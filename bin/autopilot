@@ -59,23 +59,23 @@ def check_depends():
     return True
 
 
-def ensure_autopilot_is_importable():
+def ensure_test_suite_is_importable(args):
     """Patch sys.path with the local autopilot directory if it's not already
     importable.
     """
     try:
-        find_module("autopilot")
+        find_module(args.suite)
     except ImportError:
-        ap_dir = os.path.join(os.path.dirname(__file__),
-            "../tests/autopilot")
-        ap_dir = os.path.realpath(ap_dir)
-        sys.path.append(ap_dir)
-        print "Patching sys.path to include local autopilot folder '%s'\n" % ap_dir
+        print "Cannot import test suite '%s'. Make sure it is in your PYTHONPATH!" % (args.suite)
+        exit(1)
 
 
 def parse_arguments():
     """Parse command-line arguments, and return an argparse arguments object."""
-    parser = ArgumentParser(description="Autopilot test-runner")
+    parser = ArgumentParser(description=dedent("""\
+        Autopilot test tool.
+        """))
+    parser.add_argument("-s", "--suite", help="Test suite name to run.", required=True)
     subparsers = parser.add_subparsers(help='Run modes', dest="mode")
 
     parser_run = subparsers.add_parser('run', help="Run autopilot tests")
@@ -129,7 +129,7 @@ def run_tests(args):
     if args.test:
         test_suite = loader.loadTestsFromNames(args.test)
     else:
-        test_suite = loader.discover('autopilot.tests')
+        test_suite = loader.discover(args.suite)
 
     if args.output == None:
         results_stream = sys.stdout
@@ -157,6 +157,7 @@ def run_tests(args):
 
 def main():
     args = parse_arguments()
+    ensure_test_suite_is_importable(args)
     if args.mode == 'list':
         list_tests()
     elif args.mode == 'run':
@@ -165,5 +166,4 @@ def main():
 if __name__ == "__main__":
     if not check_depends():
         exit(1)
-    ensure_autopilot_is_importable()
     main()

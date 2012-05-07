@@ -13,5 +13,6 @@ setup(
     license='GPLv3',
     packages=find_packages(),
     test_suite='tests',
+    scripts='bin/autopilot',
 )
 

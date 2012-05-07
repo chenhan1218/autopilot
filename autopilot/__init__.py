@@ -1,7 +1,10 @@
+# -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
+# Copyright 2012 Canonical
+# Author: Thomi Richards
 #
-# Copyright (C) 2011 Canonical.
-#
-# This software is licensed under the GNU GPLv3 (see the file LICENSE).
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 3, as published
+# by the Free Software Foundation.
 
 """An automated test runner and driver for Unity"""
 

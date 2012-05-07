@@ -6,7 +6,7 @@
 # under the terms of the GNU General Public License version 3, as published
 # by the Free Software Foundation.
 
-"Autopilot-specific matchers."
+"""Autopilot-specific testtools matchers."""
 
 from testtools.matchers import Matcher
 

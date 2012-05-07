@@ -12,7 +12,7 @@ setup(
     url='https://launchpad.net/autopilot',
     license='GPLv3',
     packages=find_packages(),
-    test_suite='tests',
-    scripts='bin/autopilot',
+    test_suite='autopilot.tests',
+    scripts=['bin/autopilot',],
 )
 

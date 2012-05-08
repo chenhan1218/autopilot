@@ -7,17 +7,16 @@
 # by the Free Software Foundation.
 
 """
-Autopilot tests for Unity.
+Autopilot test case class.
 """
 
+from __future__ import absolute_import
 
 from compizconfig import Setting, Plugin
-from dbus import DBusException
 import logging
 import os
 from StringIO import StringIO
 from subprocess import call, check_output, Popen, PIPE, STDOUT
-from tempfile import mktemp
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.content import text_content
@@ -25,18 +24,7 @@ from testtools.matchers import Equals
 import time
 
 from autopilot.emulators.bamf import Bamf
-from autopilot.emulators.unity import (
-    set_log_severity,
-    start_log_to_file,
-    reset_logging,
-    )
-from autopilot.emulators.unity.dash import Dash
-from autopilot.emulators.unity.hud import Hud
-from autopilot.emulators.unity.launcher import LauncherController
-from autopilot.emulators.unity.panel import PanelController
-from autopilot.emulators.unity.switcher import Switcher
-from autopilot.emulators.unity.window_manager import WindowManager
-from autopilot.emulators.unity.workspace import WorkspaceManager
+
 from autopilot.emulators.X11 import ScreenGeometry, Keyboard, Mouse, reset_display
 from autopilot.glibrunner import GlibRunner
 from autopilot.globals import (global_context,
@@ -118,32 +106,6 @@ class LoggedTestCase(TestWithScenarios, TestCase):
         # abusing the log handlers here a little.
         del self._log_buffer
 
-    def _setUpUnityLogging(self):
-        self._unity_log_file_name = mktemp(prefix=self.shortDescription())
-        start_log_to_file(self._unity_log_file_name)
-        self.addCleanup(self._tearDownUnityLogging)
-
-    def _tearDownUnityLogging(self):
-        # If unity dies, our dbus interface has gone, and reset_logging will fail
-        # but we still want our log, so we ignore any errors.
-        try:
-            reset_logging()
-        except DBusException:
-            pass
-        with open(self._unity_log_file_name) as unity_log:
-            self.addDetail('unity-log', text_content(unity_log.read()))
-        os.remove(self._unity_log_file_name)
-        self._unity_log_file_name = ""
-
-    def set_unity_log_level(self, component, level):
-        """Set the unity log level for 'component' to 'level'.
-
-        Valid levels are: TRACE, DEBUG, INFO, WARNING and ERROR.
-
-        Components are dotted unity component names. The empty string specifies
-        the root logging component.
-        """
-        set_log_severity(component, level)
 
 
 class VideoCapturedTestCase(LoggedTestCase):
@@ -247,13 +209,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         self.bamf = Bamf()
         self.keyboard = Keyboard()
         self.mouse = Mouse()
-        self.dash = Dash()
-        self.hud = Hud()
-        self.launcher = self._get_launcher_controller()
-        self.panels = self._get_panel_controller()
-        self.switcher = Switcher()
-        self.window_manager = self._get_window_manager()
-        self.workspace = WorkspaceManager()
+
         self.screen_geo = ScreenGeometry()
         self.addCleanup(self.workspace.switch_to, self.workspace.current_workspace)
         self.addCleanup(Keyboard.cleanup)
@@ -339,21 +295,6 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         setting.Value = option_value
         global_context.Write()
         return old_value
-
-    def _get_launcher_controller(self):
-        controllers = LauncherController.get_all_instances()
-        self.assertThat(len(controllers), Equals(1))
-        return controllers[0]
-
-    def _get_panel_controller(self):
-        controllers = PanelController.get_all_instances()
-        self.assertThat(len(controllers), Equals(1))
-        return controllers[0]
-
-    def _get_window_manager(self):
-        managers = WindowManager.get_all_instances()
-        self.assertThat(len(managers), Equals(1))
-        return managers[0]
 
     def assertVisibleWindowStack(self, stack_start):
         """Check that the visible window stack starts with the windows passed in.

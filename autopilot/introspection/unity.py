@@ -7,6 +7,8 @@
 # by the Free Software Foundation.
 #
 
+from __future__ import absolute_import
+
 from dbus import Interface
 import logging
 from testtools.matchers import Equals

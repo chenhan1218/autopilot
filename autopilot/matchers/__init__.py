@@ -8,6 +8,8 @@
 
 """Autopilot-specific testtools matchers."""
 
+from __future__ import absolute_import
+
 from testtools.matchers import Matcher
 
 

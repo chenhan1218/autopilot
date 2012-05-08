@@ -21,6 +21,8 @@ Keybindings come from two different places:
  2) Elsewhere. Right now we're hard-coding these in a separate dictionary.
 """
 
+from __future__ import absolute_import
+
 from compizconfig import Plugin, Setting
 import logging
 from types import NoneType

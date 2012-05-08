@@ -8,8 +8,8 @@
 
 """Functions to deal with ibus service."""
 
-# without this the 'import ibus' imports us, and import ibus.common fails. 0.O
 from __future__ import absolute_import
+
 import ibus
 import ibus.common
 import os

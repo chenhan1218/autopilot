@@ -16,6 +16,8 @@ In the future we may also need other devices.
 
 """
 
+from __future__ import absolute_import
+
 import gtk.gdk
 import logging
 import os

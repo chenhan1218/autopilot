@@ -5,7 +5,9 @@
 # under the terms of the GNU General Public License version 3, as published
 # by the Free Software Foundation.
 
-"Various classes for interacting with BAMF."
+"""Various classes for interacting with BAMF."""
+
+from __future__ import absolute_import
 
 import dbus
 import dbus.glib

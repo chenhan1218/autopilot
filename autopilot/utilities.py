@@ -12,6 +12,7 @@
 
 """Various utility classes and functions that are useful when running tests."""
 
+from __future__ import absolute_import
 
 from Xlib import X, display, protocol
 

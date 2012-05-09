@@ -67,7 +67,6 @@ class LoggedTestCase(TestWithScenarios, TestCase):
 
     def setUp(self):
         self._setUpTestLogging()
-        self._setUpUnityLogging()
         # The reason that the super setup is done here is due to making sure
         # that the logging is properly set up prior to calling it.
         super(LoggedTestCase, self).setUp()

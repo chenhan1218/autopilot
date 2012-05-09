@@ -210,7 +210,6 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         self.mouse = Mouse()
 
         self.screen_geo = ScreenGeometry()
-        self.addCleanup(self.workspace.switch_to, self.workspace.current_workspace)
         self.addCleanup(Keyboard.cleanup)
         self.addCleanup(Mouse.cleanup)
 

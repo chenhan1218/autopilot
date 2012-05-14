@@ -61,15 +61,15 @@ def check_depends():
     return True
 
 
-def ensure_test_suite_is_importable(args):
-    """Patch sys.path with the local autopilot directory if it's not already
-    importable.
+def ensure_test_suite_is_importable(suites):
+    """Make sure we can import the test suites passed to us, or bail with an error.
     """
-    try:
-        find_module(args.suite)
-    except ImportError:
-        print "Cannot import test suite '%s'. Make sure it is in your PYTHONPATH!" % (args.suite)
-        exit(1)
+    for suite in suites:
+        try:
+            find_module(suite)
+        except ImportError:
+            print "Cannot import test suite '%s'. Make sure it is in your PYTHONPATH!" % (suite)
+            exit(1)
 
 
 def parse_arguments():
@@ -77,7 +77,6 @@ def parse_arguments():
     parser = ArgumentParser(description=dedent("""\
         Autopilot test tool.
         """))
-    parser.add_argument("-s", "--suite", help="Test suite name to run.", required=True)
     subparsers = parser.add_subparsers(help='Run modes', dest="mode")
 
     parser_run = subparsers.add_parser('run', help="Run autopilot tests")
@@ -90,31 +89,34 @@ def parse_arguments():
         are stored in /tmp/autopilot.")
     parser_run.add_argument("-rd", "--record-directory", required=False,
         default="/tmp/autopilot", type=str, help="Directory to put recorded tests (only if -r) specified.")
-    parser_run.add_argument("test", nargs="*", help="Specify tests to run, as listed by the 'list' command")
+    parser_run.add_argument("suite", nargs="+", help="Specify test suite(s) to run.")
 
 
     parser_list = subparsers.add_parser('list', help="List autopilot tests")
+    parser_list.add_argument("suite", nargs="+", help="Specify test suite(s) to run.")
     args = parser.parse_args()
 
     return args
 
 
-def list_tests():
+def list_tests(args):
     """Print a list of tests we find inside autopilot.tests."""
     num_tests = 0
     from testtools import iterate_tests
     loader = TestLoader()
-    test_suite = loader.discover('autopilot.tests')
-    print "Listing all autopilot tests:"
-    print
-    for test in iterate_tests(test_suite):
-        has_scenarios = hasattr(test, "scenarios")
-        if has_scenarios:
-            num_tests += len(test.scenarios)
-            print " *%d %s" % (len(test.scenarios), test.id())
-        else:
-            num_tests += 1
-            print test.id()
+    for suite in args.suite:
+        test_suite = loader.discover(suite)
+        print "Listing all autopilot tests in suite '%s':" % (suite)
+        print
+        for test in iterate_tests(test_suite):
+            has_scenarios = hasattr(test, "scenarios")
+            if has_scenarios:
+                num_tests += len(test.scenarios)
+                print " *%d %s" % (len(test.scenarios), test.id())
+            else:
+                num_tests += 1
+                print test.id()
+        print
     print "\n %d total tests." % (num_tests)
 
 
@@ -128,40 +130,38 @@ def run_tests(args):
         autopilot.globals.video_record_directory = args.record_directory
 
     loader = TestLoader()
-    if args.test:
-        test_suite = loader.loadTestsFromNames(args.test)
-    else:
-        test_suite = loader.discover(args.suite)
+    for suite in args.suite:
+        test_suite = loader.discover(suite)
 
-    if args.output == None:
-        results_stream = sys.stdout
-    else:
-        try:
-            path = os.path.dirname(args.output)
-            if path != '' and not os.path.exists(path):
-                os.makedirs(path)
-            results_stream = open(args.output, 'w')
-        except:
+        if args.output == None:
             results_stream = sys.stdout
-    if args.format == "xml":
-        result = junitxml.JUnitXmlResult(results_stream)
-        result.startTestRun()
-        test_suite.run(result)
-        result.stopTestRun()
-        results_stream.close()
-        if not result.wasSuccessful:
-            exit(1)
-    elif args.format == "text":
-        runner = TextTestRunner(stream=results_stream)
-        success = runner.run(test_suite).wasSuccessful()
-        if not success:
-            exit(1)
+        else:
+            try:
+                path = os.path.dirname(args.output)
+                if path != '' and not os.path.exists(path):
+                    os.makedirs(path)
+                results_stream = open(args.output, 'w')
+            except:
+                results_stream = sys.stdout
+        if args.format == "xml":
+            result = junitxml.JUnitXmlResult(results_stream)
+            result.startTestRun()
+            test_suite.run(result)
+            result.stopTestRun()
+            results_stream.close()
+            if not result.wasSuccessful:
+                exit(1)
+        elif args.format == "text":
+            runner = TextTestRunner(stream=results_stream)
+            success = runner.run(test_suite).wasSuccessful()
+            if not success:
+                exit(1)
 
 def main():
     args = parse_arguments()
-    ensure_test_suite_is_importable(args)
+    ensure_test_suite_is_importable(args.suite)
     if args.mode == 'list':
-        list_tests()
+        list_tests(args)
     elif args.mode == 'run':
         run_tests(args)
 

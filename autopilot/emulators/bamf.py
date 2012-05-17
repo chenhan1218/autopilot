@@ -99,7 +99,9 @@ class Bamf(object):
         if user_visible_only:
             windows = filter(_filter_user_visible, windows)
         # Now sort on stacking order.
-        return reversed(windows)
+        # We explicitly convert to a list from an iterator since tests frequently
+        # try and use len() on return values from these methods.
+        return list(reversed(windows))
 
     def get_window_by_xid(self, xid):
         """Get the BamfWindow that matches the provided 'xid'."""

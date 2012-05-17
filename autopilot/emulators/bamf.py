@@ -69,7 +69,7 @@ class Bamf(object):
         return apps
 
     def get_running_applications_by_desktop_file(self, desktop_file):
-        """Return a list of applications that have the desktop file 'desktop_file'`.
+        """Return a list of applications that have the desktop file 'desktop_file'.
 
         This method may return an empty list, if no applications
         are found with the specified desktop file.

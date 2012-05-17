@@ -1,1 +1,2 @@
-recursive-include bin *
+graft bin
+graft build/sphinx/html 

@@ -16,7 +16,14 @@ from compizconfig import Setting, Plugin
 import logging
 import os
 from StringIO import StringIO
-from subprocess import call, check_output, Popen, PIPE, STDOUT
+from subprocess import (
+    call,
+    CalledProcessError,
+    check_output,
+    Popen,
+    PIPE,
+    STDOUT,
+    )
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.content import text_content
@@ -232,16 +239,19 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         app = self.KNOWN_APPS[app_name]
         self.bamf.launch_application(app['desktop-file'], files)
         apps = self.bamf.get_running_applications_by_desktop_file(app['desktop-file'])
-        self.addCleanup(call, "kill `pidof %s`" % (app['process-name']), shell=True)
+        self.addCleanup(self.close_all_app, app_name)
         self.assertThat(len(apps), Equals(1))
         return apps[0]
 
     def close_all_app(self, app_name):
         """Close all instances of the app_name."""
         app = self.KNOWN_APPS[app_name]
-        pids = check_output(["pidof", app['process-name']]).split()
-        if len(pids):
-            call(["kill"] + pids)
+        try:
+            pids = check_output(["pidof", app['process-name']]).split()
+            if len(pids):
+                call(["kill"] + pids)
+        except CalledProcessError:
+            logger.warning("Tried to close applicaton '%s' but it wasn't running.", app_name)
 
     def get_app_instances(self, app_name):
         """Get BamfApplication instances for app_name."""

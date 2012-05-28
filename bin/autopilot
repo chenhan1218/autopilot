@@ -18,6 +18,8 @@ from argparse import ArgumentParser
 from unittest.loader import TestLoader
 from unittest.runner import TextTestRunner
 from unittest import TestSuite
+from testtools import iterate_tests
+
 
 
 # list autopilot depends here, with the form:
@@ -92,7 +94,6 @@ def parse_arguments():
 def list_tests(args):
     """Print a list of tests we find inside autopilot.tests."""
     num_tests = 0
-    from testtools import iterate_tests
     test_suite = load_test_suite_from_name(args.suite)
 
     for test in iterate_tests(test_suite):
@@ -157,16 +158,26 @@ def load_test_suite_from_name(test_names):
             __import__(test_name)
             tests.append(loader.discover(test_name))
         except ImportError as e:
-            suite = loader.loadTestsFromName(test_name)
-            if suite.countTestCases():
-                tests.append(suite)
-            else:
-                print "Warning: No tests found at '%s' Loading module have error:" % (test_name)
-                print e
-    if len(tests) > 1:
-        return TestSuite(tests)
-    elif len(tests) == 1:
-        return tests[0]
+            try:
+                suite = loader.loadTestsFromName(test_name)
+                if suite.countTestCases():
+                    tests.append(suite)
+                else:
+                    print "Warning: No tests found at '%s' Loading module have error:" % (test_name)
+                    print e
+            except AttributeError as e:
+                print "Warninig: Test/Package not valid: %s" % e
+        except KeyError as e:
+            print "Warninig: Test/Package not valid: %s" % e
+
+    all_tests = {}
+    for test in iterate_tests(tests):
+        for suite in test_names:
+            if test.id().startswith(suite):
+                all_tests[test.id()] = test
+
+    if all_tests:
+        return TestSuite(all_tests.values())
     else:
         print "No tests found."
         return TestSuite()

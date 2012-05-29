@@ -1,18 +1,17 @@
+# -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
+# Copyright 2012 Canonical
+# Author: Chris Lee
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 3, as published
+# by the Free Software Foundation.
+#
+
+from __future__ import absolute_import
+
 import dbus
-
-try:
-    from autopilot.introspection.unity import get_state_by_path
-except ImportError, e:
-    print "Error: could not import the autopilot python module."
-    print "Make sure the autopilot module is in your $PYTHONPATH."
-    exit(1)
-
-try:
-    import pydot
-except ImportError:
-    print "Error: the 'pydot' module is required to run this script."
-    print "Try installing the 'python-pydot' package."
-    exit(1)
+import pydot
+from autopilot.introspection.unity import get_state_by_path
 
 NEXT_NODE_ID=1
 NODE_BLACKLIST=["Result"]

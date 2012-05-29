@@ -12,7 +12,10 @@ from __future__ import absolute_import
 from imp import find_module
 import os
 import os.path
+from os import remove
+from subprocess import call
 import sys
+from tempfile import NamedTemporaryFile
 from testtools import iterate_tests
 from textwrap import dedent
 from argparse import ArgumentParser
@@ -34,6 +37,7 @@ DEPENDS = [
     ('testtools', 'python-testtools'),
     ('xdg', 'python-xdg'),
     ('Xlib', 'python-xlib'),
+    ('pydot', 'python-pydot'),
 ]
 
 
@@ -206,14 +210,12 @@ def make_visualisation(output=None):
         print "Writing file: %s" % output
         base, extension = splitext(output)
         write_method_name = 'write_' + extension[1:]
-        if hasattr(graph, write_method_name):
-            getattr(graph, write_method_name)(output)
+        write_fn = getattr(graph, write_method_name, None)
+        if write_fn:
+            write_fn(output)
         else:
             print "Error: unsupported format: '%s'" % (extension)
     else:
-        from os import remove
-        from subprocess import call
-        from tempfile import NamedTemporaryFile
         tf = NamedTemporaryFile(suffix='.png', delete=False)
         print "Creating visualisation . . ."
         tf.write(graph.create_dot())

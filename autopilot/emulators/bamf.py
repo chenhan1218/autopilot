@@ -75,7 +75,14 @@ class Bamf(object):
         are found with the specified desktop file.
 
         """
-        return [a for a in self.get_running_applications() if a.desktop_file == desktop_file]
+        apps = []
+        for a in self.get_running_applications():
+            try:
+                if a.desktop_file == desktop_file:
+                    app.append(a)
+            except DBusException:
+                pass
+        return apps
 
     def get_application_by_xid(self, xid):
         """Return the application that has a child with the requested xid or None."""

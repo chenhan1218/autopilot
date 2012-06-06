@@ -78,7 +78,7 @@ class ProcessManager(object):
         self.bamf.launch_application(app['desktop-file'], files)
         apps = self.bamf.get_running_applications_by_desktop_file(app['desktop-file'])
         self.addCleanup(self.close_all_app, app_name)
-        self.assertThat(len(apps), Equals(1))
+
         return apps[0]
 
     def close_all_app(self, app_name):

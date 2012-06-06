@@ -79,7 +79,7 @@ class Bamf(object):
         for a in self.get_running_applications():
             try:
                 if a.desktop_file == desktop_file:
-                    app.append(a)
+                    apps.append(a)
             except dbus.DBusException:
                 pass
         return apps

@@ -80,7 +80,7 @@ class Bamf(object):
             try:
                 if a.desktop_file == desktop_file:
                     app.append(a)
-            except DBusException:
+            except dbus.DBusException:
                 pass
         return apps
 

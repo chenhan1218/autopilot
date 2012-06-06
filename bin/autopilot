@@ -189,10 +189,10 @@ def load_test_suite_from_name(test_names):
                     print "Warning: No tests found at '%s' Loading module \
                     have error:" % (test_name)
                     print e
-            except AttributeError as e:
-                print "Warninig: Test/Package not valid: %s" % e
+            except (AttributeError, ImportError) as e:
+                print "Error: Cannot import test/package: %s" % e
         except KeyError as e:
-            print "Warninig: Test/Package not valid: %s" % e
+            print "Warninig: Invalid test/package: %s" % e
 
     requested = lambda test: any([test.id().startswith(name)
                                   for name in test_names])

@@ -9,10 +9,8 @@
 generally managing processes during a test."""
 
 from __future__ import absolute_import
-
-import os
 import logging
-from subprocess import check_output, call, CalledProcessError
+from time import sleep
 
 from autopilot.emulators.bamf import Bamf
 
@@ -22,81 +20,45 @@ logger = logging.getLogger(__name__)
 class ProcessManager(object):
     """Manage Processes during a test cycle."""
 
-    KNOWN_APPS = {
-        'Character Map' : {
-            'desktop-file': 'gucharmap.desktop',
-            'process-name': 'gucharmap',
-            },
-        'Calculator' : {
-            'desktop-file': 'gcalctool.desktop',
-            'process-name': 'gcalctool',
-            },
-        'Mahjongg' : {
-            'desktop-file': 'mahjongg.desktop',
-            'process-name': 'mahjongg',
-            },
-        'Remmina' : {
-            'desktop-file': 'remmina.desktop',
-            'process-name': 'remmina',
-            },
-        'System Settings' : {
-            'desktop-file': 'gnome-control-center.desktop',
-            'process-name': 'gnome-control-center',
-            },
-        'Text Editor' : {
-            'desktop-file': 'gedit.desktop',
-            'process-name': 'gedit',
-            },
-        }
-
     def __init__(self):
         self._bamf = Bamf()
+        self.snapshot = None
 
-    def start_test(self):
-        """Call this before your test starts."""
+    def snapshot_running_apps(self):
+        """Make a list of all the running applications, and store it.
 
-    def end_test(self):
-        """Call this after your test ends."""
+        The stored list can later be used to detect any applications that have
+        been launched during a test and not shut down.
 
-    def start_app(self, app_name, files=[], locale=None):
-        """Start one of the known apps, and kill it on tear down.
-
-        If files is specified, start the application with the specified files.
-        If locale is specified, the locale will be set when the application is launched.
-
-        The method returns the BamfApplication instance.
-
+        You may only call this method once before calling
+        compare_system_with_snapshot. Calling this method multiple times will
+        cause a RuntimeError to be raised.
         """
-        if locale:
-            os.putenv("LC_ALL", locale)
-            self.addCleanup(os.unsetenv, "LC_ALL")
-            logger.info("Starting application '%s' with files %r in locale %s", app_name, files, locale)
-        else:
-            logger.info("Starting application '%s' with files %r", app_name, files)
 
-        app = self.KNOWN_APPS[app_name]
-        self.bamf.launch_application(app['desktop-file'], files)
-        apps = self.bamf.get_running_applications_by_desktop_file(app['desktop-file'])
-        self.addCleanup(self.close_all_app, app_name)
+        if self.snapshot:
+            raise RuntimeError("You may only call snapshot_running_apps once \
+before calling compare_system_with_snapshot.")
 
-        return apps[0]
+        self.snapshot = self._bamf.get_running_applications()
 
-    def close_all_app(self, app_name):
-        """Close all instances of the app_name."""
-        app = self.KNOWN_APPS[app_name]
-        try:
-            pids = check_output(["pidof", app['process-name']]).split()
-            if len(pids):
-                call(["kill"] + pids)
-        except CalledProcessError:
-            logger.warning("Tried to close applicaton '%s' but it wasn't running.", app_name)
+    def compare_system_with_snapshot(self):
+        """Compare the currently running application with the last snapshot.
 
-    def get_app_instances(self, app_name):
-        """Get BamfApplication instances for app_name."""
-        desktop_file = self.KNOWN_APPS[app_name]['desktop-file']
-        return self.bamf.get_running_applications_by_desktop_file(desktop_file)
+        This method will raise an AssertionError if there are any new applications
+        currently running that were not running when the snapshot was taken.
 
-    def app_is_running(self, app_name):
-        """Returns true if an instance of the application is running."""
-        apps = self.get_app_instances(app_name)
-        return len(apps) > 0
+        This method should typically be called at the every end of a test.
+        """
+        if not self.snapshot:
+            raise RuntimeError("No snapshot to match against.")
+
+        new_apps = []
+        for i in range(10):
+            current_apps = self._bamf.get_running_applications()
+            new_apps = filter(lambda i: i not in self.snapshot, current_apps)
+            if not new_apps:
+                return
+            sleep(1)
+        raise AssertionError("The following apps were started during the test and not closed: %r", new_apps)
+
+

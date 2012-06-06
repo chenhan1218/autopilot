@@ -198,8 +198,15 @@ class BamfApplication(object):
 
     @property
     def desktop_file(self):
-        """Get the application desktop file"""
-        return os.path.split(self._app_iface.DesktopFile())[1]
+        """Get the application desktop file.
+
+        This just returns the filename, not the full path.
+        If the application no longer exists, this returns an empty string.
+        """
+        try:
+            return os.path.split(self._app_iface.DesktopFile())[1]
+        except dbus.DBusException:
+            return ""
 
     @property
     def name(self):
@@ -242,6 +249,9 @@ class BamfApplication(object):
 
     def __repr__(self):
         return "<BamfApplication '%s'>" % (self.name)
+
+    def __eq__(self, other):
+        return self.desktop_file == other.desktop_file
 
 
 class BamfWindow(object):

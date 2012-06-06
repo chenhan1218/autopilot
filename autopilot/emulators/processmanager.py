@@ -1,4 +1,4 @@
-# Copyright 2011 Canonical
+# Copyright 2012 Canonical
 # Author: Thomi Richards
 #
 # This program is free software: you can redistribute it and/or modify it

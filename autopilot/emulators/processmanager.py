@@ -49,7 +49,7 @@ before calling compare_system_with_snapshot.")
 
         This method should typically be called at the every end of a test.
         """
-        if not self.snapshot:
+        if self.snapshot is None:
             raise RuntimeError("No snapshot to match against.")
 
         new_apps = []
@@ -57,8 +57,10 @@ before calling compare_system_with_snapshot.")
             current_apps = self._bamf.get_running_applications()
             new_apps = filter(lambda i: i not in self.snapshot, current_apps)
             if not new_apps:
+                self.snapshot = None
                 return
             sleep(1)
+        self.snapshot = None
         raise AssertionError("The following apps were started during the test and not closed: %r", new_apps)
 
 

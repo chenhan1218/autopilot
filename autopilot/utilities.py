@@ -14,6 +14,7 @@
 
 from __future__ import absolute_import
 
+from compizconfig import Plugin, Setting
 from Xlib import X, display, protocol
 
 _display = display.Display()
@@ -71,3 +72,9 @@ def _getProperty(_type, win=None):
         win = _display.screen().root
     atom = win.get_full_property(_display.get_atom(_type), X.AnyPropertyType)
     if atom: return atom.value
+
+
+def get_compiz_option(self, plugin_name, setting_name):
+    plugin = Plugin(global_context, plugin_name)
+    setting = Setting(plugin, setting_name)
+    return setting.Value

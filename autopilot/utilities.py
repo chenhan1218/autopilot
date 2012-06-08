@@ -14,6 +14,7 @@
 
 from __future__ import absolute_import
 
+from autopilot.globals import global_context
 from compizconfig import Plugin, Setting
 from Xlib import X, display, protocol
 
@@ -74,7 +75,7 @@ def _getProperty(_type, win=None):
     if atom: return atom.value
 
 
-def get_compiz_option(self, plugin_name, setting_name):
+def get_compiz_option(plugin_name, setting_name):
     plugin = Plugin(global_context, plugin_name)
     setting = Setting(plugin, setting_name)
     return setting.Value

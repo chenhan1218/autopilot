@@ -9,10 +9,12 @@
 
 from __future__ import absolute_import
 
+from datetime import datetime
 from imp import find_module
 import os
 import os.path
 from os import remove
+from platform import node
 from subprocess import call
 import sys
 from tempfile import NamedTemporaryFile
@@ -79,7 +81,10 @@ def parse_arguments():
     parser_run = subparsers.add_parser('run', help="Run autopilot tests")
     parser_run.add_argument('-o', "--output", required=False,
                             help='Write test result report to file.\
-                            Defaults to stdout')
+                            Defaults to stdout.\
+                            If given a directory instead of a file will \
+                            write to a file in that directory named: \
+                            <hostname>_<dd.mm.yyy_HHMMSS>.log')
     parser_run.add_argument('-f', "--format", choices=['text', 'xml'],
                             default='text',
                             required=False,
@@ -148,7 +153,13 @@ def run_tests(args):
             path = os.path.dirname(args.output)
             if path != '' and not os.path.exists(path):
                 os.makedirs(path)
-            results_stream = open(args.output, 'w')
+            log_file = args.output
+            if os.path.isdir(log_file):
+                default_log = "%s_%s.log" % (node(),
+                                             datetime.now().strftime("%d.%m.%y-%H%M%S"))
+                log_file = os.path.join(log_file, default_log)
+                print "Using default log filename: %s " % default_log
+            results_stream = open(log_file, 'w')
         except:
             results_stream = sys.stdout
     if args.format == "xml":

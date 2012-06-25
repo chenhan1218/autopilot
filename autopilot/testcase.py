@@ -321,3 +321,24 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         """Returns true if an instance of the application is running."""
         apps = self.get_app_instances(app_name)
         return len(apps) > 0
+
+    def patch_environment(self, key, value):
+        """Patch the system environment 'key' with value 'value'.
+
+        This patches os.environ suck that for the duration of the test only:
+
+        os.environ[key] == value
+
+        After the test, the patch will be undone (including deleting the key if
+        if didn't exist before this method was called).
+
+        """
+        if key in os.environ:
+            old_value = os.environ[key]
+            self.addCleanup(os.putenv, key, old_value)
+        else:
+            # there's no os.delenv, and you can't use del inside a lambda. *sigh*
+            def del_env(key):
+                del os.environ[key]
+            self.addCleanup(del_env, key)
+        os.environ[key] = value

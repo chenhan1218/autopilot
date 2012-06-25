@@ -36,7 +36,7 @@ class Eventually(Matcher):
         else:
             wait_fun = getattr(value, 'wait_for', None)
             if wait_fun is None or not callable(wait_fun):
-                raise TypeError("Eventually can only be used against autopilot attributes that have a wait_for funtion.")
+                raise TypeError("Eventually can only be used against autopilot attributes that have a wait_for function.")
             wait_fun(self.matcher)
 
     def __str__(self):
@@ -49,7 +49,7 @@ def _callable_wait_for(refresh_fn, matcher):
 
     """
 
-    for i in range(11):
+    for i in range(10):
         new_value = refresh_fn()
         mismatch = matcher.match(new_value)
         if mismatch:

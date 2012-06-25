@@ -174,7 +174,7 @@ class UnityIntrospectionObject(object):
             if not is_matcher:
                 expected_value = Equals(expected_value)
 
-            for i in range(11):
+            for i in range(10):
                 new_state = translate_state_keys(get_state_by_name_and_id(
                                                 self.parent.__class__.__name__,
                                                 self.parent.id)

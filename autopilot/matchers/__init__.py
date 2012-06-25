@@ -11,10 +11,17 @@
 from __future__ import absolute_import
 
 from testtools.matchers import Matcher
+from time import sleep
 
 
 class Eventually(Matcher):
-    """Asserts that a value will eventually equal a given Matcher object."""
+    """Asserts that a value will eventually equal a given Matcher object.
+
+    This works on objects that *either* have a wait_for(expected) function, *or*
+    objects that are callable and return the most current value (i.e.- they
+    refresh the objects value).
+
+    """
 
     def __init__(self, matcher):
         super(Eventually, self).__init__()
@@ -24,10 +31,34 @@ class Eventually(Matcher):
         self.matcher = matcher
 
     def match(self, value):
-        wait_fun = getattr(value, 'wait_for', None)
-        if wait_fun is None or not callable(wait_fun):
-            raise TypeError("Eventually can only be used against autopilot attributes that have a wait_for funtion.")
-        wait_fun(self.matcher)
+        if callable(value):
+            _callable_wait_for(value, self.matcher)
+        else:
+            wait_fun = getattr(value, 'wait_for', None)
+            if wait_fun is None or not callable(wait_fun):
+                raise TypeError("Eventually can only be used against autopilot attributes that have a wait_for funtion.")
+            wait_fun(self.matcher)
 
     def __str__(self):
         return "Eventually " + str(self.matcher)
+
+
+def _callable_wait_for(refresh_fn, matcher):
+    """Like the patched wait_for method, but for callable objects instead of
+    patched variables.
+
+    """
+
+    for i in range(11):
+        new_value = refresh_fn()
+        mismatch = matcher.match(new_value)
+        if mismatch:
+            failure_msg = mismatch.describe()
+        else:
+            return
+
+        sleep(1)
+
+    # can't give a very descriptive message here, especially as refresh_fn
+    # is likely to be a lambda.
+    raise AssertionError("After 10 seconds test failed: %s", failure_msg)

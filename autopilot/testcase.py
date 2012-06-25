@@ -325,7 +325,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     def patch_environment(self, key, value):
         """Patch the system environment 'key' with value 'value'.
 
-        This patches os.environ suck that for the duration of the test only:
+        This patches os.environ for the duration of the test only:
 
         os.environ[key] == value
 

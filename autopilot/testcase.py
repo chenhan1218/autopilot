@@ -337,8 +337,5 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             old_value = os.environ[key]
             self.addCleanup(os.putenv, key, old_value)
         else:
-            # there's no os.delenv, and you can't use del inside a lambda. *sigh*
-            def del_env(key):
-                del os.environ[key]
-            self.addCleanup(del_env, key)
+            self.addCleanup(os.unsetenv, key)
         os.environ[key] = value

@@ -13,6 +13,7 @@ Autopilot test case class.
 from __future__ import absolute_import
 
 from compizconfig import Setting, Plugin
+import gconf
 import logging
 import os
 from StringIO import StringIO
@@ -266,6 +267,65 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         setting.Value = option_value
         global_context.Write()
         return old_value
+
+    def set_gconf_option(self, path, value):
+        """Set the gconf setting on `path` to the defined `value`"""
+        client = gconf.client_get_default()
+        gconfval = self._get_gconf_from_native_value(value, path)
+        client.set(path, gconfval)
+
+    def get_gconf_option(self, path):
+        """Get the gconf setting on `path`"""
+        client = gconf.client_get_default()
+        value = client.get(path)
+        return self._get_native_gconf_value(value)
+
+    def _get_gconf_from_native_value(self, value, path):
+        """Translates a python type to a GConfValue"""
+        if type(value) is str:
+            gconfvalue = gconf.Value(gconf.VALUE_STRING)
+            gconfvalue.set_string(value)
+        elif type(value) is int:
+            gconfvalue = gconf.Value(gconf.VALUE_INT)
+            gconfvalue.set_int(value)
+        elif type(value) is float:
+            gconfvalue = gconf.Value(gconf.VALUE_FLOAT)
+            gconfvalue.set_float(value)
+        elif type(value) is bool:
+            gconfvalue = gconf.Value(gconf.VALUE_BOOL)
+            gconfvalue.set_bool(value)
+        elif type(value) is list:
+            gconfvalue = gconf.Value(gconf.VALUE_LIST)
+            values = [self._get_gconf_from_native_value(val, path) for val in value]
+
+            if len(values) == 0:
+                client = gconf.client_get_default()
+                path_value = client.get(path)
+                assert(path_value.type == gconf.VALUE_LIST)
+                gconfvalue.set_list_type(path_value.get_list_type())
+                gconfvalue.set_list([])
+            else:
+                gconfvalue.set_list_type(values[0].type)
+                gconfvalue.set_list(values)
+        else:
+            raise TypeError("Invalid gconf value type")
+
+        return gconfvalue
+
+    def _get_native_gconf_value(self, value):
+        """Translates a GConfValue to a native one"""
+        if value.type is gconf.VALUE_STRING:
+            return value.get_string()
+        elif value.type is gconf.VALUE_INT:
+            return value.get_int()
+        elif value.type is gconf.VALUE_FLOAT:
+            return value.get_float()
+        elif value.type is gconf.VALUE_BOOL:
+            return value.get_bool()
+        elif value.type is gconf.VALUE_LIST:
+            return [self._get_native_gconf_value(val) for val in value.get_list()]
+        else:
+            raise TypeError("Invalid gconf value type")
 
     def assertVisibleWindowStack(self, stack_start):
         """Check that the visible window stack starts with the windows passed in.

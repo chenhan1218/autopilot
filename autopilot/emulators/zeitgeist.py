@@ -15,6 +15,7 @@ import os.path
 from zeitgeist.client import ZeitgeistClient
 from zeitgeist.datamodel import Event, Interpretation, Manifestation, ResultType
 
+
 class Zeitgeist(object):
     """Class to access zeitgeist."""
 

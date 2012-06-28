@@ -16,8 +16,8 @@ import tempfile
 from zeitgeist.client import ZeitgeistClient
 from zeitgeist.datamodel import Event, Interpretation, Manifestation, ResultType
 
-class Zeitgesit(object):
-    """Class to access zeitgesit."""
+class Zeitgeist(object):
+    """Class to access zeitgeist."""
 
     def __init__(self):
         self.zg = ZeitgeistClient()

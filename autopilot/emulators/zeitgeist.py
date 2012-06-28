@@ -12,7 +12,6 @@ from __future__ import absolute_import
 
 import logging
 import os.path
-import tempfile
 from zeitgeist.client import ZeitgeistClient
 from zeitgeist.datamodel import Event, Interpretation, Manifestation, ResultType
 
@@ -25,16 +24,11 @@ class Zeitgeist(object):
         self.logger = logging.getLogger(__name__)
 
     def add_existing_file(self, path):
-        """Takes a complete path to an existing text file add it to the file lens."""
+        """Takes a complete path to an existing text file then adds it to the file lens."""
         if os.path.exists(path):
             self.__add_text_file(path)
         else:
           self.logger.info("File not found on path: %s." %(path))
-
-    def add_temp_file(self):
-        """Creates a named temporary file then adds it to the file lens."""
-        self.temp_file = tempfile.NamedTemporaryFile()
-        self.__add_text_file(self.temp_file.name)
 
     def __add_text_file(self, path):
         """Takes a path to a file and creates an event for it then querys it."""

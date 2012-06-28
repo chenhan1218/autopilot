@@ -21,7 +21,6 @@ class Zeitgeist(object):
 
     def __init__(self):
         self.zg = ZeitgeistClient()
-        self.temp_file = None
         self.logger = logging.getLogger(__name__)
 
     def add_existing_file(self, path):

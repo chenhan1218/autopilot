@@ -221,7 +221,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         self.bamf = Bamf()
         self.keyboard = Keyboard()
         self.mouse = Mouse()
-        #self.zeitgeist = Zeitgeist()
+        self.zeitgeist = Zeitgeist()
 
         self.screen_geo = ScreenGeometry()
         self.addCleanup(Keyboard.cleanup)

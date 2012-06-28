@@ -143,10 +143,7 @@ class DBusIntrospectionObject(object):
 
             for i in range(10):
                 new_state = translate_state_keys(
-                                self.parent.get_state_by_name_and_id(
-                                        self.parent.__class__.__name__,
-                                        self.parent.id
-                                    )
+                                self.parent.get_new_state()
                                 )
                 new_value = new_state[self.name]
                 # Support for testtools.matcher classes:
@@ -178,28 +175,6 @@ class DBusIntrospectionObject(object):
         attrs = {'wait_for': wait_for, 'parent':self, 'name':name}
         return type(t.__name__, (t,), attrs)(value)
 
-    def _get_child_tuples_by_type(self, desired_type):
-        """Get a list of (name,dict) pairs from children of the specified type.
-
-        desired_type must be a subclass of DBusIntrospectionObject.
-
-        """
-        if not issubclass(desired_type, DBusIntrospectionObject):
-            raise TypeError("%r must be a subclass of %r" % (desired_type,
-                DBusIntrospectionObject))
-
-        children = getattr(self, 'Children', [])
-        results = []
-        # loop through all children, and try find one that matches the type the
-        # user wants.
-        for child_type, child_state in children:
-            try:
-                if issubclass(_object_registry[child_type], desired_type):
-                    results.append((child_type, child_state))
-            except KeyError:
-                pass
-        return results
-
     def get_children_by_type(self, desired_type, **kwargs):
         """Get a list of children of the specified type.
 
@@ -213,10 +188,18 @@ class DBusIntrospectionObject(object):
             that is equal to 1.
 
         """
+        #TODO: if kwargs has exactly one item in it we should specify the
+        # restriction in the XPath query, so it gets processed in the Unity C++
+        # code rather than in Python.
         self.refresh_state()
+
+        cls_name = desired_type.__name__
+        query = self.get_class_query_string() + "/" + cls_name
+        state_dicts = self.get_state_by_path(query)
+        instances = [make_introspection_object((cls_name,i)) for i in state_dicts]
+
         result = []
-        for child in self._get_child_tuples_by_type(desired_type):
-            instance = make_introspection_object(child)
+        for instance in instances:
             filters_passed = True
             for attr, val in kwargs.iteritems():
                 if not hasattr(instance, attr) or getattr(instance, attr) != val:
@@ -234,8 +217,7 @@ class DBusIntrospectionObject(object):
         raises StateNotFound if the object in unity has been destroyed.
 
         """
-        # need to get name from class object.
-        new_state = self.get_state_by_name_and_id(self.__class__.__name__, self.id)
+        new_state = self.get_new_state()
         self.set_properties(new_state)
 
     @classmethod
@@ -254,8 +236,8 @@ class DBusIntrospectionObject(object):
         return [make_introspection_object((cls_name,i)) for i in instances]
 
     def __getattr__(self, name):
-        # avoid recursion if for some reason we have no state set (should never)
-        # happen.
+        # avoid recursion if for some reason we have no state set (should never
+        # happen).
         if name == '__state':
             raise AttributeError()
 
@@ -266,30 +248,32 @@ class DBusIntrospectionObject(object):
         raise AttributeError("Attribute '%s' not found." % (name))
 
     @classmethod
-    def get_state_by_path(cls, piece='/Unity'):
-        """Returns a full dump of unity's state."""
+    def get_state_by_path(cls, piece):
+        """Get state for a particular piece of the state tree.
+
+        'piece' is an XPath-like query that specifies which bit of the tree you
+        want to look at.
+
+        """
+        if not isinstance(piece, basestring):
+            raise TypeError("XPath query must be a string, not %r", type(piece))
+
         return get_introspection_iface(
             cls.DBUS_SERVICE,
             cls.DBUS_OBJECT
             ).GetState(piece)
 
-    def get_state_by_name_and_id(self, class_name, unique_id):
-        """Get a state dictionary from unity given a class name and id.
+    def get_new_state(self):
+        """Retrieve a new state dictionary for this class instance.
 
-        raises StateNotFoundError if the state is not found.
+        Note: The state keys in the returned dictionary are not translated.
 
-        Returns a dictionary of information. Unlike get_state_by_path, this
-        method can never return state for more than one object.
         """
-        try:
-            query = "//%(class_name)s[id=%(unique_id)d]" % (dict(
-                                                        class_name=class_name,
-                                                        unique_id=unique_id))
-            return self.get_state_by_path(query)[0]
-        except IndexError:
-            raise StateNotFoundError(class_name, unique_id)
+        return self.get_state_by_path(self.get_class_query_string())[0]
 
-
+    def get_class_query_string(self):
+        """Get the XPath query string required to refresh this class's state."""
+        return "//%s[id=%d]" % (self.__class__.__name__, self.id)
 
 
 

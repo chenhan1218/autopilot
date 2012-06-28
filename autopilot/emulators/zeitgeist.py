@@ -10,11 +10,11 @@
 
 from __future__ import absolute_import
 
-from zeitgeist.datamodel import Event, Subject, Interpretation, Manifestation, ResultType
-from zeitgeist.client import ZeitgeistClient
 import logging
-import tempfile
 import os.path
+import tempfile
+from zeitgeist.client import ZeitgeistClient
+from zeitgeist.datamodel import Event, Interpretation, Manifestation, ResultType
 
 class Zeitgesit(object):
     """Class to access zeitgesit."""

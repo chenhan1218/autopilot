@@ -25,11 +25,15 @@ class Zeitgeist(object):
         self.logger = logging.getLogger(__name__)
 
     def add_existing_file(self, path):
-        """Takes a complete path to an existing text file then adds it to the file lens."""
+        """Registers 'file' with zeitgeist.
+
+        'file' must be a full path to an existing file, or a RuntimeError will Raise.
+
+        """
         if os.path.exists(path):
             self.__add_text_file(path)
         else:
-          self.logger.info("File not found on path: %s." %(path))
+          raise RuntimeError("File not found on path: %s." % (path))
 
     def __add_text_file(self, path):
         """Takes a path to a file and creates an event for it then querys it."""

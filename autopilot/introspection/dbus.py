@@ -142,9 +142,8 @@ class DBusIntrospectionObject(object):
                 expected_value = Equals(expected_value)
 
             for i in range(10):
-                new_state = translate_state_keys(
-                                self.parent.get_new_state()
-                                )
+                name, new_state = self.parent.get_new_state()
+                new_state = translate_state_keys(new_state)
                 new_value = new_state[self.name]
                 # Support for testtools.matcher classes:
                 mismatch = expected_value.match(new_value)
@@ -193,22 +192,22 @@ class DBusIntrospectionObject(object):
         # code rather than in Python.
         self.refresh_state()
 
-        cls_name = desired_type.__name__
-        query = self.get_class_query_string() + "/" + cls_name
+        query = self.get_class_query_string() + "/*"
         state_dicts = self.get_state_by_path(query)
-        instances = [make_introspection_object((cls_name,i)) for i in state_dicts]
+        instances = [make_introspection_object(i) for i in state_dicts]
 
         result = []
         for instance in instances:
-            filters_passed = True
+            # Skip items that are not instances of the desired type:
+            if not isinstance(instance, desired_type):
+                continue
+            #skip instances that fail attribute check:
             for attr, val in kwargs.iteritems():
                 if not hasattr(instance, attr) or getattr(instance, attr) != val:
                     # Either attribute is not present, or is present but with
                     # the wrong value - don't add this instance to the results list.
-                    filters_passed = False
-                    break
-            if filters_passed:
-                result.append(instance)
+                    continue
+            result.append(instance)
         return result
 
     def refresh_state(self):
@@ -217,7 +216,7 @@ class DBusIntrospectionObject(object):
         raises StateNotFound if the object in unity has been destroyed.
 
         """
-        new_state = self.get_new_state()
+        name, new_state = self.get_new_state()
         self.set_properties(new_state)
 
     @classmethod
@@ -233,7 +232,7 @@ class DBusIntrospectionObject(object):
         """
         cls_name = cls.__name__
         instances = cls.get_state_by_path("//%s" % (cls_name))
-        return [make_introspection_object((cls_name,i)) for i in instances]
+        return [make_introspection_object(i) for i in instances]
 
     def __getattr__(self, name):
         # avoid recursion if for some reason we have no state set (should never
@@ -269,7 +268,10 @@ class DBusIntrospectionObject(object):
         Note: The state keys in the returned dictionary are not translated.
 
         """
-        return self.get_state_by_path(self.get_class_query_string())[0]
+        try:
+            return self.get_state_by_path(self.get_class_query_string())[0]
+        except IndexError:
+            raise StateNotFoundError(self.__class__.__name__, self.id)
 
     def get_class_query_string(self):
         """Get the XPath query string required to refresh this class's state."""

@@ -7,6 +7,13 @@
 # by the Free Software Foundation.
 #
 
+"""This module contains the code to retrieve state via DBus calls.
+
+Under normal circumstances, the only thing you should need to use from this module
+is the DBusIntrospectableObject class.
+
+"""
+
 from __future__ import absolute_import
 
 from dbus import Interface
@@ -39,85 +46,21 @@ class IntrospectableObjectMetaclass(type):
         return class_object
 
 
-# acquire the debugging dbus object
-UNITY_BUS_NAME = 'com.canonical.Unity'
-DEBUG_PATH = '/com/canonical/Unity/Debug'
-INTROSPECTION_IFACE = 'com.canonical.Unity.Debug.Introspection'
+INTROSPECTION_IFACE = 'com.canonical.Autopilot.Introspection'
 
 
-_debug_proxy_obj = session_bus.get_object(UNITY_BUS_NAME, DEBUG_PATH)
-_introspection_iface = Interface(_debug_proxy_obj, INTROSPECTION_IFACE)
-
-
-def get_state_by_path(piece='/Unity'):
-    """Returns a full dump of unity's state."""
-    return _introspection_iface.GetState(piece)
-
-
-def get_state_by_name_and_id(class_name, unique_id):
-    """Get a state dictionary from unity given a class name and id.
-
-    raises StateNotFoundError if the state is not found.
-
-    Returns a dictionary of information. Unlike get_state_by_path, this
-    method can never return state for more than one object.
-    """
-    try:
-        query = "//%(class_name)s[id=%(unique_id)d]" % (dict(
-                                                    class_name=class_name,
-                                                    unique_id=unique_id))
-        return get_state_by_path(query)[0]
-    except IndexError:
-        raise StateNotFoundError(class_name, unique_id)
-
-
-def make_introspection_object(dbus_tuple):
-    """Make an introspection object given a DBus tuple of (name, state_dict).
-
-    This only works for classes that derive from UnityIntrospectionObject.
-    """
-    name, state = dbus_tuple
-    try:
-        class_type = _object_registry[name]
-    except KeyError:
-        print name, "is not a valid introspection type!"
-        return None
-    return class_type(state)
-
-
-def start_log_to_file(file_path):
-    """Instruct Unity to start logging to the given file."""
-    _introspection_iface.StartLogToFile(file_path)
-
-
-def reset_logging():
-    """Instruct Unity to stop logging to a file."""
-    _introspection_iface.ResetLogging()
-
-
-def set_log_severity(component, severity):
-    """Instruct Unity to set a log component's severity.
-
-    'component' is the unity logging component name.
-
-    'severity' is the severity name (like 'DEBUG', 'INFO' etc.)
+def get_introspection_iface(service_name, object_path):
+    """Get the autopilot introspection interface for the specified service name
+    and object path.
 
     """
-    _introspection_iface.SetLogSeverity(component, severity)
+    if not isinstance(service_name, basestring):
+        raise TypeError("Service name must be a string.")
+    if not isinstance(object_path, basestring):
+        raise TypeError("Object name must be a string")
 
-
-def log_unity_message(severity, message):
-    """Instruct unity to log a message for us.
-
-    severity: one of ('TRACE', 'DEBUG', 'INFO', 'WARNING', 'ERROR').
-
-    message: The message to log.
-
-    For debugging purposes only! If you want to log a message during an autopilot
-    test, use the python logging framework instead.
-
-    """
-    _introspection_iface.LogMessage(severity, message)
+    _debug_proxy_obj = session_bus.get_object(service_name, object_path)
+    return Interface(_debug_proxy_obj, INTROSPECTION_IFACE)
 
 
 def translate_state_keys(state_dict):
@@ -125,9 +68,33 @@ def translate_state_keys(state_dict):
     return {k.replace('-','_'):v for k,v in state_dict.iteritems() }
 
 
-class UnityIntrospectionObject(object):
-    """A class that can be created using a dictionary of state from Unity."""
+def make_introspection_object(dbus_tuple):
+    """Make an introspection object given a DBus tuple of (name, state_dict).
+
+    This only works for classes that derive from DBusIntrospectionObject.
+    """
+    name, state = dbus_tuple
+    try:
+        class_type = _object_registry[name]
+    except KeyError:
+        logger.error("%s is not a valid introspection type!", name)
+        return None
+    return class_type(state)
+
+
+class DBusIntrospectionObject(object):
+    """A class that can be created using a dictionary of state from DBus.
+
+    To use this class properly you must set the DBUS_SERVICE and DBUS_OBJECT
+    class attributes. THey should be set to the Service name and object path
+    where the autopilot interface is being exposed.
+
+    """
+
     __metaclass__ = IntrospectableObjectMetaclass
+
+    DBUS_SERVICE = None
+    DBUS_OBJECT = None
 
     def __init__(self, state_dict):
         self.__state = {}
@@ -175,10 +142,8 @@ class UnityIntrospectionObject(object):
                 expected_value = Equals(expected_value)
 
             for i in range(10):
-                new_state = translate_state_keys(get_state_by_name_and_id(
-                                                self.parent.__class__.__name__,
-                                                self.parent.id)
-                                                )
+                name, new_state = self.parent.get_new_state()
+                new_state = translate_state_keys(new_state)
                 new_value = new_state[self.name]
                 # Support for testtools.matcher classes:
                 mismatch = expected_value.match(new_value)
@@ -209,32 +174,10 @@ class UnityIntrospectionObject(object):
         attrs = {'wait_for': wait_for, 'parent':self, 'name':name}
         return type(t.__name__, (t,), attrs)(value)
 
-    def _get_child_tuples_by_type(self, desired_type):
-        """Get a list of (name,dict) pairs from children of the specified type.
-
-        desired_type must be a subclass of UnityIntrospectionObject.
-
-        """
-        if not issubclass(desired_type, UnityIntrospectionObject):
-            raise TypeError("%r must be a subclass of %r" % (desired_type,
-                UnityIntrospectionObject))
-
-        children = getattr(self, 'Children', [])
-        results = []
-        # loop through all children, and try find one that matches the type the
-        # user wants.
-        for child_type, child_state in children:
-            try:
-                if issubclass(_object_registry[child_type], desired_type):
-                    results.append((child_type, child_state))
-            except KeyError:
-                pass
-        return results
-
     def get_children_by_type(self, desired_type, **kwargs):
         """Get a list of children of the specified type.
 
-        desired_type must be a subclass of UnityIntrospectionObject.
+        desired_type must be a subclass of DBusIntrospectionObject.
 
         Keyword arguments can be used to restrict returned instances. For example:
 
@@ -244,19 +187,27 @@ class UnityIntrospectionObject(object):
             that is equal to 1.
 
         """
+        #TODO: if kwargs has exactly one item in it we should specify the
+        # restriction in the XPath query, so it gets processed in the Unity C++
+        # code rather than in Python.
         self.refresh_state()
+
+        query = self.get_class_query_string() + "/*"
+        state_dicts = self.get_state_by_path(query)
+        instances = [make_introspection_object(i) for i in state_dicts]
+
         result = []
-        for child in self._get_child_tuples_by_type(desired_type):
-            instance = make_introspection_object(child)
-            filters_passed = True
+        for instance in instances:
+            # Skip items that are not instances of the desired type:
+            if not isinstance(instance, desired_type):
+                continue
+            #skip instances that fail attribute check:
             for attr, val in kwargs.iteritems():
                 if not hasattr(instance, attr) or getattr(instance, attr) != val:
                     # Either attribute is not present, or is present but with
                     # the wrong value - don't add this instance to the results list.
-                    filters_passed = False
-                    break
-            if filters_passed:
-                result.append(instance)
+                    continue
+            result.append(instance)
         return result
 
     def refresh_state(self):
@@ -265,8 +216,7 @@ class UnityIntrospectionObject(object):
         raises StateNotFound if the object in unity has been destroyed.
 
         """
-        # need to get name from class object.
-        new_state = get_state_by_name_and_id(self.__class__.__name__, self.id)
+        name, new_state = self.get_new_state()
         self.set_properties(new_state)
 
     @classmethod
@@ -281,12 +231,12 @@ class UnityIntrospectionObject(object):
 
         """
         cls_name = cls.__name__
-        instances = get_state_by_path("//%s" % (cls_name))
-        return [make_introspection_object((cls_name,i)) for i in instances]
+        instances = cls.get_state_by_path("//%s" % (cls_name))
+        return [make_introspection_object(i) for i in instances]
 
     def __getattr__(self, name):
-        # avoid recursion if for some reason we have no state set (should never)
-        # happen.
+        # avoid recursion if for some reason we have no state set (should never
+        # happen).
         if name == '__state':
             raise AttributeError()
 
@@ -295,3 +245,37 @@ class UnityIntrospectionObject(object):
             return self.__state[name]
         # attribute not found.
         raise AttributeError("Attribute '%s' not found." % (name))
+
+    @classmethod
+    def get_state_by_path(cls, piece):
+        """Get state for a particular piece of the state tree.
+
+        'piece' is an XPath-like query that specifies which bit of the tree you
+        want to look at.
+
+        """
+        if not isinstance(piece, basestring):
+            raise TypeError("XPath query must be a string, not %r", type(piece))
+
+        return get_introspection_iface(
+            cls.DBUS_SERVICE,
+            cls.DBUS_OBJECT
+            ).GetState(piece)
+
+    def get_new_state(self):
+        """Retrieve a new state dictionary for this class instance.
+
+        Note: The state keys in the returned dictionary are not translated.
+
+        """
+        try:
+            return self.get_state_by_path(self.get_class_query_string())[0]
+        except IndexError:
+            raise StateNotFoundError(self.__class__.__name__, self.id)
+
+    def get_class_query_string(self):
+        """Get the XPath query string required to refresh this class's state."""
+        return "//%s[id=%d]" % (self.__class__.__name__, self.id)
+
+
+

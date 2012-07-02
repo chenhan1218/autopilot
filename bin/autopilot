@@ -104,6 +104,10 @@ def parse_arguments():
                             help="Specify test suite(s) to run.")
 
     parser_list = subparsers.add_parser('list', help="List autopilot tests")
+    parser_list.add_argument("-ro", "--run-order", required=False, default=False,
+                            action="store_true",
+                            help="List tests in run order, rather than alphabetical \
+                            order (the default).")
     parser_list.add_argument("suite", nargs="+",
                              help="Specify test suite(s) to run.")
 
@@ -125,14 +129,20 @@ def list_tests(args):
     num_tests = 0
     test_suite = load_test_suite_from_name(args.suite)
 
-    for test in iterate_tests(test_suite):
+    if args.run_order:
+        list_fn = lambda: iterate_tests(test_suite)
+    else:
+        list_fn = lambda: sorted(iterate_tests(test_suite),
+            lambda a, b: cmp(a.id(), b.id()))
+
+    for test in list_fn():
         has_scenarios = hasattr(test, "scenarios")
         if has_scenarios:
             num_tests += len(test.scenarios)
             print " *%d %s" % (len(test.scenarios), test.id())
         else:
             num_tests += 1
-            print test.id()
+            print "   ", test.id()
     print "\n\n %d total tests." % (num_tests)
 
 

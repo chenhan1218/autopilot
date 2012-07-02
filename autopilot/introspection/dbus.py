@@ -244,7 +244,8 @@ class DBusIntrospectionObject(object):
             self.refresh_state()
             return self.__state[name]
         # attribute not found.
-        raise AttributeError("Attribute '%s' not found." % (name))
+        raise AttributeError("Class '%s' has no attribute '%s'." %
+            (self.__class__.__name__, name))
 
     @classmethod
     def get_state_by_path(cls, piece):

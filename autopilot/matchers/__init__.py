@@ -36,7 +36,7 @@ class Eventually(Matcher):
         else:
             wait_fun = getattr(value, 'wait_for', None)
             if wait_fun is None or not callable(wait_fun):
-                raise TypeError("Eventually can only be used against autopilot attributes that have a wait_for function.")
+                raise TypeError("Eventually is only usable with attributes that have a wait_for function or callable objects.")
             wait_fun(self.matcher)
 
     def __str__(self):

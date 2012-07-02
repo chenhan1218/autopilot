@@ -130,12 +130,12 @@ def list_tests(args):
     test_suite = load_test_suite_from_name(args.suite)
 
     if args.run_order:
-        list_fn = lambda: iterate_tests(test_suite)
+        test_list_fn = lambda: iterate_tests(test_suite)
     else:
-        list_fn = lambda: sorted(iterate_tests(test_suite),
+        test_list_fn = lambda: sorted(iterate_tests(test_suite),
             lambda a, b: cmp(a.id(), b.id()))
 
-    for test in list_fn():
+    for test in test_list_fn():
         has_scenarios = hasattr(test, "scenarios")
         if has_scenarios:
             num_tests += len(test.scenarios)

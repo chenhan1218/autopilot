@@ -202,12 +202,15 @@ class DBusIntrospectionObject(object):
             if not isinstance(instance, desired_type):
                 continue
             #skip instances that fail attribute check:
+            passed = True
             for attr, val in kwargs.iteritems():
                 if not hasattr(instance, attr) or getattr(instance, attr) != val:
                     # Either attribute is not present, or is present but with
                     # the wrong value - don't add this instance to the results list.
-                    continue
-            result.append(instance)
+                    passed = False
+                    break
+            if passed:
+                result.append(instance)
         return result
 
     def refresh_state(self):

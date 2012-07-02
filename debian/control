@@ -1,0 +1,22 @@
+Source: autopilot
+Section: python
+Priority: optional
+Maintainer: Didier Roche <didrocks@ubuntu.com>
+Build-Depends: debhelper (>= 9.0.0),
+               python (>= 2.6),
+Standards-Version: 3.9.3
+Homepage: https://launchpad.net/autopilot
+Vcs-bzr: https://code.launchpad.net/~autopilot/autopilot/trunk
+
+Package: python-autopilot
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         ${python:Depends},
+         python-gtk2,
+         python-xlib,
+Description: Utility to write and run integration tests easily
+ The autopilot engine enables to ease the writing of python tests
+ for your application manipulating your inputs like the mouse and
+ keyboard. It also provides a lot of utilities linked to the X server
+ and detecting applications.

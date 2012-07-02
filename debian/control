@@ -16,6 +16,9 @@ Depends: ${shlibs:Depends},
          python-gtk2,
          python-xlib,
          python-testtools,
+         python-junitxml,
+         python-testscenarios,
+         python-pydot,
 Description: Utility to write and run integration tests easily
  The autopilot engine enables to ease the writing of python tests
  for your application manipulating your inputs like the mouse and

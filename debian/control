@@ -9,12 +9,13 @@ Homepage: https://launchpad.net/autopilot
 Vcs-bzr: https://code.launchpad.net/~autopilot/autopilot/trunk
 
 Package: python-autopilot
-Architecture: any
+Architecture: all
 Depends: ${shlibs:Depends},
          ${misc:Depends},
          ${python:Depends},
          python-gtk2,
          python-xlib,
+         python-testtools,
 Description: Utility to write and run integration tests easily
  The autopilot engine enables to ease the writing of python tests
  for your application manipulating your inputs like the mouse and

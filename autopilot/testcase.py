@@ -342,12 +342,48 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     def start_app(self, app_name, files=[], locale=None):
         """Start one of the known apps, and kill it on tear down.
 
+        Note: This method will clear all instances of this application on tearDown,
+        not just the one opened by this method!
+
         If files is specified, start the application with the specified files.
         If locale is specified, the locale will be set when the application is launched.
 
         The method returns the BamfApplication instance.
 
         """
+        window = self._open_window(app_name, files, locale)
+        if window:
+            self.addCleanup(self.close_all_app, app_name)
+            return window.application
+
+        raise AssertionError("No new application window was opened.")
+
+    def start_app_window(self, app_name, files=[], locale=None):
+        """Start one of the known apps, and kill it on tear down.
+
+        If files is specified, start the application with the specified files.
+        If locale is specified, the locale will be set when the application is launched.
+
+        The method returns the BamfWindow instance.
+
+        If no window was opened, or more than one window was opened, this method
+        raises AssertionError.
+
+        """
+        window = self._open_window(app_name, files, locale)
+        if window:
+            self.addCleanup(window.close)
+            return window
+        raise AssertionError("No window was opened.")
+
+    def _open_window(self, app_name, files, locale):
+        """Open a new 'app_name' window, returning the window instance or None.
+
+        Raises an AssertionError if this creates more than one window.
+
+        """
+        existing_windows = self.get_open_windows_by_application(app_name)
+
         if locale:
             os.putenv("LC_ALL", locale)
             self.addCleanup(os.unsetenv, "LC_ALL")
@@ -355,12 +391,29 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         else:
             logger.info("Starting application '%s' with files %r", app_name, files)
 
+
         app = self.KNOWN_APPS[app_name]
         self.bamf.launch_application(app['desktop-file'], files)
         apps = self.bamf.get_running_applications_by_desktop_file(app['desktop-file'])
-        self.addCleanup(self.close_all_app, app_name)
 
-        return apps[0]
+        for i in range(10):
+            new_windows = []
+            [new_windows.extend(a.get_windows()) for a in apps]
+            filter_fn = lambda w: w.x_id not in [c.x_id for c in existing_windows]
+            new_wins = filter(filter_fn, new_windows)
+            if new_wins:
+                assert len(new_wins) == 1
+                return new_wins[0]
+            time.sleep(1)
+        return None
+
+
+
+    def get_open_windows_by_application(self, app_name):
+        """Get a list of BamfWindow instances for the given application name."""
+        existing_windows = []
+        [existing_windows.extend(a.get_windows()) for a in self.get_app_instances(app_name)]
+        return existing_windows
 
     def close_all_app(self, app_name):
         """Close all instances of the app_name."""

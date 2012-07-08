@@ -398,7 +398,7 @@ class BamfWindow(object):
         self._x_win.configure(stack_mode=X.Above)
 
     def __repr__(self):
-        return "<BamfWindow '%s'>" % (self.title if self._x_win else str(self._xid))
+        return "<BamfWindow '%s' Xid: %d>" % (self.title if self._x_win else '', self.x_id)
 
     def _getProperty(self, _type):
         """Get an X11 property.

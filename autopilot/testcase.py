@@ -359,7 +359,8 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         raise AssertionError("No new application window was opened.")
 
     def start_app_window(self, app_name, files=[], locale=None):
-        """Start one of the known apps, and kill it on tear down.
+        """Start a single window for one of the known applications, and close it
+        at the end of the test.
 
         If files is specified, start the application with the specified files.
         If locale is specified, the locale will be set when the application is launched.

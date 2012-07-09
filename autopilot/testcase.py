@@ -481,3 +481,5 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
                 raise ValueError("Object %r's '%s' attribute is a callable. It must be a property."
                     % (object, prop_name))
             self.assertThat(lambda: getattr(object, prop_name), Eventually(Equals(desired_value)))
+
+    assert_properties = assert_property

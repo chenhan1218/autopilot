@@ -464,9 +464,9 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         For example, from within a test, to assert certain properties on a
         BamfWindow instance:
 
-        self.assert_property(my_window, is_maximized=True)
+        self.assertProperty(my_window, is_maximized=True)
 
-        Note that assert_properties is a synonym for this method.
+        Note that assertProperties is a synonym for this method.
 
         """
         if not kwargs:

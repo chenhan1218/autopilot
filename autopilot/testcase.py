@@ -455,7 +455,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             self.addCleanup(os.unsetenv, key)
         os.environ[key] = value
 
-    def assert_property(self, object, **kwargs):
+    def assertProperty(self, object, **kwargs):
         """Assert that 'object' has properties equal to the key/value pairs in kwargs.
 
         This method is intended to be used on objects whose attributes do not have
@@ -482,4 +482,4 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
                     % (object, prop_name))
             self.assertThat(lambda: getattr(object, prop_name), Eventually(Equals(desired_value)))
 
-    assert_properties = assert_property
+    assertProperties = assertProperty

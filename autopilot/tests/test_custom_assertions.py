@@ -29,56 +29,56 @@ class AssertionTests(AutopilotTestCase):
 
     test_object = TestObject()
 
-    def test_assert_property_raises_valueerror_on_empty_test(self):
-        """assert_property must raise ValueError if called without any kwargs."""
+    def test_assertProperty_raises_valueerror_on_empty_test(self):
+        """assertProperty must raise ValueError if called without any kwargs."""
 
-        self.assertThat(lambda: self.assert_property(self.test_object), raises(ValueError))
+        self.assertThat(lambda: self.assertProperty(self.test_object), raises(ValueError))
 
-    def test_assert_property_raises_valueerror_on_callable(self):
-        """assert_property must raise ValueError when called with a callable
+    def test_assertProperty_raises_valueerror_on_callable(self):
+        """assertProperty must raise ValueError when called with a callable
         property name.
 
         """
 
-        self.assertThat(lambda: self.assert_property(self.test_object, test_method=456),
+        self.assertThat(lambda: self.assertProperty(self.test_object, test_method=456),
             raises(ValueError))
 
-    def test_assert_property_raises_assert_with_single_property(self):
-        """assert_property must raise an AssertionError when called with a single
+    def test_assertProperty_raises_assert_with_single_property(self):
+        """assertProperty must raise an AssertionError when called with a single
         property.
 
         """
-        self.assertThat(lambda: self.assert_property(self.test_object, test_property=234),
+        self.assertThat(lambda: self.assertProperty(self.test_object, test_property=234),
             raises(AssertionError))
 
-    def test_assert_property_doesnt_raise(self):
-        """assert_property must not raise an exception if called with correct
+    def test_assertProperty_doesnt_raise(self):
+        """assertProperty must not raise an exception if called with correct
         parameters.
 
         """
 
-        self.assertThat(lambda: self.assert_property(self.test_object, test_property=123),
+        self.assertThat(lambda: self.assertProperty(self.test_object, test_property=123),
             Not(raises(AssertionError)))
 
-    def test_assert_property_doesnt_raise_multiples(self):
-        """assert_property must not raise an exception if called with correct
+    def test_assertProperty_doesnt_raise_multiples(self):
+        """assertProperty must not raise an exception if called with correct
         parameters.
 
         """
 
-        self.assertThat(lambda: self.assert_property(self.test_object, test_property=123, another_property="foobar"),
+        self.assertThat(lambda: self.assertProperty(self.test_object, test_property=123, another_property="foobar"),
             Not(raises(AssertionError)))
 
-    def test_assert_property_raises_assert_with_double_property(self):
-        """assert_property must raise an AssertionError when called with a single
+    def test_assertProperty_raises_assert_with_double_property(self):
+        """assertProperty must raise an AssertionError when called with a single
         property.
 
         """
-        self.assertThat(lambda: self.assert_property(self.test_object, test_property=234, another_property=123),
+        self.assertThat(lambda: self.assertProperty(self.test_object, test_property=234, another_property=123),
             raises(AssertionError))
 
-    def test_assert_properties_works(self):
-        """Asserts that the assert_properties method is a synonym for assert_property."""
-        self.assertThat(callable(self.assert_properties), Equals(True))
-        self.assertThat(lambda: self.assert_properties(self.test_object, test_property=123, another_property="foobar"),
+    def test_assertProperties_works(self):
+        """Asserts that the assert_properties method is a synonym for assertProperty."""
+        self.assertThat(callable(self.assertProperties), Equals(True))
+        self.assertThat(lambda: self.assertProperties(self.test_object, test_property=123, another_property="foobar"),
             Not(raises(AssertionError)))

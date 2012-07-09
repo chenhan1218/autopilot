@@ -40,6 +40,7 @@ from autopilot.globals import (global_context,
     video_record_directory,
     )
 from autopilot.keybindings import KeybindingsHelper
+from autopilot.matchers import Eventually
 
 
 logger = logging.getLogger(__name__)
@@ -453,3 +454,33 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         else:
             self.addCleanup(os.unsetenv, key)
         os.environ[key] = value
+
+    def assertProperty(self, obj, **kwargs):
+        """Assert that 'object' has properties equal to the key/value pairs in kwargs.
+
+        This method is intended to be used on objects whose attributes do not have
+        the wait_for method.
+
+        For example, from within a test, to assert certain properties on a
+        BamfWindow instance:
+
+        self.assertProperty(my_window, is_maximized=True)
+
+        Note that assertProperties is a synonym for this method.
+
+        """
+        if not kwargs:
+            raise ValueError("At least one keyword argument must be present.")
+
+        for prop_name, desired_value in kwargs.iteritems():
+            none_val = object()
+            attr = getattr(obj, prop_name, none_val)
+            if attr == none_val:
+                raise AssertionError("Object %r does not have an attribute named '%s'"
+                    % (obj, prop_name))
+            if callable(attr):
+                raise ValueError("Object %r's '%s' attribute is a callable. It must be a property."
+                    % (obj, prop_name))
+            self.assertThat(lambda: getattr(obj, prop_name), Eventually(Equals(desired_value)))
+
+    assertProperties = assertProperty

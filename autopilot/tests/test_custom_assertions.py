@@ -21,6 +21,8 @@ class TestObject(object):
 
     another_property = "foobar"
 
+    none_prop = None
+
     def test_method(self):
         return 456
 
@@ -78,7 +80,17 @@ class AssertionTests(AutopilotTestCase):
             raises(AssertionError))
 
     def test_assertProperties_works(self):
-        """Asserts that the assert_properties method is a synonym for assertProperty."""
+        """Asserts that the assertProperties method is a synonym for assertProperty."""
         self.assertThat(callable(self.assertProperties), Equals(True))
         self.assertThat(lambda: self.assertProperties(self.test_object, test_property=123, another_property="foobar"),
+            Not(raises(AssertionError)))
+
+    def test_assertProperty_raises_assertionerror_on_no_such_property(self):
+        """AssertProperty must rise an AssertionError if the property is not found."""
+        self.assertThat(lambda: self.assertProperty(self.test_object, foo="bar"),
+            raises(AssertionError))
+
+    def test_assertProperty_works_for_None_properties(self):
+        """Must be able to match properties whose values are None."""
+        self.assertThat(lambda: self.assertProperties(self.test_object, none_prop=None),
             Not(raises(AssertionError)))

@@ -455,7 +455,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             self.addCleanup(os.unsetenv, key)
         os.environ[key] = value
 
-    def assertProperty(self, object, **kwargs):
+    def assertProperty(self, obj, **kwargs):
         """Assert that 'object' has properties equal to the key/value pairs in kwargs.
 
         This method is intended to be used on objects whose attributes do not have
@@ -473,13 +473,14 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             raise ValueError("At least one keyword argument must be present.")
 
         for prop_name, desired_value in kwargs.iteritems():
-            attr = getattr(object, prop_name, None)
-            if not attr:
+            none_val = object()
+            attr = getattr(obj, prop_name, none_val)
+            if attr == none_val:
                 raise AssertionError("Object %r does not have an attribute named '%s'"
-                    % (object, prop_name))
+                    % (obj, prop_name))
             if callable(attr):
                 raise ValueError("Object %r's '%s' attribute is a callable. It must be a property."
-                    % (object, prop_name))
-            self.assertThat(lambda: getattr(object, prop_name), Eventually(Equals(desired_value)))
+                    % (obj, prop_name))
+            self.assertThat(lambda: getattr(obj, prop_name), Eventually(Equals(desired_value)))
 
     assertProperties = assertProperty

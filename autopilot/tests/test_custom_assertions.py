@@ -71,9 +71,9 @@ class AssertionTests(AutopilotTestCase):
         self.assertThat(lambda: self.assertProperty(self.test_object, test_property=123, another_property="foobar"),
             Not(raises(AssertionError)))
 
-    def test_assertProperty_raises_assert_with_double_property(self):
-        """assertProperty must raise an AssertionError when called with a single
-        property.
+    def test_assertProperty_raises_assert_with_double_properties(self):
+        """assertProperty must raise an AssertionError when called with multiple
+        properties.
 
         """
         self.assertThat(lambda: self.assertProperty(self.test_object, test_property=234, another_property=123),

@@ -32,6 +32,7 @@ from testtools.matchers import Equals
 import time
 
 from autopilot.emulators.bamf import Bamf
+from autopilot.emulators.zeitgeist import Zeitgeist
 from autopilot.emulators.processmanager import ProcessManager
 from autopilot.emulators.X11 import ScreenGeometry, Keyboard, Mouse, reset_display
 from autopilot.glibrunner import GlibRunner
@@ -222,6 +223,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         self.bamf = Bamf()
         self.keyboard = Keyboard()
         self.mouse = Mouse()
+        self.zeitgeist = Zeitgeist()
 
         self.screen_geo = ScreenGeometry()
         self.addCleanup(Keyboard.cleanup)

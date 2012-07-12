@@ -13,6 +13,7 @@ Autopilot test case class.
 from __future__ import absolute_import
 
 from compizconfig import Setting, Plugin
+from dbus import DBusException
 import gconf
 import logging
 import os
@@ -401,13 +402,16 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         apps = self.bamf.get_running_applications_by_desktop_file(app['desktop-file'])
 
         for i in range(10):
-            new_windows = []
-            [new_windows.extend(a.get_windows()) for a in apps]
-            filter_fn = lambda w: w.x_id not in [c.x_id for c in existing_windows]
-            new_wins = filter(filter_fn, new_windows)
-            if new_wins:
-                assert len(new_wins) == 1
-                return new_wins[0]
+            try:
+                new_windows = []
+                [new_windows.extend(a.get_windows()) for a in apps]
+                filter_fn = lambda w: w.x_id not in [c.x_id for c in existing_windows]
+                new_wins = filter(filter_fn, new_windows)
+                if new_wins:
+                    assert len(new_wins) == 1
+                    return new_wins[0]
+            except DBusException:
+                pass
             time.sleep(1)
         return None
 

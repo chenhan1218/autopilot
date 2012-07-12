@@ -271,8 +271,13 @@ class Mouse(object):
         sleep(press_duration)
         self.release(button)
 
-    def move(self, x, y, animate=True, rate=100, time_between_events=0.001):
-        '''Moves mouse to location (x, y, pixels_per_event, time_between_event)'''
+    def move(self, x, y, animate=True, rate=10, time_between_events=0.01):
+        """Moves mouse to location (x, y).
+
+        Callers should avoid specifying the rate or time_between_events parameters
+        unless they need a specific rate of movement.
+
+        """
         logger.debug("Moving mouse to position %d,%d %s animation.", x, y,
             "with" if animate else "without")
 
@@ -283,28 +288,28 @@ class Mouse(object):
 
         if not animate:
             perform_move(x, y, False)
+            return
 
         dest_x, dest_y = x, y
         curr_x, curr_y = self.position()
 
-        # calculate a path from our current position to our destination
-        dy = float(curr_y - dest_y)
-        dx = float(curr_x - dest_x)
-        slope = dy / dx if dx > 0 else 0
-        yint = curr_y - (slope * curr_x)
-        xscale = rate if dest_x > curr_x else -rate
+        while curr_x != dest_x or curr_y != dest_y:
+            dx = abs(dest_x - curr_x)
+            dy = abs(dest_y - curr_y)
 
-        while (int(curr_x) != dest_x):
-            target_x = min(curr_x + xscale, dest_x) if dest_x > curr_x else max(curr_x + xscale, dest_x)
-            perform_move(target_x - curr_x, 0, True)
-            curr_x = target_x
+            intx = float(dx) / max(dx, dy)
+            inty = float(dy) / max(dx, dy)
 
-        if (curr_y != dest_y):
-            yscale = rate if dest_y > curr_y else -rate
-            while (curr_y != dest_y):
-                target_y = min(curr_y + yscale, dest_y) if dest_y > curr_y else max(curr_y + yscale, dest_y)
-                perform_move(0, target_y - curr_y, True)
-                curr_y = target_y
+            step_x = min(rate * intx, dx)
+            step_y = min(rate * inty, dy)
+
+            if dest_x < curr_x:
+                step_x *= -1
+            if dest_y < curr_y:
+                step_y *= -1
+
+            perform_move(step_x, step_y, True)
+            curr_x, curr_y = self.position()
 
     def position(self):
         """Returns the current position of the mouse pointer."""

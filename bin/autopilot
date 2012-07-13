@@ -100,6 +100,10 @@ def parse_arguments():
                             default="/tmp/autopilot", type=str,
                             help="Directory to put recorded tests \
                             (only if -r) specified.")
+    parser_run.add_argument('-v', '--verbose', default=False, required=False,
+                            action='store_true',
+                            help="If set, autopilot will output test log data \
+                            to stderr during a test run.")
     parser_run.add_argument("suite", nargs="+",
                             help="Specify test suite(s) to run.")
 
@@ -154,6 +158,8 @@ def run_tests(args):
     if args.record:
         autopilot.globals.video_recording_enabled = True
         autopilot.globals.video_record_directory = args.record_directory
+    if args.verbose:
+        autopilot.globals.log_verbose = True
 
     test_suite = load_test_suite_from_name(args.suite)
 

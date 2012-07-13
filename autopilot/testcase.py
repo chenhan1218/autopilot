@@ -83,6 +83,9 @@ class LoggedTestCase(TestWithScenarios, TestCase):
         # The reason that the super setup is done here is due to making sure
         # that the logging is properly set up prior to calling it.
         super(LoggedTestCase, self).setUp()
+        if log_verbose:
+            logger.info("*" * 60)
+            logger.info("Starting test %s", self.shortDescription())
 
     def _setUpTestLogging(self):
         class MyFormatter(logging.Formatter):

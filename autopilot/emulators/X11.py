@@ -292,6 +292,7 @@ class Mouse(object):
 
         dest_x, dest_y = x, y
         curr_x, curr_y = self.position()
+        valid_coordinate = ScreenGeometry().is_point_on_any_monitor((x,y))
 
         while curr_x != dest_x or curr_y != dest_y:
             dx = abs(dest_x - curr_x)
@@ -309,8 +310,11 @@ class Mouse(object):
                 step_y *= -1
 
             perform_move(step_x, step_y, True)
-            curr_x += step_x
-            curr_y += step_y
+            if valid_coordinate:
+                curr_x, curr_y = self.position()
+            else:
+                curr_x += step_x
+                curr_y += step_y
 
     def position(self):
         """Returns the current position of the mouse pointer."""
@@ -399,6 +403,20 @@ class ScreenGeometry:
         (x, y, w, h) = rect
         (m_x, m_y, m_w, m_h) = self.get_monitor_geometry(monitor_number)
         return (x >= m_x and x + w <= m_x + m_w and y >= m_y and y + h <= m_y + m_h)
+
+    def is_point_on_monitor(self, monitor_number, point):
+        """Returns True if `point` is on the specified monitor.
+
+        point must be an iterable type with two elements: (x, y)
+
+        """
+        x,y = point
+        (m_x, m_y, m_w, m_h) = self.get_monitor_geometry(monitor_number)
+        return (x >= m_x and x < m_x + m_w and y >= m_y and y < m_y + m_h)
+
+    def is_point_on_any_monitor(self, point):
+        """Returns true if `point` is on any currently configured monitor."""
+        return any([self.is_point_on_monitor(m, point) for m in range(self.get_num_monitors())])
 
     def move_mouse_to_monitor(self, monitor_number):
         """Move the mouse to the center of the specified monitor."""

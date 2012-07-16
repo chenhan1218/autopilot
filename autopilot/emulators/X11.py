@@ -292,7 +292,7 @@ class Mouse(object):
 
         dest_x, dest_y = x, y
         curr_x, curr_y = self.position()
-        valid_coordinate = ScreenGeometry().is_point_on_any_monitor((x,y))
+        coordinate_valid = ScreenGeometry().is_point_on_any_monitor((x,y))
 
         while curr_x != dest_x or curr_y != dest_y:
             dx = abs(dest_x - curr_x)
@@ -310,7 +310,7 @@ class Mouse(object):
                 step_y *= -1
 
             perform_move(step_x, step_y, True)
-            if valid_coordinate:
+            if coordinate_valid:
                 curr_x, curr_y = self.position()
             else:
                 curr_x += step_x

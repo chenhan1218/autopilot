@@ -309,7 +309,8 @@ class Mouse(object):
                 step_y *= -1
 
             perform_move(step_x, step_y, True)
-            curr_x, curr_y = self.position()
+            curr_x += step_x
+            curr_y += step_y
 
     def position(self):
         """Returns the current position of the mouse pointer."""

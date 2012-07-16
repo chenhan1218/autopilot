@@ -26,6 +26,7 @@ from subprocess import (
     PIPE,
     STDOUT,
     )
+import sys
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.content import text_content
@@ -38,6 +39,7 @@ from autopilot.emulators.processmanager import ProcessManager
 from autopilot.emulators.X11 import ScreenGeometry, Keyboard, Mouse, reset_display
 from autopilot.glibrunner import GlibRunner
 from autopilot.globals import (global_context,
+    log_verbose,
     video_recording_enabled,
     video_record_directory,
     )
@@ -81,6 +83,9 @@ class LoggedTestCase(TestWithScenarios, TestCase):
         # The reason that the super setup is done here is due to making sure
         # that the logging is properly set up prior to calling it.
         super(LoggedTestCase, self).setUp()
+        if log_verbose:
+            logger.info("*" * 60)
+            logger.info("Starting test %s", self.shortDescription())
 
     def _setUpTestLogging(self):
         class MyFormatter(logging.Formatter):
@@ -101,6 +106,11 @@ class LoggedTestCase(TestWithScenarios, TestCase):
         log_format = "%(asctime)s %(levelname)s %(module)s:%(lineno)d - %(message)s"
         handler.setFormatter(MyFormatter(log_format))
         root_logger.addHandler(handler)
+        if log_verbose:
+            stderr_handler = logging.StreamHandler(stream=sys.stderr)
+            handler.setFormatter(MyFormatter(log_format))
+            root_logger.addHandler(stderr_handler)
+
         #Tear down logging in a cleanUp handler, so it's done after all other
         # tearDown() calls and cleanup handlers.
         self.addCleanup(self._tearDownLogging)

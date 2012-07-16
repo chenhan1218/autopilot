@@ -401,8 +401,8 @@ class ScreenGeometry:
             raise TypeError("rect must be a tuple of 4 int elements.")
 
         (x, y, w, h) = rect
-        (m_x, m_y, m_w, m_h) = self.get_monitor_geometry(monitor_number)
-        return (x >= m_x and x + w <= m_x + m_w and y >= m_y and y + h <= m_y + m_h)
+        (mx, my, mw, mh) = self.get_monitor_geometry(monitor_number)
+        return (x >= mx and x + w <= mx + mw and y >= my and y + h <= my + mh)
 
     def is_point_on_monitor(self, monitor_number, point):
         """Returns True if `point` is on the specified monitor.
@@ -411,8 +411,8 @@ class ScreenGeometry:
 
         """
         x,y = point
-        (m_x, m_y, m_w, m_h) = self.get_monitor_geometry(monitor_number)
-        return (x >= m_x and x < m_x + m_w and y >= m_y and y < m_y + m_h)
+        (mx, my, mw, mh) = self.get_monitor_geometry(monitor_number)
+        return (x >= mx and x < mx + mw and y >= my and y < my + mh)
 
     def is_point_on_any_monitor(self, point):
         """Returns true if `point` is on any currently configured monitor."""
@@ -436,7 +436,7 @@ class ScreenGeometry:
 
         assert(not window.is_maximized)
         (win_x, win_y, win_w, win_h) = window.geometry
-        (m_x, m_y, m_w, m_h) = self.get_monitor_geometry(monitor)
+        (mx, my, mw, mh) = self.get_monitor_geometry(monitor)
 
         logger.debug("Dragging window %r to monitor %d." % (window.x_id, monitor))
 
@@ -449,8 +449,8 @@ class ScreenGeometry:
 
         # We do the movements in two steps, to reduce the risk of being
         # blocked by the pointer barrier
-        target_x = m_x + m_w/2
-        target_y = m_y + m_h/2
+        target_x = mx + mw/2
+        target_y = my + mh/2
         mouse.move(win_x, target_y, rate=20, time_between_events=0.005)
         mouse.move(target_x, target_y, rate=20, time_between_events=0.005)
         mouse.release()

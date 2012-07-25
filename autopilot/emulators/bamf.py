@@ -164,7 +164,8 @@ class Bamf(object):
 
         `files` is a list of files to pass to the application. Not all apps support this.
 
-        If `wait` is True, this method will block until the application has launched.
+        If `wait` is True, this method will wait up to 10 seconds for the
+        application to appear in the bamf model.
 
         Returns the Gobject process object. if wait is True (the default),
         this method will not return until an instance of this application
@@ -175,7 +176,7 @@ class Bamf(object):
         proc = gio.unix.DesktopAppInfo(desktop_file)
         proc.launch_uris(files)
         if wait:
-            self.wait_until_application_is_running(desktop_file, -1)
+            self.wait_until_application_is_running(desktop_file, 10)
         return proc
 
 

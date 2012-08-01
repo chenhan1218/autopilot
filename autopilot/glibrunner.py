@@ -11,19 +11,23 @@ from __future__ import absolute_import
 import sys
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
+import gobject
 import glib
+import gtk
+import gtk.gdk
 import testtools
 import threading
 
 glib.threads_init()
 dbus.mainloop.glib.threads_init()
+gtk.gdk.threads_init()
 
 
 # Turning run_in_glib_loop into a decorator is left as an exercise for the
 # reader.
 def run_in_glib_loop(function, *args, **kwargs):
     # log.info("Running: %r with args: %r and kwargs: %r", function, args, kwargs)
-    loop = glib.MainLoop()
+    loop = gobject.MainLoop()
     # XXX: I think this has re-entrancy problems.  There is parallel code in
     # testtools somewhere (spinner.py or deferredruntest.py)
     result = []
@@ -54,7 +58,10 @@ def run_in_glib_loop(function, *args, **kwargs):
     # is running, so we start the thread from the main loop itself. This waits
     # 10 mS - it could possibly be set to 0.
     glib.timeout_add(10, thread.start)
-    loop.run()
+    # loop.run()
+    gtk.threads_enter()
+    gtk.main()
+    gtk.threads_leave()
 
 
     thread.join()

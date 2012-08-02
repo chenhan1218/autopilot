@@ -234,10 +234,9 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
 
         Raises 'KeyError' if application has been registered already
         """
-        try:
-            cls.KNOWN_APPS[name]
+        if name in cls.KNOWN_APPS:
             raise KeyError("Application has been registered already")
-        except:
+        else:
             cls.KNOWN_APPS[name] = { 
                                      "desktop-file" : desktop_file,
                                      "process-name" : process_name 
@@ -251,9 +250,9 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
 
         Raises 'KeyError' if application has not been registered.
         """
-        try:
+        if name in cls.KNOWN_APPS:
             del cls.KNOWN_APPS[name]
-        except:
+        else:
             raise KeyError("Application has not been registered")
 
     def setUp(self):

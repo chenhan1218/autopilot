@@ -224,6 +224,9 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             },
         }
 
+    def addKnownApp(self,name,desktop_file,process_file):
+        self.KNOWN_APPS[name] = {"desktop-file":desktop_file,"process-file":process_file }
+
     def setUp(self):
         super(AutopilotTestCase, self).setUp()
 

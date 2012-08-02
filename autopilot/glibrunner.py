@@ -8,71 +8,75 @@
 
 from __future__ import absolute_import
 
+import dbus.glib
+
 import sys
-import dbus
-from dbus.mainloop.glib import DBusGMainLoop
-import gobject
+# import dbus
+# from dbus.mainloop.glib import DBusGMainLoop
 import glib
-import gtk
-import gtk.gdk
+# import gtk
+# import gtk.gdk
 import testtools
+import time
 import threading
+try:
+    import faulthandler
+    faulthandler.enable()
+except:
+    pass
 
+# Pokemon functions: gotta call 'em all!
+# If you don't, random glib/gobject/gtk functions will hang...
 glib.threads_init()
-dbus.mainloop.glib.threads_init()
-gtk.gdk.threads_init()
+dbus.glib.threads_init()
+# dbus.mainloop.glib.threads_init()
+# gtk.gdk.threads_init()
+
+class WorkerThread(threading.Thread):
+    def __init__(self, loop, worker):
+        super(WorkerThread, self).__init__()
+        self.loop = loop
+        self.worker = worker
+        self.errors = []
+        self.result = None
+
+    def run(self):
+        try:
+            while self.loop.is_running() is False:
+                # _print("Thread '%i': mainloop not yet running, backing off" % (self.ident, ))
+                time.sleep(0.5)
+                continue
+            # from autopilot.emulators.bamf import Bamf
+            # print Bamf().get_running_applications()
+            self.result = self.worker()
+        except:
+            self.errors.append(sys.exc_info())
+            # XXX: Not sure if this is needed / desired
+            raise
+        finally:
+            # print "Quitting main loop now."
+            glib.idle_add(self.loop.quit)
+            # gtk.mainquit()
+            print "Done"
 
 
-# Turning run_in_glib_loop into a decorator is left as an exercise for the
-# reader.
 def run_in_glib_loop(function, *args, **kwargs):
-    # log.info("Running: %r with args: %r and kwargs: %r", function, args, kwargs)
-    loop = gobject.MainLoop()
-    # XXX: I think this has re-entrancy problems.  There is parallel code in
-    # testtools somewhere (spinner.py or deferredruntest.py)
-    result = []
-    errors = []
+    # set_main_loop()
+    loop = glib.MainLoop()
+    # dbus.set_default_main_loop(dbus_loop)
 
-    # This function is run in a worker thread. The GLib main loop is guaranteed to
-    # be started before this function is run.
-    class ThreadTest(threading.Thread):
-        def __init__(self, loop):
-            super(ThreadTest, self).__init__()
-            self.loop = loop
-
-        def run(self):
-            DBusGMainLoop(set_as_default=True)
-            try:
-                # import pdb; pdb.set_trace()
-                result.append(function(*args, **kwargs))
-            except:
-                errors.append(sys.exc_info())
-                # XXX: Not sure if this is needed / desired
-                raise
-            finally:
-                self.loop.quit()
-
-    thread = ThreadTest(loop)
-    # Calling thread.start directly here creates a possible race condition. We
-    # need to be assured that the glib main loop has started by the time the test
-    # is running, so we start the thread from the main loop itself. This waits
-    # 10 mS - it could possibly be set to 0.
-    glib.timeout_add(10, thread.start)
-    # loop.run()
-    gtk.threads_enter()
-    gtk.main()
-    gtk.threads_leave()
-
-
+    thread = WorkerThread(loop, lambda: function(*args, **kwargs))
+    thread.start()
+    loop.run()
+    print "Loop finished."
     thread.join()
+    # print "Thread joined"
     if thread.is_alive():
         raise RuntimeError("Test %r did not exit after 120 seconds." % function)
 
-    # assert loop.is_running() == False, "Loop should not be running after thread has quit!"
-
-    if errors:
-        raise errors[0]
-    return True
+    if thread.errors:
+        raise thread.errors[0]
+    return thread.result
 
 
 class GlibRunner(testtools.RunTest):

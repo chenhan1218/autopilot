@@ -14,15 +14,12 @@ from __future__ import absolute_import
 # loop *before* it's initialised anywhere else. This module exists so we can
 # initialise the dbus module once, and once only.
 
-import dbus
-import dbus.glib
+# def set_main_loop():
+# import dbus.glib
 from dbus.mainloop.glib import DBusGMainLoop
-import gobject
-
-
 DBusGMainLoop(set_as_default=True)
+
+import dbus
+
+# DBusGMainLoop(set_as_default=True)
 session_bus = dbus.SessionBus()
-
-
-gobject.threads_init()
-dbus.glib.init_threads()

@@ -31,8 +31,12 @@ def get_clipboard_contents():
 
     def get_cb_text(q):
         cb = gtk.Clipboard(selection="CLIPBOARD")
+        # q.put("Copy")
         q.put(cb.wait_for_text())
+        return False
 
     queue = Queue()
-    glib.idle_add(get_cb_text, queue)
-    return queue.get()
+    id = glib.idle_add(get_cb_text, queue)
+    data = queue.get()
+    glib.source_remove(id)
+    return data

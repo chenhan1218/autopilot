@@ -77,8 +77,8 @@ def make_introspection_object(dbus_tuple):
     try:
         class_type = _object_registry[name]
     except KeyError:
-        logger.error("%s is not a valid introspection type!", name)
-        return None
+        logger.warning("Generating introspection instance for type '%s' based on generic class.", name)
+        return type(name, (DBusIntrospectionObject,), {})(state)
     return class_type(state)
 
 

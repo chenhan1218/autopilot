@@ -8,37 +8,60 @@
 
 from __future__ import absolute_import
 
+import dbus.glib
+
 import sys
-from dbus.mainloop.glib import DBusGMainLoop
 import glib
 import testtools
+import time
+import threading
+try:
+    import faulthandler
+    faulthandler.enable()
+except:
+    pass
 
-DBusGMainLoop(set_as_default=True)
+# Pokemon functions: gotta call 'em all!
+# If you don't, random glib/gobject/gtk functions will hang...
+glib.threads_init()
+dbus.glib.threads_init()
 
+class WorkerThread(threading.Thread):
+    def __init__(self, loop, worker):
+        super(WorkerThread, self).__init__()
+        self.loop = loop
+        self.worker = worker
+        self.errors = []
+        self.result = None
 
-# Turning run_in_glib_loop into a decorator is left as an exercise for the
-# reader.
-def run_in_glib_loop(function, *args, **kwargs):
-    loop = glib.MainLoop()
-    # XXX: I think this has re-entrancy problems.  There is parallel code in
-    # testtools somewhere (spinner.py or deferredruntest.py)
-    result = []
-    errors = []
-
-    def callback():
+    def run(self):
         try:
-            result.append(function(*args, **kwargs))
+            while self.loop.is_running() is False:
+                time.sleep(0.5)
+
+            self.result = self.worker()
         except:
-            errors.append(sys.exc_info())
-            # XXX: Not sure if this is needed / desired
-            raise
+            self.errors.append(sys.exc_info())
         finally:
-            loop.quit()
-    glib.idle_add(callback)
-    loop.run()
-    if errors:
-        raise errors[0]
-    return result[0]
+            glib.idle_add(self.loop.quit)
+
+
+def run_in_glib_loop(function, *args, **kwargs):
+    try:
+        loop = glib.MainLoop()
+        thread = WorkerThread(loop, lambda: function(*args, **kwargs))
+        thread.start()
+        loop.run()
+        thread.join(5 * 60)
+    except Exception as e:
+        return e
+
+    if thread.is_alive():
+        raise RuntimeError("Test %r did not exit after 5 minutes." % function)
+
+    if thread.errors:
+        raise thread.errors[0]
+    return thread.result
 
 
 class GlibRunner(testtools.RunTest):

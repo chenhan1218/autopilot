@@ -29,4 +29,5 @@ class QtIntrospectionTestMixin(object):
          Introspection data is retrievable via this object.
 
          """
-         # if not isinstance(application, basestring)
+        if not isinstance(application, basestring):
+            raise TypeError("'application' parameter must be a string.")

@@ -42,21 +42,22 @@ class WorkerThread(threading.Thread):
             self.result = self.worker()
         except:
             self.errors.append(sys.exc_info())
-            # XXX: Not sure if this is needed / desired
-            raise
         finally:
             glib.idle_add(self.loop.quit)
 
 
 def run_in_glib_loop(function, *args, **kwargs):
-    loop = glib.MainLoop()
-    thread = WorkerThread(loop, lambda: function(*args, **kwargs))
-    thread.start()
-    loop.run()
-    thread.join()
+    try:
+        loop = glib.MainLoop()
+        thread = WorkerThread(loop, lambda: function(*args, **kwargs))
+        thread.start()
+        loop.run()
+        thread.join(5 * 60)
+    except Exception as e:
+        return e
 
     if thread.is_alive():
-        raise RuntimeError("Test %r did not exit after 120 seconds." % function)
+        raise RuntimeError("Test %r did not exit after 5 minutes." % function)
 
     if thread.errors:
         raise thread.errors[0]

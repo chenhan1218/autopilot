@@ -29,9 +29,9 @@ def get_clipboard_contents():
 
     """
 
-    def get_cb_text(q):
+    def get_cb_text(queue):
         cb = gtk.Clipboard(selection="CLIPBOARD")
-        q.put(cb.wait_for_text())
+        queue.put(cb.wait_for_text())
         return False
 
     queue = Queue()

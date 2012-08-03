@@ -38,7 +38,7 @@ class WorkerThread(threading.Thread):
         try:
             while self.loop.is_running() is False:
                 time.sleep(0.5)
-                continue
+
             self.result = self.worker()
         except:
             self.errors.append(sys.exc_info())

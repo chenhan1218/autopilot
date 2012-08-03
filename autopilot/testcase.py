@@ -35,7 +35,7 @@ import time
 
 from autopilot.emulators.bamf import Bamf
 from autopilot.emulators.zeitgeist import Zeitgeist
-# from autopilot.emulators.processmanager import ProcessManager
+from autopilot.emulators.processmanager import ProcessManager
 from autopilot.emulators.X11 import ScreenGeometry, Keyboard, Mouse, reset_display
 from autopilot.glibrunner import GlibRunner
 from autopilot.globals import (global_context,
@@ -227,14 +227,14 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     def setUp(self):
         super(AutopilotTestCase, self).setUp()
 
-        # self._process_manager = ProcessManager()
-        # self._process_manager.snapshot_running_apps()
-        # self.addCleanup(self._process_manager.compare_system_with_snapshot)
+        self._process_manager = ProcessManager()
+        self._process_manager.snapshot_running_apps()
+        self.addCleanup(self._process_manager.compare_system_with_snapshot)
 
-        # self.bamf = Bamf()
+        self.bamf = Bamf()
         self.keyboard = Keyboard()
         self.mouse = Mouse()
-        # self.zeitgeist = Zeitgeist()
+        self.zeitgeist = Zeitgeist()
 
         self.screen_geo = ScreenGeometry()
         self.addCleanup(Keyboard.cleanup)

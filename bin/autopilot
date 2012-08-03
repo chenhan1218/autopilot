@@ -9,9 +9,6 @@
 
 from __future__ import absolute_import
 
-import dbus.glib
-dbus.glib.DBusGMainLoop(set_as_default=True)
-
 from datetime import datetime
 from imp import find_module
 import os

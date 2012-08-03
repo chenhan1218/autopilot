@@ -10,7 +10,6 @@
 from __future__ import absolute_import
 
 import dbus
-# import dbus.glib
 import gio
 import glib
 import os
@@ -145,8 +144,8 @@ class Bamf(object):
 
             # ...and one for when the user-defined timeout has been reached:
             def on_timeout_reached():
-                evt.set()
                 found_app[0] = False
+                evt.set()
                 return False
 
             # need a timeout? if so, connect it:

@@ -31,7 +31,6 @@ def get_clipboard_contents():
 
     def get_cb_text(q):
         cb = gtk.Clipboard(selection="CLIPBOARD")
-        # q.put("Copy")
         q.put(cb.wait_for_text())
         return False
 

@@ -195,7 +195,7 @@ class VideoCapturedTestCase(LoggedTestCase):
 class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     """Wrapper around testtools.TestCase that takes care of some cleaning."""
 
-    run_test_with = GlibRunner
+    run_tests_with = GlibRunner
 
     KNOWN_APPS = {
         'Character Map' : {
@@ -208,7 +208,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             },
         'Mahjongg' : {
             'desktop-file': 'gnome-mahjongg.desktop',
-            'process-name': 'mahjongg',
+            'process-name': 'gnome-mahjongg',
             },
         'Remmina' : {
             'desktop-file': 'remmina.desktop',

@@ -9,6 +9,7 @@
 
 from __future__ import absolute_import
 
+from autopilot.vis import vis_main
 from datetime import datetime
 from imp import find_module
 import os
@@ -262,7 +263,8 @@ def main():
     elif args.mode == 'run':
         run_tests(args)
     elif args.mode == 'vis':
-        make_visualisation(args.output)
+        vis_main()
+        # make_visualisation(args.output)
 
 
 if __name__ == "__main__":

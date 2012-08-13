@@ -132,4 +132,5 @@ class ApplicationSupportTests(TestCase):
 class ApplicationLaunchTests(AutopilotTestCase, QtIntrospectionTestMixin):
 
     def test_launch(self):
-        self.launch_test_application("qtcreator")
+        proxy_object = self.launch_test_application("qtcreator")
+        import pdb; pdb.set_trace()

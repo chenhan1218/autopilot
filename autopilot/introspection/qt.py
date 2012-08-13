@@ -43,9 +43,10 @@ class QtIntrospectionTestMixin(object):
             raise TypeError("'application' parameter must be a string.")
 
         if application.endswith('.desktop'):
-            launch_application_from_desktop_file(application, *arguments)
+            proxy = launch_application_from_desktop_file(application, *arguments)
         else:
-            launch_application_from_path(application, *arguments)
+            proxy = launch_application_from_path(application, *arguments)
+        return proxy
 
 
 def launch_application_from_desktop_file(desktop_file, *arguments):
@@ -56,7 +57,7 @@ def launch_application_from_desktop_file(desktop_file, *arguments):
 
     """
     proc = gio.unix.DesktopAppInfo(desktop_file)
-    launch_application_from_path(proc.get_executable())
+    return launch_application_from_path(proc.get_executable())
 
 
 def launch_application_from_path(application_path, *arguments):
@@ -68,101 +69,81 @@ def launch_application_from_path(application_path, *arguments):
 
 
 def launch_autopilot_enabled_process(application, *args):
+    """Launch an autopilot-enabled process and return the proxy object."""
     commandline = [application]
     commandline.extend(args)
-    listener = IndicateListener(10)
-    listener.start_listening()
-    process = subprocess.Popen(commandline)
-    dbus_address = listener.get_found_dbus_address(process.pid)
-    print "DBus address to connect to is:", dbus_address
+    process = subprocess.Popen(commandline,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    return get_autopilot_proxy_object_for_process(process.pid)
 
-    if dbus_address is None:
+
+def get_autopilot_proxy_object_for_process(pid):
+    """return the autopilot proxy object for the given pid.
+
+    Raises RuntimeError if no autopilot interface was found.
+
+    """
+    #
+    # FIXME: Currently the libindicate python bindings provide no way of
+    # getting a server property. Instead, the only thing we can do is to
+    # iterate over every service in the session bus, grab the ones that
+    # match the process id passed to us, and look for the autopilot interface
+    # manually.
+    #
+    # This sucks, and should be changed to something more elegant in the future.
+    from autopilot.emulators.dbus_handler import session_bus
+    import dbus
+
+    bus_object = session_bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
+    bus_iface = dbus.Interface(bus_object, 'org.freedesktop.DBus')
+
+    target_iface_object = None
+    cls_name = "UnknownProxy"
+    cls_state = {}
+
+    logger.info("Looking for autopilot interface for PID %d", pid)
+
+    for i in range(10):
+        names = session_bus.list_names()
+        for name in names:
+            # We only care about anonymous names for now.
+            if not name.startswith(":"):
+                continue
+            try:
+                # Autopilot interface is always registered at "/" - for now.
+                # dbus_object = session_bus.get_object(name, "/")
+                # dbus_iface = dbus.Interface(dbus_object, )
+                name_pid = bus_iface.GetConnectionUnixProcessID(name)
+                if name_pid == pid:
+                    # We've found at least one connection to the session bus from
+                    # this PID. Might not be the one we want however...
+                    dbus_object = session_bus.get_object(name, "/")
+                    dbus_iface = dbus.Interface(dbus_object, 'com.canonical.Autopilot.Introspection')
+                    # THis next line will raise an exception if we have the wrong
+                    # connection:
+                    cls_name, cls_state = dbus_iface.GetState("/")[0]
+                    target_iface_object = dbus_iface
+                    logger.debug("Found interface: %r", target_iface_object)
+                    break
+            except:
+                pass
+        if target_iface_object:
+            break
+        sleep(1)
+
+    if not target_iface_object:
         raise RuntimeError("Could not find autopilot DBus interface on target application")
 
-    cls_name = "UnknownProxy"
-    try:
-        cls_name = open("/proc/%d/cmdline").read().split()[0] + "Proxy"
-    except:
-        pass
-    clsobj = type(cls_name,
+    # create the proxy object:
+    clsobj = type(str(cls_name),
                 (DBusIntrospectionObject,),
-                dict(DBUS_SERVICE=dbus_address[0], DBUS_OBJECT=dbus_address[1]))
-    return clsobj
-
-
-
-class IndicateListener(object):
-
-    def __init__(self, timeout):
-        self.timeout = timeout
-        self.listener = indicate.indicate_listener_ref_default()
-        self.found_servers = []
-
-    def start_listening(self):
-        """Start listening for an autopilot indicator object."""
-        self.listener.connect("server-added", self._on_server_found)
-        # self.listener.connect("indicator-added", self._on_indicator_found)
-
-    def _on_server_found(self, listener, server, server_type, *args):
-        # print server, server_type
-        if server_type == 'autopilot':
-            self.found_servers.append(server)
-
-    def _on_indicator_found(self, *args):
-        print args
-
-    def get_found_dbus_address(self, pid):
-        """Return the found autopilot DBus address.
-
-        Returns a tuple of: (bus_name, object_path, object_interface)
-
-        ...or None if no autopilot interface was found that matches the PID.
-
-        """
-        #
-        # FIXME: Currently the libindicate python bindings provide no way of
-        # getting a server property. Instead, the only thing we can do is to
-        # iterate over every service in the session bus, grab the ones that
-        # match the process id passed to us, and look for the autopilot interface
-        # manually.
-        #
-        # This sucks, and should be changed to something more elegant in the future.
-        from autopilot.emulators.dbus_handler import session_bus
-        import dbus
-
-        bus_object = session_bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
-        bus_iface = dbus.Interface(bus_object, 'org.freedesktop.DBus')
-
-        target_iface_object = None
-        for i in range(self.timeout):
-            names = session_bus.list_names()
-            for name in names:
-                # We only care about anonymous names for now.
-                if not name.startswith(":"):
-                    continue
-                try:
-                    # Autopilot interface is always registered at "/" - for now.
-                    # dbus_object = session_bus.get_object(name, "/")
-                    # dbus_iface = dbus.Interface(dbus_object, )
-                    name_pid = bus_iface.GetConnectionUnixProcessID(name)
-                    if name_pid == pid:
-                        # We've found at least one connection to the session bus from
-                        # this PID. Might not be the one we want however...
-                        dbus_object = session_bus.get_object(name, "/")
-                        dbus_iface = dbus.Interface(dbus_object, 'com.canonical.Autopilot.Introspection')
-                        # THis next line will raise an exception if we have the wrong
-                        # connection:
-                        dbus_iface.GetState("/very/unlikely/to/match/anything")
-                        target_iface_object = dbus_iface
-                        break
-                except:
-                    pass
-            if target_iface_object:
-                return (target_iface_object.bus_name,
-                    target_iface_object.object_path,
-                    target_iface_object.dbus_interface)
-            sleep(1)
-        return None
+                dict(
+                    DBUS_SERVICE=target_iface_object.bus_name,
+                    DBUS_OBJECT=target_iface_object.object_path
+                    ))
+    return clsobj(cls_state)
 
 
 

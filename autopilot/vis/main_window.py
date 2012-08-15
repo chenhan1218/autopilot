@@ -8,34 +8,67 @@ from autopilot.introspection.dbus import (
     )
 
 
-class MainWindow(QtGui.QMainWindow):
+class DbusConnectionDetails(object):
+    def __init__(self, name, service_str='', object_str=''):
+        self.name = name
+        self.service_str = service_str
+        self.object_str = object_str
+        # Should this perhaps be a property
+        self.dbus_object = self.generate_dbus_object()
 
+    def generate_dbus_object(self):
+        if self.service_str == '' or self.object_str == '':
+            return None
+        else:
+            return type(self.name,
+                        (DBusIntrospectionObject,),
+                        dict(DBUS_SERVICE=self.service_str,
+                             DBUS_OBJECT=self.object_str))
+
+
+class MainWindow(QtGui.QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.initUI()
 
     def initUI(self):
+        header_titles = QtCore.QStringList(["Name", "Value"])
+
         self.splitter = QtGui.QSplitter(self)
         self.treeview = QtGui.QTreeView(self.splitter)
         self.table_view = QtGui.QTableWidget(self.splitter)
         self.table_view.setColumnCount(2)
         self.table_view.setAlternatingRowColors(True)
-        header_titles = QtCore.QStringList(["Name", "Value"])
         self.table_view.setHorizontalHeaderLabels(header_titles)
         self.table_view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.splitter.setStretchFactor(0, 0)
         self.splitter.setStretchFactor(1, 100)
         self.setCentralWidget(self.splitter)
-        unity_object = type("Unity",
-                            (DBusIntrospectionObject,),
-                            dict(DBUS_SERVICE="com.canonical.Unity",
-                                 DBUS_OBJECT="/com/canonical/Unity/Debug"))
-        name, state = unity_object.get_state_by_path('/')[0]
-        unity_root = unity_object(state)
 
-        self.tree_model = VisTreeModel(unity_root)
-        self.treeview.setModel(self.tree_model)
         self.treeview.clicked.connect(self.tree_item_clicked)
+
+        self.connection_list = QtGui.QComboBox()
+        self.connection_list.currentIndexChanged.connect(self.conn_list_changed)
+        blank_selector = DbusConnectionDetails("Select an Application")
+        # Will programatically create a list of these
+        unity_selector = DbusConnectionDetails("Unity",
+                                               "com.canonical.Unity",
+                                               "/com/canonical/Unity/Debug")
+        self.connection_list.addItem(blank_selector.name,
+                                     QtCore.QVariant(blank_selector))
+        self.connection_list.addItem(unity_selector.name,
+                                     QtCore.QVariant(unity_selector))
+
+        self.toolbar = self.addToolBar('Connection')
+        self.toolbar.addWidget(self.connection_list)
+
+    def conn_list_changed(self, index):
+        dbus_obj = self.connection_list.itemData(index).toPyObject().dbus_object
+        if dbus_obj:
+            name, state = dbus_obj.get_state_by_path('/')[0]
+            dbus_obj_root = dbus_obj(state)
+            self.tree_model = VisTreeModel(dbus_obj_root)
+            self.treeview.setModel(self.tree_model)
 
     def tree_item_clicked(self, model_index):
         object_details = model_index.internalPointer().dbus_object._DBusIntrospectionObject__state
@@ -106,13 +139,11 @@ def generate_tree(root_object):
     return node
 
 class VisTreeModel(QtCore.QAbstractItemModel):
-
     def __init__(self, introspectable_obj):
         super(VisTreeModel, self).__init__()
+        self.introspectable_obj = None
         self.introspectable_obj = introspectable_obj
-        print "Generating tree"
         self.tree_root = generate_tree(self.introspectable_obj)
-        print "Done"
 
     def index(self, row, col, parent):
         if not self.hasIndex(row, col, parent):

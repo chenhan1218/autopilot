@@ -66,9 +66,6 @@ class ApplicationProxyObect(DBusIntrospectionObject):
         return filter(lambda i: object_passes_filters(i, **kwargs), instances)
 
 
-
-
-
 class QtIntrospectionTestMixin(object):
      """A mix-in class to make Qt/Gtk application introspection easier."""
 
@@ -192,8 +189,3 @@ def get_autopilot_proxy_object_for_process(pid):
                     DBUS_OBJECT=target_iface_object.object_path
                     ))
     return clsobj(cls_state)
-
-
-
-
-

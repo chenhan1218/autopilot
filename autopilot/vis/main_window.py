@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-import sys
 from PyQt4 import QtGui, QtCore
 from autopilot.introspection.dbus import (
     DBusIntrospectionObject,
@@ -9,6 +8,10 @@ from autopilot.introspection.dbus import (
 
 
 class DbusConnectionDetails(object):
+    """Encapsulate displaying details of and creating instances of
+    DBusIntrospectionObject.
+
+    """
     def __init__(self, name, service_str='', object_str=''):
         self.name = name
         self.service_str = service_str
@@ -35,17 +38,18 @@ class MainWindow(QtGui.QMainWindow):
         header_titles = QtCore.QStringList(["Name", "Value"])
 
         self.splitter = QtGui.QSplitter(self)
-        self.treeview = QtGui.QTreeView(self.splitter)
+        self.tree_view = QtGui.QTreeView(self.splitter)
+        self.tree_view.clicked.connect(self.tree_item_clicked)
+
         self.table_view = QtGui.QTableWidget(self.splitter)
         self.table_view.setColumnCount(2)
         self.table_view.setAlternatingRowColors(True)
         self.table_view.setHorizontalHeaderLabels(header_titles)
         self.table_view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+
         self.splitter.setStretchFactor(0, 0)
         self.splitter.setStretchFactor(1, 100)
         self.setCentralWidget(self.splitter)
-
-        self.treeview.clicked.connect(self.tree_item_clicked)
 
         self.connection_list = QtGui.QComboBox()
         self.connection_list.currentIndexChanged.connect(self.conn_list_changed)
@@ -68,14 +72,15 @@ class MainWindow(QtGui.QMainWindow):
             name, state = dbus_obj.get_state_by_path('/')[0]
             dbus_obj_root = dbus_obj(state)
             self.tree_model = VisTreeModel(dbus_obj_root)
-            self.treeview.setModel(self.tree_model)
+            self.tree_view.setModel(self.tree_model)
 
     def tree_item_clicked(self, model_index):
         object_details = model_index.internalPointer().dbus_object._DBusIntrospectionObject__state
         self.table_view.setSortingEnabled(False)
         self.table_view.clearContents()
 
-        object_details = dict(filter(lambda i: i[0] != "Children", object_details.iteritems()))
+        object_details = dict(filter(lambda i: i[0] != "Children",
+                                     object_details.iteritems()))
         self.table_view.setRowCount(len(object_details))
         for i, key in enumerate(object_details):
             if key == "Children":
@@ -104,7 +109,7 @@ def dbus_string_rep(dbus_type):
         or isinstance(dbus_type, dbus.UInt16)
         or isinstance(dbus_type, dbus.Int32)
         or isinstance(dbus_type, dbus.UInt32)
-        or isinstance(dbus_type,dbus.Int64)
+        or isinstance(dbus_type, dbus.Int64)
         or isinstance(dbus_type, dbus.UInt64)):
         return repr(int(dbus_type))
     if isinstance(dbus_type, dbus.Double):
@@ -114,11 +119,19 @@ def dbus_string_rep(dbus_type):
     else:
         return repr(dbus_type)
 
+
 class TreeNode(object):
+    """Used to represent the tree data structure that is the backend of the
+    treeview.
+
+    Lazy loads a nodes children instead of waiting to load and store a static
+    snapshot of the apps whole state.
+
+    """
     def __init__(self, parent=None, name='', dbus_object=None):
-        self.parent=parent
-        self.name=name
-        self.dbus_object=dbus_object
+        self.parent = parent
+        self.name = name
+        self.dbus_object = dbus_object
         self._children = []
 
     @property
@@ -133,17 +146,11 @@ class TreeNode(object):
         return self._children
 
 
-def generate_tree(root_object):
-    name = root_object.__class__.__name__
-    node = TreeNode(name=name, dbus_object=root_object)
-    return node
-
 class VisTreeModel(QtCore.QAbstractItemModel):
     def __init__(self, introspectable_obj):
         super(VisTreeModel, self).__init__()
-        self.introspectable_obj = None
-        self.introspectable_obj = introspectable_obj
-        self.tree_root = generate_tree(self.introspectable_obj)
+        name = introspectable_obj.__class__.__name__
+        self.tree_root = TreeNode(name=name, dbus_object=introspectable_obj)
 
     def index(self, row, col, parent):
         if not self.hasIndex(row, col, parent):

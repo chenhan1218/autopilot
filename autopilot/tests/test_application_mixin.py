@@ -31,6 +31,9 @@ class ApplicationSupportTests(TestCase):
         self.assertThat(lambda: mixin.launch_test_application(True), raises(TypeError))
         self.assertThat(lambda: mixin.launch_test_application(1.0), raises(TypeError))
         self.assertThat(lambda: mixin.launch_test_application(object()), raises(TypeError))
+        self.assertThat(lambda: mixin.launch_test_application(None), raises(TypeError))
+        self.assertThat(lambda: mixin.launch_test_application([]), raises(TypeError))
+        self.assertThat(lambda: mixin.launch_test_application((None,)), raises(TypeError))
 
     @patch('autopilot.introspection.qt.launch_application_from_desktop_file')
     def test_launch_can_classify_absolute_desktop_file(self, mock):

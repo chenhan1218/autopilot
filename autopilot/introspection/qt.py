@@ -67,7 +67,7 @@ class ApplicationProxyObect(DBusIntrospectionObject):
 
 
 class QtIntrospectionTestMixin(object):
-     """A mix-in class to make Qt/Gtk application introspection easier."""
+     """A mix-in class to make Qt application introspection easier."""
 
      def launch_test_application(self, application, *arguments):
         """Launch 'application' and retrieve a proxy object for the application.

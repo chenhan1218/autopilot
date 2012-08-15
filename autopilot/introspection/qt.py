@@ -13,15 +13,61 @@
 __all__ = 'QtIntrospectionTetMixin'
 
 import gio
-import indicate
-# from Queue import Queue
 import logging
 import subprocess
 from time import sleep
 
-from autopilot.introspection.dbus import DBusIntrospectionObject
+from autopilot.introspection.dbus import (
+    DBusIntrospectionObject,
+    object_passes_filters,
+    )
 
 logger = logging.getLogger(__name__)
+
+
+class ApplicationProxyObect(DBusIntrospectionObject):
+    """A class that better supports query data from an application."""
+
+    def select_single(self, type_name, **kwargs):
+        """Get a single node from the introspection tree, with type equal to 'type_name'
+        and (optionally) matching the keyword filters present in kwargs. For example:
+
+        >>> app.select_single('QPushButton', objectName='clickme')
+        ... returns a QPushButton whose 'objectName' property is 'clickme'.
+
+        If the query returns more than one item, a ValueError will be raised. If
+        you want more than one item, use select_many instead.
+
+        If nothing is returned from the query, this method returns None.
+
+        """
+        instances = self.select_many(type_name, **kwargs)
+        if len(instances) > 1:
+            raise ValueError("More than one item was returned for query")
+        if not instances:
+            return None
+        return instances[0]
+
+    def select_many(self, type_name, **kwargs):
+        """Get a list of nodes from the introspection tree, with type equal to
+        'type_name' and (optionally) matching the keyword filters present in
+        kwargs. For example:
+
+        >>> app.select_many('QPushButton', enabled=True)
+        ... returns a list of QPushButtons that are enabled.
+
+        If you only want to get one item, use select_single instead.
+
+        """
+
+        path = "//%s" % type_name
+        state_dicts = self.get_state_by_path(path)
+        instances = [self.make_introspection_object(i) for i in state_dicts]
+        return filter(lambda i: object_passes_filters(i, **kwargs), instances)
+
+
+
+
 
 class QtIntrospectionTestMixin(object):
      """A mix-in class to make Qt/Gtk application introspection easier."""
@@ -43,9 +89,11 @@ class QtIntrospectionTestMixin(object):
             raise TypeError("'application' parameter must be a string.")
 
         if application.endswith('.desktop'):
-            proxy = launch_application_from_desktop_file(application, *arguments)
+            proxy, pid = launch_application_from_desktop_file(application, *arguments)
         else:
-            proxy = launch_application_from_path(application, *arguments)
+            proxy, pid = launch_application_from_path(application, *arguments)
+
+        self.addCleanup(lambda: subprocess.call(["kill", "%d" % pid]))
         return proxy
 
 
@@ -76,7 +124,7 @@ def launch_autopilot_enabled_process(application, *args):
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
-    return get_autopilot_proxy_object_for_process(process.pid)
+    return get_autopilot_proxy_object_for_process(process.pid), process.pid
 
 
 def get_autopilot_proxy_object_for_process(pid):
@@ -119,7 +167,7 @@ def get_autopilot_proxy_object_for_process(pid):
                 if name_pid == pid:
                     # We've found at least one connection to the session bus from
                     # this PID. Might not be the one we want however...
-                    dbus_object = session_bus.get_object(name, "/")
+                    dbus_object = session_bus.get_object(name, "/com/canonical/Autopilot/Introspection")
                     dbus_iface = dbus.Interface(dbus_object, 'com.canonical.Autopilot.Introspection')
                     # THis next line will raise an exception if we have the wrong
                     # connection:
@@ -138,7 +186,7 @@ def get_autopilot_proxy_object_for_process(pid):
 
     # create the proxy object:
     clsobj = type(str(cls_name),
-                (DBusIntrospectionObject,),
+                (ApplicationProxyObect,),
                 dict(
                     DBUS_SERVICE=target_iface_object.bus_name,
                     DBUS_OBJECT=target_iface_object.object_path

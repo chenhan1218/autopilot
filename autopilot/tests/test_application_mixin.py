@@ -128,10 +128,3 @@ class ApplicationSupportTests(TestCase):
 
         mock.assert_called_once_with(relative_path, "-some", "arguments")
 
-
-class ApplicationLaunchTests(AutopilotTestCase, QtIntrospectionTestMixin):
-
-    def test_launch(self):
-        proxy_object = self.launch_test_application("qtcreator")
-        menus = proxy_object.get_children_by_type('QMenu')
-        import pdb; pdb.set_trace()

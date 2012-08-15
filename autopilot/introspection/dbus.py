@@ -68,6 +68,16 @@ def translate_state_keys(state_dict):
     return {k.replace('-','_'):v for k,v in state_dict.iteritems() }
 
 
+def object_passes_filters(instance, **kwargs):
+    """Return true if 'instance' satisifies all the filters present in kwargs."""
+    for attr, val in kwargs.iteritems():
+        if not hasattr(instance, attr) or getattr(instance, attr) != val:
+            # Either attribute is not present, or is present but with
+            # the wrong value - don't add this instance to the results list.
+            return False
+    return True
+
+
 class DBusIntrospectionObject(object):
     """A class that can be created using a dictionary of state from DBus.
 
@@ -186,15 +196,9 @@ class DBusIntrospectionObject(object):
                     continue
             elif not isinstance(instance, desired_type):
                 continue
+
             #skip instances that fail attribute check:
-            passed = True
-            for attr, val in kwargs.iteritems():
-                if not hasattr(instance, attr) or getattr(instance, attr) != val:
-                    # Either attribute is not present, or is present but with
-                    # the wrong value - don't add this instance to the results list.
-                    passed = False
-                    break
-            if passed:
+            if object_passes_filters(instance, **kwargs):
                 result.append(instance)
         return result
 

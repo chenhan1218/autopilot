@@ -316,6 +316,51 @@ class Mouse(object):
                 curr_x += step_x
                 curr_y += step_y
 
+    def move_to_object(self, object_proxy):
+        """Attempts to move the mouse to 'object_proxy's centre point.
+
+        It does this by looking for several attributes, in order. The first
+        attribute found will be used. The attributes used are (in order):
+
+         * globalRect (x,y,w,h)
+         * center_x, center_y
+         * x, y
+
+        If none of these attributes are found, or if an attribute is of an incorrect
+        type, a ValueError is raised.
+
+        """
+        try:
+            x,y,w,h = object_proxy.globalRect
+            logger.debug("Moving to object's globalRect coordinates.")
+            self.move(x+w/2, y+h/2)
+            return
+        except AttributeError:
+            pass
+        except (TypeError, ValueError):
+            raise ValueError("Object '%r' has globalRect attribute, but it is not of the correct type" % object_proxy)
+
+        try:
+            x,y = object_proxy.center_x, object_proxy.center_y
+            logger.debug("Moving to object's center_x, center_y coordinates.")
+            self.move(x,y)
+            return
+        except AttributeError:
+            pass
+        except (TypeError, ValueError):
+            raise ValueError("Object '%r' has center_x, center_y attributes, but they are not of the correct type" % object_proxy)
+
+        try:
+            x,y = object_proxy.x, object_proxy.y
+            logger.debug("Moving to object's x, y coordinates.")
+            self.move(x,y)
+            return
+        except AttributeError:
+            raise ValueError("Object '%r' does not have any recognised position attributes" % object_proxy)
+        except (TypeError, ValueError):
+            raise ValueError("Object '%r' has x,y attribute, but they are not of the correct type" % object_proxy)
+
+
     def position(self):
         """Returns the current position of the mouse pointer."""
         coord = _DISPLAY.screen().root.query_pointer()._data

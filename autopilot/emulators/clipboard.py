@@ -12,9 +12,6 @@
 
 """A collection of functions relating to the X11clipboards."""
 
-
-import glib
-from Queue import Queue
 import gtk
 
 
@@ -24,18 +21,6 @@ def get_clipboard_contents():
     This function returns the text copied to the 'CLIPBOARD' clipboard. Text can
     be added to this clipbaord using Ctrl+C.
 
-    You *must* use this function rather than using the Gtk Clipboard class, since
-    the Clipboard class cannot be used from a separate thread.
-
     """
-
-    def get_cb_text(queue):
-        cb = gtk.Clipboard(selection="CLIPBOARD")
-        queue.put(cb.wait_for_text())
-        return False
-
-    queue = Queue()
-    id = glib.idle_add(get_cb_text, queue)
-    data = queue.get()
-    glib.source_remove(id)
-    return data
+    cb = gtk.Clipboard(selection="CLIPBOARD")
+    return cb.wait_for_text()

@@ -10,12 +10,12 @@
 from __future__ import absolute_import
 
 import dbus
+import dbus.glib
 import gio
-import glib
+import gobject
 import os
 from Xlib import display, X, protocol
 from gtk import gdk
-from threading import Event
 
 from autopilot.emulators.dbus_handler import session_bus
 
@@ -133,27 +133,29 @@ class Bamf(object):
         # maybe the app is running already?
         if len(self.get_running_applications_by_desktop_file(desktop_file)) == 0:
             wait_forever = timeout < 0
-            evt = Event()
+            gobject_loop = gobject.MainLoop()
 
             # No, so define a callback to watch the ViewOpened signal:
             def on_view_added(bamf_path, name):
                 if bamf_path.split('/')[-1].startswith('application'):
                     app = BamfApplication(bamf_path)
                     if desktop_file == os.path.split(app.desktop_file)[1]:
-                        evt.set()
+                        gobject_loop.quit()
 
             # ...and one for when the user-defined timeout has been reached:
             def on_timeout_reached():
+                gobject_loop.quit()
                 found_app[0] = False
-                evt.set()
                 return False
 
             # need a timeout? if so, connect it:
             if not wait_forever:
-                glib.timeout_add(timeout * 1000, on_timeout_reached)
+                gobject.timeout_add(timeout * 1000, on_timeout_reached)
             # connect signal handler:
             session_bus.add_signal_receiver(on_view_added, 'ViewOpened')
-            evt.wait()
+            # pump the gobject main loop until either the correct signal is emitted, or the
+            # timeout happens.
+            gobject_loop.run()
 
         return found_app[0]
 

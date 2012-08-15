@@ -33,12 +33,12 @@ class MainWindow(QtGui.QMainWindow):
         name, state = unity_object.get_state_by_path('/')[0]
         unity_root = unity_object(state)
 
-        self.model = VisTreeModel(unity_root)
-        self.treeview.setModel(self.model)
+        self.tree_model = VisTreeModel(unity_root)
+        self.treeview.setModel(self.tree_model)
         self.treeview.clicked.connect(self.tree_item_clicked)
 
     def tree_item_clicked(self, model_index):
-        object_details = model_index.internalPointer().data._DBusIntrospectionObject__state
+        object_details = model_index.internalPointer().dbus_object._DBusIntrospectionObject__state
         self.table_view.setSortingEnabled(False)
         self.table_view.clearContents()
 
@@ -48,7 +48,7 @@ class MainWindow(QtGui.QMainWindow):
             if key == "Children":
                 continue
             if key == "id":
-                details_string = str(model_index.internalPointer().data.id)
+                details_string = str(model_index.internalPointer().dbus_object.id)
             else:
                 details_string = dbus_string_rep(object_details[key])
             item_name = QtGui.QTableWidgetItem(key)
@@ -82,30 +82,28 @@ def dbus_string_rep(dbus_type):
         return repr(dbus_type)
 
 class TreeNode(object):
-    pass
+    def __init__(self, parent=None, name='', dbus_object=None):
+        self.parent=parent
+        self.name=name
+        self.dbus_object=dbus_object
+        self._children = []
+
+    @property
+    def children(self):
+        if not self._children:
+            try:
+                for child in self.dbus_object.get_children():
+                    name = child.__class__.__name__
+                    self._children.append(TreeNode(self, name, child))
+            except StateNotFoundError:
+                pass
+        return self._children
+
 
 def generate_tree(root_object):
-    node = TreeNode()
-    node.children = []
-    node.data = root_object
-    node.name = root_object.__class__.__name__
-    for child in root_object.get_children():
-        make_tree_node(node, child)
+    name = root_object.__class__.__name__
+    node = TreeNode(name=name, dbus_object=root_object)
     return node
-
-def make_tree_node(parent_node, obj):
-    node = TreeNode()
-    node.name = obj.__class__.__name__
-    node.parent = parent_node
-    node.children = []
-    node.data = obj
-    node.parent.children.append(node)
-    try:
-        for child in obj.get_children():
-            make_tree_node(node, child)
-    except StateNotFoundError:
-        pass
-
 
 class VisTreeModel(QtCore.QAbstractItemModel):
 

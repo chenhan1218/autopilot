@@ -324,7 +324,7 @@ class Mouse(object):
 
          * globalRect (x,y,w,h)
          * center_x, center_y
-         * x, y
+         * x, y, w, h
 
         If none of these attributes are found, or if an attribute is of an incorrect
         type, a ValueError is raised.
@@ -352,7 +352,7 @@ class Mouse(object):
 
         try:
             x,y,w,h = object_proxy.x, object_proxy.y, object_proxy.w, object_proxy.h
-            logger.debug("Moving to object's x, y coordinates.")
+            logger.debug("Moving to object's center point calculated from x,y,w,h attributes.")
             self.move(x+w/2,y+h/2)
             return
         except AttributeError:

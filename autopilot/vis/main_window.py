@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from collections import defaultdict
 from PyQt4 import QtGui, QtCore
 from autopilot.introspection.dbus import (
     DBusIntrospectionObject,
@@ -30,8 +31,11 @@ class DbusConnectionDetails(object):
 
 
 class MainWindow(QtGui.QMainWindow):
+    AP_DBUS_IFACE_STR = "com.canonical.Autopilot.Introspection"
+
     def __init__(self):
         super(MainWindow, self).__init__()
+        self.selectable_interfaces = {}
         self.initUI()
 
     def initUI(self):
@@ -52,23 +56,39 @@ class MainWindow(QtGui.QMainWindow):
         self.setCentralWidget(self.splitter)
 
         self.connection_list = QtGui.QComboBox()
-        self.connection_list.currentIndexChanged.connect(self.conn_list_changed)
-        blank_selector = DbusConnectionDetails("Select an Application")
-        # Will programatically create a list of these
-        unity_selector = DbusConnectionDetails("Unity",
-                                               "com.canonical.Unity",
-                                               "/com/canonical/Unity/Debug")
-        self.connection_list.addItem(blank_selector.name,
-                                     QtCore.QVariant(blank_selector))
-        self.connection_list.addItem(unity_selector.name,
-                                     QtCore.QVariant(unity_selector))
+        self.connection_list.activated.connect(self.conn_list_activated)
 
         self.toolbar = self.addToolBar('Connection')
         self.toolbar.addWidget(self.connection_list)
 
-    def conn_list_changed(self, index):
-        dbus_obj = self.connection_list.itemData(index).toPyObject().dbus_object
-        if dbus_obj:
+    def on_interface_found(self, conn, obj, iface):
+        if iface == self.AP_DBUS_IFACE_STR:
+            #print "Updating interface list: %s, %s, %s" % (conn, obj, iface)
+            self.selectable_interfaces[conn] = (obj, conn)
+            self.update_selectable_interfaces()
+
+    def update_selectable_interfaces(self):
+        selected_text = self.connection_list.currentText()
+        self.connection_list.clear()
+        self.connection_list.addItem("Please select a connection",
+                                     QtCore.QVariant(None))
+        for name, details in self.selectable_interfaces.iteritems():
+            self.connection_list.addItem(name, QtCore.QVariant(details))
+
+        prev_selected = self.connection_list.findText(selected_text,
+                                                      QtCore.Qt.MatchExactly)
+        if prev_selected == -1:
+            prev_selected = 0
+        self.connection_list.setCurrentIndex(prev_selected)
+
+    def conn_list_activated(self, index):
+        """itemData will return a tuple with (obj, iface) details pair."""
+        dbus_details = self.connection_list.itemData(index).toPyObject()
+        if dbus_details:
+            dbus_obj = type("Unity",
+                            (DBusIntrospectionObject,),
+                            dict(DBUS_SERVICE=str(dbus_details[1]),
+                                 DBUS_OBJECT=str(dbus_details[0])))
             name, state = dbus_obj.get_state_by_path('/')[0]
             dbus_obj_root = dbus_obj(state)
             self.tree_model = VisTreeModel(dbus_obj_root)

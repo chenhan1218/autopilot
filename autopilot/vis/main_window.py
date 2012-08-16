@@ -41,12 +41,15 @@ class MainWindow(QtGui.QMainWindow):
     def initUI(self):
         header_titles = QtCore.QStringList(["Name", "Value"])
 
+        self.statusBar().showMessage('Waiting for first valid dbus connection')
+
         self.splitter = QtGui.QSplitter(self)
         self.tree_view = QtGui.QTreeView(self.splitter)
         self.tree_view.clicked.connect(self.tree_item_clicked)
 
         self.table_view = QtGui.QTableWidget(self.splitter)
         self.table_view.setColumnCount(2)
+        self.table_view.verticalHeader().setVisible(False)
         self.table_view.setAlternatingRowColors(True)
         self.table_view.setHorizontalHeaderLabels(header_titles)
         self.table_view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
@@ -56,6 +59,7 @@ class MainWindow(QtGui.QMainWindow):
         self.setCentralWidget(self.splitter)
 
         self.connection_list = QtGui.QComboBox()
+        self.connection_list.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
         self.connection_list.activated.connect(self.conn_list_activated)
 
         self.toolbar = self.addToolBar('Connection')
@@ -63,6 +67,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def on_interface_found(self, conn, obj, iface):
         if iface == self.AP_DBUS_IFACE_STR:
+            self.statusBar().showMessage('Updating connection list')
             #print "Updating interface list: %s, %s, %s" % (conn, obj, iface)
             self.selectable_interfaces[conn] = (obj, conn)
             self.update_selectable_interfaces()
@@ -80,6 +85,8 @@ class MainWindow(QtGui.QMainWindow):
         if prev_selected == -1:
             prev_selected = 0
         self.connection_list.setCurrentIndex(prev_selected)
+
+        self.statusBar().clearMessage()
 
     def conn_list_activated(self, index):
         """itemData will return a tuple with (obj, iface) details pair."""

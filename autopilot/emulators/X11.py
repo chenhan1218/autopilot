@@ -351,9 +351,9 @@ class Mouse(object):
             raise ValueError("Object '%r' has center_x, center_y attributes, but they are not of the correct type" % object_proxy)
 
         try:
-            x,y = object_proxy.x, object_proxy.y
+            x,y,w,h = object_proxy.x, object_proxy.y, object_proxy.w, object_proxy.h
             logger.debug("Moving to object's x, y coordinates.")
-            self.move(x,y)
+            self.move(x+w/2,y+h/2)
             return
         except AttributeError:
             raise ValueError("Object '%r' does not have any recognised position attributes" % object_proxy)

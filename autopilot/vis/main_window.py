@@ -8,28 +8,6 @@ from autopilot.introspection.dbus import (
     )
 
 
-class DbusConnectionDetails(object):
-    """Encapsulate displaying details of and creating instances of
-    DBusIntrospectionObject.
-
-    """
-    def __init__(self, name, service_str='', object_str=''):
-        self.name = name
-        self.service_str = service_str
-        self.object_str = object_str
-        # Should this perhaps be a property
-        self.dbus_object = self.generate_dbus_object()
-
-    def generate_dbus_object(self):
-        if self.service_str == '' or self.object_str == '':
-            return None
-        else:
-            return type(self.name,
-                        (DBusIntrospectionObject,),
-                        dict(DBUS_SERVICE=self.service_str,
-                             DBUS_OBJECT=self.object_str))
-
-
 class MainWindow(QtGui.QMainWindow):
     AP_DBUS_IFACE_STR = "com.canonical.Autopilot.Introspection"
 

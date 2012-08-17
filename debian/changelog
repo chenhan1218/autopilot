@@ -1,5 +1,5 @@
-autopilot (0.1) UNRELEASED; urgency=low
+autopilot (0.1) quantal; urgency=low
 
   * Initial Release.
 
- -- Didier Roche <didrocks@ubuntu.com>  Mon, 02 Jul 2012 09:35:57 +0200
+ -- Didier Roche <didrocks@ubuntu.com>  Fri, 17 Aug 2012 10:03:58 +0200

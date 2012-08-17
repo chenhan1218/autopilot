@@ -120,10 +120,6 @@ def parse_arguments():
                                       help="Create introspection visualisation.\
                                       Opens visualisation in xdot when not\
                                       passed an output path to write file to.")
-    parser_vis.add_argument('-o', "--output", required=False,
-                            help="File to write visualisation to.\
-                            (Instead of opening in xdot automatically)")
-
     args = parser.parse_args()
 
     return args
@@ -231,31 +227,6 @@ def load_test_suite_from_name(test_names):
     return TestSuite(selected_tests.values())
 
 
-def make_visualisation(output=None):
-    from autopilot.introspection.vis import get_vis_graph
-    graph = get_vis_graph()
-    if output:
-        from os.path import splitext
-        print "Writing file: %s" % output
-        base, extension = splitext(output)
-        write_method_name = 'write_' + extension[1:]
-        write_fn = getattr(graph, write_method_name, None)
-        if write_fn:
-            write_fn(output)
-        else:
-            print "Error: unsupported format: '%s'" % (extension)
-    else:
-        tf = NamedTemporaryFile(suffix='.png', delete=False)
-        print "Creating visualisation . . ."
-        tf.write(graph.create_dot())
-        tf.close()
-        try:
-            call(["xdot", tf.name])
-        except OSError as e:
-            print "Error: you need to have xdot installed to view the visualisation (%s)" % e
-        remove(tf.name)
-
-
 def main():
     args = parse_arguments()
     if args.mode == 'list':
@@ -272,7 +243,6 @@ def main():
         #
         putenv('LIBOVERLAY_SCROLLBAR', '0')
         vis_main()
-        # make_visualisation(args.output)
 
 
 if __name__ == "__main__":

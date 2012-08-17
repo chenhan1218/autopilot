@@ -16,7 +16,7 @@ Depends: ${shlibs:Depends},
          python-compizconfig,
          python-dbus,
          python-gconf,
-         python-gobject
+         python-gobject,
          python-gtk2,
          python-ibus,
          python-junitxml,

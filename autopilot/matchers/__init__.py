@@ -10,7 +10,8 @@
 
 from __future__ import absolute_import
 
-from testtools.matchers import Matcher
+from functools import partial
+from testtools.matchers import Matcher, Mismatch
 from time import sleep
 
 
@@ -32,12 +33,17 @@ class Eventually(Matcher):
 
     def match(self, value):
         if callable(value):
-            _callable_wait_for(value, self.matcher)
+            wait_fun = partial(_callable_wait_for, value)
         else:
             wait_fun = getattr(value, 'wait_for', None)
             if wait_fun is None or not callable(wait_fun):
-                raise TypeError("Eventually can only be used against autopilot attributes that have a wait_for function.")
+                raise TypeError("Eventually is only usable with attributes that have a wait_for function or callable objects.")
+
+        try:
             wait_fun(self.matcher)
+        except AssertionError as e:
+            return Mismatch(str(e))
+        return None
 
     def __str__(self):
         return "Eventually " + str(self.matcher)

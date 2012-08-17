@@ -68,18 +68,14 @@ def translate_state_keys(state_dict):
     return {k.replace('-','_'):v for k,v in state_dict.iteritems() }
 
 
-def make_introspection_object(dbus_tuple):
-    """Make an introspection object given a DBus tuple of (name, state_dict).
-
-    This only works for classes that derive from DBusIntrospectionObject.
-    """
-    name, state = dbus_tuple
-    try:
-        class_type = _object_registry[name]
-    except KeyError:
-        logger.error("%s is not a valid introspection type!", name)
-        return None
-    return class_type(state)
+def object_passes_filters(instance, **kwargs):
+    """Return true if 'instance' satisifies all the filters present in kwargs."""
+    for attr, val in kwargs.iteritems():
+        if not hasattr(instance, attr) or getattr(instance, attr) != val:
+            # Either attribute is not present, or is present but with
+            # the wrong value - don't add this instance to the results list.
+            return False
+    return True
 
 
 class DBusIntrospectionObject(object):
@@ -190,25 +186,30 @@ class DBusIntrospectionObject(object):
         #TODO: if kwargs has exactly one item in it we should specify the
         # restriction in the XPath query, so it gets processed in the Unity C++
         # code rather than in Python.
-        self.refresh_state()
-
-        query = self.get_class_query_string() + "/*"
-        state_dicts = self.get_state_by_path(query)
-        instances = [make_introspection_object(i) for i in state_dicts]
+        instances = self.get_children()
 
         result = []
         for instance in instances:
             # Skip items that are not instances of the desired type:
-            if not isinstance(instance, desired_type):
-                continue
-            #skip instances that fail attribute check:
-            for attr, val in kwargs.iteritems():
-                if not hasattr(instance, attr) or getattr(instance, attr) != val:
-                    # Either attribute is not present, or is present but with
-                    # the wrong value - don't add this instance to the results list.
+            if isinstance(desired_type, basestring):
+                if instance.__class__.__name__ != desired_type:
                     continue
-            result.append(instance)
+            elif not isinstance(instance, desired_type):
+                continue
+
+            #skip instances that fail attribute check:
+            if object_passes_filters(instance, **kwargs):
+                result.append(instance)
         return result
+
+    def get_children(self):
+        """Returns a list of all child objects."""
+        self.refresh_state()
+
+        query = self.get_class_query_string() + "/*"
+        state_dicts = self.get_state_by_path(query)
+        children = [self.make_introspection_object(i) for i in state_dicts]
+        return children
 
     def refresh_state(self):
         """Refreshes the object's state from unity.
@@ -232,7 +233,7 @@ class DBusIntrospectionObject(object):
         """
         cls_name = cls.__name__
         instances = cls.get_state_by_path("//%s" % (cls_name))
-        return [make_introspection_object(i) for i in instances]
+        return [cls.make_introspection_object(i) for i in instances]
 
     def __getattr__(self, name):
         # avoid recursion if for some reason we have no state set (should never
@@ -244,7 +245,8 @@ class DBusIntrospectionObject(object):
             self.refresh_state()
             return self.__state[name]
         # attribute not found.
-        raise AttributeError("Attribute '%s' not found." % (name))
+        raise AttributeError("Class '%s' has no attribute '%s'." %
+            (self.__class__.__name__, name))
 
     @classmethod
     def get_state_by_path(cls, piece):
@@ -276,6 +278,20 @@ class DBusIntrospectionObject(object):
     def get_class_query_string(self):
         """Get the XPath query string required to refresh this class's state."""
         return "//%s[id=%d]" % (self.__class__.__name__, self.id)
+
+    @classmethod
+    def make_introspection_object(cls, dbus_tuple):
+        """Make an introspection object given a DBus tuple of (name, state_dict).
+
+        This only works for classes that derive from DBusIntrospectionObject.
+        """
+        name, state = dbus_tuple
+        try:
+            class_type = _object_registry[name]
+        except KeyError:
+            logger.warning("Generating introspection instance for type '%s' based on generic class.", name)
+            return type(str(name), (cls,), {})(state)
+        return class_type(state)
 
 
 

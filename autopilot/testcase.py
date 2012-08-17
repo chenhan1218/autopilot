@@ -13,6 +13,7 @@ Autopilot test case class.
 from __future__ import absolute_import
 
 from compizconfig import Setting, Plugin
+from dbus import DBusException
 import gconf
 import logging
 import os
@@ -25,6 +26,7 @@ from subprocess import (
     PIPE,
     STDOUT,
     )
+import sys
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.content import text_content
@@ -32,14 +34,17 @@ from testtools.matchers import Equals
 import time
 
 from autopilot.emulators.bamf import Bamf
+from autopilot.emulators.zeitgeist import Zeitgeist
 from autopilot.emulators.processmanager import ProcessManager
 from autopilot.emulators.X11 import ScreenGeometry, Keyboard, Mouse, reset_display
 from autopilot.glibrunner import GlibRunner
 from autopilot.globals import (global_context,
+    log_verbose,
     video_recording_enabled,
     video_record_directory,
     )
 from autopilot.keybindings import KeybindingsHelper
+from autopilot.matchers import Eventually
 
 
 logger = logging.getLogger(__name__)
@@ -78,6 +83,9 @@ class LoggedTestCase(TestWithScenarios, TestCase):
         # The reason that the super setup is done here is due to making sure
         # that the logging is properly set up prior to calling it.
         super(LoggedTestCase, self).setUp()
+        if log_verbose:
+            logger.info("*" * 60)
+            logger.info("Starting test %s", self.shortDescription())
 
     def _setUpTestLogging(self):
         class MyFormatter(logging.Formatter):
@@ -98,6 +106,11 @@ class LoggedTestCase(TestWithScenarios, TestCase):
         log_format = "%(asctime)s %(levelname)s %(module)s:%(lineno)d - %(message)s"
         handler.setFormatter(MyFormatter(log_format))
         root_logger.addHandler(handler)
+        if log_verbose:
+            stderr_handler = logging.StreamHandler(stream=sys.stderr)
+            handler.setFormatter(MyFormatter(log_format))
+            root_logger.addHandler(stderr_handler)
+
         #Tear down logging in a cleanUp handler, so it's done after all other
         # tearDown() calls and cleanup handlers.
         self.addCleanup(self._tearDownLogging)
@@ -182,7 +195,7 @@ class VideoCapturedTestCase(LoggedTestCase):
 class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     """Wrapper around testtools.TestCase that takes care of some cleaning."""
 
-    run_test_with = GlibRunner
+    run_tests_with = GlibRunner
 
     KNOWN_APPS = {
         'Character Map' : {
@@ -194,8 +207,8 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             'process-name': 'gcalctool',
             },
         'Mahjongg' : {
-            'desktop-file': 'mahjongg.desktop',
-            'process-name': 'mahjongg',
+            'desktop-file': 'gnome-mahjongg.desktop',
+            'process-name': 'gnome-mahjongg',
             },
         'Remmina' : {
             'desktop-file': 'remmina.desktop',
@@ -221,6 +234,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         self.bamf = Bamf()
         self.keyboard = Keyboard()
         self.mouse = Mouse()
+        self.zeitgeist = Zeitgeist()
 
         self.screen_geo = ScreenGeometry()
         self.addCleanup(Keyboard.cleanup)
@@ -342,12 +356,49 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     def start_app(self, app_name, files=[], locale=None):
         """Start one of the known apps, and kill it on tear down.
 
+        Note: This method will clear all instances of this application on tearDown,
+        not just the one opened by this method!
+
         If files is specified, start the application with the specified files.
         If locale is specified, the locale will be set when the application is launched.
 
         The method returns the BamfApplication instance.
 
         """
+        window = self._open_window(app_name, files, locale)
+        if window:
+            self.addCleanup(self.close_all_app, app_name)
+            return window.application
+
+        raise AssertionError("No new application window was opened.")
+
+    def start_app_window(self, app_name, files=[], locale=None):
+        """Start a single window for one of the known applications, and close it
+        at the end of the test.
+
+        If files is specified, start the application with the specified files.
+        If locale is specified, the locale will be set when the application is launched.
+
+        The method returns the BamfWindow instance.
+
+        If no window was opened, or more than one window was opened, this method
+        raises AssertionError.
+
+        """
+        window = self._open_window(app_name, files, locale)
+        if window:
+            self.addCleanup(window.close)
+            return window
+        raise AssertionError("No window was opened.")
+
+    def _open_window(self, app_name, files, locale):
+        """Open a new 'app_name' window, returning the window instance or None.
+
+        Raises an AssertionError if this creates more than one window.
+
+        """
+        existing_windows = self.get_open_windows_by_application(app_name)
+
         if locale:
             os.putenv("LC_ALL", locale)
             self.addCleanup(os.unsetenv, "LC_ALL")
@@ -355,12 +406,32 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         else:
             logger.info("Starting application '%s' with files %r", app_name, files)
 
+
         app = self.KNOWN_APPS[app_name]
         self.bamf.launch_application(app['desktop-file'], files)
         apps = self.bamf.get_running_applications_by_desktop_file(app['desktop-file'])
-        self.addCleanup(self.close_all_app, app_name)
 
-        return apps[0]
+        for i in range(10):
+            try:
+                new_windows = []
+                [new_windows.extend(a.get_windows()) for a in apps]
+                filter_fn = lambda w: w.x_id not in [c.x_id for c in existing_windows]
+                new_wins = filter(filter_fn, new_windows)
+                if new_wins:
+                    assert len(new_wins) == 1
+                    return new_wins[0]
+            except DBusException:
+                pass
+            time.sleep(1)
+        return None
+
+
+
+    def get_open_windows_by_application(self, app_name):
+        """Get a list of BamfWindow instances for the given application name."""
+        existing_windows = []
+        [existing_windows.extend(a.get_windows()) for a in self.get_app_instances(app_name)]
+        return existing_windows
 
     def close_all_app(self, app_name):
         """Close all instances of the app_name."""
@@ -399,3 +470,33 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         else:
             self.addCleanup(os.unsetenv, key)
         os.environ[key] = value
+
+    def assertProperty(self, obj, **kwargs):
+        """Assert that 'object' has properties equal to the key/value pairs in kwargs.
+
+        This method is intended to be used on objects whose attributes do not have
+        the wait_for method.
+
+        For example, from within a test, to assert certain properties on a
+        BamfWindow instance:
+
+        self.assertProperty(my_window, is_maximized=True)
+
+        Note that assertProperties is a synonym for this method.
+
+        """
+        if not kwargs:
+            raise ValueError("At least one keyword argument must be present.")
+
+        for prop_name, desired_value in kwargs.iteritems():
+            none_val = object()
+            attr = getattr(obj, prop_name, none_val)
+            if attr == none_val:
+                raise AssertionError("Object %r does not have an attribute named '%s'"
+                    % (obj, prop_name))
+            if callable(attr):
+                raise ValueError("Object %r's '%s' attribute is a callable. It must be a property."
+                    % (obj, prop_name))
+            self.assertThat(lambda: getattr(obj, prop_name), Eventually(Equals(desired_value)))
+
+    assertProperties = assertProperty

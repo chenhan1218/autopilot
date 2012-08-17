@@ -17,3 +17,6 @@ video_recording_enabled = False
 
 # this is where videos will be put after being encoded.
 video_record_directory = "/tmp/autopilot"
+
+# if set to true, autopilot will output all pythong logging to stderr
+log_verbose = False

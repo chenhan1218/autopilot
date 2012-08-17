@@ -271,8 +271,13 @@ class Mouse(object):
         sleep(press_duration)
         self.release(button)
 
-    def move(self, x, y, animate=True, rate=100, time_between_events=0.001):
-        '''Moves mouse to location (x, y, pixels_per_event, time_between_event)'''
+    def move(self, x, y, animate=True, rate=10, time_between_events=0.01):
+        """Moves mouse to location (x, y).
+
+        Callers should avoid specifying the rate or time_between_events parameters
+        unless they need a specific rate of movement.
+
+        """
         logger.debug("Moving mouse to position %d,%d %s animation.", x, y,
             "with" if animate else "without")
 
@@ -283,28 +288,78 @@ class Mouse(object):
 
         if not animate:
             perform_move(x, y, False)
+            return
 
         dest_x, dest_y = x, y
         curr_x, curr_y = self.position()
+        coordinate_valid = ScreenGeometry().is_point_on_any_monitor((x,y))
 
-        # calculate a path from our current position to our destination
-        dy = float(curr_y - dest_y)
-        dx = float(curr_x - dest_x)
-        slope = dy / dx if dx > 0 else 0
-        yint = curr_y - (slope * curr_x)
-        xscale = rate if dest_x > curr_x else -rate
+        while curr_x != dest_x or curr_y != dest_y:
+            dx = abs(dest_x - curr_x)
+            dy = abs(dest_y - curr_y)
 
-        while (int(curr_x) != dest_x):
-            target_x = min(curr_x + xscale, dest_x) if dest_x > curr_x else max(curr_x + xscale, dest_x)
-            perform_move(target_x - curr_x, 0, True)
-            curr_x = target_x
+            intx = float(dx) / max(dx, dy)
+            inty = float(dy) / max(dx, dy)
 
-        if (curr_y != dest_y):
-            yscale = rate if dest_y > curr_y else -rate
-            while (curr_y != dest_y):
-                target_y = min(curr_y + yscale, dest_y) if dest_y > curr_y else max(curr_y + yscale, dest_y)
-                perform_move(0, target_y - curr_y, True)
-                curr_y = target_y
+            step_x = min(rate * intx, dx)
+            step_y = min(rate * inty, dy)
+
+            if dest_x < curr_x:
+                step_x *= -1
+            if dest_y < curr_y:
+                step_y *= -1
+
+            perform_move(step_x, step_y, True)
+            if coordinate_valid:
+                curr_x, curr_y = self.position()
+            else:
+                curr_x += step_x
+                curr_y += step_y
+
+    def move_to_object(self, object_proxy):
+        """Attempts to move the mouse to 'object_proxy's centre point.
+
+        It does this by looking for several attributes, in order. The first
+        attribute found will be used. The attributes used are (in order):
+
+         * globalRect (x,y,w,h)
+         * center_x, center_y
+         * x, y, w, h
+
+        If none of these attributes are found, or if an attribute is of an incorrect
+        type, a ValueError is raised.
+
+        """
+        try:
+            x,y,w,h = object_proxy.globalRect
+            logger.debug("Moving to object's globalRect coordinates.")
+            self.move(x+w/2, y+h/2)
+            return
+        except AttributeError:
+            pass
+        except (TypeError, ValueError):
+            raise ValueError("Object '%r' has globalRect attribute, but it is not of the correct type" % object_proxy)
+
+        try:
+            x,y = object_proxy.center_x, object_proxy.center_y
+            logger.debug("Moving to object's center_x, center_y coordinates.")
+            self.move(x,y)
+            return
+        except AttributeError:
+            pass
+        except (TypeError, ValueError):
+            raise ValueError("Object '%r' has center_x, center_y attributes, but they are not of the correct type" % object_proxy)
+
+        try:
+            x,y,w,h = object_proxy.x, object_proxy.y, object_proxy.w, object_proxy.h
+            logger.debug("Moving to object's center point calculated from x,y,w,h attributes.")
+            self.move(x+w/2,y+h/2)
+            return
+        except AttributeError:
+            raise ValueError("Object '%r' does not have any recognised position attributes" % object_proxy)
+        except (TypeError, ValueError):
+            raise ValueError("Object '%r' has x,y attribute, but they are not of the correct type" % object_proxy)
+
 
     def position(self):
         """Returns the current position of the mouse pointer."""
@@ -391,8 +446,22 @@ class ScreenGeometry:
             raise TypeError("rect must be a tuple of 4 int elements.")
 
         (x, y, w, h) = rect
-        (m_x, m_y, m_w, m_h) = self.get_monitor_geometry(monitor_number)
-        return (x >= m_x and x + w <= m_x + m_w and y >= m_y and y + h <= m_y + m_h)
+        (mx, my, mw, mh) = self.get_monitor_geometry(monitor_number)
+        return (x >= mx and x + w <= mx + mw and y >= my and y + h <= my + mh)
+
+    def is_point_on_monitor(self, monitor_number, point):
+        """Returns True if `point` is on the specified monitor.
+
+        point must be an iterable type with two elements: (x, y)
+
+        """
+        x,y = point
+        (mx, my, mw, mh) = self.get_monitor_geometry(monitor_number)
+        return (x >= mx and x < mx + mw and y >= my and y < my + mh)
+
+    def is_point_on_any_monitor(self, point):
+        """Returns true if `point` is on any currently configured monitor."""
+        return any([self.is_point_on_monitor(m, point) for m in range(self.get_num_monitors())])
 
     def move_mouse_to_monitor(self, monitor_number):
         """Move the mouse to the center of the specified monitor."""
@@ -412,7 +481,7 @@ class ScreenGeometry:
 
         assert(not window.is_maximized)
         (win_x, win_y, win_w, win_h) = window.geometry
-        (m_x, m_y, m_w, m_h) = self.get_monitor_geometry(monitor)
+        (mx, my, mw, mh) = self.get_monitor_geometry(monitor)
 
         logger.debug("Dragging window %r to monitor %d." % (window.x_id, monitor))
 
@@ -425,8 +494,8 @@ class ScreenGeometry:
 
         # We do the movements in two steps, to reduce the risk of being
         # blocked by the pointer barrier
-        target_x = m_x + m_w/2
-        target_y = m_y + m_h/2
+        target_x = mx + mw/2
+        target_y = my + mh/2
         mouse.move(win_x, target_y, rate=20, time_between_events=0.005)
         mouse.move(target_x, target_y, rate=20, time_between_events=0.005)
         mouse.release()

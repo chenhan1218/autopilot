@@ -79,6 +79,7 @@ _keys = {
     "lens_reveal/apps": "Super+a",
     "lens_reveal/files": "Super+f",
     "lens_reveal/music": "Super+m",
+    "lens_reveal/video": "Super+v",
     # Hud:
     "hud/reveal": ("unityshell", "show_hud"),
     # Switcher:

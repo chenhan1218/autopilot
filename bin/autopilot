@@ -14,7 +14,7 @@ from datetime import datetime
 from imp import find_module
 import os
 import os.path
-from os import remove
+from os import remove, putenv
 from platform import node
 from subprocess import call
 import sys
@@ -263,6 +263,14 @@ def main():
     elif args.mode == 'run':
         run_tests(args)
     elif args.mode == 'vis':
+        # XXX - in quantal, overlay scrollbars make this process consume 100% of
+        # the CPU. It's a known bug:
+        #
+        # https://bugs.launchpad.net/ubuntu/quantal/+source/qt4-x11/+bug/1005677
+        #
+        # Once that's been fixed we can remove the following line:
+        #
+        putenv('LIBOVERLAY_SCROLLBAR', '0')
         vis_main()
         # make_visualisation(args.output)
 

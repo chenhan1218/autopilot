@@ -1,9 +1,10 @@
-import sys
 import dbus
 from dbus.mainloop.qt import DBusQtMainLoop
+from PyQt4 import QtGui
+import sys
+
 from autopilot.vis.bus_enumerator import BusEnumerator
 from autopilot.vis.main_window import MainWindow
-from PyQt4 import QtGui
 
 def vis_main():
     app = QtGui.QApplication(sys.argv)

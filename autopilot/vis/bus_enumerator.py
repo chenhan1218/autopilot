@@ -1,16 +1,15 @@
-from xml.etree import ElementTree
-from os.path import join
 from collections import defaultdict
-
 import dbus
 from dbus.mainloop.qt import DBusQtMainLoop
-
+from os.path import join
 from PyQt4.QtCore import (
-    QObject,
     pyqtSignal,
     QCoreApplication,
     qDebug,
+    QObject,
     )
+from xml.etree import ElementTree
+
 
 class BusEnumerator(QObject):
     """A simple utility class to support enumeration of all DBus connections,

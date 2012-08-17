@@ -6,13 +6,12 @@ from PyQt4 import QtGui, QtCore
 from autopilot.emulators.dbus_handler import session_bus
 from autopilot.introspection.dbus import (
     DBusIntrospectionObject,
-    StateNotFoundError,
+    INTROSPECTION_IFACE,
+    StateNotFoundError
     )
 
 
 class MainWindow(QtGui.QMainWindow):
-    AP_DBUS_IFACE_STR = "com.canonical.Autopilot.Introspection"
-
     def __init__(self):
         super(MainWindow, self).__init__()
         self.selectable_interfaces = {}
@@ -46,22 +45,24 @@ class MainWindow(QtGui.QMainWindow):
         self.toolbar.addWidget(self.connection_list)
 
     def on_interface_found(self, conn, obj, iface):
-        if iface == self.AP_DBUS_IFACE_STR:
+        if iface == INTROSPECTION_IFACE:
             self.statusBar().showMessage('Updating connection list')
-            # print "Updating interface list: %s, %s, %s" % (conn, obj, iface)
-            dbus_object = session_bus.get_object(str(conn), str(obj))
-            dbus_iface = dbus.Interface(dbus_object,
-                                        'com.canonical.Autopilot.Introspection')
-            cls_name, cls_state = dbus_iface.GetState("/")[0]
-            cls_name = str(cls_name)
-            if not self.selectable_interfaces.has_key(cls_name):
-                dbus_obj = type(cls_name,
-                                (DBusIntrospectionObject,),
-                                dict(DBUS_SERVICE=str(conn),
-                                     DBUS_OBJECT=str(obj)))
-                dbus_obj = dbus_obj(cls_state)
-                self.selectable_interfaces[cls_name] = dbus_obj
-                self.update_selectable_interfaces()
+            try:
+                dbus_object = session_bus.get_object(str(conn), str(obj))
+                dbus_iface = dbus.Interface(dbus_object,
+                                            'com.canonical.Autopilot.Introspection')
+                cls_name, cls_state = dbus_iface.GetState("/")[0]
+                cls_name = str(cls_name)
+                if not self.selectable_interfaces.has_key(cls_name):
+                    dbus_obj = type(cls_name,
+                                    (DBusIntrospectionObject,),
+                                    dict(DBUS_SERVICE=str(conn),
+                                         DBUS_OBJECT=str(obj)))
+                    dbus_obj = dbus_obj(cls_state)
+                    self.selectable_interfaces[cls_name] = dbus_obj
+                    self.update_selectable_interfaces()
+            except dbus.DBusException:
+                pass
             self.statusBar().clearMessage()
 
     def update_selectable_interfaces(self):
@@ -79,7 +80,6 @@ class MainWindow(QtGui.QMainWindow):
         self.connection_list.setCurrentIndex(prev_selected)
 
     def conn_list_activated(self, index):
-        """itemData will return a tuple with (obj, iface) details pair."""
         dbus_details = self.connection_list.itemData(index).toPyObject()
         if dbus_details:
             self.tree_model = VisTreeModel(dbus_details)
@@ -90,12 +90,9 @@ class MainWindow(QtGui.QMainWindow):
         self.table_view.setSortingEnabled(False)
         self.table_view.clearContents()
 
-        object_details = dict(filter(lambda i: i[0] != "Children",
-                                     object_details.iteritems()))
+        object_details.pop("Children", None)
         self.table_view.setRowCount(len(object_details))
         for i, key in enumerate(object_details):
-            if key == "Children":
-                continue
             if key == "id":
                 details_string = str(model_index.internalPointer().dbus_object.id)
             else:
@@ -111,7 +108,6 @@ class MainWindow(QtGui.QMainWindow):
 
 def dbus_string_rep(dbus_type):
     """Get a string representation of various dbus types."""
-    import dbus
     if isinstance(dbus_type, dbus.Boolean):
         return repr(bool(dbus_type))
     if isinstance(dbus_type, dbus.String):
@@ -125,7 +121,8 @@ def dbus_string_rep(dbus_type):
         return repr(int(dbus_type))
     if isinstance(dbus_type, dbus.Double):
         return repr(float(dbus_type))
-    if isinstance(dbus_type, dbus.Array):
+    if (isinstance(dbus_type, dbus.Array)
+        or isinstance(dbus_type, dbus.Struct)):
         return ', '.join([dbus_string_rep(i) for i in dbus_type])
     else:
         return repr(dbus_type)
@@ -175,7 +172,7 @@ class VisTreeModel(QtCore.QAbstractItemModel):
         try:
             childItem = parentItem.children[row]
             return self.createIndex(row, col, childItem)
-        except:
+        except IndexError:
             return QtCore.QModelIndex()
 
     def parent(self, index):

@@ -62,6 +62,7 @@ class MainWindow(QtGui.QMainWindow):
                 dbus_obj = dbus_obj(cls_state)
                 self.selectable_interfaces[cls_name] = dbus_obj
                 self.update_selectable_interfaces()
+            self.statusBar().clearMessage()
 
     def update_selectable_interfaces(self):
         selected_text = self.connection_list.currentText()
@@ -76,8 +77,6 @@ class MainWindow(QtGui.QMainWindow):
         if prev_selected == -1:
             prev_selected = 0
         self.connection_list.setCurrentIndex(prev_selected)
-
-        self.statusBar().clearMessage()
 
     def conn_list_activated(self, index):
         """itemData will return a tuple with (obj, iface) details pair."""

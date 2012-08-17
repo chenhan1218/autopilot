@@ -222,6 +222,10 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             'desktop-file': 'gedit.desktop',
             'process-name': 'gedit',
             },
+        'Terminal' : {
+            'desktop-file': 'gnome-terminal.desktop',
+            'process-name': 'gnome-terminal',
+            },
         }
 
     def setUp(self):

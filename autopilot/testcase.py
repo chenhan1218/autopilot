@@ -44,6 +44,7 @@ from autopilot.globals import (global_context,
     )
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
+from autopilot.utilities import get_compiz_setting
 
 
 logger = logging.getLogger(__name__)
@@ -278,8 +279,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     def _set_compiz_option(self, plugin_name, option_name, option_value):
         logger.info("Setting compiz option '%s' in plugin '%s' to %r",
             option_name, plugin_name, option_value)
-        plugin = global_context.Plugins[plugin_name]
-        setting = plugin.Screen[option_name]
+        setting = get_compiz_setting(plugin_name, option_name)
         old_value = setting.Value
         setting.Value = option_value
         global_context.Write()

@@ -15,7 +15,6 @@
 from __future__ import absolute_import
 
 from autopilot.globals import global_context
-from compizconfig import Plugin, Setting
 from Xlib import X, display, protocol
 
 _display = display.Display()
@@ -75,7 +74,22 @@ def _getProperty(_type, win=None):
     if atom: return atom.value
 
 
-def get_compiz_option(plugin_name, setting_name):
-    plugin = Plugin(global_context, plugin_name)
-    setting = Setting(plugin, setting_name)
-    return setting.Value
+def get_compiz_setting(plugin_name, setting_name):
+    """Get a compiz setting object.
+
+    'plugin_name' is the name of the plugin (e.g. 'core' or 'unityshell')
+    'setting_name' is the name of the setting (e.g. 'alt_tab_timeout')
+
+    This function will raise KeyError if the plugin or setting named does not
+    exist.
+
+    """
+    try:
+        plugin = global_context.Plugins[plugin_name]
+    except KeyError:
+        raise KeyError("Compiz plugin '%s' does not exist." % (plugin_name))
+    try:
+        setting = plugin.Screen[setting_name]
+    except KeyError:
+        raise KeyError("Compiz setting '%s' does not exist in plugin '%s'." % (setting_name, plugin_name))
+    return setting

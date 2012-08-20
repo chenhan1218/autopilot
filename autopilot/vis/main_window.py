@@ -16,6 +16,17 @@ class MainWindow(QtGui.QMainWindow):
         super(MainWindow, self).__init__()
         self.selectable_interfaces = {}
         self.initUI()
+        self.readSettings()
+
+    def readSettings(self):
+        settings = QtCore.QSettings()
+        self.restoreGeometry(settings.value("geometry").toByteArray());
+        self.restoreState(settings.value("windowState").toByteArray());
+
+    def closeEvent(self, event):
+        settings = QtCore.QSettings()
+        settings.setValue("geometry", self.saveGeometry())
+        settings.setValue("windowState", self.saveState())
 
     def initUI(self):
         header_titles = QtCore.QStringList(["Name", "Value"])
@@ -41,6 +52,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connection_list.activated.connect(self.conn_list_activated)
 
         self.toolbar = self.addToolBar('Connection')
+        self.toolbar.setObjectName('Connection Toolbar')
         self.toolbar.addWidget(self.connection_list)
 
     def on_interface_found(self, conn, obj, iface):

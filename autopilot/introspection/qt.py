@@ -18,7 +18,9 @@ import subprocess
 from time import sleep
 
 from autopilot.introspection.dbus import (
+    clear_object_registry,
     DBusIntrospectionObject,
+    INTROSPECTION_IFACE,
     object_passes_filters,
     )
 
@@ -63,6 +65,9 @@ class ApplicationProxyObect(DBusIntrospectionObject):
         If you only want to get one item, use select_single instead.
 
         """
+        logger.debug("Selecting objects of %s with attributes: %r",
+            'any type' if type_name == '*' else 'type ' + type_name,
+            kwargs)
 
         path = "//%s" % type_name
         state_dicts = self.get_state_by_path(path)
@@ -153,7 +158,7 @@ def launch_autopilot_enabled_process(application, *args, **kwargs):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         **kwargs)
-    return get_autopilot_proxy_object_for_process(process.pid), process.pid
+    return get_autopilot_proxy_object_for_process(process.pid)
 
 
 def get_autopilot_proxy_object_for_process(pid):
@@ -197,7 +202,7 @@ def get_autopilot_proxy_object_for_process(pid):
                     # We've found at least one connection to the session bus from
                     # this PID. Might not be the one we want however...
                     dbus_object = session_bus.get_object(name, "/com/canonical/Autopilot/Introspection")
-                    dbus_iface = dbus.Interface(dbus_object, 'com.canonical.Autopilot.Introspection')
+                    dbus_iface = dbus.Interface(dbus_object, INTROSPECTION_IFACE)
                     # THis next line will raise an exception if we have the wrong
                     # connection:
                     cls_name, cls_state = dbus_iface.GetState("/")[0]
@@ -213,11 +218,18 @@ def get_autopilot_proxy_object_for_process(pid):
     if not target_iface_object:
         raise RuntimeError("Could not find autopilot DBus interface on target application")
 
-    # create the proxy object:
+    # clear the object registry, since it's specific to the dbus service, and we
+    # have just started a new service. We don't want the old types hanging around
+    # in the registry. We need a better method for this however.
+    clear_object_registry()
+
     clsobj = type(str(cls_name),
                 (ApplicationProxyObect,),
-                dict(
-                    DBUS_SERVICE=target_iface_object.bus_name,
-                    DBUS_OBJECT=target_iface_object.object_path
-                    ))
-    return clsobj(cls_state)
+                dict(DBUS_SERVICE=str(target_iface_object.bus_name),
+                    DBUS_OBJECT=str(target_iface_object.object_path)
+                    )
+                )
+
+    proxy = clsobj(cls_state)
+    proxy.set_pid(pid)
+    return proxy

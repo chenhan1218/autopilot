@@ -177,4 +177,3 @@ class ApplicationSupportTests(TestCase):
         mixin = QtIntrospectionTestMixin()
         fn = lambda: mixin.launch_test_application('gedit', arg1=123, arg2='asd', launch_dir='/')
         self.assertThat(fn, raises(ValueError("Unknown keyword arguments: 'arg1', 'arg2'.")))
-

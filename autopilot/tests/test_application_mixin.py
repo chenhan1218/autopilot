@@ -9,12 +9,15 @@
 from __future__ import absolute_import
 
 from testtools import TestCase
-from testtools.matchers import Is, Not, raises
+from testtools.matchers import Equals, Is, Not, raises
 from mock import patch
 
 from autopilot.introspection.qt import QtIntrospectionTestMixin
 from autopilot.testcase import AutopilotTestCase
 
+
+def dummy_addCleanup(*args, **kwargs):
+    pass
 
 class ApplicationSupportTests(TestCase):
 
@@ -27,6 +30,8 @@ class ApplicationSupportTests(TestCase):
         raise a TypeError"""
 
         mixin = QtIntrospectionTestMixin()
+        mixin.addCleanup = dummy_addCleanup
+
         self.assertThat(lambda: mixin.launch_test_application(1), raises(TypeError))
         self.assertThat(lambda: mixin.launch_test_application(True), raises(TypeError))
         self.assertThat(lambda: mixin.launch_test_application(1.0), raises(TypeError))
@@ -42,10 +47,13 @@ class ApplicationSupportTests(TestCase):
 
         """
         mixin = QtIntrospectionTestMixin()
+        mixin.addCleanup = dummy_addCleanup
+
         absolute_desktop_file = '/usr/share/applications/gedit.desktop'
         mixin.launch_test_application(absolute_desktop_file)
 
-        mock.assert_called_once_with(absolute_desktop_file)
+        self.assertThat(mock.called, Equals(True))
+        self.assertThat(mock.call_args[0], Equals((absolute_desktop_file,)))
 
     @patch('autopilot.introspection.qt.launch_application_from_desktop_file')
     def test_launch_can_classify_relative_desktop_file(self, mock):
@@ -54,10 +62,13 @@ class ApplicationSupportTests(TestCase):
 
         """
         mixin = QtIntrospectionTestMixin()
+        mixin.addCleanup = dummy_addCleanup
+
         relative_desktop_file = 'gedit.desktop'
         mixin.launch_test_application(relative_desktop_file)
 
-        mock.assert_called_once_with(relative_desktop_file)
+        self.assertThat(mock.called, Equals(True))
+        self.assertThat(mock.call_args[0], Equals((relative_desktop_file,)))
 
     @patch('autopilot.introspection.qt.launch_application_from_path')
     def test_launch_can_classify_absolute_app_path(self, mock):
@@ -66,10 +77,13 @@ class ApplicationSupportTests(TestCase):
 
         """
         mixin = QtIntrospectionTestMixin()
+        mixin.addCleanup = dummy_addCleanup
+
         absolute_path = '/usr/bin/gedit'
         mixin.launch_test_application(absolute_path)
 
-        mock.assert_called_once_with(absolute_path)
+        self.assertThat(mock.called, Equals(True))
+        self.assertThat(mock.call_args[0], Equals((absolute_path,)))
 
     @patch('autopilot.introspection.qt.launch_application_from_path')
     def test_launch_can_classify_relative_app_path(self, mock):
@@ -78,10 +92,13 @@ class ApplicationSupportTests(TestCase):
 
         """
         mixin = QtIntrospectionTestMixin()
+        mixin.addCleanup = dummy_addCleanup
+
         relative_path = 'gedit'
         mixin.launch_test_application(relative_path)
 
-        mock.assert_called_once_with(relative_path)
+        self.assertThat(mock.called, Equals(True))
+        self.assertThat(mock.call_args[0], Equals((relative_path,)))
 
     @patch('autopilot.introspection.qt.launch_application_from_desktop_file')
     def test_launch_can_classify_absolute_desktop_file_with_args(self, mock):
@@ -90,10 +107,13 @@ class ApplicationSupportTests(TestCase):
 
         """
         mixin = QtIntrospectionTestMixin()
+        mixin.addCleanup = dummy_addCleanup
+
         absolute_desktop_file = '/usr/share/applications/gedit.desktop'
         mixin.launch_test_application(absolute_desktop_file, "-some", "arguments")
 
-        mock.assert_called_once_with(absolute_desktop_file, "-some", "arguments")
+        self.assertThat(mock.called, Equals(True))
+        self.assertThat(mock.call_args[0], Equals((absolute_desktop_file, "-some", "arguments")))
 
     @patch('autopilot.introspection.qt.launch_application_from_desktop_file')
     def test_launch_can_classify_relative_desktop_file_with_args(self, mock):
@@ -102,10 +122,13 @@ class ApplicationSupportTests(TestCase):
 
         """
         mixin = QtIntrospectionTestMixin()
+        mixin.addCleanup = dummy_addCleanup
+
         relative_desktop_file = 'gedit.desktop'
         mixin.launch_test_application(relative_desktop_file, "-some", "arguments")
 
-        mock.assert_called_once_with(relative_desktop_file, "-some", "arguments")
+        self.assertThat(mock.called, Equals(True))
+        self.assertThat(mock.call_args[0], Equals((relative_desktop_file, "-some", "arguments")))
 
     @patch('autopilot.introspection.qt.launch_application_from_path')
     def test_launch_can_classify_absolute_app_path_with_args(self, mock):
@@ -114,10 +137,13 @@ class ApplicationSupportTests(TestCase):
 
         """
         mixin = QtIntrospectionTestMixin()
+        mixin.addCleanup = dummy_addCleanup
+
         absolute_path = '/usr/bin/gedit'
         mixin.launch_test_application(absolute_path, "-some", "arguments")
 
-        mock.assert_called_once_with(absolute_path, "-some", "arguments")
+        self.assertThat(mock.called, Equals(True))
+        self.assertThat(mock.call_args[0], Equals((absolute_path, "-some", "arguments")))
 
     @patch('autopilot.introspection.qt.launch_application_from_path')
     def test_launch_can_classify_relative_app_path_with_args(self, mock):
@@ -126,8 +152,29 @@ class ApplicationSupportTests(TestCase):
 
         """
         mixin = QtIntrospectionTestMixin()
+        mixin.addCleanup = dummy_addCleanup
+
         relative_path = 'gedit'
         mixin.launch_test_application(relative_path, "-some", "arguments")
 
-        mock.assert_called_once_with(relative_path, "-some", "arguments")
+        self.assertThat(mock.called, Equals(True))
+        self.assertThat(mock.call_args[0], Equals((relative_path, "-some", "arguments")))
+
+    def test_launch_raises_ValueError_on_unknown_kwargs(self):
+        """launch_test_application must raise ValueError when given unknown
+        keyword arguments.
+
+        """
+        mixin = QtIntrospectionTestMixin()
+        fn = lambda: mixin.launch_test_application('gedit', arg1=123, arg2='asd')
+        self.assertThat(fn, raises(ValueError("Unknown keyword arguments: 'arg1', 'arg2'.")))
+
+    def test_launch_raises_ValueError_on_unknown_kwargs_with_known(self):
+        """launch_test_application must raise ValueError when given unknown
+        keyword arguments.
+
+        """
+        mixin = QtIntrospectionTestMixin()
+        fn = lambda: mixin.launch_test_application('gedit', arg1=123, arg2='asd', launch_dir='/')
+        self.assertThat(fn, raises(ValueError("Unknown keyword arguments: 'arg1', 'arg2'.")))
 

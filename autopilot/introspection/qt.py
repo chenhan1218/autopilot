@@ -28,6 +28,10 @@ logger = logging.getLogger(__name__)
 class ApplicationProxyObect(DBusIntrospectionObject):
     """A class that better supports query data from an application."""
 
+    def __init__(self, *args, **kwargs):
+        super(ApplicationProxyObect, self).__init__(*args, **kwargs)
+        self._pid = None
+
     def select_single(self, type_name='*', **kwargs):
         """Get a single node from the introspection tree, with type equal to 'type_name'
         and (optionally) matching the keyword filters present in kwargs. For example:
@@ -65,11 +69,27 @@ class ApplicationProxyObect(DBusIntrospectionObject):
         instances = [self.make_introspection_object(i) for i in state_dicts]
         return filter(lambda i: object_passes_filters(i, **kwargs), instances)
 
+    def set_pid(self, pid):
+        """Set the process Id of the process that this is a proxy for.
+
+        You should never normally need to call this method.
+
+        """
+        self._pid = pid
+
+    @property
+    def pid(self):
+        return self._pid
+
+    def kill_application(self):
+        """Kill the running process that this is a proxy for using 'kill `pid`'."""
+        subprocess.call(["kill", "%d" % self._pid])
+
 
 class QtIntrospectionTestMixin(object):
      """A mix-in class to make Qt application introspection easier."""
 
-     def launch_test_application(self, application, *arguments):
+     def launch_test_application(self, application, *arguments, **kwargs):
         """Launch 'application' and retrieve a proxy object for the application.
 
         Use this method to launch a supported application and start testing it.
@@ -78,23 +98,34 @@ class QtIntrospectionTestMixin(object):
          * A Desktop file, either with or without a path component.
          * An executable file, either with a path, or one that is in the $PATH.
 
-         This method returns a proxy object that represents the application.
-         Introspection data is retrievable via this object.
+        This method supports the following keyword arguments:
+
+         * launch_dir. If set to a directory that exists the process will be
+         launched from that directory.
+
+        Unknown keyword arguments will cause a ValueError to be raised.
+
+        This method returns a proxy object that represents the application.
+        Introspection data is retrievable via this object.
 
          """
         if not isinstance(application, basestring):
             raise TypeError("'application' parameter must be a string.")
+        cwd = kwargs.pop('launch_dir', None)
+        if kwargs:
+            raise ValueError("Unknown keyword arguments: %s." %
+                (', '.join( repr(k) for k in kwargs.keys())))
 
         if application.endswith('.desktop'):
-            proxy, pid = launch_application_from_desktop_file(application, *arguments)
+            proxy = launch_application_from_desktop_file(application, *arguments, cwd=cwd)
         else:
-            proxy, pid = launch_application_from_path(application, *arguments)
+            proxy = launch_application_from_path(application, *arguments, cwd=cwd)
 
-        self.addCleanup(lambda: subprocess.call(["kill", "%d" % pid]))
+        self.addCleanup(proxy.kill_application)
         return proxy
 
 
-def launch_application_from_desktop_file(desktop_file, *arguments):
+def launch_application_from_desktop_file(desktop_file, *arguments, **kwargs):
     """Launch an application from a desktop file.
 
     This function actually just finds the executable on disk and defers the
@@ -102,25 +133,26 @@ def launch_application_from_desktop_file(desktop_file, *arguments):
 
     """
     proc = gio.unix.DesktopAppInfo(desktop_file)
-    return launch_application_from_path(proc.get_executable())
+    return launch_application_from_path(proc.get_executable(), *arguments, **kwargs)
 
 
-def launch_application_from_path(application_path, *arguments):
+def launch_application_from_path(application_path, *arguments, **kwargs):
     arguments = list(arguments)
     if "-testability" not in arguments:
         arguments.insert(0, "-testability")
 
-    return launch_autopilot_enabled_process(application_path, *arguments)
+    return launch_autopilot_enabled_process(application_path, *arguments, **kwargs)
 
 
-def launch_autopilot_enabled_process(application, *args):
+def launch_autopilot_enabled_process(application, *args, **kwargs):
     """Launch an autopilot-enabled process and return the proxy object."""
     commandline = [application]
     commandline.extend(args)
     process = subprocess.Popen(commandline,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        stderr=subprocess.PIPE,
+        **kwargs)
     return get_autopilot_proxy_object_for_process(process.pid), process.pid
 
 

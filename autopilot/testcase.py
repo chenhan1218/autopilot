@@ -228,6 +228,37 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             },
         }
 
+    @classmethod
+    def register_known_application(cls, name, desktop_file, process_name):
+        """Registers an application with the known_apps dictionary.
+        
+        'name' is the name to be used when launching the application.
+        'desktop_file' is the filename (without path component) of the desktop file used to launch the application.
+        'process_name' is the name of the executable process that gets run.
+
+        Raises 'KeyError' if application has been registered already
+        """
+        if name in cls.KNOWN_APPS:
+            raise KeyError("Application has been registered already")
+        else:
+            cls.KNOWN_APPS[name] = { 
+                                     "desktop-file" : desktop_file,
+                                     "process-name" : process_name 
+                                   }
+
+    @classmethod
+    def unregister_known_application(cls, name):
+        """Unregisters an application with the known_apps dictionary.
+        
+        'name' is the name to be used when launching the application.
+
+        Raises 'KeyError' if application has not been registered.
+        """
+        if name in cls.KNOWN_APPS:
+            del cls.KNOWN_APPS[name]
+        else:
+            raise KeyError("Application has not been registered")
+
     def setUp(self):
         super(AutopilotTestCase, self).setUp()
 

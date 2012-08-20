@@ -24,7 +24,6 @@ class MainWindow(QtGui.QMainWindow):
 
         self.splitter = QtGui.QSplitter(self)
         self.tree_view = QtGui.QTreeView(self.splitter)
-        self.tree_view.clicked.connect(self.tree_item_clicked)
 
         self.table_view = QtGui.QTableWidget(self.splitter)
         self.table_view.setColumnCount(2)
@@ -84,17 +83,18 @@ class MainWindow(QtGui.QMainWindow):
         if dbus_details:
             self.tree_model = VisTreeModel(dbus_details)
             self.tree_view.setModel(self.tree_model)
+            self.tree_view.selectionModel().currentChanged.connect(self.tree_item_changed)
 
-    def tree_item_clicked(self, model_index):
-        object_details = model_index.internalPointer().dbus_object._DBusIntrospectionObject__state
+    def tree_item_changed(self, current, previous):
         self.table_view.setSortingEnabled(False)
         self.table_view.clearContents()
 
+        object_details = current.internalPointer().dbus_object._DBusIntrospectionObject__state
         object_details.pop("Children", None)
         self.table_view.setRowCount(len(object_details))
         for i, key in enumerate(object_details):
             if key == "id":
-                details_string = str(model_index.internalPointer().dbus_object.id)
+                details_string = str(current.internalPointer().dbus_object.id)
             else:
                 details_string = dbus_string_rep(object_details[key])
             item_name = QtGui.QTableWidgetItem(key)

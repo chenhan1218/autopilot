@@ -93,3 +93,14 @@ def get_compiz_setting(plugin_name, setting_name):
     except KeyError:
         raise KeyError("Compiz setting '%s' does not exist in plugin '%s'." % (setting_name, plugin_name))
     return setting
+
+
+def get_compiz_option(plugin_name, setting_name):
+    """Get a compiz setting value.
+
+    This is the same as calling:
+
+    >>> get_compiz_setting(plugin_name, setting_name).Value
+
+    """
+    return get_compiz_setting(plugin_name, setting_name).Value

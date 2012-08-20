@@ -8,6 +8,8 @@ from autopilot.vis.main_window import MainWindow
 
 def vis_main():
     app = QtGui.QApplication(sys.argv)
+    app.setApplicationName("Autopilot")
+    app.setOrganizationName("Canonical")
 
     dbus_loop = DBusQtMainLoop()
     session_bus = dbus.SessionBus(mainloop=dbus_loop)

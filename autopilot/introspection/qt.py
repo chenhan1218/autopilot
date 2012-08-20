@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 class ApplicationProxyObect(DBusIntrospectionObject):
     """A class that better supports query data from an application."""
 
-    def select_single(self, type_name, **kwargs):
+    def select_single(self, type_name='*', **kwargs):
         """Get a single node from the introspection tree, with type equal to 'type_name'
         and (optionally) matching the keyword filters present in kwargs. For example:
 
@@ -48,7 +48,7 @@ class ApplicationProxyObect(DBusIntrospectionObject):
             return None
         return instances[0]
 
-    def select_many(self, type_name, **kwargs):
+    def select_many(self, type_name='*', **kwargs):
         """Get a list of nodes from the introspection tree, with type equal to
         'type_name' and (optionally) matching the keyword filters present in
         kwargs. For example:

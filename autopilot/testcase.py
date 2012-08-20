@@ -12,7 +12,6 @@ Autopilot test case class.
 
 from __future__ import absolute_import
 
-from compizconfig import Setting, Plugin
 from dbus import DBusException
 import gconf
 import logging
@@ -260,12 +259,16 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
 
         The value will be set for the current test only.
 
+        This will raise KeyError if the option named does not exist.
+
         """
         self.set_compiz_option("unityshell", option_name, option_value)
 
     def set_compiz_option(self, plugin_name, setting_name, setting_value):
-        """Set setting `setting_name` in compiz plugin `plugin_name` to value `setting_value`
-        for one test only.
+        """Set setting `setting_name` in compiz plugin `plugin_name` to value
+        `setting_value` for one test only.
+
+        This will raise KeyError if the plugin or setting named does not exist.
         """
         old_value = self._set_compiz_option(plugin_name, setting_name, setting_value)
         self.addCleanup(self._set_compiz_option, plugin_name, setting_name, old_value)
@@ -275,8 +278,8 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     def _set_compiz_option(self, plugin_name, option_name, option_value):
         logger.info("Setting compiz option '%s' in plugin '%s' to %r",
             option_name, plugin_name, option_value)
-        plugin = Plugin(global_context, plugin_name)
-        setting = Setting(plugin, option_name)
+        plugin = global_context.Plugins[plugin_name]
+        setting = plugin.Screen[option_name]
         old_value = setting.Value
         setting.Value = option_value
         global_context.Write()

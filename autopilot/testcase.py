@@ -12,7 +12,6 @@ Autopilot test case class.
 
 from __future__ import absolute_import
 
-from compizconfig import Setting, Plugin
 from dbus import DBusException
 import gconf
 import logging
@@ -45,6 +44,7 @@ from autopilot.globals import (global_context,
     )
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
+from autopilot.utilities import get_compiz_setting
 
 
 logger = logging.getLogger(__name__)
@@ -222,7 +222,42 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             'desktop-file': 'gedit.desktop',
             'process-name': 'gedit',
             },
+        'Terminal' : {
+            'desktop-file': 'gnome-terminal.desktop',
+            'process-name': 'gnome-terminal',
+            },
         }
+
+    @classmethod
+    def register_known_application(cls, name, desktop_file, process_name):
+        """Registers an application with the known_apps dictionary.
+        
+        'name' is the name to be used when launching the application.
+        'desktop_file' is the filename (without path component) of the desktop file used to launch the application.
+        'process_name' is the name of the executable process that gets run.
+
+        Raises 'KeyError' if application has been registered already
+        """
+        if name in cls.KNOWN_APPS:
+            raise KeyError("Application has been registered already")
+        else:
+            cls.KNOWN_APPS[name] = { 
+                                     "desktop-file" : desktop_file,
+                                     "process-name" : process_name 
+                                   }
+
+    @classmethod
+    def unregister_known_application(cls, name):
+        """Unregisters an application with the known_apps dictionary.
+        
+        'name' is the name to be used when launching the application.
+
+        Raises 'KeyError' if application has not been registered.
+        """
+        if name in cls.KNOWN_APPS:
+            del cls.KNOWN_APPS[name]
+        else:
+            raise KeyError("Application has not been registered")
 
     def setUp(self):
         super(AutopilotTestCase, self).setUp()
@@ -260,12 +295,16 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
 
         The value will be set for the current test only.
 
+        This will raise KeyError if the option named does not exist.
+
         """
         self.set_compiz_option("unityshell", option_name, option_value)
 
     def set_compiz_option(self, plugin_name, setting_name, setting_value):
-        """Set setting `setting_name` in compiz plugin `plugin_name` to value `setting_value`
-        for one test only.
+        """Set setting `setting_name` in compiz plugin `plugin_name` to value
+        `setting_value` for one test only.
+
+        This will raise KeyError if the plugin or setting named does not exist.
         """
         old_value = self._set_compiz_option(plugin_name, setting_name, setting_value)
         self.addCleanup(self._set_compiz_option, plugin_name, setting_name, old_value)
@@ -275,8 +314,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     def _set_compiz_option(self, plugin_name, option_name, option_value):
         logger.info("Setting compiz option '%s' in plugin '%s' to %r",
             option_name, plugin_name, option_value)
-        plugin = Plugin(global_context, plugin_name)
-        setting = Setting(plugin, option_name)
+        setting = get_compiz_setting(plugin_name, option_name)
         old_value = setting.Value
         setting.Value = option_value
         global_context.Write()

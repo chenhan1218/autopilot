@@ -1,3 +1,10 @@
+# -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
+# Copyright 2012 Canonical
+# Author: Thomi Richards
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 3, as published
+# by the Free Software Foundation.
 from __future__ import absolute_import
 
 import dbus
@@ -16,6 +23,17 @@ class MainWindow(QtGui.QMainWindow):
         super(MainWindow, self).__init__()
         self.selectable_interfaces = {}
         self.initUI()
+        self.readSettings()
+
+    def readSettings(self):
+        settings = QtCore.QSettings()
+        self.restoreGeometry(settings.value("geometry").toByteArray());
+        self.restoreState(settings.value("windowState").toByteArray());
+
+    def closeEvent(self, event):
+        settings = QtCore.QSettings()
+        settings.setValue("geometry", self.saveGeometry())
+        settings.setValue("windowState", self.saveState())
 
     def initUI(self):
         header_titles = QtCore.QStringList(["Name", "Value"])
@@ -24,7 +42,6 @@ class MainWindow(QtGui.QMainWindow):
 
         self.splitter = QtGui.QSplitter(self)
         self.tree_view = QtGui.QTreeView(self.splitter)
-        self.tree_view.clicked.connect(self.tree_item_clicked)
 
         self.table_view = QtGui.QTableWidget(self.splitter)
         self.table_view.setColumnCount(2)
@@ -42,6 +59,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connection_list.activated.connect(self.conn_list_activated)
 
         self.toolbar = self.addToolBar('Connection')
+        self.toolbar.setObjectName('Connection Toolbar')
         self.toolbar.addWidget(self.connection_list)
 
     def on_interface_found(self, conn, obj, iface):
@@ -84,17 +102,18 @@ class MainWindow(QtGui.QMainWindow):
         if dbus_details:
             self.tree_model = VisTreeModel(dbus_details)
             self.tree_view.setModel(self.tree_model)
+            self.tree_view.selectionModel().currentChanged.connect(self.tree_item_changed)
 
-    def tree_item_clicked(self, model_index):
-        object_details = model_index.internalPointer().dbus_object._DBusIntrospectionObject__state
+    def tree_item_changed(self, current, previous):
         self.table_view.setSortingEnabled(False)
         self.table_view.clearContents()
 
+        object_details = current.internalPointer().dbus_object._DBusIntrospectionObject__state
         object_details.pop("Children", None)
         self.table_view.setRowCount(len(object_details))
         for i, key in enumerate(object_details):
             if key == "id":
-                details_string = str(model_index.internalPointer().dbus_object.id)
+                details_string = str(current.internalPointer().dbus_object.id)
             else:
                 details_string = dbus_string_rep(object_details[key])
             item_name = QtGui.QTableWidgetItem(key)

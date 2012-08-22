@@ -184,8 +184,8 @@ def _get_compiz_keybinding(compiz_tuple):
 
     """
     plugin_name, setting_name = compiz_tuple
-    plugin = Plugin(global_context, plugin_name)
-    setting = Setting(plugin, setting_name)
+    plugin = global_context.Plugins[plugin_name]
+    setting = plugin.Screen[setting_name]
     if setting.Type != 'Key':
         raise ValueError("Key binding maps to a compiz option that does not hold a keybinding.")
     if not plugin.Enabled:

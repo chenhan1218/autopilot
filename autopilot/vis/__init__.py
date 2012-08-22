@@ -1,3 +1,10 @@
+# -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
+# Copyright 2012 Canonical
+# Author: Thomi Richards
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 3, as published
+# by the Free Software Foundation.
 import dbus
 from dbus.mainloop.qt import DBusQtMainLoop
 from PyQt4 import QtGui
@@ -8,6 +15,8 @@ from autopilot.vis.main_window import MainWindow
 
 def vis_main():
     app = QtGui.QApplication(sys.argv)
+    app.setApplicationName("Autopilot")
+    app.setOrganizationName("Canonical")
 
     dbus_loop = DBusQtMainLoop()
     session_bus = dbus.SessionBus(mainloop=dbus_loop)

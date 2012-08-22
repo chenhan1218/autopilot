@@ -16,6 +16,7 @@ is the DBusIntrospectableObject class.
 
 from __future__ import absolute_import
 
+from contextlib import contextmanager
 from dbus import Interface
 import logging
 from testtools.matchers import Equals
@@ -46,6 +47,17 @@ class IntrospectableObjectMetaclass(type):
         return class_object
 
 
+def clear_object_registry():
+    """Clear the object registry.
+
+    DO NOT CALL THIS UNLESS YOU REALLY KNOW WHAT YOU ARE DOING!
+
+    ... and even then, are you *sure*?
+    """
+    global _object_registry
+    _object_registry.clear()
+
+
 INTROSPECTION_IFACE = 'com.canonical.Autopilot.Introspection'
 
 
@@ -70,11 +82,12 @@ def translate_state_keys(state_dict):
 
 def object_passes_filters(instance, **kwargs):
     """Return true if 'instance' satisifies all the filters present in kwargs."""
-    for attr, val in kwargs.iteritems():
-        if not hasattr(instance, attr) or getattr(instance, attr) != val:
-            # Either attribute is not present, or is present but with
-            # the wrong value - don't add this instance to the results list.
-            return False
+    with instance.no_automatic_refreshing():
+        for attr, val in kwargs.iteritems():
+            if not hasattr(instance, attr) or getattr(instance, attr) != val:
+                # Either attribute is not present, or is present but with
+                # the wrong value - don't add this instance to the results list.
+                return False
     return True
 
 
@@ -94,6 +107,7 @@ class DBusIntrospectionObject(object):
 
     def __init__(self, state_dict):
         self.__state = {}
+        self.__refresh_on_attribute = True
         self.set_properties(state_dict)
 
     def set_properties(self, state_dict):
@@ -242,7 +256,8 @@ class DBusIntrospectionObject(object):
             raise AttributeError()
 
         if name in self.__state:
-            self.refresh_state()
+            if self.__refresh_on_attribute:
+                self.refresh_state()
             return self.__state[name]
         # attribute not found.
         raise AttributeError("Class '%s' has no attribute '%s'." %
@@ -292,6 +307,24 @@ class DBusIntrospectionObject(object):
             logger.warning("Generating introspection instance for type '%s' based on generic class.", name)
             return type(str(name), (cls,), {})(state)
         return class_type(state)
+
+    @contextmanager
+    def no_automatic_refreshing(self):
+        """Context manager function to disable automatic DBus refreshing when retrieving attributes.
+
+        example usage:
+
+        >>> with instance.no_automatic_refreshing():
+            # access lots of attributes.
+
+        """
+        try:
+            self.__refresh_on_attribute = False
+            yield
+        finally:
+            self.__refresh_on_attribute = True
+
+
 
 
 

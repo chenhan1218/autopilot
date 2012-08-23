@@ -12,7 +12,7 @@
 
 __all__ = 'QtIntrospectionTetMixin'
 
-from dbus import Interface
+import dbus
 import gio
 import logging
 import subprocess
@@ -117,7 +117,7 @@ def get_qt_iface(service_name, object_path):
         raise TypeError("Object name must be a string")
 
     _debug_proxy_obj = session_bus.get_object(service_name, object_path)
-    return Interface(_debug_proxy_obj, QT_AUTOPILOT_IFACE)
+    return dbus.Interface(_debug_proxy_obj, QT_AUTOPILOT_IFACE)
 
 
 class QtSignalWatcher(object):
@@ -282,16 +282,14 @@ def get_autopilot_proxy_object_for_process(process):
     # manually.
     #
     # This sucks, and should be changed to something more elegant in the future.
-    from autopilot.emulators.dbus_handler import session_bus
-    import dbus
 
     bus_object = session_bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
     bus_iface = dbus.Interface(bus_object, 'org.freedesktop.DBus')
 
-    target_iface_object = None
-    qt_iface_object = None
-    cls_name = "UnknownProxy"
-    cls_state = {}
+    # clear the object registry, since it's specific to the dbus service, and we
+    # have just started a new service. We don't want the old types hanging around
+    # in the registry. We need a better method for this however.
+    clear_object_registry()
 
     logger.info("Looking for autopilot interface for PID %d", pid)
 
@@ -309,47 +307,42 @@ def get_autopilot_proxy_object_for_process(process):
                 if name_pid == pid:
                     # We've found at least one connection to the session bus from
                     # this PID. Might not be the one we want however...
-                    dbus_object = session_bus.get_object(name, "/com/canonical/Autopilot/Introspection")
-                    introspection_iface = dbus.Interface(dbus_object, DBUS_INTROSPECTION_IFACE)
-                    intro_xml = introspection_iface.Introspect()
-                    if AP_INTROSPECTION_IFACE in intro_xml:
-                        dbus_iface = dbus.Interface(dbus_object, AP_INTROSPECTION_IFACE)
-                    if QT_AUTOPILOT_IFACE in intro_xml:
-                        qt_iface_object = dbus.Interface(dbus_object, QT_AUTOPILOT_IFACE)
-
-                    cls_name, cls_state = dbus_iface.GetState("/")[0]
-                    target_iface_object = dbus_iface
-                    logger.debug("Found interface: %r", target_iface_object)
-                    break
+                    proxy = make_proxy_object_from_service_name(name)
+                    proxy.set_process(process)
+                    return proxy
             except:
                 pass
-        if target_iface_object:
-            break
         sleep(1)
+    raise RuntimeError("Unable to find Autopilot interface.")
 
-    if not target_iface_object:
-        raise RuntimeError("Could not find autopilot DBus interface on target application")
 
-    # clear the object registry, since it's specific to the dbus service, and we
-    # have just started a new service. We don't want the old types hanging around
-    # in the registry. We need a better method for this however.
-    clear_object_registry()
+def make_proxy_object_from_service_name(service_name, obj_path):
+    """Returns a root proxy object given a DBus service name."""
+    # parameters can sometimes be dbus.String instances, sometimes QString instances.
+    # it's easier to convert them here than at the calling sites.
+    service_name = str(service_name)
+    obj_path = str(obj_path)
+    dbus_object = session_bus.get_object(service_name, obj_path)
+    introspection_iface = dbus.Interface(dbus_object, DBUS_INTROSPECTION_IFACE)
+    intro_xml = introspection_iface.Introspect()
+    if AP_INTROSPECTION_IFACE not in intro_xml:
+        raise RuntimeError("Could not find Autopilot interface on service name '%s'" % service_name)
 
-    if qt_iface_object is not None:
+    dbus_iface = dbus.Interface(dbus_object, AP_INTROSPECTION_IFACE)
+    cls_name, cls_state = dbus_iface.GetState("/")[0]
+    if QT_AUTOPILOT_IFACE in intro_xml:
         clsobj = type(str(cls_name),
-                    (QtApplicationProxyObject,),
-                    dict(DBUS_SERVICE=str(target_iface_object.bus_name),
-                        DBUS_OBJECT=str(target_iface_object.object_path)
-                        )
-                    )
+            (QtApplicationProxyObject,),
+            dict(DBUS_SERVICE=service_name,
+                DBUS_OBJECT=obj_path
+                )
+            )
     else:
         clsobj = type(str(cls_name),
-                    (ApplicationProxyObect,),
-                    dict(DBUS_SERVICE=str(target_iface_object.bus_name),
-                        DBUS_OBJECT=str(target_iface_object.object_path)
-                        )
-                    )
-
+            (ApplicationProxyObect,),
+            dict(DBUS_SERVICE=service_name,
+                DBUS_OBJECT=obj_path
+                )
+            )
     proxy = clsobj(cls_state)
-    proxy.set_process(process)
     return proxy

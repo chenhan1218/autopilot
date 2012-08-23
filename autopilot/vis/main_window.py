@@ -10,11 +10,14 @@ from __future__ import absolute_import
 import dbus
 from PyQt4 import QtGui, QtCore
 
-from autopilot.emulators.dbus_handler import session_bus
 from autopilot.introspection.dbus import (
     DBusIntrospectionObject,
     AP_INTROSPECTION_IFACE,
     StateNotFoundError
+    )
+from autopilot.introspection.qt import (
+    make_proxy_object_from_service_name,
+    QtApplicationProxyObject,
     )
 
 
@@ -66,20 +69,12 @@ class MainWindow(QtGui.QMainWindow):
         if iface == AP_INTROSPECTION_IFACE:
             self.statusBar().showMessage('Updating connection list')
             try:
-                dbus_object = session_bus.get_object(str(conn), str(obj))
-                dbus_iface = dbus.Interface(dbus_object,
-                                            'com.canonical.Autopilot.Introspection')
-                cls_name, cls_state = dbus_iface.GetState("/")[0]
-                cls_name = str(cls_name)
+                proxy_object = make_proxy_object_from_service_name(conn, obj)
+                cls_name = proxy_object.__class__.__name__
                 if not self.selectable_interfaces.has_key(cls_name):
-                    dbus_obj = type(cls_name,
-                                    (DBusIntrospectionObject,),
-                                    dict(DBUS_SERVICE=str(conn),
-                                         DBUS_OBJECT=str(obj)))
-                    dbus_obj = dbus_obj(cls_state)
-                    self.selectable_interfaces[cls_name] = dbus_obj
+                    self.selectable_interfaces[cls_name] = proxy_object
                     self.update_selectable_interfaces()
-            except dbus.DBusException:
+            except (dbus.DBusException, RuntimeError):
                 pass
             self.statusBar().clearMessage()
 
@@ -88,8 +83,15 @@ class MainWindow(QtGui.QMainWindow):
         self.connection_list.clear()
         self.connection_list.addItem("Please select a connection",
                                      QtCore.QVariant(None))
-        for name, dbus_obj in self.selectable_interfaces.iteritems():
-            self.connection_list.addItem(name, QtCore.QVariant(dbus_obj))
+        for name, proxy_obj in self.selectable_interfaces.iteritems():
+            if isinstance(proxy_obj, QtApplicationProxyObject):
+                self.connection_list.addItem(
+                    QtGui.QIcon(":/trolltech/qmessagebox/images/qtlogo-64.png"),
+                    name,
+                    QtCore.QVariant(proxy_obj)
+                    )
+            else:
+                self.connection_list.addItem(name, QtCore.QVariant(proxy_obj))
 
         prev_selected = self.connection_list.findText(selected_text,
                                                       QtCore.Qt.MatchExactly)

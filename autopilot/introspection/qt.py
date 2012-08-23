@@ -186,6 +186,10 @@ class QtApplicationProxyObject(ApplicationProxyObect):
         """
         return self._qt_iface.GetSignalEmissions(self.id, signal_name)
 
+    def list_signals(self):
+        """Get a list of the signals available on this object."""
+        return self._qt_iface.ListSignals(self.id)
+
 
 class QtIntrospectionTestMixin(object):
     """A mix-in class to make Qt application introspection easier."""

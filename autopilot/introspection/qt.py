@@ -16,6 +16,7 @@ from dbus import Interface
 import gio
 import logging
 import subprocess
+from testtools.content import text_content
 from time import sleep
 
 from autopilot.introspection.dbus import (
@@ -36,7 +37,7 @@ class ApplicationProxyObect(DBusIntrospectionObject):
 
     def __init__(self, state):
         super(ApplicationProxyObect, self).__init__(state)
-        self._pid = None
+        self._process = None
 
     def select_single(self, type_name='*', **kwargs):
         """Get a single node from the introspection tree, with type equal to 'type_name'
@@ -78,21 +79,31 @@ class ApplicationProxyObect(DBusIntrospectionObject):
         instances = [self.make_introspection_object(i) for i in state_dicts]
         return filter(lambda i: object_passes_filters(i, **kwargs), instances)
 
-    def set_pid(self, pid):
+    def set_process(self, process):
         """Set the process Id of the process that this is a proxy for.
 
         You should never normally need to call this method.
 
         """
-        self._pid = pid
+        self._process = process
 
     @property
     def pid(self):
-        return self._pid
+        return self._process.pid
+
+    @property
+    def stdout(self):
+        """A file-like object that represents the launched process's stdout."""
+        return self._process.stdout
+
+    @property
+    def stderr(self):
+        """A file-like object that represents the launched process's stderr."""
+        return self._process.stderr
 
     def kill_application(self):
         """Kill the running process that this is a proxy for using 'kill `pid`'."""
-        subprocess.call(["kill", "%d" % self._pid])
+        subprocess.call(["kill", "%d" % self._process.pid])
 
 
 def get_qt_iface(service_name, object_path):
@@ -107,6 +118,28 @@ def get_qt_iface(service_name, object_path):
 
     _debug_proxy_obj = session_bus.get_object(service_name, object_path)
     return Interface(_debug_proxy_obj, QT_AUTOPILOT_IFACE)
+
+
+class QtSignalWatcher(object):
+
+    """A utility class to make watching Qt signals easy."""
+
+    def __init__(self, proxy, signal_name):
+        self._proxy = proxy
+        self.signal_name = signal_name
+        self._data = None
+
+    def _refresh(self):
+        self._data = self._proxy.get_signal_emissions(self.signal_name)
+
+    @property
+    def num_emissions(self):
+        """Get the number of times the signal has been emitted since we started
+        monitoring it.
+
+        """
+        self._refresh()
+        return len(self._data)
 
 
 class QtApplicationProxyObject(ApplicationProxyObect):
@@ -125,14 +158,21 @@ class QtApplicationProxyObject(ApplicationProxyObect):
          * 'clicked(bool)'
          * 'pressed()'
 
+        This method returns a QtSignalWatcher instance.
+
         By default, no signals are monitored. You must call this method once for
         each signal you are interested in.
 
         """
         self._qt_iface.RegisterSignalInterest(self.id, signal_name)
+        return QtSignalWatcher(self, signal_name)
 
     def get_signal_emissions(self, signal_name):
         """Get a list of all the emissions of the 'signal_name' signal.
+
+        The QtSignalWatcher class provides a more convenient API than calling
+        this method directly. A QtSignalWatcher instance is returned from
+        'watch_signal'.
 
         Each item in the returned list is a tuple containing the arguments in the
         emission (possibly an empty list if the signal has no arguments).
@@ -148,9 +188,9 @@ class QtApplicationProxyObject(ApplicationProxyObect):
 
 
 class QtIntrospectionTestMixin(object):
-     """A mix-in class to make Qt application introspection easier."""
+    """A mix-in class to make Qt application introspection easier."""
 
-     def launch_test_application(self, application, *arguments, **kwargs):
+    def launch_test_application(self, application, *arguments, **kwargs):
         """Launch 'application' and retrieve a proxy object for the application.
 
         Use this method to launch a supported application and start testing it.
@@ -183,7 +223,12 @@ class QtIntrospectionTestMixin(object):
             proxy = launch_application_from_path(application, *arguments, cwd=cwd)
 
         self.addCleanup(proxy.kill_application)
+        self.addCleanup(self._attach_process_logs, proxy)
         return proxy
+
+    def _attach_process_logs(self, proxy):
+        self.addDetail('process-stdout', text_content(proxy.stdout.read()))
+        self.addDetail('process-stderr', text_content(proxy.stderr.read()))
 
 
 def launch_application_from_desktop_file(desktop_file, *arguments, **kwargs):
@@ -213,16 +258,18 @@ def launch_autopilot_enabled_process(application, *args, **kwargs):
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        close_fds=True,
         **kwargs)
-    return get_autopilot_proxy_object_for_process(process.pid)
+    return get_autopilot_proxy_object_for_process(process)
 
 
-def get_autopilot_proxy_object_for_process(pid):
-    """return the autopilot proxy object for the given pid.
+def get_autopilot_proxy_object_for_process(process):
+    """return the autopilot proxy object for the given process.
 
     Raises RuntimeError if no autopilot interface was found.
 
     """
+    pid = process.pid
     #
     # FIXME: Currently the libindicate python bindings provide no way of
     # getting a server property. Instead, the only thing we can do is to
@@ -300,5 +347,5 @@ def get_autopilot_proxy_object_for_process(pid):
                     )
 
     proxy = clsobj(cls_state)
-    proxy.set_pid(pid)
+    proxy.set_process(process)
     return proxy

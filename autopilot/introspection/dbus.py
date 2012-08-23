@@ -58,7 +58,8 @@ def clear_object_registry():
     _object_registry.clear()
 
 
-INTROSPECTION_IFACE = 'com.canonical.Autopilot.Introspection'
+AP_INTROSPECTION_IFACE = 'com.canonical.Autopilot.Introspection'
+DBUS_INTROSPECTION_IFACE = 'org.freedesktop.DBus.Introspectable'
 
 
 def get_introspection_iface(service_name, object_path):
@@ -72,7 +73,7 @@ def get_introspection_iface(service_name, object_path):
         raise TypeError("Object name must be a string")
 
     _debug_proxy_obj = session_bus.get_object(service_name, object_path)
-    return Interface(_debug_proxy_obj, INTROSPECTION_IFACE)
+    return Interface(_debug_proxy_obj, AP_INTROSPECTION_IFACE)
 
 
 def translate_state_keys(state_dict):

@@ -12,26 +12,30 @@
 
 __all__ = 'QtIntrospectionTetMixin'
 
+from dbus import Interface
 import gio
 import logging
 import subprocess
 from time import sleep
 
 from autopilot.introspection.dbus import (
+    AP_INTROSPECTION_IFACE,
     clear_object_registry,
     DBusIntrospectionObject,
-    INTROSPECTION_IFACE,
+    DBUS_INTROSPECTION_IFACE,
     object_passes_filters,
+    session_bus,
     )
 
 logger = logging.getLogger(__name__)
 
+QT_AUTOPILOT_IFACE = 'com.canonical.Autopilot.Qt'
 
 class ApplicationProxyObect(DBusIntrospectionObject):
     """A class that better supports query data from an application."""
 
-    def __init__(self, *args, **kwargs):
-        super(ApplicationProxyObect, self).__init__(*args, **kwargs)
+    def __init__(self, state):
+        super(ApplicationProxyObect, self).__init__(state)
         self._pid = None
 
     def select_single(self, type_name='*', **kwargs):
@@ -89,6 +93,58 @@ class ApplicationProxyObect(DBusIntrospectionObject):
     def kill_application(self):
         """Kill the running process that this is a proxy for using 'kill `pid`'."""
         subprocess.call(["kill", "%d" % self._pid])
+
+
+def get_qt_iface(service_name, object_path):
+    """Get the autopilot introspection interface for the specified service name
+    and object path.
+
+    """
+    if not isinstance(service_name, basestring):
+        raise TypeError("Service name must be a string.")
+    if not isinstance(object_path, basestring):
+        raise TypeError("Object name must be a string")
+
+    _debug_proxy_obj = session_bus.get_object(service_name, object_path)
+    return Interface(_debug_proxy_obj, QT_AUTOPILOT_IFACE)
+
+
+class QtApplicationProxyObject(ApplicationProxyObect):
+    """A class containing methods specific to querying Qt applications."""
+
+    def __init__(self, state):
+        super(QtApplicationProxyObject, self).__init__(state)
+        self._qt_iface = get_qt_iface(self.DBUS_SERVICE, self.DBUS_OBJECT)
+
+    def watch_signal(self, signal_name):
+        """Start watching the 'signal_name' signal on this object.
+
+        signal_name must be the C++ signal signature, as is usually used within
+        the Qt 'SIGNAL' macro. Examples of valid signal names are:
+
+         * 'clicked(bool)'
+         * 'pressed()'
+
+        By default, no signals are monitored. You must call this method once for
+        each signal you are interested in.
+
+        """
+        self._qt_iface.RegisterSignalInterest(self.id, signal_name)
+
+    def get_signal_emissions(self, signal_name):
+        """Get a list of all the emissions of the 'signal_name' signal.
+
+        Each item in the returned list is a tuple containing the arguments in the
+        emission (possibly an empty list if the signal has no arguments).
+
+        If the signal was not emitted, the list will be empty. You must first
+        call 'watch_signal(signal_name)' in order to monitor this signal.
+
+        Note: Some signal arguments may not be marshallable over DBus. If this is
+        the case, they will be omitted from the argument list.
+
+        """
+        return self._qt_iface.GetSignalEmissions(self.id, signal_name)
 
 
 class QtIntrospectionTestMixin(object):
@@ -182,6 +238,7 @@ def get_autopilot_proxy_object_for_process(pid):
     bus_iface = dbus.Interface(bus_object, 'org.freedesktop.DBus')
 
     target_iface_object = None
+    qt_iface_object = None
     cls_name = "UnknownProxy"
     cls_state = {}
 
@@ -202,9 +259,13 @@ def get_autopilot_proxy_object_for_process(pid):
                     # We've found at least one connection to the session bus from
                     # this PID. Might not be the one we want however...
                     dbus_object = session_bus.get_object(name, "/com/canonical/Autopilot/Introspection")
-                    dbus_iface = dbus.Interface(dbus_object, INTROSPECTION_IFACE)
-                    # THis next line will raise an exception if we have the wrong
-                    # connection:
+                    introspection_iface = dbus.Interface(dbus_object, DBUS_INTROSPECTION_IFACE)
+                    intro_xml = introspection_iface.Introspect()
+                    if AP_INTROSPECTION_IFACE in intro_xml:
+                        dbus_iface = dbus.Interface(dbus_object, AP_INTROSPECTION_IFACE)
+                    if QT_AUTOPILOT_IFACE in intro_xml:
+                        qt_iface_object = dbus.Interface(dbus_object, QT_AUTOPILOT_IFACE)
+
                     cls_name, cls_state = dbus_iface.GetState("/")[0]
                     target_iface_object = dbus_iface
                     logger.debug("Found interface: %r", target_iface_object)
@@ -223,12 +284,20 @@ def get_autopilot_proxy_object_for_process(pid):
     # in the registry. We need a better method for this however.
     clear_object_registry()
 
-    clsobj = type(str(cls_name),
-                (ApplicationProxyObect,),
-                dict(DBUS_SERVICE=str(target_iface_object.bus_name),
-                    DBUS_OBJECT=str(target_iface_object.object_path)
+    if qt_iface_object is not None:
+        clsobj = type(str(cls_name),
+                    (QtApplicationProxyObject,),
+                    dict(DBUS_SERVICE=str(target_iface_object.bus_name),
+                        DBUS_OBJECT=str(target_iface_object.object_path)
+                        )
                     )
-                )
+    else:
+        clsobj = type(str(cls_name),
+                    (ApplicationProxyObect,),
+                    dict(DBUS_SERVICE=str(target_iface_object.bus_name),
+                        DBUS_OBJECT=str(target_iface_object.object_path)
+                        )
+                    )
 
     proxy = clsobj(cls_state)
     proxy.set_pid(pid)

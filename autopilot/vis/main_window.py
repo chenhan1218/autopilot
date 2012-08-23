@@ -13,7 +13,7 @@ from PyQt4 import QtGui, QtCore
 from autopilot.emulators.dbus_handler import session_bus
 from autopilot.introspection.dbus import (
     DBusIntrospectionObject,
-    INTROSPECTION_IFACE,
+    AP_INTROSPECTION_IFACE,
     StateNotFoundError
     )
 
@@ -63,7 +63,7 @@ class MainWindow(QtGui.QMainWindow):
         self.toolbar.addWidget(self.connection_list)
 
     def on_interface_found(self, conn, obj, iface):
-        if iface == INTROSPECTION_IFACE:
+        if iface == AP_INTROSPECTION_IFACE:
             self.statusBar().showMessage('Updating connection list')
             try:
                 dbus_object = session_bus.get_object(str(conn), str(obj))

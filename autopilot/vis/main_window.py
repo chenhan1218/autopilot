@@ -132,14 +132,16 @@ class MainWindow(QtGui.QMainWindow):
         self.table_view.setSortingEnabled(False)
         self.table_view.clearContents()
 
-        object_details = current.internalPointer().dbus_object._DBusIntrospectionObject__state
+        object_proxy = current.internalPointer().dbus_object
+        self.update_object_detals_table_from_proxy_object(object_proxy)
+
+    def update_object_detals_table_from_proxy_object(self, proxy_object):
+        object_details = proxy_object.get_properties()
+        # remove the Children property - we don't care about it:
         object_details.pop("Children", None)
         self.table_view.setRowCount(len(object_details))
         for i, key in enumerate(object_details):
-            if key == "id":
-                details_string = str(current.internalPointer().dbus_object.id)
-            else:
-                details_string = dbus_string_rep(object_details[key])
+            details_string = dbus_string_rep(object_details[key])
             item_name = QtGui.QTableWidgetItem(key)
             item_details = QtGui.QTableWidgetItem(details_string)
             self.table_view.setItem(i, 0, item_name)

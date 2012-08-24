@@ -217,6 +217,15 @@ class DBusIntrospectionObject(object):
                 result.append(instance)
         return result
 
+    def get_properties(self):
+        """Returns a dictionary of all the properties on this class."""
+        # Since we're grabbing __state directly there's no implied state
+        # refresh, so do it manually:
+        self.refresh_state()
+        props = self.__state
+        props['id'] = self.id
+        return props
+
     def get_children(self):
         """Returns a list of all child objects."""
         self.refresh_state()

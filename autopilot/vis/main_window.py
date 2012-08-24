@@ -17,7 +17,7 @@ from autopilot.introspection.dbus import (
     )
 from autopilot.introspection.qt import (
     make_proxy_object_from_service_name,
-    QtApplicationProxyObject,
+    QtObjectProxyMixin,
     )
 
 
@@ -106,7 +106,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connection_list.addItem("Please select a connection",
                                      QtCore.QVariant(None))
         for name, proxy_obj in self.selectable_interfaces.iteritems():
-            if isinstance(proxy_obj, QtApplicationProxyObject):
+            if isinstance(proxy_obj, QtObjectProxyMixin):
                 self.connection_list.addItem(
                     QtGui.QIcon(":/trolltech/qmessagebox/images/qtlogo-64.png"),
                     name,
@@ -131,7 +131,7 @@ class MainWindow(QtGui.QMainWindow):
     def tree_item_changed(self, current, previous):
         proxy = current.internalPointer().dbus_object
         self.update_object_detals_table_from_proxy_object(proxy)
-        if isinstance(proxy, QtApplicationProxyObject):
+        if isinstance(proxy, QtObjectProxyMixin):
             self.update_object_signals_from_proxy_object(proxy)
             self.show_signal_table(True)
         else:

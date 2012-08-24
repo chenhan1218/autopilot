@@ -31,6 +31,7 @@ from autopilot.introspection.dbus import (
 logger = logging.getLogger(__name__)
 
 QT_AUTOPILOT_IFACE = 'com.canonical.Autopilot.Qt'
+QT_AUTOPILOT_PATH = "/com/canonical/Autopilot/Introspection"
 
 class ApplicationProxyObect(DBusIntrospectionObject):
     """A class that better supports query data from an application."""
@@ -92,32 +93,12 @@ class ApplicationProxyObect(DBusIntrospectionObject):
         return self._process.pid
 
     @property
-    def stdout(self):
-        """A file-like object that represents the launched process's stdout."""
-        return self._process.stdout
-
-    @property
-    def stderr(self):
-        """A file-like object that represents the launched process's stderr."""
-        return self._process.stderr
+    def process(self):
+        return self._process
 
     def kill_application(self):
         """Kill the running process that this is a proxy for using 'kill `pid`'."""
         subprocess.call(["kill", "%d" % self._process.pid])
-
-
-def get_qt_iface(service_name, object_path):
-    """Get the autopilot introspection interface for the specified service name
-    and object path.
-
-    """
-    if not isinstance(service_name, basestring):
-        raise TypeError("Service name must be a string.")
-    if not isinstance(object_path, basestring):
-        raise TypeError("Object name must be a string")
-
-    _debug_proxy_obj = session_bus.get_object(service_name, object_path)
-    return dbus.Interface(_debug_proxy_obj, QT_AUTOPILOT_IFACE)
 
 
 class QtSignalWatcher(object):
@@ -125,6 +106,15 @@ class QtSignalWatcher(object):
     """A utility class to make watching Qt signals easy."""
 
     def __init__(self, proxy, signal_name):
+        """Initialise the signal watcher.
+
+        'proxy' is an instance of QtObjectProxyMixin.
+        'signal_name' is the name of the signal being monitored.
+
+        Do not construct this object yourself. Instead, call 'watch_signal' on a
+        QtObjectProxyMixin instance.
+
+        """
         self._proxy = proxy
         self.signal_name = signal_name
         self._data = None
@@ -141,13 +131,24 @@ class QtSignalWatcher(object):
         self._refresh()
         return len(self._data)
 
+    @property
+    def was_emitted(self):
+        """True if the signal was emitted at least once."""
+        self._refresh()
+        return len(self._data) > 0
 
-class QtApplicationProxyObject(ApplicationProxyObect):
+
+class QtObjectProxyMixin(object):
     """A class containing methods specific to querying Qt applications."""
 
-    def __init__(self, state):
-        super(QtApplicationProxyObject, self).__init__(state)
-        self._qt_iface = get_qt_iface(self.DBUS_SERVICE, self.DBUS_OBJECT)
+    def _get_qt_iface(self):
+        """Get the autopilot Qt-specific interface for the specified service name
+        and object path.
+
+        """
+
+        _debug_proxy_obj = session_bus.get_object(self.DBUS_SERVICE, self.DBUS_OBJECT)
+        return dbus.Interface(_debug_proxy_obj, QT_AUTOPILOT_IFACE)
 
     def watch_signal(self, signal_name):
         """Start watching the 'signal_name' signal on this object.
@@ -158,17 +159,26 @@ class QtApplicationProxyObject(ApplicationProxyObect):
          * 'clicked(bool)'
          * 'pressed()'
 
+        A list of valid signal names can be retrieved from 'get_signals()'. If an
+        invalid signal name is given ValueError will be raised.
+
         This method returns a QtSignalWatcher instance.
 
         By default, no signals are monitored. You must call this method once for
         each signal you are interested in.
 
         """
-        self._qt_iface.RegisterSignalInterest(self.id, signal_name)
+        valid_signals = self.get_signals()
+        if signal_name not in valid_signals:
+            raise ValueError("Signal name %r is not in the valid signal list of %r" % (signal_name, valid_signals))
+
+        self._get_qt_iface().RegisterSignalInterest(self.id, signal_name)
         return QtSignalWatcher(self, signal_name)
 
     def get_signal_emissions(self, signal_name):
         """Get a list of all the emissions of the 'signal_name' signal.
+
+        If signal_name is not a valid signal, ValueError is raised.
 
         The QtSignalWatcher class provides a more convenient API than calling
         this method directly. A QtSignalWatcher instance is returned from
@@ -184,11 +194,16 @@ class QtApplicationProxyObject(ApplicationProxyObect):
         the case, they will be omitted from the argument list.
 
         """
-        return self._qt_iface.GetSignalEmissions(self.id, signal_name)
+        valid_signals = self.get_signals()
+        if signal_name not in valid_signals:
+            raise ValueError("Signal name %r is not in the valid signal list of %r" % (signal_name, valid_signals))
+
+        return self._get_qt_iface().GetSignalEmissions(self.id, signal_name)
 
     def get_signals(self):
         """Get a list of the signals available on this object."""
-        return self._qt_iface.ListSignals(self.id)
+        dbus_signal_list = self._get_qt_iface().ListSignals(self.id)
+        return [str(sig) for sig in dbus_signal_list]
 
 
 class QtIntrospectionTestMixin(object):
@@ -226,13 +241,15 @@ class QtIntrospectionTestMixin(object):
         else:
             proxy = launch_application_from_path(application, *arguments, cwd=cwd)
 
-        self.addCleanup(proxy.kill_application)
-        self.addCleanup(self._attach_process_logs, proxy)
+        self.addCleanup(self._kill_process_and_attach_logs, proxy)
         return proxy
 
-    def _attach_process_logs(self, proxy):
-        self.addDetail('process-stdout', text_content(proxy.stdout.read()))
-        self.addDetail('process-stderr', text_content(proxy.stderr.read()))
+    def _kill_process_and_attach_logs(self, proxy):
+        process = proxy.process
+        process.kill()
+        stdout, stderr = process.communicate()
+        self.addDetail('process-stdout', text_content(stdout))
+        self.addDetail('process-stderr', text_content(stderr))
 
 
 def launch_application_from_desktop_file(desktop_file, *arguments, **kwargs):
@@ -307,11 +324,11 @@ def get_autopilot_proxy_object_for_process(process):
                 if name_pid == pid:
                     # We've found at least one connection to the session bus from
                     # this PID. Might not be the one we want however...
-                    proxy = make_proxy_object_from_service_name(name)
+                    proxy = make_proxy_object_from_service_name(name, QT_AUTOPILOT_PATH)
                     proxy.set_process(process)
                     return proxy
-            except:
-                pass
+            except Exception as e:
+                print e
         sleep(1)
     raise RuntimeError("Unable to find Autopilot interface.")
 
@@ -330,9 +347,11 @@ def make_proxy_object_from_service_name(service_name, obj_path):
 
     dbus_iface = dbus.Interface(dbus_object, AP_INTROSPECTION_IFACE)
     cls_name, cls_state = dbus_iface.GetState("/")[0]
+
+    # If this is a Qt-enabled application, add the QtObjectProxyMixin
     if QT_AUTOPILOT_IFACE in intro_xml:
         clsobj = type(str(cls_name),
-            (QtApplicationProxyObject,),
+            (ApplicationProxyObect, QtObjectProxyMixin),
             dict(DBUS_SERVICE=service_name,
                 DBUS_OBJECT=obj_path
                 )

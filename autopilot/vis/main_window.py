@@ -46,16 +46,33 @@ class MainWindow(QtGui.QMainWindow):
         self.splitter = QtGui.QSplitter(self)
         self.tree_view = QtGui.QTreeView(self.splitter)
 
-        self.table_view = QtGui.QTableWidget(self.splitter)
+        self.details_frame = QtGui.QFrame(self.splitter)
+        self.details_layout = QtGui.QVBoxLayout(self.details_frame)
+        self.details_layout.addWidget(QtGui.QLabel("Properties:"))
+        self.table_view = QtGui.QTableWidget()
         self.table_view.setColumnCount(2)
         self.table_view.verticalHeader().setVisible(False)
         self.table_view.setAlternatingRowColors(True)
         self.table_view.setHorizontalHeaderLabels(header_titles)
         self.table_view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+        self.details_layout.addWidget(self.table_view)
+
+        self.signals_label = QtGui.QLabel("Signals:")
+        self.details_layout.addWidget(self.signals_label)
+
+        self.signals_table = QtGui.QTableWidget()
+        self.signals_table.setColumnCount(1)
+        self.signals_table.verticalHeader().setVisible(False)
+        self.signals_table.setAlternatingRowColors(True)
+        self.signals_table.setHorizontalHeaderLabels(["Signal Signature"])
+        self.signals_table.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+        self.details_layout.addWidget(self.signals_table)
 
         self.splitter.setStretchFactor(0, 0)
         self.splitter.setStretchFactor(1, 100)
         self.setCentralWidget(self.splitter)
+
+        self.show_signal_table(False)
 
         self.connection_list = QtGui.QComboBox()
         self.connection_list.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
@@ -64,6 +81,11 @@ class MainWindow(QtGui.QMainWindow):
         self.toolbar = self.addToolBar('Connection')
         self.toolbar.setObjectName('Connection Toolbar')
         self.toolbar.addWidget(self.connection_list)
+
+    def show_signal_table(self, show):
+        """Show or hide the signals table & label."""
+        self.signals_label.setVisible(show)
+        self.signals_table.setVisible(show)
 
     def on_interface_found(self, conn, obj, iface):
         if iface == AP_INTROSPECTION_IFACE:

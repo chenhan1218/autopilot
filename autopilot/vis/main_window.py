@@ -129,13 +129,18 @@ class MainWindow(QtGui.QMainWindow):
             self.tree_view.selectionModel().currentChanged.connect(self.tree_item_changed)
 
     def tree_item_changed(self, current, previous):
-        self.table_view.setSortingEnabled(False)
-        self.table_view.clearContents()
-
-        object_proxy = current.internalPointer().dbus_object
-        self.update_object_detals_table_from_proxy_object(object_proxy)
+        proxy = current.internalPointer().dbus_object
+        self.update_object_detals_table_from_proxy_object(proxy)
+        if isinstance(proxy, QtApplicationProxyObject):
+            self.update_object_signals_from_proxy_object(proxy)
+            self.show_signal_table(True)
+        else:
+            self.show_signal_table(False)
 
     def update_object_detals_table_from_proxy_object(self, proxy_object):
+        """Update the object details table."""
+        self.table_view.setSortingEnabled(False)
+        self.table_view.clearContents()
         object_details = proxy_object.get_properties()
         # remove the Children property - we don't care about it:
         object_details.pop("Children", None)
@@ -149,6 +154,18 @@ class MainWindow(QtGui.QMainWindow):
         self.table_view.setSortingEnabled(True)
         self.table_view.sortByColumn(0, QtCore.Qt.AscendingOrder)
         self.table_view.resizeColumnsToContents()
+
+    def update_object_signals_from_proxy_object(self, proxy_object):
+        """Update the object signals table."""
+        self.signals_table.setSortingEnabled(False)
+        self.signals_table.clearContents()
+        signals = proxy_object.get_signals()
+        self.signals_table.setRowCount(len(signals))
+        for i, signal in enumerate(signals):
+            self.signals_table.setItem(i, 0, QtGui.QTableWidgetItem(str(signal)))
+        self.signals_table.setSortingEnabled(True)
+        self.signals_table.sortByColumn(0, QtCore.Qt.AscendingOrder)
+        self.signals_table.resizeColumnsToContents()
 
 
 def dbus_string_rep(dbus_type):

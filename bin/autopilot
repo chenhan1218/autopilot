@@ -210,7 +210,7 @@ def load_test_suite_from_name(test_names):
                     '..'
                     )
                 )
-            tests.append(loader.discover(test_name, top_level_dir=package_parent_path))
+            tests.append(loader.discover(top_level_pkg, top_level_dir=package_parent_path))
         except ImportError as e:
             raise
             # try:

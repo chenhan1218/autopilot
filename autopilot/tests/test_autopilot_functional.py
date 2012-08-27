@@ -112,18 +112,8 @@ class AutopilotFunctionalTests(TestCase):
                 name),
             'w').write(contents)
 
-    def test_can_list_empty_test_dir(self):
-        """Autopilot list must report 0 tests found with an empty test module."""
-        code, output, error = self.run_autopilot_list()
-
-        expected_output = '\n\n 0 total tests.\n'
-
-        self.assertThat(code, Equals(0))
-        self.assertThat(error, Equals(''))
-        self.assertThat(output, Equals(expected_output))
-
-    def test_can_list_tests(self):
-        """Autopilot must find tests in a file."""
+    def create_simple_test_suite(self):
+        """Create a simple test suite file."""
         self.create_test_file('test_simple.py', dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
@@ -136,7 +126,20 @@ class AutopilotFunctionalTests(TestCase):
             """
             ))
 
+    def test_can_list_empty_test_dir(self):
+        """Autopilot list must report 0 tests found with an empty test module."""
         code, output, error = self.run_autopilot_list()
+
+        expected_output = '\n\n 0 total tests.\n'
+
+        self.assertThat(code, Equals(0))
+        self.assertThat(error, Equals(''))
+        self.assertThat(output, Equals(expected_output))
+
+    def test_can_list_tests(self):
+        """Autopilot must find tests in a file."""
+
+        self.create_simple_test_suite()
 
         expected_output = '''\
     tests.test_simple.SimpleTest.test_simple
@@ -145,9 +148,17 @@ class AutopilotFunctionalTests(TestCase):
  1 total tests.
 '''
 
-
-        self.assertThat(code, Equals(0))
-        self.assertThat(error, Equals(''))
-        self.assertThat(output, Equals(expected_output))
+        # ideally these would be different tests, but I'm lazy:
+        valid_test_specs = [
+            'tests',
+            'tests.test_simple',
+            'tests.test_simple.SimpleTest',
+            'tests.test_simple.SimpleTest.test_simple',
+            ]
+        for test_spec in valid_test_specs:
+            code, output, error = self.run_autopilot_list(test_spec)
+            self.assertThat(code, Equals(0))
+            self.assertThat(error, Equals(''))
+            self.assertThat(output, Equals(expected_output))
 
 

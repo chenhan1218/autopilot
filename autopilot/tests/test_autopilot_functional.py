@@ -24,6 +24,10 @@ class AutopilotFunctionalTests(TestCase):
 
     """A collection of functional tests for autopilot."""
 
+    def setUp(self):
+        super(AutopilotFunctionalTests, self).setUp()
+        self.base_path = self.create_empty_test_module()
+
     def create_empty_test_module(self):
         """Create an empty temp directory, with an empty test directory inside it.
 
@@ -51,7 +55,7 @@ class AutopilotFunctionalTests(TestCase):
             'w').write('# Auto-generated file.')
         return base_path
 
-    def run_autopilot_list(self, base_path):
+    def run_autopilot_list(self):
         """Run 'autopilot list' in the specified base path.
 
         This patches the environment to ensure that it's *this* version of autopilot
@@ -69,13 +73,15 @@ class AutopilotFunctionalTests(TestCase):
 
         return subprocess.check_output(
             [bin_path, 'list', 'tests'],
-            cwd=base_path,
-            env=dict(PYTHONPATH='%s:%s' % (base_path, ap_base_path))
+            cwd=self.base_path,
+            env=dict(PYTHONPATH='%s:%s' % (self.base_path, ap_base_path))
             )
 
+    def create_test_file(self, name, contents):
+        """Create a test file with the given name and contents."""
+
     def test_can_list_empty_test_dir(self):
-        base_path = self.create_empty_test_module()
-        output = self.run_autopilot_list(base_path)
+        output = self.run_autopilot_list()
 
         expected_output = '\n\n 0 total tests.\n'
         self.assertThat(output, Equals(expected_output))

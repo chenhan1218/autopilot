@@ -112,20 +112,6 @@ class AutopilotFunctionalTests(TestCase):
                 name),
             'w').write(contents)
 
-    def create_simple_test_suite(self):
-        """Create a simple test suite file."""
-        self.create_test_file('test_simple.py', dedent("""\
-
-            from autopilot.testcase import AutopilotTestCase
-
-
-            class SimpleTest(AutopilotTestCase):
-
-                def test_simple(self):
-                    pass
-            """
-            ))
-
     def test_can_list_empty_test_dir(self):
         """Autopilot list must report 0 tests found with an empty test module."""
         code, output, error = self.run_autopilot_list()
@@ -138,8 +124,17 @@ class AutopilotFunctionalTests(TestCase):
 
     def test_can_list_tests(self):
         """Autopilot must find tests in a file."""
+        self.create_test_file('test_simple.py', dedent("""\
 
-        self.create_simple_test_suite()
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    pass
+            """
+            ))
 
         expected_output = '''\
     tests.test_simple.SimpleTest.test_simple

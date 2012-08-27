@@ -17,7 +17,16 @@ from __future__ import absolute_import
 import os
 from Xlib import X, display, protocol
 
-_display = display.Display()
+_display = None
+
+def get_display():
+    """Get a Xlib display object. Creating the display prints garbage to stdout."""
+    global _display
+    if _display is None:
+        with Silence():
+            _display = display.Display()
+    return _display()
+
 
 
 def make_window_skip_taskbar(window, set_flag=True):
@@ -27,14 +36,14 @@ def make_window_skip_taskbar(window, set_flag=True):
     set_flag should be 'True' to set the flag, 'False' to clear it.
 
     """
-    state = _display.get_atom('_NET_WM_STATE_SKIP_TASKBAR', 1)
+    state = get_display().get_atom('_NET_WM_STATE_SKIP_TASKBAR', 1)
     action = int(set_flag)
     if action == 0:
         print "Clearing flag"
     elif action == 1:
         print "Setting flag"
     _setProperty('_NET_WM_STATE', [action, state, 0, 1], window)
-    _display.sync()
+    get_display().sync()
 
 
 def get_desktop_viewport():
@@ -50,7 +59,7 @@ def get_desktop_geometry():
 def _setProperty(_type, data, win=None, mask=None):
     """ Send a ClientMessage event to a window"""
     if not win:
-        win = _display.screen().root
+        win = get_display().screen().root
     if type(data) is str:
         dataSize = 8
     else:
@@ -59,18 +68,18 @@ def _setProperty(_type, data, win=None, mask=None):
         dataSize = 32
 
     ev = protocol.event.ClientMessage(window=win,
-        client_type=_display.get_atom(_type),
+        client_type=get_display().get_atom(_type),
         data=(dataSize, data))
 
     if not mask:
         mask = (X.SubstructureRedirectMask | X.SubstructureNotifyMask)
-    _display.screen().root.send_event(ev, event_mask=mask)
+    get_display().screen().root.send_event(ev, event_mask=mask)
 
 
 def _getProperty(_type, win=None):
     if not win:
-        win = _display.screen().root
-    atom = win.get_full_property(_display.get_atom(_type), X.AnyPropertyType)
+        win = get_display().screen().root
+    atom = win.get_full_property(get_display().get_atom(_type), X.AnyPropertyType)
     if atom: return atom.value
 
 

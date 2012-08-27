@@ -227,6 +227,7 @@ def load_test_suite_from_name(test_names):
 
 
 def main():
+    putenv('CCS_LOG_LEVEL', 'Error')
     args = parse_arguments()
     if args.mode == 'list':
         list_tests(args)

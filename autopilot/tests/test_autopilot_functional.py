@@ -15,6 +15,7 @@ from shutil import rmtree
 import subprocess
 from tempfile import mkdtemp
 from testtools import TestCase
+from testtools.content import text_content
 from testtools.matchers import Equals
 from textwrap import dedent
 
@@ -39,6 +40,7 @@ class AutopilotFunctionalTests(TestCase):
 
         # create the base directory:
         base_path = mkdtemp()
+        self.addDetail('base path', text_content(base_path))
         self.addCleanup(rmtree, base_path)
 
         # create the tests directory:
@@ -55,11 +57,13 @@ class AutopilotFunctionalTests(TestCase):
             'w').write('# Auto-generated file.')
         return base_path
 
-    def run_autopilot_list(self):
+    def run_autopilot_list(self, list_spec='tests'):
         """Run 'autopilot list' in the specified base path.
 
         This patches the environment to ensure that it's *this* version of autopilot
         that's run.
+
+        returns a tuple containing: (exit_code, stdout, stderr)
 
         """
         ap_base_path = os.path.abspath(
@@ -71,19 +75,79 @@ class AutopilotFunctionalTests(TestCase):
             )
         bin_path = os.path.join(ap_base_path, 'bin', 'autopilot')
 
-        return subprocess.check_output(
-            [bin_path, 'list', 'tests'],
+        environ = os.environ
+        environ.update(dict(
+                PYTHONPATH='%s:%s' % (self.base_path, ap_base_path),
+                DISPLAY=':0'))
+
+        process = subprocess.Popen(
+            "%s list %s" % (bin_path, list_spec),
             cwd=self.base_path,
-            env=dict(PYTHONPATH='%s:%s' % (self.base_path, ap_base_path))
+            env=environ,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=True
             )
 
+        stdout, stderr = process.communicate()
+        retcode = process.poll()
+
+        self.addDetail('retcode', text_content(str(retcode)))
+        self.addDetail('stdout', text_content(stdout))
+        self.addDetail('stderr', text_content(stderr))
+
+        return (retcode, stdout, stderr)
+
     def create_test_file(self, name, contents):
-        """Create a test file with the given name and contents."""
+        """Create a test file with the given name and contents.
+
+        'name' must end in '.py' if it is to be importable.
+        'contents' must be valid python code.
+
+        """
+        open(
+            os.path.join(
+                self.base_path,
+                'tests',
+                name),
+            'w').write(contents)
 
     def test_can_list_empty_test_dir(self):
-        output = self.run_autopilot_list()
+        """Autopilot list must report 0 tests found with an empty test module."""
+        code, output, error = self.run_autopilot_list()
 
         expected_output = '\n\n 0 total tests.\n'
+
+        self.assertThat(code, Equals(0))
+        self.assertThat(error, Equals(''))
+        self.assertThat(output, Equals(expected_output))
+
+    def test_can_list_tests(self):
+        """Autopilot must find tests in a file."""
+        self.create_test_file('test_simple.py', dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    pass
+            """
+            ))
+
+        code, output, error = self.run_autopilot_list('tests.test_simple')
+
+        expected_output = '''\
+    tests.test_simple.SimpleTest.test_simple
+
+
+ 1 total tests.
+'''
+
+
+        self.assertThat(code, Equals(0))
+        self.assertThat(error, Equals(''))
         self.assertThat(output, Equals(expected_output))
 
 

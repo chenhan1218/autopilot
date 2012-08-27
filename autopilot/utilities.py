@@ -14,7 +14,7 @@
 
 from __future__ import absolute_import
 
-from autopilot.globals import global_context
+import os
 from Xlib import X, display, protocol
 
 _display = display.Display()
@@ -84,15 +84,9 @@ def get_compiz_setting(plugin_name, setting_name):
     exist.
 
     """
-    try:
-        plugin = global_context.Plugins[plugin_name]
-    except KeyError:
-        raise KeyError("Compiz plugin '%s' does not exist." % (plugin_name))
-    try:
-        setting = plugin.Screen[setting_name]
-    except KeyError:
-        raise KeyError("Compiz setting '%s' does not exist in plugin '%s'." % (setting_name, plugin_name))
-    return setting
+    # circular dependancy:
+    from autopilot.compizconfig import get_setting
+    return get_setting(plugin_name, setting_name)
 
 
 def get_compiz_option(plugin_name, setting_name):
@@ -104,3 +98,55 @@ def get_compiz_option(plugin_name, setting_name):
 
     """
     return get_compiz_setting(plugin_name, setting_name).Value
+
+
+# Taken from http://code.activestate.com/recipes/577564-context-manager-for-low-level-redirection-of-stdou/
+# licensed under the MIT license.
+class Silence(object):
+    """Context manager which uses low-level file descriptors to suppress
+    output to stdout/stderr, optionally redirecting to the named file(s).
+
+    >>> with Silence():
+    ...     # do something that prints to stdout or stderr:
+    ...
+
+    """
+    def __init__(self, stdout=os.devnull, stderr=os.devnull, mode='w'):
+        self.outfiles = stdout, stderr
+        self.combine = (stdout == stderr)
+        self.mode = mode
+
+    def __enter__(self):
+        import sys
+        self.sys = sys
+        # save previous stdout/stderr
+        self.saved_streams = saved_streams = sys.__stdout__, sys.__stderr__
+        self.fds = fds = [s.fileno() for s in saved_streams]
+        self.saved_fds = map(os.dup, fds)
+        # flush any pending output
+        for s in saved_streams: s.flush()
+
+        # open surrogate files
+        if self.combine:
+            null_streams = [open(self.outfiles[0], self.mode, 0)] * 2
+            if self.outfiles[0] != os.devnull:
+                # disable buffering so output is merged immediately
+                sys.stdout, sys.stderr = map(os.fdopen, fds, ['w']*2, [0]*2)
+        else: null_streams = [open(f, self.mode, 0) for f in self.outfiles]
+        self.null_fds = null_fds = [s.fileno() for s in null_streams]
+        self.null_streams = null_streams
+
+        # overwrite file objects and low-level file descriptors
+        map(os.dup2, null_fds, fds)
+
+    def __exit__(self, *args):
+        sys = self.sys
+        # flush any pending output
+        for s in self.saved_streams: s.flush()
+        # restore original streams and file descriptors
+        map(os.dup2, self.saved_fds, self.fds)
+        sys.stdout, sys.stderr = self.saved_streams
+        # clean up
+        for s in self.null_streams: s.close()
+        for fd in self.saved_fds: os.close(fd)
+        return False

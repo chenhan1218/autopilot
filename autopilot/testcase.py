@@ -32,13 +32,13 @@ from testtools.content import text_content
 from testtools.matchers import Equals
 import time
 
+from autopilot.compizconfig import get_global_context
 from autopilot.emulators.bamf import Bamf
 from autopilot.emulators.zeitgeist import Zeitgeist
 from autopilot.emulators.processmanager import ProcessManager
 from autopilot.emulators.X11 import ScreenGeometry, Keyboard, Mouse, reset_display
 from autopilot.glibrunner import GlibRunner
-from autopilot.globals import (global_context,
-    log_verbose,
+from autopilot.globals import (log_verbose,
     video_recording_enabled,
     video_record_directory,
     )
@@ -231,7 +231,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     @classmethod
     def register_known_application(cls, name, desktop_file, process_name):
         """Registers an application with the known_apps dictionary.
-        
+
         'name' is the name to be used when launching the application.
         'desktop_file' is the filename (without path component) of the desktop file used to launch the application.
         'process_name' is the name of the executable process that gets run.
@@ -241,15 +241,15 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         if name in cls.KNOWN_APPS:
             raise KeyError("Application has been registered already")
         else:
-            cls.KNOWN_APPS[name] = { 
+            cls.KNOWN_APPS[name] = {
                                      "desktop-file" : desktop_file,
-                                     "process-name" : process_name 
+                                     "process-name" : process_name
                                    }
 
     @classmethod
     def unregister_known_application(cls, name):
         """Unregisters an application with the known_apps dictionary.
-        
+
         'name' is the name to be used when launching the application.
 
         Raises 'KeyError' if application has not been registered.
@@ -317,7 +317,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         setting = get_compiz_setting(plugin_name, option_name)
         old_value = setting.Value
         setting.Value = option_value
-        global_context.Write()
+        get_global_context().Write()
         return old_value
 
     def set_gconf_option(self, path, value):

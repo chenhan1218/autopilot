@@ -202,21 +202,29 @@ def load_test_suite_from_name(test_names):
     tests = []
     for test_name in test_names:
         try:
-            __import__(test_name)
-            tests.append(loader.discover(test_name))
+            top_level_pkg = test_name.split('.')[0]
+            package = __import__(top_level_pkg)
+            package_parent_path = os.path.abspath(
+                os.path.join(
+                    os.path.dirname(package.__file__),
+                    '..'
+                    )
+                )
+            tests.append(loader.discover(test_name, top_level_dir=package_parent_path))
         except ImportError as e:
-            try:
-                suite = loader.loadTestsFromName(test_name)
-                if suite.countTestCases():
-                    tests.append(suite)
-                else:
-                    print "Warning: No tests found at '%s' Loading module \
-                    have error:" % (test_name)
-                    print e
-            except (AttributeError, ImportError) as e:
-                print "Error: Cannot import test/package: %s" % e
-        except KeyError as e:
-            print "Warninig: Invalid test/package: %s" % e
+            raise
+            # try:
+            #     suite = loader.loadTestsFromName(test_name)
+            #     if suite.countTestCases():
+            #         tests.append(suite)
+            #     else:
+            #         print "Warning: No tests found at '%s' Loading module \
+            #         have error:" % (test_name)
+            #         print e
+            # except (AttributeError, ImportError) as e:
+            #     print "Error: Cannot import test/package: %s" % e
+        # except KeyError as e:
+        #     print "Warninig: Invalid test/package: %s" % e
 
     requested = lambda test: any([test.id().startswith(name)
                                   for name in test_names])

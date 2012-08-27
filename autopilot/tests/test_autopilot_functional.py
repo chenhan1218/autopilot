@@ -136,7 +136,7 @@ class AutopilotFunctionalTests(TestCase):
             """
             ))
 
-        code, output, error = self.run_autopilot_list('tests.test_simple')
+        code, output, error = self.run_autopilot_list()
 
         expected_output = '''\
     tests.test_simple.SimpleTest.test_simple

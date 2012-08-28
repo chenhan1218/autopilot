@@ -25,7 +25,7 @@ def get_display():
     if _display is None:
         with Silence():
             _display = display.Display()
-    return _display()
+    return _display
 
 
 

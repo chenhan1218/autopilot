@@ -225,3 +225,33 @@ SyntaxError: invalid syntax
         self.assertThat(error, Equals(''))
         self.assertThat(output, MatchesRegex(expected_regex, re.MULTILINE))
 
+    def test_can_list_scenariod_tests(self):
+        """Autopilot must find tests in a file."""
+        self.create_test_file('test_simple.py', dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                scenarios = [
+                    ('scenario one', {'key': 'value'}),
+                    ]
+
+                def test_simple(self):
+                    pass
+            """
+            ))
+
+        expected_output = '''\
+ *1 tests.test_simple.SimpleTest.test_simple
+
+
+ 1 total tests.
+'''
+
+        code, output, error = self.run_autopilot_list()
+        self.assertThat(code, Equals(0))
+        self.assertThat(error, Equals(''))
+        self.assertThat(output, Equals(expected_output))
+

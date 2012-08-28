@@ -9,7 +9,6 @@
 
 from __future__ import absolute_import
 
-from autopilot.vis import vis_main
 from datetime import datetime
 from imp import find_module
 import os
@@ -137,7 +136,7 @@ def list_tests(args):
             lambda a, b: cmp(a.id(), b.id()))
 
     for test in test_list_fn():
-        has_scenarios = hasattr(test, "scenarios")
+        has_scenarios = hasattr(test, "scenarios") and type(test.scenarios) is list
         if has_scenarios:
             num_tests += len(test.scenarios)
             print " *%d %s" % (len(test.scenarios), test.id())
@@ -202,29 +201,33 @@ def load_test_suite_from_name(test_names):
 
     tests = []
     for test_name in test_names:
-        try:
-            __import__(test_name)
-            tests.append(loader.discover(test_name))
-        except ImportError as e:
+        top_level_pkg = test_name.split('.')[0]
+        package = __import__(top_level_pkg)
+        package_parent_path = os.path.abspath(
+            os.path.join(
+                os.path.dirname(package.__file__),
+                '..'
+                )
+            )
+        tests.append(loader.discover(top_level_pkg, top_level_dir=package_parent_path))
+    all_tests = TestSuite(tests)
+
+    requested_tests = {}
+    for test in iterate_tests(all_tests):
+        # The test loader returns tests that start with 'unittest.loader' if for
+        # whatever reason the test failed to load. We run the tests without the
+        # built-in exception catching turned on, so we can get at the raised
+        # exception, which we print, so the user knows that something in their
+        # tests is broken.
+        if test.id().startswith('unittest.loader'):
             try:
-                suite = loader.loadTestsFromName(test_name)
-                if suite.countTestCases():
-                    tests.append(suite)
-                else:
-                    print "Warning: No tests found at '%s' Loading module \
-                    have error:" % (test_name)
-                    print e
-            except (AttributeError, ImportError) as e:
-                print "Error: Cannot import test/package: %s" % e
-        except KeyError as e:
-            print "Warninig: Invalid test/package: %s" % e
+                test.debug()
+            except Exception as e:
+                print e
+        elif any([test.id().startswith(name) for name in test_names]):
+            requested_tests[test.id()] = test
 
-    requested = lambda test: any([test.id().startswith(name)
-                                  for name in test_names])
-    selected_tests = {t.id(): t for t
-                      in filter(requested, iterate_tests(TestSuite(tests)))}
-
-    return TestSuite(selected_tests.values())
+    return TestSuite(requested_tests.values())
 
 
 def main():
@@ -234,6 +237,10 @@ def main():
     elif args.mode == 'run':
         run_tests(args)
     elif args.mode == 'vis':
+        # importing this requires that DISPLAY is set. Since we don't always want
+        # that requirement, do the import here:
+        from autopilot.vis import vis_main
+
         # XXX - in quantal, overlay scrollbars make this process consume 100% of
         # the CPU. It's a known bug:
         #

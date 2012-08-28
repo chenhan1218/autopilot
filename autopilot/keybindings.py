@@ -23,14 +23,12 @@ Keybindings come from two different places:
 
 from __future__ import absolute_import
 
-from compizconfig import Plugin, Setting
 import logging
 from types import NoneType
 import re
 
 from autopilot.emulators.X11 import Keyboard
-from autopilot.globals import global_context
-
+from autopilot.compizconfig import get_plugin, get_setting
 
 logger = logging.getLogger(__name__)
 
@@ -184,8 +182,8 @@ def _get_compiz_keybinding(compiz_tuple):
 
     """
     plugin_name, setting_name = compiz_tuple
-    plugin = global_context.Plugins[plugin_name]
-    setting = plugin.Screen[setting_name]
+    plugin = get_plugin(plugin_name)
+    setting = get_setting(plugin_name, setting_name)
     if setting.Type != 'Key':
         raise ValueError("Key binding maps to a compiz option that does not hold a keybinding.")
     if not plugin.Enabled:

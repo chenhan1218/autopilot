@@ -16,8 +16,10 @@ import subprocess
 from tempfile import mkdtemp
 from testtools import TestCase
 from testtools.content import text_content
-from testtools.matchers import Equals
+from testtools.matchers import Equals, MatchesRegex
 from textwrap import dedent
+import re
+
 
 logger = logging.getLogger(__name__)
 
@@ -156,4 +158,36 @@ class AutopilotFunctionalTests(TestCase):
             self.assertThat(error, Equals(''))
             self.assertThat(output, Equals(expected_output))
 
+    def test_list_tests_with_import_error(self):
+        self.create_test_file('test_simple.py', dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+            # create an import error:
+            import asdjkhdfjgsdhfjhsd
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    pass
+            """
+            ))
+        code, output, error = self.run_autopilot_list()
+        expected_regex = '''\
+Failed to import test module: tests.test_simple
+Traceback \(most recent call last\):
+  File "/usr/lib/python2.7/unittest/loader.py", line 252, in _find_tests
+    module = self._get_module_from_name\(name\)
+  File "/usr/lib/python2.7/unittest/loader.py", line 230, in _get_module_from_name
+    __import__\(name\)
+  File "/tmp/[a-zA-Z]*/tests/test_simple.py", line 4, in <module>
+    import asdjkhdfjgsdhfjhsd
+ImportError: No module named asdjkhdfjgsdhfjhsd
+
+
+
+ 0 total tests.
+'''
+        self.assertThat(code, Equals(0))
+        self.assertThat(error, Equals(''))
+        self.assertThat(output, MatchesRegex(expected_regex, re.MULTILINE))
 

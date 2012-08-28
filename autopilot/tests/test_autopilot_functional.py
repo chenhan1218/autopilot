@@ -226,7 +226,7 @@ SyntaxError: invalid syntax
         self.assertThat(output, MatchesRegex(expected_regex, re.MULTILINE))
 
     def test_can_list_scenariod_tests(self):
-        """Autopilot must find tests in a file."""
+        """Autopilot must show scenario counts next to tests that have scenarios."""
         self.create_test_file('test_simple.py', dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
@@ -248,6 +248,45 @@ SyntaxError: invalid syntax
 
 
  1 total tests.
+'''
+
+        code, output, error = self.run_autopilot_list()
+        self.assertThat(code, Equals(0))
+        self.assertThat(error, Equals(''))
+        self.assertThat(output, Equals(expected_output))
+
+    def test_can_list_scenariod_tests_with_multiple_scenarios(self):
+        """Autopilot must show scenario counts next to tests that have scenarios.
+
+        Tests multiple scenarios on a single test suite with multiple test cases.
+
+        """
+        self.create_test_file('test_simple.py', dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                scenarios = [
+                    ('scenario one', {'key': 'value'}),
+                    ('scenario two', {'key': 'value2'}),
+                    ]
+
+                def test_simple(self):
+                    pass
+
+                def test_simple_two(self):
+                    pass
+            """
+            ))
+
+        expected_output = '''\
+ *2 tests.test_simple.SimpleTest.test_simple
+ *2 tests.test_simple.SimpleTest.test_simple_two
+
+
+ 4 total tests.
 '''
 
         code, output, error = self.run_autopilot_list()

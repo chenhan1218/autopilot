@@ -294,3 +294,31 @@ SyntaxError: invalid syntax
         self.assertThat(error, Equals(''))
         self.assertThat(output, Equals(expected_output))
 
+    def test_can_list_invalid_scenarios(self):
+        """Autopilot must ignore scenarios that are not lists."""
+        self.create_test_file('test_simple.py', dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                scenarios = None
+
+                def test_simple(self):
+                    pass
+            """
+            ))
+
+        expected_output = '''\
+    tests.test_simple.SimpleTest.test_simple
+
+
+ 1 total tests.
+'''
+
+        code, output, error = self.run_autopilot_list()
+        self.assertThat(code, Equals(0))
+        self.assertThat(error, Equals(''))
+        self.assertThat(output, Equals(expected_output))
+

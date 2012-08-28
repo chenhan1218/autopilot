@@ -136,7 +136,7 @@ def list_tests(args):
             lambda a, b: cmp(a.id(), b.id()))
 
     for test in test_list_fn():
-        has_scenarios = hasattr(test, "scenarios")
+        has_scenarios = hasattr(test, "scenarios") and type(test.scenarios) is list
         if has_scenarios:
             num_tests += len(test.scenarios)
             print " *%d %s" % (len(test.scenarios), test.id())

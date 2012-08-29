@@ -81,7 +81,7 @@ class ApplicationProxyObect(DBusIntrospectionObject):
         return filter(lambda i: object_passes_filters(i, **kwargs), instances)
 
     def set_process(self, process):
-        """Set the process Id of the process that this is a proxy for.
+        """Set the subprocess.Popen object of the process that this is a proxy for.
 
         You should never normally need to call this method.
 

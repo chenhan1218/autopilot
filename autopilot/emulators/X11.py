@@ -25,6 +25,7 @@ import subprocess
 from time import sleep
 
 from autopilot.emulators.bamf import BamfWindow
+from autopilot.utilities import Silence
 from Xlib import X, XK
 from Xlib.display import Display
 from Xlib.ext.xtest import fake_input
@@ -32,13 +33,22 @@ from Xlib.ext.xtest import fake_input
 
 _PRESSED_KEYS = []
 _PRESSED_MOUSE_BUTTONS = []
-_DISPLAY = Display()
+_DISPLAY = None
 logger = logging.getLogger(__name__)
+
+
+def get_display():
+    """Get the Xlib display object, creating it (silently) if it doesn't exist."""
+    global _DISPLAY
+    if _DISPLAY is None:
+        with Silence():
+            _DISPLAY = Display()
+    return _DISPLAY
 
 
 def reset_display():
     global _DISPLAY
-    _DISPLAY = Display()
+    _DISPLAY = None
 
 
 class Keyboard(object):
@@ -96,7 +106,7 @@ class Keyboard(object):
     }
 
     def __init__(self):
-        self.shifted_keys = [k[1] for k in _DISPLAY._keymap_codes if k]
+        self.shifted_keys = [k[1] for k in get_display()._keymap_codes if k]
 
     def press(self, keys, delay=0.2):
         """Send key press events only.
@@ -179,7 +189,7 @@ class Keyboard(object):
         global _PRESSED_KEYS
         for keycode in _PRESSED_KEYS:
             logger.warning("Releasing key %r as part of cleanup call.", keycode)
-            fake_input(_DISPLAY, X.KeyRelease, keycode)
+            fake_input(get_display(), X.KeyRelease, keycode)
         _PRESSED_KEYS = []
 
     def __perform_on_key(self, key, event):
@@ -192,7 +202,7 @@ class Keyboard(object):
         keycode, shift_mask = self.__char_to_keycode(key)
 
         if shift_mask != 0:
-            fake_input(_DISPLAY, event, 50)
+            fake_input(get_display(), event, 50)
 
         if event == X.KeyPress:
             logger.debug("Sending press event for key: %s", key)
@@ -204,8 +214,8 @@ class Keyboard(object):
             else:
                 logger.warning("Generating release event for keycode %d that was not pressed.", keycode)
 
-        fake_input(_DISPLAY, event, keycode)
-        _DISPLAY.sync()
+        fake_input(get_display(), event, keycode)
+        get_display().sync()
 
     def __get_keysym(self, key) :
         keysym = XK.string_to_keysym(key)
@@ -221,7 +231,7 @@ class Keyboard(object):
 
     def __char_to_keycode(self, key) :
         keysym = self.__get_keysym(key)
-        keycode = _DISPLAY.keysym_to_keycode(keysym)
+        keycode = get_display().keysym_to_keycode(keysym)
         if keycode == 0 :
             print "Sorry, can't map", key
 
@@ -252,8 +262,8 @@ class Mouse(object):
         """Press mouse button at current mouse location."""
         logger.debug("Pressing mouse button %d", button)
         _PRESSED_MOUSE_BUTTONS.append(button)
-        fake_input(_DISPLAY, X.ButtonPress, button)
-        _DISPLAY.sync()
+        fake_input(get_display(), X.ButtonPress, button)
+        get_display().sync()
 
     def release(self, button=1):
         """Releases mouse button at current mouse location."""
@@ -262,8 +272,8 @@ class Mouse(object):
             _PRESSED_MOUSE_BUTTONS.remove(button)
         else:
             logger.warning("Generating button release event or button %d that was not pressed.", button)
-        fake_input(_DISPLAY, X.ButtonRelease, button)
-        _DISPLAY.sync()
+        fake_input(get_display(), X.ButtonRelease, button)
+        get_display().sync()
 
     def click(self, button=1, press_duration=0.10):
         """Click mouse at current location."""
@@ -282,8 +292,8 @@ class Mouse(object):
             "with" if animate else "without")
 
         def perform_move(x, y, sync):
-            fake_input(_DISPLAY, X.MotionNotify, sync, X.CurrentTime, X.NONE, x=x, y=y)
-            _DISPLAY.sync()
+            fake_input(get_display(), X.MotionNotify, sync, X.CurrentTime, X.NONE, x=x, y=y)
+            get_display().sync()
             sleep(time_between_events)
 
         if not animate:
@@ -363,7 +373,7 @@ class Mouse(object):
 
     def position(self):
         """Returns the current position of the mouse pointer."""
-        coord = _DISPLAY.screen().root.query_pointer()._data
+        coord = get_display().screen().root.query_pointer()._data
         x, y = coord["root_x"], coord["root_y"]
         return x, y
 
@@ -373,7 +383,7 @@ class Mouse(object):
         global _PRESSED_MOUSE_BUTTONS
         for btn in _PRESSED_MOUSE_BUTTONS:
             logger.debug("Releasing mouse button %d as part of cleanup", btn)
-            fake_input(_DISPLAY, X.ButtonRelease, btn)
+            fake_input(get_display(), X.ButtonRelease, btn)
         _PRESSED_MOUSE_BUTTONS = []
         sg = ScreenGeometry()
         sg.move_mouse_to_monitor(0)

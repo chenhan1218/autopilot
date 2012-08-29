@@ -1,3 +1,9 @@
+autopilot (1.1) UNRELEASED; urgency=low
+
+  * Release r64 as 1.1
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Wed, 29 Aug 2012 11:26:01 +0200
+
 autopilot (0.1.2) quantal; urgency=low
 
   * Update to trunk r63, fix compizconfig use (lp: #1038844)

@@ -18,6 +18,7 @@ from Xlib import display, X, protocol
 from gtk import gdk
 
 from autopilot.emulators.dbus_handler import session_bus
+from autopilot.utilities import Silence
 
 __all__ = [
     "Bamf",
@@ -26,7 +27,16 @@ __all__ = [
     ]
 
 _BAMF_BUS_NAME = 'org.ayatana.bamf'
-_X_DISPLAY = display.Display()
+_X_DISPLAY = None
+
+
+def get_display():
+    """Create an Xlib display object (silently) and return it."""
+    global _X_DISPLAY
+    if _X_DISPLAY is None:
+        with Silence():
+            _X_DISPLAY = display.Display()
+    return _X_DISPLAY
 
 
 def _filter_user_visible(win):
@@ -269,8 +279,8 @@ class BamfWindow(object):
         self._view_iface = dbus.Interface(self._app_proxy, 'org.ayatana.bamf.view')
 
         self._xid = int(self._window_iface.GetXid())
-        self._x_root_win = _X_DISPLAY.screen().root
-        self._x_win = _X_DISPLAY.create_resource_object('window', self._xid)
+        self._x_root_win = get_display().screen().root
+        self._x_win = get_display().create_resource_object('window', self._xid)
 
     @property
     def x_id(self):
@@ -407,7 +417,7 @@ class BamfWindow(object):
         _type is a string naming the property type. win is the X11 window object.
 
         """
-        atom = self._x_win.get_full_property(_X_DISPLAY.get_atom(_type), X.AnyPropertyType)
+        atom = self._x_win.get_full_property(get_display().get_atom(_type), X.AnyPropertyType)
         if atom:
             return atom.value
 
@@ -419,15 +429,15 @@ class BamfWindow(object):
             data = (data + [0] * (5 - len(data)))[:5]
             dataSize = 32
 
-        ev = protocol.event.ClientMessage(window=self._x_win, client_type=_X_DISPLAY.get_atom(_type), data=(dataSize, data))
+        ev = protocol.event.ClientMessage(window=self._x_win, client_type=get_display().get_atom(_type), data=(dataSize, data))
 
         if not mask:
             mask = (X.SubstructureRedirectMask | X.SubstructureNotifyMask)
         self._x_root_win.send_event(ev, event_mask=mask)
-        _X_DISPLAY.sync()
+        get_display().sync()
 
     def _get_window_states(self):
         """Return a list of strings representing the current window state."""
 
-        _X_DISPLAY.sync()
-        return map(_X_DISPLAY.get_atom_name, self._getProperty('_NET_WM_STATE'))
+        get_display().sync()
+        return map(get_display().get_atom_name, self._getProperty('_NET_WM_STATE'))

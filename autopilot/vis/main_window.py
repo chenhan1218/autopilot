@@ -10,11 +10,14 @@ from __future__ import absolute_import
 import dbus
 from PyQt4 import QtGui, QtCore
 
-from autopilot.emulators.dbus_handler import session_bus
 from autopilot.introspection.dbus import (
     DBusIntrospectionObject,
-    INTROSPECTION_IFACE,
+    AP_INTROSPECTION_IFACE,
     StateNotFoundError
+    )
+from autopilot.introspection.qt import (
+    make_proxy_object_from_service_name,
+    QtObjectProxyMixin,
     )
 
 
@@ -43,16 +46,33 @@ class MainWindow(QtGui.QMainWindow):
         self.splitter = QtGui.QSplitter(self)
         self.tree_view = QtGui.QTreeView(self.splitter)
 
-        self.table_view = QtGui.QTableWidget(self.splitter)
+        self.details_frame = QtGui.QFrame(self.splitter)
+        self.details_layout = QtGui.QVBoxLayout(self.details_frame)
+        self.details_layout.addWidget(QtGui.QLabel("Properties:"))
+        self.table_view = QtGui.QTableWidget()
         self.table_view.setColumnCount(2)
         self.table_view.verticalHeader().setVisible(False)
         self.table_view.setAlternatingRowColors(True)
         self.table_view.setHorizontalHeaderLabels(header_titles)
         self.table_view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+        self.details_layout.addWidget(self.table_view)
+
+        self.signals_label = QtGui.QLabel("Signals:")
+        self.details_layout.addWidget(self.signals_label)
+
+        self.signals_table = QtGui.QTableWidget()
+        self.signals_table.setColumnCount(1)
+        self.signals_table.verticalHeader().setVisible(False)
+        self.signals_table.setAlternatingRowColors(True)
+        self.signals_table.setHorizontalHeaderLabels(["Signal Signature"])
+        self.signals_table.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+        self.details_layout.addWidget(self.signals_table)
 
         self.splitter.setStretchFactor(0, 0)
         self.splitter.setStretchFactor(1, 100)
         self.setCentralWidget(self.splitter)
+
+        self.show_signal_table(False)
 
         self.connection_list = QtGui.QComboBox()
         self.connection_list.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
@@ -62,24 +82,21 @@ class MainWindow(QtGui.QMainWindow):
         self.toolbar.setObjectName('Connection Toolbar')
         self.toolbar.addWidget(self.connection_list)
 
+    def show_signal_table(self, show):
+        """Show or hide the signals table & label."""
+        self.signals_label.setVisible(show)
+        self.signals_table.setVisible(show)
+
     def on_interface_found(self, conn, obj, iface):
-        if iface == INTROSPECTION_IFACE:
+        if iface == AP_INTROSPECTION_IFACE:
             self.statusBar().showMessage('Updating connection list')
             try:
-                dbus_object = session_bus.get_object(str(conn), str(obj))
-                dbus_iface = dbus.Interface(dbus_object,
-                                            'com.canonical.Autopilot.Introspection')
-                cls_name, cls_state = dbus_iface.GetState("/")[0]
-                cls_name = str(cls_name)
+                proxy_object = make_proxy_object_from_service_name(conn, obj)
+                cls_name = proxy_object.__class__.__name__
                 if not self.selectable_interfaces.has_key(cls_name):
-                    dbus_obj = type(cls_name,
-                                    (DBusIntrospectionObject,),
-                                    dict(DBUS_SERVICE=str(conn),
-                                         DBUS_OBJECT=str(obj)))
-                    dbus_obj = dbus_obj(cls_state)
-                    self.selectable_interfaces[cls_name] = dbus_obj
+                    self.selectable_interfaces[cls_name] = proxy_object
                     self.update_selectable_interfaces()
-            except dbus.DBusException:
+            except (dbus.DBusException, RuntimeError):
                 pass
             self.statusBar().clearMessage()
 
@@ -88,8 +105,15 @@ class MainWindow(QtGui.QMainWindow):
         self.connection_list.clear()
         self.connection_list.addItem("Please select a connection",
                                      QtCore.QVariant(None))
-        for name, dbus_obj in self.selectable_interfaces.iteritems():
-            self.connection_list.addItem(name, QtCore.QVariant(dbus_obj))
+        for name, proxy_obj in self.selectable_interfaces.iteritems():
+            if isinstance(proxy_obj, QtObjectProxyMixin):
+                self.connection_list.addItem(
+                    QtGui.QIcon(":/trolltech/qmessagebox/images/qtlogo-64.png"),
+                    name,
+                    QtCore.QVariant(proxy_obj)
+                    )
+            else:
+                self.connection_list.addItem(name, QtCore.QVariant(proxy_obj))
 
         prev_selected = self.connection_list.findText(selected_text,
                                                       QtCore.Qt.MatchExactly)
@@ -105,17 +129,24 @@ class MainWindow(QtGui.QMainWindow):
             self.tree_view.selectionModel().currentChanged.connect(self.tree_item_changed)
 
     def tree_item_changed(self, current, previous):
+        proxy = current.internalPointer().dbus_object
+        self.update_object_detals_table_from_proxy_object(proxy)
+        if isinstance(proxy, QtObjectProxyMixin):
+            self.update_object_signals_from_proxy_object(proxy)
+            self.show_signal_table(True)
+        else:
+            self.show_signal_table(False)
+
+    def update_object_detals_table_from_proxy_object(self, proxy_object):
+        """Update the object details table."""
         self.table_view.setSortingEnabled(False)
         self.table_view.clearContents()
-
-        object_details = current.internalPointer().dbus_object._DBusIntrospectionObject__state
+        object_details = proxy_object.get_properties()
+        # remove the Children property - we don't care about it:
         object_details.pop("Children", None)
         self.table_view.setRowCount(len(object_details))
         for i, key in enumerate(object_details):
-            if key == "id":
-                details_string = str(current.internalPointer().dbus_object.id)
-            else:
-                details_string = dbus_string_rep(object_details[key])
+            details_string = dbus_string_rep(object_details[key])
             item_name = QtGui.QTableWidgetItem(key)
             item_details = QtGui.QTableWidgetItem(details_string)
             self.table_view.setItem(i, 0, item_name)
@@ -123,6 +154,18 @@ class MainWindow(QtGui.QMainWindow):
         self.table_view.setSortingEnabled(True)
         self.table_view.sortByColumn(0, QtCore.Qt.AscendingOrder)
         self.table_view.resizeColumnsToContents()
+
+    def update_object_signals_from_proxy_object(self, proxy_object):
+        """Update the object signals table."""
+        self.signals_table.setSortingEnabled(False)
+        self.signals_table.clearContents()
+        signals = proxy_object.get_signals()
+        self.signals_table.setRowCount(len(signals))
+        for i, signal in enumerate(signals):
+            self.signals_table.setItem(i, 0, QtGui.QTableWidgetItem(str(signal)))
+        self.signals_table.setSortingEnabled(True)
+        self.signals_table.sortByColumn(0, QtCore.Qt.AscendingOrder)
+        self.signals_table.resizeColumnsToContents()
 
 
 def dbus_string_rep(dbus_type):

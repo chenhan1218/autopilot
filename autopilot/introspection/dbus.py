@@ -58,7 +58,8 @@ def clear_object_registry():
     _object_registry.clear()
 
 
-INTROSPECTION_IFACE = 'com.canonical.Autopilot.Introspection'
+AP_INTROSPECTION_IFACE = 'com.canonical.Autopilot.Introspection'
+DBUS_INTROSPECTION_IFACE = 'org.freedesktop.DBus.Introspectable'
 
 
 def get_introspection_iface(service_name, object_path):
@@ -72,7 +73,7 @@ def get_introspection_iface(service_name, object_path):
         raise TypeError("Object name must be a string")
 
     _debug_proxy_obj = session_bus.get_object(service_name, object_path)
-    return Interface(_debug_proxy_obj, INTROSPECTION_IFACE)
+    return Interface(_debug_proxy_obj, AP_INTROSPECTION_IFACE)
 
 
 def translate_state_keys(state_dict):
@@ -215,6 +216,15 @@ class DBusIntrospectionObject(object):
             if object_passes_filters(instance, **kwargs):
                 result.append(instance)
         return result
+
+    def get_properties(self):
+        """Returns a dictionary of all the properties on this class."""
+        # Since we're grabbing __state directly there's no implied state
+        # refresh, so do it manually:
+        self.refresh_state()
+        props = self.__state
+        props['id'] = self.id
+        return props
 
     def get_children(self):
         """Returns a list of all child objects."""

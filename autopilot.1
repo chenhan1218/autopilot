@@ -1,0 +1,54 @@
+.TH AUTOPILOT 1 LOCAL
+.SH NAME
+autopilot - functional test tool for Ubuntu
+.SH SYNOPSYS
+.B autopilot
+[-h]
+.br
+.B autopilot list suite [suite...]
+.br
+.B autopilot run [-v] [-r] [--rd directory] suite [suite...]
+.SH DESCRIPTION
+.B autopilot is a tool for writing functional test suites for graphical
+applications for Ubuntu.
+.SH OPTIONS
+.SS General Options
+.TP 5
+-h --help
+Get help from autopilot. This command can also be present after a sub-command
+(such as run or list) to get help on the specific command.
+Further options are restricted to particular autopilot commands.
+.TP 5
+suite
+Suites are listed as a python dotted package name. Autopilot will do a
+recursive import in order to find all tests within a python package.
+.SS list [options] suite [suite...]
+List the autopilot tests found in the given test suite.
+.TP 5
+-ro, --run-order
+List tests in the order they will be run in, rather than alphabetically (which
+is the default).
+.SS run [options]suite [suite...]
+Run one or more test suites.
+.TP 5
+-o FILE, --output FILE
+Specify where the test log should be written. Defaults to stdout. If a directory
+is specified the file will be created with a filename of
+<hostname>_<dd.mm.yyy_HHMMSS>.log
+.TP 5
+-f FORMAT, --format FORMAT
+Specify the format for the log. Valid options are 'xml' and 'text' for JUnit XML
+and text format, respectively.
+.TP 5
+-r, --record
+Record failed tests. Using this option requires the 'recordmydesktop'
+application be installed. By default, videos are stored in /tmp/autopilot
+.TP 5
+-rd DIR, --record-directory DIR
+Directory where videos should be stored (overrides the default set by the -r
+option).
+.TP 5
+-v, --verbose
+Causes autopilot to print the test log to stdout while the test is running.
+.SH AUTHOR
+Thomi Richards (thomi.richards@canonical.com)

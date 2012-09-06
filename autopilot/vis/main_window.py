@@ -51,8 +51,6 @@ class MainWindow(QtGui.QMainWindow):
         self.splitter.setStretchFactor(1, 100)
         self.setCentralWidget(self.splitter)
 
-        # self.show_signal_table(False)
-
         self.connection_list = QtGui.QComboBox()
         self.connection_list.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
         self.connection_list.activated.connect(self.conn_list_activated)

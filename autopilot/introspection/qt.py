@@ -232,7 +232,6 @@ class QtSlotProxy(object):
             stripped_method_name = method_name[:method_name.find('(')]
             setattr(self, stripped_method_name, method)
 
-
     def _call_method(self, name, *args):
         self._dbus_iface.InvokeMethod(self._object_id, name, args)
 

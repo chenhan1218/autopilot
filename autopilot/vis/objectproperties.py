@@ -101,7 +101,6 @@ class PropertyView(AbstractView):
         self.table_view.setSortingEnabled(False)
         self.table_view.clearContents()
         object_details = node.get_properties()
-        # remove the Children property - we don't care about it:
         object_details.pop("Children", None)
         self.table_view.setRowCount(len(object_details))
         for i, key in enumerate(object_details):

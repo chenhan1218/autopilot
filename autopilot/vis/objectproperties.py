@@ -25,7 +25,7 @@ class TreeNodeDetailWidget(QtGui.QTabWidget):
         self.views = []
         for view_class in ALL_VIEWS:
             view = view_class()
-            self.addTab(view, view.icon(), view.name())
+            # self.addTab(view, view.icon(), view.name())
             self.views.append(view)
 
     def tree_node_changed(self, new_node):
@@ -73,17 +73,15 @@ class AbstractView(QtGui.QWidget):
         raise NotImplementedError("This method must be implemented in subclasses!")
 
 
-class AttributeView(AbstractView):
+class PropertyView(AbstractView):
 
     """A view that displays the basic exported object properties in a table."""
 
     def __init__(self, *args, **kwargs):
-        super(AttributeView, self).__init__(*args, **kwargs)
+        super(PropertyView, self).__init__(*args, **kwargs)
 
         header_titles = QtCore.QStringList(["Name", "Value"])
         self.details_layout = QtGui.QVBoxLayout(self)
-
-        self.details_layout.addWidget(QtGui.QLabel("Properties:"))
 
         self.table_view = QtGui.QTableWidget()
         self.table_view.setColumnCount(2)
@@ -94,7 +92,7 @@ class AttributeView(AbstractView):
         self.details_layout.addWidget(self.table_view)
 
     def name(self):
-        return "Attributes"
+        return "Properties"
 
     def is_relevant(self, node):
         return True
@@ -119,12 +117,12 @@ class AttributeView(AbstractView):
 
 class SignalView(AbstractView):
 
+    """A view that exposes signals available on an object."""
+
     def __init__(self, *args, **kwargs):
         super(SignalView, self).__init__(*args, **kwargs)
 
         self.details_layout = QtGui.QVBoxLayout(self)
-
-        self.details_layout.addWidget(QtGui.QLabel("Signals:"))
 
         self.signals_table = QtGui.QTableWidget()
         self.signals_table.setColumnCount(1)
@@ -157,6 +155,21 @@ class SignalView(AbstractView):
 
 class SlotView(AbstractView):
 
+    """A View that exposes slots on an object."""
+
+    def __init__(self, *args, **kwargs):
+        super(SlotView, self).__init__(*args, **kwargs)
+
+        self.details_layout = QtGui.QVBoxLayout(self)
+
+        self.slots_table = QtGui.QTableWidget()
+        self.slots_table.setColumnCount(1)
+        self.slots_table.verticalHeader().setVisible(False)
+        self.slots_table.setAlternatingRowColors(True)
+        self.slots_table.setHorizontalHeaderLabels(["Slot Signature"])
+        self.slots_table.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+        self.details_layout.addWidget(self.slots_table)
+
     def name(self):
         return "Slots"
 
@@ -167,11 +180,19 @@ class SlotView(AbstractView):
         return isinstance(node, QtObjectProxyMixin)
 
     def new_node_selected(self, node):
-        pass
+        self.slots_table.setSortingEnabled(False)
+        self.slots_table.clearContents()
+        signals = node.get_slots()
+        self.slots_table.setRowCount(len(signals))
+        for i, signal in enumerate(signals):
+            self.slots_table.setItem(i, 0, QtGui.QTableWidgetItem(str(signal)))
+        self.slots_table.setSortingEnabled(True)
+        self.slots_table.sortByColumn(0, QtCore.Qt.AscendingOrder)
+        self.slots_table.resizeColumnsToContents()
 
 
 ALL_VIEWS = [
-    AttributeView,
+    PropertyView,
     SignalView,
     SlotView,
     ]

@@ -213,6 +213,11 @@ class QtObjectProxyMixin(object):
         dbus_signal_list = self._get_qt_iface().ListSignals(self.id)
         return [str(sig) for sig in dbus_signal_list]
 
+    def get_slots(self):
+        """Get a list of the slots available on this object."""
+        dbus_slot_list = self._get_qt_iface().ListMethods(self.id)
+        return [str(sig) for sig in dbus_slot_list]
+
 
 class QtSlotProxy(object):
     """A class that transparently calls slots in a Qt object."""

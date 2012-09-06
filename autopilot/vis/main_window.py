@@ -11,7 +11,6 @@ import dbus
 from PyQt4 import QtGui, QtCore
 
 from autopilot.introspection.dbus import (
-    DBusIntrospectionObject,
     AP_INTROSPECTION_IFACE,
     StateNotFoundError
     )
@@ -19,6 +18,9 @@ from autopilot.introspection.qt import (
     make_proxy_object_from_service_name,
     QtObjectProxyMixin,
     )
+
+from autopilot.vis.objectproperties import TreeNodeDetailWidget
+from autopilot.vis.resources import get_qt_icon
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -39,40 +41,17 @@ class MainWindow(QtGui.QMainWindow):
         settings.setValue("windowState", self.saveState())
 
     def initUI(self):
-        header_titles = QtCore.QStringList(["Name", "Value"])
-
         self.statusBar().showMessage('Waiting for first valid dbus connection')
 
         self.splitter = QtGui.QSplitter(self)
         self.tree_view = QtGui.QTreeView(self.splitter)
-
-        self.details_frame = QtGui.QFrame(self.splitter)
-        self.details_layout = QtGui.QVBoxLayout(self.details_frame)
-        self.details_layout.addWidget(QtGui.QLabel("Properties:"))
-        self.table_view = QtGui.QTableWidget()
-        self.table_view.setColumnCount(2)
-        self.table_view.verticalHeader().setVisible(False)
-        self.table_view.setAlternatingRowColors(True)
-        self.table_view.setHorizontalHeaderLabels(header_titles)
-        self.table_view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
-        self.details_layout.addWidget(self.table_view)
-
-        self.signals_label = QtGui.QLabel("Signals:")
-        self.details_layout.addWidget(self.signals_label)
-
-        self.signals_table = QtGui.QTableWidget()
-        self.signals_table.setColumnCount(1)
-        self.signals_table.verticalHeader().setVisible(False)
-        self.signals_table.setAlternatingRowColors(True)
-        self.signals_table.setHorizontalHeaderLabels(["Signal Signature"])
-        self.signals_table.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
-        self.details_layout.addWidget(self.signals_table)
+        self.detail_widget = TreeNodeDetailWidget(self.splitter)
 
         self.splitter.setStretchFactor(0, 0)
         self.splitter.setStretchFactor(1, 100)
         self.setCentralWidget(self.splitter)
 
-        self.show_signal_table(False)
+        # self.show_signal_table(False)
 
         self.connection_list = QtGui.QComboBox()
         self.connection_list.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
@@ -81,11 +60,6 @@ class MainWindow(QtGui.QMainWindow):
         self.toolbar = self.addToolBar('Connection')
         self.toolbar.setObjectName('Connection Toolbar')
         self.toolbar.addWidget(self.connection_list)
-
-    def show_signal_table(self, show):
-        """Show or hide the signals table & label."""
-        self.signals_label.setVisible(show)
-        self.signals_table.setVisible(show)
 
     def on_interface_found(self, conn, obj, iface):
         if iface == AP_INTROSPECTION_IFACE:
@@ -108,7 +82,7 @@ class MainWindow(QtGui.QMainWindow):
         for name, proxy_obj in self.selectable_interfaces.iteritems():
             if isinstance(proxy_obj, QtObjectProxyMixin):
                 self.connection_list.addItem(
-                    QtGui.QIcon(":/trolltech/qmessagebox/images/qtlogo-64.png"),
+                    get_qt_icon(),
                     name,
                     QtCore.QVariant(proxy_obj)
                     )
@@ -130,64 +104,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def tree_item_changed(self, current, previous):
         proxy = current.internalPointer().dbus_object
-        self.update_object_detals_table_from_proxy_object(proxy)
-        if isinstance(proxy, QtObjectProxyMixin):
-            self.update_object_signals_from_proxy_object(proxy)
-            self.show_signal_table(True)
-        else:
-            self.show_signal_table(False)
-
-    def update_object_detals_table_from_proxy_object(self, proxy_object):
-        """Update the object details table."""
-        self.table_view.setSortingEnabled(False)
-        self.table_view.clearContents()
-        object_details = proxy_object.get_properties()
-        # remove the Children property - we don't care about it:
-        object_details.pop("Children", None)
-        self.table_view.setRowCount(len(object_details))
-        for i, key in enumerate(object_details):
-            details_string = dbus_string_rep(object_details[key])
-            item_name = QtGui.QTableWidgetItem(key)
-            item_details = QtGui.QTableWidgetItem(details_string)
-            self.table_view.setItem(i, 0, item_name)
-            self.table_view.setItem(i, 1, item_details)
-        self.table_view.setSortingEnabled(True)
-        self.table_view.sortByColumn(0, QtCore.Qt.AscendingOrder)
-        self.table_view.resizeColumnsToContents()
-
-    def update_object_signals_from_proxy_object(self, proxy_object):
-        """Update the object signals table."""
-        self.signals_table.setSortingEnabled(False)
-        self.signals_table.clearContents()
-        signals = proxy_object.get_signals()
-        self.signals_table.setRowCount(len(signals))
-        for i, signal in enumerate(signals):
-            self.signals_table.setItem(i, 0, QtGui.QTableWidgetItem(str(signal)))
-        self.signals_table.setSortingEnabled(True)
-        self.signals_table.sortByColumn(0, QtCore.Qt.AscendingOrder)
-        self.signals_table.resizeColumnsToContents()
-
-
-def dbus_string_rep(dbus_type):
-    """Get a string representation of various dbus types."""
-    if isinstance(dbus_type, dbus.Boolean):
-        return repr(bool(dbus_type))
-    if isinstance(dbus_type, dbus.String):
-        return dbus_type.encode('ascii', errors='ignore')
-    if (isinstance(dbus_type, dbus.Int16)
-        or isinstance(dbus_type, dbus.UInt16)
-        or isinstance(dbus_type, dbus.Int32)
-        or isinstance(dbus_type, dbus.UInt32)
-        or isinstance(dbus_type, dbus.Int64)
-        or isinstance(dbus_type, dbus.UInt64)):
-        return repr(int(dbus_type))
-    if isinstance(dbus_type, dbus.Double):
-        return repr(float(dbus_type))
-    if (isinstance(dbus_type, dbus.Array)
-        or isinstance(dbus_type, dbus.Struct)):
-        return ', '.join([dbus_string_rep(i) for i in dbus_type])
-    else:
-        return repr(dbus_type)
+        self.detail_widget.tree_node_changed(proxy)
 
 
 class TreeNode(object):

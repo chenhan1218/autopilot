@@ -13,6 +13,7 @@
 __all__ = 'QtIntrospectionTetMixin'
 
 import dbus
+import functools
 import gio
 import logging
 import subprocess
@@ -150,6 +151,13 @@ class QtObjectProxyMixin(object):
         _debug_proxy_obj = session_bus.get_object(self.DBUS_SERVICE, self.DBUS_OBJECT)
         return dbus.Interface(_debug_proxy_obj, QT_AUTOPILOT_IFACE)
 
+    @property
+    def slots(self):
+        """An object that contains all the slots available to be called in this object."""
+        if getattr(self, '_slots', None) is None:
+            self._slots = QtSlotProxy(self)
+        return self._slots
+
     def watch_signal(self, signal_name):
         """Start watching the 'signal_name' signal on this object.
 
@@ -204,6 +212,24 @@ class QtObjectProxyMixin(object):
         """Get a list of the signals available on this object."""
         dbus_signal_list = self._get_qt_iface().ListSignals(self.id)
         return [str(sig) for sig in dbus_signal_list]
+
+
+class QtSlotProxy(object):
+    """A class that transparently calls slots in a Qt object."""
+
+    def __init__(self, qt_mixin):
+        self._dbus_iface = qt_mixin._get_qt_iface()
+        self._object_id = qt_mixin.id
+
+        methods = self._dbus_iface.ListMethods(self._object_id)
+        for method_name in methods:
+            method = functools.partial(self._call_method, method_name)
+            stripped_method_name = method_name[:method_name.find('(')]
+            setattr(self, stripped_method_name, method)
+
+
+    def _call_method(self, name, *args):
+        self._dbus_iface.InvokeMethod(self._object_id, name, args)
 
 
 class QtIntrospectionTestMixin(object):

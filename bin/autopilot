@@ -214,8 +214,7 @@ def load_test_suite_from_name(test_names):
         tests.append(loader.discover(top_level_pkg, top_level_dir=package_parent_path))
     all_tests = TestSuite(tests)
 
-    print "Loading tests from:", ", ".join(sorted(test_package_locations))
-    print
+    print "Loading tests from: %s\n" % ", ".join(sorted(test_package_locations))
 
     requested_tests = {}
     for test in iterate_tests(all_tests):

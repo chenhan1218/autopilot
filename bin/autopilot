@@ -13,11 +13,9 @@ from datetime import datetime
 from imp import find_module
 import os
 import os.path
-from os import remove, putenv
+from os import putenv
 from platform import node
-from subprocess import call
 import sys
-from tempfile import NamedTemporaryFile
 from testtools import iterate_tests
 from textwrap import dedent
 from argparse import ArgumentParser
@@ -192,6 +190,7 @@ def run_tests(args):
 
 def load_test_suite_from_name(test_names):
     """Returns a test suite object given a dotted test names."""
+    patch_python_path()
     loader = TestLoader()
     if isinstance(test_names, basestring):
         test_names = list(test_names)
@@ -200,6 +199,7 @@ def load_test_suite_from_name(test_names):
                         % (type(test_names)))
 
     tests = []
+    test_package_locations = []
     for test_name in test_names:
         top_level_pkg = test_name.split('.')[0]
         package = __import__(top_level_pkg)
@@ -209,8 +209,13 @@ def load_test_suite_from_name(test_names):
                 '..'
                 )
             )
+        if package_parent_path not in test_package_locations:
+            test_package_locations.append(package_parent_path)
         tests.append(loader.discover(top_level_pkg, top_level_dir=package_parent_path))
     all_tests = TestSuite(tests)
+
+    print "Loading tests from:", ", ".join(sorted(test_package_locations))
+    print
 
     requested_tests = {}
     for test in iterate_tests(all_tests):
@@ -228,6 +233,15 @@ def load_test_suite_from_name(test_names):
             requested_tests[test.id()] = test
 
     return TestSuite(requested_tests.values())
+
+
+def patch_python_path():
+    """Prepend the current directory to sys.path to ensure that we can load & run
+    autopilot tests if the caller is in the parent directory.
+
+    """
+    if os.getcwd() not in sys.path:
+        sys.path.insert(0, os.getcwd())
 
 
 def main():

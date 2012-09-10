@@ -17,6 +17,7 @@ from os import remove, putenv
 from platform import node
 from subprocess import call
 import sys
+import subprocess
 from tempfile import NamedTemporaryFile
 from testtools import iterate_tests
 from textwrap import dedent
@@ -152,6 +153,11 @@ def run_tests(args):
     import autopilot.globals
 
     if args.record:
+        try:
+            subprocess.check_output('which recordmydesktop', shell=True)
+        except subprocess.CalledProcessError:
+			print "ERROR: The application 'recordmydesktop' needs to be installed to record failing jobs."
+			exit(1)
         autopilot.globals.video_recording_enabled = True
         autopilot.globals.video_record_directory = args.record_directory
     if args.verbose:

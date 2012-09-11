@@ -79,7 +79,7 @@ class AutopilotFunctionalTests(TestCase):
 
         environ = os.environ
         environ.update(dict(
-                PYTHONPATH='%s:%s' % (self.base_path, ap_base_path),
+                PYTHONPATH=ap_base_path,
                 DISPLAY=':0'))
 
         process = subprocess.Popen(
@@ -100,6 +100,27 @@ class AutopilotFunctionalTests(TestCase):
 
         return (retcode, stdout, stderr)
 
+    def assertTestsInOutput(self, tests, output):
+        """Asserts that 'tests' are all present in 'output'."""
+
+        if type(tests) is not list:
+            raise TypeError("tests must be a list, not %r" % type(tests))
+        if not isinstance(output, basestring):
+            raise TypeError("output must be a string, not %r" % type(output))
+
+        expected = '''\
+Loading tests from: %s
+
+%s
+
+ %d total tests.
+''' % (self.base_path,
+    ''.join(['    %s\n' % t for t in sorted(tests)]),
+    len(tests))
+
+        self.assertThat(output, Equals(expected))
+
+
     def create_test_file(self, name, contents):
         """Create a test file with the given name and contents.
 
@@ -118,11 +139,9 @@ class AutopilotFunctionalTests(TestCase):
         """Autopilot list must report 0 tests found with an empty test module."""
         code, output, error = self.run_autopilot_list()
 
-        expected_output = '\n\n 0 total tests.\n'
-
         self.assertThat(code, Equals(0))
         self.assertThat(error, Equals(''))
-        self.assertThat(output, Equals(expected_output))
+        self.assertTestsInOutput([], output)
 
     def test_can_list_tests(self):
         """Autopilot must find tests in a file."""
@@ -138,13 +157,6 @@ class AutopilotFunctionalTests(TestCase):
             """
             ))
 
-        expected_output = '''\
-    tests.test_simple.SimpleTest.test_simple
-
-
- 1 total tests.
-'''
-
         # ideally these would be different tests, but I'm lazy:
         valid_test_specs = [
             'tests',
@@ -156,7 +168,7 @@ class AutopilotFunctionalTests(TestCase):
             code, output, error = self.run_autopilot_list(test_spec)
             self.assertThat(code, Equals(0))
             self.assertThat(error, Equals(''))
-            self.assertThat(output, Equals(expected_output))
+            self.assertTestsInOutput(['tests.test_simple.SimpleTest.test_simple'], output)
 
     def test_list_tests_with_import_error(self):
         self.create_test_file('test_simple.py', dedent("""\
@@ -173,6 +185,8 @@ class AutopilotFunctionalTests(TestCase):
             ))
         code, output, error = self.run_autopilot_list()
         expected_regex = '''\
+Loading tests from: %s
+
 Failed to import test module: tests.test_simple
 Traceback \(most recent call last\):
   File "/usr/lib/python2.7/unittest/loader.py", line 252, in _find_tests
@@ -186,7 +200,7 @@ ImportError: No module named asdjkhdfjgsdhfjhsd
 
 
  0 total tests.
-'''
+''' % self.base_path
         self.assertThat(code, Equals(0))
         self.assertThat(error, Equals(''))
         self.assertThat(output, MatchesRegex(expected_regex, re.MULTILINE))
@@ -206,6 +220,8 @@ ImportError: No module named asdjkhdfjgsdhfjhsd
             ))
         code, output, error = self.run_autopilot_list()
         expected_regex = '''\
+Loading tests from: %s
+
 Failed to import test module: tests.test_simple
 Traceback \(most recent call last\):
   File "/usr/lib/python2.7/unittest/loader.py", line 252, in _find_tests
@@ -220,7 +236,7 @@ SyntaxError: invalid syntax
 
 
  0 total tests.
-'''
+''' % self.base_path
         self.assertThat(code, Equals(0))
         self.assertThat(error, Equals(''))
         self.assertThat(output, MatchesRegex(expected_regex, re.MULTILINE))
@@ -244,11 +260,13 @@ SyntaxError: invalid syntax
             ))
 
         expected_output = '''\
+Loading tests from: %s
+
  *1 tests.test_simple.SimpleTest.test_simple
 
 
  1 total tests.
-'''
+''' % self.base_path
 
         code, output, error = self.run_autopilot_list()
         self.assertThat(code, Equals(0))
@@ -282,12 +300,14 @@ SyntaxError: invalid syntax
             ))
 
         expected_output = '''\
+Loading tests from: %s
+
  *2 tests.test_simple.SimpleTest.test_simple
  *2 tests.test_simple.SimpleTest.test_simple_two
 
 
  4 total tests.
-'''
+''' % self.base_path
 
         code, output, error = self.run_autopilot_list()
         self.assertThat(code, Equals(0))
@@ -310,15 +330,7 @@ SyntaxError: invalid syntax
             """
             ))
 
-        expected_output = '''\
-    tests.test_simple.SimpleTest.test_simple
-
-
- 1 total tests.
-'''
-
         code, output, error = self.run_autopilot_list()
         self.assertThat(code, Equals(0))
         self.assertThat(error, Equals(''))
-        self.assertThat(output, Equals(expected_output))
-
+        self.assertTestsInOutput(['tests.test_simple.SimpleTest.test_simple'], output)

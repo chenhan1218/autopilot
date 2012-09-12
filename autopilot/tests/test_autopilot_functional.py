@@ -13,6 +13,7 @@ import os.path
 import logging
 from shutil import rmtree
 import subprocess
+import sys
 from tempfile import mkdtemp
 from testtools import TestCase
 from testtools.content import text_content
@@ -75,12 +76,19 @@ class AutopilotFunctionalTests(TestCase):
                 '..'
                 )
             )
+
+        environment_patch = dict(DISPLAY=':0')
+        # only set PYTHONPATH if we're not already in the sys.path list.
+        if ap_base_path not in sys.path:
+            environment_patch['PYTHONPATH'] = ap_base_path
+
         bin_path = os.path.join(ap_base_path, 'bin', 'autopilot')
+        if not os.path.exists(bin_path):
+            bin_path = subprocess.check_output(['which', 'autopilot']).strip()
+            logger.info("Not running from source, setting bin_path to %s", bin_path)
 
         environ = os.environ
-        environ.update(dict(
-                PYTHONPATH=ap_base_path,
-                DISPLAY=':0'))
+        environ.update(environment_patch)
 
         process = subprocess.Popen(
             "%s list %s" % (bin_path, list_spec),

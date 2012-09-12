@@ -358,7 +358,7 @@ def get_autopilot_proxy_object_for_process(process):
                     proxy.set_process(process)
                     return proxy
             except Exception as e:
-                print e
+                logger.warning("Caught exception while searching for autopilot infterface: '%r'", e)
         sleep(1)
     raise RuntimeError("Unable to find Autopilot interface.")
 

@@ -233,7 +233,7 @@ class Keyboard(object):
         keysym = self.__get_keysym(key)
         keycode = get_display().keysym_to_keycode(keysym)
         if keycode == 0 :
-            print "Sorry, can't map", key
+            logger.warning("Sorry, can't map '%s'", key)
 
         if (self.__is_shifted(key)) :
             shift_mask = X.ShiftMask

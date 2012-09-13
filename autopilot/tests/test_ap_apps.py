@@ -9,6 +9,7 @@
 import subprocess
 
 from autopilot.testcase import AutopilotTestCase
+from autopilot.introspection.gtk import GtkIntrospectionTestMixin
 from autopilot.introspection.qt import QtIntrospectionTestMixin
 
 class QtTests(AutopilotTestCase, QtIntrospectionTestMixin):
@@ -20,6 +21,21 @@ class QtTests(AutopilotTestCase, QtIntrospectionTestMixin):
             self.app_path = subprocess.check_output(['which','qmlviewer']).strip()
         except subprocess.CalledProcessError:
             self.skip("qmlviewer not found.")
+
+    def test_can_launch_qt_app(self):
+        app_proxy = self.launch_test_application(self.app_path)
+        self.assertTrue(app_proxy is not None)
+
+
+class GtkTests(AutopilotTestCase, GtkIntrospectionTestMixin):
+
+    def setUp(self):
+        super(GtkTests, self).setUp()
+
+        try:
+            self.app_path = subprocess.check_output(['which','gnome-mahjongg']).strip()
+        except subprocess.CalledProcessError:
+            self.skip("gnome-mahjongg not found.")
 
     def test_can_launch_qt_app(self):
         app_proxy = self.launch_test_application(self.app_path)

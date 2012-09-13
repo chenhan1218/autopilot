@@ -10,8 +10,10 @@
 """Package for introspection support."""
 
 import dbus
+import gio
 import logging
 import subprocess
+from testtools.content import text_content
 from time import sleep
 
 
@@ -30,6 +32,85 @@ logger = logging.getLogger(__name__)
 
 QT_AUTOPILOT_IFACE = 'com.canonical.Autopilot.Qt'
 AUTOPILOT_PATH = "/com/canonical/Autopilot/Introspection"
+
+
+class ApplicationIntrospectionTestMixin(object):
+    """A mix-in class to make launching applications for introsection easier.
+
+    You should not instantiate this class directly. Instead, use one of the
+    derived classes.
+
+    """
+
+    def launch_test_application(self, application, *arguments, **kwargs):
+        """Launch 'application' and retrieve a proxy object for the application.
+
+        Use this method to launch a supported application and start testing it.
+        The application can be specified as:
+
+         * A Desktop file, either with or without a path component.
+         * An executable file, either with a path, or one that is in the $PATH.
+
+        This method supports the following keyword arguments:
+
+         * launch_dir. If set to a directory that exists the process will be
+         launched from that directory.
+
+        Unknown keyword arguments will cause a ValueError to be raised.
+
+        This method returns a proxy object that represents the application.
+        Introspection data is retrievable via this object.
+
+         """
+        if not isinstance(application, basestring):
+            raise TypeError("'application' parameter must be a string.")
+        cwd = kwargs.pop('launch_dir', None)
+        if kwargs:
+            raise ValueError("Unknown keyword arguments: %s." %
+                (', '.join( repr(k) for k in kwargs.keys())))
+
+        if application.endswith('.desktop'):
+            proc = gio.unix.DesktopAppInfo(application)
+            application = proc.get_executable()
+
+        path, args = self.prepare_environment(application, list(arguments))
+
+        proxy = launch_autopilot_enabled_process(path, args, cwd=cwd)
+
+        self.addCleanup(self._kill_process_and_attach_logs, proxy)
+        return proxy
+
+    def prepare_environment(self, app_path, arguments):
+        """Prepare the application, or environment to launch with autopilot-support.
+
+        This method does nothing - it exists so child classes can override it.
+
+        The method MUST return a tuple of (app_path, arguments). Either of these
+        can be altered by this method.
+
+        """
+        raise NotImplementedError("Sub-classes must implement this method.")
+
+    def _kill_process_and_attach_logs(self, proxy):
+        process = proxy.process
+        process.kill()
+        stdout, stderr = process.communicate()
+        self.addDetail('process-stdout', text_content(stdout))
+        self.addDetail('process-stderr', text_content(stderr))
+
+
+def launch_autopilot_enabled_process(application, args, **kwargs):
+    """Launch an autopilot-enabled process and return the proxy object."""
+    commandline = [application]
+    commandline.extend(args)
+    logger.info("Launching process: %r", commandline)
+    process = subprocess.Popen(commandline,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        close_fds=True,
+        **kwargs)
+    return get_autopilot_proxy_object_for_process(process)
 
 
 def get_autopilot_proxy_object_for_process(process):
@@ -57,17 +138,11 @@ def get_autopilot_proxy_object_for_process(process):
     clear_object_registry()
 
     logger.info("Looking for autopilot interface for PID %d", pid)
-
+    # We give the process 10 seconds grace time to get the dbus interface up...
     for i in range(10):
         names = session_bus.list_names()
         for name in names:
-            # We only care about anonymous names for now.
-            if not name.startswith(":"):
-                continue
             try:
-                # Autopilot interface is always registered at "/" - for now.
-                # dbus_object = session_bus.get_object(name, "/")
-                # dbus_iface = dbus.Interface(dbus_object, )
                 name_pid = bus_iface.GetConnectionUnixProcessID(name)
                 if name_pid == pid:
                     # We've found at least one connection to the session bus from
@@ -76,7 +151,7 @@ def get_autopilot_proxy_object_for_process(process):
                     proxy.set_process(process)
                     return proxy
             except Exception as e:
-                logger.warning("Caught exception while searching for autopilot infterface: '%r'", e)
+                logger.warning("Caught exception while searching for autopilot interface: '%r'", e)
         sleep(1)
     raise RuntimeError("Unable to find Autopilot interface.")
 
@@ -129,6 +204,7 @@ def get_proxy_object_class_name_and_state(service_name, obj_path):
     dbus_object = session_bus.get_object(service_name, obj_path)
     dbus_iface = dbus.Interface(dbus_object, AP_INTROSPECTION_IFACE)
     return dbus_iface.GetState("/")[0]
+
 
 class ApplicationProxyObect(DBusIntrospectionObject):
     """A class that better supports query data from an application."""

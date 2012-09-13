@@ -13,11 +13,11 @@ from testtools.matchers import Equals, Is, Not, raises
 from mock import patch
 
 from autopilot.introspection.qt import QtIntrospectionTestMixin
-from autopilot.testcase import AutopilotTestCase
 
 
 def dummy_addCleanup(*args, **kwargs):
     pass
+
 
 class ApplicationSupportTests(TestCase):
 
@@ -39,66 +39,6 @@ class ApplicationSupportTests(TestCase):
         self.assertThat(lambda: mixin.launch_test_application(None), raises(TypeError))
         self.assertThat(lambda: mixin.launch_test_application([]), raises(TypeError))
         self.assertThat(lambda: mixin.launch_test_application((None,)), raises(TypeError))
-
-    @patch('autopilot.introspection.qt.launch_application_from_path')
-    def test_launch_can_classify_absolute_app_path(self, mock):
-        """launch_test_application must be able to correctly classify an absolute
-        path to a desktop file as a desktop file.
-
-        """
-        mixin = QtIntrospectionTestMixin()
-        mixin.addCleanup = dummy_addCleanup
-
-        absolute_path = '/usr/bin/gedit'
-        mixin.launch_test_application(absolute_path)
-
-        self.assertThat(mock.called, Equals(True))
-        self.assertThat(mock.call_args[0], Equals((absolute_path,)))
-
-    @patch('autopilot.introspection.qt.launch_application_from_path')
-    def test_launch_can_classify_relative_app_path(self, mock):
-        """launch_test_application must be able to correctly classify a relative
-        path to a desktop file as a desktop file.
-
-        """
-        mixin = QtIntrospectionTestMixin()
-        mixin.addCleanup = dummy_addCleanup
-
-        relative_path = 'gedit'
-        mixin.launch_test_application(relative_path)
-
-        self.assertThat(mock.called, Equals(True))
-        self.assertThat(mock.call_args[0], Equals((relative_path,)))
-
-    @patch('autopilot.introspection.qt.launch_application_from_path')
-    def test_launch_can_classify_absolute_app_path_with_args(self, mock):
-        """launch_test_application must be able to correctly classify an absolute
-        path to a desktop file as a desktop file.
-
-        """
-        mixin = QtIntrospectionTestMixin()
-        mixin.addCleanup = dummy_addCleanup
-
-        absolute_path = '/usr/bin/gedit'
-        mixin.launch_test_application(absolute_path, "-some", "arguments")
-
-        self.assertThat(mock.called, Equals(True))
-        self.assertThat(mock.call_args[0], Equals((absolute_path, "-some", "arguments")))
-
-    @patch('autopilot.introspection.qt.launch_application_from_path')
-    def test_launch_can_classify_relative_app_path_with_args(self, mock):
-        """launch_test_application must be able to correctly classify a relative
-        path to a desktop file as a desktop file.
-
-        """
-        mixin = QtIntrospectionTestMixin()
-        mixin.addCleanup = dummy_addCleanup
-
-        relative_path = 'gedit'
-        mixin.launch_test_application(relative_path, "-some", "arguments")
-
-        self.assertThat(mock.called, Equals(True))
-        self.assertThat(mock.call_args[0], Equals((relative_path, "-some", "arguments")))
 
     def test_launch_raises_ValueError_on_unknown_kwargs(self):
         """launch_test_application must raise ValueError when given unknown

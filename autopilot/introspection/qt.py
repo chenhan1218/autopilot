@@ -14,12 +14,10 @@ __all__ = 'QtIntrospectionTetMixin'
 
 import dbus
 import functools
-import gio
-import logging
-import subprocess
-from testtools.content import text_content
 
-from autopilot.introspection import get_autopilot_proxy_object_for_process, QT_AUTOPILOT_IFACE
+import logging
+
+from autopilot.introspection import QT_AUTOPILOT_IFACE, ApplicationIntrospectionTestMixin
 from autopilot.introspection.dbus import session_bus
 
 
@@ -160,70 +158,16 @@ class QtSlotProxy(object):
         self._dbus_iface.InvokeMethod(self._object_id, name, args)
 
 
-class QtIntrospectionTestMixin(object):
+class QtIntrospectionTestMixin(ApplicationIntrospectionTestMixin):
     """A mix-in class to make Qt application introspection easier."""
 
-    def launch_test_application(self, application, *arguments, **kwargs):
-        """Launch 'application' and retrieve a proxy object for the application.
+    def prepare_environment(self, app_path, arguments):
+        """Prepare the application, or environment to launch with autopilot-support.
 
-        Use this method to launch a supported application and start testing it.
-        The application can be specified as:
+        """
+        if '-testability' not in arguments:
+            arguments.insert(0, '-testability')
 
-         * A Desktop file, either with or without a path component.
-         * An executable file, either with a path, or one that is in the $PATH.
+        return app_path, arguments
 
-        This method supports the following keyword arguments:
-
-         * launch_dir. If set to a directory that exists the process will be
-         launched from that directory.
-
-        Unknown keyword arguments will cause a ValueError to be raised.
-
-        This method returns a proxy object that represents the application.
-        Introspection data is retrievable via this object.
-
-         """
-        if not isinstance(application, basestring):
-            raise TypeError("'application' parameter must be a string.")
-        cwd = kwargs.pop('launch_dir', None)
-        if kwargs:
-            raise ValueError("Unknown keyword arguments: %s." %
-                (', '.join( repr(k) for k in kwargs.keys())))
-
-        if application.endswith('.desktop'):
-            proc = gio.unix.DesktopAppInfo(application)
-            application = proc.get_executable()
-
-        proxy = launch_application_from_path(application, *arguments, cwd=cwd)
-
-        self.addCleanup(self._kill_process_and_attach_logs, proxy)
-        return proxy
-
-    def _kill_process_and_attach_logs(self, proxy):
-        process = proxy.process
-        process.kill()
-        stdout, stderr = process.communicate()
-        self.addDetail('process-stdout', text_content(stdout))
-        self.addDetail('process-stderr', text_content(stderr))
-
-
-def launch_application_from_path(application_path, *arguments, **kwargs):
-    arguments = list(arguments)
-    if "-testability" not in arguments:
-        arguments.insert(0, "-testability")
-
-    return launch_autopilot_enabled_process(application_path, *arguments, **kwargs)
-
-
-def launch_autopilot_enabled_process(application, *args, **kwargs):
-    """Launch an autopilot-enabled process and return the proxy object."""
-    commandline = [application]
-    commandline.extend(args)
-    process = subprocess.Popen(commandline,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        close_fds=True,
-        **kwargs)
-    return get_autopilot_proxy_object_for_process(process)
 

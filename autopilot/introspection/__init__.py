@@ -18,9 +18,7 @@ from time import sleep
 
 
 from autopilot.introspection.dbus import (
-    AP_INTROSPECTION_IFACE,
     clear_object_registry,
-    DBUS_INTROSPECTION_IFACE,
     DBusIntrospectionObject,
     object_passes_filters,
     session_bus,
@@ -30,8 +28,10 @@ from autopilot.introspection.dbus import (
 logger = logging.getLogger(__name__)
 
 
-QT_AUTOPILOT_IFACE = 'com.canonical.Autopilot.Qt'
 AUTOPILOT_PATH = "/com/canonical/Autopilot/Introspection"
+QT_AUTOPILOT_IFACE = 'com.canonical.Autopilot.Qt'
+AP_INTROSPECTION_IFACE = 'com.canonical.Autopilot.Introspection'
+DBUS_INTROSPECTION_IFACE = 'org.freedesktop.DBus.Introspectable'
 
 
 class ApplicationIntrospectionTestMixin(object):
@@ -201,6 +201,7 @@ def get_proxy_object_base_clases(service_name, obj_path):
 
 
 def get_proxy_object_class_name_and_state(service_name, obj_path):
+    """Return the class name and root state dictionary."""
     dbus_object = session_bus.get_object(service_name, obj_path)
     dbus_iface = dbus.Interface(dbus_object, AP_INTROSPECTION_IFACE)
     return dbus_iface.GetState("/")[0]

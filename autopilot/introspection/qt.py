@@ -24,8 +24,25 @@ from autopilot.introspection.dbus import session_bus
 logger = logging.getLogger(__name__)
 
 
-class QtSignalWatcher(object):
+class QtIntrospectionTestMixin(ApplicationIntrospectionTestMixin):
+    """A mix-in class to make Qt application introspection easier.
 
+    Inherit from this class if you want to launch and test Qt application with
+    autopilot.
+
+    """
+
+    def prepare_environment(self, app_path, arguments):
+        """Prepare the application, or environment to launch with autopilot-support.
+
+        """
+        if '-testability' not in arguments:
+            arguments.insert(0, '-testability')
+
+        return app_path, arguments
+
+
+class QtSignalWatcher(object):
     """A utility class to make watching Qt signals easy."""
 
     def __init__(self, proxy, signal_name):
@@ -156,18 +173,3 @@ class QtSlotProxy(object):
 
     def _call_method(self, name, *args):
         self._dbus_iface.InvokeMethod(self._object_id, name, args)
-
-
-class QtIntrospectionTestMixin(ApplicationIntrospectionTestMixin):
-    """A mix-in class to make Qt application introspection easier."""
-
-    def prepare_environment(self, app_path, arguments):
-        """Prepare the application, or environment to launch with autopilot-support.
-
-        """
-        if '-testability' not in arguments:
-            arguments.insert(0, '-testability')
-
-        return app_path, arguments
-
-

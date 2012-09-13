@@ -147,6 +147,8 @@ def list_tests(args):
 
 def run_tests(args):
     """Run tests, using input from `args`."""
+    test_suite = load_test_suite_from_name(args.suite)
+
     import junitxml
     import autopilot.globals
 
@@ -159,7 +161,6 @@ def run_tests(args):
     if args.verbose:
         autopilot.globals.log_verbose = True
 
-    test_suite = load_test_suite_from_name(args.suite)
 
     if args.output == None:
         results_stream = sys.stdout

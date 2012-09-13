@@ -191,9 +191,10 @@ class QtIntrospectionTestMixin(object):
                 (', '.join( repr(k) for k in kwargs.keys())))
 
         if application.endswith('.desktop'):
-            proxy = launch_application_from_desktop_file(application, *arguments, cwd=cwd)
-        else:
-            proxy = launch_application_from_path(application, *arguments, cwd=cwd)
+            proc = gio.unix.DesktopAppInfo(application)
+            application = proc.get_executable()
+
+        proxy = launch_application_from_path(application, *arguments, cwd=cwd)
 
         self.addCleanup(self._kill_process_and_attach_logs, proxy)
         return proxy
@@ -204,17 +205,6 @@ class QtIntrospectionTestMixin(object):
         stdout, stderr = process.communicate()
         self.addDetail('process-stdout', text_content(stdout))
         self.addDetail('process-stderr', text_content(stderr))
-
-
-def launch_application_from_desktop_file(desktop_file, *arguments, **kwargs):
-    """Launch an application from a desktop file.
-
-    This function actually just finds the executable on disk and defers the
-    real work to launch_application_from_path.
-
-    """
-    proc = gio.unix.DesktopAppInfo(desktop_file)
-    return launch_application_from_path(proc.get_executable(), *arguments, **kwargs)
 
 
 def launch_application_from_path(application_path, *arguments, **kwargs):

@@ -58,10 +58,6 @@ def clear_object_registry():
     _object_registry.clear()
 
 
-AP_INTROSPECTION_IFACE = 'com.canonical.Autopilot.Introspection'
-DBUS_INTROSPECTION_IFACE = 'org.freedesktop.DBus.Introspectable'
-
-
 def get_introspection_iface(service_name, object_path):
     """Get the autopilot introspection interface for the specified service name
     and object path.
@@ -333,8 +329,3 @@ class DBusIntrospectionObject(object):
             yield
         finally:
             self.__refresh_on_attribute = True
-
-
-
-
-

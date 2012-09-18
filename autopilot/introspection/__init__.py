@@ -17,6 +17,12 @@ from testtools.content import text_content
 from time import sleep
 
 
+from autopilot.introspection.constants import (
+    AUTOPILOT_PATH,
+    QT_AUTOPILOT_IFACE,
+    AP_INTROSPECTION_IFACE,
+    DBUS_INTROSPECTION_IFACE,
+    )
 from autopilot.introspection.dbus import (
     clear_object_registry,
     DBusIntrospectionObject,
@@ -26,12 +32,6 @@ from autopilot.introspection.dbus import (
 
 
 logger = logging.getLogger(__name__)
-
-
-AUTOPILOT_PATH = "/com/canonical/Autopilot/Introspection"
-QT_AUTOPILOT_IFACE = 'com.canonical.Autopilot.Qt'
-AP_INTROSPECTION_IFACE = 'com.canonical.Autopilot.Introspection'
-DBUS_INTROSPECTION_IFACE = 'org.freedesktop.DBus.Introspectable'
 
 
 class ApplicationIntrospectionTestMixin(object):

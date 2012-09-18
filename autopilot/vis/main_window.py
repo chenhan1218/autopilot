@@ -10,10 +10,8 @@ from __future__ import absolute_import
 import dbus
 from PyQt4 import QtGui, QtCore
 
-from autopilot.introspection.dbus import (
-    AP_INTROSPECTION_IFACE,
-    StateNotFoundError
-    )
+from autopilot.introspection.constants import AP_INTROSPECTION_IFACE,
+from autopilot.introspection.dbus import StateNotFoundError
 from autopilot.introspection.qt import (
     make_proxy_object_from_service_name,
     QtObjectProxyMixin,

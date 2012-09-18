@@ -23,6 +23,8 @@ from testtools.matchers import Equals
 from time import sleep
 
 from autopilot.emulators.dbus_handler import session_bus
+from autopilot.introspection.constants import AP_INTROSPECTION_IFACE
+
 
 _object_registry = {}
 logger = logging.getLogger(__name__)

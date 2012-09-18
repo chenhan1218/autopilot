@@ -17,7 +17,8 @@ import functools
 
 import logging
 
-from autopilot.introspection import QT_AUTOPILOT_IFACE, ApplicationIntrospectionTestMixin
+from autopilot.introspection import ApplicationIntrospectionTestMixin
+from autopilot.introspection.constants import QT_AUTOPILOT_IFACE
 from autopilot.introspection.dbus import session_bus
 
 

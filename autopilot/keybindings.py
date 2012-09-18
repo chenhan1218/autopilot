@@ -114,7 +114,7 @@ _keys = {
     "expo/start": ("expo", "expo_key"),
     "expo/cancel": "Escape",
     # spread (scale) plugin:
-    "spread/start": ("scale", "initiate_all_key"),
+    "spread/start": ("scale", "initiate_key"),
     "spread/cancel": "Escape",
 }
 

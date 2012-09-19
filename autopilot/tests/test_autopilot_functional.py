@@ -355,7 +355,6 @@ Loading tests from: %s
             class SimpleTest(AutopilotTestCase):
 
                 def test_simple(self):
-                    '''This is the test description.'''
                     pass
             """
             ))
@@ -364,3 +363,23 @@ Loading tests from: %s
 
         self.assertThat(code, Equals(0))
         self.assertThat(error, Contains("Starting test tests.test_simple.SimpleTest.test_simple"))
+
+    def test_record_flag_works(self):
+        """Must be able to record videos when the -r flag is present."""
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    self.fail()
+            """
+            ))
+
+        code, output, error = self.run_autopilot("run -r tests")
+
+        self.assertThat(code, Equals(1))
+        self.assertTrue(os.path.exists('/tmp/autopilot'))
+        self.assertTrue(os.path.exists('/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv'))

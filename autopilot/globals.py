@@ -16,4 +16,17 @@ video_recording_enabled = False
 video_record_directory = "/tmp/autopilot"
 
 # if set to true, autopilot will output all pythong logging to stderr
-log_verbose = False
+__log_verbose = False
+
+def get_log_verbose():
+    """Returns true if the user asked for verbose logging."""
+    global __log_verbose
+    return __log_verbose
+
+
+def set_log_verbose(verbose):
+    """Set whether or not we should log verbosely."""
+    if type(verbose) is not bool:
+        raise TypeError("Verbose flag must be a boolean.")
+    global __log_verbose
+    __log_verbose = verbose

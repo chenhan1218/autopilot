@@ -159,7 +159,7 @@ def run_tests(args):
         autopilot.globals.video_recording_enabled = True
         autopilot.globals.video_record_directory = args.record_directory
     if args.verbose:
-        autopilot.globals.log_verbose = True
+        autopilot.globals.set_log_verbose(True)
 
 
     if args.output == None:

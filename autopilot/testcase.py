@@ -38,7 +38,7 @@ from autopilot.emulators.zeitgeist import Zeitgeist
 from autopilot.emulators.processmanager import ProcessManager
 from autopilot.emulators.X11 import ScreenGeometry, Keyboard, Mouse, reset_display
 from autopilot.glibrunner import GlibRunner
-from autopilot.globals import (log_verbose,
+from autopilot.globals import (get_log_verbose,
     video_recording_enabled,
     video_record_directory,
     )
@@ -83,7 +83,7 @@ class LoggedTestCase(TestWithScenarios, TestCase):
         # The reason that the super setup is done here is due to making sure
         # that the logging is properly set up prior to calling it.
         super(LoggedTestCase, self).setUp()
-        if log_verbose:
+        if get_log_verbose():
             logger.info("*" * 60)
             logger.info("Starting test %s", self.shortDescription())
 
@@ -106,7 +106,7 @@ class LoggedTestCase(TestWithScenarios, TestCase):
         log_format = "%(asctime)s %(levelname)s %(module)s:%(lineno)d - %(message)s"
         handler.setFormatter(MyFormatter(log_format))
         root_logger.addHandler(handler)
-        if log_verbose:
+        if get_log_verbose():
             stderr_handler = logging.StreamHandler(stream=sys.stderr)
             handler.setFormatter(MyFormatter(log_format))
             root_logger.addHandler(stderr_handler)

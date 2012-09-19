@@ -8,10 +8,6 @@
 
 from __future__ import absolute_import
 
-
-video_recording_enabled = False
-video_record_directory = "/tmp/autopilot"
-
 # this can be set to True, in which case tests will be recorded.
 __video_recording_enabled = False
 
@@ -35,7 +31,7 @@ def set_log_verbose(verbose):
     __log_verbose = verbose
 
 
-def set_video_recording_option(enable_recording, record_dir):
+def configure_video_recording(enable_recording, record_dir):
     """Configure video logging.
 
     enable_recording is a boolean, and enables or disables recording globally.

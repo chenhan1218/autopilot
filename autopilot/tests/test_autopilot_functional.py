@@ -382,4 +382,26 @@ Loading tests from: %s
 
         self.assertThat(code, Equals(1))
         self.assertTrue(os.path.exists('/tmp/autopilot'))
+        self.addCleanup(rmtree, "/tmp/autopilot")
         self.assertTrue(os.path.exists('/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv'))
+
+    def test_record_dir_option_works(self):
+        """Must be able to specify record directory flag."""
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    self.fail()
+            """
+            ))
+        video_dir = mkdtemp()
+        code, output, error = self.run_autopilot("run -r -rd %s tests" % (video_dir))
+
+        self.assertThat(code, Equals(1))
+        self.assertTrue(os.path.exists(video_dir))
+        self.addCleanup(rmtree, video_dir)
+        self.assertTrue(os.path.exists('%s/tests.test_simple.SimpleTest.test_simple.ogv' % (video_dir)))

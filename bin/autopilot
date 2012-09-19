@@ -153,11 +153,10 @@ def run_tests(args):
     import autopilot.globals
 
     if args.record:
-        if subprocess.call(['which', 'recordmydesktop']) != 0:
+        if subprocess.call(['which', 'recordmydesktop'], stdout=subprocess.PIPE) != 0:
             print "ERROR: The application 'recordmydesktop' needs to be installed to record failing jobs."
             exit(1)
-        autopilot.globals.video_recording_enabled = True
-        autopilot.globals.video_record_directory = args.record_directory
+    autopilot.globals.configure_video_recording(True, args.record_directory)
     if args.verbose:
         autopilot.globals.set_log_verbose(True)
 

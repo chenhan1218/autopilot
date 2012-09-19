@@ -38,9 +38,9 @@ from autopilot.emulators.zeitgeist import Zeitgeist
 from autopilot.emulators.processmanager import ProcessManager
 from autopilot.emulators.X11 import ScreenGeometry, Keyboard, Mouse, reset_display
 from autopilot.glibrunner import GlibRunner
-from autopilot.globals import (log_verbose,
-    video_recording_enabled,
-    video_record_directory,
+from autopilot.globals import (get_log_verbose,
+    get_video_recording_enabled,
+    get_video_record_directory,
     )
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
@@ -83,7 +83,7 @@ class LoggedTestCase(TestWithScenarios, TestCase):
         # The reason that the super setup is done here is due to making sure
         # that the logging is properly set up prior to calling it.
         super(LoggedTestCase, self).setUp()
-        if log_verbose:
+        if get_log_verbose():
             logger.info("*" * 60)
             logger.info("Starting test %s", self.shortDescription())
 
@@ -106,7 +106,7 @@ class LoggedTestCase(TestWithScenarios, TestCase):
         log_format = "%(asctime)s %(levelname)s %(module)s:%(lineno)d - %(message)s"
         handler.setFormatter(MyFormatter(log_format))
         root_logger.addHandler(handler)
-        if log_verbose:
+        if get_log_verbose():
             stderr_handler = logging.StreamHandler(stream=sys.stderr)
             handler.setFormatter(MyFormatter(log_format))
             root_logger.addHandler(stderr_handler)
@@ -137,11 +137,11 @@ class VideoCapturedTestCase(LoggedTestCase):
     def setUp(self):
         super(VideoCapturedTestCase, self).setUp()
         global video_recording_enabled
-        if video_recording_enabled and not self._have_recording_app():
+        if get_video_recording_enabled() and not self._have_recording_app():
             video_recording_enabled = False
             logger.warning("Disabling video capture since '%s' is not present", self._recording_app)
 
-        if video_recording_enabled:
+        if get_video_recording_enabled():
             self._test_passed = True
             self.addOnException(self._on_test_failed)
             self.addCleanup(self._stop_video_capture)
@@ -177,7 +177,7 @@ class VideoCapturedTestCase(LoggedTestCase):
         return [self._recording_app] + self._recording_opts
 
     def _get_capture_output_file(self):
-        return os.path.join(video_record_directory, '%s.ogv' % (self.shortDescription()))
+        return os.path.join(get_video_record_directory(), '%s.ogv' % (self.shortDescription()))
 
     def _ensure_directory_exists_but_not_file(self, file_path):
         dirpath = os.path.dirname(file_path)

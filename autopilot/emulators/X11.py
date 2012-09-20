@@ -18,7 +18,7 @@ In the future we may also need other devices.
 
 from __future__ import absolute_import
 
-import gtk.gdk
+from gi.repository import Gdk
 import logging
 import os
 import subprocess
@@ -396,7 +396,7 @@ class ScreenGeometry:
         """Cannot set primary monitor when running drivers listed in the driver blacklist."""
 
     def __init__(self):
-        self._default_screen = gtk.gdk.screen_get_default()
+        self._default_screen = Gdk.Screen.get_default()
         self._blacklisted_drivers = ["NVIDIA"]
 
     def get_num_monitors(self):

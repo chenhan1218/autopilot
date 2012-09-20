@@ -10,7 +10,7 @@
 """Package for introspection support."""
 
 import dbus
-import gio
+from gi.repository import Gio
 import logging
 import subprocess
 from testtools.content import text_content
@@ -70,7 +70,7 @@ class ApplicationIntrospectionTestMixin(object):
                 (', '.join( repr(k) for k in kwargs.keys())))
 
         if application.endswith('.desktop'):
-            proc = gio.unix.DesktopAppInfo(application)
+            proc = Gio.DesktopAppInfo(application)
             application = proc.get_executable()
 
         path, args = self.prepare_environment(application, list(arguments))

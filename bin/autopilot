@@ -31,15 +31,12 @@ DEPENDS = [
     ('compizconfig', 'python-compizconfig'),
     ('dbus', 'python-dbus'),
     ('gconf', 'python-gconf'),
-    ('gobject', 'python-gobject'),
-    ('gtk', 'python-gtk2'),
     ('ibus', 'python-ibus'),
     ('junitxml', 'python-junitxml'),
     ('testscenarios', 'python-testscenarios'),
     ('testtools', 'python-testtools'),
     ('xdg', 'python-xdg'),
     ('Xlib', 'python-xlib'),
-    ('pydot', 'python-pydot'),
 ]
 
 

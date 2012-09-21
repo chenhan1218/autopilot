@@ -184,8 +184,9 @@ class Bamf(object):
         """
         if type(files) is not list:
             raise TypeError("files must be a list.")
-        proc = Gio.DesktopAppInfo.new_from_filename(desktop_file)
-        proc.launch_uris(files)
+        proc = Gio.DesktopAppInfo.new(desktop_file)
+        # FIXME: second item is a GEerror
+        proc.launch_uris(files, None)
         if wait:
             self.wait_until_application_is_running(desktop_file, 10)
         return proc

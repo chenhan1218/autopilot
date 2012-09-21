@@ -70,7 +70,7 @@ class ApplicationIntrospectionTestMixin(object):
                 (', '.join( repr(k) for k in kwargs.keys())))
 
         if application.endswith('.desktop'):
-            proc = Gio.DesktopAppInfo.new_from_filename(application)
+            proc = Gio.DesktopAppInfo.new(application)
             application = proc.get_executable()
 
         path, args = self.prepare_environment(application, list(arguments))

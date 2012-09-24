@@ -13,17 +13,24 @@ import os.path
 import logging
 from shutil import rmtree
 import subprocess
-from tempfile import mkdtemp
-from testtools import TestCase
+from tempfile import mktemp, mkdtemp
 from testtools.content import text_content
 from testtools.matchers import Contains, Equals, MatchesRegex
 from textwrap import dedent
 import re
 
 
+from autopilot.testcase import AutopilotTestCase
+
+
+def remove_if_exists(path):
+    if os.path.exists(path):
+        rmtree(path)
+
+
 logger = logging.getLogger(__name__)
 
-class AutopilotFunctionalTests(TestCase):
+class AutopilotFunctionalTests(AutopilotTestCase):
 
     """A collection of functional tests for autopilot."""
 
@@ -68,7 +75,7 @@ class AutopilotFunctionalTests(TestCase):
         returns a tuple containing: (exit_code, stdout, stderr)
 
         """
-        return self.run_autopilot("list " + list_spec)
+        return self.run_autopilot(["list", list_spec])
 
     def run_autopilot(self, arguments):
         ap_base_path = os.path.abspath(
@@ -92,13 +99,20 @@ class AutopilotFunctionalTests(TestCase):
         environ = os.environ
         environ.update(environment_patch)
 
+        logger.info("Starting autopilot command with:")
+        logger.info("Autopilot command = %s", bin_path)
+        logger.info("Arguments = %s", arguments)
+        logger.info("CWD = %r", self.base_path)
+        logger.info("environment = %r", environ)
+
+        arg = [bin_path]
+        arg.extend(arguments)
         process = subprocess.Popen(
-            "%s %s" % (bin_path, arguments),
+            arg,
             cwd=self.base_path,
             env=environ,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            shell=True
             )
 
         stdout, stderr = process.communicate()
@@ -359,7 +373,7 @@ Loading tests from: %s
             """
             ))
 
-        code, output, error = self.run_autopilot("run -v tests")
+        code, output, error = self.run_autopilot(["run", "-v", "tests"])
 
         self.assertThat(code, Equals(0))
         self.assertThat(error, Contains("Starting test tests.test_simple.SimpleTest.test_simple"))
@@ -378,11 +392,11 @@ Loading tests from: %s
             """
             ))
 
-        code, output, error = self.run_autopilot("run -r tests")
+        self.addCleanup(remove_if_exists, "/tmp/autopilot")
+        code, output, error = self.run_autopilot(["run", "-r", "tests"])
 
         self.assertThat(code, Equals(1))
         self.assertTrue(os.path.exists('/tmp/autopilot'))
-        self.addCleanup(rmtree, "/tmp/autopilot")
         self.assertTrue(os.path.exists('/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv'))
 
     def test_record_dir_option_works(self):
@@ -398,10 +412,33 @@ Loading tests from: %s
                     self.fail()
             """
             ))
-        video_dir = mkdtemp()
-        code, output, error = self.run_autopilot("run -r -rd %s tests" % (video_dir))
+        video_dir = mktemp()
+        self.addCleanup(remove_if_exists, video_dir)
+
+        code, output, error = self.run_autopilot(["run", "-r", "-rd", video_dir, "tests"])
 
         self.assertThat(code, Equals(1))
         self.assertTrue(os.path.exists(video_dir))
-        self.addCleanup(rmtree, video_dir)
         self.assertTrue(os.path.exists('%s/tests.test_simple.SimpleTest.test_simple.ogv' % (video_dir)))
+
+    def test_no_videos_saved_when_record_option_is_not_present(self):
+        """Videos must not be saved if the '-r' option is not specified."""
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    self.fail()
+            """
+            ))
+        video_dir = mktemp()
+        self.addCleanup(remove_if_exists, video_dir)
+
+        code, output, error = self.run_autopilot(["run", "-rd", video_dir, "tests"])
+
+        self.assertThat(code, Equals(1))
+        self.assertFalse(os.path.exists(video_dir))
+        self.assertFalse(os.path.exists('%s/tests.test_simple.SimpleTest.test_simple.ogv' % (video_dir)))

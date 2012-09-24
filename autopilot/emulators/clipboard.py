@@ -12,7 +12,7 @@
 
 """A collection of functions relating to the X11clipboards."""
 
-import gtk
+from gi.repository import Gtk, Gdk
 
 
 def get_clipboard_contents():
@@ -22,5 +22,5 @@ def get_clipboard_contents():
     be added to this clipbaord using Ctrl+C.
 
     """
-    cb = gtk.Clipboard(selection="CLIPBOARD")
+    cb = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
     return cb.wait_for_text()

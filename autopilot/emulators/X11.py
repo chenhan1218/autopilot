@@ -18,7 +18,7 @@ In the future we may also need other devices.
 
 from __future__ import absolute_import
 
-import gtk.gdk
+from gi.repository import Gdk
 import logging
 import os
 import subprocess
@@ -396,7 +396,7 @@ class ScreenGeometry:
         """Cannot set primary monitor when running drivers listed in the driver blacklist."""
 
     def __init__(self):
-        self._default_screen = gtk.gdk.screen_get_default()
+        self._default_screen = Gdk.Screen.get_default()
         self._blacklisted_drivers = ["NVIDIA"]
 
     def get_num_monitors(self):
@@ -447,7 +447,8 @@ class ScreenGeometry:
         """
         if monitor_number < 0 or monitor_number >= self.get_num_monitors():
             raise ValueError('Specified monitor number is out of range.')
-        return tuple(self._default_screen.get_monitor_geometry(monitor_number))
+        rect = self._default_screen.get_monitor_geometry(monitor_number)
+        return (rect.x, rect.y, rect.width, rect.height)
 
     def is_rect_on_monitor(self, monitor_number, rect):
         """Returns True if `rect` is _entirely_ on the specified monitor, with no overlap."""

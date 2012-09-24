@@ -11,11 +11,12 @@ from __future__ import absolute_import
 
 import dbus
 import dbus.glib
-import gio
-import gobject
+from gi.repository import Gio
+from gi.repository import GObject
 import os
 from Xlib import display, X, protocol
-from gtk import gdk
+from gi.repository import Gdk
+from gi.repository import GdkX11
 
 from autopilot.emulators.dbus_handler import session_bus
 from autopilot.utilities import Silence
@@ -143,7 +144,7 @@ class Bamf(object):
         # maybe the app is running already?
         if len(self.get_running_applications_by_desktop_file(desktop_file)) == 0:
             wait_forever = timeout < 0
-            gobject_loop = gobject.MainLoop()
+            gobject_loop = GObject.MainLoop()
 
             # No, so define a callback to watch the ViewOpened signal:
             def on_view_added(bamf_path, name):
@@ -160,7 +161,7 @@ class Bamf(object):
 
             # need a timeout? if so, connect it:
             if not wait_forever:
-                gobject.timeout_add(timeout * 1000, on_timeout_reached)
+                GObject.timeout_add(timeout * 1000, on_timeout_reached)
             # connect signal handler:
             session_bus.add_signal_receiver(on_view_added, 'ViewOpened')
             # pump the gobject main loop until either the correct signal is emitted, or the
@@ -183,8 +184,9 @@ class Bamf(object):
         """
         if type(files) is not list:
             raise TypeError("files must be a list.")
-        proc = gio.unix.DesktopAppInfo(desktop_file)
-        proc.launch_uris(files)
+        proc = Gio.DesktopAppInfo.new(desktop_file)
+        # FIXME: second item is a GEerror
+        proc.launch_uris(files, None)
         if wait:
             self.wait_until_application_is_running(desktop_file, 10)
         return proc
@@ -322,7 +324,7 @@ class BamfWindow(object):
         """
         # FIXME: We need to use the gdk window here to get the real coordinates
         geometry = self._x_win.get_geometry()
-        origin = gdk.window_foreign_new(self._xid).get_origin()
+        origin = GdkX11.X11Window.foreign_new_for_display(get_display(), self._xid).get_origin()
         return (origin[0], origin[1], geometry.width, geometry.height)
 
     @property

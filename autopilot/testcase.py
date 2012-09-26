@@ -13,7 +13,7 @@ Autopilot test case class.
 from __future__ import absolute_import
 
 from dbus import DBusException
-import gconf
+from gi.repository import GConf
 import logging
 import os
 from StringIO import StringIO
@@ -37,7 +37,7 @@ from autopilot.emulators.bamf import Bamf
 from autopilot.emulators.zeitgeist import Zeitgeist
 from autopilot.emulators.processmanager import ProcessManager
 from autopilot.emulators.X11 import ScreenGeometry, Keyboard, Mouse, reset_display
-from autopilot.glibrunner import GlibRunner
+from autopilot.glibrunner import AutopilotTestRunner
 from autopilot.globals import (get_log_verbose,
     get_video_recording_enabled,
     get_video_record_directory,
@@ -195,7 +195,7 @@ class VideoCapturedTestCase(LoggedTestCase):
 class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     """Wrapper around testtools.TestCase that takes care of some cleaning."""
 
-    run_tests_with = GlibRunner
+    run_tests_with = AutopilotTestRunner
 
     KNOWN_APPS = {
         'Character Map' : {
@@ -227,6 +227,12 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             'process-name': 'gnome-terminal',
             },
         }
+
+    class StopTestRun(RuntimeError):
+        """Raise this exception from within a test run to halt further test
+        execution. The entire test run will fail.
+
+        """
 
     @classmethod
     def register_known_application(cls, name, desktop_file, process_name):
@@ -322,38 +328,38 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
 
     def set_gconf_option(self, path, value):
         """Set the gconf setting on `path` to the defined `value`"""
-        client = gconf.client_get_default()
+        client = GConf.client_get_default()
         gconfval = self._get_gconf_from_native_value(value, path)
         client.set(path, gconfval)
 
     def get_gconf_option(self, path):
         """Get the gconf setting on `path`"""
-        client = gconf.client_get_default()
+        client = GConf.Client.get_default()
         value = client.get(path)
         return self._get_native_gconf_value(value)
 
     def _get_gconf_from_native_value(self, value, path):
         """Translates a python type to a GConfValue"""
         if type(value) is str:
-            gconfvalue = gconf.Value(gconf.VALUE_STRING)
+            gconfvalue = GConf.Value(GConf.ValueType.STRING)
             gconfvalue.set_string(value)
         elif type(value) is int:
-            gconfvalue = gconf.Value(gconf.VALUE_INT)
+            gconfvalue = GConf.Value(GConf.ValueType.INT)
             gconfvalue.set_int(value)
         elif type(value) is float:
-            gconfvalue = gconf.Value(gconf.VALUE_FLOAT)
+            gconfvalue = GConf.Value(GConf.ValueType.FLOAT)
             gconfvalue.set_float(value)
         elif type(value) is bool:
-            gconfvalue = gconf.Value(gconf.VALUE_BOOL)
+            gconfvalue = GConf.Value(GConf.ValueType.BOOL)
             gconfvalue.set_bool(value)
         elif type(value) is list:
-            gconfvalue = gconf.Value(gconf.VALUE_LIST)
+            gconfvalue = GConf.Value(GConf.ValueType.LIST)
             values = [self._get_gconf_from_native_value(val, path) for val in value]
 
             if len(values) == 0:
-                client = gconf.client_get_default()
+                client = GConf.Client.get_default()
                 path_value = client.get(path)
-                assert(path_value.type == gconf.VALUE_LIST)
+                assert(path_value.type == GConf.ValueType.LIST)
                 gconfvalue.set_list_type(path_value.get_list_type())
                 gconfvalue.set_list([])
             else:
@@ -366,15 +372,15 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
 
     def _get_native_gconf_value(self, value):
         """Translates a GConfValue to a native one"""
-        if value.type is gconf.VALUE_STRING:
+        if value.type is GConf.ValueType.STRING:
             return value.get_string()
-        elif value.type is gconf.VALUE_INT:
+        elif value.type is GConf.ValueType.INT:
             return value.get_int()
-        elif value.type is gconf.VALUE_FLOAT:
+        elif value.type is GConf.ValueType.FLOAT:
             return value.get_float()
-        elif value.type is gconf.VALUE_BOOL:
+        elif value.type is GConf.ValueType.BOOL:
             return value.get_bool()
-        elif value.type is gconf.VALUE_LIST:
+        elif value.type is GConf.ValueType.LIST:
             return [self._get_native_gconf_value(val) for val in value.get_list()]
         else:
             raise TypeError("Invalid gconf value type")

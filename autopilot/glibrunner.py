@@ -17,6 +17,10 @@ except:
     pass
 
 
-class GlibRunner(testtools.RunTest):
+__all__ = [
+    'AutopilotTestRunner',
+    ]
+
+class AutopilotTestRunner(testtools.RunTest):
     pass
 

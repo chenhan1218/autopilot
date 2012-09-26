@@ -216,13 +216,9 @@ class ConfigurableTestRunner(object):
 
     """
 
-    def __init__(self, stdout, output_format, coverage=False, cover_format=None, cover_output='-', cover_exclude=''):
+    def __init__(self, stdout, output_format):
         self.stdout = stdout
         self.result_class = output_format
-        self.coverage = coverage
-        self.cover_format = cover_format
-        self.cover_output = cover_output
-        self.cover_exclude = cover_exclude.split(',')
 
     def run(self, test):
         "Run the given test case or test suite."
@@ -232,7 +228,6 @@ class ConfigurableTestRunner(object):
             return test.run(result)
         finally:
             result.stopTestRun()
-
 
 
 def load_test_suite_from_name(test_names):

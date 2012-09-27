@@ -228,12 +228,6 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             },
         }
 
-    class StopTestRun(RuntimeError):
-        """Raise this exception from within a test run to halt further test
-        execution. The entire test run will fail.
-
-        """
-
     @classmethod
     def register_known_application(cls, name, desktop_file, process_name):
         """Registers an application with the known_apps dictionary.

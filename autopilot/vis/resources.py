@@ -14,6 +14,7 @@ from PyQt4 import QtGui
 def get_qt_icon():
     return QtGui.QIcon(":/trolltech/qmessagebox/images/qtlogo-64.png")
 
+
 def dbus_string_rep(dbus_type):
     """Get a string representation of various dbus types."""
     if isinstance(dbus_type, dbus.Boolean):

@@ -172,10 +172,7 @@ def construct_test_runner(args):
 
 
 def get_output_format(format):
-    """Return a dictionary mapping a short name to a Result object for each
-    format we support.
-
-    """
+    """Return a Result object for each format we support."""
 
     if format == "text":
         return TextTestResult

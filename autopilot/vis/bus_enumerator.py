@@ -6,12 +6,10 @@
 # under the terms of the GNU General Public License version 3, as published
 # by the Free Software Foundation.
 from collections import defaultdict
-import dbus
-from dbus.mainloop.qt import DBusQtMainLoop
+
 from os.path import join
 from PyQt4.QtCore import (
     pyqtSignal,
-    QCoreApplication,
     qDebug,
     QObject,
     )

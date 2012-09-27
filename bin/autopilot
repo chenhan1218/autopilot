@@ -18,10 +18,10 @@ from platform import node
 import sys
 import subprocess
 from testtools import iterate_tests
+from testtools import TextTestResult
 from textwrap import dedent
 from argparse import ArgumentParser
 from unittest.loader import TestLoader
-from unittest.runner import TextTestRunner
 from unittest import TestSuite
 
 
@@ -30,7 +30,7 @@ from unittest import TestSuite
 DEPENDS = [
     ('compizconfig', 'python-compizconfig'),
     ('dbus', 'python-dbus'),
-    ('gconf', 'python-gconf'),
+    ('gconf', 'gir1.2-gconf-2.0'),
     ('ibus', 'python-ibus'),
     ('junitxml', 'python-junitxml'),
     ('testscenarios', 'python-testscenarios'),
@@ -39,6 +39,7 @@ DEPENDS = [
     ('Xlib', 'python-xlib'),
 ]
 
+_output_stream=None
 
 def check_depends():
     """Check for required dependancies, and print a helpful message if any are
@@ -146,7 +147,6 @@ def run_tests(args):
     """Run tests, using input from `args`."""
     test_suite = load_test_suite_from_name(args.suite)
 
-    import junitxml
     import autopilot.globals
 
     if args.record:
@@ -157,11 +157,38 @@ def run_tests(args):
     if args.verbose:
         autopilot.globals.set_log_verbose(True)
 
+    runner = construct_test_runner(args)
+    success = runner.run(test_suite).wasSuccessful()
+    if not success:
+        exit(1)
 
-    if args.output == None:
-        results_stream = sys.stdout
-    else:
-        try:
+
+def construct_test_runner(args):
+    kwargs = dict(stdout=get_output_stream(args),
+        output_format=get_output_format(args.format),
+        )
+
+    return ConfigurableTestRunner(**kwargs)
+
+
+def get_output_format(format):
+    """Return a Result object for each format we support."""
+
+    if format == "text":
+        return TextTestResult
+
+    elif format == "xml":
+        from junitxml import JUnitXmlResult
+        return JUnitXmlResult
+
+    raise KeyError("Unknown format name '%s'" % format)
+
+
+def get_output_stream(args):
+    global _output_stream
+
+    if _output_stream is None:
+        if args.output:
             path = os.path.dirname(args.output)
             if path != '' and not os.path.exists(path):
                 os.makedirs(path)
@@ -171,22 +198,32 @@ def run_tests(args):
                                              datetime.now().strftime("%d.%m.%y-%H%M%S"))
                 log_file = os.path.join(log_file, default_log)
                 print "Using default log filename: %s " % default_log
-            results_stream = open(log_file, 'w')
-        except:
-            results_stream = sys.stdout
-    if args.format == "xml":
-        result = junitxml.JUnitXmlResult(results_stream)
+            _output_stream = open(log_file, 'w')
+        else:
+            _output_stream = sys.stdout
+    return _output_stream
+
+
+class ConfigurableTestRunner(object):
+    """A configurable test runner class.
+
+    This class alows us to configure the output format and whether of not we
+    collect coverage information for the test run.
+
+    """
+
+    def __init__(self, stdout, output_format):
+        self.stdout = stdout
+        self.result_class = output_format
+
+    def run(self, test):
+        "Run the given test case or test suite."
+        result = self.result_class(self.stdout)
         result.startTestRun()
-        test_suite.run(result)
-        result.stopTestRun()
-        results_stream.close()
-        if not result.wasSuccessful:
-            exit(1)
-    elif args.format == "text":
-        runner = TextTestRunner(stream=results_stream)
-        success = runner.run(test_suite).wasSuccessful()
-        if not success:
-            exit(1)
+        try:
+            return test.run(result)
+        finally:
+            result.stopTestRun()
 
 
 def load_test_suite_from_name(test_names):
@@ -217,6 +254,7 @@ def load_test_suite_from_name(test_names):
 
     test_dirs = ", ".join(sorted(test_package_locations))
     print "Loading tests from: %s\n" % test_dirs
+    sys.stdout.flush()
 
     requested_tests = {}
     for test in iterate_tests(all_tests):

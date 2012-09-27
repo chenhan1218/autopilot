@@ -10,11 +10,10 @@ from __future__ import absolute_import
 import dbus
 from PyQt4 import QtGui, QtCore
 
+from autopilot.introspection import make_proxy_object_from_service_name
 from autopilot.introspection.constants import AP_INTROSPECTION_IFACE
 from autopilot.introspection.dbus import StateNotFoundError
 from autopilot.introspection.qt import QtObjectProxyMixin
-from autopilot.introspection import make_proxy_object_from_service_name
-
 from autopilot.vis.objectproperties import TreeNodeDetailWidget
 from autopilot.vis.resources import get_qt_icon
 

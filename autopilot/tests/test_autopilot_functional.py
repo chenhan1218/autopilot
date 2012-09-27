@@ -221,13 +221,10 @@ Traceback \(most recent call last\):
     import asdjkhdfjgsdhfjhsd
 ImportError: No module named asdjkhdfjgsdhfjhsd
 
-
-
- 0 total tests.
 ''' % self.base_path
         self.assertThat(code, Equals(0))
         self.assertThat(error, Equals(''))
-        self.assertThat(output, MatchesRegex(expected_regex, re.MULTILINE))
+        self.assertTrue(re.search(expected_regex, output, re.MULTILINE))
 
     def test_list_tests_with_syntax_error(self):
         self.create_test_file('test_simple.py', dedent("""\
@@ -257,13 +254,10 @@ Traceback \(most recent call last\):
     \^
 SyntaxError: invalid syntax
 
-
-
- 0 total tests.
 ''' % self.base_path
         self.assertThat(code, Equals(0))
         self.assertThat(error, Equals(''))
-        self.assertThat(output, MatchesRegex(expected_regex, re.MULTILINE))
+        self.assertTrue(re.search(expected_regex, output, re.MULTILINE))
 
     def test_can_list_scenariod_tests(self):
         """Autopilot must show scenario counts next to tests that have scenarios."""
@@ -442,3 +436,78 @@ Loading tests from: %s
         self.assertThat(code, Equals(1))
         self.assertFalse(os.path.exists(video_dir))
         self.assertFalse(os.path.exists('%s/tests.test_simple.SimpleTest.test_simple.ogv' % (video_dir)))
+
+    def test_runs_with_import_errors_fail(self):
+        """Import errors inside a test must be considered a test failure."""
+        self.create_test_file('test_simple.py', dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+            # create an import error:
+            import asdjkhdfjgsdhfjhsd
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    pass
+            """
+            ))
+
+        code, output, error = self.run_autopilot(["run", "tests"])
+
+        expected_regex = '''\
+Loading tests from: %s
+
+Failed to import test module: tests.test_simple
+Traceback \(most recent call last\):
+  File "/usr/lib/python2.7/unittest/loader.py", line 252, in _find_tests
+    module = self._get_module_from_name\(name\)
+  File "/usr/lib/python2.7/unittest/loader.py", line 230, in _get_module_from_name
+    __import__\(name\)
+  File "/tmp/\w*/tests/test_simple.py", line 4, in <module>
+    import asdjkhdfjgsdhfjhsd
+ImportError: No module named asdjkhdfjgsdhfjhsd
+
+''' % self.base_path
+
+        self.assertThat(code, Equals(1))
+        self.assertThat(error, Equals(''))
+        self.assertTrue(re.search(expected_regex, output, re.MULTILINE))
+        self.assertThat(output, Contains("FAILED (failures=1)"))
+
+    def test_runs_with_syntax_errors_fail(self):
+        """Import errors inside a test must be considered a test failure."""
+        self.create_test_file('test_simple.py', dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+            # create a syntax error:
+            ..
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    pass
+            """
+            ))
+
+        code, output, error = self.run_autopilot(["run", "tests"])
+
+        expected_regex = '''\
+Loading tests from: %s
+
+Failed to import test module: tests.test_simple
+Traceback \(most recent call last\):
+  File "/usr/lib/python2.7/unittest/loader.py", line 252, in _find_tests
+    module = self._get_module_from_name\(name\)
+  File "/usr/lib/python2.7/unittest/loader.py", line 230, in _get_module_from_name
+    __import__\(name\)
+  File "/tmp/\w*/tests/test_simple.py", line 4
+    \.\.
+    \^
+SyntaxError: invalid syntax
+
+''' % self.base_path
+
+        self.assertThat(code, Equals(1))
+        self.assertThat(error, Equals(''))
+        self.assertTrue(re.search(expected_regex, output, re.MULTILINE))
+        self.assertThat(output, Contains("FAILED (failures=1)"))

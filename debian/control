@@ -14,6 +14,7 @@ Architecture: all
 Depends: ${shlibs:Depends},
          ${misc:Depends},
          ${python:Depends},
+         gir1.2-gconf-2.0,
          python-compizconfig,
          python-dbus,
          python-gconf,
@@ -26,7 +27,6 @@ Depends: ${shlibs:Depends},
          python-testtools,
          python-xdg,
          python-xlib,
-         python-pydot,
          python-zeitgeist,
 Description: Utility to write and run integration tests easily
  The autopilot engine enables to ease the writing of python tests

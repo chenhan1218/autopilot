@@ -16,8 +16,7 @@ import logging
 from shutil import rmtree
 import subprocess
 from tempfile import mktemp, mkdtemp
-from testtools.content import text_content
-from testtools.content import Content
+from testtools.content import Content, text_content
 from testtools.content_type import ContentType
 from testtools.matchers import Contains, Equals
 from textwrap import dedent

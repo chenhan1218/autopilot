@@ -540,7 +540,6 @@ SyntaxError: invalid syntax
         output_file_path = mktemp()
         self.addCleanup(remove_if_exists, output_file_path)
 
-        # code, output, error = self.run_autopilot(["run", "tests"])
         code, output, error = self.run_autopilot(["run", "-o", output_file_path, "tests"])
 
         self.assertThat(code, Equals(1))

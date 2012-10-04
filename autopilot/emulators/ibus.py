@@ -14,6 +14,8 @@ import ibus
 import ibus.common
 import os
 import logging
+import subprocess
+from gi.repository import GConf
 from time import sleep
 
 
@@ -106,3 +108,36 @@ def set_global_input_engine(engine_name):
     else:
         bus.get_config().set_value("general", "use_global_engine", False)
         logger.info('Disabling global ibus engine.')
+
+
+def set_gconf_option(path, value):
+    """Set the gconf setting on `path` to the defined `value`"""
+    _set_gconf_list (path, value)
+
+
+def get_gconf_option(path):
+    """Get the gconf setting on `path`"""
+    client = GConf.Client.get_default()
+    value = client.get(path)
+    return _get_native_gconf_value(value)
+
+
+def _set_gconf_list(path, values):
+    gconf_value = '[%s]' % ','.join(values)
+    subprocess.check_output(["gconftool-2", "--set", "--type=list", "--list-type=string", path, gconf_value])
+
+
+def _get_native_gconf_value(value):
+    """Translates a GConfValue to a native one"""
+    if value.type is GConf.ValueType.STRING:
+        return value.get_string()
+    elif value.type is GConf.ValueType.INT:
+        return value.get_int()
+    elif value.type is GConf.ValueType.FLOAT:
+        return value.get_float()
+    elif value.type is GConf.ValueType.BOOL:
+        return value.get_bool()
+    elif value.type is GConf.ValueType.LIST:
+        return [_get_native_gconf_value(val) for val in value.get_list()]
+    else:
+        raise TypeError("Invalid gconf value type")

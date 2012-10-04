@@ -322,7 +322,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
 
     def set_gconf_option(self, path, value):
         """Set the gconf setting on `path` to the defined `value`"""
-        client = GConf.client_get_default()
+        client = GConf.Client.get_default()
         gconfval = self._get_gconf_from_native_value(value, path)
         client.set(path, gconfval)
 
@@ -335,19 +335,19 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     def _get_gconf_from_native_value(self, value, path):
         """Translates a python type to a GConfValue"""
         if type(value) is str:
-            gconfvalue = GConf.Value(GConf.ValueType.STRING)
+            gconfvalue = GConf.Value.new(GConf.ValueType.STRING)
             gconfvalue.set_string(value)
         elif type(value) is int:
-            gconfvalue = GConf.Value(GConf.ValueType.INT)
+            gconfvalue = GConf.Value.new(GConf.ValueType.INT)
             gconfvalue.set_int(value)
         elif type(value) is float:
-            gconfvalue = GConf.Value(GConf.ValueType.FLOAT)
+            gconfvalue = GConf.Value.new(GConf.ValueType.FLOAT)
             gconfvalue.set_float(value)
         elif type(value) is bool:
-            gconfvalue = GConf.Value(GConf.ValueType.BOOL)
+            gconfvalue = GConf.Value.new(GConf.ValueType.BOOL)
             gconfvalue.set_bool(value)
         elif type(value) is list:
-            gconfvalue = GConf.Value(GConf.ValueType.LIST)
+            gconfvalue = GConf.Value.new(GConf.ValueType.LIST)
             values = [self._get_gconf_from_native_value(val, path) for val in value]
 
             if len(values) == 0:

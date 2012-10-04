@@ -110,7 +110,6 @@ class AutopilotFunctionalTests(AutopilotTestCase):
         logger.info("Autopilot command = %s", bin_path)
         logger.info("Arguments = %s", arguments)
         logger.info("CWD = %r", self.base_path)
-        # logger.info("environment = %r", environ)
 
         arg = [bin_path]
         arg.extend(arguments)

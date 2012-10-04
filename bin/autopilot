@@ -9,6 +9,7 @@
 
 from __future__ import absolute_import
 
+from codecs import open
 from datetime import datetime
 from imp import find_module
 import os
@@ -198,6 +199,7 @@ def get_output_stream(args):
                                              datetime.now().strftime("%d.%m.%y-%H%M%S"))
                 log_file = os.path.join(log_file, default_log)
                 print "Using default log filename: %s " % default_log
+            # _output_stream = open(log_file, 'w', encoding='utf-8')
             _output_stream = open(log_file, 'w')
         else:
             _output_stream = sys.stdout

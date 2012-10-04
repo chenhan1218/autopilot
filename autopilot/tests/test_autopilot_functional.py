@@ -1,4 +1,5 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
+# encoding: utf-8
 # Copyright 2012 Canonical
 # Author: Thomi Richards
 #
@@ -8,6 +9,7 @@
 
 from __future__ import absolute_import
 
+from codecs import open
 import os
 import os.path
 import logging
@@ -15,7 +17,9 @@ from shutil import rmtree
 import subprocess
 from tempfile import mktemp, mkdtemp
 from testtools.content import text_content
-from testtools.matchers import Contains, Equals, MatchesRegex
+from testtools.content import Content
+from testtools.content_type import ContentType
+from testtools.matchers import Contains, Equals
 from textwrap import dedent
 import re
 
@@ -25,7 +29,10 @@ from autopilot.testcase import AutopilotTestCase
 
 def remove_if_exists(path):
     if os.path.exists(path):
-        rmtree(path)
+        if os.path.isdir(path):
+            rmtree(path)
+        else:
+            os.remove(path)
 
 
 logger = logging.getLogger(__name__)
@@ -103,7 +110,7 @@ class AutopilotFunctionalTests(AutopilotTestCase):
         logger.info("Autopilot command = %s", bin_path)
         logger.info("Arguments = %s", arguments)
         logger.info("CWD = %r", self.base_path)
-        logger.info("environment = %r", environ)
+        # logger.info("environment = %r", environ)
 
         arg = [bin_path]
         arg.extend(arguments)
@@ -119,8 +126,12 @@ class AutopilotFunctionalTests(AutopilotTestCase):
         retcode = process.poll()
 
         self.addDetail('retcode', text_content(str(retcode)))
-        self.addDetail('stdout', text_content(stdout))
-        self.addDetail('stderr', text_content(stderr))
+        self.addDetail('stdout', Content(
+            ContentType('text', 'plain', {'charset': 'iso-8859-1'}),
+            lambda:[stdout]))
+        self.addDetail('stderr', Content(
+            ContentType('text', 'plain', {'charset': 'iso-8859-1'}),
+            lambda:[stderr]))
 
         return (retcode, stdout, stderr)
 
@@ -157,7 +168,8 @@ Loading tests from: %s
                 self.base_path,
                 'tests',
                 name),
-            'w').write(contents)
+            'w',
+            encoding='utf8').write(contents)
 
     def test_can_list_empty_test_dir(self):
         """Autopilot list must report 0 tests found with an empty test module."""
@@ -511,3 +523,31 @@ SyntaxError: invalid syntax
         self.assertThat(error, Equals(''))
         self.assertTrue(re.search(expected_regex, output, re.MULTILINE))
         self.assertThat(output, Contains("FAILED (failures=1)"))
+
+    def test_can_error_with_unicode_data(self):
+        """Videos must not be saved if the '-r' option is not specified."""
+        self.create_test_file("test_simple.py", dedent(u"""\
+            # encoding: utf-8
+
+            # from autopilot.testcase import AutopilotTestCase
+            from testtools import TestCase
+
+            class SimpleTest(TestCase):
+
+                def test_simple(self):
+                    self.fail(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH')
+
+            """
+            ))
+        output_file_path = mktemp()
+        self.addCleanup(remove_if_exists, output_file_path)
+
+        # code, output, error = self.run_autopilot(["run", "tests"])
+        code, output, error = self.run_autopilot(["run", "-o", output_file_path, "tests"])
+
+        self.assertThat(code, Equals(1))
+        # self.assertThat(output.decode('iso-8859-1'), Contains(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH'))
+        self.assertTrue(os.path.exists(output_file_path))
+        log_contents = unicode(open(output_file_path, encoding='utf-8').read())
+        self.assertThat(log_contents,
+            Contains(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH'))

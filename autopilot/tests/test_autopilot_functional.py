@@ -523,7 +523,7 @@ SyntaxError: invalid syntax
         self.assertThat(output, Contains("FAILED (failures=1)"))
 
     def test_can_error_with_unicode_data(self):
-        """Videos must not be saved if the '-r' option is not specified."""
+        """Tests that assert with unicode errors must get saved to a log file."""
         self.create_test_file("test_simple.py", dedent(u"""\
             # encoding: utf-8
 

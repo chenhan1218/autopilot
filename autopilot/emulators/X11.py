@@ -415,7 +415,11 @@ class ScreenGeometry:
         BlacklistedDriverError is raised if your video driver does not support this.
 
         """
-        glxinfo_out = subprocess.check_output("glxinfo")
+        try:
+            glxinfo_out = subprocess.check_output("glxinfo")
+        except OSError, e:
+            raise OSError("Failed to run glxinfo: %s. (do you have mesa-utils installed?)" % e)
+
         for dri in self._blacklisted_drivers:
             if dri in glxinfo_out:
                 raise ScreenGeometry.BlacklistedDriverError('Impossible change the primary monitor for the given driver')

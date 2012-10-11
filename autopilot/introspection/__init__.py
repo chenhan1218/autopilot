@@ -54,7 +54,7 @@ class ApplicationIntrospectionTestMixin(object):
         This method supports the following keyword arguments:
 
          * launch_dir. If set to a directory that exists the process will be
-         launched from that directory.
+           launched from that directory.
 
         Unknown keyword arguments will cause a ValueError to be raised.
 

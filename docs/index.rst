@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Autopilot's documentation!
-=====================================
+Autopilot Documentation!
+========================
 
 Contents:
 
@@ -14,8 +14,6 @@ Contents:
    tutorial/tutorial
 
    api/autopilot
-
-
 
 
 Indices and tables

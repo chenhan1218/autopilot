@@ -10,7 +10,7 @@
 """Classes and tools to support Qt introspection."""
 
 
-__all__ = 'QtIntrospectionTetMixin'
+__all__ = ['QtIntrospectionTestMixin']
 
 import dbus
 import functools

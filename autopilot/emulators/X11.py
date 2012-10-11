@@ -370,7 +370,6 @@ class Mouse(object):
         except (TypeError, ValueError):
             raise ValueError("Object '%r' has x,y attribute, but they are not of the correct type" % object_proxy)
 
-
     def position(self):
         """Returns the current position of the mouse pointer."""
         coord = get_display().screen().root.query_pointer()._data

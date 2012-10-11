@@ -6,9 +6,7 @@
 # under the terms of the GNU General Public License version 3, as published
 # by the Free Software Foundation.
 
-"""
-Autopilot test case class.
-"""
+"""Autopilot test case classes."""
 
 from __future__ import absolute_import
 
@@ -192,7 +190,38 @@ class VideoCapturedTestCase(LoggedTestCase):
 
 
 class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
-    """Wrapper around testtools.TestCase that takes care of some cleaning."""
+    """Wrapper around testtools.TestCase that adds significant functionality.
+
+    This class should be the base class for all autopilot test case classes. Not
+    using this class as the base class disables several important convenience
+    methods, and also prevents the use of the failed-test recording tools.
+
+    Some of the more notable features of this class include:
+
+    **Application Launch Support**
+
+    This class contains the methods :meth:`start_app` and
+    :meth:`start_app_window` which will launch one of the well-known
+    applications and return a :class:`~autopilot.emulators.bamf.BamfApplication`
+    or :class:`~autopilot.emulators.bamf.BamfWindow` instance to the launched
+    process respectively. All applications launched in this way will be closed
+    when the test ends.
+
+    **Set Unity & Compiz Options**
+
+    The :meth:`set_unity_option` and :meth:`set_compiz_option` methods set a
+    unity or compiz setting to a particular value for the duration of the
+    current test only. This is useful if you want the window manager to behave
+    in a particular fashion for a particular test, while being assured that any
+    chances are non-destructive.
+
+    **Patch Process Environment**
+
+    The :meth:`patch_environment` method patches the process envionment, for the
+    duration of the current test only. This allows you to set an environment
+    variable for the duration of the current test only.
+
+    """
 
     run_tests_with = AutopilotTestRunner
 
@@ -227,36 +256,6 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             },
         }
 
-    @classmethod
-    def register_known_application(cls, name, desktop_file, process_name):
-        """Registers an application with the known_apps dictionary.
-
-        'name' is the name to be used when launching the application.
-        'desktop_file' is the filename (without path component) of the desktop file used to launch the application.
-        'process_name' is the name of the executable process that gets run.
-
-        Raises 'KeyError' if application has been registered already
-        """
-        if name in cls.KNOWN_APPS:
-            raise KeyError("Application has been registered already")
-        else:
-            cls.KNOWN_APPS[name] = {
-                                     "desktop-file" : desktop_file,
-                                     "process-name" : process_name
-                                   }
-
-    @classmethod
-    def unregister_known_application(cls, name):
-        """Unregisters an application with the known_apps dictionary.
-
-        'name' is the name to be used when launching the application.
-
-        Raises 'KeyError' if application has not been registered.
-        """
-        if name in cls.KNOWN_APPS:
-            del cls.KNOWN_APPS[name]
-        else:
-            raise KeyError("Application has not been registered")
 
     def setUp(self):
         super(AutopilotTestCase, self).setUp()
@@ -292,21 +291,29 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     def set_unity_option(self, option_name, option_value):
         """Set an option in the unity compiz plugin options.
 
-        The value will be set for the current test only.
+        The value will be set for the current test only, and automatically
+        undone when the test ends.
 
-        This will raise KeyError if the option named does not exist.
+        :param option_name: The name of the unity option.
+        :param option_value: The value you want to set.
+        :raises: KeyError if the option named does not exist.
 
         """
         self.set_compiz_option("unityshell", option_name, option_value)
 
-    def set_compiz_option(self, plugin_name, setting_name, setting_value):
-        """Set setting `setting_name` in compiz plugin `plugin_name` to value
-        `setting_value` for one test only.
+    def set_compiz_option(self, plugin_name, option_name, option_value):
+        """Set a compiz option for the duration of this test only.
 
-        This will raise KeyError if the plugin or setting named does not exist.
+        :param plugin_name: The name of the compiz plugin where the option is
+         registered. If the option is not in a plugin, the string "core" should
+         be used as the plugin name.
+        :param option_name: The name of the unity option.
+        :param option_value: The value you want to set.
+        :raises: KeyError if the option named does not exist.
+
         """
-        old_value = self._set_compiz_option(plugin_name, setting_name, setting_value)
-        self.addCleanup(self._set_compiz_option, plugin_name, setting_name, old_value)
+        old_value = self._set_compiz_option(option_name, option_name, option_value)
+        self.addCleanup(self._set_compiz_option, plugin_name, option_name, old_value)
         # Allow unity time to respond to the new setting.
         time.sleep(0.5)
 
@@ -319,28 +326,61 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         get_global_context().Write()
         return old_value
 
-    def assertVisibleWindowStack(self, stack_start):
-        """Check that the visible window stack starts with the windows passed in.
+    @classmethod
+    def register_known_application(cls, name, desktop_file, process_name):
+        """Registers an application with autopilot.
 
-        The start_stack is an iterable of BamfWindow objects.
-        Minimised windows are skipped.
+        After calling this method, you may call `start_app` or
+        `start_app_window` with the `name` parameter to start this application.
+        You need only call this once within a test run - the application will
+        remain registerred until the test run ends.
+
+        :param name: The name to be used when launching the application.
+        :param desktop_file: is the filename (without path component) of the desktop file used to launch the application.
+        :param process_name: is the name of the executable process that gets run.
+        :raises: KeyError if application has been registered already
 
         """
-        stack = [win for win in self.bamf.get_open_windows() if not win.is_hidden]
-        for pos, win in enumerate(stack_start):
-            self.assertThat(stack[pos].x_id, Equals(win.x_id),
-                            "%r at %d does not equal %r" % (stack[pos], pos, win))
+        if name in cls.KNOWN_APPS:
+            raise KeyError("Application has been registered already")
+        else:
+            cls.KNOWN_APPS[name] = {
+                                     "desktop-file" : desktop_file,
+                                     "process-name" : process_name
+                                   }
+
+    @classmethod
+    def unregister_known_application(cls, name):
+        """Unregisters an application with the known_apps dictionary.
+
+        :param name: The name to be used when launching the application.
+        :raises: KeyError if application has not been registered.
+
+        """
+        if name in cls.KNOWN_APPS:
+            del cls.KNOWN_APPS[name]
+        else:
+            raise KeyError("Application has not been registered")
 
     def start_app(self, app_name, files=[], locale=None):
-        """Start one of the known apps, and kill it on tear down.
+        """Start one of the known applications, and kill it on tear down.
 
-        Note: This method will clear all instances of this application on tearDown,
-        not just the one opened by this method!
+        .. warning:: This method will clear all instances of this application on
+         tearDown, not just the one opened by this method! We recommend that
+         you use the :meth:`start_app_window` method instead, as it is generally
+         safer.
 
-        If files is specified, start the application with the specified files.
-        If locale is specified, the locale will be set when the application is launched.
-
-        The method returns the BamfApplication instance.
+        :param app_name: The application name. This name must either already
+         be registered as one of the built-in applications that are supported
+         by autopilot, or must have been registered with the
+         :math:`register_known_application` method beforehand.
+        :param files: If specified, should be a list of paths to open with the
+         given application. Not all applications support opening files in this
+         way.
+        :param locale: If specified, the locale will to set when the application
+         is launched. If you want to launch an application without any
+         localisation being applied, set this parameter to 'C'.
+        :returns: A :class:`~autopilot.emulators.bamf.BamfApplication` instance.
 
         """
         window = self._open_window(app_name, files, locale)
@@ -351,16 +391,22 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         raise AssertionError("No new application window was opened.")
 
     def start_app_window(self, app_name, files=[], locale=None):
-        """Start a single window for one of the known applications, and close it
+        """Open a single window for one of the known applications, and close it
         at the end of the test.
 
-        If files is specified, start the application with the specified files.
-        If locale is specified, the locale will be set when the application is launched.
-
-        The method returns the BamfWindow instance.
-
-        If no window was opened, or more than one window was opened, this method
-        raises AssertionError.
+        :param app_name: The application name. This name must either already
+         be registered as one of the built-in applications that are supported
+         by autopilot, or must have been registered with the
+         :math:`register_known_application` method beforehand.
+        :param files: If specified, should be a list of paths to open with the
+         given application. Not all applications support opening files in this
+         way.
+        :param locale: If specified, the locale will to set when the application
+         is launched. If you want to launch an application without any
+         localisation being applied, set this parameter to 'C'.
+        :raises: AssertionError if no window was opened, or more than one window
+         was opened.
+        :returns: A :class:`~autopilot.emulators.bamf.BamfWindow` instance.
 
         """
         window = self._open_window(app_name, files, locale)
@@ -403,10 +449,14 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             time.sleep(1)
         return None
 
-
-
     def get_open_windows_by_application(self, app_name):
-        """Get a list of BamfWindow instances for the given application name."""
+        """Get a list of BamfWindow instances for the given application name.
+
+        :param app_name: The name of one of the well-known applications.
+        :returns: A list of :class:`~autopilot.emulators.bamf.BamfWindow`
+         instances.
+
+        """
         existing_windows = []
         [existing_windows.extend(a.get_windows()) for a in self.get_app_instances(app_name)]
         return existing_windows
@@ -432,14 +482,27 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         return len(apps) > 0
 
     def patch_environment(self, key, value):
-        """Patch the system environment 'key' with value 'value'.
+        """Patch the process environment, setting 'key' with value 'value'.
 
-        This patches os.environ for the duration of the test only:
+        This patches os.environ for the duration of the test only. After calling
+        this method, the following should be True::
 
-        os.environ[key] == value
+            os.environ[key] == value
 
         After the test, the patch will be undone (including deleting the key if
         if didn't exist before this method was called).
+
+        .. note:: Be aware that patching the environment in this way only
+         affects the current autopilot process, and any processes spawned by
+         autopilot. If you are planing on starting an application from within
+         autopilot and you want this new application to read the patched
+         environment variable, you must patch the environment *before* launching
+         the new process.
+
+        :param key: The name of the key you wish to set. If the key does not
+         already exist in the process environment it will be created (and then
+         deleted when the test ends). The key must be a string.
+        :param value: The value you wish to set. This must be a string.
 
         """
         if key in os.environ:
@@ -449,18 +512,42 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             self.addCleanup(os.unsetenv, key)
         os.environ[key] = value
 
+    def assertVisibleWindowStack(self, stack_start):
+        """Check that the visible window stack starts with the windows passed in.
+
+        Minimised windows are skipped.
+
+        :param stack_start: An iterable of BamfWindow instances.
+        :raises: AssertionError if the top of the window stack does not match
+         the contents of the stack_start parameter.
+
+        """
+        stack = [win for win in self.bamf.get_open_windows() if not win.is_hidden]
+        for pos, win in enumerate(stack_start):
+            self.assertThat(stack[pos].x_id, Equals(win.x_id),
+                            "%r at %d does not equal %r" % (stack[pos], pos, win))
+
     def assertProperty(self, obj, **kwargs):
-        """Assert that 'object' has properties equal to the key/value pairs in kwargs.
+        """Assert that 'obj' has properties equal to the key/value pairs in kwargs.
 
         This method is intended to be used on objects whose attributes do not have
-        the wait_for method.
+        the wait_for method (i.e.- objects that do not come from the autopilot
+        DBus interface).
 
         For example, from within a test, to assert certain properties on a
-        BamfWindow instance:
+        BamfWindow instance::
 
-        self.assertProperty(my_window, is_maximized=True)
+            self.assertProperty(my_window, is_maximized=True)
 
-        Note that assertProperties is a synonym for this method.
+        .. note:: assertProperties is a synonym for this method.
+
+        :param obj: An object to test.
+        :param kwargs: One or more keyword arguments to match against the
+         attributes of the 'obj' parameter.
+        :raises: ValueError if no keyword arguments were given.
+        :raises: ValueError if a named attribute is a callable object.
+        :raises: AssertionError if any of the attribute/value pairs in kwargs
+         do not match the attributes on the object passed in.
 
         """
         if not kwargs:

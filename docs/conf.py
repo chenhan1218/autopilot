@@ -27,6 +27,8 @@ import sys, os
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
 
+autodoc_member_order='bysource'
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -41,7 +43,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Autopilot'
-copyright = u'2012, Thomi Richards'
+copyright = u'2012, Canonical'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -70,7 +72,7 @@ exclude_patterns = ['_build']
 #default_role = None
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
-#add_function_parentheses = True
+add_function_parentheses = False
 
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
@@ -84,7 +86,7 @@ exclude_patterns = ['_build']
 pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
-#modindex_common_prefix = []
+modindex_common_prefix = ['autopilot.']
 
 
 # -- Options for HTML output ---------------------------------------------------

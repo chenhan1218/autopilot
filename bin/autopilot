@@ -11,7 +11,6 @@ from __future__ import absolute_import
 
 from codecs import open
 from datetime import datetime
-from imp import find_module
 import os
 import os.path
 from os import putenv
@@ -31,7 +30,7 @@ from unittest import TestSuite
 DEPENDS = [
     ('compizconfig', 'python-compizconfig'),
     ('dbus', 'python-dbus'),
-    ('gconf', 'gir1.2-gconf-2.0'),
+    ('gi.repository.GConf', 'gir1.2-gconf-2.0'),
     ('ibus', 'python-ibus'),
     ('junitxml', 'python-junitxml'),
     ('testscenarios', 'python-testscenarios'),
@@ -51,7 +50,7 @@ def check_depends():
     missing = []
     for module_name, package_name in DEPENDS:
         try:
-            find_module(module_name)
+            __import__(module_name)
         except ImportError:
             missing.append(package_name)
     if missing:

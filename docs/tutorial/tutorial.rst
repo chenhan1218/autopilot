@@ -7,4 +7,5 @@ This tutorial will guide users new to Autopilot through creating a minimal autop
    :maxdepth: 2
 
    getting_started
+   running_ap
    good_tests

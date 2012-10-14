@@ -166,6 +166,27 @@ All classes that derive from :class:`~autopilot.testcase.AutopilotTestCase` have
 
 * The keyboard class also contains 'press' and 'release' methods. These take the same parameters as the press_and_release method.
 
+The Keybindings System
+~~~~~~~~~~~~~~~~~~~~~~
+
+Autopilot includes the :module:`autopilot.keybindings` module, which includes code to make it easier to send pre-configured keybindings to the application under test. The difficulty with keybindings is that most applications allow the user to configure the keybindings at will. If a user has changed the default keybindings, your autopilot tests will break if you have the default keys hard-coded in your tests. To overcome this, the keybindings system allows you to name a keybinding, and autopilot will read the actual keys to press and release from the application under test.
+
+.. note:: At the time of writing, the keybindings system only works when teting Unity. Work is in progress to make this feature work with Qt and Gtk targets.
+
+To use the keybindings system, you need to derive from the :class:`~autopilot.keybindings.KeybindingsHelper` class. This class adds the :meth:`~autopilot.keybindings.KeybindingsHelper.keybinding(binding_name, delay)` method, which allows you to send keybindings, like so::
+
+    from autopilot.testcase import AutopilotTestCase
+    from autopilot.keybindings import KeybindingsHelper
+
+
+    class DashRevealTest(AutopilotTestCase, KeybindingsHelper):
+
+        def test_dash_reveals_with_keybindings(self):
+            self.keybinding("dash/reveal")
+            self.addCleanup(self.dash.ensure_hidden)
+
+            self.assertThat(dash.visible, Eventually(Equals(True)))
+
 Using the Mouse
 ###############
 
@@ -209,9 +230,9 @@ All classes that derive from :class:`~autopilot.testcase.AutopilotTestCase` have
 Test Assertions
 ---------------
 
-Autopilot is built on top of the standard python unit test tools - all the test assertion methods that are provided by the :mod:`unittest` and :mod:`testtools` modules are available to an autopilot test. However, autopilot adds a few additional test assertions that may be useful to test authors.
+Autopilot is built on top of the standard python unit test tools - all the test assertion methods that are provided by the :module:`unittest` and :module:`testtools` modules are available to an autopilot test. However, autopilot adds a few additional test assertions that may be useful to test authors.
 
-The authors of autopilot recommend that test authors make use of the :meth:`~testtools.TestCase.assertThat` method in their tests. The :mod:`autopilot.matchers` module provides the :class:`~autopilot.matchers.Eventually` matcher, which introduces a timeout to the thing meing tested. This keep autopilot tests accurate, since the application under test is in a separate process, and event handling usually happens in an asynchronous fashion. As an example, here's a simple test that ensures that the unity dash is revealed when the 'Super' key is pressed::
+The authors of autopilot recommend that test authors make use of the :meth:`~testtools.TestCase.assertThat` method in their tests. The :module:`autopilot.matchers` module provides the :class:`~autopilot.matchers.Eventually` matcher, which introduces a timeout to the thing meing tested. This keep autopilot tests accurate, since the application under test is in a separate process, and event handling usually happens in an asynchronous fashion. As an example, here's a simple test that ensures that the unity dash is revealed when the 'Super' key is pressed::
 
     test_dash_is_revealed(self):
         dash = ... # Get the dash object from somewhere

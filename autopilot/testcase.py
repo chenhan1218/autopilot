@@ -462,7 +462,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         return existing_windows
 
     def close_all_app(self, app_name):
-        """Close all instances of the app_name."""
+        """Close all instances of the application 'app_name'."""
         app = self.KNOWN_APPS[app_name]
         try:
             pids = check_output(["pidof", app['process-name']]).split()

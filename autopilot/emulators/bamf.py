@@ -80,7 +80,7 @@ class Bamf(object):
         return apps
 
     def get_running_applications_by_desktop_file(self, desktop_file):
-        """Return a list of applications that have the desktop file 'desktop_file'.
+        """Return a list of applications that have the desktop file *desktop_file*.
 
         This method may return an empty list, if no applications
         are found with the specified desktop file.
@@ -106,8 +106,8 @@ class Bamf(object):
     def get_open_windows(self, user_visible_only=True):
         """Get a list of currently open windows.
 
-        If user_visible_only is True (the default), only applications
-        visible to the user in the switcher will be returned.
+        If *user_visible_only* is True (the default), only applications visible
+        to the user in the switcher will be returned.
 
         The result is sorted to be in stacking order.
 
@@ -122,7 +122,7 @@ class Bamf(object):
         return list(reversed(windows))
 
     def get_window_by_xid(self, xid):
-        """Get the BamfWindow that matches the provided 'xid'."""
+        """Get the BamfWindow that matches the provided *xid*."""
         windows = [BamfWindow(w) for w in self.matcher_interface.WindowPaths() if BamfWindow(w).x_id == xid]
         return windows[0] if windows else None
 

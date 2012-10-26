@@ -451,7 +451,7 @@ class ScreenGeometry:
     def get_monitor_geometry(self, monitor_number):
         """Get the geometry for a particular monitor.
 
-        :return: Tuple containing (x,y,width,height).
+        :return: Tuple containing (x, y, width, height).
 
         """
         if monitor_number < 0 or monitor_number >= self.get_num_monitors():

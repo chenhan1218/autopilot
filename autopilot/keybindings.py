@@ -140,10 +140,10 @@ def get(binding_name):
 
 
 def get_hold_part(binding_name):
-    """Returns the part of a keybinding that must be held permenantly.
+    """Returns the part of a keybinding that must be held permanently.
 
     Use this function to split bindings like "Alt+Tab" into the part that must be
-    held down. See get_tap_part for the part that must be tapped.
+    held down. See :meth:`get_tap_part` for the part that must be tapped.
 
     :raises: **ValueError** if the binding specified does not have multiple
      parts.
@@ -161,7 +161,7 @@ def get_tap_part(binding_name):
     """Returns the part of a keybinding that must be tapped.
 
     Use this function to split bindings like "Alt+Tab" into the part that must be
-    held tapped. See get_hold_part for the part that must be held down.
+    held tapped. See :meth:`get_hold_part` for the part that must be held down.
 
     :Raises: **ValueError** if the binding specified does not have multiple
      parts.
@@ -228,7 +228,7 @@ def _translate_compiz_keystroke_string(keystroke_string):
 
 
 class KeybindingsHelper(object):
-    """A helper class that makes it easier to use unity keybindings."""
+    """A helper class that makes it easier to use Unity keybindings."""
     _keyboard = Keyboard()
 
     def keybinding(self, binding_name, delay=None):

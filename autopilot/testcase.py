@@ -405,7 +405,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         :param app_name: The application name. *This name must either already
          be registered as one of the built-in applications that are supported
          by autopilot, or must have been registered with*
-         :math:`register_known_application` *beforehand.*
+         :meth:`register_known_application` *beforehand.*
         :param files: (Optional) Should be a list of paths to open with the
          given application. *Not all applications support opening files in this
          way.*
@@ -490,7 +490,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         return len(apps) > 0
 
     def patch_environment(self, key, value):
-        """Patch the process environment, setting 'key' with value 'value'.
+        """Patch the process environment, setting *key* with value *value*.
 
         This patches os.environ for the duration of the test only. After calling
         this method, the following should be True::
@@ -538,9 +538,9 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     def assertProperty(self, obj, **kwargs):
         """Assert that *obj* has properties equal to the key/value pairs in kwargs.
 
-        This method is intended to be used on objects whose attributes do not have
-        the wait_for method (i.e.- objects that do not come from the autopilot
-        DBus interface).
+        This method is intended to be used on objects whose attributes do not
+        have the :meth:`wait_for` method (i.e.- objects that do not come from
+        the autopilot DBus interface).
 
         For example, from within a test, to assert certain properties on a
         BamfWindow instance::

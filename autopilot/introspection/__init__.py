@@ -53,7 +53,7 @@ class ApplicationIntrospectionTestMixin(object):
 
         This method supports the following keyword arguments:
 
-         * launch_dir. If set to a directory that exists the process will be
+         * *launch_dir*. If set to a directory that exists the process will be
            launched from that directory.
 
         :raises: **ValueError** if unknown keyword arguments are passed.
@@ -84,7 +84,7 @@ class ApplicationIntrospectionTestMixin(object):
 
         This method does nothing - it exists so child classes can override it.
 
-        The method *must* return a tuple of (app_path, arguments). Either of
+        The method *must* return a tuple of (*app_path*, *arguments*). Either of
         these can be altered by this method.
 
         """
@@ -113,7 +113,7 @@ def launch_autopilot_enabled_process(application, args, **kwargs):
 
 
 def get_autopilot_proxy_object_for_process(process):
-    """Return the autopilot proxy object for the given process.
+    """Return the autopilot proxy object for the given *process*.
 
     :raises: **RuntimeError** if no autopilot interface was found.
 
@@ -179,8 +179,7 @@ def get_proxy_object_base_clases(service_name, obj_path):
     """Return  tuple of the base classes to use when creating a proxy object
     for the given service name & path.
 
-    This function will raise a RuntimeError if the autopilot interface cannot be
-    found.
+    :raises: **RuntimeError** if the autopilot interface cannot be found.
 
     """
 
@@ -214,16 +213,19 @@ class ApplicationProxyObect(DBusIntrospectionObject):
         self._process = None
 
     def select_single(self, type_name='*', **kwargs):
-        """Get a single node from the introspection tree, with type equal to 'type_name'
-        and (optionally) matching the keyword filters present in kwargs. For example:
+        """Get a single node from the introspection tree, with type equal to
+        *type_name* and (optionally) matching the keyword filters present in
+        *kwargs*.
+
+        For example:
 
         >>> app.select_single('QPushButton', objectName='clickme')
         ... returns a QPushButton whose 'objectName' property is 'clickme'.
 
-        If the query returns more than one item, a ValueError will be raised. If
-        you want more than one item, use select_many instead.
-
         If nothing is returned from the query, this method returns None.
+
+        :raises: **ValueError** if the query returns more than one item. *If you
+         want more than one item, use select_many instead*.
 
         """
         instances = self.select_many(type_name, **kwargs)
@@ -235,8 +237,10 @@ class ApplicationProxyObect(DBusIntrospectionObject):
 
     def select_many(self, type_name='*', **kwargs):
         """Get a list of nodes from the introspection tree, with type equal to
-        'type_name' and (optionally) matching the keyword filters present in
-        kwargs. For example:
+        *type_name* and (optionally) matching the keyword filters present in
+        *kwargs*.
+
+        For example:
 
         >>> app.select_many('QPushButton', enabled=True)
         ... returns a list of QPushButtons that are enabled.

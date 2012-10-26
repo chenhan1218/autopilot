@@ -78,12 +78,12 @@ def get_introspection_iface(service_name, object_path):
 
 
 def translate_state_keys(state_dict):
-    """Translates the state_dict passed in so the keys are usable as python attributes."""
+    """Translates the *state_dict* passed in so the keys are usable as python attributes."""
     return {k.replace('-','_'):v for k,v in state_dict.iteritems() }
 
 
 def object_passes_filters(instance, **kwargs):
-    """Return true if 'instance' satisifies all the filters present in kwargs."""
+    """Return true if *instance* satisifies all the filters present in kwargs."""
     with instance.no_automatic_refreshing():
         for attr, val in kwargs.iteritems():
             if not hasattr(instance, attr) or getattr(instance, attr) != val:

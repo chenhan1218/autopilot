@@ -47,7 +47,15 @@ Emulators Package
     :undoc-members:
     :show-inheritance:
 
-introspection Package
+:mod:`zeitgeist` Module
+-----------------------
+
+.. automodule:: autopilot.emulators.zeitgeist
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Introspection Package
 +++++++++++++++++++++
 
 :mod:`introspection` Package

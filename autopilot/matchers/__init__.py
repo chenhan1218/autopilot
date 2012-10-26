@@ -18,9 +18,9 @@ from time import sleep
 class Eventually(Matcher):
     """Asserts that a value will eventually equal a given Matcher object.
 
-    This works on objects that *either* have a wait_for(expected) function, *or*
-    objects that are callable and return the most current value (i.e.- they
-    refresh the objects value).
+    This works on objects that *either* have a :meth:`wait_for(expected)`
+    function, *or* objects that are callable and return the most current value
+    (i.e.- they refresh the objects value).
 
     """
 
@@ -50,8 +50,8 @@ class Eventually(Matcher):
 
 
 def _callable_wait_for(refresh_fn, matcher):
-    """Like the patched wait_for method, but for callable objects instead of
-    patched variables.
+    """Like the patched :meth:`wait_for method`, but for callable objects instead
+    of patched variables.
 
     """
 

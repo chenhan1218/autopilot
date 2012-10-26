@@ -1,5 +1,8 @@
-autopilot API Documentation
+Autopilot API Documentation
 ===========================
+
+Autopilot Utility Modules
++++++++++++++++++++++++++
 
 :mod:`testcase` Module
 ----------------------
@@ -17,7 +20,7 @@ autopilot API Documentation
     :undoc-members:
     :show-inheritance:
 
-emulators Package
+Emulators Package
 +++++++++++++++++
 
 :mod:`X11` Module

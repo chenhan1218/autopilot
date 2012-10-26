@@ -200,16 +200,19 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
 
     **Application Launch Support**
 
-    This class contains the methods :meth:`start_app` and
-    :meth:`start_app_window` which will launch one of the well-known
-    applications and return a :class:`~autopilot.emulators.bamf.BamfApplication`
-    or :class:`~autopilot.emulators.bamf.BamfWindow` instance to the launched
+    This class contains the methods
+    :meth:`~autopilot.testcase.AutopilotTestCase.start_app` and
+    :meth:`~autopilot.testcase.AutopilotTestCase.start_app_window` which will
+    launch one of the well-known applications and return a
+    :class:`~autopilot.emulators.bamf.BamfApplication` or
+    :class:`~autopilot.emulators.bamf.BamfWindow` instance to the launched
     process respectively. All applications launched in this way will be closed
     when the test ends.
 
     **Set Unity & Compiz Options**
 
-    The :meth:`set_unity_option` and :meth:`set_compiz_option` methods set a
+    The :meth:`~autopilot.testcase.AutopilotTestCase.set_unity_option` and
+    :meth:`~autopilot.testcase.AutopilotTestCase.set_compiz_option` methods set a
     unity or compiz setting to a particular value for the duration of the
     current test only. This is useful if you want the window manager to behave
     in a particular fashion for a particular test, while being assured that any
@@ -217,9 +220,10 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
 
     **Patch Process Environment**
 
-    The :meth:`patch_environment` method patches the process envionment, for the
-    duration of the current test only. This allows you to set an environment
-    variable for the duration of the current test only.
+    The :meth:`~autopilot.testcase.AutopilotTestCase.patch_environment` method
+    patches the process environment, for the duration of the current test
+    only. This allows you to set an environment variable for the duration of the
+    current test only.
 
     """
 
@@ -276,9 +280,9 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     def call_gsettings_cmd(self, command, schema, *args):
         """Set a desktop wide gsettings option
 
-        Using the gsettings command because there's a bug with importing
+        Using the gsettings command because there is a bug with importing
         from gobject introspection and pygtk2 simultaneously, and the Xlib
-        keyboard layout bits are very unweildy. This seems like the best
+        keyboard layout bits are very unwieldy. This seems like the best
         solution, even a little bit brutish.
         """
         cmd = ['gsettings', command, schema] + list(args)
@@ -291,12 +295,12 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     def set_unity_option(self, option_name, option_value):
         """Set an option in the unity compiz plugin options.
 
-        The value will be set for the current test only, and automatically
-        undone when the test ends.
+        .. note:: The value will be set for the current test only, and
+         automatically undone when the test ends.
 
         :param option_name: The name of the unity option.
         :param option_value: The value you want to set.
-        :raises: KeyError if the option named does not exist.
+        :raises: **KeyError** if the option named does not exist.
 
         """
         self.set_compiz_option("unityshell", option_name, option_value)
@@ -304,12 +308,15 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     def set_compiz_option(self, plugin_name, option_name, option_value):
         """Set a compiz option for the duration of this test only.
 
+        .. note:: The value will be set for the current test only, and
+         automatically undone when the test ends.
+
         :param plugin_name: The name of the compiz plugin where the option is
          registered. If the option is not in a plugin, the string "core" should
          be used as the plugin name.
         :param option_name: The name of the unity option.
         :param option_value: The value you want to set.
-        :raises: KeyError if the option named does not exist.
+        :raises: **KeyError** if the option named does not exist.
 
         """
         old_value = self._set_compiz_option(option_name, option_name, option_value)
@@ -328,17 +335,18 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
 
     @classmethod
     def register_known_application(cls, name, desktop_file, process_name):
-        """Registers an application with autopilot.
+        """Register an application with autopilot.
 
-        After calling this method, you may call `start_app` or
-        `start_app_window` with the `name` parameter to start this application.
+        After calling this method, you may call :meth:`start_app` or
+        :meth:`start_app_window` with the `name` parameter to start this
+        application.
         You need only call this once within a test run - the application will
         remain registerred until the test run ends.
 
         :param name: The name to be used when launching the application.
-        :param desktop_file: is the filename (without path component) of the desktop file used to launch the application.
-        :param process_name: is the name of the executable process that gets run.
-        :raises: KeyError if application has been registered already
+        :param desktop_file: The filename (without path component) of the desktop file used to launch the application.
+        :param process_name: The name of the executable process that gets run.
+        :raises: **KeyError** if application has been registered already
 
         """
         if name in cls.KNOWN_APPS:
@@ -351,10 +359,10 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
 
     @classmethod
     def unregister_known_application(cls, name):
-        """Unregisters an application with the known_apps dictionary.
+        """Unregister an application with the known_apps dictionary.
 
         :param name: The name to be used when launching the application.
-        :raises: KeyError if application has not been registered.
+        :raises: **KeyError** if the application has not been registered.
 
         """
         if name in cls.KNOWN_APPS:
@@ -370,16 +378,16 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
          you use the :meth:`start_app_window` method instead, as it is generally
          safer.
 
-        :param app_name: The application name. This name must either already
+        :param app_name: The application name. *This name must either already
          be registered as one of the built-in applications that are supported
-         by autopilot, or must have been registered with the
-         :math:`register_known_application` method beforehand.
-        :param files: If specified, should be a list of paths to open with the
-         given application. Not all applications support opening files in this
-         way.
-        :param locale: If specified, the locale will to set when the application
-         is launched. If you want to launch an application without any
-         localisation being applied, set this parameter to 'C'.
+         by autopilot, or must have been registered using*
+         :meth:`register_known_application` *beforehand.*
+        :param files: (Optional) A list of paths to open with the
+         given application. *Not all applications support opening files in this
+         way.*
+        :param locale: (Optional) The locale will to set when the application
+         is launched. *If you want to launch an application without any
+         localisation being applied, set this parameter to 'C'.*
         :returns: A :class:`~autopilot.emulators.bamf.BamfApplication` instance.
 
         """
@@ -394,18 +402,18 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         """Open a single window for one of the known applications, and close it
         at the end of the test.
 
-        :param app_name: The application name. This name must either already
+        :param app_name: The application name. *This name must either already
          be registered as one of the built-in applications that are supported
-         by autopilot, or must have been registered with the
-         :math:`register_known_application` method beforehand.
-        :param files: If specified, should be a list of paths to open with the
-         given application. Not all applications support opening files in this
-         way.
-        :param locale: If specified, the locale will to set when the application
-         is launched. If you want to launch an application without any
-         localisation being applied, set this parameter to 'C'.
-        :raises: AssertionError if no window was opened, or more than one window
-         was opened.
+         by autopilot, or must have been registered with*
+         :math:`register_known_application` *beforehand.*
+        :param files: (Optional) Should be a list of paths to open with the
+         given application. *Not all applications support opening files in this
+         way.*
+        :param locale: (Optional) The locale will to set when the application
+         is launched. *If you want to launch an application without any
+         localisation being applied, set this parameter to 'C'.*
+        :raises: **AssertionError** if no window was opened, or more than one
+         window was opened.
         :returns: A :class:`~autopilot.emulators.bamf.BamfWindow` instance.
 
         """
@@ -477,7 +485,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         return self.bamf.get_running_applications_by_desktop_file(desktop_file)
 
     def app_is_running(self, app_name):
-        """Returns true if an instance of the application is running."""
+        """Return true if an instance of the application is running."""
         apps = self.get_app_instances(app_name)
         return len(apps) > 0
 
@@ -499,10 +507,10 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
          environment variable, you must patch the environment *before* launching
          the new process.
 
-        :param key: The name of the key you wish to set. If the key does not
+        :param string key: The name of the key you wish to set. If the key does not
          already exist in the process environment it will be created (and then
-         deleted when the test ends). The key must be a string.
-        :param value: The value you wish to set. This must be a string.
+         deleted when the test ends).
+        :param string value: The value you wish to set.
 
         """
         if key in os.environ:
@@ -515,11 +523,11 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     def assertVisibleWindowStack(self, stack_start):
         """Check that the visible window stack starts with the windows passed in.
 
-        Minimised windows are skipped.
+        .. note:: Minimised windows are skipped.
 
         :param stack_start: An iterable of BamfWindow instances.
-        :raises: AssertionError if the top of the window stack does not match
-         the contents of the stack_start parameter.
+        :raises: **AssertionError** if the top of the window stack does not
+         match the contents of the stack_start parameter.
 
         """
         stack = [win for win in self.bamf.get_open_windows() if not win.is_hidden]
@@ -528,7 +536,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
                             "%r at %d does not equal %r" % (stack[pos], pos, win))
 
     def assertProperty(self, obj, **kwargs):
-        """Assert that 'obj' has properties equal to the key/value pairs in kwargs.
+        """Assert that *obj* has properties equal to the key/value pairs in kwargs.
 
         This method is intended to be used on objects whose attributes do not have
         the wait_for method (i.e.- objects that do not come from the autopilot
@@ -541,13 +549,13 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
 
         .. note:: assertProperties is a synonym for this method.
 
-        :param obj: An object to test.
+        :param obj: The object to test.
         :param kwargs: One or more keyword arguments to match against the
-         attributes of the 'obj' parameter.
-        :raises: ValueError if no keyword arguments were given.
-        :raises: ValueError if a named attribute is a callable object.
-        :raises: AssertionError if any of the attribute/value pairs in kwargs
-         do not match the attributes on the object passed in.
+         attributes of the *obj* parameter.
+        :raises: **ValueError** if no keyword arguments were given.
+        :raises: **ValueError** if a named attribute is a callable object.
+        :raises: **AssertionError** if any of the attribute/value pairs in
+         kwargs do not match the attributes on the object passed in.
 
         """
         if not kwargs:

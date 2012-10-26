@@ -37,13 +37,13 @@ logger = logging.getLogger(__name__)
 class ApplicationIntrospectionTestMixin(object):
     """A mix-in class to make launching applications for introsection easier.
 
-    You should not instantiate this class directly. Instead, use one of the
-    derived classes.
+    .. important:: You should not instantiate this class directly. Instead, use
+     one of the derived classes.
 
     """
 
     def launch_test_application(self, application, *arguments, **kwargs):
-        """Launch 'application' and retrieve a proxy object for the application.
+        """Launch *application* and retrieve a proxy object for the application.
 
         Use this method to launch a supported application and start testing it.
         The application can be specified as:
@@ -56,10 +56,9 @@ class ApplicationIntrospectionTestMixin(object):
          * launch_dir. If set to a directory that exists the process will be
            launched from that directory.
 
-        Unknown keyword arguments will cause a ValueError to be raised.
-
-        This method returns a proxy object that represents the application.
-        Introspection data is retrievable via this object.
+        :raises: **ValueError** if unknown keyword arguments are passed.
+        :return: A proxy object that represents the application. Introspection
+         data is retrievable via this object.
 
          """
         if not isinstance(application, basestring):
@@ -85,8 +84,8 @@ class ApplicationIntrospectionTestMixin(object):
 
         This method does nothing - it exists so child classes can override it.
 
-        The method MUST return a tuple of (app_path, arguments). Either of these
-        can be altered by this method.
+        The method *must* return a tuple of (app_path, arguments). Either of
+        these can be altered by this method.
 
         """
         raise NotImplementedError("Sub-classes must implement this method.")
@@ -114,9 +113,9 @@ def launch_autopilot_enabled_process(application, args, **kwargs):
 
 
 def get_autopilot_proxy_object_for_process(process):
-    """return the autopilot proxy object for the given process.
+    """Return the autopilot proxy object for the given process.
 
-    Raises RuntimeError if no autopilot interface was found.
+    :raises: **RuntimeError** if no autopilot interface was found.
 
     """
     pid = process.pid
@@ -177,7 +176,7 @@ def make_proxy_object_from_service_name(service_name, obj_path):
 
 
 def get_proxy_object_base_clases(service_name, obj_path):
-    """Returna  tuple of the base classes to use when creating a proxy object
+    """Return  tuple of the base classes to use when creating a proxy object
     for the given service name & path.
 
     This function will raise a RuntimeError if the autopilot interface cannot be

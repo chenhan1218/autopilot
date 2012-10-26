@@ -6,7 +6,7 @@
 # under the terms of the GNU General Public License version 3, as published
 # by the Free Software Foundation.
 
-"""Class to add text files to the file lens."""
+"""Provide ability to register text files with the file lens."""
 
 from __future__ import absolute_import
 
@@ -17,16 +17,17 @@ from zeitgeist.datamodel import Event, Interpretation, Manifestation, ResultType
 
 
 class Zeitgeist(object):
-    """Class to access zeitgeist."""
+    """Provide access zeitgeist."""
 
     def __init__(self):
         self.zg = ZeitgeistClient()
         self.logger = logging.getLogger(__name__)
 
     def add_existing_file(self, path):
-        """Registers 'file' with zeitgeist.
+        """Registers *file* with zeitgeist.
 
-        'file' must be a full path to an existing file, or a RuntimeError will Raise.
+        :param string file: full path to an existing text file to register.
+        :raises: **RuntimeError** if *file* does not exist.
 
         """
         if os.path.exists(path):

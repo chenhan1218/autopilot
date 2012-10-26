@@ -10,7 +10,7 @@
 """Classes and tools to support Qt introspection."""
 
 
-__all__ = 'QtIntrospectionTetMixin'
+__all__ = ['QtIntrospectionTestMixin']
 
 import dbus
 import functools
@@ -48,6 +48,9 @@ class QtSignalWatcher(object):
 
     def __init__(self, proxy, signal_name):
         """Initialise the signal watcher.
+
+        :param QtObjectProxyMixin proxy:
+        :param string signal_name: Name of the signal being monitored.
 
         'proxy' is an instance of QtObjectProxyMixin.
         'signal_name' is the name of the signal being monitored.

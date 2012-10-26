@@ -111,10 +111,11 @@ class Keyboard(object):
     def press(self, keys, delay=0.2):
         """Send key press events only.
 
-        The 'keys' argument must be a string of keys you want
-        pressed. For example:
+        :param string keys: Keys you want pressed.
 
-        press('Alt+F2')
+        Example:
+
+        >>> press('Alt+F2')
 
         presses the 'Alt' and 'F2' keys.
 
@@ -129,10 +130,11 @@ class Keyboard(object):
     def release(self, keys, delay=0.2):
         """Send key release events only.
 
-        The 'keys' argument must be a string of keys you want
-        released. For example:
+        :param string keys: Keys you want released.
 
-        release('Alt+F2')
+        Example:
+
+        >>> release('Alt+F2')
 
         releases the 'Alt' and 'F2' keys.
 
@@ -152,10 +154,11 @@ class Keyboard(object):
 
         This is the same as calling 'press(keys);release(keys)'.
 
-        The 'keys' argument must be a string of keys you want
-        pressed and released.. For example:
+        :param string keys: Keys you want pressed and released.
 
-        press_and_release('Alt+F2'])
+        Example:
+
+        >>> press_and_release('Alt+F2')
 
         presses both the 'Alt' and 'F2' keys, and then releases both keys.
 
@@ -167,8 +170,9 @@ class Keyboard(object):
     def type(self, string, delay=0.1):
         """Simulate a user typing a string of text.
 
-        Only 'normal' keys can be typed with this method. Control characters
-        (such as 'Alt' will be interpreted as an 'A', and 'l', and a 't').
+        .. note:: Only 'normal' keys can be typed with this method. Control
+         characters (such as 'Alt' will be interpreted as an 'A', and 'l',
+         and a 't').
 
         """
         if not isinstance(string, basestring):
@@ -182,8 +186,8 @@ class Keyboard(object):
     def cleanup():
         """Generate KeyRelease events for any un-released keys.
 
-        Make sure you call this at the end of any test to release
-        any keys that were pressed and not released.
+        .. important:: Ensure you call this at the end of any test to release any
+         keys that were pressed and not released.
 
         """
         global _PRESSED_KEYS
@@ -284,8 +288,8 @@ class Mouse(object):
     def move(self, x, y, animate=True, rate=10, time_between_events=0.01):
         """Moves mouse to location (x, y).
 
-        Callers should avoid specifying the rate or time_between_events parameters
-        unless they need a specific rate of movement.
+        Callers should avoid specifying the *rate* or *time_between_events*
+        parameters unless they need a specific rate of movement.
 
         """
         logger.debug("Moving mouse to position %d,%d %s animation.", x, y,
@@ -336,8 +340,8 @@ class Mouse(object):
          * center_x, center_y
          * x, y, w, h
 
-        If none of these attributes are found, or if an attribute is of an incorrect
-        type, a ValueError is raised.
+        :raises: **ValueError** if none of these attributes are found, or if an
+         attribute is of an incorrect type.
 
         """
         try:
@@ -370,9 +374,13 @@ class Mouse(object):
         except (TypeError, ValueError):
             raise ValueError("Object '%r' has x,y attribute, but they are not of the correct type" % object_proxy)
 
-
     def position(self):
-        """Returns the current position of the mouse pointer."""
+        """
+        Returns the current position of the mouse pointer.
+
+        :return: (x,y) tuple
+        """
+
         coord = get_display().screen().root.query_pointer()._data
         x, y = coord["root_x"], coord["root_y"]
         return x, y
@@ -407,12 +415,13 @@ class ScreenGeometry:
         return self._default_screen.get_primary_monitor()
 
     def set_primary_monitor(self, monitor):
-        """Set `monitor` to be the primary monitor.
+        """Set *monitor* to be the primary monitor.
 
-        `monitor` must be an integer between 0 and the number of configured monitors.
-        ValueError is raised if an invalid monitor is specified.
-
-        BlacklistedDriverError is raised if your video driver does not support this.
+        :param int monitor: Must be between 0 and the number of configured
+         monitors.
+        :raises: **ValueError** if an invalid monitor is specified.
+        :raises: **BlacklistedDriverError** if your video driver does not
+         support this.
 
         """
         try:
@@ -446,7 +455,7 @@ class ScreenGeometry:
     def get_monitor_geometry(self, monitor_number):
         """Get the geometry for a particular monitor.
 
-        Returns a tuple containing (x,y,width,height).
+        :return: Tuple containing (x, y, width, height).
 
         """
         if monitor_number < 0 or monitor_number >= self.get_num_monitors():
@@ -455,7 +464,7 @@ class ScreenGeometry:
         return (rect.x, rect.y, rect.width, rect.height)
 
     def is_rect_on_monitor(self, monitor_number, rect):
-        """Returns True if `rect` is _entirely_ on the specified monitor, with no overlap."""
+        """Returns True if *rect* is **entirely** on the specified monitor, with no overlap."""
 
         if type(rect) is not tuple or len(rect) != 4:
             raise TypeError("rect must be a tuple of 4 int elements.")
@@ -465,9 +474,9 @@ class ScreenGeometry:
         return (x >= mx and x + w <= mx + mw and y >= my and y + h <= my + mh)
 
     def is_point_on_monitor(self, monitor_number, point):
-        """Returns True if `point` is on the specified monitor.
+        """Returns True if *point* is on the specified monitor.
 
-        point must be an iterable type with two elements: (x, y)
+        *point* must be an iterable type with two elements: (x, y)
 
         """
         x,y = point
@@ -475,7 +484,7 @@ class ScreenGeometry:
         return (x >= mx and x < mx + mw and y >= my and y < my + mh)
 
     def is_point_on_any_monitor(self, point):
-        """Returns true if `point` is on any currently configured monitor."""
+        """Returns true if *point* is on any currently configured monitor."""
         return any([self.is_point_on_monitor(m, point) for m in range(self.get_num_monitors())])
 
     def move_mouse_to_monitor(self, monitor_number):
@@ -487,6 +496,13 @@ class ScreenGeometry:
         Mouse().move(x, y, False)
 
     def drag_window_to_monitor(self, window, monitor):
+        """Drags *window* to *monitor*
+
+        :param BamfWindow window: The window to drag
+        :param integer monitor: The monitor to drag the *window* to
+        :raises: **TypeError** if *window* is not a BamfWindow
+
+        """
         if not isinstance(window, BamfWindow):
             raise TypeError("Window must be a BamfWindow")
 

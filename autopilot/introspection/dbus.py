@@ -52,9 +52,8 @@ class IntrospectableObjectMetaclass(type):
 def clear_object_registry():
     """Clear the object registry.
 
-    DO NOT CALL THIS UNLESS YOU REALLY KNOW WHAT YOU ARE DOING!
-
-    ... and even then, are you *sure*?
+    .. important:: DO NOT CALL THIS UNLESS YOU REALLY KNOW WHAT YOU ARE DOING!
+     ... and even then, are you *sure*?
     """
     global _object_registry
     _object_registry.clear()
@@ -63,6 +62,10 @@ def clear_object_registry():
 def get_introspection_iface(service_name, object_path):
     """Get the autopilot introspection interface for the specified service name
     and object path.
+
+    :param string service_name:
+    :param string object_name:
+    :raises: **TypeError** on invalid parameter type
 
     """
     if not isinstance(service_name, basestring):
@@ -75,12 +78,12 @@ def get_introspection_iface(service_name, object_path):
 
 
 def translate_state_keys(state_dict):
-    """Translates the state_dict passed in so the keys are usable as python attributes."""
+    """Translates the *state_dict* passed in so the keys are usable as python attributes."""
     return {k.replace('-','_'):v for k,v in state_dict.iteritems() }
 
 
 def object_passes_filters(instance, **kwargs):
-    """Return true if 'instance' satisifies all the filters present in kwargs."""
+    """Return true if *instance* satisifies all the filters present in kwargs."""
     with instance.no_automatic_refreshing():
         for attr, val in kwargs.iteritems():
             if not hasattr(instance, attr) or getattr(instance, attr) != val:
@@ -94,7 +97,7 @@ class DBusIntrospectionObject(object):
     """A class that can be created using a dictionary of state from DBus.
 
     To use this class properly you must set the DBUS_SERVICE and DBUS_OBJECT
-    class attributes. THey should be set to the Service name and object path
+    class attributes. They should be set to the Service name and object path
     where the autopilot interface is being exposed.
 
     """
@@ -110,9 +113,10 @@ class DBusIntrospectionObject(object):
         self.set_properties(state_dict)
 
     def set_properties(self, state_dict):
-        """Creates and set attributes of `self` based on contents of `state_dict`.
+        """Creates and set attributes of *self* based on contents of *state_dict*.
 
-        Translates '-' to '_', so a key of 'icon-type' for example becomes 'icon_type'.
+        .. note:: Translates '-' to '_', so a key of 'icon-type' for example
+         becomes 'icon_type'.
 
         """
         self.__state = {}
@@ -123,18 +127,18 @@ class DBusIntrospectionObject(object):
             self.__state[key] = self._make_attribute(key, value)
 
     def _make_attribute(self, name, value):
-        """Make an attribute for 'value', patched with the wait_for function."""
+        """Make an attribute for *value*, patched with the wait_for function."""
 
         def wait_for(self, expected_value):
-            """Wait up to 10 seconds for our value to change to 'expected_value'.
+            """Wait up to 10 seconds for our value to change to *expected_value*.
 
-            expected_value can be a testtools.matcher.Matcher subclass (like
+            *expected_value* can be a testtools.matcher. Matcher subclass (like
             LessThan, for example), or an ordinary value.
 
             This works by refreshing the value using repeated dbus calls.
 
-            Raises RuntimeError if the attribute was not equal to the expected value
-            after 10 seconds.
+            :raises: **RuntimeError** if the attribute was not equal to the
+             expected value after 10 seconds.
 
             """
             # It's guaranteed that our value is up to date, since __getattr__ calls
@@ -186,14 +190,18 @@ class DBusIntrospectionObject(object):
     def get_children_by_type(self, desired_type, **kwargs):
         """Get a list of children of the specified type.
 
-        desired_type must be a subclass of DBusIntrospectionObject.
-
         Keyword arguments can be used to restrict returned instances. For example:
 
         >>> get_children_by_type(Launcher, monitor=1)
 
-        ... will return only LauncherInstances that have an attribute 'monitor'
-            that is equal to 1.
+        will return only LauncherInstances that have an attribute 'monitor' that
+        is equal to 1.
+
+        :param desired_type:
+        :type desired_type: subclass of DBusIntrospectionObject
+
+        .. important:: *desired_type* **must** be a subclass of
+         DBusIntrospectionObject.
 
         """
         #TODO: if kwargs has exactly one item in it we should specify the
@@ -236,7 +244,7 @@ class DBusIntrospectionObject(object):
     def refresh_state(self):
         """Refreshes the object's state from unity.
 
-        raises StateNotFound if the object in unity has been destroyed.
+        :raises: **StateNotFound** if the object in unity has been destroyed.
 
         """
         name, new_state = self.get_new_state()
@@ -248,9 +256,9 @@ class DBusIntrospectionObject(object):
 
         For example, to get all the BamfLauncherIcons:
 
-        icons = BamfLauncherIcons.get_all_instances()
+        >>> icons = BamfLauncherIcons.get_all_instances()
 
-        The return value is a list (possibly empty) of class instances.
+        :return: List (possibly empty) of class instances.
 
         """
         cls_name = cls.__name__
@@ -275,8 +283,11 @@ class DBusIntrospectionObject(object):
     def get_state_by_path(cls, piece):
         """Get state for a particular piece of the state tree.
 
-        'piece' is an XPath-like query that specifies which bit of the tree you
+        *piece* is an XPath-like query that specifies which bit of the tree you
         want to look at.
+
+        :param string piece:
+        :raises: **TypeError** on invalid *piece* parameter.
 
         """
         if not isinstance(piece, basestring):
@@ -290,7 +301,7 @@ class DBusIntrospectionObject(object):
     def get_new_state(self):
         """Retrieve a new state dictionary for this class instance.
 
-        Note: The state keys in the returned dictionary are not translated.
+        .. note:: The state keys in the returned dictionary are not translated.
 
         """
         try:
@@ -320,7 +331,7 @@ class DBusIntrospectionObject(object):
     def no_automatic_refreshing(self):
         """Context manager function to disable automatic DBus refreshing when retrieving attributes.
 
-        example usage:
+        Example usage:
 
         >>> with instance.no_automatic_refreshing():
             # access lots of attributes.

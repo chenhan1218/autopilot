@@ -80,7 +80,7 @@ class Bamf(object):
         return apps
 
     def get_running_applications_by_desktop_file(self, desktop_file):
-        """Return a list of applications that have the desktop file 'desktop_file'.
+        """Return a list of applications that have the desktop file *desktop_file*.
 
         This method may return an empty list, if no applications
         are found with the specified desktop file.
@@ -106,8 +106,8 @@ class Bamf(object):
     def get_open_windows(self, user_visible_only=True):
         """Get a list of currently open windows.
 
-        If user_visible_only is True (the default), only applications
-        visible to the user in the switcher will be returned.
+        If *user_visible_only* is True (the default), only applications visible
+        to the user in the switcher will be returned.
 
         The result is sorted to be in stacking order.
 
@@ -122,19 +122,19 @@ class Bamf(object):
         return list(reversed(windows))
 
     def get_window_by_xid(self, xid):
-        """Get the BamfWindow that matches the provided 'xid'."""
+        """Get the BamfWindow that matches the provided *xid*."""
         windows = [BamfWindow(w) for w in self.matcher_interface.WindowPaths() if BamfWindow(w).x_id == xid]
         return windows[0] if windows else None
 
     def wait_until_application_is_running(self, desktop_file, timeout):
         """Wait until a given application is running.
 
-        'desktop_file' is the name of the application desktop file.
-        'timeout' is the maximum time to wait, in seconds. If set to
-        something less than 0, this method will wait forever.
+        :param string desktop_file: The name of the application desktop file.
+        :param integer timeout: The maximum time to wait, in seconds. *If set to
+         something less than 0, this method will wait forever.*
 
-        This method returns true once the application is found, or false
-        if the application was not found until the timeout was reached.
+        :return: true once the application is found, or false if the application
+         was not found until the timeout was reached.
         """
         desktop_file = os.path.split(desktop_file)[1]
         # python workaround since you can't assign to variables in the enclosing scope:
@@ -173,14 +173,16 @@ class Bamf(object):
     def launch_application(self, desktop_file, files=[], wait=True):
         """Launch an application by specifying a desktop file.
 
-        `files` is a list of files to pass to the application. Not all apps support this.
+        :param files: List of files to pass to the application. *Not all
+         apps support this.*
+        :type files: List of strings
 
-        If `wait` is True, this method will wait up to 10 seconds for the
-        application to appear in the bamf model.
+        .. note:: If `wait` is True, this method will wait up to 10 seconds for
+         the application to appear in the BAMF model.
 
-        Returns the Gobject process object. if wait is True (the default),
-        this method will not return until an instance of this application
-        appears in the BAMF application list.
+
+        :raises: **TypeError** on invalid *files* parameter.
+        :return: The Gobject process object.
         """
         if type(files) is not list:
             raise TypeError("files must be a list.")
@@ -195,8 +197,10 @@ class Bamf(object):
 class BamfApplication(object):
     """Represents an application, with information as returned by Bamf.
 
-    Don't instantiate this class yourself. instead, use the methods as
-    provided by the Bamf class.
+    .. important:: Don't instantiate this class yourself. instead, use the
+     methods as provided by the Bamf class.
+
+    :raises: **dbus.DBusException** in the case of a DBus error.
 
     """
     def __init__(self, bamf_app_path):
@@ -225,15 +229,20 @@ class BamfApplication(object):
     def name(self):
         """Get the application name.
 
-        Note: This may change according to the current locale. If you want a unique
-        string to match applications against, use the desktop_file instead.
+        .. note:: This may change according to the current locale. If you want a
+         unique string to match applications against, use the desktop_file
+         instead.
 
         """
         return self._view_iface.Name()
 
     @property
     def icon(self):
-        """Get the application icon."""
+        """Get the application icon.
+
+        :return: The name of the icon.
+
+        """
         return self._view_iface.Icon()
 
     @property
@@ -250,8 +259,8 @@ class BamfApplication(object):
     def user_visible(self):
         """Is this application visible to the user?
 
-        Some applications (such as the panel) are hidden to the user but will
-        still be returned by bamf.
+        .. note:: Some applications (such as the panel) are hidden to the user
+         but will still be returned by bamf.
 
         """
         return self._view_iface.UserVisible()
@@ -270,8 +279,8 @@ class BamfApplication(object):
 class BamfWindow(object):
     """Represents an application window, as returned by Bamf.
 
-    Don't instantiate this class yourself. Instead, use the appropriate methods
-    in BamfApplication.
+    .. important:: Don't instantiate this class yourself. Instead, use the
+     appropriate methods in BamfApplication.
 
     """
     def __init__(self, window_path):
@@ -298,8 +307,8 @@ class BamfWindow(object):
     def name(self):
         """Get the window name.
 
-        Note: This may change according to the current locale. If you want a unique
-        string to match windows against, use the x_id instead.
+        .. note:: This may change according to the current locale. If you want a
+         unique string to match windows against, use the x_id instead.
 
         """
         return self._view_iface.Name()
@@ -310,7 +319,7 @@ class BamfWindow(object):
 
         This may be different from the application name.
 
-        Note that this may change depending on the current locale.
+        .. note:: This may change depending on the current locale.
 
         """
         return self._getProperty('_NET_WM_NAME')
@@ -319,7 +328,7 @@ class BamfWindow(object):
     def geometry(self):
         """Get the geometry for this window.
 
-        Returns a tuple containing (x, y, width, height).
+        :return: Tuple containing (x, y, width, height).
 
         """
         # FIXME: We need to use the gdk window here to get the real coordinates
@@ -331,9 +340,9 @@ class BamfWindow(object):
     def is_maximized(self):
         """Is the window maximized?
 
-        Maximized in this case means both maximized
-        vertically and horizontally. If a window is only maximized in one
-        direction it is not considered maximized.
+        Maximized in this case means both maximized vertically and
+        horizontally. If a window is only maximized in one direction it is not
+        considered maximized.
 
         """
         win_state = self._get_window_states()

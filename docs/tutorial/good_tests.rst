@@ -1,10 +1,9 @@
-.. This document serves to provide a guide for autopilot test authors. Changes to this document must be approved by a members of the desktop shell QA team.
-
 Writing Good Autopilot Tests
 ============================
 
 This document is an introduction to writing good autopilot tests. This should be treated as additional material on top of all the things you'd normally do to write good code. Put another way: test code follows all the same rules as production code - it must follow the coding standards, and be of a professional quality.
 
+Several points in this document are written with respect to the unity autopilot test suite. This is incidental, and doesn't mean that these points do not apply to other test suites!
 
 Test One Thing Only
 +++++++++++++++++++

@@ -1,29 +1,16 @@
-autopilot Package
-=================
+Autopilot API Documentation
+===========================
 
-:mod:`autopilot` Package
-------------------------
+Autopilot Utility Modules
++++++++++++++++++++++++++
 
-.. automodule:: autopilot.__init__
+:mod:`testcase` Module
+----------------------
+
+.. autoclass:: autopilot.testcase.AutopilotTestCase
     :members:
-    :undoc-members:
-    :show-inheritance:
 
-:mod:`glibrunner` Module
-------------------------
-
-.. automodule:: autopilot.glibrunner
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`globals` Module
----------------------
-
-.. automodule:: autopilot.globals
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. autofunction:: autopilot.testcase.multiply_scenarios
 
 :mod:`keybindings` Module
 -------------------------
@@ -33,29 +20,84 @@ autopilot Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`testcase` Module
-----------------------
+Emulators Package
++++++++++++++++++
 
-.. automodule:: autopilot.testcase
+:mod:`X11` Module
+-----------------
+
+.. automodule:: autopilot.emulators.X11
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`utilities` Module
+:mod:`bamf` Module
+------------------
+
+.. automodule:: autopilot.emulators.bamf
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`ibus` Module
+------------------
+
+.. automodule:: autopilot.emulators.ibus
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`zeitgeist` Module
 -----------------------
 
-.. automodule:: autopilot.utilities
+.. automodule:: autopilot.emulators.zeitgeist
     :members:
     :undoc-members:
     :show-inheritance:
 
-Subpackages
------------
+Introspection Package
++++++++++++++++++++++
 
-.. toctree::
+:mod:`introspection` Package
+----------------------------
 
-    autopilot.emulators
-    autopilot.introspection
-    autopilot.matchers
-    autopilot.tests
+.. automodule:: autopilot.introspection
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`dbus` Module
+-------------------
+
+.. automodule:: autopilot.introspection.dbus
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`qt` Module
+-------------------
+
+.. automodule:: autopilot.introspection.qt
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`gtk` Module
+-------------------
+
+.. automodule:: autopilot.introspection.gtk
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Matchers Package
+++++++++++++++++
+
+:mod:`matchers` Package
+-----------------------
+
+.. automodule:: autopilot.matchers
+    :members:
+    :undoc-members:
+    :show-inheritance:
 

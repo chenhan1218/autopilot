@@ -8,7 +8,7 @@
 
 """Utility functions to get shortcut keybindings for various parts of Unity.
 
-Inside autopilot we deal with keybindings by naming them with unique names. For
+Inside Autopilot we deal with keybindings by naming them with unique names. For
 example, instead of hard-coding the fact that 'Alt+F2' opens the command lens, we
 might call:
 
@@ -123,10 +123,9 @@ _keys = {
 def get(binding_name):
     """Get a keybinding, given its well-known name.
 
-    binding_name must be a string, or a TypeError will be raised.
-
-    If binding_name cannot be found in the bindings dictionaries, a ValueError
-    will be raised.
+    :param string binding_name:
+    :raises: **TypeError** if binding_name cannot be found in the bindings
+     dictionaries.
 
     """
     if not isinstance(binding_name, basestring):
@@ -141,12 +140,13 @@ def get(binding_name):
 
 
 def get_hold_part(binding_name):
-    """Returns the part of a keybinding that must be held permenantly.
+    """Returns the part of a keybinding that must be held permanently.
 
     Use this function to split bindings like "Alt+Tab" into the part that must be
-    held down. See get_tap_part for the part that must be tapped.
+    held down. See :meth:`get_tap_part` for the part that must be tapped.
 
-    Raises a ValueError if the binding specified does not have multiple parts.
+    :raises: **ValueError** if the binding specified does not have multiple
+     parts.
 
     """
     binding = get(binding_name)
@@ -161,9 +161,10 @@ def get_tap_part(binding_name):
     """Returns the part of a keybinding that must be tapped.
 
     Use this function to split bindings like "Alt+Tab" into the part that must be
-    held tapped. See get_hold_part for the part that must be held down.
+    held tapped. See :meth:`get_hold_part` for the part that must be held down.
 
-    Raises a ValueError if the binding specified does not have multiple parts.
+    :Raises: **ValueError** if the binding specified does not have multiple
+     parts.
 
     """
     binding = get(binding_name)
@@ -177,8 +178,9 @@ def get_tap_part(binding_name):
 def _get_compiz_keybinding(compiz_tuple):
     """Given a keybinding name, get the keybinding string from the compiz option.
 
-    Raises ValueError if the compiz setting described does not hold a keybinding.
-    Raises RuntimeError if the compiz keybinding has been disabled.
+    :raises: **ValueError** if the compiz setting described does not hold a
+     keybinding.
+    :raises: **RuntimeError** if the compiz keybinding has been disabled.
 
     """
     plugin_name, setting_name = compiz_tuple
@@ -198,11 +200,11 @@ def _get_compiz_keybinding(compiz_tuple):
 
 
 def _translate_compiz_keystroke_string(keystroke_string):
-    """Get a string representing the keystroke stored in `keystroke_string`.
-
-    `keystroke_string` is a compizconfig-style keystroke string.
+    """Get a string representing the keystroke stored in *keystroke_string*.
 
     The returned value is suitable for passing into the Keyboard emulator.
+
+    :param string keystroke_string: A compizconfig-style keystroke string.
 
     """
     if not isinstance(keystroke_string, basestring):
@@ -226,7 +228,7 @@ def _translate_compiz_keystroke_string(keystroke_string):
 
 
 class KeybindingsHelper(object):
-    """A helper class that makes it easier to use unity keybindings."""
+    """A helper class that makes it easier to use Unity keybindings."""
     _keyboard = Keyboard()
 
     def keybinding(self, binding_name, delay=None):

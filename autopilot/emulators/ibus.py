@@ -26,6 +26,8 @@ def get_ibus_bus():
     """Get the ibus bus object, possibly starting the ibus daemon if it's
     not already running.
 
+    :raises: **RuntimeError** in the case of ibus-daemon being unavailable.
+
     """
     max_tries = 5
     for i in range(max_tries):
@@ -51,14 +53,23 @@ def get_active_input_engines():
 
 
 def set_active_engines(engine_list):
-    """Installs the engines in 'engine_list' into the list of active iBus engines.
+    """Installs the engines in *engine_list* into the list of active iBus
+    engines.
 
     The specified engines must appear in the return list from
-    get_available_input_engines(). This function removes all other engines.
+    get_available_input_engines().
+
+    .. note:: This function removes all other engines.
 
     This function returns the list of engines installed before this function was
     called. The caller should pass this list to set_active_engines to restore
     ibus to it's old state once the test has finished.
+
+    :param engine_list: List of engine names
+    :type engine_list: List of strings
+    :raises: **TypeError** on invalid *engine_list* parameter.
+    :raises: **ValueError** when engine_list contains invalid engine name.
+
     """
     if type(engine_list) is not list:
         raise TypeError("engine_list must be a list of valid engine names.")
@@ -91,6 +102,9 @@ def set_global_input_engine(engine_name):
 
     This function enables the global input engine. To turn it off again, pass None
     as the engine name.
+
+    :raises: **TypeError** on invalid *engine_name* parameter.
+    :raises: **ValueError** when *engine_name* is an unknown engine.
 
     """
     if not (engine_name is None or isinstance(engine_name, basestring)):

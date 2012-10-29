@@ -319,7 +319,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         :raises: **KeyError** if the option named does not exist.
 
         """
-        old_value = self._set_compiz_option(option_name, option_name, option_value)
+        old_value = self._set_compiz_option(plugin_name, option_name, option_value)
         self.addCleanup(self._set_compiz_option, plugin_name, option_name, old_value)
         # Allow unity time to respond to the new setting.
         time.sleep(0.5)

@@ -1,0 +1,31 @@
+autopilot (1.2) UNRELEASED; urgency=low
+
+  * debian/control:
+    - update build-dep for latest build-deps
+
+ -- Didier Roche <didrocks@ubuntu.com>  Fri, 28 Sep 2012 08:40:21 +0200
+
+autopilot (1.1) quantal; urgency=low
+
+  * Release r64 as 1.1
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Wed, 29 Aug 2012 11:26:01 +0200
+
+autopilot (0.1.2) quantal; urgency=low
+
+  * Update to trunk r63, fix compizconfig use (lp: #1038844)
+  * Depends on python-qt4
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Tue, 21 Aug 2012 14:52:30 +0200
+
+autopilot (0.1.1) quantal; urgency=low
+
+  * add python-setuptools build-dep
+
+ -- Didier Roche <didrocks@ubuntu.com>  Fri, 17 Aug 2012 11:40:24 +0200
+
+autopilot (0.1) quantal; urgency=low
+
+  * Initial Release.
+
+ -- Didier Roche <didrocks@ubuntu.com>  Fri, 17 Aug 2012 10:03:58 +0200

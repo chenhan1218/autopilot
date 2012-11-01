@@ -1,8 +1,11 @@
 autopilot (1.2) UNRELEASED; urgency=low
 
+  [ Didier Roche ]
   * debian/control:
     - update build-dep for latest build-deps
-  * Build sphinx documentation and package it.
+
+  [ Thomi Richards ]
+  * Build sphinx documentation and package it in python-autopilot. 
 
  -- Didier Roche <didrocks@ubuntu.com>  Fri, 28 Sep 2012 08:40:21 +0200
 

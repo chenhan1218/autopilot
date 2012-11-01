@@ -33,9 +33,3 @@ Description: Utility to write and run integration tests easily
  keyboard. It also provides a lot of utilities linked to the X server
  and detecting applications.
 
-Package: python-autopilot-doc
-Architecture: all
-Depends:
-Description: HTML Documentation for the Autopilot system.
- This package installs HTML documetnation for autopilot.
-

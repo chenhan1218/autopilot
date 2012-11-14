@@ -31,7 +31,7 @@ DEPENDS = [
     ('compizconfig', 'python-compizconfig'),
     ('dbus', 'python-dbus'),
     ('gi.repository.GConf', 'gir1.2-gconf-2.0'),
-    ('ibus', 'python-ibus'),
+    ('gi.repository.IBus', 'gir1.2-ibus-1.0'),
     ('junitxml', 'python-junitxml'),
     ('testscenarios', 'python-testscenarios'),
     ('testtools', 'python-testtools'),
@@ -198,7 +198,10 @@ def get_output_stream(args):
                                              datetime.now().strftime("%d.%m.%y-%H%M%S"))
                 log_file = os.path.join(log_file, default_log)
                 print "Using default log filename: %s " % default_log
-            _output_stream = open(log_file, 'w', encoding='utf-8')
+            if args.format == 'xml':
+                _output_stream = open(log_file, 'w')
+            else:
+                _output_stream = open(log_file, 'w', encoding='utf-8')
         else:
             _output_stream = sys.stdout
     return _output_stream

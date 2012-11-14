@@ -42,7 +42,7 @@ Autopilot allows you to write tests for several different targets, including:
 * Gtk 3.x applications. Autopilot can introspect Gtk applications with the
   help of the autopilot-gtk package.
 
-The details of how to write an autopilot tests is remarkably similar across
+The details of how to write an autopilot tests are remarkably similar across
 these different targets. The only thing that changes is the way in which the
 application under test is started.
 
@@ -76,7 +76,7 @@ Note that the :meth:`launch_test_application(application)` accepts several diffe
 Starting a Qt/Qml application
 -----------------------------
 
-There are two different approaches to running a Qml application under autopilot - either compile the Qml appalication into a binary that can be run as described above, or run the Qml file within qmlview, like so::
+There are two different approaches to running a Qml application under autopilot - either compile the Qml application into a binary that can be run as described above, or run the Qml file within qmlview, like so::
 
     class MyFirstQtTests(AutopilotTestCase, QtIntrospectionTestMixin):
 
@@ -102,7 +102,7 @@ Autopilot tests typically have three distinct stages:
 
 1. **Test Setup.** Do whatever it takes to get to the point where the thing you're trying to test is ready. This typically involves launching the application under test (not applicable to the Unity shell, as discussed above) and navigating to the component that you want to test.
 
-2. **Test Actions.** Send input events to the applicatio under test to mimic a user interaction. This typically involves using the :class:`~autopilot.emulators.X11.Keyboard` or :class:`~autopilot.emulators.X11.Mouse` classes.
+2. **Test Actions.** Send input events to the application under test to mimic a user interaction. This typically involves using the :class:`~autopilot.emulators.X11.Keyboard` or :class:`~autopilot.emulators.X11.Mouse` classes.
 
 3. **Test Assertions.** Do one or more test assertions to verify that the application under test performed as expected.
 
@@ -140,7 +140,7 @@ You may use addCleanup as many times as you want - they will be run in the rever
 Test Actions
 ------------
 
-Test actions will almost always involve simulating user interaction with the application under test. The two principle means of achieving this are generating Keyboard and Mouse events.
+Test actions will almost always involve simulating user interaction with the application under test. The two principal means of achieving this are generating Keyboard and Mouse events.
 
 Using the Keyboard
 ##################
@@ -151,7 +151,7 @@ All classes that derive from :class:`~autopilot.testcase.AutopilotTestCase` have
 
     self.keyboaqrd.type("Hello World")
 
-  Here, each character in the string passed in he pressed and released in sequence. If all goes well, the application under test will recieve the characters 'H', 'e', 'l', 'l', 'o', ' ', 'W', 'o', 'r', 'l', 'd' - in that order.
+  Here, each character in the string passed in is pressed and released in sequence. If all goes well, the application under test will recieve the characters 'H', 'e', 'l', 'l', 'o', ' ', 'W', 'o', 'r', 'l', 'd' - in that order.
 
 * **Key Combinations**. Often a test needs to simulate a user pressing a key combination, like 'Ctrl+a'. This is achieved like this::
 
@@ -171,7 +171,7 @@ The Keybindings System
 
 Autopilot includes the :module:`autopilot.keybindings` module, which includes code to make it easier to send pre-configured keybindings to the application under test. The difficulty with keybindings is that most applications allow the user to configure the keybindings at will. If a user has changed the default keybindings, your autopilot tests will break if you have the default keys hard-coded in your tests. To overcome this, the keybindings system allows you to name a keybinding, and autopilot will read the actual keys to press and release from the application under test.
 
-.. note:: At the time of writing, the keybindings system only works when teting Unity. Work is in progress to make this feature work with Qt and Gtk targets.
+.. note:: At the time of writing, the keybindings system only works when testing Unity. Work is in progress to make this feature work with Qt and Gtk targets.
 
 To use the keybindings system, you need to derive from the :class:`~autopilot.keybindings.KeybindingsHelper` class. This class adds the :meth:`~autopilot.keybindings.KeybindingsHelper.keybinding(binding_name, delay)` method, which allows you to send keybindings, like so::
 
@@ -232,7 +232,7 @@ Test Assertions
 
 Autopilot is built on top of the standard python unit test tools - all the test assertion methods that are provided by the :module:`unittest` and :module:`testtools` modules are available to an autopilot test. However, autopilot adds a few additional test assertions that may be useful to test authors.
 
-The authors of autopilot recommend that test authors make use of the :meth:`~testtools.TestCase.assertThat` method in their tests. The :module:`autopilot.matchers` module provides the :class:`~autopilot.matchers.Eventually` matcher, which introduces a timeout to the thing meing tested. This keep autopilot tests accurate, since the application under test is in a separate process, and event handling usually happens in an asynchronous fashion. As an example, here's a simple test that ensures that the unity dash is revealed when the 'Super' key is pressed::
+The authors of autopilot recommend that test authors make use of the :meth:`~testtools.TestCase.assertThat` method in their tests. The :module:`autopilot.matchers` module provides the :class:`~autopilot.matchers.Eventually` matcher, which introduces a timeout to the thing being tested. This keeps autopilot tests accurate, since the application under test is in a separate process, and event handling usually happens in an asynchronous fashion. As an example, here's a simple test that ensures that the unity dash is revealed when the 'Super' key is pressed::
 
     test_dash_is_revealed(self):
         dash = ... # Get the dash object from somewhere
@@ -240,7 +240,7 @@ The authors of autopilot recommend that test authors make use of the :meth:`~tes
 
         self.assertThat(dash.visible, Eventually(Equals(True)))
 
-If we didn't use the Eventually matcher, this test might fail if the assertion method was executed before Unity had a chance to reveal the dash. The Eventually matcher is usable on any property that has been transmitted over DBus. The Eventually matcher will n ot work on calculated values, or values that have been obtained from some other source.
+If we didn't use the Eventually matcher, this test might fail if the assertion method was executed before Unity had a chance to reveal the dash. The Eventually matcher is usable on any property that has been transmitted over DBus. The Eventually matcher will not work on calculated values, or values that have been obtained from some other source.
 
 To do assertions with a similar timeout in places where Eventually does not work, the :class:`~autopilot.testcase.AutopilotTestCase` class includes the :meth:`~autopilot.testcase.AutopilotTestCase.assertProperty` method. This method takes an object, and a number of keyword arguments. These arguments will be applied to the object and tested, using a similar timeout mechanism to the Eventually matcher. For example, the above example could be re-written to use the assertProperty method::
 

@@ -84,7 +84,7 @@ Common use cases
 Visualise Introspection Tree
 ----------------------------
 
-A very common thinbg to want to do while writing autopilot tests is see the structure of the application being tested. To support this, autopilot includes a simple application to help visualise the intropection tree. To start it, make sure the application you wish to test is running, and then run::
+A very common thing to want to do while writing autopilot tests is see the structure of the application being tested. To support this, autopilot includes a simple application to help visualise the intropection tree. To start it, make sure the application you wish to test is running, and then run::
 
     $ autopilot vis
 

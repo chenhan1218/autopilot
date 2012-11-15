@@ -3,7 +3,7 @@ Getting Started
 
 Autopilot is a tool for *functional* testing an application. The basic idea is
 that we simulate user input at a very low level, and verify that the application
-under test responde the way we expect it to. Autopilot provides two main
+under test responds the way we expect it to. Autopilot provides two main
 facilities to make this possible:
 
 

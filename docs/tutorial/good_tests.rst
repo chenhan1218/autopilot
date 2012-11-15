@@ -30,7 +30,7 @@ Tests should test one thing, and one thing only. Since we're not writing unit te
         self.keyboard.press_and_release("Alt+F4")
         self.assertThat(self.dash.visible, Eventually(Equals(False)))
 
-This test tests one thing only. It's three lines match perfectly with the typical three stages of a test (see above), and it only tests for things that it's supposed to. Remember that it's fine to assume that other parts of unity work as expected, as long as they're covered by an autopilot test somewhere else - that's why we don't need to verify that the dash really did open when we called ``self.dash.ensure_visible()``.
+This test tests one thing only. Its three lines match perfectly with the typical three stages of a test (see above), and it only tests for things that it's supposed to. Remember that it's fine to assume that other parts of unity work as expected, as long as they're covered by an autopilot test somewhere else - that's why we don't need to verify that the dash really did open when we called ``self.dash.ensure_visible()``.
 
 Fail Well
 +++++++++
@@ -167,7 +167,7 @@ The most important attribute for a test is that it is correct - it must test wha
         self.launcher_instance.switcher_next()
         self.assertThat(self.launcher.key_nav_selection, Eventually(GreaterThan(0)))
 
- This leads to a shorter test (which we've already said is a good thing), but the test itself is incomplete. Without scrolling up to the ``setUp`` and ``tearDown`` methods, it's hard to tell how the launcher switcher is started. THe situation gets even worse when test classes derive from each other, since the code that starts the launcher switcher may not even be in the same class!
+ This leads to a shorter test (which we've already said is a good thing), but the test itself is incomplete. Without scrolling up to the ``setUp`` and ``tearDown`` methods, it's hard to tell how the launcher switcher is started. The situation gets even worse when test classes derive from each other, since the code that starts the launcher switcher may not even be in the same class!
 
  A much better solution in this example is to initiate the switcher explicitly, and use ``addCleanup()`` to cancel it when the test ends, like this:
 
@@ -251,7 +251,7 @@ The most important attribute for a test is that it is correct - it must test wha
 Prefer ``wait_for`` and ``Eventually`` to ``sleep``
 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Early autopilot tests relied on extensive use of the python ``sleep`` call to halt tests long enough for unity to change it's state before the test continued. Previously, an autopilot test might have looked like this:
+Early autopilot tests relied on extensive use of the python ``sleep`` call to halt tests long enough for unity to change its state before the test continued. Previously, an autopilot test might have looked like this:
 
 **Bad Example:**
 
@@ -265,7 +265,7 @@ Early autopilot tests relied on extensive use of the python ``sleep`` call to ha
         sleep(2)
         self.assertThat(self.dash.visible, Equals(False))
 
-This test uses two ``sleep`` calls. The first makes sure the dash has had time to open before the test continues, and the second make sure that the dash has had time to respond to our key presses before we start testing things.
+This test uses two ``sleep`` calls. The first makes sure the dash has had time to open before the test continues, and the second makes sure that the dash has had time to respond to our key presses before we start testing things.
 
 There are several issues with this approach:
  1. On slow machines (like a jenkins instance running on a virtual machine), we may not be sleeping long enough. This can lead to tests failing on jenkins that pass on developers machines.
@@ -276,7 +276,7 @@ There are two solutions to this problem:
 In Tests
 --------
 
-Tests should use the ``Eventually`` matcher. This cen be imported as follows:
+Tests should use the ``Eventually`` matcher. This can be imported as follows:
 
 .. code-block:: python
 
@@ -301,7 +301,7 @@ Note that you can pass any object that follows the testtools matcher protocol (s
 In Emulators
 ------------
 
-Emulators are not test cases, and do not have access to the ``self.assertThat`` method. However, we want emylator methods to block until unity has had time to process the commands given. For example, the ``ensure_visible`` method on the Dash controller should block until the dash really is visible.
+Emulators are not test cases, and do not have access to the ``self.assertThat`` method. However, we want emulator methods to block until unity has had time to process the commands given. For example, the ``ensure_visible`` method on the Dash controller should block until the dash really is visible.
 
 To achieve this goal, all attributes on unity emulators have been patched with a ``wait_for`` method that takes a testtools matcher (just like ``Eventually`` - in fact, the ``Eventually`` matcher just calls wait_for under the hood). For example, previously the ``ensure_visible`` method on the Dash controller might have looked like this:
 
@@ -367,7 +367,7 @@ In order to use test scenarios, the test author must create a list of scenarios 
 This is a simplified version of the IBus tests. In this case, the ``test_simple_input_dash`` test will be called 5 times. Each time, the ``self.input`` and ``self.result`` attribute will be set to the values in the scenario list. The first part of the scenario tuple is the scenario name - this is appended to the test id, and can be whatever you want.
 
 .. Important::
-   It is important to notice that the test does not change it's behavior depending on the scenario it is run under. Exactly the same steps are taken - the only difference in this case is what gets typed on the keyboard, and what result is expected.
+   It is important to notice that the test does not change its behavior depending on the scenario it is run under. Exactly the same steps are taken - the only difference in this case is what gets typed on the keyboard, and what result is expected.
 
 Scenarios are applied before the test's ``setUp`` or ``tearDown`` methods are called, so it's safe (and indeed encouraged) to set up the test environment based on these attributes. For example, you may wish to set certain unity options for the duration of the test based on a scenario parameter.
 
@@ -447,7 +447,7 @@ Now we have a problem: Some of the generated scenarios won't make any sense. For
 
 There are two ways to get around this problem, and they both lead to terrible tests:
 
- 1. Detect these situations and skip the test. This is bad for sveeral reasons - first, skipped tests should be viewed with the same level of suspicion as commented out code. Test skips should only be used in exceptional circumstances. A test skip in the test results is just as serious as a test failure.
+ 1. Detect these situations and skip the test. This is bad for several reasons - first, skipped tests should be viewed with the same level of suspicion as commented out code. Test skips should only be used in exceptional circumstances. A test skip in the test results is just as serious as a test failure.
 
  2. Detect the situation in the test, and run different code using an if statement. For example, we might decode to do this:
 

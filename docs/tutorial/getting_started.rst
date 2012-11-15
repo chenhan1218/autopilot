@@ -30,7 +30,7 @@ Autopilot Targets
 
 Autopilot allows you to write tests for several different targets, including:
 
-* The Unity desktop shell. This was the original target for the autopiolot
+* The Unity desktop shell. This was the original target for the autopilot
   tool, and as such contains the most comprehensive test suite.
 
 * Qt 4.x applications. Autopilot can introspect Qt 4.x applications with the

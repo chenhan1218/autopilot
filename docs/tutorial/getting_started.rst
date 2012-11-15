@@ -42,7 +42,7 @@ Autopilot allows you to write tests for several different targets, including:
 * Gtk 3.x applications. Autopilot can introspect Gtk applications with the
   help of the autopilot-gtk package.
 
-The details of how to write an autopilot tests are remarkably similar across
+The details of how to write an autopilot test are remarkably similar across
 these different targets. The only thing that changes is the way in which the
 application under test is started.
 

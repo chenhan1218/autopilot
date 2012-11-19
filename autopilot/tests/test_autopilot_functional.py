@@ -547,3 +547,33 @@ SyntaxError: invalid syntax
         log_contents = unicode(open(output_file_path, encoding='utf-8').read())
         self.assertThat(log_contents,
             Contains(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH'))
+
+    def test_can_write_xml_error_with_unicode_data(self):
+        """Tests that assert with unicode errors must get saved to XML log file."""
+        self.create_test_file("test_simple.py", dedent(u"""\
+            # encoding: utf-8
+
+            # from autopilot.testcase import AutopilotTestCase
+            from testtools import TestCase
+
+            class SimpleTest(TestCase):
+
+                def test_simple(self):
+                    self.fail(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH')
+
+            """
+            ))
+        output_file_path = mktemp()
+        self.addCleanup(remove_if_exists, output_file_path)
+
+        code, output, error = self.run_autopilot([
+            "run",
+            "-o", output_file_path,
+            "-f", "xml",
+            "tests"])
+
+        self.assertThat(code, Equals(1))
+        self.assertTrue(os.path.exists(output_file_path))
+        log_contents = unicode(open(output_file_path, encoding='utf-8').read())
+        self.assertThat(log_contents,
+            Contains(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH'))

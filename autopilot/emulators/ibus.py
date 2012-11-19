@@ -10,8 +10,7 @@
 
 from __future__ import absolute_import
 
-import ibus
-import ibus.common
+from gi.repository import IBus
 import os
 import logging
 import subprocess
@@ -31,12 +30,12 @@ def get_ibus_bus():
     """
     max_tries = 5
     for i in range(max_tries):
-        if ibus.common.get_address() is None:
+        if IBus.get_address() is None:
             pid = os.spawnlp(os.P_NOWAIT, "ibus-daemon", "ibus-daemon", "-d", "--xim")
             logger.info("Started ibus-daemon with pid %i." % (pid))
             sleep(2)
         else:
-            return ibus.Bus()
+            return IBus.Bus()
     raise RuntimeError("Could not start ibus-daemon after %d tries." % (max_tries))
 
 
@@ -85,7 +84,7 @@ def set_active_engines(engine_list):
 
     config.set_value("general",
                      "preload_engine_mode",
-                     ibus.common.PRELOAD_ENGINE_MODE_USER)
+                     IBus.PreloadEngineMode.USER)
 
     old_engines = get_active_input_engines()
     config.set_list("general", "preload_engines", engine_list, "s")

@@ -35,7 +35,15 @@ def get_ibus_bus():
             logger.info("Started ibus-daemon with pid %i." % (pid))
             sleep(2)
         else:
-            return IBus.Bus.new()
+            bus = IBus.Bus.new()
+            for i in range(20):
+                if bus.is_connected():
+                    break
+                sleep(1)
+            if not bus.is_connected():
+                logger.warning("IBus bus failed to connect after 20 seconds.")
+            return bus
+
     raise RuntimeError("Could not start ibus-daemon after %d tries." % (max_tries))
 
 
@@ -95,7 +103,6 @@ def set_active_engines(engine_list):
     # see bug report here:
     # http://code.google.com/p/ibus/issues/detail?id=1418&thanks=1418&ts=1329885137
     bus.exit(restart=True)
-    sleep(5)
     return old_engines
 
 

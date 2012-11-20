@@ -100,33 +100,6 @@ def set_active_engines(engine_list):
     return old_engines
 
 
-def set_global_input_engine(engine_name):
-    """Set the global iBus input engine by name.
-
-    This function enables the global input engine. To turn it off again, pass None
-    as the engine name.
-
-    :raises: **TypeError** on invalid *engine_name* parameter.
-    :raises: **ValueError** when *engine_name* is an unknown engine.
-
-    """
-    if not (engine_name is None or isinstance(engine_name, basestring)):
-        raise TypeError("engine_name type must be either str or None.")
-
-    bus = get_ibus_bus()
-
-    if engine_name:
-        available_engines = get_available_input_engines()
-        if not engine_name in available_engines:
-            raise ValueError("Unknown engine '%s'" % (engine_name))
-        bus.get_config().set_value("general", "use_global_engine", True)
-        bus.set_global_engine(engine_name)
-        logger.info('Enabling global ibus engine "%s".' % (engine_name))
-    else:
-        bus.get_config().set_value("general", "use_global_engine", False)
-        logger.info('Disabling global ibus engine.')
-
-
 def set_gconf_option(path, value):
     """Set the gconf setting on `path` to the defined `value`"""
     _set_gconf_list (path, value)

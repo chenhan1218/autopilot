@@ -36,12 +36,14 @@ def get_ibus_bus():
             sleep(2)
         else:
             bus = IBus.Bus.new()
-            for i in range(20):
-                if bus.is_connected():
-                    break
-                sleep(1)
-            if not bus.is_connected():
-                logger.warning("IBus bus failed to connect after 20 seconds.")
+            for i in range(5):
+                for i in range(10):
+                    if bus.is_connected():
+                        break
+                    sleep(1)
+                if not bus.is_connected():
+                    logger.warning("IBus bus failed to connect after 10 seconds, killing daemon.")
+                subprocess.check_call(["killall", "ibus-daemon"])
             return bus
 
     raise RuntimeError("Could not start ibus-daemon after %d tries." % (max_tries))

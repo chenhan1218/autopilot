@@ -10,7 +10,7 @@
 
 from __future__ import absolute_import
 
-from gi.repository import IBus
+from gi.repository import IBus, GLib
 import os
 import logging
 import subprocess
@@ -42,13 +42,13 @@ def get_ibus_bus():
 def get_available_input_engines():
     """Get a list of available input engines."""
     bus = get_ibus_bus()
-    return [e.name for e in bus.list_engines()]
+    return [e.get_name() for e in bus.list_engines()]
 
 
 def get_active_input_engines():
     """Get the list of input engines that have been activated."""
     bus = get_ibus_bus()
-    return [e.name for e in bus.list_active_engines()]
+    return [e.get_name() for e in bus.list_active_engines()]
 
 
 def set_active_engines(engine_list):
@@ -84,7 +84,7 @@ def set_active_engines(engine_list):
 
     config.set_value("general",
                      "preload_engine_mode",
-                     IBus.PreloadEngineMode.USER)
+                     GLib.Variant.new_int32(IBus.PreloadEngineMode.USER))
 
     old_engines = get_active_input_engines()
     config.set_list("general", "preload_engines", engine_list, "s")

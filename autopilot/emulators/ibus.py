@@ -94,9 +94,8 @@ def set_active_engines(engine_list):
     # need to restart the ibus bus before it'll pick up the new engine.
     # see bug report here:
     # http://code.google.com/p/ibus/issues/detail?id=1418&thanks=1418&ts=1329885137
-    # bus.exit(restart=False)
-    # subprocess.check_call(["killall", "ibus-daemon"])
-    # sleep(1)
+    bus.exit(restart=True)
+    sleep(5)
     return old_engines
 
 

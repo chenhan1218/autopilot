@@ -29,29 +29,23 @@ def get_ibus_bus():
     :raises: **RuntimeError** in the case of ibus-daemon being unavailable.
 
     """
-    max_tries = 5
-    for i in range(max_tries):
-        if IBus.get_address() is None:
-            pid = os.spawnlp(os.P_NOWAIT, "ibus-daemon", "ibus-daemon", "-d", "--xim")
-            logger.info("Started ibus-daemon with pid %i." % (pid))
-            sleep(2)
-        else:
-            global _cached_bus
-            if _cached_bus is not None and _cached_bus.is_connected():
-                return _cached_bus
+    bus = IBus.Bus()
+    if bus.is_connected():
+        return bus
 
-            bus = IBus.Bus()
-            for i in range(5):
-                for i in range(10):
-                    if bus.is_connected():
-                        _cached_bus = bus
-                        return bus
-                    sleep(1)
-                if not bus.is_connected():
-                    logger.warning("IBus bus failed to connect after 10 seconds, killing daemon.")
-                subprocess.check_call(["killall", "ibus-daemon"])
+    main_loop = GLib.MainLoop()
 
-    raise RuntimeError("Could not start ibus-daemon after %d tries." % (max_tries))
+    timeout = 5
+    GLib.timeout_add_seconds(timeout, lambda *args: main_loop.quit())
+    bus.connect("connected", lambda *args: main_loop.quit())
+
+    os.spawnlp(os.P_NOWAIT, "ibus-daemon", "ibus-daemon", "--xim")
+
+    main_loop.run()
+
+    if not bus.is_connected():
+        raise RuntimeError("Could not start ibus-daemon after %d seconds." % (timeout))
+    return bus
 
 
 def reset_ibus_bus():

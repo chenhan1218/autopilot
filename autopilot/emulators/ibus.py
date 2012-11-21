@@ -40,7 +40,7 @@ def get_ibus_bus():
             if _cached_bus is not None and _cached_bus.is_connected():
                 return _cached_bus
 
-            bus = IBus.Bus.new()
+            bus = IBus.Bus()
             for i in range(5):
                 for i in range(10):
                     if bus.is_connected():

@@ -102,7 +102,6 @@ def set_active_engines(engine_list):
     # see bug report here:
     # http://code.google.com/p/ibus/issues/detail?id=1418&thanks=1418&ts=1329885137
     bus.exit(restart=True)
-
     return old_engines
 
 

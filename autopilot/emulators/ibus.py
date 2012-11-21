@@ -39,7 +39,7 @@ def get_ibus_bus():
             for i in range(5):
                 for i in range(10):
                     if bus.is_connected():
-                        break
+                        return bus
                     sleep(1)
                 if not bus.is_connected():
                     logger.warning("IBus bus failed to connect after 10 seconds, killing daemon.")

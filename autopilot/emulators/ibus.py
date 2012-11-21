@@ -48,13 +48,6 @@ def get_ibus_bus():
     return bus
 
 
-def reset_ibus_bus():
-    global _cached_bus
-    if _cached_bus is not None:
-        _cached_bus.exit(restart=True)
-        _cached_bus = None
-
-
 def get_available_input_engines():
     """Get a list of available input engines."""
     bus = get_ibus_bus()
@@ -110,7 +103,7 @@ def set_active_engines(engine_list):
     # need to restart the ibus bus before it'll pick up the new engine.
     # see bug report here:
     # http://code.google.com/p/ibus/issues/detail?id=1418&thanks=1418&ts=1329885137
-    reset_ibus_bus()
+    bus.exit(restart=True)
 
     return old_engines
 

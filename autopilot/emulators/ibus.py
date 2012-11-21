@@ -15,11 +15,9 @@ import os
 import logging
 import subprocess
 from gi.repository import GConf
-from time import sleep
 
 
 logger = logging.getLogger(__name__)
-_cached_bus = None
 
 
 def get_ibus_bus():

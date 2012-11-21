@@ -19,6 +19,7 @@ from time import sleep
 
 
 logger = logging.getLogger(__name__)
+_cached_bus = None
 
 
 def get_ibus_bus():
@@ -35,18 +36,29 @@ def get_ibus_bus():
             logger.info("Started ibus-daemon with pid %i." % (pid))
             sleep(2)
         else:
+            global _cached_bus
+            if _cached_bus is not None and _cached_bus.is_connected():
+                return _cached_bus
+
             bus = IBus.Bus.new()
             for i in range(5):
                 for i in range(10):
                     if bus.is_connected():
+                        _cached_bus = bus
                         return bus
                     sleep(1)
                 if not bus.is_connected():
                     logger.warning("IBus bus failed to connect after 10 seconds, killing daemon.")
                 subprocess.check_call(["killall", "ibus-daemon"])
-            return bus
 
     raise RuntimeError("Could not start ibus-daemon after %d tries." % (max_tries))
+
+
+def reset_ibus_bus():
+    global _cached_bus
+    if _cached_bus is not None:
+        _cached_bus.exit(restart=True)
+        _cached_bus = None
 
 
 def get_available_input_engines():
@@ -104,7 +116,8 @@ def set_active_engines(engine_list):
     # need to restart the ibus bus before it'll pick up the new engine.
     # see bug report here:
     # http://code.google.com/p/ibus/issues/detail?id=1418&thanks=1418&ts=1329885137
-    bus.exit(restart=True)
+    reset_ibus_bus()
+
     return old_engines
 
 

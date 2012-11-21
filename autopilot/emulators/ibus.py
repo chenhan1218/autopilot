@@ -10,13 +10,11 @@
 
 from __future__ import absolute_import
 
-import ibus
-import ibus.common
+from gi.repository import IBus, GLib
 import os
 import logging
 import subprocess
 from gi.repository import GConf
-from time import sleep
 
 
 logger = logging.getLogger(__name__)
@@ -29,27 +27,35 @@ def get_ibus_bus():
     :raises: **RuntimeError** in the case of ibus-daemon being unavailable.
 
     """
-    max_tries = 5
-    for i in range(max_tries):
-        if ibus.common.get_address() is None:
-            pid = os.spawnlp(os.P_NOWAIT, "ibus-daemon", "ibus-daemon", "-d", "--xim")
-            logger.info("Started ibus-daemon with pid %i." % (pid))
-            sleep(2)
-        else:
-            return ibus.Bus()
-    raise RuntimeError("Could not start ibus-daemon after %d tries." % (max_tries))
+    bus = IBus.Bus()
+    if bus.is_connected():
+        return bus
+
+    main_loop = GLib.MainLoop()
+
+    timeout = 5
+    GLib.timeout_add_seconds(timeout, lambda *args: main_loop.quit())
+    bus.connect("connected", lambda *args: main_loop.quit())
+
+    os.spawnlp(os.P_NOWAIT, "ibus-daemon", "ibus-daemon", "--xim")
+
+    main_loop.run()
+
+    if not bus.is_connected():
+        raise RuntimeError("Could not start ibus-daemon after %d seconds." % (timeout))
+    return bus
 
 
 def get_available_input_engines():
     """Get a list of available input engines."""
     bus = get_ibus_bus()
-    return [e.name for e in bus.list_engines()]
+    return [e.get_name() for e in bus.list_engines()]
 
 
 def get_active_input_engines():
     """Get the list of input engines that have been activated."""
     bus = get_ibus_bus()
-    return [e.name for e in bus.list_active_engines()]
+    return [e.get_name() for e in bus.list_active_engines()]
 
 
 def set_active_engines(engine_list):
@@ -85,43 +91,18 @@ def set_active_engines(engine_list):
 
     config.set_value("general",
                      "preload_engine_mode",
-                     ibus.common.PRELOAD_ENGINE_MODE_USER)
+                     GLib.Variant.new_int32(IBus.PreloadEngineMode.USER))
 
     old_engines = get_active_input_engines()
-    config.set_list("general", "preload_engines", engine_list, "s")
+    config.set_value("general",
+                    "preload_engines",
+                    GLib.Variant("as", engine_list)
+                    )
     # need to restart the ibus bus before it'll pick up the new engine.
     # see bug report here:
     # http://code.google.com/p/ibus/issues/detail?id=1418&thanks=1418&ts=1329885137
     bus.exit(restart=True)
-    sleep(1)
     return old_engines
-
-
-def set_global_input_engine(engine_name):
-    """Set the global iBus input engine by name.
-
-    This function enables the global input engine. To turn it off again, pass None
-    as the engine name.
-
-    :raises: **TypeError** on invalid *engine_name* parameter.
-    :raises: **ValueError** when *engine_name* is an unknown engine.
-
-    """
-    if not (engine_name is None or isinstance(engine_name, basestring)):
-        raise TypeError("engine_name type must be either str or None.")
-
-    bus = get_ibus_bus()
-
-    if engine_name:
-        available_engines = get_available_input_engines()
-        if not engine_name in available_engines:
-            raise ValueError("Unknown engine '%s'" % (engine_name))
-        bus.get_config().set_value("general", "use_global_engine", True)
-        bus.set_global_engine(engine_name)
-        logger.info('Enabling global ibus engine "%s".' % (engine_name))
-    else:
-        bus.get_config().set_value("general", "use_global_engine", False)
-        logger.info('Disabling global ibus engine.')
 
 
 def set_gconf_option(path, value):

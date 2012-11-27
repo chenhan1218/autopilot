@@ -1,7 +1,8 @@
 Source: autopilot
 Section: python
 Priority: optional
-Maintainer: Thomi Richards <thomi.richards@canonical.com>
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+XSBC-Original-Maintainer: Thomi Richards <thomi.richards@canonical.com>
 Build-Depends: debhelper (>= 9.0.0),
                python (>= 2.6),
                python-setuptools,

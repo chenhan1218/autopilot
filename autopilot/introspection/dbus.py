@@ -195,10 +195,16 @@ class DBusIntrospectionObject(object):
         >>> get_children_by_type(Launcher, monitor=1)
 
         will return only LauncherInstances that have an attribute 'monitor' that
-        is equal to 1.
+        is equal to 1. The type can also be specified as a string, which is
+        useful if there is no emulator class specified:
+
+        >>> get_children_by_type('Launcher', monitor=1)
+
+        Note however that if you pass a string, and there is an emulator class
+        defined, autopilot will not use it.
 
         :param desired_type:
-        :type desired_type: subclass of DBusIntrospectionObject
+        :type desired_type: subclass of DBusIntrospectionObject, or a string.
 
         .. important:: *desired_type* **must** be a subclass of
          DBusIntrospectionObject.

@@ -229,7 +229,10 @@ def _translate_compiz_keystroke_string(keystroke_string):
 
 class KeybindingsHelper(object):
     """A helper class that makes it easier to use Unity keybindings."""
-    _keyboard = Keyboard()
+
+    @property
+    def _keyboard(self):
+        return Keyboard()
 
     def keybinding(self, binding_name, delay=None):
         """Press and release the keybinding with the given name.

@@ -9,6 +9,5 @@
 
 override_dh_auto_build:
 	sphinx-build -b html -W  docs/ docs/_build/html/
-	# make -f docs/Makefile html
 	dh_auto_build
 

@@ -9,7 +9,7 @@
 from __future__ import absolute_import
 
 from os import remove
-from testtools.matchers import Contains
+from testtools.matchers import Equals
 from time import sleep
 
 from autopilot.testcase import AutopilotTestCase
@@ -37,4 +37,5 @@ class KeyboardTests(AutopilotTestCase):
         self.keyboard.type(self.input)
         self.keyboard.press_and_release('Enter')
 
-        self.assertThat(open('foo').read(), Contains(self.input))
+        self.assertThat(open('foo').read(), Equals(self.input))
+

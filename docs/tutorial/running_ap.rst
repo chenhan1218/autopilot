@@ -44,19 +44,24 @@ Running autopilot tests is very similar to listing tests::
 However, the run command has many more options to customise the run behavior:
 
 -h, --help            show this help message and exit
+
 -o OUTPUT, --output OUTPUT
                       Write test result report to file. Defaults to stdout.
                       If given a directory instead of a file will write to a
                       file in that directory named:
                       <hostname>_<dd.mm.yyy_HHMMSS>.log
+
 -f FORMAT, --format FORMAT
                       Specify desired output format. Default is "text".
                       Other option is 'xml' to produce junit xml format.
+
 -r, --record          Record failing tests. Required 'recordmydesktop' app
                       to be installed. Videos are stored in /tmp/autopilot.
+
 -rd PATH, --record-directory PATH
                       Directory to put recorded tests (only if -r)
                       specified.
+
 -v, --verbose         If set, autopilot will output test log data to stderr
                       during a test run.
 

@@ -221,17 +221,17 @@ class Keyboard(object):
         fake_input(get_display(), event, keycode)
         get_display().sync()
 
-    def __get_keysym(self, key) :
+    def __get_keysym(self, key):
         keysym = XK.string_to_keysym(key)
-        if keysym == 0 :
+        if keysym == 0:
             # Unfortunately, although this works to get the correct keysym
             # i.e. keysym for '#' is returned as "numbersign"
             # the subsequent display.keysym_to_keycode("numbersign") is 0.
             keysym = XK.string_to_keysym(self._special_X_keysyms[key])
         return keysym
 
-    def __is_shifted(self, key) :
-        return len(key) == 1 and ord(key) in self.shifted_keys
+    def __is_shifted(self, key):
+        return len(key) == 1 and ord(key) in self.shifted_keys and key != '<'
 
     def __char_to_keycode(self, key) :
         keysym = self.__get_keysym(key)
@@ -243,6 +243,7 @@ class Keyboard(object):
             shift_mask = X.ShiftMask
         else :
             shift_mask = 0
+
         return keycode, shift_mask
 
     def __translate_keys(self, key_string):

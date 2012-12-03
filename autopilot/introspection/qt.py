@@ -19,7 +19,7 @@ import logging
 
 from autopilot.introspection import ApplicationIntrospectionTestMixin
 from autopilot.introspection.constants import QT_AUTOPILOT_IFACE
-from autopilot.introspection.dbus import session_bus
+from autopilot.introspection.dbus import get_session_bus
 
 
 logger = logging.getLogger(__name__)
@@ -91,7 +91,7 @@ class QtObjectProxyMixin(object):
 
         """
 
-        _debug_proxy_obj = session_bus.get_object(self.DBUS_SERVICE, self.DBUS_OBJECT)
+        _debug_proxy_obj = get_session_bus().get_object(self.DBUS_SERVICE, self.DBUS_OBJECT)
         return dbus.Interface(_debug_proxy_obj, QT_AUTOPILOT_IFACE)
 
     @property

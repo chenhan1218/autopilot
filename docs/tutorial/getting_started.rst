@@ -149,7 +149,7 @@ All classes that derive from :class:`~autopilot.testcase.AutopilotTestCase` have
 
 * **Typing Text**. The most common operation is typing text. This can be achieved by calling the 'type' method, like so::
 
-    self.keyboaqrd.type("Hello World")
+    self.keyboard.type("Hello World")
 
   Here, each character in the string passed in is pressed and released in sequence. If all goes well, the application under test will recieve the characters 'H', 'e', 'l', 'l', 'o', ' ', 'W', 'o', 'r', 'l', 'd' - in that order.
 

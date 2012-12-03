@@ -179,8 +179,11 @@ class Keyboard(object):
             raise TypeError("'keys' argument must be a string.")
         logger.debug("Typing text %r", string)
         for key in string:
-            self.press(key, delay)
-            self.release(key, delay)
+            # Don't call press or release here, as they translate keys to keysyms.
+            self.__perform_on_key(key, X.KeyPress)
+            sleep(delay)
+            self.__perform_on_key(key, X.KeyRelease)
+            sleep(delay)
 
     @staticmethod
     def cleanup():

@@ -29,7 +29,7 @@ class KeyboardTests(AutopilotTestCase):
 
     def test_keyboard_types_correct_characters(self):
         """Verify that the keyboard types what we expect."""
-        term_window = self.start_app_window('Terminal')
+        self.start_app_window('Terminal')
         self.keyboard.type('''python -c "open('foo','w').write(raw_input())"''')
         self.keyboard.press_and_release('Enter')
         self.addCleanup(remove, 'foo')

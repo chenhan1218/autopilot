@@ -37,3 +37,11 @@ class EventuallyMatcherTests(AutopilotTestCase):
         Eventually(Equals(True)).match(lambda: True)
         # max error of 1 second seems reasonable:
         self.assertThat(abs(time() - start), LessThan(1))
+
+    def test_eventually_matcher_allows_non_default_timeout(self):
+        """Eventually matcher must allow a non-default timeout value."""
+        start = time()
+        with ExpectedException(MismatchError):
+            Eventually(Equals(True), timeout=5).match(lambda: False)
+        # max error of 1 second seems reasonable:
+        self.assertThat(abs(time() - start - 5.0), LessThan(1))

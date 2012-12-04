@@ -250,7 +250,11 @@ class Keyboard(object):
         return keycode, shift_mask
 
     def __translate_keys(self, key_string):
-        return [self._keysym_translations.get(k, k) for k in key_string.split('+')]
+        if len(key_string) > 1:
+            return [self._keysym_translations.get(k, k) for k in key_string.split('+')]
+        else:
+            # workaround that lets us press_and_release '+' by itself.
+            return [self._keysym_translations.get(key_string, key_string)]
 
 
 class Mouse(object):

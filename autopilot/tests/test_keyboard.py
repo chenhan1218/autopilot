@@ -34,7 +34,7 @@ class KeyboardTests(AutopilotTestCase):
         self.keyboard.press_and_release('Enter')
         self.addCleanup(remove, 'foo')
         sleep(1)
-        self.keyboard.type(self.input)
+        self.keyboard.type(self.input, 0.01)
         self.keyboard.press_and_release('Enter')
 
         self.assertThat(open('foo').read(), Equals(self.input))
@@ -50,7 +50,7 @@ class KeyboardTests(AutopilotTestCase):
         self.addCleanup(remove, 'foo')
         sleep(1)
         for character in self.input:
-            self.keyboard.press_and_release(character)
+            self.keyboard.press_and_release(character, 0.01)
         self.keyboard.press_and_release('Enter')
 
         self.assertThat(open('foo').read(), Equals(self.input))

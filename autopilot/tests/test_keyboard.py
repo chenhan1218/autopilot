@@ -9,6 +9,7 @@
 from __future__ import absolute_import
 
 from os import remove
+from tempfile import mktemp
 from testtools.matchers import Equals
 from time import sleep
 
@@ -30,14 +31,15 @@ class KeyboardTests(AutopilotTestCase):
     def test_keyboard_types_correct_characters(self):
         """Verify that the keyboard.type method types what we expect."""
         self.start_app_window('Terminal')
-        self.keyboard.type('''python -c "open('foo','w').write(raw_input())"''')
+        filename = mktemp()
+        self.keyboard.type('''python -c "open('%s','w').write(raw_input())"''' % filename)
         self.keyboard.press_and_release('Enter')
-        self.addCleanup(remove, 'foo')
+        self.addCleanup(remove, filename)
         sleep(1)
         self.keyboard.type(self.input, 0.01)
         self.keyboard.press_and_release('Enter')
 
-        self.assertThat(open('foo').read(), Equals(self.input))
+        self.assertThat(open(filename).read(), Equals(self.input))
 
     def test_keyboard_press_and_release_types_correct_characters(self):
         """Verify that the Keyboard.press_and_release method types what we
@@ -45,13 +47,14 @@ class KeyboardTests(AutopilotTestCase):
 
         """
         self.start_app_window('Terminal')
-        self.keyboard.type('''python -c "open('foo','w').write(raw_input())"''')
+        filename = mktemp()
+        self.keyboard.type('''python -c "open('%s','w').write(raw_input())"''' % filename)
         self.keyboard.press_and_release('Enter')
-        self.addCleanup(remove, 'foo')
+        self.addCleanup(remove, filename)
         sleep(1)
         for character in self.input:
             self.keyboard.press_and_release(character, 0.01)
         self.keyboard.press_and_release('Enter')
 
-        self.assertThat(open('foo').read(), Equals(self.input))
+        self.assertThat(open(filename).read(), Equals(self.input))
 

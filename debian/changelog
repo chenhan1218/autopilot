@@ -1,34 +1,9 @@
-autopilot (1.2daily12.11.27-0ubuntu1) raring; urgency=low
+autopilot (1.2-0ubuntu1) UNRELEASED; urgency=low
 
   [ Didier Roche ]
   * debian/control:
-    - update build-dep for latest build-deps
+    - update build-dep for latest deps
   * Automatic snapshot from revision 64 (bootstrap)
-
-  [ Thomi Richards ]
-  * Build sphinx documentation and package it in python-autopilot. 
-  * Autopilot ibus module should use Gir ibus module, not 'python-ibus'
-    (LP: #1078917)
-  * autopilot exits with 0 when a test error-ed (LP: #1050208)
-
-  [ Leo Arias ]
-  * Typos in getting started page (LP: #1078692)
-  * Typo in writing good tests page (LP: #1079129)
-  * Typo in docs: responde (LP: #1078680)
-  * Typo in docs: autopiolot (LP: #1078683)
-  * Typo in running autopilot page (LP: #1078710)
-
-  [ Francis Ginther ]
-  * UnicodeDecodeError after test-suite has finished (LP: #1078732)
-
-  [ Christopher Lee ]
-  * autopilot is checking for gtk2 gconf instead of real  (LP: #1060973)
-
-  [ Sebastien Bacher ]
-  * Autopilot uses compizconfig incorrectly (LP: #1038844)
-
-  [ Automatic PS uploader ]
-  * Automatic snapshot from revision 100
 
  -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Tue, 27 Nov 2012 10:37:27 +0100
 

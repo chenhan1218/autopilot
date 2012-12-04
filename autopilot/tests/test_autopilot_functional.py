@@ -398,7 +398,7 @@ Loading tests from: %s
 
         code, output, error = self.run_autopilot(["run", "-v", "tests"])
 
-        self.assertThat(error, MatchesRegex("\d\d:\d\d:\d\d\.\d\d\d"))
+        self.assertThat(error, MatchesRegex("^\d\d:\d\d:\d\d\.\d\d\d"))
 
     def test_record_flag_works(self):
         """Must be able to record videos when the -r flag is present."""

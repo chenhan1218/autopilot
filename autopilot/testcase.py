@@ -99,13 +99,14 @@ class LoggedTestCase(TestWithScenarios, TestCase):
         self._log_buffer = StringIO()
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.DEBUG)
-        handler = logging.StreamHandler(stream=self._log_buffer)
         log_format = "%(asctime)s %(levelname)s %(module)s:%(lineno)d - %(message)s"
-        handler.setFormatter(MyFormatter(log_format))
+        formatter = MyFormatter(log_format)
+        handler = logging.StreamHandler(stream=self._log_buffer)
+        handler.setFormatter(formatter)
         root_logger.addHandler(handler)
         if get_log_verbose():
             stderr_handler = logging.StreamHandler(stream=sys.stderr)
-            handler.setFormatter(MyFormatter(log_format))
+            stderr_handler.setFormatter(formatter)
             root_logger.addHandler(stderr_handler)
 
         #Tear down logging in a cleanUp handler, so it's done after all other

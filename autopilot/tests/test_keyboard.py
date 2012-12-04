@@ -28,13 +28,29 @@ class KeyboardTests(AutopilotTestCase):
     ]
 
     def test_keyboard_types_correct_characters(self):
-        """Verify that the keyboard types what we expect."""
+        """Verify that the keyboard.type method types what we expect."""
         self.start_app_window('Terminal')
         self.keyboard.type('''python -c "open('foo','w').write(raw_input())"''')
         self.keyboard.press_and_release('Enter')
         self.addCleanup(remove, 'foo')
         sleep(1)
         self.keyboard.type(self.input)
+        self.keyboard.press_and_release('Enter')
+
+        self.assertThat(open('foo').read(), Equals(self.input))
+
+    def test_keyboard_press_and_release_types_correct_characters(self):
+        """Verify that the Keyboard.press_and_release method types what we
+        expect.
+
+        """
+        self.start_app_window('Terminal')
+        self.keyboard.type('''python -c "open('foo','w').write(raw_input())"''')
+        self.keyboard.press_and_release('Enter')
+        self.addCleanup(remove, 'foo')
+        sleep(1)
+        for character in self.input:
+            self.keyboard.press_and_release(character)
         self.keyboard.press_and_release('Enter')
 
         self.assertThat(open('foo').read(), Equals(self.input))

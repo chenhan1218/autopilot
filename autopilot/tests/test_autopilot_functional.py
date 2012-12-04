@@ -18,7 +18,7 @@ import subprocess
 from tempfile import mktemp, mkdtemp
 from testtools.content import Content, text_content
 from testtools.content_type import ContentType
-from testtools.matchers import Contains, Equals
+from testtools.matchers import Contains, Equals, MatchesRegex
 from textwrap import dedent
 import re
 
@@ -381,6 +381,24 @@ Loading tests from: %s
 
         self.assertThat(code, Equals(0))
         self.assertThat(error, Contains("Starting test tests.test_simple.SimpleTest.test_simple"))
+
+    def test_verbose_flag_shows_timestamps(self):
+        """Verbose log must include timestamps."""
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    pass
+            """
+            ))
+
+        code, output, error = self.run_autopilot(["run", "-v", "tests"])
+
+        self.assertThat(error, MatchesRegex("^\d\d:\d\d:\d\d\.\d\d\d"))
 
     def test_record_flag_works(self):
         """Must be able to record videos when the -r flag is present."""

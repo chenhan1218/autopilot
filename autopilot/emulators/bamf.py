@@ -15,10 +15,8 @@ from gi.repository import Gio
 from gi.repository import GObject
 import os
 from Xlib import display, X, protocol
-from gi.repository import Gdk
-from gi.repository import GdkX11
 
-from autopilot.emulators.dbus_handler import session_bus
+from autopilot.emulators.dbus_handler import get_session_bus
 from autopilot.utilities import Silence
 
 __all__ = [
@@ -64,7 +62,7 @@ class Bamf(object):
     def __init__(self):
         matcher_path = '/org/ayatana/bamf/matcher'
         self.matcher_interface_name = 'org.ayatana.bamf.matcher'
-        self.matcher_proxy = session_bus.get_object(_BAMF_BUS_NAME, matcher_path)
+        self.matcher_proxy = get_session_bus().get_object(_BAMF_BUS_NAME, matcher_path)
         self.matcher_interface = dbus.Interface(self.matcher_proxy, self.matcher_interface_name)
 
     def get_running_applications(self, user_visible_only=True):
@@ -163,7 +161,7 @@ class Bamf(object):
             if not wait_forever:
                 GObject.timeout_add(timeout * 1000, on_timeout_reached)
             # connect signal handler:
-            session_bus.add_signal_receiver(on_view_added, 'ViewOpened')
+            get_session_bus().add_signal_receiver(on_view_added, 'ViewOpened')
             # pump the gobject main loop until either the correct signal is emitted, or the
             # timeout happens.
             gobject_loop.run()
@@ -206,7 +204,7 @@ class BamfApplication(object):
     def __init__(self, bamf_app_path):
         self.bamf_app_path = bamf_app_path
         try:
-            self._app_proxy = session_bus.get_object(_BAMF_BUS_NAME, bamf_app_path)
+            self._app_proxy = get_session_bus().get_object(_BAMF_BUS_NAME, bamf_app_path)
             self._view_iface = dbus.Interface(self._app_proxy, 'org.ayatana.bamf.view')
             self._app_iface = dbus.Interface(self._app_proxy, 'org.ayatana.bamf.application')
         except dbus.DBusException, e:
@@ -285,7 +283,7 @@ class BamfWindow(object):
     """
     def __init__(self, window_path):
         self._bamf_win_path = window_path
-        self._app_proxy = session_bus.get_object(_BAMF_BUS_NAME, window_path)
+        self._app_proxy = get_session_bus().get_object(_BAMF_BUS_NAME, window_path)
         self._window_iface = dbus.Interface(self._app_proxy, 'org.ayatana.bamf.window')
         self._view_iface = dbus.Interface(self._app_proxy, 'org.ayatana.bamf.view')
 
@@ -331,6 +329,11 @@ class BamfWindow(object):
         :return: Tuple containing (x, y, width, height).
 
         """
+        # Note: MUST import these here, rather than at the top of the file. Why?
+        # Because sphinx imports these modules to build the API documentation,
+        # which in turn tries to import Gdk, which in turn fails because there's
+        # no DISPlAY environment set in the package builder.
+        from gi.repository import GdkX11
         # FIXME: We need to use the gdk window here to get the real coordinates
         geometry = self._x_win.get_geometry()
         origin = GdkX11.X11Window.foreign_new_for_display(get_display(), self._xid).get_origin()

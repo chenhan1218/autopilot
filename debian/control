@@ -4,9 +4,17 @@ Priority: optional
 Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
 XSBC-Original-Maintainer: Thomi Richards <thomi.richards@canonical.com>
 Build-Depends: debhelper (>= 9.0.0),
+               gir1.2-ibus-1.0,
+               gir1.2-gconf-2.0,
+               gir1.2-gtk-2.0,
                python (>= 2.6),
+               python-dbus,
                python-setuptools,
-               python-sphinx
+               python-sphinx,
+               python-testtools,
+               python-testscenarios,
+               python-xlib,
+               python-zeitgeist,
 Standards-Version: 3.9.3
 Homepage: https://launchpad.net/autopilot
 Vcs-bzr: https://code.launchpad.net/+branch/ubuntu/autopilot
@@ -18,6 +26,7 @@ Depends: ${shlibs:Depends},
          ${python:Depends},
          gir1.2-gconf-2.0,
          gir1.2-glib-2.0,
+         gir1.2-gtk-2.0,
          gir1.2-ibus-1.0,
          python-compizconfig,
          python-dbus,

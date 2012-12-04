@@ -22,7 +22,7 @@ import logging
 from testtools.matchers import Equals
 from time import sleep
 
-from autopilot.emulators.dbus_handler import session_bus
+from autopilot.emulators.dbus_handler import get_session_bus
 from autopilot.introspection.constants import AP_INTROSPECTION_IFACE
 
 
@@ -73,7 +73,7 @@ def get_introspection_iface(service_name, object_path):
     if not isinstance(object_path, basestring):
         raise TypeError("Object name must be a string")
 
-    _debug_proxy_obj = session_bus.get_object(service_name, object_path)
+    _debug_proxy_obj = get_session_bus().get_object(service_name, object_path)
     return Interface(_debug_proxy_obj, AP_INTROSPECTION_IFACE)
 
 

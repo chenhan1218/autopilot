@@ -27,7 +27,7 @@ from autopilot.introspection.dbus import (
     clear_object_registry,
     DBusIntrospectionObject,
     object_passes_filters,
-    session_bus,
+    get_session_bus,
     )
 
 
@@ -127,7 +127,7 @@ def get_autopilot_proxy_object_for_process(process):
     # manually.
     #
     # This sucks, and should be changed to something more elegant in the future.
-
+    session_bus = get_session_bus()
     bus_object = session_bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
     bus_iface = dbus.Interface(bus_object, 'org.freedesktop.DBus')
 
@@ -185,7 +185,7 @@ def get_proxy_object_base_clases(service_name, obj_path):
 
     bases = [ApplicationProxyObect]
 
-    dbus_object = session_bus.get_object(service_name, obj_path)
+    dbus_object = get_session_bus().get_object(service_name, obj_path)
     introspection_iface = dbus.Interface(dbus_object, DBUS_INTROSPECTION_IFACE)
     intro_xml = introspection_iface.Introspect()
     if AP_INTROSPECTION_IFACE not in intro_xml:
@@ -200,7 +200,7 @@ def get_proxy_object_base_clases(service_name, obj_path):
 
 def get_proxy_object_class_name_and_state(service_name, obj_path):
     """Return the class name and root state dictionary."""
-    dbus_object = session_bus.get_object(service_name, obj_path)
+    dbus_object = get_session_bus().get_object(service_name, obj_path)
     dbus_iface = dbus.Interface(dbus_object, AP_INTROSPECTION_IFACE)
     return dbus_iface.GetState("/")[0]
 

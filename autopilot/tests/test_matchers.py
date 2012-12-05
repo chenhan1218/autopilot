@@ -8,12 +8,13 @@
 
 from __future__ import absolute_import
 
-from autopilot.testcase import AutopilotTestCase
+from autopilot.introspection.dbus import DBusIntrospectionObject
 from autopilot.matchers import Eventually
+from autopilot.testcase import AutopilotTestCase
 
 import dbus
 from testtools.matchers import Equals, IsInstance, LessThan, Mismatch, raises
-from time import sleep, time
+from time import time
 
 class EventuallyMatcherTests(AutopilotTestCase):
 
@@ -29,25 +30,21 @@ class EventuallyMatcherTests(AutopilotTestCase):
         wait_for method, according to the current test scenario.
 
         """
-        def fake_wait_for(self, expected, timeout):
-            time_left = True
-            while time_left:
-                if expected.match(result) == None:
-                    return
+        class FakeObject(DBusIntrospectionObject):
 
-                if timeout >= 1:
-                    sleep(1)
-                    timeout -= 1
-                else:
-                    sleep(timeout)
-                    time_left = False
+            def __init__(self, props):
+                super(FakeObject, self).__init__(props)
+                FakeObject._fake_props = props
 
-            raise AssertionError()
+            @classmethod
+            def get_state_by_path(cls, piece):
+                return [('FakeObject', cls._fake_props)]
+
         if self.attribute_type == 'callable':
             return lambda: result
         elif self.attribute_type == 'wait_for':
-            t = dbus.Boolean
-            return type(t.__name__, (t,), dict(wait_for=fake_wait_for))(result)
+            obj = FakeObject(dict(id=123,attr=dbus.Boolean(result)))
+            return obj.attr
 
     def test_eventually_matcher_returns_Mismatch(self):
         """Eventually matcher must return a Mismatch."""
@@ -80,8 +77,8 @@ class EventuallyMatcherTests(AutopilotTestCase):
         # max error of 1 second seems reasonable:
         self.assertThat(abs(time() - start - 5.0), LessThan(1))
 
+
 class EventuallyNonScenariodTests(AutopilotTestCase):
 
     def test_eventually_matcher_raises_ValueError_on_unknown_kwargs(self):
         self.assertThat(lambda: Eventually(Equals(True), foo=123), raises(ValueError))
-

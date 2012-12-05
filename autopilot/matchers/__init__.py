@@ -24,8 +24,11 @@ class Eventually(Matcher):
 
     """
 
-    def __init__(self, matcher):
+    def __init__(self, matcher, **kwargs):
         super(Eventually, self).__init__()
+        self.timeout = kwargs.pop('timeout', 10)
+        if kwargs:
+            raise ValueError("Unknown keyword arguments: %s" % ', '.join(kwargs.keys()))
         match_fun = getattr(matcher, 'match', None)
         if match_fun is None or not callable(match_fun):
             raise TypeError("Eventually must be called with a testtools matcher argument.")
@@ -40,7 +43,7 @@ class Eventually(Matcher):
                 raise TypeError("Eventually is only usable with attributes that have a wait_for function or callable objects.")
 
         try:
-            wait_fun(self.matcher)
+            wait_fun(self.matcher, self.timeout)
         except AssertionError as e:
             return Mismatch(str(e))
         return None
@@ -49,13 +52,13 @@ class Eventually(Matcher):
         return "Eventually " + str(self.matcher)
 
 
-def _callable_wait_for(refresh_fn, matcher):
+def _callable_wait_for(refresh_fn, matcher, timeout):
     """Like the patched :meth:`wait_for method`, but for callable objects instead
     of patched variables.
 
     """
-
-    for i in range(10):
+    time_left = timeout
+    while True:
         new_value = refresh_fn()
         mismatch = matcher.match(new_value)
         if mismatch:
@@ -63,8 +66,13 @@ def _callable_wait_for(refresh_fn, matcher):
         else:
             return
 
-        sleep(1)
+        if time_left >= 1:
+            sleep(1)
+            time_left -= 1
+        else:
+            sleep(time_left)
+            break
 
     # can't give a very descriptive message here, especially as refresh_fn
     # is likely to be a lambda.
-    raise AssertionError("After 10 seconds test failed: %s", failure_msg)
+    raise AssertionError("After %.1f seconds test failed: %s" % (timeout, failure_msg))

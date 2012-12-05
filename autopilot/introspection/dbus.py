@@ -129,7 +129,7 @@ class DBusIntrospectionObject(object):
     def _make_attribute(self, name, value):
         """Make an attribute for *value*, patched with the wait_for function."""
 
-        def wait_for(self, expected_value):
+        def wait_for(self, expected_value, timeout):
             """Wait up to 10 seconds for our value to change to *expected_value*.
 
             *expected_value* can be a testtools.matcher. Matcher subclass (like
@@ -154,7 +154,9 @@ class DBusIntrospectionObject(object):
             if not is_matcher:
                 expected_value = Equals(expected_value)
 
-            for i in range(10):
+
+            time_left = timeout
+            while True:
                 name, new_state = self.parent.get_new_state()
                 new_state = translate_state_keys(new_state)
                 new_value = new_state[self.name]
@@ -166,10 +168,15 @@ class DBusIntrospectionObject(object):
                     self.parent.set_properties(new_state)
                     return
 
-                sleep(1)
+                if time_left >= 1:
+                    sleep(1)
+                    time_left -= 1
+                else:
+                    sleep(time_left)
+                    break
 
-            raise AssertionError("After 10 seconds test on %s.%s failed: %s"
-                % (self.parent.__class__.__name__, self.name, failure_msg))
+            raise AssertionError("After %.1f seconds test on %s.%s failed: %s"
+                % (timeout, self.parent.__class__.__name__, self.name, failure_msg))
 
         # This looks like magic, but it's really not. We're creating a new type
         # on the fly that derives from the type of 'value' with a couple of

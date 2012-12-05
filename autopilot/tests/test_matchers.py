@@ -13,7 +13,14 @@ from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase
 
 import dbus
-from testtools.matchers import Equals, IsInstance, LessThan, Mismatch, raises
+from testtools.matchers import (
+    Contains,
+    Equals,
+    IsInstance,
+    LessThan,
+    Mismatch,
+    raises,
+    )
 from time import time
 
 class EventuallyMatcherTests(AutopilotTestCase):
@@ -76,6 +83,12 @@ class EventuallyMatcherTests(AutopilotTestCase):
         Eventually(Equals(True), timeout=5).match(attr)
         # max error of 1 second seems reasonable:
         self.assertThat(abs(time() - start - 5.0), LessThan(1))
+
+    def test_mismatch_message_has_correct_timeout_value(self):
+        """The mismatch value must have the correct timeout value in it."""
+        attr = self.make_fake_attribute_with_result(False)
+        mismatch = Eventually(Equals(True), timeout=1).match(attr)
+        self.assertThat(mismatch.describe(), Contains("After 1.0 seconds test"))
 
 
 class EventuallyNonScenariodTests(AutopilotTestCase):

@@ -57,8 +57,8 @@ def _callable_wait_for(refresh_fn, matcher, timeout):
     of patched variables.
 
     """
-    time_left = True
-    while time_left:
+    time_left = timeout
+    while True:
         new_value = refresh_fn()
         mismatch = matcher.match(new_value)
         if mismatch:
@@ -66,13 +66,13 @@ def _callable_wait_for(refresh_fn, matcher, timeout):
         else:
             return
 
-        if timeout >= 1:
+        if time_left >= 1:
             sleep(1)
-            timeout -= 1
+            time_left -= 1
         else:
-            sleep(timeout)
-            time_left = False
+            sleep(time_left)
+            break
 
     # can't give a very descriptive message here, especially as refresh_fn
     # is likely to be a lambda.
-    raise AssertionError("After 10 seconds test failed: %s", failure_msg)
+    raise AssertionError("After %.1f seconds test failed: %s" % (timeout, failure_msg))

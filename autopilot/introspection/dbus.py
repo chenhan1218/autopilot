@@ -154,8 +154,9 @@ class DBusIntrospectionObject(object):
             if not is_matcher:
                 expected_value = Equals(expected_value)
 
-            time_left = True
-            while time_left:
+
+            time_left = timeout
+            while True:
                 name, new_state = self.parent.get_new_state()
                 new_state = translate_state_keys(new_state)
                 new_value = new_state[self.name]
@@ -167,15 +168,15 @@ class DBusIntrospectionObject(object):
                     self.parent.set_properties(new_state)
                     return
 
-                if timeout >= 1:
+                if time_left >= 1:
                     sleep(1)
-                    timeout -= 1
+                    time_left -= 1
                 else:
-                    sleep(timeout)
-                    time_left = False
+                    sleep(time_left)
+                    break
 
-            raise AssertionError("After 10 seconds test on %s.%s failed: %s"
-                % (self.parent.__class__.__name__, self.name, failure_msg))
+            raise AssertionError("After %.1f seconds test on %s.%s failed: %s"
+                % (timeout, self.parent.__class__.__name__, self.name, failure_msg))
 
         # This looks like magic, but it's really not. We're creating a new type
         # on the fly that derives from the type of 'value' with a couple of

@@ -18,8 +18,9 @@ from testtools.matchers import (
     Equals,
     IsInstance,
     LessThan,
+    MatchesException,
     Mismatch,
-    raises,
+    Raises,
     )
 from time import time
 
@@ -94,4 +95,5 @@ class EventuallyMatcherTests(AutopilotTestCase):
 class EventuallyNonScenariodTests(AutopilotTestCase):
 
     def test_eventually_matcher_raises_ValueError_on_unknown_kwargs(self):
-        self.assertThat(lambda: Eventually(Equals(True), foo=123), raises(ValueError))
+        self.assertThat(lambda: Eventually(Equals(True), foo=123),
+            Raises(MatchesException(ValueError, "Unknown keyword arguments: foo")))

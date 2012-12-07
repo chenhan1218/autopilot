@@ -129,7 +129,7 @@ class DBusIntrospectionObject(object):
     def _make_attribute(self, name, value):
         """Make an attribute for *value*, patched with the wait_for function."""
 
-        def wait_for(self, expected_value, timeout):
+        def wait_for(self, expected_value, timeout=10):
             """Wait up to 10 seconds for our value to change to *expected_value*.
 
             *expected_value* can be a testtools.matcher. Matcher subclass (like

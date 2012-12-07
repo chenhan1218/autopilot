@@ -3,7 +3,14 @@ autopilot (1.2-0ubuntu1) UNRELEASED; urgency=low
   [ Didier Roche ]
   * debian/control:
     - update build-dep for latest deps
-  * Automatic snapshot from revision 64 (bootstrap)
+  * Automatic snapshot from revision 90 (bootstrap):
+    - autopilot is checking for gtk2 gconf instead of real  (LP: #1060973)
+    - autopilot exits with 0 when a test error-ed (LP: #1050208)
+    - Fixes a wrong import of make_proxy_object_from_service_name.
+      (LP: #1053023)
+    - autopilot crashed with AssertionError in _get_name_from_path(): Path must
+      be within the project (LP: #1044701)
+    - Adds a man page for autopilot (LP: #1037940)
 
  -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Tue, 27 Nov 2012 10:37:27 +0100
 

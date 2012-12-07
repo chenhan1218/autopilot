@@ -24,6 +24,38 @@ from testtools.matchers import (
     )
 from time import time
 
+
+def make_fake_attribute_with_result(result, attribute_type='wait_for'):
+    """Make a fake attribute with the given result.
+
+    This will either return a callable, or an attribute patched with a
+    wait_for method, according to the current test scenario.
+
+    """
+    class FakeObject(DBusIntrospectionObject):
+        def __init__(self, props):
+            super(FakeObject, self).__init__(props)
+            FakeObject._fake_props = props
+
+        @classmethod
+        def get_state_by_path(cls, piece):
+            return [('FakeObject', cls._fake_props)]
+
+    if attribute_type == 'callable':
+        return lambda: result
+    elif attribute_type == 'wait_for':
+        obj = FakeObject(dict(id=123,attr=dbus.Boolean(result)))
+        return obj.attr
+
+
+class ObjectPatchingMatcherTests(AutopilotTestCase):
+    """Ensure the core functionality the matchers use is correct."""
+
+    def test_default_wait_for_args(self):
+        """Ensure"""
+        intro_obj = make_fake_attribute_with_result(False)
+        intro_obj.wait_for(False)
+
 class EventuallyMatcherTests(AutopilotTestCase):
 
     scenarios = [
@@ -31,39 +63,16 @@ class EventuallyMatcherTests(AutopilotTestCase):
         ('wait_for', dict(attribute_type='wait_for')),
     ]
 
-    def make_fake_attribute_with_result(self, result):
-        """Make a fake attribute with the given result.
-
-        This will either return a callable, or an attribute patched with a
-        wait_for method, according to the current test scenario.
-
-        """
-        class FakeObject(DBusIntrospectionObject):
-
-            def __init__(self, props):
-                super(FakeObject, self).__init__(props)
-                FakeObject._fake_props = props
-
-            @classmethod
-            def get_state_by_path(cls, piece):
-                return [('FakeObject', cls._fake_props)]
-
-        if self.attribute_type == 'callable':
-            return lambda: result
-        elif self.attribute_type == 'wait_for':
-            obj = FakeObject(dict(id=123,attr=dbus.Boolean(result)))
-            return obj.attr
-
     def test_eventually_matcher_returns_Mismatch(self):
         """Eventually matcher must return a Mismatch."""
-        attr = self.make_fake_attribute_with_result(False)
+        attr = make_fake_attribute_with_result(False, self.attribute_type)
         e = Eventually(Equals(True)).match(lambda: attr)
 
         self.assertThat(e, IsInstance(Mismatch))
 
     def test_eventually_default_timeout(self):
         """Eventually matcher must default to 10 second timeout."""
-        attr = self.make_fake_attribute_with_result(False)
+        attr = make_fake_attribute_with_result(False, self.attribute_type)
         start = time()
         Eventually(Equals(True)).match(attr)
         # max error of 1 second seems reasonable:
@@ -72,7 +81,7 @@ class EventuallyMatcherTests(AutopilotTestCase):
     def test_eventually_passes_immeadiately(self):
         """Eventually matcher must not wait if the assertion passes initially."""
         start = time()
-        attr = self.make_fake_attribute_with_result(True)
+        attr = make_fake_attribute_with_result(True, self.attribute_type)
         Eventually(Equals(True)).match(attr)
         # max error of 1 second seems reasonable:
         self.assertThat(abs(time() - start), LessThan(1))
@@ -80,14 +89,14 @@ class EventuallyMatcherTests(AutopilotTestCase):
     def test_eventually_matcher_allows_non_default_timeout(self):
         """Eventually matcher must allow a non-default timeout value."""
         start = time()
-        attr = self.make_fake_attribute_with_result(False)
+        attr = make_fake_attribute_with_result(False, self.attribute_type)
         Eventually(Equals(True), timeout=5).match(attr)
         # max error of 1 second seems reasonable:
         self.assertThat(abs(time() - start - 5.0), LessThan(1))
 
     def test_mismatch_message_has_correct_timeout_value(self):
         """The mismatch value must have the correct timeout value in it."""
-        attr = self.make_fake_attribute_with_result(False)
+        attr = make_fake_attribute_with_result(False, self.attribute_type)
         mismatch = Eventually(Equals(True), timeout=1).match(attr)
         self.assertThat(mismatch.describe(), Contains("After 1.0 seconds test"))
 

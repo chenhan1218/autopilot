@@ -1,4 +1,4 @@
-autopilot (1.2-0ubuntu1) UNRELEASED; urgency=low
+autopilot (1.2daily12.12.10-0ubuntu1) raring; urgency=low
 
   [ Didier Roche ]
   * debian/control:
@@ -12,7 +12,31 @@ autopilot (1.2-0ubuntu1) UNRELEASED; urgency=low
       be within the project (LP: #1044701)
     - Adds a man page for autopilot (LP: #1037940)
 
- -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Tue, 27 Nov 2012 10:37:27 +0100
+  [ Thomi Richards ]
+  * Autopilot ibus module should use Gir ibus module, not 'python-ibus'
+    (LP: #1078917)
+  * No timestamp in verbose log (LP: #1067161)
+  * Less than (<) keypress emulates as a greater than keypress (>) (LP:
+    #1081318)
+  * Eventually() should have a variable time delay (LP: #1083435)
+
+  [ Leo Arias ]
+  * Typos in getting started page (LP: #1078692)
+  * Typo in writing good tests page (LP: #1079129)
+  * Typo in docs: responde (LP: #1078680)
+  * Typo in docs: autopiolot (LP: #1078683)
+  * Typo in running autopilot page (LP: #1078710)
+
+  [ Francis Ginther ]
+  * UnicodeDecodeError after test-suite has finished (LP: #1078732)
+
+  [ Martin Mrazik ]
+  * UnicodeDecodeError after test-suite has finished (LP: #1078732)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 111
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Mon, 10 Dec 2012 00:01:06 +0000
 
 autopilot (1.1) quantal; urgency=low
 

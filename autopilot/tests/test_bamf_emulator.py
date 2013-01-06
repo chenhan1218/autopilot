@@ -10,8 +10,9 @@
 from autopilot.testcase import AutopilotTestCase
 
 from subprocess import Popen, call
-from time import sleep
+from testtools.matchers import Equals, LessThan
 from threading import Thread
+from time import sleep, time
 
 class BamfEmulatorTests(AutopilotTestCase):
 
@@ -26,5 +27,13 @@ class BamfEmulatorTests(AutopilotTestCase):
         t.join()
         self.assertTrue(ret)
         call(['killall', 'gedit'])
+
+    def test_wait_for_app_running_times_out_correctly(self):
+        call(['killall', 'gedit'])
+        start = time()
+        ret = self.bamf.wait_until_application_is_running('gedit.desktop', 5)
+        end = time()
+        self.assertThat(abs(end - start - 5.0), LessThan(1))
+        self.assertThat(ret, Equals(False))
 
 

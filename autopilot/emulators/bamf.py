@@ -12,7 +12,8 @@ from __future__ import absolute_import
 import dbus
 import dbus.glib
 from gi.repository import Gio
-from gi.repository import GObject
+from gi.repository import GLib
+from gi.repository import GLib
 import os
 from Xlib import display, X, protocol
 
@@ -142,7 +143,7 @@ class Bamf(object):
         # maybe the app is running already?
         if len(self.get_running_applications_by_desktop_file(desktop_file)) == 0:
             wait_forever = timeout < 0
-            gobject_loop = GObject.MainLoop()
+            gobject_loop = GLib.MainLoop()
 
             # No, so define a callback to watch the ViewOpened signal:
             def on_view_added(bamf_path, name):
@@ -159,7 +160,7 @@ class Bamf(object):
 
             # need a timeout? if so, connect it:
             if not wait_forever:
-                GObject.timeout_add(timeout * 1000, on_timeout_reached)
+                GLib.timeout_add(timeout * 1000, on_timeout_reached)
             # connect signal handler:
             get_session_bus().add_signal_receiver(on_view_added, 'ViewOpened')
             # pump the gobject main loop until either the correct signal is emitted, or the

@@ -13,7 +13,6 @@ import dbus
 import dbus.glib
 from gi.repository import Gio
 from gi.repository import GLib
-from gi.repository import GLib
 import os
 from Xlib import display, X, protocol
 

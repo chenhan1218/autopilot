@@ -113,9 +113,7 @@ def parse_arguments():
                              help="Specify test suite(s) to run.")
 
     parser_vis = subparsers.add_parser('vis',
-                                      help="Create introspection visualisation.\
-                                      Opens visualisation in xdot when not\
-                                      passed an output path to write file to.")
+                                      help="Open the Autopilot visualiser tool")
     args = parser.parse_args()
 
     return args

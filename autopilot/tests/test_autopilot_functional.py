@@ -595,3 +595,36 @@ SyntaxError: invalid syntax
         log_contents = unicode(open(output_file_path, encoding='utf-8').read())
         self.assertThat(log_contents,
             Contains(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH'))
+
+    def test_launch_needs_arguments(self):
+        """Autopilot launch must complain if not given an application to launch."""
+        rc, _, _ = self.run_autopilot(["launch"])
+        self.assertThat(rc, Equals(2))
+
+    def test_complains_on_unknown_introspection_type(self):
+        """Launching a binary that does not support an introspection type we are
+        familiar with must result in a nice error message.
+
+        """
+        rc, stdout, _ = self.run_autopilot(["launch", "yes"])
+
+        self.assertThat(rc, Equals(1))
+        self.assertThat(stdout,
+            Contains("Error: Could not determine introspection type to use for application '/usr/bin/yes'"))
+
+    def test_complains_on_missing_file(self):
+        """Must give a nice error message if we try and launch a binary that's missing."""
+        rc, stdout, _ = self.run_autopilot(["launch", "DoEsNotExist"])
+
+        self.assertThat(rc, Equals(1))
+        self.assertThat(stdout,
+            Contains("Error: cannot find application 'DoEsNotExist'"))
+
+    def test_complains_on_non_dynamic_binary(self):
+        """Must give a nice error message when passing in a non-dynamic binary."""
+        #tzselect is a bash script, and is in the base system, so should always exist.
+        rc, stdout, _ = self.run_autopilot(["launch", "tzselect"])
+
+        self.assertThat(rc, Equals(1))
+        self.assertThat(stdout,
+            Contains("Error: Only dynamically linked binaries are supported at the moment."))

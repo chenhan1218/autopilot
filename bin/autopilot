@@ -14,6 +14,7 @@ from datetime import datetime
 import os
 import os.path
 from os import putenv
+from os.path import isabs, exists
 from platform import node
 import sys
 import subprocess
@@ -113,9 +114,14 @@ def parse_arguments():
                              help="Specify test suite(s) to run.")
 
     parser_vis = subparsers.add_parser('vis',
-                                      help="Create introspection visualisation.\
-                                      Opens visualisation in xdot when not\
-                                      passed an output path to write file to.")
+                                      help="Open the Autopilot visualiser tool")
+
+    parser_launch = subparsers.add_parser('launch',
+                            help="Launch an application with introspection enabled")
+    parser_launch.add_argument('application', nargs=1, type=str,
+                            help="The application to launch. Can be a full path, \
+                            or just an application name (in which case Autopilot \
+                                will search for it in $PATH).")
     args = parser.parse_args()
 
     return args
@@ -289,6 +295,56 @@ def patch_python_path():
         sys.path.insert(0, os.getcwd())
 
 
+def launch_app(args):
+    """Launch an application, with introspection support."""
+    app_name = args.application[0]
+    if not isabs(app_name) or not exists(app_name):
+        try:
+            app_name = subprocess.check_output(["which", app_name]).strip()
+        except subprocess.CalledProcessError:
+            print "Error: cannot find application '%s'" % (app_name)
+            exit(1)
+
+    # We now have a full path to the application.
+    IntrospectionBase = get_application_introspection_base(app_name)
+    if IntrospectionBase is None:
+        print "Error: Could not determine introspection type to use for application '%s'." % app_name
+        exit(1)
+
+    # IntrospectionBase is supposed to be a mixin class with a TestCase, and makes
+    # use of addCleanup to shut down the app after the test has completed. We
+    # patch that function here so we don't error...
+    def fake_cleanup(self, *args, **kwargs):
+        pass
+    IntrospectionBase.addCleanup = fake_cleanup
+
+    b = IntrospectionBase()
+    b.launch_test_application(app_name)
+
+
+def get_application_introspection_base(app_path):
+    """Return a base class that knows how to enable introspection for this app,
+    or None.
+
+    """
+    # TODO: this is a teeny bit hacky - we call ldd to check whether this application
+    # links to certain library. We're assuming that linking to libQt* or libGtk*
+    # means the application is introspectable. This excludes any non-dynamically
+    # linked executables, which we may need to fix further down the line.
+    try:
+        ldd_output = subprocess.check_output(["ldd", app_path]).strip().lower()
+    except subprocess.CalledProcessError:
+        print "Error: Only dynamically linked binaries are supported at the moment."
+        exit(1)
+    if 'libqtcore' in ldd_output:
+        from autopilot.introspection.qt import QtIntrospectionTestMixin
+        return QtIntrospectionTestMixin
+    elif 'libgtk' in ldd_output:
+        from autopilot.introspection.gtk import GtkIntrospectionTestMixin
+        return GtkIntrospectionTestMixin
+    return None
+
+
 def main():
     args = parse_arguments()
     if args.mode == 'list':
@@ -309,6 +365,8 @@ def main():
         #
         putenv('LIBOVERLAY_SCROLLBAR', '0')
         vis_main()
+    elif args.mode == 'launch':
+        launch_app(args)
 
 
 if __name__ == "__main__":

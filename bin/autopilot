@@ -316,7 +316,7 @@ def launch_app(args):
     # patch that function here so we don't error...
     def fake_cleanup(self, *args, **kwargs):
         pass
-    IntrospectionBase.addCleanup  = fake_cleanup
+    IntrospectionBase.addCleanup = fake_cleanup
 
     b = IntrospectionBase()
     b.launch_test_application(app_name)

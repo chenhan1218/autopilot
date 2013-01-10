@@ -1,3 +1,16 @@
+autopilot (1.2daily13.01.10-0ubuntu1) raring; urgency=low
+
+  [ Thomi Richards ]
+  * Cannot easily launch applications with introspection support enabled
+    (LP: #1097102)
+  * autopilot uses deprecated methods. (LP: #1095865)
+  * Help string for 'vis' command is wrong (LP: #1097058)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 114
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Thu, 10 Jan 2013 16:12:21 +0000
+
 autopilot (1.2daily12.12.10-0ubuntu1) raring; urgency=low
 
   [ Didier Roche ]

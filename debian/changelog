@@ -9,6 +9,9 @@ autopilot (1.2daily13.01.10-0ubuntu1) raring; urgency=low
   [ Automatic PS uploader ]
   * Automatic snapshot from revision 114
 
+  [ Allan LeSage ]
+  * Update GTK+ introspection for renamed module (minus '-gtk').
+
  -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Thu, 10 Jan 2013 16:12:21 +0000
 
 autopilot (1.2daily12.12.10-0ubuntu1) raring; urgency=low

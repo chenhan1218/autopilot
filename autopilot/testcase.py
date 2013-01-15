@@ -72,6 +72,17 @@ except ImportError:
         return result
 
 
+class MyFormatter(logging.Formatter):
+    def formatTime(self, record, datefmt=None):
+        ct = self.converter(record.created)
+        if datefmt:
+            s = time.strftime(datefmt, ct)
+        else:
+            t = time.strftime("%H:%M:%S", ct)
+            s = "%s.%03d" % (t, record.msecs)
+        return s
+
+
 class LoggedTestCase(TestWithScenarios, TestCase):
     """Initialize the logging for the test case."""
 
@@ -85,17 +96,6 @@ class LoggedTestCase(TestWithScenarios, TestCase):
             logger.info("Starting test %s", self.shortDescription())
 
     def _setUpTestLogging(self):
-        class MyFormatter(logging.Formatter):
-
-            def formatTime(self, record, datefmt=None):
-                ct = self.converter(record.created)
-                if datefmt:
-                    s = time.strftime(datefmt, ct)
-                else:
-                    t = time.strftime("%H:%M:%S", ct)
-                    s = "%s.%03d" % (t, record.msecs)
-                return s
-
         self._log_buffer = StringIO()
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.DEBUG)
@@ -114,12 +114,14 @@ class LoggedTestCase(TestWithScenarios, TestCase):
         self.addCleanup(self._tearDownLogging)
 
     def _tearDownLogging(self):
-        logger = logging.getLogger()
-        for handler in logger.handlers:
+        root_logger = logging.getLogger()
+        # Copy the handlers into a new list to allow safe removal
+        handlers = [h for h in root_logger.handlers]
+        for handler in handlers:
             handler.flush()
             self._log_buffer.seek(0)
             self.addDetail('test-log', text_content(self._log_buffer.getvalue()))
-            logger.removeHandler(handler)
+            root_logger.removeHandler(handler)
         # Calling del to remove the handler and flush the buffer.  We are
         # abusing the log handlers here a little.
         del self._log_buffer

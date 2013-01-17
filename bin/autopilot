@@ -20,7 +20,7 @@ import sys
 import subprocess
 from testtools import iterate_tests
 from testtools import TextTestResult
-import autopilot.testresult
+from autopilot.testresult import AutopilotVerboseResult
 from textwrap import dedent
 from argparse import ArgumentParser
 from unittest.loader import TestLoader
@@ -182,11 +182,13 @@ def get_output_format(format):
     """Return a Result object for each format we support."""
 
     if format == "text":
-        return autopilot.testresult.VerboseTextTestResult
+        return type('VerboseTextTestResult', (TextTestResult,),
+                    dict(AutopilotVerboseResult.__dict__))
 
     elif format == "xml":
         from junitxml import JUnitXmlResult
-        return JUnitXmlResult
+        return type('VerboseXmlResult', (JUnitXmlResult,),
+                    dict(AutopilotVerboseResult.__dict__))
 
     raise KeyError("Unknown format name '%s'" % format)
 

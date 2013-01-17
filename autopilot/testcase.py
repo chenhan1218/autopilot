@@ -41,8 +41,10 @@ from autopilot.globals import (get_log_verbose,
     )
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
-from autopilot.utilities import get_compiz_setting
-
+from autopilot.utilities import (get_compiz_setting,
+    LogFormatter,
+    log_format,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -72,17 +74,6 @@ except ImportError:
         return result
 
 
-class MyFormatter(logging.Formatter):
-    def formatTime(self, record, datefmt=None):
-        ct = self.converter(record.created)
-        if datefmt:
-            s = time.strftime(datefmt, ct)
-        else:
-            t = time.strftime("%H:%M:%S", ct)
-            s = "%s.%03d" % (t, record.msecs)
-        return s
-
-
 class LoggedTestCase(TestWithScenarios, TestCase):
     """Initialize the logging for the test case."""
 
@@ -99,8 +90,7 @@ class LoggedTestCase(TestWithScenarios, TestCase):
         self._log_buffer = StringIO()
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.DEBUG)
-        log_format = "%(asctime)s %(levelname)s %(module)s:%(lineno)d - %(message)s"
-        formatter = MyFormatter(log_format)
+        formatter = LogFormatter(log_format)
         handler = logging.StreamHandler(stream=self._log_buffer)
         handler.setFormatter(formatter)
         root_logger.addHandler(handler)

@@ -14,7 +14,9 @@
 
 from __future__ import absolute_import
 
+import logging
 import os
+import time
 from Xlib import X, display, protocol
 
 _display = None
@@ -159,3 +161,17 @@ class Silence(object):
         for s in self.null_streams: s.close()
         for fd in self.saved_fds: os.close(fd)
         return False
+
+# this is the default format to use for logging
+log_format = "%(asctime)s %(levelname)s %(module)s:%(lineno)d - %(message)s"
+
+
+class LogFormatter(logging.Formatter):
+    def formatTime(self, record, datefmt=None):
+        ct = self.converter(record.created)
+        if datefmt:
+            s = time.strftime(datefmt, ct)
+        else:
+            t = time.strftime("%H:%M:%S", ct)
+            s = "%s.%03d" % (t, record.msecs)
+        return s

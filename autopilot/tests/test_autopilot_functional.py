@@ -400,6 +400,106 @@ Loading tests from: %s
 
         self.assertThat(error, MatchesRegex("^\d\d:\d\d:\d\d\.\d\d\d"))
 
+    def test_verbose_flag_shows_success_text(self):
+        """Verbose log must indicate successful tests (text format)."""
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    pass
+            """
+            ))
+
+        code, output, error = self.run_autopilot(["run", "-f", "text",
+                                                  "-v", "tests"])
+
+        self.assertIn("OK: tests.test_simple.SimpleTest.test_simple", error)
+
+    def test_verbose_flag_shows_success_xml(self):
+        """Verbose log must indicate successful tests (xml format)."""
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    pass
+            """
+            ))
+
+        code, output, error = self.run_autopilot(["run", "-f", "xml",
+                                                  "-v", "tests"])
+
+        self.assertIn("OK: tests.test_simple.SimpleTest.test_simple", error)
+
+    def test_verbose_flag_shows_error(self):
+        """Verbose log must indicate test error with a traceback."""
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    self.assertTrue()
+            """
+            ))
+
+        code, output, error = self.run_autopilot(["run", "-v", "tests"])
+
+        self.assertIn("ERROR: tests.test_simple.SimpleTest.test_simple", error)
+        self.assertIn("traceback:", error)
+        self.assertIn("TypeError: assertTrue() takes at least 2 arguments " +
+                      "(1 given)", error)
+
+    def test_verbose_flag_shows_failure_text(self):
+        """Verbose log must indicate a test failure with a traceback (text format)."""
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    self.assertTrue(False)
+            """
+            ))
+
+        code, output, error = self.run_autopilot(["run", "-f", "text",
+                                                  "-v", "tests"])
+
+        self.assertIn("FAIL: tests.test_simple.SimpleTest.test_simple", error)
+        self.assertIn("traceback:", error)
+
+    def test_verbose_flag_shows_failure(self):
+        """Verbose log must indicate a test failure with a traceback (xml format)."""
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    self.assertTrue(False)
+            """
+            ))
+
+        code, output, error = self.run_autopilot(["run", "-f", "xml",
+                                                  "-v", "tests"])
+
+        self.assertIn("FAIL: tests.test_simple.SimpleTest.test_simple", error)
+        self.assertIn("traceback:", error)
+        self.assertIn("AssertionError: False is not true", error)
+
     def test_record_flag_works(self):
         """Must be able to record videos when the -r flag is present."""
         self.create_test_file("test_simple.py", dedent("""\

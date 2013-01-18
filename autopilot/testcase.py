@@ -43,7 +43,6 @@ from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
 from autopilot.utilities import (get_compiz_setting,
     LogFormatter,
-    log_format,
     )
 
 logger = logging.getLogger(__name__)
@@ -90,14 +89,10 @@ class LoggedTestCase(TestWithScenarios, TestCase):
         self._log_buffer = StringIO()
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.DEBUG)
-        formatter = LogFormatter(log_format)
-        handler = logging.StreamHandler(stream=self._log_buffer)
-        handler.setFormatter(formatter)
-        root_logger.addHandler(handler)
-        if get_log_verbose():
-            stderr_handler = logging.StreamHandler(stream=sys.stderr)
-            stderr_handler.setFormatter(formatter)
-            root_logger.addHandler(stderr_handler)
+        formatter = LogFormatter()
+        self._log_handler = logging.StreamHandler(stream=self._log_buffer)
+        self._log_handler.setFormatter(formatter)
+        root_logger.addHandler(self._log_handler)
 
         #Tear down logging in a cleanUp handler, so it's done after all other
         # tearDown() calls and cleanup handlers.
@@ -105,13 +100,10 @@ class LoggedTestCase(TestWithScenarios, TestCase):
 
     def _tearDownLogging(self):
         root_logger = logging.getLogger()
-        # Copy the handlers into a new list to allow safe removal
-        handlers = [h for h in root_logger.handlers]
-        for handler in handlers:
-            handler.flush()
-            self._log_buffer.seek(0)
-            self.addDetail('test-log', text_content(self._log_buffer.getvalue()))
-            root_logger.removeHandler(handler)
+        self._log_handler.flush()
+        self._log_buffer.seek(0)
+        self.addDetail('test-log', text_content(self._log_buffer.getvalue()))
+        root_logger.removeHandler(self._log_handler)
         # Calling del to remove the handler and flush the buffer.  We are
         # abusing the log handlers here a little.
         del self._log_buffer

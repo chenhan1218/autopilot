@@ -162,11 +162,15 @@ class Silence(object):
         for fd in self.saved_fds: os.close(fd)
         return False
 
-# this is the default format to use for logging
-log_format = "%(asctime)s %(levelname)s %(module)s:%(lineno)d - %(message)s"
-
 
 class LogFormatter(logging.Formatter):
+
+    # this is the default format to use for logging
+    log_format = "%(asctime)s %(levelname)s %(module)s:%(lineno)d - %(message)s"
+
+    def __init__(self):
+        super(LogFormatter, self).__init__(self.log_format)
+
     def formatTime(self, record, datefmt=None):
         ct = self.converter(record.created)
         if datefmt:

@@ -1,54 +1,44 @@
+# -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
+# Copyright 2013 Canonical
+# Author: Francis Ginther
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 3, as published
+# by the Free Software Foundation.
+
+"""Autopilot test result classes"""
+
 import logging
 import sys
-from autopilot.globals import get_log_verbose
-from autopilot.utilities import (LogFormatter,
-                                 log_format)
 
-logger = logging.getLogger(__name__)
+from autopilot.globals import get_log_verbose
 
 
 class AutopilotVerboseResult(object):
-    def _setup_logging(self):
-        """Adds an appropriate stderr handler for logging."""
-        logging_setup = getattr(self, "logging_setup", False)
-        if get_log_verbose() and not logging_setup:
-            formatter = LogFormatter(log_format)
-            stderr_handler = logging.StreamHandler(stream=sys.stderr)
-            stderr_handler.setFormatter(formatter)
-            logger.addHandler(stderr_handler)
-        self.logging_setup = True
+    """A result class that logs failures, errors and success via the python logging framework."""
 
-    def _teardown_logging(self):
-        """Removes all logging handlers"""
-        handlers = [h for h in logger.handlers]
-        for h in handlers:
-            logger.removeHandler(h)
-        self.logging_setup = False
-
-    def _log(self, message):
+    def _log(self, level, message):
         """Performs the actual message logging"""
         if get_log_verbose():
-            logger.debug(message)
+            logging.getLogger().log(level, message)
 
-    def _log_details(self, details):
+    def _log_details(self, level, details):
         """Logs the relavent test details"""
         for detail in details:
             # Skip the test-log as it was logged while the test executed
             if detail == "test-log":
                 continue
             text = "%s: {{{\n%s}}}" % (detail, details[detail].as_text())
-            self._log(text)
+            self._log(level, text)
 
     def addSuccess(self, test, details=None):
         """Called for a successful test"""
         # Allow for different calling syntax used by the base class.
-        self._setup_logging()
         if details is None:
             super(type(self), self).addSuccess(test)
         else:
             super(type(self), self).addSuccess(test, details)
-        self._log("OK: %s" % (test.id()))
-        self._teardown_logging()
+        self._log(logging.INFO, "OK: %s" % (test.id()))
 
     def addError(self, test, err=None, details=None):
         """Called for a test which failed with an error"""
@@ -57,15 +47,13 @@ class AutopilotVerboseResult(object):
         # forced by raising TypeError when it is not specified.
         if err is None:
             raise TypeError
-        self._setup_logging()
         if details is None:
             super(type(self), self).addError(test, err)
         else:
             super(type(self), self).addError(test, err, details)
-        self._log("ERROR: %s" % (test.id()))
+        self._log(logging.ERROR, "ERROR: %s" % (test.id()))
         if hasattr(test, "getDetails"):
-            self._log_details(test.getDetails())
-        self._teardown_logging()
+            self._log_details(logging.ERROR, test.getDetails())
 
     def addFailure(self, test, err=None, details=None):
         """Called for a test which failed an assert"""
@@ -74,12 +62,10 @@ class AutopilotVerboseResult(object):
         # forced by raising TypeError when it is not specified.
         if err is None:
             raise TypeError
-        self._setup_logging()
         if details is None:
             super(type(self), self).addFailure(test, err)
         else:
             super(type(self), self).addFailure(test, err, details)
-        self._log("FAIL: %s" % (test.id()))
+        self._log(logging.ERROR, "FAIL: %s" % (test.id()))
         if hasattr(test, "getDetails"):
-            self._log_details(test.getDetails())
-        self._teardown_logging()
+            self._log_details(logging.ERROR, test.getDetails())

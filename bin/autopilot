@@ -11,6 +11,7 @@ from __future__ import absolute_import
 
 from codecs import open
 from datetime import datetime
+import logging
 import os
 import os.path
 from os import putenv
@@ -21,6 +22,7 @@ import subprocess
 from testtools import iterate_tests
 from testtools import TextTestResult
 from autopilot.testresult import AutopilotVerboseResult
+from autopilot.utilities import LogFormatter
 from textwrap import dedent
 from argparse import ArgumentParser
 from unittest.loader import TestLoader
@@ -161,13 +163,26 @@ def run_tests(args):
             print "ERROR: The application 'recordmydesktop' needs to be installed to record failing jobs."
             exit(1)
         autopilot.globals.configure_video_recording(True, args.record_directory)
+
     if args.verbose:
         autopilot.globals.set_log_verbose(True)
 
+    setup_logging(args.verbose)
     runner = construct_test_runner(args)
     success = runner.run(test_suite).wasSuccessful()
     if not success:
         exit(1)
+
+
+def setup_logging(verbose):
+    """Configure the root logger and verbose logging to stderr"""
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.DEBUG)
+    if verbose:
+        formatter = LogFormatter()
+        stderr_handler = logging.StreamHandler(stream=sys.stderr)
+        stderr_handler.setFormatter(formatter)
+        root_logger.addHandler(stderr_handler)
 
 
 def construct_test_runner(args):

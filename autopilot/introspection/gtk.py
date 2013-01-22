@@ -20,7 +20,7 @@ class GtkIntrospectionTestMixin(ApplicationIntrospectionTestMixin):
         """
         modules = os.getenv('GTK_MODULES', '').split(':')
         if 'autopilot-gtk' not in modules:
-            modules.append('autopilot-gtk')
+            modules.append('libautopilot-gtk')
             os.putenv('GTK_MODULES', ':'.join(modules))
 
 

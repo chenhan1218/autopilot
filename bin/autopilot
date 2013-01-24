@@ -118,9 +118,13 @@ def parse_arguments():
 
     parser_vis = subparsers.add_parser('vis',
                                       help="Open the Autopilot visualiser tool")
+    parser_vis.add_argument('-v', '--verbose', required=False, default=False,
+                            action='store_true', help="Show autopilot log messages.")
 
     parser_launch = subparsers.add_parser('launch',
                             help="Launch an application with introspection enabled")
+    parser_launch.add_argument('-v', '--verbose', required=False, default=False,
+                            action='store_true', help="Show autopilot log messages.")
     parser_launch.add_argument('application', nargs=1, type=str,
                             help="The application to launch. Can be a full path, \
                             or just an application name (in which case Autopilot \
@@ -183,6 +187,8 @@ def setup_logging(verbose):
         stderr_handler = logging.StreamHandler(stream=sys.stderr)
         stderr_handler.setFormatter(formatter)
         root_logger.addHandler(stderr_handler)
+    else:
+        root_logger.addHandler(logging.NullHandler())
 
 
 def construct_test_runner(args):
@@ -315,6 +321,7 @@ def patch_python_path():
 
 def launch_app(args):
     """Launch an application, with introspection support."""
+    setup_logging(args.verbose)
     app_name = args.application[0]
     if not isabs(app_name) or not exists(app_name):
         try:
@@ -363,6 +370,23 @@ def get_application_introspection_base(app_path):
     return None
 
 
+def run_vis(args):
+    setup_logging(args.verbose)
+    # importing this requires that DISPLAY is set. Since we don't always want
+    # that requirement, do the import here:
+    from autopilot.vis import vis_main
+
+    # XXX - in quantal, overlay scrollbars make this process consume 100% of
+    # the CPU. It's a known bug:
+    #
+    # https://bugs.launchpad.net/ubuntu/quantal/+source/qt4-x11/+bug/1005677
+    #
+    # Once that's been fixed we can remove the following line:
+    #
+    putenv('LIBOVERLAY_SCROLLBAR', '0')
+    vis_main()
+
+
 def main():
     args = parse_arguments()
     if args.mode == 'list':
@@ -370,19 +394,7 @@ def main():
     elif args.mode == 'run':
         run_tests(args)
     elif args.mode == 'vis':
-        # importing this requires that DISPLAY is set. Since we don't always want
-        # that requirement, do the import here:
-        from autopilot.vis import vis_main
-
-        # XXX - in quantal, overlay scrollbars make this process consume 100% of
-        # the CPU. It's a known bug:
-        #
-        # https://bugs.launchpad.net/ubuntu/quantal/+source/qt4-x11/+bug/1005677
-        #
-        # Once that's been fixed we can remove the following line:
-        #
-        putenv('LIBOVERLAY_SCROLLBAR', '0')
-        vis_main()
+        run_vis(args)
     elif args.mode == 'launch':
         launch_app(args)
 

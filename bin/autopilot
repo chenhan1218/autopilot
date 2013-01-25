@@ -344,7 +344,11 @@ def launch_app(args):
     IntrospectionBase.addCleanup = fake_cleanup
 
     b = IntrospectionBase()
-    b.launch_test_application(app_name)
+    try:
+        b.launch_test_application(app_name)
+    except RuntimeError as e:
+        print "Error: " + e.message
+        exit(1)
 
 
 def get_application_introspection_base(app_path):

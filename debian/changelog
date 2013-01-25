@@ -1,3 +1,14 @@
+autopilot (1.2daily13.01.25-0ubuntu1) raring; urgency=low
+
+  [ Thomi Richards ]
+  * Autopilot logging framework is not configured for all commands (LP:
+    #1104481)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 120
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Fri, 25 Jan 2013 00:00:57 +0000
+
 autopilot (1.2daily13.01.23-0ubuntu1) raring; urgency=low
 
   * Automatic snapshot from revision 118

@@ -41,8 +41,9 @@ from autopilot.globals import (get_log_verbose,
     )
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
-from autopilot.utilities import get_compiz_setting
-
+from autopilot.utilities import (get_compiz_setting,
+    LogFormatter,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -85,41 +86,24 @@ class LoggedTestCase(TestWithScenarios, TestCase):
             logger.info("Starting test %s", self.shortDescription())
 
     def _setUpTestLogging(self):
-        class MyFormatter(logging.Formatter):
-
-            def formatTime(self, record, datefmt=None):
-                ct = self.converter(record.created)
-                if datefmt:
-                    s = time.strftime(datefmt, ct)
-                else:
-                    t = time.strftime("%H:%M:%S", ct)
-                    s = "%s.%03d" % (t, record.msecs)
-                return s
-
         self._log_buffer = StringIO()
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.DEBUG)
-        log_format = "%(asctime)s %(levelname)s %(module)s:%(lineno)d - %(message)s"
-        formatter = MyFormatter(log_format)
-        handler = logging.StreamHandler(stream=self._log_buffer)
-        handler.setFormatter(formatter)
-        root_logger.addHandler(handler)
-        if get_log_verbose():
-            stderr_handler = logging.StreamHandler(stream=sys.stderr)
-            stderr_handler.setFormatter(formatter)
-            root_logger.addHandler(stderr_handler)
+        formatter = LogFormatter()
+        self._log_handler = logging.StreamHandler(stream=self._log_buffer)
+        self._log_handler.setFormatter(formatter)
+        root_logger.addHandler(self._log_handler)
 
         #Tear down logging in a cleanUp handler, so it's done after all other
         # tearDown() calls and cleanup handlers.
         self.addCleanup(self._tearDownLogging)
 
     def _tearDownLogging(self):
-        logger = logging.getLogger()
-        for handler in logger.handlers:
-            handler.flush()
-            self._log_buffer.seek(0)
-            self.addDetail('test-log', text_content(self._log_buffer.getvalue()))
-            logger.removeHandler(handler)
+        root_logger = logging.getLogger()
+        self._log_handler.flush()
+        self._log_buffer.seek(0)
+        self.addDetail('test-log', text_content(self._log_buffer.getvalue()))
+        root_logger.removeHandler(self._log_handler)
         # Calling del to remove the handler and flush the buffer.  We are
         # abusing the log handlers here a little.
         del self._log_buffer

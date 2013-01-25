@@ -11,6 +11,7 @@ from __future__ import absolute_import
 
 from codecs import open
 from datetime import datetime
+import logging
 import os
 import os.path
 from os import putenv
@@ -20,6 +21,8 @@ import sys
 import subprocess
 from testtools import iterate_tests
 from testtools import TextTestResult
+from autopilot.testresult import AutopilotVerboseResult
+from autopilot.utilities import LogFormatter
 from textwrap import dedent
 from argparse import ArgumentParser
 from unittest.loader import TestLoader
@@ -115,9 +118,13 @@ def parse_arguments():
 
     parser_vis = subparsers.add_parser('vis',
                                       help="Open the Autopilot visualiser tool")
+    parser_vis.add_argument('-v', '--verbose', required=False, default=False,
+                            action='store_true', help="Show autopilot log messages.")
 
     parser_launch = subparsers.add_parser('launch',
                             help="Launch an application with introspection enabled")
+    parser_launch.add_argument('-v', '--verbose', required=False, default=False,
+                            action='store_true', help="Show autopilot log messages.")
     parser_launch.add_argument('application', nargs=1, type=str,
                             help="The application to launch. Can be a full path, \
                             or just an application name (in which case Autopilot \
@@ -160,13 +167,28 @@ def run_tests(args):
             print "ERROR: The application 'recordmydesktop' needs to be installed to record failing jobs."
             exit(1)
         autopilot.globals.configure_video_recording(True, args.record_directory)
+
     if args.verbose:
         autopilot.globals.set_log_verbose(True)
 
+    setup_logging(args.verbose)
     runner = construct_test_runner(args)
     success = runner.run(test_suite).wasSuccessful()
     if not success:
         exit(1)
+
+
+def setup_logging(verbose):
+    """Configure the root logger and verbose logging to stderr"""
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.DEBUG)
+    if verbose:
+        formatter = LogFormatter()
+        stderr_handler = logging.StreamHandler(stream=sys.stderr)
+        stderr_handler.setFormatter(formatter)
+        root_logger.addHandler(stderr_handler)
+    else:
+        root_logger.addHandler(logging.NullHandler())
 
 
 def construct_test_runner(args):
@@ -181,11 +203,13 @@ def get_output_format(format):
     """Return a Result object for each format we support."""
 
     if format == "text":
-        return TextTestResult
+        return type('VerboseTextTestResult', (TextTestResult,),
+                    dict(AutopilotVerboseResult.__dict__))
 
     elif format == "xml":
         from junitxml import JUnitXmlResult
-        return JUnitXmlResult
+        return type('VerboseXmlResult', (JUnitXmlResult,),
+                    dict(AutopilotVerboseResult.__dict__))
 
     raise KeyError("Unknown format name '%s'" % format)
 
@@ -297,6 +321,7 @@ def patch_python_path():
 
 def launch_app(args):
     """Launch an application, with introspection support."""
+    setup_logging(args.verbose)
     app_name = args.application[0]
     if not isabs(app_name) or not exists(app_name):
         try:
@@ -319,7 +344,11 @@ def launch_app(args):
     IntrospectionBase.addCleanup = fake_cleanup
 
     b = IntrospectionBase()
-    b.launch_test_application(app_name)
+    try:
+        b.launch_test_application(app_name)
+    except RuntimeError as e:
+        print "Error: " + e.message
+        exit(1)
 
 
 def get_application_introspection_base(app_path):
@@ -345,6 +374,23 @@ def get_application_introspection_base(app_path):
     return None
 
 
+def run_vis(args):
+    setup_logging(args.verbose)
+    # importing this requires that DISPLAY is set. Since we don't always want
+    # that requirement, do the import here:
+    from autopilot.vis import vis_main
+
+    # XXX - in quantal, overlay scrollbars make this process consume 100% of
+    # the CPU. It's a known bug:
+    #
+    # https://bugs.launchpad.net/ubuntu/quantal/+source/qt4-x11/+bug/1005677
+    #
+    # Once that's been fixed we can remove the following line:
+    #
+    putenv('LIBOVERLAY_SCROLLBAR', '0')
+    vis_main()
+
+
 def main():
     args = parse_arguments()
     if args.mode == 'list':
@@ -352,19 +398,7 @@ def main():
     elif args.mode == 'run':
         run_tests(args)
     elif args.mode == 'vis':
-        # importing this requires that DISPLAY is set. Since we don't always want
-        # that requirement, do the import here:
-        from autopilot.vis import vis_main
-
-        # XXX - in quantal, overlay scrollbars make this process consume 100% of
-        # the CPU. It's a known bug:
-        #
-        # https://bugs.launchpad.net/ubuntu/quantal/+source/qt4-x11/+bug/1005677
-        #
-        # Once that's been fixed we can remove the following line:
-        #
-        putenv('LIBOVERLAY_SCROLLBAR', '0')
-        vis_main()
+        run_vis(args)
     elif args.mode == 'launch':
         launch_app(args)
 

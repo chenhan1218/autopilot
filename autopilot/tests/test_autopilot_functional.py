@@ -36,12 +36,12 @@ def remove_if_exists(path):
 
 logger = logging.getLogger(__name__)
 
-class AutopilotFunctionalTests(AutopilotTestCase):
+class AutopilotFunctionalTestsBase(AutopilotTestCase):
 
-    """A collection of functional tests for autopilot."""
+    """The base class for the autopilot functional tests."""
 
     def setUp(self):
-        super(AutopilotFunctionalTests, self).setUp()
+        super(AutopilotFunctionalTestsBase, self).setUp()
         self.base_path = self.create_empty_test_module()
 
     def create_empty_test_module(self):
@@ -71,17 +71,6 @@ class AutopilotFunctionalTests(AutopilotTestCase):
                 '__init__.py'),
             'w').write('# Auto-generated file.')
         return base_path
-
-    def run_autopilot_list(self, list_spec='tests'):
-        """Run 'autopilot list' in the specified base path.
-
-        This patches the environment to ensure that it's *this* version of autopilot
-        that's run.
-
-        returns a tuple containing: (exit_code, stdout, stderr)
-
-        """
-        return self.run_autopilot(["list", list_spec])
 
     def run_autopilot(self, arguments):
         ap_base_path = os.path.abspath(
@@ -133,6 +122,37 @@ class AutopilotFunctionalTests(AutopilotTestCase):
 
         return (retcode, stdout, stderr)
 
+    def create_test_file(self, name, contents):
+        """Create a test file with the given name and contents.
+
+        'name' must end in '.py' if it is to be importable.
+        'contents' must be valid python code.
+
+        """
+        open(
+            os.path.join(
+                self.base_path,
+                'tests',
+                name),
+            'w',
+            encoding='utf8').write(contents)
+
+
+class AutopilotFunctionalTests(AutopilotFunctionalTestsBase):
+
+    """A collection of functional tests for autopilot."""
+
+    def run_autopilot_list(self, list_spec='tests'):
+        """Run 'autopilot list' in the specified base path.
+
+        This patches the environment to ensure that it's *this* version of autopilot
+        that's run.
+
+        returns a tuple containing: (exit_code, stdout, stderr)
+
+        """
+        return self.run_autopilot(["list", list_spec])
+
     def assertTestsInOutput(self, tests, output):
         """Asserts that 'tests' are all present in 'output'."""
 
@@ -152,22 +172,6 @@ Loading tests from: %s
     len(tests))
 
         self.assertThat(output, Equals(expected))
-
-
-    def create_test_file(self, name, contents):
-        """Create a test file with the given name and contents.
-
-        'name' must end in '.py' if it is to be importable.
-        'contents' must be valid python code.
-
-        """
-        open(
-            os.path.join(
-                self.base_path,
-                'tests',
-                name),
-            'w',
-            encoding='utf8').write(contents)
 
     def test_can_list_empty_test_dir(self):
         """Autopilot list must report 0 tests found with an empty test module."""
@@ -362,43 +366,6 @@ Loading tests from: %s
         self.assertThat(code, Equals(0))
         self.assertThat(error, Equals(''))
         self.assertTestsInOutput(['tests.test_simple.SimpleTest.test_simple'], output)
-
-    def test_verbose_flag_works(self):
-        """Verbose flag must log to stderr."""
-        self.create_test_file("test_simple.py", dedent("""\
-
-            from autopilot.testcase import AutopilotTestCase
-
-
-            class SimpleTest(AutopilotTestCase):
-
-                def test_simple(self):
-                    pass
-            """
-            ))
-
-        code, output, error = self.run_autopilot(["run", "-v", "tests"])
-
-        self.assertThat(code, Equals(0))
-        self.assertThat(error, Contains("Starting test tests.test_simple.SimpleTest.test_simple"))
-
-    def test_verbose_flag_shows_timestamps(self):
-        """Verbose log must include timestamps."""
-        self.create_test_file("test_simple.py", dedent("""\
-
-            from autopilot.testcase import AutopilotTestCase
-
-
-            class SimpleTest(AutopilotTestCase):
-
-                def test_simple(self):
-                    pass
-            """
-            ))
-
-        code, output, error = self.run_autopilot(["run", "-v", "tests"])
-
-        self.assertThat(error, MatchesRegex("^\d\d:\d\d:\d\d\.\d\d\d"))
 
     def test_record_flag_works(self):
         """Must be able to record videos when the -r flag is present."""
@@ -628,3 +595,118 @@ SyntaxError: invalid syntax
         self.assertThat(rc, Equals(1))
         self.assertThat(stdout,
             Contains("Error: Only dynamically linked binaries are supported at the moment."))
+
+
+class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
+
+    """Scenarioed functional tests for autopilot's verbose logging."""
+
+    scenarios = [
+        ('text_format', dict(output_format='text')),
+        ('xml_format', dict(output_format='xml'))
+    ]
+
+    def test_verbose_flag_works(self):
+        """Verbose flag must log to stderr."""
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    pass
+            """
+            ))
+
+        code, output, error = self.run_autopilot(["run",
+                                                  "-f", self.output_format,
+                                                  "-v", "tests"])
+
+        self.assertThat(code, Equals(0))
+        self.assertThat(error, Contains("Starting test tests.test_simple.SimpleTest.test_simple"))
+
+    def test_verbose_flag_shows_timestamps(self):
+        """Verbose log must include timestamps."""
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    pass
+            """
+            ))
+
+        code, output, error = self.run_autopilot(["run",
+                                                  "-f", self.output_format,
+                                                  "-v", "tests"])
+
+        self.assertThat(error, MatchesRegex("^\d\d:\d\d:\d\d\.\d\d\d"))
+
+    def test_verbose_flag_shows_success(self):
+        """Verbose log must indicate successful tests (text format)."""
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    pass
+            """
+            ))
+
+        code, output, error = self.run_autopilot(["run",
+                                                  "-f", self.output_format,
+                                                  "-v", "tests"])
+
+        self.assertThat(error, Contains("OK: tests.test_simple.SimpleTest.test_simple"))
+
+    def test_verbose_flag_shows_error(self):
+        """Verbose log must indicate test error with a traceback."""
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    self.assertTrue()
+            """
+            ))
+
+        code, output, error = self.run_autopilot(["run",
+                                                  "-f", self.output_format,
+                                                  "-v", "tests"])
+
+        self.assertThat(error, Contains("ERROR: tests.test_simple.SimpleTest.test_simple"))
+        self.assertThat(error, Contains("traceback:"))
+        self.assertThat(error, Contains("TypeError: assertTrue() takes at least 2 arguments (1 given)"))
+
+    def test_verbose_flag_shows_failure(self):
+        """Verbose log must indicate a test failure with a traceback (xml format)."""
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    self.assertTrue(False)
+            """
+            ))
+
+        code, output, error = self.run_autopilot(["run",
+                                                  "-f", self.output_format,
+                                                  "-v", "tests"])
+
+        self.assertIn("FAIL: tests.test_simple.SimpleTest.test_simple", error)
+        self.assertIn("traceback:", error)
+        self.assertIn("AssertionError: False is not true", error)

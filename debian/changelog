@@ -1,3 +1,14 @@
+autopilot (1.2daily13.01.28-0ubuntu1) raring; urgency=low
+
+  [ Thomi Richards ]
+  * Autopilot raises an exception when the introspection interface for
+    an application cannot be found. (LP: #1104532)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 123
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Mon, 28 Jan 2013 00:00:55 +0000
+
 autopilot (1.2daily13.01.25-0ubuntu1) raring; urgency=low
 
   [ Thomi Richards ]

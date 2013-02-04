@@ -107,11 +107,10 @@ class DBusIntrospectionObject(object):
     DBUS_SERVICE = None
     DBUS_OBJECT = None
 
-    def __init__(self, state_dict, path_info=None):
+    def __init__(self, state_dict):
         self.__state = {}
         self.__refresh_on_attribute = True
         self.set_properties(state_dict)
-        self.path_info = path_info
 
     def set_properties(self, state_dict):
         """Creates and set attributes of *self* based on contents of *state_dict*.
@@ -252,8 +251,7 @@ class DBusIntrospectionObject(object):
 
         query = self.get_class_query_string() + "/*"
         state_dicts = self.get_state_by_path(query)
-        path_info = self.path_info + "/" if self.path_info else None
-        children = [self.make_introspection_object(i, path_info) for i in state_dicts]
+        children = [self.make_introspection_object(i) for i in state_dicts]
         return children
 
     def refresh_state(self):
@@ -275,23 +273,10 @@ class DBusIntrospectionObject(object):
 
         :return: List (possibly empty) of class instances.
 
-        WARNING: Using this method is slow - it requires a complete scan of the
-        introspection tree. Instead, get the root tree object with
-        get_root_instance, and then navigate to the desired node.
-
         """
         cls_name = cls.__name__
         instances = cls.get_state_by_path("//%s" % (cls_name))
         return [cls.make_introspection_object(i) for i in instances]
-
-    @classmethod
-    def get_root_instance(cls) :
-        """Get the object at the root of this tree."""
-        instances = cls.get_state_by_path("/")
-        if len(instances) != 1:
-            logger.error("Could not retrieve root object.")
-            return None
-        return cls.make_introspection_object(instances[0], "/")
 
     def __getattr__(self, name):
         # avoid recursion if for some reason we have no state set (should never
@@ -339,17 +324,11 @@ class DBusIntrospectionObject(object):
 
     def get_class_query_string(self):
         """Get the XPath query string required to refresh this class's state."""
-        if self.path_info is None:
-            return "//%s[id=%d]" % (self.__class__.__name__, self.id)
-        else:
-            return self.path_info + "[id=%d]" % self.id
+        return "//%s[id=%d]" % (self.__class__.__name__, self.id)
 
     @classmethod
-    def make_introspection_object(cls, dbus_tuple, path_info=None):
+    def make_introspection_object(cls, dbus_tuple):
         """Make an introspection object given a DBus tuple of (name, state_dict).
-
-        The optional 'path_info' parameter can be set to a string that contains
-        the full, absolute path in the introspection tree to this object.
 
         This only works for classes that derive from DBusIntrospectionObject.
         """
@@ -358,15 +337,8 @@ class DBusIntrospectionObject(object):
             class_type = _object_registry[name]
         except KeyError:
             logger.warning("Generating introspection instance for type '%s' based on generic class.", name)
-            class_type = type(str(name), (cls,), {})
-        if isinstance(path_info, basestring):
-            if not path_info.endswith(name):
-                if not path_info.endswith("/"):
-                    logger.error("path_info must end with '/' or class name.")
-                    path_info = None
-                else:
-                    path_info += name
-        return class_type(state, path_info)
+            return type(str(name), (cls,), {})(state)
+        return class_type(state)
 
     @contextmanager
     def no_automatic_refreshing(self):

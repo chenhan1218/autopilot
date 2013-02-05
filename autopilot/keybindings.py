@@ -108,7 +108,7 @@ _keys = {
     "window/show_desktop" : ("core", "show_desktop_key"),
     "window/minimize": ("core", "minimize_window_key"),
     "window/maximize": ("core", "maximize_window_key"),
-    "window/restore": ("core", "unmaximize_window_key"),
+    "window/restore": ("core", "unmaximize_or_minimize_window_key"),
     "window/close": ("core", "close_window_key"),
     # expo plugin:
     "expo/start": ("expo", "expo_key"),

@@ -1,3 +1,9 @@
+autopilot (1.2daily13.02.06-0ubuntu1) raring; urgency=low
+
+  * Automatic snapshot from revision 128
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Wed, 06 Feb 2013 00:00:54 +0000
+
 autopilot (1.2daily13.01.28-0ubuntu1) raring; urgency=low
 
   [ Thomi Richards ]

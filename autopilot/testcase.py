@@ -305,6 +305,8 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
 
         """
         old_value = self._set_compiz_option(plugin_name, option_name, option_value)
+        # Cleanup is LIFO, during clean-up also allow unity to respond
+        self.addCleanup(time.sleep, 0.5)
         self.addCleanup(self._set_compiz_option, plugin_name, option_name, old_value)
         # Allow unity time to respond to the new setting.
         time.sleep(0.5)

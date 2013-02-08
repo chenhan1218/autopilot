@@ -208,8 +208,8 @@ def get_proxy_object_class_name_and_state(service_name, obj_path):
 class ApplicationProxyObect(DBusIntrospectionObject):
     """A class that better supports query data from an application."""
 
-    def __init__(self, state):
-        super(ApplicationProxyObect, self).__init__(state)
+    def __init__(self, state, path_info=None):
+        super(ApplicationProxyObect, self).__init__(state, path_info)
         self._process = None
 
     def select_single(self, type_name='*', **kwargs):

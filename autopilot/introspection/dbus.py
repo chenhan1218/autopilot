@@ -25,6 +25,7 @@ from textwrap import dedent
 
 from autopilot.emulators.dbus_handler import get_session_bus
 from autopilot.introspection.constants import AP_INTROSPECTION_IFACE
+from autopilot.utilities import Timer
 
 
 _object_registry = {}
@@ -327,10 +328,11 @@ get_all_instances(...) class method.")
         if not isinstance(piece, basestring):
             raise TypeError("XPath query must be a string, not %r", type(piece))
 
-        return get_introspection_iface(
-            cls.DBUS_SERVICE,
-            cls.DBUS_OBJECT
-            ).GetState(piece)
+        with Timer("GetState %s" % piece):
+            return get_introspection_iface(
+                cls.DBUS_SERVICE,
+                cls.DBUS_OBJECT
+                ).GetState(piece)
 
     def get_new_state(self):
         """Retrieve a new state dictionary for this class instance.

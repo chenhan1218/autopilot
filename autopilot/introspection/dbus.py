@@ -328,11 +328,19 @@ get_all_instances(...) class method.")
         if not isinstance(piece, basestring):
             raise TypeError("XPath query must be a string, not %r", type(piece))
 
-        with Timer("GetState %s" % piece):
-            return get_introspection_iface(
-                cls.DBUS_SERVICE,
-                cls.DBUS_OBJECT
-                ).GetState(piece)
+        # This code is commented out since we don't want all the log messages
+        # in test code. Uncomment it to get useful log data around DBus query
+        # times. Maybe one day we can handle this gracefully.
+        #
+        # with Timer("GetState %s" % piece):
+        #     return get_introspection_iface(
+        #         cls.DBUS_SERVICE,
+        #         cls.DBUS_OBJECT
+        #         ).GetState(piece)
+        return get_introspection_iface(
+            cls.DBUS_SERVICE,
+            cls.DBUS_OBJECT
+            ).GetState(piece)
 
     def get_new_state(self):
         """Retrieve a new state dictionary for this class instance.

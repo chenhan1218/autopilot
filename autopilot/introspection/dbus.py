@@ -21,9 +21,11 @@ from dbus import Interface
 import logging
 from testtools.matchers import Equals
 from time import sleep
+from textwrap import dedent
 
 from autopilot.emulators.dbus_handler import get_session_bus
 from autopilot.introspection.constants import AP_INTROSPECTION_IFACE
+from autopilot.utilities import Timer
 
 
 _object_registry = {}
@@ -111,6 +113,11 @@ class DBusIntrospectionObject(object):
         self.__state = {}
         self.__refresh_on_attribute = True
         self.set_properties(state_dict)
+        if path_info is None:
+            logger.warning("Constructing object '%s' without path information. This will make \
+queries on this object, and all child objects considerably slower." % self.__class__.__name__)
+            logger.warning("To avoid this, make sure objects are _not_ constructed with the \
+get_all_instances(...) class method.")
         self.path_info = path_info
 
     def set_properties(self, state_dict):
@@ -321,6 +328,15 @@ class DBusIntrospectionObject(object):
         if not isinstance(piece, basestring):
             raise TypeError("XPath query must be a string, not %r", type(piece))
 
+        # This code is commented out since we don't want all the log messages
+        # in test code. Uncomment it to get useful log data around DBus query
+        # times. Maybe one day we can handle this gracefully.
+        #
+        # with Timer("GetState %s" % piece):
+        #     return get_introspection_iface(
+        #         cls.DBUS_SERVICE,
+        #         cls.DBUS_OBJECT
+        #         ).GetState(piece)
         return get_introspection_iface(
             cls.DBUS_SERVICE,
             cls.DBUS_OBJECT

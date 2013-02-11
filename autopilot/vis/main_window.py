@@ -112,11 +112,12 @@ class TreeNode(object):
         self.parent = parent
         self.name = name
         self.dbus_object = dbus_object
-        self._children = []
+        self._children = None
 
     @property
     def children(self):
-        if not self._children:
+        if self._children is None:
+            self._children = []
             try:
                 for child in self.dbus_object.get_children():
                     name = child.__class__.__name__
@@ -124,6 +125,20 @@ class TreeNode(object):
             except StateNotFoundError:
                 pass
         return self._children
+
+    @property
+    def num_children(self):
+        """An optimisation that allows us to get the number of children without
+        actually retrieving them all. This is useful since Qt needs to know if
+        there are children (to draw the drop-down triangle thingie), but doesn't
+        need to know about the details.
+
+        """
+        with self.dbus_object.no_automatic_refreshing():
+            if hasattr(self.dbus_object, 'Children'):
+                return len(self.dbus_object.Children)
+            else:
+                return 0
 
 
 class VisTreeModel(QtCore.QAbstractItemModel):
@@ -168,7 +183,7 @@ class VisTreeModel(QtCore.QAbstractItemModel):
             p_Item = self.tree_root
         else:
             p_Item = parent.internalPointer()
-        return len(p_Item.children)
+        return p_Item.num_children
 
     def columnCount(self, parent):
         return 1

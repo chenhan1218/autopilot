@@ -171,7 +171,7 @@ def make_proxy_object_from_service_name(service_name, obj_path):
             DBUS_OBJECT=obj_path
             )
         )
-    proxy = clsobj(cls_state)
+    proxy = clsobj.get_root_instance()
     return proxy
 
 

@@ -179,3 +179,21 @@ class LogFormatter(logging.Formatter):
             t = time.strftime("%H:%M:%S", ct)
             s = "%s.%03d" % (t, record.msecs)
         return s
+
+
+class Timer(object):
+
+    """A context-manager that times a block of code, writing the results to the log."""
+
+    def __init__(self, code_name, log_level=logging.DEBUG):
+        self.code_name = code_name
+        self.log_level = log_level
+        self.start = 0
+        self.logger = logging.getLogger(__name__)
+
+    def __enter__(self):
+        self.start = time.time()
+
+    def __exit__(self, *args):
+        self.end = time.time()
+        self.logger.log(self.log_level, "[%s] took %f", self.code_name, self.end - self.start)

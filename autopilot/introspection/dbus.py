@@ -65,7 +65,7 @@ def clear_object_registry():
     # of the autopilot backend abstraction leaking through into the visible
     # implementation. I'm planning on fixing that, but it's a sizable amount of work.
     # Until that happens, we need to live with this hack: don't delete objects if
-    # their DBus service name os com.canonical.Unity
+    # their DBus service name is com.canonical.Unity
     # - Thomi Richards
     to_delete = []
     for k,v in _object_registry.iteritems():

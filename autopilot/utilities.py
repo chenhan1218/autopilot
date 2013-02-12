@@ -189,11 +189,31 @@ class Timer(object):
         self.code_name = code_name
         self.log_level = log_level
         self.start = 0
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_debug_logger()
 
     def __enter__(self):
         self.start = time.time()
 
     def __exit__(self, *args):
         self.end = time.time()
-        self.logger.log(self.log_level, "[%s] took %f", self.code_name, self.end - self.start)
+        self.logger.log(self.log_level, "'%s' took %.3fS", self.code_name, self.end - self.start)
+
+
+def get_debug_logger():
+    """Get a logging object to be used as a debug logger only."""
+    logger = logging.getLogger("autopilot.debug")
+    logger.addFilter(DebugLogFilter())
+    return logger
+
+
+class DebugLogFilter(object):
+
+    """A filter class for the logging framework that allows us to turn off the
+    debug log.
+
+    """
+
+    debug_log_enabled = False
+
+    def filter(self, record):
+        return int(self.debug_log_enabled)

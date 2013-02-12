@@ -18,7 +18,7 @@ import subprocess
 from tempfile import mktemp, mkdtemp
 from testtools.content import Content, text_content
 from testtools.content_type import ContentType
-from testtools.matchers import Contains, Equals, MatchesRegex
+from testtools.matchers import Contains, Equals, MatchesRegex, Not
 from textwrap import dedent
 import re
 
@@ -710,3 +710,45 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
         self.assertIn("FAIL: tests.test_simple.SimpleTest.test_simple", error)
         self.assertIn("traceback:", error)
         self.assertIn("AssertionError: False is not true", error)
+
+    def test_can_enable_debug_output(self):
+        """Verbose log must show debug messages if we specify '-vv'."""
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+            from autopilot.utilities import get_debug_logger
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    get_debug_logger().debug("Hello World")
+            """
+            ))
+
+        code, output, error = self.run_autopilot(["run",
+                                                  "-f", self.output_format,
+                                                  "-vv", "tests"])
+
+        self.assertThat(error, Contains("Hello World"))
+
+    def test_debug_output_not_shown_by_default(self):
+        """Verbose log must not show debug messages unless we specify '-vv'."""
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+            from autopilot.utilities import get_debug_logger
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    get_debug_logger().debug("Hello World")
+            """
+            ))
+
+        code, output, error = self.run_autopilot(["run",
+                                                  "-f", self.output_format,
+                                                  "-v", "tests"])
+
+        self.assertThat(error, Not(Contains("Hello World")))

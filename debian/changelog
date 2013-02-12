@@ -1,3 +1,13 @@
+autopilot (1.2daily13.02.12-0ubuntu1) raring; urgency=low
+
+  [ Thomi Richards ]
+  * Autopilot vis floods DBus interface (LP: #1121659)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 133
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Tue, 12 Feb 2013 00:01:47 +0000
+
 autopilot (1.2daily13.02.08-0ubuntu1) raring; urgency=low
 
   * Automatic snapshot from revision 130

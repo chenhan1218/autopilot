@@ -37,6 +37,6 @@ class GtkTests(AutopilotTestCase, GtkIntrospectionTestMixin):
         except subprocess.CalledProcessError:
             self.skip("gnome-mahjongg not found.")
 
-    def test_can_launch_qt_app(self):
+    def test_can_launch_gtk_app(self):
         app_proxy = self.launch_test_application(self.app_path)
         self.assertTrue(app_proxy is not None)

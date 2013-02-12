@@ -58,7 +58,22 @@ def clear_object_registry():
      ... and even then, are you *sure*?
     """
     global _object_registry
-    _object_registry.clear()
+
+    # NOTE: We used to do '_object_registry.clear()' here, but that causes issues
+    # when trying to use the unity emulators together with an application backend
+    # since the application launch code clears the object registry. This is a case
+    # of the autopilot backend abstraction leaking through into the visible
+    # implementation. I'm planning on fixing that, but it's a sizable amount of work.
+    # Until that happens, we need to live with this hack: don't delete objects if
+    # their DBus service name os com.canonical.Unity
+    # - Thomi Richards
+    to_delete = []
+    for k,v in _object_registry.iteritems():
+        if v.DBUS_SERVICE != "com.canonical.Unity":
+            to_delete.append(k)
+
+    for k in to_delete:
+        del _object_registry[k]
 
 
 def get_introspection_iface(service_name, object_path):

@@ -74,10 +74,9 @@ class ApplicationIntrospectionTestMixin(object):
 
         path, args = self.prepare_environment(application, list(arguments))
 
-        proxy = launch_autopilot_enabled_process(path, args, cwd=cwd)
-
-        self.addCleanup(self._kill_process_and_attach_logs, proxy)
-        return proxy
+        process = launch_autopilot_enabled_process(path, args, cwd=cwd)
+        self.addCleanup(self._kill_process_and_attach_logs, process)
+        return get_autopilot_proxy_object_for_process(process)
 
     def prepare_environment(self, app_path, arguments):
         """Prepare the application, or environment to launch with autopilot-support.
@@ -90,8 +89,7 @@ class ApplicationIntrospectionTestMixin(object):
         """
         raise NotImplementedError("Sub-classes must implement this method.")
 
-    def _kill_process_and_attach_logs(self, proxy):
-        process = proxy.process
+    def _kill_process_and_attach_logs(self, process):
         process.kill()
         stdout, stderr = process.communicate()
         self.addDetail('process-stdout', text_content(stdout))
@@ -109,7 +107,7 @@ def launch_autopilot_enabled_process(application, args, **kwargs):
         stderr=subprocess.PIPE,
         close_fds=True,
         **kwargs)
-    return get_autopilot_proxy_object_for_process(process)
+    return process
 
 
 def get_autopilot_proxy_object_for_process(process):

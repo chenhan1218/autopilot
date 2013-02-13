@@ -102,9 +102,10 @@ def parse_arguments():
                             help="Directory to put recorded tests \
                             (only if -r) specified.")
     parser_run.add_argument('-v', '--verbose', default=False, required=False,
-                            action='store_true',
+                            action='count',
                             help="If set, autopilot will output test log data \
-                            to stderr during a test run.")
+                            to stderr during a test run. Set twice to also log \
+                            data useful for debugging autopilot itself.")
     parser_run.add_argument("suite", nargs="+",
                             help="Specify test suite(s) to run.")
 
@@ -119,12 +120,16 @@ def parse_arguments():
     parser_vis = subparsers.add_parser('vis',
                                       help="Open the Autopilot visualiser tool")
     parser_vis.add_argument('-v', '--verbose', required=False, default=False,
-                            action='store_true', help="Show autopilot log messages.")
+                            action='count', help="Show autopilot log messages. \
+                            Set twice to also log data useful for debugging \
+                            autopilot itself.")
 
     parser_launch = subparsers.add_parser('launch',
                             help="Launch an application with introspection enabled")
     parser_launch.add_argument('-v', '--verbose', required=False, default=False,
-                            action='store_true', help="Show autopilot log messages.")
+                            action='count', help="Show autopilot log messages. \
+                            Set twice to also log data useful for debugging \
+                            autopilot itself.")
     parser_launch.add_argument('application', nargs=1, type=str,
                             help="The application to launch. Can be a full path, \
                             or just an application name (in which case Autopilot \
@@ -182,13 +187,16 @@ def setup_logging(verbose):
     """Configure the root logger and verbose logging to stderr"""
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
-    if verbose:
+    if verbose == 0:
+        root_logger.addHandler(logging.NullHandler())
+    if verbose >= 1:
         formatter = LogFormatter()
         stderr_handler = logging.StreamHandler(stream=sys.stderr)
         stderr_handler.setFormatter(formatter)
         root_logger.addHandler(stderr_handler)
-    else:
-        root_logger.addHandler(logging.NullHandler())
+    if verbose >= 2:
+        from autopilot.utilities import DebugLogFilter
+        DebugLogFilter.debug_log_enabled = True
 
 
 def construct_test_runner(args):

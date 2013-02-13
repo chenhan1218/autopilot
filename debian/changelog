@@ -1,3 +1,14 @@
+autopilot (1.2daily13.02.13-0ubuntu1) raring; urgency=low
+
+  [ Thomi Richards ]
+  * Cannot mix unity emulators with application introspection objects
+    (LP: #1122658)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 135
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Wed, 13 Feb 2013 00:01:44 +0000
+
 autopilot (1.2daily13.02.12-0ubuntu1) raring; urgency=low
 
   [ Thomi Richards ]

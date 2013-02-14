@@ -1,3 +1,14 @@
+autopilot (1.2daily13.02.14-0ubuntu1) raring; urgency=low
+
+  [ Thomi Richards ]
+  * Autopilot needs to give better feedback when it cannot launch a test
+    application (LP: #1122371)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 138
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Thu, 14 Feb 2013 00:01:51 +0000
+
 autopilot (1.2daily13.02.13-0ubuntu1) raring; urgency=low
 
   [ Thomi Richards ]

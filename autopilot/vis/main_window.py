@@ -16,7 +16,7 @@ from autopilot.introspection.dbus import StateNotFoundError
 from autopilot.introspection.qt import QtObjectProxyMixin
 from autopilot.vis.objectproperties import TreeNodeDetailWidget
 from autopilot.vis.resources import get_qt_icon
-
+from autopilot.utilities import get_debug_logger
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self):
@@ -134,11 +134,14 @@ class TreeNode(object):
         need to know about the details.
 
         """
+        num_children = 0
         with self.dbus_object.no_automatic_refreshing():
             if hasattr(self.dbus_object, 'Children'):
-                return len(self.dbus_object.Children)
-            else:
-                return 0
+                num_children = len(self.dbus_object.Children)
+        # get_debug_logger().debug("Object %r has %d children", self.dbus_object, num_children)
+        # if self.dbus_object.__class__.__name__ == 'Screen':
+        #     get_debug_logger().debug("%r", vars(self.dbus_object))
+        return num_children
 
 
 class VisTreeModel(QtCore.QAbstractItemModel):
@@ -183,7 +186,8 @@ class VisTreeModel(QtCore.QAbstractItemModel):
             p_Item = self.tree_root
         else:
             p_Item = parent.internalPointer()
-        return p_Item.num_children
+        # return p_Item.num_children
+        return len(p_Item.children)
 
     def columnCount(self, parent):
         return 1

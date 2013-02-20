@@ -16,7 +16,7 @@ from autopilot.introspection.dbus import StateNotFoundError
 from autopilot.introspection.qt import QtObjectProxyMixin
 from autopilot.vis.objectproperties import TreeNodeDetailWidget
 from autopilot.vis.resources import get_qt_icon
-from autopilot.utilities import get_debug_logger
+
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self):

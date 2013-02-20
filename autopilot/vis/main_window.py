@@ -134,11 +134,11 @@ class TreeNode(object):
         need to know about the details.
 
         """
+        num_children = 0
         with self.dbus_object.no_automatic_refreshing():
             if hasattr(self.dbus_object, 'Children'):
-                return len(self.dbus_object.Children)
-            else:
-                return 0
+                num_children = len(self.dbus_object.Children)
+        return num_children
 
 
 class VisTreeModel(QtCore.QAbstractItemModel):

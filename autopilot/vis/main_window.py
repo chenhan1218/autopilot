@@ -138,9 +138,6 @@ class TreeNode(object):
         with self.dbus_object.no_automatic_refreshing():
             if hasattr(self.dbus_object, 'Children'):
                 num_children = len(self.dbus_object.Children)
-        # get_debug_logger().debug("Object %r has %d children", self.dbus_object, num_children)
-        # if self.dbus_object.__class__.__name__ == 'Screen':
-        #     get_debug_logger().debug("%r", vars(self.dbus_object))
         return num_children
 
 
@@ -186,8 +183,7 @@ class VisTreeModel(QtCore.QAbstractItemModel):
             p_Item = self.tree_root
         else:
             p_Item = parent.internalPointer()
-        # return p_Item.num_children
-        return len(p_Item.children)
+        return p_Item.num_children
 
     def columnCount(self, parent):
         return 1

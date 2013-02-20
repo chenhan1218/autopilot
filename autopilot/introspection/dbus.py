@@ -264,7 +264,7 @@ get_all_instances(...) class method.")
         # Since we're grabbing __state directly there's no implied state
         # refresh, so do it manually:
         self.refresh_state()
-        props = self.__state
+        props = self.__state.copy()
         props['id'] = self.id
         return props
 

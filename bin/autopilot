@@ -27,7 +27,8 @@ from textwrap import dedent
 from argparse import ArgumentParser
 from unittest.loader import TestLoader
 from unittest import TestSuite
-
+from autopilot.introspection.gtk import GtkIntrospectionTestMixin
+from autopilot.introspection.qt import QtIntrospectionTestMixin
 
 # list autopilot depends here, with the form:
 # ('python module name', 'ubuntu package name'),
@@ -126,6 +127,11 @@ def parse_arguments():
 
     parser_launch = subparsers.add_parser('launch',
                             help="Launch an application with introspection enabled")
+    parser_launch.add_argument('-i', '--interface',
+                            choices=('Gtk', 'Qt', 'Auto'), default='Auto',
+                            help="Specify which introspection interface to load. \
+                            The default ('Auto') uses ldd to try and detect which \
+                            interface to load.")
     parser_launch.add_argument('-v', '--verbose', required=False, default=False,
                             action='count', help="Show autopilot log messages. \
                             Set twice to also log data useful for debugging \
@@ -339,7 +345,14 @@ def launch_app(args):
             exit(1)
 
     # We now have a full path to the application.
-    IntrospectionBase = get_application_introspection_base(app_name)
+    import pdb; pdb.set_trace()
+    IntrospectionBase = None
+    if args.interface == 'Auto':
+        IntrospectionBase = get_application_introspection_base(app_name)
+    elif args.interface == 'Gtk':
+        IntrospectionBase = GtkIntrospectionTestMixin
+    elif args.interface == 'Qt':
+        IntrospectionBase = QtIntrospectionTestMixin
     if IntrospectionBase is None:
         print "Error: Could not determine introspection type to use for application '%s'." % app_name
         exit(1)
@@ -371,13 +384,12 @@ def get_application_introspection_base(app_path):
     try:
         ldd_output = subprocess.check_output(["ldd", app_path]).strip().lower()
     except subprocess.CalledProcessError:
-        print "Error: Only dynamically linked binaries are supported at the moment."
+        print "Error: Cannot auto-detect introspection plugin to load."
+        print "Use the '-i' argument to specify an interface."
         exit(1)
     if 'libqtcore' in ldd_output:
-        from autopilot.introspection.qt import QtIntrospectionTestMixin
         return QtIntrospectionTestMixin
     elif 'libgtk' in ldd_output:
-        from autopilot.introspection.gtk import GtkIntrospectionTestMixin
         return GtkIntrospectionTestMixin
     return None
 

@@ -594,7 +594,7 @@ SyntaxError: invalid syntax
 
         self.assertThat(rc, Equals(1))
         self.assertThat(stdout,
-            Contains("Error: Only dynamically linked binaries are supported at the moment."))
+            Contains("Error: Cannot auto-detect introspection plugin to load.\nUse the '-i' argument to specify an interface."))
 
 
 class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):

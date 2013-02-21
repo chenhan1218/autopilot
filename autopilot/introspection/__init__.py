@@ -56,6 +56,9 @@ class ApplicationIntrospectionTestMixin(object):
          * *launch_dir*. If set to a directory that exists the process will be
            launched from that directory.
 
+         * *capture_output*. If set to True (the default), the process output
+           will be captured and attached to the test as test detail.
+
         :raises: **ValueError** if unknown keyword arguments are passed.
         :return: A proxy object that represents the application. Introspection
          data is retrievable via this object.
@@ -64,6 +67,7 @@ class ApplicationIntrospectionTestMixin(object):
         if not isinstance(application, basestring):
             raise TypeError("'application' parameter must be a string.")
         cwd = kwargs.pop('launch_dir', None)
+        capture_output = kwargs.pop('capture_output', True)
         if kwargs:
             raise ValueError("Unknown keyword arguments: %s." %
                 (', '.join( repr(k) for k in kwargs.keys())))
@@ -74,7 +78,10 @@ class ApplicationIntrospectionTestMixin(object):
 
         path, args = self.prepare_environment(application, list(arguments))
 
-        process = launch_autopilot_enabled_process(path, args, cwd=cwd)
+        process = launch_autopilot_enabled_process(path,
+                                                    args,
+                                                    capture_output,
+                                                    cwd=cwd)
         self.addCleanup(self._kill_process_and_attach_logs, process)
         return get_autopilot_proxy_object_for_process(process)
 
@@ -96,15 +103,18 @@ class ApplicationIntrospectionTestMixin(object):
         self.addDetail('process-stderr', text_content(stderr))
 
 
-def launch_autopilot_enabled_process(application, args, **kwargs):
+def launch_autopilot_enabled_process(application, args, capture_output, **kwargs):
     """Launch an autopilot-enabled process and return the proxy object."""
     commandline = [application]
     commandline.extend(args)
     logger.info("Launching process: %r", commandline)
+    cap_mode = None
+    if capture_output:
+        cap_mode = subprocess.PIPE
     process = subprocess.Popen(commandline,
         stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stdout=cap_mode,
+        stderr=cap_mode,
         close_fds=True,
         **kwargs)
     return process

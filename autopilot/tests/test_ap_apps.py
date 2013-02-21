@@ -6,13 +6,34 @@
 # under the terms of the GNU General Public License version 3, as published
 # by the Free Software Foundation.
 
+import os
+import stat
 import subprocess
+from tempfile import mktemp
+from textwrap import dedent
 
 from autopilot.testcase import AutopilotTestCase
 from autopilot.introspection.gtk import GtkIntrospectionTestMixin
 from autopilot.introspection.qt import QtIntrospectionTestMixin
 
-class QtTests(AutopilotTestCase, QtIntrospectionTestMixin):
+
+class ApplicationTests(AutopilotTestCase):
+    """A base class for application mixin tests."""
+
+    def write_script(self, content):
+        """Writes a python script to a temporary file, makes it executable,
+        and returns the path to the script file.
+
+        """
+        path = mktemp('.py')
+        open(path, 'w').write(content)
+        self.addCleanup(os.unlink, path)
+
+        os.chmod(path, os.stat(path).st_mode | stat.S_IXUSR)
+        return path
+
+
+class QtTests(ApplicationTests, QtIntrospectionTestMixin):
 
     def setUp(self):
         super(QtTests, self).setUp()
@@ -27,7 +48,7 @@ class QtTests(AutopilotTestCase, QtIntrospectionTestMixin):
         self.assertTrue(app_proxy is not None)
 
 
-class GtkTests(AutopilotTestCase, GtkIntrospectionTestMixin):
+class GtkTests(ApplicationTests, GtkIntrospectionTestMixin):
 
     def setUp(self):
         super(GtkTests, self).setUp()
@@ -39,4 +60,17 @@ class GtkTests(AutopilotTestCase, GtkIntrospectionTestMixin):
 
     def test_can_launch_gtk_app(self):
         app_proxy = self.launch_test_application(self.app_path)
+        self.assertTrue(app_proxy is not None)
+
+    def test_can_launch_gtk_script(self):
+        path = self.write_script(dedent("""\
+            #!/usr/bin/python
+            from gi.repository import Gtk
+
+            win = Gtk.Window()
+            win.connect("delete-event", Gtk.main_quit)
+            win.show_all()
+            Gtk.main()
+            """))
+        app_proxy = self.launch_test_application(path)
         self.assertTrue(app_proxy is not None)

@@ -21,8 +21,8 @@ class ApplicationTests(AutopilotTestCase):
     """A base class for application mixin tests."""
 
     def write_script(self, content, extension=".py"):
-        """Writes a python script to a temporary file, makes it executable,
-        and returns the path to the script file.
+        """Write a script to a temporary file, make it executable,
+        and return the path to the script file.
 
         """
         path = mktemp(extension)

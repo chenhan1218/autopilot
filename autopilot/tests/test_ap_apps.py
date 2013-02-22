@@ -103,9 +103,7 @@ class GtkTests(ApplicationTests, GtkIntrospectionTestMixin):
             #!/bin/sh
 
             echo "Launching %s"
-            %s &
-            pid=$!
-            trap "kill $pid" 9 15
+            %s
             """ % (path, path)),
             extension=".sh")
         app_proxy = self.launch_test_application(wrapper_path)

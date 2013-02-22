@@ -31,6 +31,7 @@ from autopilot.introspection.dbus import (
     object_passes_filters,
     get_session_bus,
     )
+from autopilot.utilities import get_debug_logger
 
 
 logger = logging.getLogger(__name__)
@@ -131,6 +132,28 @@ def launch_autopilot_enabled_process(application, args, capture_output, **kwargs
     return process
 
 
+def get_child_pids(pid):
+    """Get a list of all child process Ids, for the given parent.
+
+    """
+    def get_children(pid):
+        command = ['ps', '-o', 'pid', '--ppid', str(pid), '--noheaders']
+        try:
+            raw_output = subprocess.check_output(command)
+        except subprocess.CalledProcessError:
+            return []
+        return [int(p) for p in raw_output.split()]
+
+    result = [pid]
+    data = get_children(pid)
+    while data:
+        pid = data.pop(0)
+        result.append(pid)
+        data.extend(get_children(pid))
+
+    return result
+
+
 def get_autopilot_proxy_object_for_process(process):
     """Return the autopilot proxy object for the given *process*.
 
@@ -155,14 +178,16 @@ def get_autopilot_proxy_object_for_process(process):
     # in the registry. We need a better method for this however.
     clear_object_registry()
 
-    logger.info("Looking for autopilot interface for PID %d", pid)
+    logger.info("Looking for autopilot interface for PID %d (and children)", pid)
     # We give the process 10 seconds grace time to get the dbus interface up...
     for i in range(10):
+        eligible_pids = get_child_pids(pid)
+        get_debug_logger().debug("Searching for eligible PIDs: %r", eligible_pids)
         names = session_bus.list_names()
         for name in names:
             try:
                 name_pid = bus_iface.GetConnectionUnixProcessID(name)
-                if name_pid == pid:
+                if name_pid in eligible_pids:
                     # We've found at least one connection to the session bus from
                     # this PID. Might not be the one we want however...
                     proxy = make_proxy_object_from_service_name(name, AUTOPILOT_PATH)

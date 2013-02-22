@@ -61,6 +61,27 @@ class QtTests(ApplicationTests, QtIntrospectionTestMixin):
         app_proxy = self.launch_test_application(path)
         self.assertTrue(app_proxy is not None)
 
+    def test_can_launch_wrapper_script(self):
+        path = self.write_script(dedent("""\
+            #!/usr/bin/python
+            from PyQt4.QtGui import QMainWindow, QApplication
+            from sys import argv
+
+            app = QApplication(argv)
+            win = QMainWindow()
+            win.show()
+            app.exec_()
+            """))
+        wrapper_path = self.write_script(dedent("""\
+            #!/bin/sh
+
+            echo "Launching %s"
+            %s $*
+            """ % (path, path)),
+            extension=".sh")
+        app_proxy = self.launch_test_application(wrapper_path)
+        self.assertTrue(app_proxy is not None)
+
 
 class GtkTests(ApplicationTests, GtkIntrospectionTestMixin):
 

@@ -47,6 +47,20 @@ class QtTests(ApplicationTests, QtIntrospectionTestMixin):
         app_proxy = self.launch_test_application(self.app_path)
         self.assertTrue(app_proxy is not None)
 
+    def test_can_launch_qt_script(self):
+        path = self.write_script(dedent("""\
+            #!/usr/bin/python
+            from PyQt4.QtGui import QMainWindow, QApplication
+            from sys import argv
+
+            app = QApplication(argv)
+            win = QMainWindow()
+            win.show()
+            app.exec_()
+            """))
+        app_proxy = self.launch_test_application(path)
+        self.assertTrue(app_proxy is not None)
+
 
 class GtkTests(ApplicationTests, GtkIntrospectionTestMixin):
 

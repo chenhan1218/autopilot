@@ -20,12 +20,12 @@ from autopilot.introspection.qt import QtIntrospectionTestMixin
 class ApplicationTests(AutopilotTestCase):
     """A base class for application mixin tests."""
 
-    def write_script(self, content):
+    def write_script(self, content, extension=".py"):
         """Writes a python script to a temporary file, makes it executable,
         and returns the path to the script file.
 
         """
-        path = mktemp('.py')
+        path = mktemp(extension)
         open(path, 'w').write(content)
         self.addCleanup(os.unlink, path)
 
@@ -87,4 +87,26 @@ class GtkTests(ApplicationTests, GtkIntrospectionTestMixin):
             Gtk.main()
             """))
         app_proxy = self.launch_test_application(path)
+        self.assertTrue(app_proxy is not None)
+
+    def test_can_launch_wrapper_script(self):
+        path = self.write_script(dedent("""\
+            #!/usr/bin/python
+            from gi.repository import Gtk
+
+            win = Gtk.Window()
+            win.connect("delete-event", Gtk.main_quit)
+            win.show_all()
+            Gtk.main()
+            """))
+        wrapper_path = self.write_script(dedent("""\
+            #!/bin/sh
+
+            echo "Launching %s"
+            %s &
+            pid=$!
+            trap "kill $pid" 9 15
+            """ % (path, path)),
+            extension=".sh")
+        app_proxy = self.launch_test_application(wrapper_path)
         self.assertTrue(app_proxy is not None)

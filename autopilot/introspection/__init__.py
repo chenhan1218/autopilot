@@ -15,6 +15,8 @@ import logging
 import subprocess
 from testtools.content import text_content
 from time import sleep
+import os
+import signal
 
 
 from autopilot.introspection.constants import (
@@ -98,6 +100,14 @@ class ApplicationIntrospectionTestMixin(object):
 
     def _kill_process_and_attach_logs(self, process):
         process.kill()
+        logger.info("waiting for process to exit.")
+        for i in range(10):
+            if process.returncode is not None:
+                break
+            if i == 9:
+                logger.info("Terminating process group, since it hasn't exited after 10 seconds.")
+                os.killpg(process.pid, signal.SIGTERM)
+            sleep(1)
         stdout, stderr = process.communicate()
         self.addDetail('process-stdout', text_content(stdout))
         self.addDetail('process-stderr', text_content(stderr))
@@ -116,6 +126,7 @@ def launch_autopilot_enabled_process(application, args, capture_output, **kwargs
         stdout=cap_mode,
         stderr=cap_mode,
         close_fds=True,
+        preexec_fn=os.setsid,
         **kwargs)
     return process
 

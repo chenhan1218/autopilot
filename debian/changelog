@@ -1,3 +1,13 @@
+autopilot (1.2daily13.02.25-0ubuntu1) raring; urgency=low
+
+  [ Thomi Richards ]
+  * Autopilot does not work with wrapper scripts (LP: #1131405)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 144
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Mon, 25 Feb 2013 11:05:30 +0000
+
 autopilot (1.2daily13.02.22-0ubuntu1) raring; urgency=low
 
   [ Thomi Richards ]

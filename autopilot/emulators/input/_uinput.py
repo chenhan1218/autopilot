@@ -25,10 +25,7 @@ PRESSED_KEYS = []
 class Keyboard(KeyboardBase):
 
     def __init__(self):
-        try:
-            self._device = UInput()
-        except:
-            logger.warning("uinput not available")
+        self._device = UInput()
 
     def _emit(self, event, value):
         self._device.write(e.EV_KEY, event, value)

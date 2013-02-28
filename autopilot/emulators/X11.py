@@ -54,7 +54,10 @@ def reset_display():
 # Keeping this here for compatibility. Once the Mouse emulator is ported to the
 # new input system we should log a deprecation warning, and eventually delete
 # this entire module.
-Keyboard = get_keyboard().__class__
+class KBWrapper(object):
+    def __call__(self):
+        return get_keyboard()
+Keyboard = KBWrapper()
 
 
 class Mouse(object):

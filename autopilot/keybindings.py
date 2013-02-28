@@ -27,7 +27,7 @@ import logging
 from types import NoneType
 import re
 
-from autopilot.emulators.X11 import Keyboard
+from autopilot.emulators.input import get_keyboard
 from autopilot.compizconfig import get_plugin, get_setting
 
 logger = logging.getLogger(__name__)
@@ -232,7 +232,7 @@ class KeybindingsHelper(object):
 
     @property
     def _keyboard(self):
-        return Keyboard()
+        return get_keyboard()
 
     def keybinding(self, binding_name, delay=None):
         """Press and release the keybinding with the given name.

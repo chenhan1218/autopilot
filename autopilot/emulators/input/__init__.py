@@ -47,7 +47,30 @@ def get_keyboard(preferred_variant=""):
     variants = OrderedDict()
     variants['X11'] = get_x11_kb
     variants['UInput'] = get_uinput_kb
+    return _pick_variant(variants, preferred_variant)
 
+
+def get_mouse(preferred_variant=""):
+    """Get an instance of the Mouse class.
+
+    If variant is specified, it should be a string that specifies a backend to
+    use. However, this hint can be ignored - autopilot will prefer to return a
+    mouse variant other than the one requested, rather than fail to return
+    anything at all.
+
+    If autopilot cannot instantate any of the possible backends, a RuntimeError
+    will be raised.
+    """
+    def get_x11_mouse():
+        from autopilot.emulators.input._X11 import Mouse
+        return Mouse()
+
+    variants = OrderedDict()
+    variants['X11'] = get_x11_mouse
+    return _pick_variant(variants, preferred_variant)
+
+
+def _pick_variant(variants, preferred_variant):
     possible_backends = variants.keys()
     get_debug_logger().debug("Possible keyboard variants: %s", ','.join(possible_backends))
     if preferred_variant in possible_backends:
@@ -129,4 +152,73 @@ class Keyboard(object):
          keys that were pressed and not released.
 
         """
+        raise NotImplementedError("You cannot use this class directly.")
+
+
+class Mouse(object):
+    """A base class for all mouse-type classes."""
+
+    @property
+    def x(self):
+        """Mouse position X coordinate."""
+        raise NotImplementedError("You cannot use this class directly.")
+
+    @property
+    def y(self):
+        """Mouse position Y coordinate."""
+        return self.position()[1]
+
+    def press(self, button=1):
+        """Press mouse button at current mouse location."""
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def release(self, button=1):
+        """Releases mouse button at current mouse location."""
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def click(self, button=1, press_duration=0.10):
+        """Click mouse at current location."""
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def move(self, x, y, animate=True, rate=10, time_between_events=0.01):
+        """Moves mouse to location (x, y).
+
+        Callers should avoid specifying the *rate* or *time_between_events*
+        parameters unless they need a specific rate of movement.
+
+        """
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def move_to_object(self, object_proxy):
+        """Attempts to move the mouse to 'object_proxy's centre point.
+
+        It does this by looking for several attributes, in order. The first
+        attribute found will be used. The attributes used are (in order):
+
+         * globalRect (x,y,w,h)
+         * center_x, center_y
+         * x, y, w, h
+
+        :raises: **ValueError** if none of these attributes are found, or if an
+         attribute is of an incorrect type.
+
+        """
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def position(self):
+        """
+        Returns the current position of the mouse pointer.
+
+        :return: (x,y) tuple
+        """
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def drag(self, x1, y1, x2, y2):
+        """Performs a press, move and release
+        This is to keep a common API between Mouse and Finger as long as possible"""
+        raise NotImplementedError("You cannot use this class directly.")
+
+    @staticmethod
+    def cleanup():
+        """Put mouse in a known safe state."""
         raise NotImplementedError("You cannot use this class directly.")

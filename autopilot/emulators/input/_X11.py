@@ -25,7 +25,10 @@ from time import sleep
 
 from autopilot.emulators.bamf import BamfWindow
 from autopilot.utilities import Silence
-from autopilot.emulators.input import Keyboard as KeyboardBase
+from autopilot.emulators.input import (
+    Keyboard as KeyboardBase,
+    Mouse as MouseBase,
+    )
 from Xlib import X, XK
 from Xlib.display import Display
 from Xlib.ext.xtest import fake_input
@@ -257,8 +260,12 @@ class Keyboard(KeyboardBase):
             return [self._keysym_translations.get(key_string, key_string)]
 
 
-class Mouse(object):
+class Mouse(MouseBase):
     """Wrapper around xlib to make moving the mouse easier."""
+
+    def __init__(self):
+        # Try to access the screen to see if X11 mouse is supported
+        get_display()
 
     @property
     def x(self):
@@ -269,10 +276,6 @@ class Mouse(object):
     def y(self):
         """Mouse position Y coordinate."""
         return self.position()[1]
-
-    def __init__(self):
-        # Try to access the screen to see if X11 mouse is supported
-        ScreenGeometry()
 
     def press(self, button=1):
         """Press mouse button at current mouse location."""

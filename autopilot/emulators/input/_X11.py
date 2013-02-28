@@ -25,6 +25,7 @@ from time import sleep
 
 from autopilot.emulators.bamf import BamfWindow
 from autopilot.utilities import Silence
+from autopilot.emulators.input import Keyboard as KeyboardBase
 from Xlib import X, XK
 from Xlib.display import Display
 from Xlib.ext.xtest import fake_input
@@ -50,7 +51,7 @@ def reset_display():
     _DISPLAY = None
 
 
-class Keyboard(object):
+class Keyboard(KeyboardBase):
     """Wrapper around xlib to make faking keyboard input possible."""
 
     _special_X_keysyms = {

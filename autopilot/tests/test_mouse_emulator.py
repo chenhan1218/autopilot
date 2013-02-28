@@ -10,7 +10,7 @@ from testtools import TestCase
 from testtools.matchers import Equals, raises
 from mock import patch
 
-from autopilot.emulators.X11 import Mouse
+from autopilot.emulators.input import get_mouse
 
 class Empty(object):
     pass
@@ -31,7 +31,7 @@ class MouseEmulatorTests(TestCase):
 
     def setUp(self):
         super(MouseEmulatorTests, self).setUp()
-        self.mouse = Mouse()
+        self.mouse = get_mouse()
 
     def tearDown(self):
         super(MouseEmulatorTests, self).tearDown()

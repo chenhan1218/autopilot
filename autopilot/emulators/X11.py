@@ -29,6 +29,11 @@ from autopilot.emulators.input import get_keyboard, get_mouse
 logger = logging.getLogger(__name__)
 
 
+def reset_display():
+    from autopilot.emulators.input._X11 import reset_display
+    reset_display()
+
+
 # Keeping this here for compatibility. Once the Mouse emulator is ported to the
 # new input system we should log a deprecation warning, and eventually delete
 # this entire module.

@@ -24,7 +24,7 @@ Emulators Package
 +++++++++++++++++
 
 :mod:`input` Module
------------------
+-------------------
 
 .. automodule:: autopilot.emulators.input
     :members:

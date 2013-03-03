@@ -24,6 +24,7 @@ import subprocess
 
 from autopilot.emulators.bamf import BamfWindow
 from autopilot.emulators.input import get_keyboard, get_mouse
+from autopilot.utilities import deprecated
 
 
 logger = logging.getLogger(__name__)
@@ -34,19 +35,16 @@ def reset_display():
     reset_display()
 
 
-# Keeping this here for compatibility. Once the Mouse emulator is ported to the
-# new input system we should log a deprecation warning, and eventually delete
-# this entire module.
-class KBWrapper(object):
-    def __call__(self):
-        return get_keyboard()
-Keyboard = KBWrapper()
+# Keyboard and Mouse are no longer here. This is for backwards compatibility,
+# but will eventually dissapear.
+@deprecated('autopilot.emulators.input.get_keyboard')
+def Keyboard():
+    return get_keyboard()
 
 
-class MouseWrapper(object):
-    def __call__(self):
-        return get_mouse()
-Mouse = MouseWrapper()
+@deprecated('autopilot.emulators.input.get_mouse')
+def Mouse():
+    return get_mouse()
 
 
 class ScreenGeometry:

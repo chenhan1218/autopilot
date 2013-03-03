@@ -10,8 +10,8 @@ facilities to make this possible:
 1. **Input Device Emulation**. Autopilot provides several classes that are able
 to generate input device events. Keyboard and Mouse events are trivial to
 generate, and other devices may be added in the future. See for example the
-:class:`Keyboard <autopilot.emulators.X11.Keyboard>` and :class:`Mouse
-<autopilot.emulators.X11.Mouse>` classes.
+:class:`Keyboard <autopilot.emulators.input.Keyboard>` and :class:`Mouse
+<autopilot.emulators.input.Mouse>` classes.
 
 2. **State Introspection**. Autopilot provides several methods of inspecting
 the applications state, and using the results of that introspection in a test.
@@ -34,13 +34,13 @@ Autopilot allows you to write tests for several different targets, including:
   tool, and as such contains the most comprehensive test suite.
 
 * Qt 4.x applications. Autopilot can introspect Qt 4.x applications with the
-  help of the autopilot-qt package.
+  help of the libautopilot-qt package.
 
 * Qt 5.x applications. Autopilot can introspect these applications with the
-  help of the autopilot-qt5 package.
+  help of the libautopilot-qt package.
 
 * Gtk 3.x applications. Autopilot can introspect Gtk applications with the
-  help of the autopilot-gtk package.
+  help of the libautopilot-gtk package.
 
 The details of how to write an autopilot test are remarkably similar across
 these different targets. The only thing that changes is the way in which the
@@ -102,7 +102,7 @@ Autopilot tests typically have three distinct stages:
 
 1. **Test Setup.** Do whatever it takes to get to the point where the thing you're trying to test is ready. This typically involves launching the application under test (not applicable to the Unity shell, as discussed above) and navigating to the component that you want to test.
 
-2. **Test Actions.** Send input events to the application under test to mimic a user interaction. This typically involves using the :class:`~autopilot.emulators.X11.Keyboard` or :class:`~autopilot.emulators.X11.Mouse` classes.
+2. **Test Actions.** Send input events to the application under test to mimic a user interaction. This typically involves using the :class:`~autopilot.emulators.input.Keyboard` or :class:`~autopilot.emulators.input.Mouse` classes.
 
 3. **Test Assertions.** Do one or more test assertions to verify that the application under test performed as expected.
 
@@ -145,7 +145,7 @@ Test actions will almost always involve simulating user interaction with the app
 Using the Keyboard
 ##################
 
-All classes that derive from :class:`~autopilot.testcase.AutopilotTestCase` have a 'keyboard' attribute that is an instance of :class:`~autopilot.emulators.X11.Keyboard`. We recommend that test authors use this instance of the Keyboard class instead of creating new instances. The :class:`~autopilot.emulators.X11.Keyboard` class has several capabilities:
+All classes that derive from :class:`~autopilot.testcase.AutopilotTestCase` have a 'keyboard' attribute that is an instance of :class:`~autopilot.emulators.input.Keyboard`. We recommend that test authors use this instance of the Keyboard class instead of creating new instances. The :class:`~autopilot.emulators.input.Keyboard` class has several capabilities:
 
 * **Typing Text**. The most common operation is typing text. This can be achieved by calling the 'type' method, like so::
 
@@ -190,7 +190,7 @@ To use the keybindings system, you need to derive from the :class:`~autopilot.ke
 Using the Mouse
 ###############
 
-All classes that derive from :class:`~autopilot.testcase.AutopilotTestCase` have a 'mouse' attribute that is an instance of :class:`~autopilot.emulators.X11.Mouse`. We recommend that test authors use this instance of the Mouse class instead of creating new instances. The :class:`~autopilot.emulators.X11.Mouse` class has several capabilities:
+All classes that derive from :class:`~autopilot.testcase.AutopilotTestCase` have a 'mouse' attribute that is an instance of :class:`~autopilot.emulators.input.Mouse`. We recommend that test authors use this instance of the Mouse class instead of creating new instances. The :class:`~autopilot.emulators.input.Mouse` class has several capabilities:
 
 * **Querying mouse pointer location**. The Mouse class contains two attributes that give the x and y position of the mouse. These can be used to work out where the mouse is::
 

@@ -16,7 +16,9 @@ from __future__ import absolute_import
 
 import logging
 import os
+import sys
 import time
+from functools import wraps
 from Xlib import X, display, protocol
 
 _display = None
@@ -217,3 +219,14 @@ class DebugLogFilter(object):
 
     def filter(self, record):
         return int(self.debug_log_enabled)
+
+
+def deprecated(alternative):
+    """Write a deprecation warning directly to stderr."""
+    def fdec(fn):
+        @wraps(fn)
+        def wrapped(*args, **kwargs):
+            sys.stderr.write("WARNING: This function is deprecated. Please use '%s' instead.\n" % alternative)
+            return fn(*args, **kwargs)
+        return wrapped
+    return fdec

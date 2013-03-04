@@ -22,7 +22,7 @@ from subprocess import (
     PIPE,
     STDOUT,
     )
-import sys
+
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.content import text_content
@@ -33,7 +33,8 @@ from autopilot.compizconfig import get_global_context
 from autopilot.emulators.bamf import Bamf
 from autopilot.emulators.zeitgeist import Zeitgeist
 from autopilot.emulators.processmanager import ProcessManager
-from autopilot.emulators.X11 import ScreenGeometry, Keyboard, Mouse, reset_display
+from autopilot.emulators.X11 import ScreenGeometry, reset_display
+from autopilot.emulators.input import get_keyboard, get_mouse
 from autopilot.glibrunner import AutopilotTestRunner
 from autopilot.globals import (get_log_verbose,
     get_video_recording_enabled,
@@ -254,13 +255,13 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         self.addCleanup(self._process_manager.compare_system_with_snapshot)
 
         self.bamf = Bamf()
-        self.keyboard = Keyboard()
-        self.mouse = Mouse()
+        self.keyboard = get_keyboard()
+        self.mouse = get_mouse()
         self.zeitgeist = Zeitgeist()
 
         self.screen_geo = ScreenGeometry()
-        self.addCleanup(Keyboard.cleanup)
-        self.addCleanup(Mouse.cleanup)
+        self.addCleanup(self.keyboard.cleanup)
+        self.addCleanup(self.mouse.cleanup)
 
     def call_gsettings_cmd(self, command, schema, *args):
         """Set a desktop wide gsettings option

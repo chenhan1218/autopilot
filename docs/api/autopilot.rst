@@ -23,10 +23,10 @@ Autopilot Utility Modules
 Emulators Package
 +++++++++++++++++
 
-:mod:`X11` Module
------------------
+:mod:`input` Module
+-------------------
 
-.. automodule:: autopilot.emulators.X11
+.. automodule:: autopilot.emulators.input
     :members:
     :undoc-members:
     :show-inheritance:

@@ -39,17 +39,17 @@ name is set, could trigger some more connections.
 Even if more than the actual string size is used and QString uses a large 
 representation, this is very little compared to the rest. A qmlscene with just 
 the item is 27MB. One full screen image in the Nexus 10 tablet can easily 
-consume around 30MB of memory. So objectNames are definatly not the first place
+consume around 30MB of memory. So objectNames are definitely not the first place
 where to search for optimisations.
 
 Writing the test code snippets, one interesting thing came up frequently: Just 
 modifying the code around to set the objectName often influences the results 
 more than the actual string. For example, having a javascript function that
-assignes the objectName, definately uses much more memory than the objectName
+assigns the objectName, definitely uses much more memory than the objectName
 itself. Unless it makes sense from a performance point of view (frequently
 changing bindings can be slow), objectNames should be added by directly
 binding the value to the property instead using helper code to assign it.
 
-Conclusion: If an objectName is needed for testing this is definately worth it.
+Conclusion: If an objectName is needed for testing this is definitely worth it.
 objectName's should obviously not be added when not needed. When adding them,
 the general QML guidelines for performance should be regarded.

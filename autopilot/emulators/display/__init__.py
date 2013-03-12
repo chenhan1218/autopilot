@@ -55,11 +55,11 @@ class Display:
     class BlacklistedDriverError(RuntimeError):
         """Cannot set primary monitor when running drivers listed in the driver blacklist."""
 
-    def get_num_monitors(self):
-        """Get the number of monitors attached to the PC."""
+    def get_num_screens(self):
+        """Get the number of screens attached to the PC."""
         raise NotImplementedError("You cannot use this class directly.")
 
-    def get_primary_monitor(self):
+    def get_primary_screen(self):
         raise NotImplementedError("You cannot use this class directly.")
 
     def get_screen_width(self, screen_number=0):
@@ -68,7 +68,7 @@ class Display:
     def get_screen_height(self, screen_number=0):
         raise NotImplementedError("You cannot use this class directly.")
 
-    def get_monitor_geometry(self, monitor_number):
+    def get_screen_geometry(self, monitor_number):
         """Get the geometry for a particular monitor.
 
         :return: Tuple containing (x, y, width, height).
@@ -76,11 +76,11 @@ class Display:
         """
         raise NotImplementedError("You cannot use this class directly.")
 
-    def is_rect_on_monitor(self, monitor_number, rect):
-        """Returns True if *rect* is **entirely** on the specified monitor, with no overlap."""
+    def is_rect_on_screen(self, screen_number, rect):
+        """Returns True if *rect* is **entirely** on the specified screen, with no overlap."""
         raise NotImplementedError("You cannot use this class directly.")
 
-    def is_point_on_monitor(self, monitor_number, point):
+    def is_point_on_screen(self, screen_number, point):
         """Returns True if *point* is on the specified monitor.
 
         *point* must be an iterable type with two elements: (x, y)
@@ -88,20 +88,20 @@ class Display:
         """
         raise NotImplementedError("You cannot use this class directly.")
 
-    def is_point_on_any_monitor(self, point):
-        """Returns true if *point* is on any currently configured monitor."""
+    def is_point_on_any_screen(self, point):
+        """Returns true if *point* is on any currently configured screen."""
         raise NotImplementedError("You cannot use this class directly.")
 
-    def move_mouse_to_monitor(self, monitor_number):
-        """Move the mouse to the center of the specified monitor."""
+    def move_mouse_to_screen(self, screen_number):
+        """Move the mouse to the center of the specified screen."""
         raise NotImplementedError("You cannot use this class directly.")
 
     # This should be moved elsewhere.
-    def drag_window_to_monitor(self, window, monitor):
-        """Drags *window* to *monitor*
+    def drag_window_to_screen(self, window, screen):
+        """Drags *window* to *screen*
 
         :param BamfWindow window: The window to drag
-        :param integer monitor: The monitor to drag the *window* to
+        :param integer monitor: The screen to drag the *window* to
         :raises: **TypeError** if *window* is not a BamfWindow
 
         """

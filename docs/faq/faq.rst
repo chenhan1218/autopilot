@@ -5,14 +5,16 @@ Q. If we add objectNames to QML items all over. What is the impact on memory?
 =============================================================================
 
 A. objectName is a QString property of QObject which defaults to QString().
-QString is UTF-16 representation and because it uses the other qt list
-optimisations it usually allocates twice the space it needs. OTOH it also uses
-impleicit sharing etc. Those properties makes the used memory not straight
-forward to predict. For example copying an object with an objectName, shares
-the memory between both as long as they are not changed. When measuring
-memory consumption, things like memory alignment come into play. Due to the
-fact that QML is interpreted by a JavaScript engine, we are working in
-levels where lots of abstraction layers are in between the code and the
+QString is UTF-16 representation and because it uses some general purpose
+optimisations it usually allocates twice the space it needs to be able to grow
+fast. OTOH it also uses implicit sharing with copy-on-write and other similar
+tricks to increase performance again. Those properties makes the used memory
+not straight forward to predict. For example copying an object with an
+objectName, shares the memory between both as long as they are not changed.
+
+When measuring memory consumption, things like memory alignment come into play.
+Due to the fact that QML is interpreted by a JavaScript engine, we are working
+in levels where lots of abstraction layers are in between the code and the
 hardware and we have no chance to exactly measure consumption of a single
 objectName property. Therefore the taken approach is to measure lots of items
 and calculate the average consumption.

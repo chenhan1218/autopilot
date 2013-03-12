@@ -11,6 +11,7 @@ Autopilot Documentation
 
    tutorial/tutorial
    api/autopilot
+   faq/faq
 
 
 Indices and tables

@@ -1,6 +1,14 @@
+# -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
+# Copyright 2013 Canonical
+# Author: Christopher Lee
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 3, as published
+# by the Free Software Foundation.
+
 import logging
 
-from autopilot.emulators.input import Display as DisplayBase
+from autopilot.emulators.display import Display as DisplayBase
 
 logger = logging.getLogger(__name__)
 
@@ -31,22 +39,6 @@ class Display(DisplayBase):
 
         """
         return(1, 1, 1, 1)
-
-    def is_rect_on_screen(self, screen_number, rect):
-        """Returns True if *rect* is **entirely** on the specified screen, with no overlap."""
-        return True
-
-    def is_point_on_screen(self, screen_number, point):
-        """Returns True if *point* is on the specified screen.
-
-        *point* must be an iterable type with two elements: (x, y)
-
-        """
-        return True
-
-    def is_point_on_any_screen(self, point):
-        """Returns true if *point* is on any currently configured screen."""
-        return True
 
     #should this be here or else where?
     def move_mouse_to_screen(self, screen_number):

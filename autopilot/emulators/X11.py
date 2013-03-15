@@ -24,7 +24,6 @@ import subprocess
 
 from autopilot.emulators.bamf import BamfWindow
 from autopilot.emulators.input import get_keyboard, get_mouse
-from autopilot.emulators.display import get_display(
 from autopilot.utilities import deprecated
 
 

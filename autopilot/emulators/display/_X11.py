@@ -1,7 +1,15 @@
+# -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
+# Copyright 2013 Canonical
+# Author: Christopher Lee
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 3, as published
+# by the Free Software Foundation.
+
 import logging
 
 from autopilot.emulators.bamf import BamfWindow
-from autopilot.emulators.input import Display as DisplayBase
+from autopilot.emulators.display import Display as DisplayBase
 
 logger = logging.getLogger(__name__)
 
@@ -41,30 +49,6 @@ class Display(DisplayBase):
             raise ValueError('Specified screen number is out of range.')
         rect = self._default_screen.get_monitor_geometry(screen_number)
         return (rect.x, rect.y, rect.width, rect.height)
-
-    def is_rect_on_screen(self, screen_number, rect):
-        """Returns True if *rect* is **entirely** on the specified screen, with no overlap."""
-
-        if type(rect) is not tuple or len(rect) != 4:
-            raise TypeError("rect must be a tuple of 4 int elements.")
-
-        (x, y, w, h) = rect
-        (mx, my, mw, mh) = self.get_screen_geometry(screen_number)
-        return (x >= mx and x + w <= mx + mw and y >= my and y + h <= my + mh)
-
-    def is_point_on_screen(self, screen_number, point):
-        """Returns True if *point* is on the specified screen.
-
-        *point* must be an iterable type with two elements: (x, y)
-
-        """
-        x,y = point
-        (mx, my, mw, mh) = self.get_screen_geometry(screen_number)
-        return (x >= mx and x < mx + mw and y >= my and y < my + mh)
-
-    def is_point_on_any_screen(self, point):
-        """Returns true if *point* is on any currently configured screen."""
-        return any([self.is_point_on_screen(m, point) for m in range(self.get_num_screens())])
 
     def move_mouse_to_screen(self, screen_number):
         """Move the mouse to the center of the specified screen."""

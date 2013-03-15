@@ -9,6 +9,7 @@
 from collections import OrderedDict
 from autopilot.utilities import get_debug_logger
 
+
 def get_display(preferred_variant=""):
     """Get an instance of the Display class.
 
@@ -23,6 +24,7 @@ def get_display(preferred_variant=""):
     def get_x11_display():
         from autopilot.emulators.display._X11 import Display
         return Display()
+
     def get_mir_display():
         from autopilot.emulators.display._mir import Display
         return Display()
@@ -46,6 +48,33 @@ def _pick_variant(variants, preferred_variant):
             get_debug_logger().warning("Can't create variant %s: %r", be, e)
             failure_reasons.append('%s: %r' % (be, e))
     raise RuntimeError("Unable to instantiate any backends\n%s" % '\n'.join(failure_reasons))
+
+
+def is_rect_on_screen(self, screen_number, rect):
+    """Returns True if *rect* is **entirely** on the specified screen, with no overlap."""
+
+    if type(rect) is not tuple or len(rect) != 4:
+        raise TypeError("rect must be a tuple of 4 int elements.")
+
+    (x, y, w, h) = rect
+    (mx, my, mw, mh) = get_display().get_screen_geometry(screen_number)
+    return (x >= mx and x + w <= mx + mw and y >= my and y + h <= my + mh)
+
+
+def is_point_on_screen(self, screen_number, point):
+    """Returns True if *point* is on the specified screen.
+
+    *point* must be an iterable type with two elements: (x, y)
+
+    """
+    x, y = point
+    (mx, my, mw, mh) = get_display().get_screen_geometry(screen_number)
+    return (x >= mx and x < mx + mw and y >= my and y < my + mh)
+
+
+def is_point_on_any_screen(self, point):
+    """Returns true if *point* is on any currently configured screen."""
+    return any([is_point_on_screen(m, point) for m in range(get_display().get_num_screens())])
 
 
 # This the interface that the concrete implementations will use.
@@ -74,22 +103,6 @@ class Display:
         :return: Tuple containing (x, y, width, height).
 
         """
-        raise NotImplementedError("You cannot use this class directly.")
-
-    def is_rect_on_screen(self, screen_number, rect):
-        """Returns True if *rect* is **entirely** on the specified screen, with no overlap."""
-        raise NotImplementedError("You cannot use this class directly.")
-
-    def is_point_on_screen(self, screen_number, point):
-        """Returns True if *point* is on the specified monitor.
-
-        *point* must be an iterable type with two elements: (x, y)
-
-        """
-        raise NotImplementedError("You cannot use this class directly.")
-
-    def is_point_on_any_screen(self, point):
-        """Returns true if *point* is on any currently configured screen."""
         raise NotImplementedError("You cannot use this class directly.")
 
     def move_mouse_to_screen(self, screen_number):

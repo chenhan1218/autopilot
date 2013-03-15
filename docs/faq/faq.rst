@@ -4,7 +4,7 @@ Frequently asked questions
 Q. If we add objectNames to QML items all over. What is the impact on memory?
 =============================================================================
 
-A. objectName is a QString property of QObject which defaults to QString().
+The objectName is a QString property of QObject which defaults to QString().
 QString is UTF-16 representation and because it uses some general purpose
 optimisations it usually allocates twice the space it needs to be able to grow
 fast. It also uses implicit sharing with copy-on-write and other similar

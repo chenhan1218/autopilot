@@ -52,4 +52,5 @@ binding the value to the property instead using helper code to assign it.
 
 Conclusion: If an objectName is needed for testing, this is definitely worth
 it. objectName's should obviously not be added when not needed. When adding
-them, the general QML guidelines for performance should be followed.
+them, the general QML guidelines for performance should be followed:
+http://qt-project.org/doc/qt-5.0/qtquick/qtquick-performance.html

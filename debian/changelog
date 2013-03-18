@@ -1,3 +1,14 @@
+autopilot (1.2daily13.03.18-0ubuntu1) raring; urgency=low
+
+  [ Thomi Richards ]
+  * Autopilot vis crashes when Qt app returns empty reply for signal and
+    method lists (LP: #1155340)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 150
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 18 Mar 2013 00:02:01 +0000
+
 autopilot (1.2daily13.03.05-0ubuntu1) raring; urgency=low
 
   * Automatic snapshot from revision 148

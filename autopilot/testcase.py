@@ -222,7 +222,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             },
         'Calculator' : {
             'desktop-file': 'gcalctool.desktop',
-            'process-name': 'gcalctool',
+            'process-name': 'gnome-calculator',
             },
         'Mahjongg' : {
             'desktop-file': 'gnome-mahjongg.desktop',

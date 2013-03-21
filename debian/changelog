@@ -1,3 +1,9 @@
+autopilot (1.2daily13.03.21-0ubuntu1) raring; urgency=low
+
+  * Automatic snapshot from revision 153
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 21 Mar 2013 00:01:46 +0000
+
 autopilot (1.2daily13.03.18-0ubuntu1) raring; urgency=low
 
   [ Thomi Richards ]

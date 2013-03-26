@@ -47,6 +47,7 @@ def Mouse():
     return get_mouse()
 
 
+@deprecated('autopilot.emulators.display.get_display')
 class ScreenGeometry:
     """Get details about screen geometry."""
 

@@ -37,20 +37,4 @@ class Display(DisplayBase):
 
         """
         res = get_resolution()
-        return(0, 0, res[0], res[1])
-
-    #should this be here or else where?
-    def move_mouse_to_screen(self, screen_number):
-        """Move the mouse to the center of the specified screen."""
-        pass
-
-    # This should be moved elsewhere.
-    def drag_window_to_screen(self, window, screen):
-        """Drags *window* to *screen*
-
-        :param BamfWindow window: The window to drag
-        :param integer screen: The monitor to drag the *window* to
-        :raises: **TypeError** if *window* is not a BamfWindow
-
-        """
-        pass
+        return (0, 0, res[0], res[1])

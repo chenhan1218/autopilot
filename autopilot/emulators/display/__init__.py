@@ -25,13 +25,13 @@ def get_display(preferred_variant=""):
         from autopilot.emulators.display._X11 import Display
         return Display()
 
-    def get_mir_display():
-        from autopilot.emulators.display._mir import Display
+    def get_upa_display():
+        from autopilot.emulators.display._upa import Display
         return Display()
 
     variants = OrderedDict()
     variants['X11'] = get_x11_display
-    variants['Mir'] = get_mir_display
+    variants['UPA'] = get_upa_display
     return _pick_variant(variants, preferred_variant)
 
 

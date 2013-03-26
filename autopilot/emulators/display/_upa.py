@@ -9,14 +9,12 @@
 import logging
 
 from autopilot.emulators.display import Display as DisplayBase
+from upa import get_resolution
 
 logger = logging.getLogger(__name__)
 
 class Display(DisplayBase):
     """The base class/inteface for the display devices"""
-
-    class BlacklistedDriverError(RuntimeError):
-        """Cannot set primary monitor when running drivers listed in the driver blacklist."""
 
     def get_num_screens(self):
         """Get the number of screens attached to the PC."""
@@ -27,10 +25,10 @@ class Display(DisplayBase):
         return 0
 
     def get_screen_width(self):
-        return 1
+        return get_resolution()[0]
 
     def get_screen_height(self):
-        return 1
+        return get_resolution()[1]
 
     def get_screen_geometry(self, screen_number):
         """Get the geometry for a particular screen.
@@ -38,7 +36,8 @@ class Display(DisplayBase):
         :return: Tuple containing (x, y, width, height).
 
         """
-        return(1, 1, 1, 1)
+        res = get_resolution()
+        return(0, 0, res[0], res[1])
 
     #should this be here or else where?
     def move_mouse_to_screen(self, screen_number):

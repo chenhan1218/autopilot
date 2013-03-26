@@ -27,15 +27,15 @@ without notice.
 
 
 def get_keyboard(preferred_variant=""):
-    """Get an instance of the Keyboard class.
+    """Get an instance of the :py:class:`Keyboard` class.
 
-    If variant is specified, it should be a string that specifies a backend to
-    use. However, this hint can be ignored - autopilot will prefer to return a
-    keyboard variant other than the one requested, rather than fail to return
-    anything at all.
+    :param preferred_variant: A string containing a hint as to which variant you
+        would like. However, this hint can be ignored - autopilot will prefer to
+        return a keyboard variant other than the one requested, rather than fail
+        to return anything at all.
+    :raises: a RuntimeError will be raised if autopilot cannot instantate any of
+        the possible backends.
 
-    If autopilot cannot instantate any of the possible backends, a RuntimeError
-    will be raised.
     """
     def get_x11_kb():
         from autopilot.emulators.input._X11 import Keyboard
@@ -51,15 +51,15 @@ def get_keyboard(preferred_variant=""):
 
 
 def get_mouse(preferred_variant=""):
-    """Get an instance of the Mouse class.
+    """Get an instance of the :py:class:`Mouse` class.
 
-    If variant is specified, it should be a string that specifies a backend to
-    use. However, this hint can be ignored - autopilot will prefer to return a
-    mouse variant other than the one requested, rather than fail to return
-    anything at all.
+    :param preferred_variant: A string containing a hint as to which variant you
+        would like. However, this hint can be ignored - autopilot will prefer to
+        return a mouse variant other than the one requested, rather than fail
+        to return anything at all.
+    :raises: a RuntimeError will be raised if autopilot cannot instantate any of
+        the possible backends.
 
-    If autopilot cannot instantate any of the possible backends, a RuntimeError
-    will be raised.
     """
     def get_x11_mouse():
         from autopilot.emulators.input._X11 import Mouse
@@ -71,15 +71,15 @@ def get_mouse(preferred_variant=""):
 
 
 def get_touch(preferred_variant=""):
-    """Get an instance of the Touch class.
+    """Get an instance of the :py:class:`Touch` class.
 
-    If variant is specified, it should be a string that specifies a backend to
-    use. However, this hint can be ignored - autopilot will prefer to return a
-    touch variant other than the one requested, rather than fail to return
-    anything at all.
+    :param preferred_variant: A string containing a hint as to which variant you
+        would like. However, this hint can be ignored - autopilot will prefer to
+        return a touch variant other than the one requested, rather than fail
+        to return anything at all.
+    :raises: a RuntimeError will be raised if autopilot cannot instantate any of
+        the possible backends.
 
-    If autopilot cannot instantate any of the possible backends, a RuntimeError
-    will be raised.
     """
     def get_uinput_touch():
         from autopilot.emulators.input._uinput import Touch
@@ -107,18 +107,26 @@ def _pick_variant(variants, preferred_variant):
 
 class Keyboard(object):
 
-    """A base class for all keyboard-type devices."""
+    """A simple keyboard device class.
+
+    The keyboard class is used to generate key events while in an autopilot
+    test. This class should not be instantiated directly however. To get an
+    instance of the keyboard class, call :py:func:`get_keyboard` instead.
+
+    """
 
     def press(self, keys, delay=0.2):
         """Send key press events only.
 
-        :param string keys: Keys you want pressed.
+        :param keys: Keys you want pressed.
+        :param delay: The delay (in Seconds) after pressing the keys before
+            returning control to the caller.
 
         Example:
 
         >>> press('Alt+F2')
 
-        presses the 'Alt' and 'F2' keys.
+        presses the 'Alt' and 'F2' keys, but does not release them.
 
         """
         raise NotImplementedError("You cannot use this class directly.")
@@ -126,7 +134,9 @@ class Keyboard(object):
     def release(self, keys, delay=0.2):
         """Send key release events only.
 
-        :param string keys: Keys you want released.
+        :param keys: Keys you want released.
+        :param delay: The delay (in Seconds) after releasing the keys before
+            returning control to the caller.
 
         Example:
 
@@ -142,7 +152,9 @@ class Keyboard(object):
 
         This is the same as calling 'press(keys);release(keys)'.
 
-        :param string keys: Keys you want pressed and released.
+        :param keys: Keys you want pressed and released.
+        :param delay: The delay (in Seconds) after pressing and releasing each
+            key.
 
         Example:
 
@@ -156,6 +168,11 @@ class Keyboard(object):
 
     def type(self, string, delay=0.1):
         """Simulate a user typing a string of text.
+
+        :param string: The string to text to type.
+        :param delay: The delay (in Seconds) after pressing and releasing each
+            key. Note that the default value here is shorter than for the press,
+            release and press_and_release methods.
 
         .. note:: Only 'normal' keys can be typed with this method. Control
          characters (such as 'Alt' will be interpreted as an 'A', and 'l',
@@ -176,7 +193,20 @@ class Keyboard(object):
 
 
 class Mouse(object):
-    """A base class for all mouse-type classes."""
+
+    """A simple mouse device class.
+
+    The mouse class is used to generate mnouse events while in an autopilot
+    test. This class should not be instantiated directly however. To get an
+    instance of the mouse class, call :py:func:`get_mouse` instead.
+
+    For example, to create a mouse object and click at (100,50):
+
+    >>> mouse = autopilot.emulators.input.get_mouse()
+    >>> mouse.move(100, 50)
+    >>> mouse.click()
+
+    """
 
     @property
     def x(self):
@@ -245,11 +275,11 @@ class Mouse(object):
 
 
 class Touch(object):
-    """A Low level interface to generate single finger touch events.
+    """A simple touch driver class.
 
     This class can be used for any touch events that require a single active
-    touch at once. If you need more than one simultanious touch event, you need
-    to use the gestural support.
+    touch at once. If you want to do complex gestures (including multi-touch
+    gestures), look at the :py:mod:`autopilot.emulators.gestures` module.
 
     """
 

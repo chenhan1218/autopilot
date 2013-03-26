@@ -48,7 +48,7 @@ class Keyboard(KeyboardBase):
             raise TypeError("'keys' argument must be a string.")
 
         for key in keys.split('+'):
-            for event in _get_events_for_key(key):
+            for event in Keyboard._get_events_for_key(key):
                 self._emit(event, PRESS)
                 sleep(delay)
 
@@ -71,7 +71,7 @@ class Keyboard(KeyboardBase):
         # # release keys in the reverse order they were pressed in.
         # keys = self.__translate_keys(keys)
         for key in reversed(keys.split('+')):
-            for event in _get_events_for_key(key):
+            for event in Keyboard._get_events_for_key(key):
                 self._emit(event, RELEASE)
                 sleep(delay)
 
@@ -120,11 +120,31 @@ class Keyboard(KeyboardBase):
         #     fake_input(get_display(), X.KeyRelease, keycode)
         # _PRESSED_KEYS = []
 
+    @staticmethod
+    def _get_events_for_key(key):
+        """Return a list of events required to generate 'key' as an input.
+
+        Multiple keys will be returned when the key specified requires more than one
+        keypress to generate (for example, upper-case letters).
+
+        """
+        events = []
+        if key.isupper():
+            events.append(e.KEY_LEFTSHIFT)
+        keyname = _UINPUT_CODE_TRANSLATIONS.get(key.upper(), key)
+        evt = getattr(e, 'KEY_' + keyname.upper(), None)
+        if evt is None:
+            raise ValueError("Unknown key name: '%s'" % key)
+        events.append(evt)
+        return events
+
+
 last_tracking_id = 0
 def get_next_tracking_id():
     global last_tracking_id
     last_tracking_id += 1
     return last_tracking_id
+
 
 def create_touch_device(res_x=None, res_y=None):
     """Create and return a UInput touch device.
@@ -293,58 +313,3 @@ _UINPUT_CODE_TRANSLATIONS = {
     'ALT': 'LEFTALT',
     'SHIFT': 'LEFTSHIFT',
 }
-
-
-def _get_events_for_key(key):
-    """Return a list of events required to generate 'key' as an input.
-
-    Multiple keys will be returned when the key specified requires more than one
-    keypress to generate (for example, upper-case letters).
-
-    """
-    events = []
-    if key.isupper():
-        events.append(e.KEY_LEFTSHIFT)
-    keyname = _UINPUT_CODE_TRANSLATIONS.get(key.upper(), key)
-    evt = getattr(e, 'KEY_' + keyname.upper(), None)
-    if evt is None:
-        raise ValueError("Unknown key name: '%s'" % key)
-    events.append(evt)
-    return events
-
-
-def pinch(self, center, distance_start, distance_end):
-    """Perform a two finger pinch (zoom) gesture
-    "center" gives the coordinates [x,y] of the center between the two fingers
-    "distance_start" [x,y] values to move away from the center for the start
-    "distance_end" [x,y] values to move away from the center for the end
-    The fingers will move in 100 steps between the start and the end points.
-    If start is smaller than end, the gesture will zoom in, otherwise it
-    will zoom out."""
-
-    finger_1_start = [center[0] - distance_start[0], center[1] - distance_start[1]]
-    finger_2_start = [center[0] + distance_start[0], center[1] + distance_start[1]]
-    finger_1_end = [center[0] - distance_end[0], center[1] - distance_end[1]]
-    finger_2_end = [center[0] + distance_end[0], center[1] + distance_end[1]]
-
-    dx = 1.0 * (finger_1_end[0] - finger_1_start[0]) / 100
-    dy = 1.0 * (finger_1_end[1] - finger_1_start[1]) / 100
-
-    self._finger_down(0, finger_1_start[0], finger_1_start[1])
-    self._finger_down(1, finger_2_start[0], finger_2_start[1])
-
-    finger_1_cur = [finger_1_start[0] + dx, finger_1_start[1] + dy]
-    finger_2_cur = [finger_2_start[0] - dx, finger_2_start[1] - dy]
-
-    for i in range(0, 100):
-        self._finger_move(0, finger_1_cur[0], finger_1_cur[1])
-        self._finger_move(1, finger_2_cur[0], finger_2_cur[1])
-        sleep(0.005)
-
-        finger_1_cur = [finger_1_cur[0] + dx, finger_1_cur[1] + dy]
-        finger_2_cur = [finger_2_cur[0] - dx, finger_2_cur[1] - dy]
-
-    self._finger_move(0, finger_1_end[0], finger_1_end[1])
-    self._finger_move(1, finger_2_end[0], finger_2_end[1])
-    self._finger_up(0)
-    self._finger_up(1)

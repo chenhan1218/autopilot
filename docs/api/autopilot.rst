@@ -31,6 +31,13 @@ Emulators Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`gestures` Modules
+
+.. automodule:: autopilot.emulators.gestures
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`bamf` Module
 ------------------
 

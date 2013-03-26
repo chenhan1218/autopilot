@@ -7,7 +7,7 @@
 # by the Free Software Foundation.
 
 from collections import OrderedDict
-from autopilot.utilities import get_debug_logger
+from autopilot.utilities import _pick_variant, get_debug_logger
 
 
 def get_display(preferred_variant=""):
@@ -33,21 +33,6 @@ def get_display(preferred_variant=""):
     variants['X11'] = get_x11_display
     variants['UPA'] = get_upa_display
     return _pick_variant(variants, preferred_variant)
-
-
-def _pick_variant(variants, preferred_variant):
-    possible_backends = variants.keys()
-    get_debug_logger().debug("Possible variants: %s", ','.join(possible_backends))
-    if preferred_variant in possible_backends:
-        possible_backends.sort(lambda a,b: -1 if a == preferred_variant else 0)
-    failure_reasons = []
-    for be in possible_backends:
-        try:
-            return variants[be]()
-        except Exception as e:
-            get_debug_logger().warning("Can't create variant %s: %r", be, e)
-            failure_reasons.append('%s: %r' % (be, e))
-    raise RuntimeError("Unable to instantiate any backends\n%s" % '\n'.join(failure_reasons))
 
 
 def is_rect_on_screen(self, screen_number, rect):
@@ -77,7 +62,6 @@ def is_point_on_any_screen(self, point):
     return any([is_point_on_screen(m, point) for m in range(get_display().get_num_screens())])
 
 
-# This the interface that the concrete implementations will use.
 class Display:
     """The base class/inteface for the display devices"""
 

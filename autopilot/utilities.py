@@ -23,6 +23,22 @@ from Xlib import X, display, protocol
 
 _display = None
 
+
+def _pick_variant(variants, preferred_variant):
+    possible_backends = variants.keys()
+    get_debug_logger().debug("Possible variants: %s", ','.join(possible_backends))
+    if preferred_variant in possible_backends:
+        possible_backends.sort(lambda a,b: -1 if a == preferred_variant else 0)
+    failure_reasons = []
+    for be in possible_backends:
+        try:
+            return variants[be]()
+        except Exception as e:
+            get_debug_logger().warning("Can't create variant %s: %r", be, e)
+            failure_reasons.append('%s: %r' % (be, e))
+    raise RuntimeError("Unable to instantiate any backends\n%s" % '\n'.join(failure_reasons))
+
+
 def get_display():
     """Get a Xlib display object. Creating the display prints garbage to stdout."""
     global _display

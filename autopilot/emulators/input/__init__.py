@@ -70,9 +70,29 @@ def get_mouse(preferred_variant=""):
     return _pick_variant(variants, preferred_variant)
 
 
+def get_touch(preferred_variant=""):
+    """Get an instance of the Touch class.
+
+    If variant is specified, it should be a string that specifies a backend to
+    use. However, this hint can be ignored - autopilot will prefer to return a
+    touch variant other than the one requested, rather than fail to return
+    anything at all.
+
+    If autopilot cannot instantate any of the possible backends, a RuntimeError
+    will be raised.
+    """
+    def get_uinput_touch():
+        from autopilot.emulators.input._uinput import Touch
+        return Touch()
+
+    variants = OrderedDict()
+    variants['UInput'] = get_uinput_touch
+    return _pick_variant(variants, preferred_variant)
+
+
 def _pick_variant(variants, preferred_variant):
     possible_backends = variants.keys()
-    get_debug_logger().debug("Possible keyboard variants: %s", ','.join(possible_backends))
+    get_debug_logger().debug("Possible variants: %s", ','.join(possible_backends))
     if preferred_variant in possible_backends:
         possible_backends.sort(lambda a,b: -1 if a == preferred_variant else 0)
     failure_reasons = []
@@ -80,9 +100,9 @@ def _pick_variant(variants, preferred_variant):
         try:
             return variants[be]()
         except Exception as e:
-            get_debug_logger().warning("Can't create keyboard variant %s: %r", be, e)
+            get_debug_logger().warning("Can't create variant %s: %r", be, e)
             failure_reasons.append('%s: %r' % (be, e))
-    raise RuntimeError("Unable to instantiate any Keyboard backends\n%s" % '\n'.join(failure_reasons))
+    raise RuntimeError("Unable to instantiate any backends\n%s" % '\n'.join(failure_reasons))
 
 
 class Keyboard(object):
@@ -221,4 +241,54 @@ class Mouse(object):
     @staticmethod
     def cleanup():
         """Put mouse in a known safe state."""
+        raise NotImplementedError("You cannot use this class directly.")
+
+
+class Touch(object):
+    """A Low level interface to generate single finger touch events.
+
+    This class can be used for any touch events that require a single active
+    touch at once. If you need more than one simultanious touch event, you need
+    to use the gestural support.
+
+    """
+
+    @property
+    def pressed(self):
+        """Return True if this touch is currently in use (i.e.- pressed on the
+            'screen').
+
+        """
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def tap(self, x, y):
+        """Click (or 'tap') at given x and y coordinates."""
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def tap_object(self, object):
+        """Tap the center point of a given object.
+
+        It does this by looking for several attributes, in order. The first
+        attribute found will be used. The attributes used are (in order):
+
+         * globalRect (x,y,w,h)
+         * center_x, center_y
+         * x, y, w, h
+
+        :raises: **ValueError** if none of these attributes are found, or if an
+         attribute is of an incorrect type.
+
+         """
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def press(self, x, y):
+        """Press and hold."""
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def release(self):
+        """Release a previously pressed finger"""
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def drag(self, x1, y1, x2, y2):
+        """Perform a drag gesture from (x1,y1) to (x2,y2)"""
         raise NotImplementedError("You cannot use this class directly.")

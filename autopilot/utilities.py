@@ -16,75 +16,8 @@ from __future__ import absolute_import
 
 import logging
 import os
-import sys
 import time
 from functools import wraps
-from Xlib import X, display, protocol
-
-_display = None
-
-def get_display():
-    """Get a Xlib display object. Creating the display prints garbage to stdout."""
-    global _display
-    if _display is None:
-        with Silence():
-            _display = display.Display()
-    return _display
-
-
-
-def make_window_skip_taskbar(window, set_flag=True):
-    """Set the skip-taskbar kint on an X11 window.
-
-    'window' should be an Xlib window object.
-    set_flag should be 'True' to set the flag, 'False' to clear it.
-
-    """
-    state = get_display().get_atom('_NET_WM_STATE_SKIP_TASKBAR', 1)
-    action = int(set_flag)
-    if action == 0:
-        print "Clearing flag"
-    elif action == 1:
-        print "Setting flag"
-    _setProperty('_NET_WM_STATE', [action, state, 0, 1], window)
-    get_display().sync()
-
-
-def get_desktop_viewport():
-    """Get the x,y coordinates for the current desktop viewport top-left corner."""
-    return _getProperty('_NET_DESKTOP_VIEWPORT')
-
-
-def get_desktop_geometry():
-    """Get the full width and height of the desktop, including all the viewports."""
-    return _getProperty('_NET_DESKTOP_GEOMETRY')
-
-
-def _setProperty(_type, data, win=None, mask=None):
-    """ Send a ClientMessage event to a window"""
-    if not win:
-        win = get_display().screen().root
-    if type(data) is str:
-        dataSize = 8
-    else:
-        # data length must be 5 - pad with 0's if it's short, truncate otherwise.
-        data = (data + [0] * (5 - len(data)))[:5]
-        dataSize = 32
-
-    ev = protocol.event.ClientMessage(window=win,
-        client_type=get_display().get_atom(_type),
-        data=(dataSize, data))
-
-    if not mask:
-        mask = (X.SubstructureRedirectMask | X.SubstructureNotifyMask)
-    get_display().screen().root.send_event(ev, event_mask=mask)
-
-
-def _getProperty(_type, win=None):
-    if not win:
-        win = get_display().screen().root
-    atom = win.get_full_property(get_display().get_atom(_type), X.AnyPropertyType)
-    if atom: return atom.value
 
 
 def get_compiz_setting(plugin_name, setting_name):

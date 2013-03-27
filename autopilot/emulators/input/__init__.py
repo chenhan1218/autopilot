@@ -27,15 +27,15 @@ without notice.
 
 
 def get_keyboard(preferred_variant=""):
-    """Get an instance of the Keyboard class.
+    """Get an instance of the :py:class:`Keyboard` class.
 
-    If variant is specified, it should be a string that specifies a backend to
-    use. However, this hint can be ignored - autopilot will prefer to return a
-    keyboard variant other than the one requested, rather than fail to return
-    anything at all.
+    :param preferred_variant: A string containing a hint as to which variant you
+        would like. However, this hint can be ignored - autopilot will prefer to
+        return a keyboard variant other than the one requested, rather than fail
+        to return anything at all.
+    :raises: a RuntimeError will be raised if autopilot cannot instantate any of
+        the possible backends.
 
-    If autopilot cannot instantate any of the possible backends, a RuntimeError
-    will be raised.
     """
     def get_x11_kb():
         from autopilot.emulators.input._X11 import Keyboard
@@ -51,15 +51,15 @@ def get_keyboard(preferred_variant=""):
 
 
 def get_mouse(preferred_variant=""):
-    """Get an instance of the Mouse class.
+    """Get an instance of the :py:class:`Mouse` class.
 
-    If variant is specified, it should be a string that specifies a backend to
-    use. However, this hint can be ignored - autopilot will prefer to return a
-    mouse variant other than the one requested, rather than fail to return
-    anything at all.
+    :param preferred_variant: A string containing a hint as to which variant you
+        would like. However, this hint can be ignored - autopilot will prefer to
+        return a mouse variant other than the one requested, rather than fail
+        to return anything at all.
+    :raises: a RuntimeError will be raised if autopilot cannot instantate any of
+        the possible backends.
 
-    If autopilot cannot instantate any of the possible backends, a RuntimeError
-    will be raised.
     """
     def get_x11_mouse():
         from autopilot.emulators.input._X11 import Mouse
@@ -70,9 +70,29 @@ def get_mouse(preferred_variant=""):
     return _pick_variant(variants, preferred_variant)
 
 
+def get_touch(preferred_variant=""):
+    """Get an instance of the :py:class:`Touch` class.
+
+    :param preferred_variant: A string containing a hint as to which variant you
+        would like. However, this hint can be ignored - autopilot will prefer to
+        return a touch variant other than the one requested, rather than fail
+        to return anything at all.
+    :raises: a RuntimeError will be raised if autopilot cannot instantate any of
+        the possible backends.
+
+    """
+    def get_uinput_touch():
+        from autopilot.emulators.input._uinput import Touch
+        return Touch()
+
+    variants = OrderedDict()
+    variants['UInput'] = get_uinput_touch
+    return _pick_variant(variants, preferred_variant)
+
+
 def _pick_variant(variants, preferred_variant):
     possible_backends = variants.keys()
-    get_debug_logger().debug("Possible keyboard variants: %s", ','.join(possible_backends))
+    get_debug_logger().debug("Possible variants: %s", ','.join(possible_backends))
     if preferred_variant in possible_backends:
         possible_backends.sort(lambda a,b: -1 if a == preferred_variant else 0)
     failure_reasons = []
@@ -80,25 +100,33 @@ def _pick_variant(variants, preferred_variant):
         try:
             return variants[be]()
         except Exception as e:
-            get_debug_logger().warning("Can't create keyboard variant %s: %r", be, e)
+            get_debug_logger().warning("Can't create variant %s: %r", be, e)
             failure_reasons.append('%s: %r' % (be, e))
-    raise RuntimeError("Unable to instantiate any Keyboard backends\n%s" % '\n'.join(failure_reasons))
+    raise RuntimeError("Unable to instantiate any backends\n%s" % '\n'.join(failure_reasons))
 
 
 class Keyboard(object):
 
-    """A base class for all keyboard-type devices."""
+    """A simple keyboard device class.
+
+    The keyboard class is used to generate key events while in an autopilot
+    test. This class should not be instantiated directly however. To get an
+    instance of the keyboard class, call :py:func:`get_keyboard` instead.
+
+    """
 
     def press(self, keys, delay=0.2):
         """Send key press events only.
 
-        :param string keys: Keys you want pressed.
+        :param keys: Keys you want pressed.
+        :param delay: The delay (in Seconds) after pressing the keys before
+            returning control to the caller.
 
         Example:
 
         >>> press('Alt+F2')
 
-        presses the 'Alt' and 'F2' keys.
+        presses the 'Alt' and 'F2' keys, but does not release them.
 
         """
         raise NotImplementedError("You cannot use this class directly.")
@@ -106,7 +134,9 @@ class Keyboard(object):
     def release(self, keys, delay=0.2):
         """Send key release events only.
 
-        :param string keys: Keys you want released.
+        :param keys: Keys you want released.
+        :param delay: The delay (in Seconds) after releasing the keys before
+            returning control to the caller.
 
         Example:
 
@@ -122,7 +152,9 @@ class Keyboard(object):
 
         This is the same as calling 'press(keys);release(keys)'.
 
-        :param string keys: Keys you want pressed and released.
+        :param keys: Keys you want pressed and released.
+        :param delay: The delay (in Seconds) after pressing and releasing each
+            key.
 
         Example:
 
@@ -136,6 +168,11 @@ class Keyboard(object):
 
     def type(self, string, delay=0.1):
         """Simulate a user typing a string of text.
+
+        :param string: The string to text to type.
+        :param delay: The delay (in Seconds) after pressing and releasing each
+            key. Note that the default value here is shorter than for the press,
+            release and press_and_release methods.
 
         .. note:: Only 'normal' keys can be typed with this method. Control
          characters (such as 'Alt' will be interpreted as an 'A', and 'l',
@@ -156,7 +193,20 @@ class Keyboard(object):
 
 
 class Mouse(object):
-    """A base class for all mouse-type classes."""
+
+    """A simple mouse device class.
+
+    The mouse class is used to generate mnouse events while in an autopilot
+    test. This class should not be instantiated directly however. To get an
+    instance of the mouse class, call :py:func:`get_mouse` instead.
+
+    For example, to create a mouse object and click at (100,50):
+
+    >>> mouse = autopilot.emulators.input.get_mouse()
+    >>> mouse.move(100, 50)
+    >>> mouse.click()
+
+    """
 
     @property
     def x(self):
@@ -221,4 +271,54 @@ class Mouse(object):
     @staticmethod
     def cleanup():
         """Put mouse in a known safe state."""
+        raise NotImplementedError("You cannot use this class directly.")
+
+
+class Touch(object):
+    """A simple touch driver class.
+
+    This class can be used for any touch events that require a single active
+    touch at once. If you want to do complex gestures (including multi-touch
+    gestures), look at the :py:mod:`autopilot.emulators.gestures` module.
+
+    """
+
+    @property
+    def pressed(self):
+        """Return True if this touch is currently in use (i.e.- pressed on the
+            'screen').
+
+        """
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def tap(self, x, y):
+        """Click (or 'tap') at given x and y coordinates."""
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def tap_object(self, object):
+        """Tap the center point of a given object.
+
+        It does this by looking for several attributes, in order. The first
+        attribute found will be used. The attributes used are (in order):
+
+         * globalRect (x,y,w,h)
+         * center_x, center_y
+         * x, y, w, h
+
+        :raises: **ValueError** if none of these attributes are found, or if an
+         attribute is of an incorrect type.
+
+         """
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def press(self, x, y):
+        """Press and hold."""
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def release(self):
+        """Release a previously pressed finger"""
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def drag(self, x1, y1, x2, y2):
+        """Perform a drag gesture from (x1,y1) to (x2,y2)"""
         raise NotImplementedError("You cannot use this class directly.")

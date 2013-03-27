@@ -8,7 +8,7 @@
 
 "Tests for the autopilot platform code."
 
-import autopilot.emulators.platform as platform
+import autopilot.platform as platform
 
 from StringIO import StringIO
 from testtools import TestCase
@@ -30,7 +30,7 @@ class PlatformDetectorTests(TestCase):
         detector2 = platform._PlatformDetector.create()
         self.assertThat(id(detector1), Equals(id(detector2)))
 
-    @patch('autopilot.emulators.platform._get_property_file')
+    @patch('autopilot.platform._get_property_file')
     def test_default_model(self, mock_get_property_file):
         """The default model name must be 'Desktop'."""
         mock_get_property_file.return_value = None
@@ -38,7 +38,7 @@ class PlatformDetectorTests(TestCase):
         detector = platform._PlatformDetector.create()
         self.assertThat(detector.model, Equals('Desktop'))
 
-    @patch('autopilot.emulators.platform._get_property_file')
+    @patch('autopilot.platform._get_property_file')
     def test_default_image_codename(self, mock_get_property_file):
         """The default image codename must be 'Desktop'."""
         mock_get_property_file.return_value = None
@@ -46,7 +46,7 @@ class PlatformDetectorTests(TestCase):
         detector = platform._PlatformDetector.create()
         self.assertThat(detector.image_codename, Equals('Desktop'))
 
-    @patch('autopilot.emulators.platform._get_property_file')
+    @patch('autopilot.platform._get_property_file')
     def test_model_is_set_from_property_file(self, mock_get_property_file):
         """Detector must read product model from android properties file."""
         mock_get_property_file.return_value = StringIO("ro.product.model=test123")
@@ -54,7 +54,7 @@ class PlatformDetectorTests(TestCase):
         detector = platform._PlatformDetector.create()
         self.assertThat(detector.model, Equals('test123'))
 
-    @patch('autopilot.emulators.platform._get_property_file', new=lambda: StringIO(""))
+    @patch('autopilot.platform._get_property_file', new=lambda: StringIO(""))
     def test_model_has_default_when_not_in_property_file(self):
         """Detector must use 'Desktop' as a default value for the model name
         when the property file exists, but does not contain a model description.
@@ -63,7 +63,7 @@ class PlatformDetectorTests(TestCase):
         detector = platform._PlatformDetector.create()
         self.assertThat(detector.model, Equals('Desktop'))
 
-    @patch('autopilot.emulators.platform._get_property_file')
+    @patch('autopilot.platform._get_property_file')
     def test_product_codename_is_set_from_property_file(self, mock_get_property_file):
         """Detector must read product model from android properties file."""
         mock_get_property_file.return_value = StringIO("ro.product.name=test123")
@@ -71,7 +71,7 @@ class PlatformDetectorTests(TestCase):
         detector = platform._PlatformDetector.create()
         self.assertThat(detector.image_codename, Equals('test123'))
 
-    @patch('autopilot.emulators.platform._get_property_file', new=lambda: StringIO(""))
+    @patch('autopilot.platform._get_property_file', new=lambda: StringIO(""))
     def test_product_codename_has_default_when_not_in_property_file(self):
         """Detector must use 'Desktop' as a default value for the product codename
         when the property file exists, but does not contain a model description.

@@ -22,7 +22,7 @@ def model(self):
     For desktop / laptop installations, this will return "Desktop".
     Otherwise, the current hardware model will be returned. For example:
 
-    >>> autopilot.emulators.platform.model()
+    >>> autopilot.platform.model()
     ... "Galaxy Nexus"
 
     """
@@ -36,7 +36,7 @@ def image_codename(self):
     Otherwise, the codename of the image that was installed will be
     returned. For example:
 
-    >>> autopilot.emulators.platform.image_codename()
+    >>> autopilot.platform.image_codename()
     ... "maguro"
 
     """

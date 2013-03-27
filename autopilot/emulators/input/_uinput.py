@@ -158,10 +158,10 @@ def create_touch_device(res_x=None, res_y=None):
     # res_y = 1280
 
     if res_x is None or res_y is None:
-        from autopilot.emulators.X11 import ScreenGeometry
-        sg = ScreenGeometry()
-        res_x = sg.get_screen_width()
-        res_y = sg.get_screen_height()
+        from autopilot.emulators.display import get_display
+        display = get_display()
+        res_x = display.get_screen_width()
+        res_y = display.get_screen_height()
 
     cap_mt = {
         e.EV_ABS : [

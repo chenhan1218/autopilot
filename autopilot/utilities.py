@@ -14,6 +14,7 @@
 
 from __future__ import absolute_import
 
+import inspect
 import logging
 import os
 import time
@@ -149,6 +150,10 @@ def deprecated(alternative):
         @wraps(fn)
         def wrapped(*args, **kwargs):
             sys.stderr.write("WARNING: This function is deprecated. Please use '%s' instead.\n" % alternative)
+            outerframe_details = inspect.getouterframes(inspect.currentframe())[1]
+            filename, line_number, function_name = outerframe_details[1:4]
+            sys.stderr.write("WARNING: in file \"{0}\", line {1} in {2}\n".format(filename, line_number, function_name))
+            sys.stderr.write("This function is deprecated. Please use '%s' instead.\n" % alternative)
             return fn(*args, **kwargs)
         return wrapped
     return fdec

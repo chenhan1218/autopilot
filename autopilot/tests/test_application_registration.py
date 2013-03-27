@@ -9,8 +9,8 @@
 from __future__ import absolute_import
 
 from testtools import TestCase
-from testtools.matchers import Equals, Is, Not, raises, Contains
-from mock import patch
+from testtools.matchers import Equals, Not, raises, Contains
+
 
 from autopilot.testcase import AutopilotTestCase
 

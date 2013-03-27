@@ -6,38 +6,97 @@
 # under the terms of the GNU General Public License version 3, as published
 # by the Free Software Foundation.
 
-"Platform identification utilities for Autopilot."
+from os.path import exists
 
+"""Platform identification utilities for Autopilot.
 
-class Platform(object):
-    """The Platform class encapsulates details relevant to the current platform.
+This module provides functions that give test authors hints as to which platform
+their tests are currently running on. This is useful when tests should only run
+on certain platforms.
 
-    Test authors should not instantiate this class directly. Instead, use the
-    create method to create an instance of the Platform class.
+"""
+
+def model(self):
+    """Get the model name of the current platform.
+
+    For desktop / laptop installations, this will return "Desktop".
+    Otherwise, the current hardware model will be returned. For example:
+
+    >>> autopilot.emulators.platform.model()
+    ... "Galaxy Nexus"
 
     """
+    return _PlatformDetector.create().model
 
-    @property
-    def model(self):
-        """Get the model name of the current platform.
 
-        For desktop / laptop installations, this will return "Desktop".
-        Otherwise, the current hardware model will be returned. For example:
+def image_codename(self):
+    """Get the image codename.
 
-        >>> Platform.create().model
-        ... "Galaxy Nexus"
+    For desktop / laptop installations this will return "Desktop".
+    Otherwise, the codename of the image that was installed will be
+    returned. For example:
 
-        """
+    >>> autopilot.emulators.platform.image_codename()
+    ... "maguro"
 
-    @property
-    def image_codename(self):
-        """Get the image codename.
+    """
+    return _PlatformDetector.create().image_codename
 
-        For desktop / laptop installations this will return "Desktop".
-        Otherwise, the codename of the image that was installed will be
-        returned. FOr example:
 
-        >>> Platform.create().image_codename
-        ... "maguro"
+class _PlatformDetector(object):
 
-        """
+    _cached_detector = None
+
+    @staticmethod
+    def create():
+        """Create a platform detector object, or return one we baked earlier."""
+        if _PlatformDetector._cached_detector is None:
+            _PlatformDetector._cached_detector = _PlatformDetector()
+        return _PlatformDetector._cached_detector
+
+    def __init__(self):
+        self.model = "Desktop"
+        self.image_codename = "Desktop"
+
+        property_file = _get_property_file()
+        if property_file is not None:
+            self.update_values_from_build_file(property_file)
+
+    def update_values_from_build_file(self, property_file):
+        """Read build.prop file and parse it."""
+        properties = _parse_build_properties_file(property_file)
+        self.model = properties.get('ro.product.model', "Desktop")
+        self.image_codename = properties.get('ro.product.name', "Desktop")
+
+
+def _get_property_file():
+    """Return a file-like object that contains the contents of the build properties
+    file, if it exists, or None.
+
+    """
+    if exists('/system/build.prop'):
+        return open('/system/build.prop')
+    return None
+
+
+def _parse_build_properties_file(property_file):
+    """Parse 'property_file', which must be a file-like object containing the
+    system build properties.
+
+    Returns a dictionary of key,value pairs.
+
+    """
+    properties = {}
+    for line in property_file:
+        line = line.strip()
+        if not line or line.startswith('#') or line.isspace():
+            continue
+        split_location = line.find('=')
+        if split_location == -1:
+            continue
+        key = line[:split_location]
+        value = line[split_location + 1:]
+
+        properties[key] = value
+    return properties
+

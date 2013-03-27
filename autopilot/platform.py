@@ -16,7 +16,7 @@ on certain platforms.
 
 """
 
-def model(self):
+def model():
     """Get the model name of the current platform.
 
     For desktop / laptop installations, this will return "Desktop".
@@ -29,7 +29,7 @@ def model(self):
     return _PlatformDetector.create().model
 
 
-def image_codename(self):
+def image_codename():
     """Get the image codename.
 
     For desktop / laptop installations this will return "Desktop".

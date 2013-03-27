@@ -29,7 +29,6 @@ from testtools.content import text_content
 from testtools.matchers import Equals
 import time
 
-from autopilot.compizconfig import get_global_context
 from autopilot.emulators.bamf import Bamf
 from autopilot.emulators.zeitgeist import Zeitgeist
 from autopilot.emulators.processmanager import ProcessManager
@@ -42,9 +41,7 @@ from autopilot.globals import (get_log_verbose,
     )
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
-from autopilot.utilities import (get_compiz_setting,
-    LogFormatter,
-    )
+from autopilot.utilities import LogFormatter
 
 logger = logging.getLogger(__name__)
 
@@ -195,15 +192,6 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     process respectively. All applications launched in this way will be closed
     when the test ends.
 
-    **Set Unity & Compiz Options**
-
-    The :meth:`~autopilot.testcase.AutopilotTestCase.set_unity_option` and
-    :meth:`~autopilot.testcase.AutopilotTestCase.set_compiz_option` methods set a
-    unity or compiz setting to a particular value for the duration of the
-    current test only. This is useful if you want the window manager to behave
-    in a particular fashion for a particular test, while being assured that any
-    chances are non-destructive.
-
     **Patch Process Environment**
 
     The :meth:`~autopilot.testcase.AutopilotTestCase.patch_environment` method
@@ -262,64 +250,6 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         self.screen_geo = ScreenGeometry()
         self.addCleanup(self.keyboard.cleanup)
         self.addCleanup(self.mouse.cleanup)
-
-    def call_gsettings_cmd(self, command, schema, *args):
-        """Set a desktop wide gsettings option
-
-        Using the gsettings command because there is a bug with importing
-        from gobject introspection and pygtk2 simultaneously, and the Xlib
-        keyboard layout bits are very unwieldy. This seems like the best
-        solution, even a little bit brutish.
-        """
-        cmd = ['gsettings', command, schema] + list(args)
-        # strip to remove the trailing \n.
-        ret = check_output(cmd).strip()
-        time.sleep(5)
-        reset_display()
-        return ret
-
-    def set_unity_option(self, option_name, option_value):
-        """Set an option in the unity compiz plugin options.
-
-        .. note:: The value will be set for the current test only, and
-         automatically undone when the test ends.
-
-        :param option_name: The name of the unity option.
-        :param option_value: The value you want to set.
-        :raises: **KeyError** if the option named does not exist.
-
-        """
-        self.set_compiz_option("unityshell", option_name, option_value)
-
-    def set_compiz_option(self, plugin_name, option_name, option_value):
-        """Set a compiz option for the duration of this test only.
-
-        .. note:: The value will be set for the current test only, and
-         automatically undone when the test ends.
-
-        :param plugin_name: The name of the compiz plugin where the option is
-         registered. If the option is not in a plugin, the string "core" should
-         be used as the plugin name.
-        :param option_name: The name of the unity option.
-        :param option_value: The value you want to set.
-        :raises: **KeyError** if the option named does not exist.
-
-        """
-        old_value = self._set_compiz_option(plugin_name, option_name, option_value)
-        # Cleanup is LIFO, during clean-up also allow unity to respond
-        self.addCleanup(time.sleep, 0.5)
-        self.addCleanup(self._set_compiz_option, plugin_name, option_name, old_value)
-        # Allow unity time to respond to the new setting.
-        time.sleep(0.5)
-
-    def _set_compiz_option(self, plugin_name, option_name, option_value):
-        logger.info("Setting compiz option '%s' in plugin '%s' to %r",
-            option_name, plugin_name, option_value)
-        setting = get_compiz_setting(plugin_name, option_name)
-        old_value = setting.Value
-        setting.Value = option_value
-        get_global_context().Write()
-        return old_value
 
     @classmethod
     def register_known_application(cls, name, desktop_file, process_name):

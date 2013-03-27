@@ -35,32 +35,6 @@ def _pick_variant(variants, preferred_variant):
     raise RuntimeError("Unable to instantiate any backends\n%s" % '\n'.join(failure_reasons))
 
 
-def get_compiz_setting(plugin_name, setting_name):
-    """Get a compiz setting object.
-
-    'plugin_name' is the name of the plugin (e.g. 'core' or 'unityshell')
-    'setting_name' is the name of the setting (e.g. 'alt_tab_timeout')
-
-    This function will raise KeyError if the plugin or setting named does not
-    exist.
-
-    """
-    # circular dependancy:
-    from autopilot.compizconfig import get_setting
-    return get_setting(plugin_name, setting_name)
-
-
-def get_compiz_option(plugin_name, setting_name):
-    """Get a compiz setting value.
-
-    This is the same as calling:
-
-    >>> get_compiz_setting(plugin_name, setting_name).Value
-
-    """
-    return get_compiz_setting(plugin_name, setting_name).Value
-
-
 # Taken from http://code.activestate.com/recipes/577564-context-manager-for-low-level-redirection-of-stdou/
 # licensed under the MIT license.
 class Silence(object):

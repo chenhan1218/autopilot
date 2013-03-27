@@ -34,7 +34,6 @@ from autopilot.emulators.zeitgeist import Zeitgeist
 from autopilot.emulators.processmanager import ProcessManager
 from autopilot.emulators.X11 import ScreenGeometry, reset_display
 from autopilot.emulators.input import get_keyboard, get_mouse
-from autopilot.glibrunner import AutopilotTestRunner
 from autopilot.globals import (get_log_verbose,
     get_video_recording_enabled,
     get_video_record_directory,
@@ -200,8 +199,6 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     current test only.
 
     """
-
-    run_tests_with = AutopilotTestRunner
 
     KNOWN_APPS = {
         'Character Map' : {

@@ -9,8 +9,7 @@
 from __future__ import absolute_import
 
 from testtools import TestCase
-from testtools.matchers import Equals, Is, Not, raises
-from mock import patch
+from testtools.matchers import Is, Not, raises
 
 from autopilot.introspection.qt import QtIntrospectionTestMixin
 

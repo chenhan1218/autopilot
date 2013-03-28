@@ -12,6 +12,8 @@
 from autopilot.emulators.input import Keyboard as KeyboardBase
 from autopilot.emulators.input import Touch as TouchBase
 from autopilot.emulators.input._common import get_center_point
+import autopilot.platform
+
 import logging
 from time import sleep
 from evdev import AbsData, UInput, ecodes as e
@@ -153,15 +155,17 @@ def create_touch_device(res_x=None, res_y=None):
 
     """
 
-    # FIXME: remove the harcoded values and determine ScreenGeometry without X11
-    # res_x = 720
-    # res_y = 1280
-
     if res_x is None or res_y is None:
-        from autopilot.emulators.X11 import ScreenGeometry
-        sg = ScreenGeometry()
-        res_x = sg.get_screen_width()
-        res_y = sg.get_screen_height()
+        from autopilot.emulators.display import get_display
+        display = get_display()
+        res_x = display.get_screen_width()
+        res_y = display.get_screen_height()
+
+    # android uses BTN_TOOL_FINGER, whereas desktop uses BTN_TOUCH. I have no
+    # idea why...
+    touch_tool = e.BTN_TOOL_FINGER
+    if autopilot.platform.model() == 'Desktop':
+        touch_tool = e.BTN_TOUCH
 
     cap_mt = {
         e.EV_ABS : [
@@ -178,7 +182,7 @@ def create_touch_device(res_x=None, res_y=None):
             (e.ABS_MT_SLOT, (0, 9, 0, 0)),
         ],
         e.EV_KEY: [
-            e.BTN_TOUCH,
+            touch_tool,
         ]
     }
 

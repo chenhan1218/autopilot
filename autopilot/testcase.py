@@ -34,6 +34,7 @@ from autopilot.emulators.zeitgeist import Zeitgeist
 from autopilot.emulators.processmanager import ProcessManager
 from autopilot.emulators.X11 import ScreenGeometry, reset_display
 from autopilot.emulators.input import get_keyboard, get_mouse
+from autopilot.emulators.display import get_display
 from autopilot.globals import (get_log_verbose,
     get_video_recording_enabled,
     get_video_record_directory,
@@ -244,7 +245,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         self.mouse = get_mouse()
         self.zeitgeist = Zeitgeist()
 
-        self.screen_geo = ScreenGeometry()
+        self.screen_geo = get_display()
         self.addCleanup(self.keyboard.cleanup)
         self.addCleanup(self.mouse.cleanup)
 

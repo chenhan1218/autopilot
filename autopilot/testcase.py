@@ -34,7 +34,7 @@ from autopilot.emulators.bamf import Bamf
 from autopilot.emulators.zeitgeist import Zeitgeist
 from autopilot.emulators.processmanager import ProcessManager
 from autopilot.emulators.X11 import ScreenGeometry, reset_display
-from autopilot.emulators.input import get_keyboard, get_mouse
+from autopilot.emulators.input import Keyboard, Mouse
 from autopilot.glibrunner import AutopilotTestRunner
 from autopilot.globals import (get_log_verbose,
     get_video_recording_enabled,
@@ -255,8 +255,8 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         self.addCleanup(self._process_manager.compare_system_with_snapshot)
 
         self.bamf = Bamf()
-        self.keyboard = get_keyboard()
-        self.mouse = get_mouse()
+        self.keyboard = Keyboard.create()
+        self.mouse = Mouse.create()
         self.zeitgeist = Zeitgeist()
 
         self.screen_geo = ScreenGeometry()

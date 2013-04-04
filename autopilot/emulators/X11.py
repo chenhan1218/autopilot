@@ -23,7 +23,6 @@ import os
 import subprocess
 
 from autopilot.emulators.bamf import BamfWindow
-from autopilot.emulators.input import get_keyboard, get_mouse
 from autopilot.utilities import deprecated
 
 
@@ -37,14 +36,16 @@ def reset_display():
 
 # Keyboard and Mouse are no longer here. This is for backwards compatibility,
 # but will eventually dissapear.
-@deprecated('autopilot.emulators.input.get_keyboard')
+@deprecated('autopilot.emulators.input.Keyboard.create()')
 def Keyboard():
-    return get_keyboard()
+    from autopilot.emulators.input import Keyboard as KB
+    return KB.create()
 
 
-@deprecated('autopilot.emulators.input.get_mouse')
+@deprecated('autopilot.emulators.input.Mouse.create()')
 def Mouse():
-    return get_mouse()
+    from autopilot.emulators.input import Mouse as M
+    return M.create()
 
 
 @deprecated('autopilot.emulators.display.get_display')

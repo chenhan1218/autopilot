@@ -19,16 +19,18 @@ from Xlib import display, X, protocol
 from autopilot.emulators.dbus_handler import get_session_bus
 from autopilot.utilities import Silence
 
-__all__ = [
-    "Bamf",
-    "BamfApplication",
-    "BamfWindow",
-    ]
+from autopilot.emulators.processmanager import (
+    ProcessManager as ProcessManagerBase,
+    Application as ApplicationBase,
+    Window as WindowBase
+    )
+
 
 _BAMF_BUS_NAME = 'org.ayatana.bamf'
 _X_DISPLAY = None
 
 
+# veebers: this is going to be different
 def get_display():
     """Create an Xlib display object (silently) and return it."""
     global _X_DISPLAY
@@ -51,7 +53,7 @@ def _filter_user_visible(win):
         return False
 
 
-class Bamf(object):
+class ProcessManager(ProcessManagerBase):
     """High-level class for interacting with Bamf from within a test.
 
     Use this class to inspect the state of running applications and open
@@ -72,7 +74,7 @@ class Bamf(object):
         visible to the user in the switcher will be returned.
 
         """
-        apps = [BamfApplication(p) for p in self.matcher_interface.RunningApplications()]
+        apps = [Application(p) for p in self.matcher_interface.RunningApplications()]
         if user_visible_only:
             return filter(_filter_user_visible, apps)
         return apps
@@ -80,7 +82,7 @@ class Bamf(object):
     def get_running_applications_by_desktop_file(self, desktop_file):
         """Return a list of applications that have the desktop file *desktop_file*.
 
-        This method may return an empty list, if no applications
+        This method will return an empty list if no applications
         are found with the specified desktop file.
 
         """
@@ -93,14 +95,6 @@ class Bamf(object):
                 pass
         return apps
 
-    def get_application_by_xid(self, xid):
-        """Return the application that has a child with the requested xid or None."""
-
-        app_path = self.matcher_interface.ApplicationForXid(xid)
-        if len(app_path):
-            return BamfApplication(app_path)
-        return None
-
     def get_open_windows(self, user_visible_only=True):
         """Get a list of currently open windows.
 
@@ -111,18 +105,13 @@ class Bamf(object):
 
         """
 
-        windows = [BamfWindow(w) for w in self.matcher_interface.WindowStackForMonitor(-1)]
+        windows = [Window(w) for w in self.matcher_interface.WindowStackForMonitor(-1)]
         if user_visible_only:
             windows = filter(_filter_user_visible, windows)
         # Now sort on stacking order.
         # We explicitly convert to a list from an iterator since tests frequently
         # try and use len() on return values from these methods.
         return list(reversed(windows))
-
-    def get_window_by_xid(self, xid):
-        """Get the BamfWindow that matches the provided *xid*."""
-        windows = [BamfWindow(w) for w in self.matcher_interface.WindowPaths() if BamfWindow(w).x_id == xid]
-        return windows[0] if windows else None
 
     def wait_until_application_is_running(self, desktop_file, timeout):
         """Wait until a given application is running.
@@ -147,7 +136,7 @@ class Bamf(object):
             # No, so define a callback to watch the ViewOpened signal:
             def on_view_added(bamf_path, name):
                 if bamf_path.split('/')[-1].startswith('application'):
-                    app = BamfApplication(bamf_path)
+                    app = Application(bamf_path)
                     if desktop_file == os.path.split(app.desktop_file)[1]:
                         gobject_loop.quit()
 
@@ -192,7 +181,7 @@ class Bamf(object):
         return proc
 
 
-class BamfApplication(object):
+class Application(ApplicationBase):
     """Represents an application, with information as returned by Bamf.
 
     .. important:: Don't instantiate this class yourself. instead, use the
@@ -265,20 +254,20 @@ class BamfApplication(object):
 
     def get_windows(self):
         """Get a list of the application windows."""
-        return [BamfWindow(w) for w in self._view_iface.Children()]
+        return [Window(w) for w in self._view_iface.Children()]
 
     def __repr__(self):
-        return "<BamfApplication '%s'>" % (self.name)
+        return "<Application '%s'>" % (self.name)
 
     def __eq__(self, other):
         return self.desktop_file == other.desktop_file
 
 
-class BamfWindow(object):
+class Window(WindowBase):
     """Represents an application window, as returned by Bamf.
 
     .. important:: Don't instantiate this class yourself. Instead, use the
-     appropriate methods in BamfApplication.
+     appropriate methods in Application.
 
     """
     def __init__(self, window_path):
@@ -364,7 +353,7 @@ class BamfWindow(object):
         # associated application. For these windows we return none.
         parents = self._view_iface.Parents()
         if parents:
-            return BamfApplication(parents[0])
+            return Application(parents[0])
         else:
             return None
 
@@ -423,7 +412,7 @@ class BamfWindow(object):
         self._x_win.configure(stack_mode=X.Above)
 
     def __repr__(self):
-        return "<BamfWindow '%s' Xid: %d>" % (self.title if self._x_win else '', self.x_id)
+        return "<Window '%s' Xid: %d>" % (self.title if self._x_win else '', self.x_id)
 
     def _getProperty(self, _type):
         """Get an X11 property.

@@ -30,7 +30,7 @@ from testtools.matchers import Equals
 from time import sleep
 
 from autopilot.emulators.zeitgeist import Zeitgeist
-from autopilot.emulators.processmanager import get_process_manager
+from autopilot.emulators.processmanager import ProcessManager
 from autopilot.emulators.input import Keyboard, Mouse
 from autopilot.emulators.display import get_display
 from autopilot.globals import (get_log_verbose,
@@ -235,7 +235,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     def setUp(self):
         super(AutopilotTestCase, self).setUp()
 
-        self._process_manager = get_process_manager()
+        self._process_manager = ProcessManager.create()
         self._app_snapshot = self._process_manager.get_running_applications()
         self.addCleanup(self._compare_system_with_app_snapshot)
 

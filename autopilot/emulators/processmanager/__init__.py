@@ -10,32 +10,40 @@ from collections import OrderedDict
 
 from autopilot.utilities import _pick_variant, get_debug_logger
 
-def get_process_manager(preferred_variant=""):
-    """Get an instance of the ProcessManager class.
-
-    If variant is specified, it should be a string that specifies a backend to
-    use. However, this hint can be ignored - autopilot will prefer to return a
-    variant other than the one requested, rather than fail to return anything at
-    all.
-
-    If autopilot cannot instantate any of the possible backends, a RuntimeError
-    will be raised.
-    """
-    def get_bamf_pm():
-        from autopilot.emulators.processmanager._bamf import ProcessManager
-        return ProcessManager()
-
-    def get_upa_pm():
-        from autopilot.emulators.processmanager._upa import ProcessManager
-        return ProcessManager()
-
-    variants = OrderedDict()
-    variants['BAMF'] = get_bamf_pm
-    variants['UPA'] = get_upa_pm
-    return _pick_variant(variants, preferred_variant)
-
 
 class ProcessManager(object):
+
+    """A simple process manager class.
+
+    The process manager is used to handle processes, windows and applications.
+    This class should not be instantiated directly however. To get an instance
+    of the keyboard class, call :py:meth:`create` instead.
+
+    """
+
+    @staticmethod
+    def create(preferred_variant=""):
+        """Get an instance of the :py:class:`ProcessManager` class.
+
+        :param preferred_variant: A string containing a hint as to which variant you
+            would like. However, this hint can be ignored - autopilot will prefer to
+            return a keyboard variant other than the one requested, rather than fail
+            to return anything at all.
+        :raises: a RuntimeError will be raised if autopilot cannot instantate any of
+            the possible backends.
+        """
+        def get_bamf_pm():
+            from autopilot.emulators.processmanager._bamf import ProcessManager
+            return ProcessManager()
+
+        def get_upa_pm():
+            from autopilot.emulators.processmanager._upa import ProcessManager
+            return ProcessManager()
+
+        variants = OrderedDict()
+        variants['BAMF'] = get_bamf_pm
+        variants['UPA'] = get_upa_pm
+        return _pick_variant(variants, preferred_variant)
 
     def get_running_applications(self, user_visible_only=True):
         """Get a list of the currently running applications.

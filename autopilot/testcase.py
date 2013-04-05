@@ -29,10 +29,8 @@ from testtools.content import text_content
 from testtools.matchers import Equals
 import time
 
-from autopilot.emulators.bamf import Bamf
 from autopilot.emulators.zeitgeist import Zeitgeist
-from autopilot.emulators.processmanager import ProcessManager
-from autopilot.emulators.X11 import ScreenGeometry, reset_display
+from autopilot.emulators.processmanager import get_process_manager
 from autopilot.emulators.input import Keyboard, Mouse
 from autopilot.emulators.display import get_display
 from autopilot.globals import (get_log_verbose,
@@ -187,8 +185,8 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     :meth:`~autopilot.testcase.AutopilotTestCase.start_app` and
     :meth:`~autopilot.testcase.AutopilotTestCase.start_app_window` which will
     launch one of the well-known applications and return a
-    :class:`~autopilot.emulators.bamf.BamfApplication` or
-    :class:`~autopilot.emulators.bamf.BamfWindow` instance to the launched
+    :class:`~autopilot.emulators.processmanager.Application` or
+    :class:`~autopilot.emulators.processmanager.Window` instance to the launched
     process respectively. All applications launched in this way will be closed
     when the test ends.
 
@@ -237,11 +235,10 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     def setUp(self):
         super(AutopilotTestCase, self).setUp()
 
-        self._process_manager = ProcessManager()
+        self._process_manager = get_process_manager()
         self._process_manager.snapshot_running_apps()
         self.addCleanup(self._process_manager.compare_system_with_snapshot)
 
-        self.bamf = Bamf()
         self.keyboard = Keyboard.create()
         self.mouse = Mouse.create()
         self.zeitgeist = Zeitgeist()
@@ -305,7 +302,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         :param locale: (Optional) The locale will to set when the application
          is launched. *If you want to launch an application without any
          localisation being applied, set this parameter to 'C'.*
-        :returns: A :class:`~autopilot.emulators.bamf.BamfApplication` instance.
+        :returns: A :class:`~autopilot.emulators.processmanager.Application` instance.
 
         """
         window = self._open_window(app_name, files, locale)
@@ -331,7 +328,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
          localisation being applied, set this parameter to 'C'.*
         :raises: **AssertionError** if no window was opened, or more than one
          window was opened.
-        :returns: A :class:`~autopilot.emulators.bamf.BamfWindow` instance.
+        :returns: A :class:`~autopilot.emulators.processmanger.Window` instance.
 
         """
         window = self._open_window(app_name, files, locale)
@@ -357,8 +354,8 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
 
 
         app = self.KNOWN_APPS[app_name]
-        self.bamf.launch_application(app['desktop-file'], files)
-        apps = self.bamf.get_running_applications_by_desktop_file(app['desktop-file'])
+        self._process_manager.launch_application(app['desktop-file'], files)
+        apps = self._process_manager.get_running_applications_by_desktop_file(app['desktop-file'])
 
         for i in range(10):
             try:
@@ -375,10 +372,11 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         return None
 
     def get_open_windows_by_application(self, app_name):
-        """Get a list of BamfWindow instances for the given application name.
+        """Get a list of ~autopilot.emulators.processmanager.Window` instances
+        for the given application name.
 
         :param app_name: The name of one of the well-known applications.
-        :returns: A list of :class:`~autopilot.emulators.bamf.BamfWindow`
+        :returns: A list of :class:`~autopilot.emulators.processmanager.Window`
          instances.
 
         """
@@ -397,9 +395,9 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             logger.warning("Tried to close applicaton '%s' but it wasn't running.", app_name)
 
     def get_app_instances(self, app_name):
-        """Get BamfApplication instances for app_name."""
+        """Get `~autopilot.emulators.processmanager.Application` instances for app_name."""
         desktop_file = self.KNOWN_APPS[app_name]['desktop-file']
-        return self.bamf.get_running_applications_by_desktop_file(desktop_file)
+        return self._process_manager.get_running_applications_by_desktop_file(desktop_file)
 
     def app_is_running(self, app_name):
         """Return true if an instance of the application is running."""
@@ -442,12 +440,13 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
 
         .. note:: Minimised windows are skipped.
 
-        :param stack_start: An iterable of BamfWindow instances.
+        :param stack_start: An iterable of
+         `~autopilot.emulators.processmanager.Window` instances.
         :raises: **AssertionError** if the top of the window stack does not
          match the contents of the stack_start parameter.
 
         """
-        stack = [win for win in self.bamf.get_open_windows() if not win.is_hidden]
+        stack = [win for win in self._process_manager.get_open_windows() if not win.is_hidden]
         for pos, win in enumerate(stack_start):
             self.assertThat(stack[pos].x_id, Equals(win.x_id),
                             "%r at %d does not equal %r" % (stack[pos], pos, win))
@@ -460,7 +459,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         the autopilot DBus interface).
 
         For example, from within a test, to assert certain properties on a
-        BamfWindow instance::
+        `~autopilot.emulators.processmanager.Window` instance::
 
             self.assertProperty(my_window, is_maximized=True)
 

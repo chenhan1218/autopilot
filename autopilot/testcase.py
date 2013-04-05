@@ -27,7 +27,7 @@ from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.content import text_content
 from testtools.matchers import Equals
-import time
+from time import sleep
 
 from autopilot.emulators.zeitgeist import Zeitgeist
 from autopilot.emulators.processmanager import get_process_manager
@@ -206,11 +206,11 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             'process-name': 'gucharmap',
             },
         'Calculator' : {
-            'desktop-file': 'gnome-calculator.desktop',
+            'desktop-file': 'gcalctool.desktop',
             'process-name': 'gnome-calculator',
             },
         'Mahjongg' : {
-            'desktop-file': 'gnome-mahjongg.desktop',
+            'desktop-file': 'mahjongg.desktop',
             'process-name': 'gnome-mahjongg',
             },
         'Remmina' : {
@@ -236,8 +236,8 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         super(AutopilotTestCase, self).setUp()
 
         self._process_manager = get_process_manager()
-        self._process_manager.snapshot_running_apps()
-        self.addCleanup(self._process_manager.compare_system_with_snapshot)
+        self._app_snapshot = self._process_manager.get_running_applications()
+        self.addCleanup(self._compare_system_with_app_snapshot)
 
         self.keyboard = Keyboard.create()
         self.mouse = Mouse.create()
@@ -246,6 +246,26 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         self.screen_geo = get_display()
         self.addCleanup(self.keyboard.cleanup)
         self.addCleanup(self.mouse.cleanup)
+
+    def _compare_system_with_app_snapshot(self):
+        """Compare the currently running application with the last snapshot.
+
+        This method will raise an AssertionError if there are any new applications
+        currently running that were not running when the snapshot was taken.
+        """
+        if self._app_snapshot is None:
+            raise RuntimeError("No snapshot to match against.")
+
+        new_apps = []
+        for i in range(10):
+            current_apps = self._process_manager.get_running_applications()
+            new_apps = filter(lambda i: i not in self._app_snapshot, current_apps)
+            if not new_apps:
+                self._app_snapshot = None
+                return
+            sleep(1)
+        self._app_snapshot = None
+        raise AssertionError("The following apps were started during the test and not closed: %r", new_apps)
 
     @classmethod
     def register_known_application(cls, name, desktop_file, process_name):
@@ -368,7 +388,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
                     return new_wins[0]
             except DBusException:
                 pass
-            time.sleep(1)
+            sleep(1)
         return None
 
     def get_open_windows_by_application(self, app_name):

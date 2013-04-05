@@ -7,6 +7,7 @@
 # by the Free Software Foundation.
 
 from collections import OrderedDict
+
 from autopilot.utilities import _pick_variant, get_debug_logger
 
 def get_process_manager(preferred_variant=""):

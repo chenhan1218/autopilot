@@ -10,7 +10,7 @@ from testtools import TestCase
 from testtools.matchers import Equals, raises
 from mock import patch
 
-from autopilot.emulators.input import Mouse
+from autopilot.input import Mouse
 
 class Empty(object):
     pass

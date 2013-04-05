@@ -7,7 +7,8 @@
 # by the Free Software Foundation.
 
 from collections import OrderedDict
-from autopilot.utilities import _pick_variant, get_debug_logger
+from autopilot.utilities import _pick_variant
+from autopilot.input import Mouse
 
 
 def is_rect_on_screen(self, screen_number, rect):
@@ -96,11 +97,11 @@ class Display:
         will be raised.
         """
         def get_x11_display():
-            from autopilot.emulators.display._X11 import Display
+            from autopilot.display._X11 import Display
             return Display()
 
         def get_upa_display():
-            from autopilot.emulators.display._upa import Display
+            from autopilot.display._upa import Display
             return Display()
 
         variants = OrderedDict()

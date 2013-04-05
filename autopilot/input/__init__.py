@@ -48,10 +48,10 @@ class Keyboard(object):
 
         """
         def get_x11_kb():
-            from autopilot.emulators.input._X11 import Keyboard
+            from autopilot.input._X11 import Keyboard
             return Keyboard()
         def get_uinput_kb():
-            from autopilot.emulators.input._uinput import Keyboard
+            from autopilot.input._uinput import Keyboard
             return Keyboard()
 
         variants = OrderedDict()
@@ -146,7 +146,7 @@ class Mouse(object):
 
     For example, to create a mouse object and click at (100,50):
 
-    >>> mouse = autopilot.emulators.input.create()
+    >>> mouse = autopilot.input.Mouse.create()
     >>> mouse.move(100, 50)
     >>> mouse.click()
 
@@ -165,7 +165,7 @@ class Mouse(object):
 
         """
         def get_x11_mouse():
-            from autopilot.emulators.input._X11 import Mouse
+            from autopilot.input._X11 import Mouse
             return Mouse()
 
         variants = OrderedDict()
@@ -243,7 +243,7 @@ class Touch(object):
 
     This class can be used for any touch events that require a single active
     touch at once. If you want to do complex gestures (including multi-touch
-    gestures), look at the :py:mod:`autopilot.emulators.gestures` module.
+    gestures), look at the :py:mod:`autopilot.gestures` module.
 
     """
 
@@ -260,7 +260,7 @@ class Touch(object):
 
         """
         def get_uinput_touch():
-            from autopilot.emulators.input._uinput import Touch
+            from autopilot.input._uinput import Touch
             return Touch()
 
         variants = OrderedDict()

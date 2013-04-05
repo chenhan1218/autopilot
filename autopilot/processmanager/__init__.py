@@ -8,7 +8,7 @@
 
 from collections import OrderedDict
 
-from autopilot.utilities import _pick_variant, get_debug_logger
+from autopilot.utilities import _pick_variant
 
 
 class ProcessManager(object):
@@ -33,11 +33,11 @@ class ProcessManager(object):
             the possible backends.
         """
         def get_bamf_pm():
-            from autopilot.emulators.processmanager._bamf import ProcessManager
+            from autopilot.processmanager._bamf import ProcessManager
             return ProcessManager()
 
         def get_upa_pm():
-            from autopilot.emulators.processmanager._upa import ProcessManager
+            from autopilot.processmanager._upa import ProcessManager
             return ProcessManager()
 
         variants = OrderedDict()

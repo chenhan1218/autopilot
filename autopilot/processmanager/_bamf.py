@@ -16,10 +16,10 @@ from gi.repository import GLib
 import os
 from Xlib import display, X, protocol
 
-from autopilot.emulators.dbus_handler import get_session_bus
+from autopilot.dbus_handler import get_session_bus
 from autopilot.utilities import Silence
 
-from autopilot.emulators.processmanager import (
+from autopilot.processmanager import (
     ProcessManager as ProcessManagerBase,
     Application as ApplicationBase,
     Window as WindowBase

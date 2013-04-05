@@ -8,7 +8,7 @@
 
 import logging
 
-from autopilot.emulators.display import Display as DisplayBase
+from autopilot.display import Display as DisplayBase
 from upa import get_resolution
 
 logger = logging.getLogger(__name__)

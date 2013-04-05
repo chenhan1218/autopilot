@@ -29,10 +29,9 @@ from testtools.content import text_content
 from testtools.matchers import Equals
 from time import sleep
 
-from autopilot.emulators.zeitgeist import Zeitgeist
-from autopilot.emulators.processmanager import ProcessManager
-from autopilot.emulators.input import Keyboard, Mouse
-from autopilot.emulators.display import Display
+from autopilot.processmanager import ProcessManager
+from autopilot.input import Keyboard, Mouse
+from autopilot.display import Display
 from autopilot.globals import (get_log_verbose,
     get_video_recording_enabled,
     get_video_record_directory,
@@ -185,8 +184,8 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     :meth:`~autopilot.testcase.AutopilotTestCase.start_app` and
     :meth:`~autopilot.testcase.AutopilotTestCase.start_app_window` which will
     launch one of the well-known applications and return a
-    :class:`~autopilot.emulators.processmanager.Application` or
-    :class:`~autopilot.emulators.processmanager.Window` instance to the launched
+    :class:`~autopilot.processmanager.Application` or
+    :class:`~autopilot.processmanager.Window` instance to the launched
     process respectively. All applications launched in this way will be closed
     when the test ends.
 
@@ -241,7 +240,6 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
 
         self.keyboard = Keyboard.create()
         self.mouse = Mouse.create()
-        self.zeitgeist = Zeitgeist()
 
         self.screen_geo = Display.create()
         self.addCleanup(self.keyboard.cleanup)
@@ -322,7 +320,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         :param locale: (Optional) The locale will to set when the application
          is launched. *If you want to launch an application without any
          localisation being applied, set this parameter to 'C'.*
-        :returns: A :class:`~autopilot.emulators.processmanager.Application` instance.
+        :returns: A :class:`~autopilot.processmanager.Application` instance.
 
         """
         window = self._open_window(app_name, files, locale)
@@ -348,7 +346,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
          localisation being applied, set this parameter to 'C'.*
         :raises: **AssertionError** if no window was opened, or more than one
          window was opened.
-        :returns: A :class:`~autopilot.emulators.processmanger.Window` instance.
+        :returns: A :class:`~autopilot.processmanger.Window` instance.
 
         """
         window = self._open_window(app_name, files, locale)
@@ -392,11 +390,11 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         return None
 
     def get_open_windows_by_application(self, app_name):
-        """Get a list of ~autopilot.emulators.processmanager.Window` instances
+        """Get a list of ~autopilot.processmanager.Window` instances
         for the given application name.
 
         :param app_name: The name of one of the well-known applications.
-        :returns: A list of :class:`~autopilot.emulators.processmanager.Window`
+        :returns: A list of :class:`~autopilot.processmanager.Window`
          instances.
 
         """
@@ -415,7 +413,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             logger.warning("Tried to close applicaton '%s' but it wasn't running.", app_name)
 
     def get_app_instances(self, app_name):
-        """Get `~autopilot.emulators.processmanager.Application` instances for app_name."""
+        """Get `~autopilot.processmanager.Application` instances for app_name."""
         desktop_file = self.KNOWN_APPS[app_name]['desktop-file']
         return self._process_manager.get_running_applications_by_desktop_file(desktop_file)
 
@@ -461,7 +459,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         .. note:: Minimised windows are skipped.
 
         :param stack_start: An iterable of
-         `~autopilot.emulators.processmanager.Window` instances.
+         `~autopilot.processmanager.Window` instances.
         :raises: **AssertionError** if the top of the window stack does not
          match the contents of the stack_start parameter.
 
@@ -479,7 +477,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         the autopilot DBus interface).
 
         For example, from within a test, to assert certain properties on a
-        `~autopilot.emulators.processmanager.Window` instance::
+        `~autopilot.processmanager.Window` instance::
 
             self.assertProperty(my_window, is_maximized=True)
 

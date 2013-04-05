@@ -9,9 +9,9 @@
 
 """UInput device drivers."""
 
-from autopilot.emulators.input import Keyboard as KeyboardBase
-from autopilot.emulators.input import Touch as TouchBase
-from autopilot.emulators.input._common import get_center_point
+from autopilot.input import Keyboard as KeyboardBase
+from autopilot.input import Touch as TouchBase
+from autopilot.input._common import get_center_point
 import autopilot.platform
 
 import logging
@@ -156,8 +156,8 @@ def create_touch_device(res_x=None, res_y=None):
     """
 
     if res_x is None or res_y is None:
-        from autopilot.emulators.display import get_display
-        display = get_display()
+        from autopilot.display import Display
+        display = Display.create()
         res_x = display.get_screen_width()
         res_y = display.get_screen_height()
 

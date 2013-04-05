@@ -8,8 +8,7 @@
 
 import logging
 
-from autopilot.emulators.bamf import BamfWindow
-from autopilot.emulators.display import Display as DisplayBase
+from autopilot.display import Display as DisplayBase
 
 logger = logging.getLogger(__name__)
 

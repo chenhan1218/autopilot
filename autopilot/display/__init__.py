@@ -11,14 +11,14 @@ from autopilot.utilities import _pick_variant
 from autopilot.input import Mouse
 
 
-def is_rect_on_screen(self, screen_number, rect):
+def is_rect_on_screen(screen_number, rect):
     """Returns True if *rect* is **entirely** on the specified screen, with no overlap."""
     (x, y, w, h) = rect
     (mx, my, mw, mh) = Display.create().get_screen_geometry(screen_number)
     return (x >= mx and x + w <= mx + mw and y >= my and y + h <= my + mh)
 
 
-def is_point_on_screen(self, screen_number, point):
+def is_point_on_screen(screen_number, point):
     """Returns True if *point* is on the specified screen.
 
     *point* must be an iterable type with two elements: (x, y)
@@ -29,12 +29,12 @@ def is_point_on_screen(self, screen_number, point):
     return (x >= mx and x < mx + mw and y >= my and y < my + mh)
 
 
-def is_point_on_any_screen(self, point):
+def is_point_on_any_screen(point):
     """Returns true if *point* is on any currently configured screen."""
     return any([is_point_on_screen(m, point) for m in range(Display.create().get_num_screens())])
 
 
-def move_mouse_to_screen(self, screen_number):
+def move_mouse_to_screen(screen_number):
     """Move the mouse to the center of the specified screen."""
     geo = Display.create().get_screen_geometry(screen_number)
     x = geo[0] + (geo[2] / 2)

@@ -154,12 +154,18 @@ class QtObjectProxyMixin(object):
     def get_signals(self):
         """Get a list of the signals available on this object."""
         dbus_signal_list = self._get_qt_iface().ListSignals(self.id)
-        return [str(sig) for sig in dbus_signal_list]
+        if dbus_signal_list is not None:
+            return [str(sig) for sig in dbus_signal_list]
+        else:
+            return []
 
     def get_slots(self):
         """Get a list of the slots available on this object."""
         dbus_slot_list = self._get_qt_iface().ListMethods(self.id)
-        return [str(sig) for sig in dbus_slot_list]
+        if dbus_slot_list is not None:
+            return [str(sig) for sig in dbus_slot_list]
+        else:
+            return []
 
 
 class QtSlotProxy(object):

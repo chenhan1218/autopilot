@@ -221,7 +221,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             'process-name': 'gucharmap',
             },
         'Calculator' : {
-            'desktop-file': 'gnome-calculator.desktop',
+            'desktop-file': 'gcalctool.desktop',
             'process-name': 'gnome-calculator',
             },
         'Mahjongg' : {

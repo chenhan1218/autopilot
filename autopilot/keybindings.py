@@ -27,7 +27,8 @@ import logging
 from types import NoneType
 import re
 
-from autopilot.emulators.input import get_keyboard
+from autopilot.emulators.input import Keyboard
+from autopilot.compizconfig import get_plugin, get_setting
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +136,7 @@ def get(binding_name):
     if isinstance(v, basestring):
         return v
     else:
-        raise NotImplementedError("Not implemented yet")
+        return _get_compiz_keybinding(v)
 
 
 def get_hold_part(binding_name):
@@ -174,12 +175,36 @@ def get_tap_part(binding_name):
     return parts[-1]
 
 
-def _translate_keystroke_string(keystroke_string):
+def _get_compiz_keybinding(compiz_tuple):
+    """Given a keybinding name, get the keybinding string from the compiz option.
+
+    :raises: **ValueError** if the compiz setting described does not hold a
+     keybinding.
+    :raises: **RuntimeError** if the compiz keybinding has been disabled.
+
+    """
+    plugin_name, setting_name = compiz_tuple
+    plugin = get_plugin(plugin_name)
+    setting = get_setting(plugin_name, setting_name)
+    if setting.Type != 'Key':
+        raise ValueError("Key binding maps to a compiz option that does not hold a keybinding.")
+    if not plugin.Enabled:
+        logger.warning("Returning keybinding for '%s' which is in un-enabled plugin '%s'",
+            setting.ShortDesc,
+            plugin.ShortDesc)
+    if setting.Value == "Disabled":
+        raise RuntimeError("Keybinding '%s' in compiz plugin '%s' has been disabled." %
+            (setting.ShortDesc, plugin.ShortDesc))
+
+    return _translate_compiz_keystroke_string(setting.Value)
+
+
+def _translate_compiz_keystroke_string(keystroke_string):
     """Get a string representing the keystroke stored in *keystroke_string*.
 
     The returned value is suitable for passing into the Keyboard emulator.
 
-    :param string keystroke_string.
+    :param string keystroke_string: A compizconfig-style keystroke string.
 
     """
     if not isinstance(keystroke_string, basestring):
@@ -207,7 +232,7 @@ class KeybindingsHelper(object):
 
     @property
     def _keyboard(self):
-        return get_keyboard()
+        return Keyboard.create()
 
     def keybinding(self, binding_name, delay=None):
         """Press and release the keybinding with the given name.

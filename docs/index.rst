@@ -6,8 +6,13 @@
 Autopilot Documentation
 =======================
 
+Welcome to the autopilot homepage. Autopilot is a tool for writing *functional tests* for *GUI* applications. It works out-of-the-box for Several GUI toolkits, including Gtk2, Gtk3, Qt4, and Qt5/Qml.
+
+This documentation is split into two parts. The tutorial section will walk test authors through the steps required to start using autopilot do test an application. The reference section provides an API reference for autopilot itself.
+
+
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    tutorial/tutorial
    api/autopilot

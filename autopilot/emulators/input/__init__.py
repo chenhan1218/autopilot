@@ -7,102 +7,22 @@
 # by the Free Software Foundation.
 
 from collections import OrderedDict
-from autopilot.utilities import get_debug_logger
+from autopilot.utilities import get_debug_logger, _pick_variant
 
 """Autopilot unified input system.
 
 This package provides input methods for various platforms. Autopilot aims to
 provide an appropriate implementation for the currently running system. For
 example, not all systems have an X11 stack running: on those systems, autopilot
-will instantiate a Keyboard class that uses something other than X11 to generate
-key events (possibly UInput).
+will instantiate input classes class that use something other than X11 to generate
+events (possibly UInput).
 
-Test authors are encouraged to instantiate the input devices they need for their
-tests using the get_keyboard and get_mouse methods directly. In the case where
-these methods don't do the right thing, authors may access the underlying input
-systems directly. However, these are not documented, and are liable to change
-without notice.
+Test authors should instantiate the appropriate class using the ``create`` method
+on each class. Tests can provide a hint to this method to suggest that a particular
+subsystem be used. However, autopilot will prefer to return a subsystem other than
+the one specified, if the requested subsystem is unavailable.
 
 """
-
-
-def get_keyboard(preferred_variant=""):
-    """Get an instance of the :py:class:`Keyboard` class.
-
-    :param preferred_variant: A string containing a hint as to which variant you
-        would like. However, this hint can be ignored - autopilot will prefer to
-        return a keyboard variant other than the one requested, rather than fail
-        to return anything at all.
-    :raises: a RuntimeError will be raised if autopilot cannot instantate any of
-        the possible backends.
-
-    """
-    def get_x11_kb():
-        from autopilot.emulators.input._X11 import Keyboard
-        return Keyboard()
-    def get_uinput_kb():
-        from autopilot.emulators.input._uinput import Keyboard
-        return Keyboard()
-
-    variants = OrderedDict()
-    variants['X11'] = get_x11_kb
-    variants['UInput'] = get_uinput_kb
-    return _pick_variant(variants, preferred_variant)
-
-
-def get_mouse(preferred_variant=""):
-    """Get an instance of the :py:class:`Mouse` class.
-
-    :param preferred_variant: A string containing a hint as to which variant you
-        would like. However, this hint can be ignored - autopilot will prefer to
-        return a mouse variant other than the one requested, rather than fail
-        to return anything at all.
-    :raises: a RuntimeError will be raised if autopilot cannot instantate any of
-        the possible backends.
-
-    """
-    def get_x11_mouse():
-        from autopilot.emulators.input._X11 import Mouse
-        return Mouse()
-
-    variants = OrderedDict()
-    variants['X11'] = get_x11_mouse
-    return _pick_variant(variants, preferred_variant)
-
-
-def get_touch(preferred_variant=""):
-    """Get an instance of the :py:class:`Touch` class.
-
-    :param preferred_variant: A string containing a hint as to which variant you
-        would like. However, this hint can be ignored - autopilot will prefer to
-        return a touch variant other than the one requested, rather than fail
-        to return anything at all.
-    :raises: a RuntimeError will be raised if autopilot cannot instantate any of
-        the possible backends.
-
-    """
-    def get_uinput_touch():
-        from autopilot.emulators.input._uinput import Touch
-        return Touch()
-
-    variants = OrderedDict()
-    variants['UInput'] = get_uinput_touch
-    return _pick_variant(variants, preferred_variant)
-
-
-def _pick_variant(variants, preferred_variant):
-    possible_backends = variants.keys()
-    get_debug_logger().debug("Possible variants: %s", ','.join(possible_backends))
-    if preferred_variant in possible_backends:
-        possible_backends.sort(lambda a,b: -1 if a == preferred_variant else 0)
-    failure_reasons = []
-    for be in possible_backends:
-        try:
-            return variants[be]()
-        except Exception as e:
-            get_debug_logger().warning("Can't create variant %s: %r", be, e)
-            failure_reasons.append('%s: %r' % (be, e))
-    raise RuntimeError("Unable to instantiate any backends\n%s" % '\n'.join(failure_reasons))
 
 
 class Keyboard(object):
@@ -111,9 +31,33 @@ class Keyboard(object):
 
     The keyboard class is used to generate key events while in an autopilot
     test. This class should not be instantiated directly however. To get an
-    instance of the keyboard class, call :py:func:`get_keyboard` instead.
+    instance of the keyboard class, call :py:meth:`create` instead.
 
     """
+
+    @staticmethod
+    def create(preferred_variant=''):
+        """Get an instance of the :py:class:`Keyboard` class.
+
+        :param preferred_variant: A string containing a hint as to which variant you
+            would like. However, this hint can be ignored - autopilot will prefer to
+            return a keyboard variant other than the one requested, rather than fail
+            to return anything at all.
+        :raises: a RuntimeError will be raised if autopilot cannot instantate any of
+            the possible backends.
+
+        """
+        def get_x11_kb():
+            from autopilot.emulators.input._X11 import Keyboard
+            return Keyboard()
+        def get_uinput_kb():
+            from autopilot.emulators.input._uinput import Keyboard
+            return Keyboard()
+
+        variants = OrderedDict()
+        variants['X11'] = get_x11_kb
+        variants['UInput'] = get_uinput_kb
+        return _pick_variant(variants, preferred_variant)
 
     def press(self, keys, delay=0.2):
         """Send key press events only.
@@ -208,6 +152,26 @@ class Mouse(object):
 
     """
 
+    @staticmethod
+    def create(preferred_variant=''):
+        """Get an instance of the :py:class:`Mouse` class.
+
+        :param preferred_variant: A string containing a hint as to which variant you
+            would like. However, this hint can be ignored - autopilot will prefer to
+            return a mouse variant other than the one requested, rather than fail
+            to return anything at all.
+        :raises: a RuntimeError will be raised if autopilot cannot instantate any of
+            the possible backends.
+
+        """
+        def get_x11_mouse():
+            from autopilot.emulators.input._X11 import Mouse
+            return Mouse()
+
+        variants = OrderedDict()
+        variants['X11'] = get_x11_mouse
+        return _pick_variant(variants, preferred_variant)
+
     @property
     def x(self):
         """Mouse position X coordinate."""
@@ -282,6 +246,26 @@ class Touch(object):
     gestures), look at the :py:mod:`autopilot.emulators.gestures` module.
 
     """
+
+    @staticmethod
+    def create(preferred_variant=''):
+        """Get an instance of the :py:class:`Touch` class.
+
+        :param preferred_variant: A string containing a hint as to which variant you
+            would like. However, this hint can be ignored - autopilot will prefer to
+            return a touch variant other than the one requested, rather than fail
+            to return anything at all.
+        :raises: a RuntimeError will be raised if autopilot cannot instantate any of
+            the possible backends.
+
+        """
+        def get_uinput_touch():
+            from autopilot.emulators.input._uinput import Touch
+            return Touch()
+
+        variants = OrderedDict()
+        variants['UInput'] = get_uinput_touch
+        return _pick_variant(variants, preferred_variant)
 
     @property
     def pressed(self):

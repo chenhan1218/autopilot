@@ -225,7 +225,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             'process-name': 'gnome-calculator',
             },
         'Mahjongg' : {
-            'desktop-file': 'gnome-mahjongg.desktop',
+            'desktop-file': 'mahjongg.desktop',
             'process-name': 'gnome-mahjongg',
             },
         'Remmina' : {

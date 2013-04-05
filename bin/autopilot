@@ -33,7 +33,6 @@ from autopilot.introspection.qt import QtIntrospectionTestMixin
 # list autopilot depends here, with the form:
 # ('python module name', 'ubuntu package name'),
 DEPENDS = [
-    ('compizconfig', 'python-compizconfig'),
     ('dbus', 'python-dbus'),
     ('gi.repository.GConf', 'gir1.2-gconf-2.0'),
     ('gi.repository.IBus', 'gir1.2-ibus-1.0'),

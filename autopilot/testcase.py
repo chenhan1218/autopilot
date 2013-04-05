@@ -27,24 +27,19 @@ from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.content import text_content
 from testtools.matchers import Equals
-import time
+from time import sleep
 
-from autopilot.compizconfig import get_global_context
-from autopilot.emulators.bamf import Bamf
 from autopilot.emulators.zeitgeist import Zeitgeist
 from autopilot.emulators.processmanager import ProcessManager
-from autopilot.emulators.X11 import ScreenGeometry, reset_display
 from autopilot.emulators.input import Keyboard, Mouse
-from autopilot.glibrunner import AutopilotTestRunner
+from autopilot.emulators.display import get_display
 from autopilot.globals import (get_log_verbose,
     get_video_recording_enabled,
     get_video_record_directory,
     )
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
-from autopilot.utilities import (get_compiz_setting,
-    LogFormatter,
-    )
+from autopilot.utilities import LogFormatter
 
 logger = logging.getLogger(__name__)
 
@@ -190,19 +185,11 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     :meth:`~autopilot.testcase.AutopilotTestCase.start_app` and
     :meth:`~autopilot.testcase.AutopilotTestCase.start_app_window` which will
     launch one of the well-known applications and return a
-    :class:`~autopilot.emulators.bamf.BamfApplication` or
-    :class:`~autopilot.emulators.bamf.BamfWindow` instance to the launched
+    :class:`~autopilot.emulators.processmanager.Application` or
+    :class:`~autopilot.emulators.processmanager.Window` instance to the launched
     process respectively. All applications launched in this way will be closed
     when the test ends.
 
-    **Set Unity & Compiz Options**
-
-    The :meth:`~autopilot.testcase.AutopilotTestCase.set_unity_option` and
-    :meth:`~autopilot.testcase.AutopilotTestCase.set_compiz_option` methods set a
-    unity or compiz setting to a particular value for the duration of the
-    current test only. This is useful if you want the window manager to behave
-    in a particular fashion for a particular test, while being assured that any
-    chances are non-destructive.
 
     **Patch Process Environment**
 
@@ -212,8 +199,6 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     current test only.
 
     """
-
-    run_tests_with = AutopilotTestRunner
 
     KNOWN_APPS = {
         'Character Map' : {
@@ -225,7 +210,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             'process-name': 'gnome-calculator',
             },
         'Mahjongg' : {
-            'desktop-file': 'gnome-mahjongg.desktop',
+            'desktop-file': 'mahjongg.desktop',
             'process-name': 'gnome-mahjongg',
             },
         'Remmina' : {
@@ -250,76 +235,37 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
     def setUp(self):
         super(AutopilotTestCase, self).setUp()
 
-        self._process_manager = ProcessManager()
-        self._process_manager.snapshot_running_apps()
-        self.addCleanup(self._process_manager.compare_system_with_snapshot)
+        self._process_manager = ProcessManager.create()
+        self._app_snapshot = self._process_manager.get_running_applications()
+        self.addCleanup(self._compare_system_with_app_snapshot)
 
-        self.bamf = Bamf()
         self.keyboard = Keyboard.create()
         self.mouse = Mouse.create()
         self.zeitgeist = Zeitgeist()
 
-        self.screen_geo = ScreenGeometry()
+        self.screen_geo = get_display()
         self.addCleanup(self.keyboard.cleanup)
         self.addCleanup(self.mouse.cleanup)
 
-    def call_gsettings_cmd(self, command, schema, *args):
-        """Set a desktop wide gsettings option
+    def _compare_system_with_app_snapshot(self):
+        """Compare the currently running application with the last snapshot.
 
-        Using the gsettings command because there is a bug with importing
-        from gobject introspection and pygtk2 simultaneously, and the Xlib
-        keyboard layout bits are very unwieldy. This seems like the best
-        solution, even a little bit brutish.
+        This method will raise an AssertionError if there are any new applications
+        currently running that were not running when the snapshot was taken.
         """
-        cmd = ['gsettings', command, schema] + list(args)
-        # strip to remove the trailing \n.
-        ret = check_output(cmd).strip()
-        time.sleep(5)
-        reset_display()
-        return ret
+        if self._app_snapshot is None:
+            raise RuntimeError("No snapshot to match against.")
 
-    def set_unity_option(self, option_name, option_value):
-        """Set an option in the unity compiz plugin options.
-
-        .. note:: The value will be set for the current test only, and
-         automatically undone when the test ends.
-
-        :param option_name: The name of the unity option.
-        :param option_value: The value you want to set.
-        :raises: **KeyError** if the option named does not exist.
-
-        """
-        self.set_compiz_option("unityshell", option_name, option_value)
-
-    def set_compiz_option(self, plugin_name, option_name, option_value):
-        """Set a compiz option for the duration of this test only.
-
-        .. note:: The value will be set for the current test only, and
-         automatically undone when the test ends.
-
-        :param plugin_name: The name of the compiz plugin where the option is
-         registered. If the option is not in a plugin, the string "core" should
-         be used as the plugin name.
-        :param option_name: The name of the unity option.
-        :param option_value: The value you want to set.
-        :raises: **KeyError** if the option named does not exist.
-
-        """
-        old_value = self._set_compiz_option(plugin_name, option_name, option_value)
-        # Cleanup is LIFO, during clean-up also allow unity to respond
-        self.addCleanup(time.sleep, 0.5)
-        self.addCleanup(self._set_compiz_option, plugin_name, option_name, old_value)
-        # Allow unity time to respond to the new setting.
-        time.sleep(0.5)
-
-    def _set_compiz_option(self, plugin_name, option_name, option_value):
-        logger.info("Setting compiz option '%s' in plugin '%s' to %r",
-            option_name, plugin_name, option_value)
-        setting = get_compiz_setting(plugin_name, option_name)
-        old_value = setting.Value
-        setting.Value = option_value
-        get_global_context().Write()
-        return old_value
+        new_apps = []
+        for i in range(10):
+            current_apps = self._process_manager.get_running_applications()
+            new_apps = filter(lambda i: i not in self._app_snapshot, current_apps)
+            if not new_apps:
+                self._app_snapshot = None
+                return
+            sleep(1)
+        self._app_snapshot = None
+        raise AssertionError("The following apps were started during the test and not closed: %r", new_apps)
 
     @classmethod
     def register_known_application(cls, name, desktop_file, process_name):
@@ -376,7 +322,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         :param locale: (Optional) The locale will to set when the application
          is launched. *If you want to launch an application without any
          localisation being applied, set this parameter to 'C'.*
-        :returns: A :class:`~autopilot.emulators.bamf.BamfApplication` instance.
+        :returns: A :class:`~autopilot.emulators.processmanager.Application` instance.
 
         """
         window = self._open_window(app_name, files, locale)
@@ -402,7 +348,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
          localisation being applied, set this parameter to 'C'.*
         :raises: **AssertionError** if no window was opened, or more than one
          window was opened.
-        :returns: A :class:`~autopilot.emulators.bamf.BamfWindow` instance.
+        :returns: A :class:`~autopilot.emulators.processmanger.Window` instance.
 
         """
         window = self._open_window(app_name, files, locale)
@@ -428,8 +374,8 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
 
 
         app = self.KNOWN_APPS[app_name]
-        self.bamf.launch_application(app['desktop-file'], files)
-        apps = self.bamf.get_running_applications_by_desktop_file(app['desktop-file'])
+        self._process_manager.launch_application(app['desktop-file'], files)
+        apps = self._process_manager.get_running_applications_by_desktop_file(app['desktop-file'])
 
         for i in range(10):
             try:
@@ -442,14 +388,15 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
                     return new_wins[0]
             except DBusException:
                 pass
-            time.sleep(1)
+            sleep(1)
         return None
 
     def get_open_windows_by_application(self, app_name):
-        """Get a list of BamfWindow instances for the given application name.
+        """Get a list of ~autopilot.emulators.processmanager.Window` instances
+        for the given application name.
 
         :param app_name: The name of one of the well-known applications.
-        :returns: A list of :class:`~autopilot.emulators.bamf.BamfWindow`
+        :returns: A list of :class:`~autopilot.emulators.processmanager.Window`
          instances.
 
         """
@@ -468,9 +415,9 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
             logger.warning("Tried to close applicaton '%s' but it wasn't running.", app_name)
 
     def get_app_instances(self, app_name):
-        """Get BamfApplication instances for app_name."""
+        """Get `~autopilot.emulators.processmanager.Application` instances for app_name."""
         desktop_file = self.KNOWN_APPS[app_name]['desktop-file']
-        return self.bamf.get_running_applications_by_desktop_file(desktop_file)
+        return self._process_manager.get_running_applications_by_desktop_file(desktop_file)
 
     def app_is_running(self, app_name):
         """Return true if an instance of the application is running."""
@@ -513,12 +460,13 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
 
         .. note:: Minimised windows are skipped.
 
-        :param stack_start: An iterable of BamfWindow instances.
+        :param stack_start: An iterable of
+         `~autopilot.emulators.processmanager.Window` instances.
         :raises: **AssertionError** if the top of the window stack does not
          match the contents of the stack_start parameter.
 
         """
-        stack = [win for win in self.bamf.get_open_windows() if not win.is_hidden]
+        stack = [win for win in self._process_manager.get_open_windows() if not win.is_hidden]
         for pos, win in enumerate(stack_start):
             self.assertThat(stack[pos].x_id, Equals(win.x_id),
                             "%r at %d does not equal %r" % (stack[pos], pos, win))
@@ -531,7 +479,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
         the autopilot DBus interface).
 
         For example, from within a test, to assert certain properties on a
-        BamfWindow instance::
+        `~autopilot.emulators.processmanager.Window` instance::
 
             self.assertProperty(my_window, is_maximized=True)
 

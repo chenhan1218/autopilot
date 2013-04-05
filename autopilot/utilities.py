@@ -14,6 +14,7 @@
 
 from __future__ import absolute_import
 
+import inspect
 import logging
 import os
 import time
@@ -33,32 +34,6 @@ def _pick_variant(variants, preferred_variant):
             get_debug_logger().warning("Can't create variant %s: %r", be, e)
             failure_reasons.append('%s: %r' % (be, e))
     raise RuntimeError("Unable to instantiate any backends\n%s" % '\n'.join(failure_reasons))
-
-
-def get_compiz_setting(plugin_name, setting_name):
-    """Get a compiz setting object.
-
-    'plugin_name' is the name of the plugin (e.g. 'core' or 'unityshell')
-    'setting_name' is the name of the setting (e.g. 'alt_tab_timeout')
-
-    This function will raise KeyError if the plugin or setting named does not
-    exist.
-
-    """
-    # circular dependancy:
-    from autopilot.compizconfig import get_setting
-    return get_setting(plugin_name, setting_name)
-
-
-def get_compiz_option(plugin_name, setting_name):
-    """Get a compiz setting value.
-
-    This is the same as calling:
-
-    >>> get_compiz_setting(plugin_name, setting_name).Value
-
-    """
-    return get_compiz_setting(plugin_name, setting_name).Value
 
 
 # Taken from http://code.activestate.com/recipes/577564-context-manager-for-low-level-redirection-of-stdou/
@@ -174,7 +149,11 @@ def deprecated(alternative):
     def fdec(fn):
         @wraps(fn)
         def wrapped(*args, **kwargs):
-            sys.stderr.write("WARNING: This function is deprecated. Please use '%s' instead.\n" % alternative)
+            import sys
+            outerframe_details = inspect.getouterframes(inspect.currentframe())[1]
+            filename, line_number, function_name = outerframe_details[1:4]
+            sys.stderr.write("WARNING: in file \"{0}\", line {1} in {2}\n".format(filename, line_number, function_name))
+            sys.stderr.write("This function is deprecated. Please use '%s' instead.\n" % alternative)
             return fn(*args, **kwargs)
         return wrapped
     return fdec

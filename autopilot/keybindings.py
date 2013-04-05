@@ -28,7 +28,7 @@ from types import NoneType
 import re
 
 from autopilot.emulators.input import Keyboard
-from autopilot.compizconfig import get_plugin, get_setting
+from autopilot.utilities import Silence
 
 logger = logging.getLogger(__name__)
 
@@ -184,8 +184,8 @@ def _get_compiz_keybinding(compiz_tuple):
 
     """
     plugin_name, setting_name = compiz_tuple
-    plugin = get_plugin(plugin_name)
-    setting = get_setting(plugin_name, setting_name)
+    plugin = _get_compiz_plugin(plugin_name)
+    setting = _get_compiz_setting(plugin_name, setting_name)
     if setting.Type != 'Key':
         raise ValueError("Key binding maps to a compiz option that does not hold a keybinding.")
     if not plugin.Enabled:
@@ -263,3 +263,48 @@ class KeybindingsHelper(object):
     def keybinding_hold_part_then_tap(self, binding_name):
         self.keybinding_hold(binding_name)
         self.keybinding_tap(binding_name)
+
+
+# Functions that wrap compizconfig to avoid some unpleasantness in that module.
+# Local to the this keybindings for now until their removal in the very near
+# future.
+_global_compiz_context = None
+
+def _get_global_compiz_context():
+    """Get the compizconfig global context object."""
+    global _global_compiz_context
+    if _global_compiz_context is None:
+        with Silence():
+            from compizconfig import Context
+            _global_compiz_context = Context()
+    return _global_compiz_context
+
+
+def _get_compiz_plugin(plugin_name):
+    """Get a compizconfig plugin with the specified name.
+
+    Raises KeyError of the plugin named does not exist.
+
+    """
+    ctx = _get_global_compiz_context()
+    with Silence():
+        try:
+            return ctx.Plugins[plugin_name]
+        except KeyError:
+            raise KeyError("Compiz plugin '%s' does not exist." % (plugin_name))
+
+
+def _get_compiz_setting(plugin_name, setting_name):
+    """Get a compizconfig setting object, given a plugin name and setting name.
+
+    Raises KeyError if the plugin or setting is not found.
+
+    """
+    plugin = _get_compiz_plugin(plugin_name)
+    with Silence():
+        try:
+            return plugin.Screen[setting_name]
+        except KeyError:
+            raise KeyError("Compiz setting '%s' does not exist in plugin '%s'." % (setting_name, plugin_name))
+
+

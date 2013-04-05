@@ -10,35 +10,10 @@ from collections import OrderedDict
 from autopilot.utilities import _pick_variant, get_debug_logger
 
 
-def get_display(preferred_variant=""):
-    """Get an instance of the Display class.
-
-    If variant is specified, it should be a string that specifies a backend to
-    use. However, this hint can be ignored - autopilot will prefer to return a
-    variant other than the one requested, rather than fail to return anything at
-    all.
-
-    If autopilot cannot instantate any of the possible backends, a RuntimeError
-    will be raised.
-    """
-    def get_x11_display():
-        from autopilot.emulators.display._X11 import Display
-        return Display()
-
-    def get_upa_display():
-        from autopilot.emulators.display._upa import Display
-        return Display()
-
-    variants = OrderedDict()
-    variants['X11'] = get_x11_display
-    variants['UPA'] = get_upa_display
-    return _pick_variant(variants, preferred_variant)
-
-
 def is_rect_on_screen(self, screen_number, rect):
     """Returns True if *rect* is **entirely** on the specified screen, with no overlap."""
     (x, y, w, h) = rect
-    (mx, my, mw, mh) = get_display().get_screen_geometry(screen_number)
+    (mx, my, mw, mh) = Display.create().get_screen_geometry(screen_number)
     return (x >= mx and x + w <= mx + mw and y >= my and y + h <= my + mh)
 
 
@@ -49,22 +24,22 @@ def is_point_on_screen(self, screen_number, point):
 
     """
     x, y = point
-    (mx, my, mw, mh) = get_display().get_screen_geometry(screen_number)
+    (mx, my, mw, mh) = Display.create().get_screen_geometry(screen_number)
     return (x >= mx and x < mx + mw and y >= my and y < my + mh)
 
 
 def is_point_on_any_screen(self, point):
     """Returns true if *point* is on any currently configured screen."""
-    return any([is_point_on_screen(m, point) for m in range(get_display().get_num_screens())])
+    return any([is_point_on_screen(m, point) for m in range(Display.create().get_num_screens())])
 
 
 def move_mouse_to_screen(self, screen_number):
     """Move the mouse to the center of the specified screen."""
-    geo = get_display.get_screen_geometry(screen_number)
+    geo = Display.create().get_screen_geometry(screen_number)
     x = geo[0] + (geo[2] / 2)
     y = geo[1] + (geo[3] / 2)
     #dont animate this or it might not get there due to barriers
-    Mouse().move(x, y, False)
+    Mouse.create().move(x, y, False)
 
 
 # veebers TODO: Write this so it's usable.
@@ -107,6 +82,31 @@ def move_mouse_to_screen(self, screen_number):
 
 class Display:
     """The base class/inteface for the display devices"""
+
+    @staticmethod
+    def create(preferred_variant=''):
+        """Get an instance of the Display class.
+
+        If variant is specified, it should be a string that specifies a backend to
+        use. However, this hint can be ignored - autopilot will prefer to return a
+        variant other than the one requested, rather than fail to return anything at
+        all.
+
+        If autopilot cannot instantate any of the possible backends, a RuntimeError
+        will be raised.
+        """
+        def get_x11_display():
+            from autopilot.emulators.display._X11 import Display
+            return Display()
+
+        def get_upa_display():
+            from autopilot.emulators.display._upa import Display
+            return Display()
+
+        variants = OrderedDict()
+        variants['X11'] = get_x11_display
+        variants['UPA'] = get_upa_display
+        return _pick_variant(variants, preferred_variant)
 
     class BlacklistedDriverError(RuntimeError):
         """Cannot set primary monitor when running drivers listed in the driver blacklist."""

@@ -2,5 +2,5 @@
 +++++++++++++++++++++++++++++++++++++++++++++++
 
 
-.. automodule:: autopilot.emulators.gestures
+.. automodule:: autopilot.gestures
     :members:

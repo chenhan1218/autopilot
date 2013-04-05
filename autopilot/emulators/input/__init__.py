@@ -140,13 +140,13 @@ class Mouse(object):
 
     """A simple mouse device class.
 
-    The mouse class is used to generate mnouse events while in an autopilot
+    The mouse class is used to generate mouse events while in an autopilot
     test. This class should not be instantiated directly however. To get an
-    instance of the mouse class, call :py:func:`get_mouse` instead.
+    instance of the mouse class, call :py:meth:`create` instead.
 
     For example, to create a mouse object and click at (100,50):
 
-    >>> mouse = autopilot.emulators.input.get_mouse()
+    >>> mouse = autopilot.emulators.input.create()
     >>> mouse.move(100, 50)
     >>> mouse.click()
 

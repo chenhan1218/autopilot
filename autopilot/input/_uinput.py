@@ -233,19 +233,52 @@ _touch_device = create_touch_device()
 # SLOT refers to a finger number, and the TRACKING_ID identifies a unique touch
 # for the duration of it's existance.
 
+_touch_fingers_in_use = []
+def _get_touch_finger():
+    """Claim a touch finger id for use.
+
+    :raises: RuntimeError if no more fingers are available.
+
+    """
+    global _touch_fingers_in_use
+
+    for i in range(9):
+        if i not in _touch_fingers_in_use:
+            _touch_fingers_in_use.append(i)
+            return i
+    raise RuntimeError("All available fingers have been used already.")
+
+def _release_touch_finger(finger_num):
+    """Relase a previously-claimed finger id.
+
+    :raises: RuntimeError if the finger given was never claimed, or was already
+    released.
+
+    """
+    global _touch_fingers_in_use
+
+    if finger_num not in _touch_fingers_in_use:
+        raise RuntimeError("Finger %d was never claimed, or has already been released." % (finger_num))
+    _touch_fingers_in_use.remove(finger_num)
+    assert(finger_num not in _touch_fingers_in_use)
+
 
 class Touch(TouchBase):
     """Low level interface to generate single finger touch events."""
 
+    def __init__(self):
+        super(TouchBase, self).__init__()
+        self._touch_finger = None
+
     @property
     def pressed(self):
-        return False
+        return self._touch_finger is not None
 
     def tap(self, x, y):
         """Click (or 'tap') at given x and y coordinates."""
-        self._finger_down(0, x, y)
+        self._finger_down(x, y)
         sleep(0.1)
-        self._finger_up(0)
+        self._finger_up()
 
     def tap_object(self, object):
         """Click (or 'tap') a given object"""
@@ -255,16 +288,16 @@ class Touch(TouchBase):
     def press(self, x, y):
         """Press and hold a given object or at the given coordinates
         Call release() when the object has been pressed long enough"""
-        self._finger_down(0, x, y)
+        self._finger_down(x, y)
 
     def release(self):
         """Release a previously pressed finger"""
-        self._finger_up(0)
+        self._finger_up()
 
 
     def drag(self, x1, y1, x2, y2):
         """Perform a drag gesture from (x1,y1) to (x2,y2)"""
-        self._finger_down(0, x1, y1)
+        self._finger_down(x1, y1)
 
         # Let's drag in 100 steps for now...
         dx = 1.0 * (x2 - x1) / 100
@@ -272,39 +305,46 @@ class Touch(TouchBase):
         cur_x = x1 + dx
         cur_y = y1 + dy
         for i in range(0, 100):
-            self._finger_move(0, int(cur_x), int(cur_y))
+            self._finger_move(int(cur_x), int(cur_y))
             sleep(0.002)
             cur_x += dx
             cur_y += dy
         # Make sure we actually end up at target
-        self._finger_move(0, x2, y2)
-        self._finger_up(0)
+        self._finger_move(x2, y2)
+        self._finger_up()
 
 
 
-    def _finger_down(self, finger, x, y):
+    def _finger_down(self, x, y):
         """Internal: moves finger "finger" down to the touchscreen at pos (x,y)"""
-        _touch_device.write(e.EV_ABS, e.ABS_MT_SLOT, finger)
+        if self._touch_finger is not None:
+            raise RuntimeError("Cannot press finger: it's already pressed.")
+        self._touch_finger = _get_touch_finger()
+
+        _touch_device.write(e.EV_ABS, e.ABS_MT_SLOT, self._touch_finger)
         _touch_device.write(e.EV_ABS, e.ABS_MT_TRACKING_ID, get_next_tracking_id())
         _touch_device.write(e.EV_KEY, e.BTN_TOOL_FINGER, 1)
-        _touch_device.write(e.EV_ABS, e.ABS_MT_POSITION_X, x)
-        _touch_device.write(e.EV_ABS, e.ABS_MT_POSITION_Y, y)
+        _touch_device.write(e.EV_ABS, e.ABS_MT_POSITION_X, int(x))
+        _touch_device.write(e.EV_ABS, e.ABS_MT_POSITION_Y, int(y))
         _touch_device.write(e.EV_ABS, e.ABS_MT_PRESSURE, 400)
         _touch_device.syn()
 
 
-    def _finger_move(self, finger, x, y):
+    def _finger_move(self, x, y):
         """Internal: moves finger "finger" on the touchscreen to pos (x,y)
            NOTE: The finger has to be down for this to have any effect."""
-        _touch_device.write(e.EV_ABS, e.ABS_MT_SLOT, finger)
-        _touch_device.write(e.EV_ABS, e.ABS_MT_POSITION_X, int(x))
-        _touch_device.write(e.EV_ABS, e.ABS_MT_POSITION_Y, int(y))
-        _touch_device.syn()
+        if self._touch_finger is not None:
+            _touch_device.write(e.EV_ABS, e.ABS_MT_SLOT, self._touch_finger)
+            _touch_device.write(e.EV_ABS, e.ABS_MT_POSITION_X, int(x))
+            _touch_device.write(e.EV_ABS, e.ABS_MT_POSITION_Y, int(y))
+            _touch_device.syn()
 
 
-    def _finger_up(self, finger):
+    def _finger_up(self):
         """Internal: moves finger "finger" up from the touchscreen"""
-        _touch_device.write(e.EV_ABS, e.ABS_MT_SLOT, finger)
+        if self._touch_finger is None:
+            raise RuntimeError("Cannot release finger: it's not pressed.")
+        _touch_device.write(e.EV_ABS, e.ABS_MT_SLOT, self._touch_finger)
         _touch_device.write(e.EV_ABS, e.ABS_MT_TRACKING_ID, -1)
         _touch_device.write(e.EV_KEY, e.BTN_TOOL_FINGER, 0)
         _touch_device.syn()

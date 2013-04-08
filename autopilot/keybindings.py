@@ -27,7 +27,7 @@ import logging
 from types import NoneType
 import re
 
-from autopilot.emulators.input import Keyboard
+from autopilot.input import Keyboard
 from autopilot.utilities import Silence
 
 logger = logging.getLogger(__name__)

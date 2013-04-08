@@ -14,6 +14,9 @@ you from generating your own gestures!
 
 """
 
+from autopilot.input import get_touch
+from time import sleep
+
 
 def pinch(center, vector_start, vector_end):
     """Perform a two finger pinch (zoom) gesture.
@@ -24,7 +27,7 @@ def pinch(center, vector_start, vector_end):
 
     The fingers will move in 100 steps between the start and the end points.
     If start is smaller than end, the gesture will zoom in, otherwise it
-    will zoom out. For example:
+    will zoom out.
 
     """
 
@@ -36,21 +39,24 @@ def pinch(center, vector_start, vector_end):
     dx = 1.0 * (finger_1_end[0] - finger_1_start[0]) / 100
     dy = 1.0 * (finger_1_end[1] - finger_1_start[1]) / 100
 
-    self._finger_down(0, finger_1_start[0], finger_1_start[1])
-    self._finger_down(1, finger_2_start[0], finger_2_start[1])
+    finger_1 = get_touch()
+    finger_2 = get_touch()
+
+    finger_1.press(*finger_1_start)
+    finger_2.press(*finger_2_start)
 
     finger_1_cur = [finger_1_start[0] + dx, finger_1_start[1] + dy]
     finger_2_cur = [finger_2_start[0] - dx, finger_2_start[1] - dy]
 
     for i in range(0, 100):
-        self._finger_move(0, finger_1_cur[0], finger_1_cur[1])
-        self._finger_move(1, finger_2_cur[0], finger_2_cur[1])
+        finger_1.move(*finger_1_cur)
+        finger_2.move(*finger_2_cur)
         sleep(0.005)
 
         finger_1_cur = [finger_1_cur[0] + dx, finger_1_cur[1] + dy]
         finger_2_cur = [finger_2_cur[0] - dx, finger_2_cur[1] - dy]
 
-    self._finger_move(0, finger_1_end[0], finger_1_end[1])
-    self._finger_move(1, finger_2_end[0], finger_2_end[1])
-    self._finger_up(0)
-    self._finger_up(1)
+    finger_1.move(*finger_1_end)
+    finger_2.move(*finger_2_end)
+    finger_1.release()
+    finger_2.release()

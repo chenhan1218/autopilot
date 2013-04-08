@@ -157,3 +157,25 @@ def deprecated(alternative):
             return fn(*args, **kwargs)
         return wrapped
     return fdec
+
+
+class _CleanupWrapper(object):
+    """Support for calling 'addCleanup' outside the test case."""
+
+    def __init__(self):
+        self._test_instance = None
+
+    def __call__(self, callable, *args, **kwargs):
+        if self._test_instance is None:
+            raise RuntimeError("Out-of-test addCleanup can only be called while an autopilot test case is running!")
+        self._test_instance.addCleanup(callable, *args, **kwargs)
+
+    def set_test_instance(self, test_instance):
+        self._test_instance = test_instance
+        test_instance.addCleanup(self._on_test_ended)
+
+    def _on_test_ended(self):
+        self._test_instance = None
+
+
+addCleanup = _CleanupWrapper()

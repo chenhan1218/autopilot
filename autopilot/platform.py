@@ -6,15 +6,18 @@
 # under the terms of the GNU General Public License version 3, as published
 # by the Free Software Foundation.
 
-from os.path import exists
-
-"""Platform identification utilities for Autopilot.
+"""
+Platform identification utilities for Autopilot.
+================================================
 
 This module provides functions that give test authors hints as to which platform
 their tests are currently running on. This is useful when tests should only run
 on certain platforms.
 
 """
+
+from os.path import exists
+
 
 def model():
     """Get the model name of the current platform.

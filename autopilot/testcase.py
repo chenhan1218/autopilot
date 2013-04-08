@@ -13,32 +13,24 @@ from __future__ import absolute_import
 from dbus import DBusException
 import logging
 import os
-from StringIO import StringIO
 from subprocess import (
     call,
     CalledProcessError,
     check_output,
-    Popen,
-    PIPE,
-    STDOUT,
     )
 
 from testscenarios import TestWithScenarios
 from testtools import TestCase
-from testtools.content import text_content
 from testtools.matchers import Equals
 from time import sleep
 
 from autopilot.processmanager import ProcessManager
 from autopilot.input import Keyboard, Mouse
 from autopilot.display import Display
-from autopilot.globals import (get_log_verbose,
-    get_video_recording_enabled,
-    get_video_record_directory,
-    )
+from autopilot.globals import on_test_started
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
-from autopilot.utilities import LogFormatter
+
 
 logger = logging.getLogger(__name__)
 
@@ -68,108 +60,7 @@ except ImportError:
         return result
 
 
-class LoggedTestCase(TestWithScenarios, TestCase):
-    """Initialize the logging for the test case."""
-
-    def setUp(self):
-        self._setUpTestLogging()
-        # The reason that the super setup is done here is due to making sure
-        # that the logging is properly set up prior to calling it.
-        super(LoggedTestCase, self).setUp()
-        if get_log_verbose():
-            logger.info("*" * 60)
-            logger.info("Starting test %s", self.shortDescription())
-
-    def _setUpTestLogging(self):
-        self._log_buffer = StringIO()
-        root_logger = logging.getLogger()
-        root_logger.setLevel(logging.DEBUG)
-        formatter = LogFormatter()
-        self._log_handler = logging.StreamHandler(stream=self._log_buffer)
-        self._log_handler.setFormatter(formatter)
-        root_logger.addHandler(self._log_handler)
-
-        #Tear down logging in a cleanUp handler, so it's done after all other
-        # tearDown() calls and cleanup handlers.
-        self.addCleanup(self._tearDownLogging)
-
-    def _tearDownLogging(self):
-        root_logger = logging.getLogger()
-        self._log_handler.flush()
-        self._log_buffer.seek(0)
-        self.addDetail('test-log', text_content(self._log_buffer.getvalue()))
-        root_logger.removeHandler(self._log_handler)
-        # Calling del to remove the handler and flush the buffer.  We are
-        # abusing the log handlers here a little.
-        del self._log_buffer
-
-
-
-class VideoCapturedTestCase(LoggedTestCase):
-    """Video capture autopilot tests, saving the results if the test failed."""
-
-    _recording_app = '/usr/bin/recordmydesktop'
-    _recording_opts = ['--no-sound', '--no-frame', '-o',]
-
-    def setUp(self):
-        super(VideoCapturedTestCase, self).setUp()
-        global video_recording_enabled
-        if get_video_recording_enabled() and not self._have_recording_app():
-            video_recording_enabled = False
-            logger.warning("Disabling video capture since '%s' is not present", self._recording_app)
-
-        if get_video_recording_enabled():
-            self._test_passed = True
-            self.addOnException(self._on_test_failed)
-            self.addCleanup(self._stop_video_capture)
-            self._start_video_capture()
-
-    def _have_recording_app(self):
-        return os.path.exists(self._recording_app)
-
-    def _start_video_capture(self):
-        args = self._get_capture_command_line()
-        self._capture_file = self._get_capture_output_file()
-        self._ensure_directory_exists_but_not_file(self._capture_file)
-        args.append(self._capture_file)
-        logger.debug("Starting: %r", args)
-        self._capture_process = Popen(args, stdout=PIPE, stderr=STDOUT)
-
-    def _stop_video_capture(self):
-        """Stop the video capture. If the test failed, save the resulting file."""
-
-        if self._test_passed:
-            # We use kill here because we don't want the recording app to start
-            # encoding the video file (since we're removing it anyway.)
-            self._capture_process.kill()
-            self._capture_process.wait()
-        else:
-            self._capture_process.terminate()
-            self._capture_process.wait()
-            if self._capture_process.returncode != 0:
-                self.addDetail('video capture log', text_content(self._capture_process.stdout.read()))
-        self._capture_process = None
-
-    def _get_capture_command_line(self):
-        return [self._recording_app] + self._recording_opts
-
-    def _get_capture_output_file(self):
-        return os.path.join(get_video_record_directory(), '%s.ogv' % (self.shortDescription()))
-
-    def _ensure_directory_exists_but_not_file(self, file_path):
-        dirpath = os.path.dirname(file_path)
-        if not os.path.exists(dirpath):
-            os.makedirs(dirpath)
-        elif os.path.exists(file_path):
-            logger.warning("Video capture file '%s' already exists, deleting.", file_path)
-            os.remove(file_path)
-
-    def _on_test_failed(self, ex_info):
-        """Called when a test fails."""
-        self._test_passed = False
-
-
-class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
+class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
     """Wrapper around testtools.TestCase that adds significant functionality.
 
     This class should be the base class for all autopilot test case classes. Not
@@ -233,6 +124,7 @@ class AutopilotTestCase(VideoCapturedTestCase, KeybindingsHelper):
 
     def setUp(self):
         super(AutopilotTestCase, self).setUp()
+        on_test_started(self)
 
         self._process_manager = ProcessManager.create()
         self._app_snapshot = self._process_manager.get_running_applications()

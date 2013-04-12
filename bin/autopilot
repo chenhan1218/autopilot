@@ -27,8 +27,9 @@ from textwrap import dedent
 from argparse import ArgumentParser
 from unittest.loader import TestLoader
 from unittest import TestSuite
-from autopilot.introspection.gtk import GtkIntrospectionTestMixin
-from autopilot.introspection.qt import QtIntrospectionTestMixin
+from autopilot.introspection import launch_application
+from autopilot.introspection.gtk import GtkApplicationLauncher
+from autopilot.introspection.qt import QtApplicationLauncher
 
 # list autopilot depends here, with the form:
 # ('python module name', 'ubuntu package name'),
@@ -344,27 +345,19 @@ def launch_app(args):
             exit(1)
 
     # We now have a full path to the application.
-    IntrospectionBase = None
+    launcher = None
     if args.interface == 'Auto':
-        IntrospectionBase = get_application_introspection_base(app_name)
+        launcher = get_application_introspection_base(app_name)
     elif args.interface == 'Gtk':
-        IntrospectionBase = GtkIntrospectionTestMixin
+        launcher = GtkApplicationLauncher()
     elif args.interface == 'Qt':
-        IntrospectionBase = QtIntrospectionTestMixin
-    if IntrospectionBase is None:
+        launcher = QtApplicationLauncher()
+    if launcher is None:
         print "Error: Could not determine introspection type to use for application '%s'." % app_name
         exit(1)
 
-    # IntrospectionBase is supposed to be a mixin class with a TestCase, and makes
-    # use of addCleanup to shut down the app after the test has completed. We
-    # patch that function here so we don't error...
-    def fake_cleanup(self, *args, **kwargs):
-        pass
-    IntrospectionBase.addCleanup = fake_cleanup
-
-    b = IntrospectionBase()
     try:
-        b.launch_test_application(app_name, capture_output=False)
+        launch_application(launcher, app_name, capture_output=False)
     except RuntimeError as e:
         print "Error: " + e.message
         exit(1)
@@ -386,9 +379,9 @@ def get_application_introspection_base(app_path):
         print "Use the '-i' argument to specify an interface."
         exit(1)
     if 'libqtcore' in ldd_output:
-        return QtIntrospectionTestMixin
+        return QtApplicationLauncher
     elif 'libgtk' in ldd_output:
-        return GtkIntrospectionTestMixin
+        return GtkApplicationLauncher
     return None
 
 

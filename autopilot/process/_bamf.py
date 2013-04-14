@@ -33,7 +33,6 @@ _X_DISPLAY = None
 
 logger = logging.getLogger(__name__)
 
-# veebers: this is going to be different
 def get_display():
     """Create an Xlib display object (silently) and return it."""
     global _X_DISPLAY

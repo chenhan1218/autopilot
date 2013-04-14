@@ -219,7 +219,6 @@ class ProcessManager(object):
         """
         raise NotImplementedError("You cannot use this class directly.")
 
-    # Veebers: this will need to change a bit as it is expected to return a Gobject.
     def launch_application(self, desktop_file, files=[], wait=True):
         """Launch an application by specifying a desktop file.
 
@@ -292,12 +291,6 @@ class Application(object):
 
 
 class Window(object):
-    # Veebers:
-    #   The use of x_id and x_win.
-    # x_id: Perhaps just a (unique) id that the bamf backend uses the x_id for
-    # and the UPA uses (something)
-    # x_win: Maybe wrap the immediate requirements in a property
-    # (i.e. get_wm_state).
     @property
     def x_id(self):
         """Get the X11 Window Id."""
@@ -308,7 +301,6 @@ class Window(object):
         """Get the X11 window object of the underlying window."""
         raise NotImplementedError("You cannot use this class directly.")
 
-    # veebers: example from above comment.
     @property
     def get_wm_state(self):
         """Get the state of the underlying window."""

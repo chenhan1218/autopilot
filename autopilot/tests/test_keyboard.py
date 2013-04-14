@@ -30,7 +30,7 @@ class KeyboardTests(AutopilotTestCase):
 
     def test_keyboard_types_correct_characters(self):
         """Verify that the keyboard.type method types what we expect."""
-        self.start_app_window('Terminal')
+        self.process_manager.start_app_window('Terminal')
         filename = mktemp()
         self.keyboard.type('''python -c "open('%s','w').write(raw_input())"''' % filename)
         self.keyboard.press_and_release('Enter')
@@ -46,7 +46,7 @@ class KeyboardTests(AutopilotTestCase):
         expect.
 
         """
-        self.start_app_window('Terminal')
+        self.process_manager.start_app_window('Terminal')
         filename = mktemp()
         self.keyboard.type('''python -c "open('%s','w').write(raw_input())"''' % filename)
         self.keyboard.press_and_release('Enter')

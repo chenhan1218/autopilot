@@ -425,6 +425,10 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         ... a Qt4 Qml application might be launched like this::
 
+            app_proxy = self.launch_test_application('qmlviewer', 'my_scene.qml')
+
+        ... a Qt5 Qml application is launched in a similar fashion::
+
             app_proxy = self.launch_test_application('qmlscene', 'my_scene.qml')
 
         :param application: The application to launch. The application can be

@@ -451,6 +451,10 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         """
         # first, we get a launcher. Tests can override this if they need:
         launcher = self.pick_app_launcher(application)
+        if launcher is None:
+            raise RuntimeError("Autopilot could not determine the correct \
+                introspection type to use. You can specify one by overriding \
+                the AutopilotTestCase.pick_app_launcher method.")
         process = launch_application(launcher, application, *arguments, **kwargs)
         self.addCleanup(self._kill_process_and_attach_logs, process)
         return get_autopilot_proxy_object_for_process(process)

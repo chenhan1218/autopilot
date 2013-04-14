@@ -21,6 +21,38 @@ class ProcessManager(object):
 
     """
 
+    KNOWN_APPS = {
+        'Character Map' : {
+            'desktop-file': 'gucharmap.desktop',
+            'process-name': 'gucharmap',
+            },
+        'Calculator' : {
+            'desktop-file': 'gcalctool.desktop',
+            'process-name': 'gnome-calculator',
+            },
+        'Mahjongg' : {
+            'desktop-file': 'mahjongg.desktop',
+            'process-name': 'gnome-mahjongg',
+            },
+        'Remmina' : {
+            'desktop-file': 'remmina.desktop',
+            'process-name': 'remmina',
+            },
+        'System Settings' : {
+            'desktop-file': 'gnome-control-center.desktop',
+            'process-name': 'gnome-control-center',
+            },
+        'Text Editor' : {
+            'desktop-file': 'gedit.desktop',
+            'process-name': 'gedit',
+            },
+        'Terminal' : {
+            'desktop-file': 'gnome-terminal.desktop',
+            'process-name': 'gnome-terminal',
+            },
+        }
+
+
     @staticmethod
     def create(preferred_variant=""):
         """Get an instance of the :py:class:`ProcessManager` class.
@@ -33,17 +65,118 @@ class ProcessManager(object):
             the possible backends.
         """
         def get_bamf_pm():
-            from autopilot.processmanager._bamf import ProcessManager
+            from autopilot.process._bamf import ProcessManager
             return ProcessManager()
 
         def get_upa_pm():
-            from autopilot.processmanager._upa import ProcessManager
+            from autopilot.process._upa import ProcessManager
             return ProcessManager()
 
         variants = OrderedDict()
         variants['BAMF'] = get_bamf_pm
         variants['UPA'] = get_upa_pm
         return _pick_variant(variants, preferred_variant)
+
+    @classmethod
+    def register_known_application(cls, name, desktop_file, process_name):
+        """Register an application with autopilot.
+
+        After calling this method, you may call :meth:`start_app` or
+        :meth:`start_app_window` with the `name` parameter to start this
+        application.
+        You need only call this once within a test run - the application will
+        remain registerred until the test run ends.
+
+        :param name: The name to be used when launching the application.
+        :param desktop_file: The filename (without path component) of the desktop file used to launch the application.
+        :param process_name: The name of the executable process that gets run.
+        :raises: **KeyError** if application has been registered already
+
+        """
+        if name in cls.KNOWN_APPS:
+            raise KeyError("Application has been registered already")
+        else:
+            cls.KNOWN_APPS[name] = {
+                                     "desktop-file" : desktop_file,
+                                     "process-name" : process_name
+                                   }
+
+    @classmethod
+    def unregister_known_application(cls, name):
+        """Unregister an application with the known_apps dictionary.
+
+        :param name: The name to be used when launching the application.
+        :raises: **KeyError** if the application has not been registered.
+
+        """
+        if name in cls.KNOWN_APPS:
+            del cls.KNOWN_APPS[name]
+        else:
+            raise KeyError("Application has not been registered")
+
+    def start_app(self, app_name, files=[], locale=None):
+        """Start one of the known applications, and kill it on tear down.
+
+        .. warning:: This method will clear all instances of this application on
+         tearDown, not just the one opened by this method! We recommend that
+         you use the :meth:`start_app_window` method instead, as it is generally
+         safer.
+
+        :param app_name: The application name. *This name must either already
+         be registered as one of the built-in applications that are supported
+         by autopilot, or must have been registered using*
+         :meth:`register_known_application` *beforehand.*
+        :param files: (Optional) A list of paths to open with the
+         given application. *Not all applications support opening files in this
+         way.*
+        :param locale: (Optional) The locale will to set when the application
+         is launched. *If you want to launch an application without any
+         localisation being applied, set this parameter to 'C'.*
+        :returns: A :class:`~autopilot.process.Application` instance.
+
+        """
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def start_app_window(self, app_name, files=[], locale=None):
+        """Open a single window for one of the known applications, and close it
+        at the end of the test.
+
+        :param app_name: The application name. *This name must either already
+         be registered as one of the built-in applications that are supported
+         by autopilot, or must have been registered with*
+         :meth:`register_known_application` *beforehand.*
+        :param files: (Optional) Should be a list of paths to open with the
+         given application. *Not all applications support opening files in this
+         way.*
+        :param locale: (Optional) The locale will to set when the application
+         is launched. *If you want to launch an application without any
+         localisation being applied, set this parameter to 'C'.*
+        :raises: **AssertionError** if no window was opened, or more than one
+         window was opened.
+        :returns: A :class:`~autopilot.process.Window` instance.
+
+        """
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def get_open_windows_by_application(self, app_name):
+        """Get a list of ~autopilot.process.Window` instances
+        for the given application name.
+
+        :param app_name: The name of one of the well-known applications.
+        :returns: A list of :class:`~autopilot.process.Window`
+         instances.
+
+        """
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def close_all_app(self, app_name):
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def get_app_instances(self, app_name):
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def app_is_running(self, app_name):
+        raise NotImplementedError("You cannot use this class directly.")
 
     def get_running_applications(self, user_visible_only=True):
         """Get a list of the currently running applications.
@@ -86,7 +219,6 @@ class ProcessManager(object):
         """
         raise NotImplementedError("You cannot use this class directly.")
 
-    # Veebers: this will need to change a bit as it is expected to return a Gobject.
     def launch_application(self, desktop_file, files=[], wait=True):
         """Launch an application by specifying a desktop file.
 
@@ -159,12 +291,6 @@ class Application(object):
 
 
 class Window(object):
-    # Veebers:
-    #   The use of x_id and x_win.
-    # x_id: Perhaps just a (unique) id that the bamf backend uses the x_id for
-    # and the UPA uses (something)
-    # x_win: Maybe wrap the immediate requirements in a property
-    # (i.e. get_wm_state).
     @property
     def x_id(self):
         """Get the X11 Window Id."""
@@ -175,7 +301,6 @@ class Window(object):
         """Get the X11 window object of the underlying window."""
         raise NotImplementedError("You cannot use this class directly.")
 
-    # veebers: example from above comment.
     @property
     def get_wm_state(self):
         """Get the state of the underlying window."""

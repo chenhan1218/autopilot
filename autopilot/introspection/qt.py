@@ -10,14 +10,14 @@
 """Classes and tools to support Qt introspection."""
 
 
-__all__ = ['QtIntrospectionTestMixin']
+__all__ = ['QtApplicationLauncher']
 
 import dbus
 import functools
 
 import logging
 
-from autopilot.introspection import ApplicationIntrospectionTestMixin
+from autopilot.introspection import ApplicationLauncher
 from autopilot.introspection.constants import QT_AUTOPILOT_IFACE
 from autopilot.introspection.dbus import get_session_bus
 
@@ -25,7 +25,7 @@ from autopilot.introspection.dbus import get_session_bus
 logger = logging.getLogger(__name__)
 
 
-class QtIntrospectionTestMixin(ApplicationIntrospectionTestMixin):
+class QtApplicationLauncher(ApplicationLauncher):
     """A mix-in class to make Qt application introspection easier.
 
     Inherit from this class if you want to launch and test Qt application with

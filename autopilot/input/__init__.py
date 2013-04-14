@@ -6,10 +6,9 @@
 # under the terms of the GNU General Public License version 3, as published
 # by the Free Software Foundation.
 
-from collections import OrderedDict
-from autopilot.utilities import get_debug_logger, _pick_variant
-
-"""Autopilot unified input system.
+"""
+Autopilot unified input system.
+===============================
 
 This package provides input methods for various platforms. Autopilot aims to
 provide an appropriate implementation for the currently running system. For
@@ -22,7 +21,18 @@ on each class. Tests can provide a hint to this method to suggest that a particu
 subsystem be used. However, autopilot will prefer to return a subsystem other than
 the one specified, if the requested subsystem is unavailable.
 
+There are three basic input types available:
+
+ * :class:`Keyboard` - traditional keyboard devices.
+ * :class:`Mouse` - traditional mouse devices.
+ * :class:`Touch` - single point-of-contact touch device.
+ * For multitouch capabilities, see the :mod:`autopilot.gestures` module.
+
 """
+
+from collections import OrderedDict
+from autopilot.utilities import _pick_variant
+
 
 
 class Keyboard(object):

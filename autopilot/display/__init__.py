@@ -6,6 +6,8 @@
 # under the terms of the GNU General Public License version 3, as published
 # by the Free Software Foundation.
 
+"""The display module contaions support for getting screen information."""
+
 from collections import OrderedDict
 from autopilot.utilities import _pick_variant
 from autopilot.input import Mouse

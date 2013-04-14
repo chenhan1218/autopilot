@@ -13,8 +13,7 @@ from tempfile import mktemp
 from textwrap import dedent
 
 from autopilot.testcase import AutopilotTestCase
-from autopilot.introspection.gtk import GtkIntrospectionTestMixin
-from autopilot.introspection.qt import QtIntrospectionTestMixin
+from autopilot.introspection.gtk import GtkApplicationLauncher
 
 
 class ApplicationTests(AutopilotTestCase):
@@ -33,15 +32,20 @@ class ApplicationTests(AutopilotTestCase):
         return path
 
 
-class QtTests(ApplicationTests, QtIntrospectionTestMixin):
+class QtTests(ApplicationTests):
 
     def setUp(self):
         super(QtTests, self).setUp()
 
         try:
-            self.app_path = subprocess.check_output(['which','qmlviewer']).strip()
+            self.app_path = subprocess.check_output(['which','qmlscene']).strip()
         except subprocess.CalledProcessError:
-            self.skip("qmlviewer not found.")
+            self.skip("qmlscene not found.")
+
+    def pick_app_launcher(self, app_path):
+        # force Qt app introspection:
+        from autopilot.introspection.qt import QtApplicationLauncher
+        return QtApplicationLauncher()
 
     def test_can_launch_qt_app(self):
         app_proxy = self.launch_test_application(self.app_path)
@@ -83,7 +87,7 @@ class QtTests(ApplicationTests, QtIntrospectionTestMixin):
         self.assertTrue(app_proxy is not None)
 
 
-class GtkTests(ApplicationTests, GtkIntrospectionTestMixin):
+class GtkTests(ApplicationTests):
 
     def setUp(self):
         super(GtkTests, self).setUp()

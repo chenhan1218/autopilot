@@ -1,10 +1,43 @@
-Frequently asked questions
-++++++++++++++++++++++++++
+:orphan:
 
-Q. If we add objectNames to QML items all over. What is the impact on memory?
-=============================================================================
+Frequently Asked Questions
+##########################
 
-The objectName is a QString property of QObject which defaults to QString().
+.. contents::
+
+Q. How do I install Autopilot?
+==============================
+
+The easiest way is by running Ubuntu Raring, and typing::
+
+    sudo apt-get install python-autopilot
+
+in a terminal. This will download and install the latest autopilot release, along with the documentation. If you're not running Ubuntu Raring, you can download the source code from the `autopilot project page <http://launchpad.net/autopilot/>`_.
+
+Q. Where can I report a bug?
+============================
+
+Autopilot is hosted on launchpad - bugs can be reported on the `launchpad bug page for autopilot <https://bugs.launchpad.net/autopilot/+filebug>`_ (this requires a launchpad account).
+
+Q. Where can I get help / support?
+==================================
+
+The developers hang out in the #ubuntu-quality IRC channel on irc.freenode.net.
+
+Q. What type of applications can autopilot test?
+================================================
+
+Autopilot works with severall different types of applications, including:
+ * The Unity desktop shell.
+ * Gtk 2 & 3 applications.
+ * Qt4, Qt5, and Qml applications.
+
+Autopilot is designed to work across all the form factors Ubuntu runs on, including the phone and tablet.
+
+Q. What is the impact on memory of adding objectNames to QML items?
+===================================================================
+
+The objectName is a QString property of QObject which defaults to an empty QString.
 QString is UTF-16 representation and because it uses some general purpose
 optimisations it usually allocates twice the space it needs to be able to grow
 fast. It also uses implicit sharing with copy-on-write and other similar
@@ -19,11 +52,13 @@ hardware and we have no chance to exactly measure consumption of a single
 objectName property. Therefore the taken approach is to measure lots of items
 and calculate the average consumption.
 
-Measurement of memory consumption of 10000 Items
+.. table:: Measurement of memory consumption of 10000 Items
 
-* without objectName: 65292 kB
-* with unique objectName ("item_0" .. "item_9999"): 66628 kB
-* with same objectName: 66480 kB
+    ================== ====================== ====================
+    Without objectName With unique objectName With same objectName
+    ================== ====================== ====================
+    65292 kB           66628 kB               66480 kB
+    ================== ====================== ====================
 
 => With 10000 different objectNames 1336 kB of memory are consumed which is
 around 127 Bytes per Item.
@@ -36,14 +71,14 @@ needed to do signal/slot connections. Also, QML does some optimisations: It
 does not connect signals/slots when not needed. So the fact that the object
 name is set could trigger some more connections.
 
-Even if more than the actual string size is used and QString uses a large 
-representation, this is very little compared to the rest. A qmlscene with just 
-the item is 27MB. One full screen image in the Nexus 10 tablet can easily 
+Even if more than the actual string size is used and QString uses a large
+representation, this is very little compared to the rest. A qmlscene with just
+the item is 27MB. One full screen image in the Nexus 10 tablet can easily
 consume around 30MB of memory. So objectNames are definitely not the first
 places where to search for optimisations.
 
-Writing the test code snippets, one interesting thing came up frequently: Just 
-modifying the code around to set the objectName often influences the results 
+Writing the test code snippets, one interesting thing came up frequently: Just
+modifying the code around to set the objectName often influences the results
 more than the actual string. For example, having a javascript function that
 assigns the objectName definitely uses much more memory than the objectName
 itself. Unless it makes sense from a performance point of view (frequently
@@ -52,5 +87,4 @@ binding the value to the property instead using helper code to assign it.
 
 Conclusion: If an objectName is needed for testing, this is definitely worth
 it. objectName's should obviously not be added when not needed. When adding
-them, the general QML guidelines for performance should be followed:
-http://qt-project.org/doc/qt-5.0/qtquick/qtquick-performance.html
+them, the `general QML guidelines for performance should be followed. <http://qt-project.org/doc/qt-5.0/qtquick/qtquick-performance.html>`_

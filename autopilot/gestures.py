@@ -14,7 +14,7 @@ you from generating your own gestures!
 
 """
 
-from autopilot.input import get_touch
+from autopilot.input import Touch
 from time import sleep
 
 
@@ -39,8 +39,8 @@ def pinch(center, vector_start, vector_end):
     dx = 1.0 * (finger_1_end[0] - finger_1_start[0]) / 100
     dy = 1.0 * (finger_1_end[1] - finger_1_start[1]) / 100
 
-    finger_1 = get_touch()
-    finger_2 = get_touch()
+    finger_1 = Touch.create()
+    finger_2 = Touch.create()
 
     finger_1.press(*finger_1_start)
     finger_2.press(*finger_2_start)

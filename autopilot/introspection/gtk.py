@@ -8,10 +8,10 @@
 
 import os
 
-from autopilot.introspection import ApplicationIntrospectionTestMixin
+from autopilot.introspection import ApplicationLauncher
 
 
-class GtkIntrospectionTestMixin(ApplicationIntrospectionTestMixin):
+class GtkApplicationLauncher(ApplicationLauncher):
     """A mix-in class to make Gtk application introspection easier."""
 
     def prepare_environment(self, app_path, arguments):

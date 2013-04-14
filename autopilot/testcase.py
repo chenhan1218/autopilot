@@ -11,8 +11,10 @@
 from __future__ import absolute_import
 
 from dbus import DBusException
+from gi.repository import Gio
 import logging
 import os
+import signal
 from subprocess import (
     call,
     CalledProcessError,
@@ -21,11 +23,18 @@ from subprocess import (
 
 from testscenarios import TestWithScenarios
 from testtools import TestCase
+from testtools.content import text_content
 from testtools.matchers import Equals
 from time import sleep
 
 from autopilot.process import ProcessManager
 from autopilot.input import Keyboard, Mouse
+from autopilot.introspection import (
+    get_application_launcher,
+    get_autopilot_proxy_object_for_process,
+    launch_application,
+    launch_process,
+    )
 from autopilot.display import Display
 from autopilot.globals import on_test_started
 from autopilot.keybindings import KeybindingsHelper
@@ -210,3 +219,83 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             self.assertThat(lambda: getattr(obj, prop_name), Eventually(Equals(desired_value)))
 
     assertProperties = assertProperty
+
+    def launch_test_application(self, application, *arguments, **kwargs):
+        """Launch ``application`` and return a proxy object for the application.
+
+        Use this method to launch an application and start testing it. The
+        positional arguments are used as arguments to the application to lanch.
+        Keyword arguments are used to control the manner in which the application
+        is launched.
+
+        This method is designed to be flexible enough to launch all supported
+        types of applications. For example, to launch a traditional Gtk application,
+        a test might start with::
+
+            app_proxy = self.launch_test_application('gedit')
+
+        ... a Qt4 Qml application might be launched like this::
+
+            app_proxy = self.launch_test_application('qmlviewer', 'my_scene.qml')
+
+        ... a Qt5 Qml application is launched in a similar fashion::
+
+            app_proxy = self.launch_test_application('qmlscene', 'my_scene.qml')
+
+        :param application: The application to launch. The application can be
+            specified as:
+
+             * A full, absolute path to an executable file. (``/usr/bin/gedit``)
+             * A relative path to an executable file. (``./build/my_app``)
+             * An app name, which will be searched for in $PATH (``my_app``)
+
+        :keyword launch_dir:  If set to a directory that exists the process will be
+            launched from that directory.
+
+        :keyword capture_output: If set to True (the default), the process output
+            will be captured and attached to the test as test detail.
+
+        :raises: **ValueError** if unknown keyword arguments are passed.
+        :return: A proxy object that represents the application. Introspection
+         data is retrievable via this object.
+
+        """
+        # first, we get a launcher. Tests can override this if they need:
+        launcher = self.pick_app_launcher(application)
+        if launcher is None:
+            raise RuntimeError("Autopilot could not determine the correct \
+                introspection type to use. You can specify one by overriding \
+                the AutopilotTestCase.pick_app_launcher method.")
+        process = launch_application(launcher, application, *arguments, **kwargs)
+        self.addCleanup(self._kill_process_and_attach_logs, process)
+        return get_autopilot_proxy_object_for_process(process)
+
+    def pick_app_launcher(self, app_path):
+        """Given an application path, return an object suitable for launching
+        the application.
+
+        This function attempts to guess what kind of application you are
+        launching. If, for some reason the default implementation returns the
+        wrong launcher, test authors may override this method to provide their
+        own implemetnation.
+
+        The default implementation calls
+        :py:func:`autopilot.introspection.get_application_launcher`
+
+        """
+        # default implementation is in autopilot.introspection:
+        return get_application_launcher(app_path)
+
+    def _kill_process_and_attach_logs(self, process):
+        process.kill()
+        logger.info("waiting for process to exit.")
+        for i in range(10):
+            if process.returncode is not None:
+                break
+            if i == 9:
+                logger.info("Terminating process group, since it hasn't exited after 10 seconds.")
+                os.killpg(process.pid, signal.SIGTERM)
+            sleep(1)
+        stdout, stderr = process.communicate()
+        self.addDetail('process-stdout', text_content(stdout))
+        self.addDetail('process-stderr', text_content(stderr))

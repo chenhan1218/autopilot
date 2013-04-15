@@ -74,7 +74,6 @@ class ProcessManager(object):
 
         variants = OrderedDict()
         variants['BAMF'] = get_bamf_pm
-        variants['UPA'] = get_upa_pm
         return _pick_variant(variants, preferred_variant)
 
     @classmethod

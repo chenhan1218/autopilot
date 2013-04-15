@@ -7,16 +7,18 @@
 # by the Free Software Foundation.
 #
 
-"""Package for introspection support."""
+"""Package for introspection support.
+
+This package contains the internal implementation of the autopilot introspection
+mechanism, and probably isn't useful to most test authors.
+
+"""
 
 import dbus
-from gi.repository import Gio
 import logging
 import subprocess
-from testtools.content import text_content
 from time import sleep
 import os
-import signal
 
 
 from autopilot.introspection.constants import (
@@ -31,62 +33,65 @@ from autopilot.introspection.dbus import (
     object_passes_filters,
     get_session_bus,
     )
-from autopilot.utilities import get_debug_logger
+from autopilot.utilities import get_debug_logger, addCleanup
 
 
 logger = logging.getLogger(__name__)
 
 
-class ApplicationIntrospectionTestMixin(object):
-    """A mix-in class to make launching applications for introsection easier.
+def get_application_launcher(app_path):
+    """Return an instance of :class:`ApplicationLauncher` that knows how to launch
+    the application at 'app_path'.
+    """
+    # TODO: this is a teeny bit hacky - we call ldd to check whether this application
+    # links to certain library. We're assuming that linking to libQt* or libGtk*
+    # means the application is introspectable. This excludes any non-dynamically
+    # linked executables, which we may need to fix further down the line.
+    try:
+        ldd_output = subprocess.check_output(["ldd", app_path]).strip().lower()
+    except subprocess.CalledProcessError:
+        print "Error: Cannot auto-detect introspection plugin to load."
+        print "Use the '-i' argument to specify an interface."
+        exit(1) # TODO - don't exit, raise an exception, and handle it appropriately in parent code.
+    if 'libqtcore' in ldd_output:
+        from autopilot.introspection.qt import QtApplicationLauncher
+        return QtApplicationLauncher()
+    elif 'libgtk' in ldd_output:
+        from autopilot.introspection.gtk import GtkApplicationLauncher
+        return GtkApplicationLauncher()
+    return None
 
-    .. important:: You should not instantiate this class directly. Instead, use
-     one of the derived classes.
 
+def launch_application(launcher, application, *arguments, **kwargs):
+    """Launch an application, and return a process object.
+
+    :param launcher: An instance of the :class:`ApplicationLauncher` class to
+        prepare the environment before launching the application itself.
     """
 
-    def launch_test_application(self, application, *arguments, **kwargs):
-        """Launch *application* and retrieve a proxy object for the application.
+    if not isinstance(application, basestring):
+        raise TypeError("'application' parameter must be a string.")
+    cwd = kwargs.pop('launch_dir', None)
+    capture_output = kwargs.pop('capture_output', True)
+    if kwargs:
+        raise ValueError("Unknown keyword arguments: %s." %
+            (', '.join( repr(k) for k in kwargs.keys())))
 
-        Use this method to launch a supported application and start testing it.
-        The application can be specified as:
+    path, args = launcher.prepare_environment(application, list(arguments))
 
-         * A Desktop file, either with or without a path component.
-         * An executable file, either with a path, or one that is in the $PATH.
+    process = launch_process(path,
+        args,
+        capture_output,
+        cwd=cwd
+        )
+    return process
 
-        This method supports the following keyword arguments:
 
-         * *launch_dir*. If set to a directory that exists the process will be
-           launched from that directory.
+class ApplicationLauncher(object):
+    """A class that knows how to launch an application with a certain type of
+    introspection enabled.
 
-         * *capture_output*. If set to True (the default), the process output
-           will be captured and attached to the test as test detail.
-
-        :raises: **ValueError** if unknown keyword arguments are passed.
-        :return: A proxy object that represents the application. Introspection
-         data is retrievable via this object.
-
-         """
-        if not isinstance(application, basestring):
-            raise TypeError("'application' parameter must be a string.")
-        cwd = kwargs.pop('launch_dir', None)
-        capture_output = kwargs.pop('capture_output', True)
-        if kwargs:
-            raise ValueError("Unknown keyword arguments: %s." %
-                (', '.join( repr(k) for k in kwargs.keys())))
-
-        if application.endswith('.desktop'):
-            proc = Gio.DesktopAppInfo.new(application)
-            application = proc.get_executable()
-
-        path, args = self.prepare_environment(application, list(arguments))
-
-        process = launch_autopilot_enabled_process(path,
-                                                    args,
-                                                    capture_output,
-                                                    cwd=cwd)
-        self.addCleanup(self._kill_process_and_attach_logs, process)
-        return get_autopilot_proxy_object_for_process(process)
+    """
 
     def prepare_environment(self, app_path, arguments):
         """Prepare the application, or environment to launch with autopilot-support.
@@ -99,22 +104,9 @@ class ApplicationIntrospectionTestMixin(object):
         """
         raise NotImplementedError("Sub-classes must implement this method.")
 
-    def _kill_process_and_attach_logs(self, process):
-        process.kill()
-        logger.info("waiting for process to exit.")
-        for i in range(10):
-            if process.returncode is not None:
-                break
-            if i == 9:
-                logger.info("Terminating process group, since it hasn't exited after 10 seconds.")
-                os.killpg(process.pid, signal.SIGTERM)
-            sleep(1)
-        stdout, stderr = process.communicate()
-        self.addDetail('process-stdout', text_content(stdout))
-        self.addDetail('process-stderr', text_content(stderr))
 
 
-def launch_autopilot_enabled_process(application, args, capture_output, **kwargs):
+def launch_process(application, args, capture_output, **kwargs):
     """Launch an autopilot-enabled process and return the proxy object."""
     commandline = [application]
     commandline.extend(args)
@@ -130,28 +122,6 @@ def launch_autopilot_enabled_process(application, args, capture_output, **kwargs
         preexec_fn=os.setsid,
         **kwargs)
     return process
-
-
-def get_child_pids(pid):
-    """Get a list of all child process Ids, for the given parent.
-
-    """
-    def get_children(pid):
-        command = ['ps', '-o', 'pid', '--ppid', str(pid), '--noheaders']
-        try:
-            raw_output = subprocess.check_output(command)
-        except subprocess.CalledProcessError:
-            return []
-        return [int(p) for p in raw_output.split()]
-
-    result = [pid]
-    data = get_children(pid)
-    while data:
-        pid = data.pop(0)
-        result.append(pid)
-        data.extend(get_children(pid))
-
-    return result
 
 
 def get_autopilot_proxy_object_for_process(process):
@@ -197,6 +167,28 @@ def get_autopilot_proxy_object_for_process(process):
                 logger.warning("Caught exception while searching for autopilot interface: '%r'", e)
         sleep(1)
     raise RuntimeError("Unable to find Autopilot interface.")
+
+
+def get_child_pids(pid):
+    """Get a list of all child process Ids, for the given parent.
+
+    """
+    def get_children(pid):
+        command = ['ps', '-o', 'pid', '--ppid', str(pid), '--noheaders']
+        try:
+            raw_output = subprocess.check_output(command)
+        except subprocess.CalledProcessError:
+            return []
+        return [int(p) for p in raw_output.split()]
+
+    result = [pid]
+    data = get_children(pid)
+    while data:
+        pid = data.pop(0)
+        result.append(pid)
+        data.extend(get_children(pid))
+
+    return result
 
 
 def make_proxy_object_from_service_name(service_name, obj_path):

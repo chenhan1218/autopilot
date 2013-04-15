@@ -1,0 +1,45 @@
+{% extends "defindex.html" %}
+{% block tables %}
+<p>Autopilot is a tool for writing <i>functional tests</i> for <i>GUI</i> applications. It works out-of-the-box for Several GUI toolkits, including Gtk2, Gtk3, Qt4, and Qt5/Qml.</p>
+  <p><strong>Parts of the documentation:</strong></p>
+  <table class="contentstable" align="center">
+    <tr>
+      <td width="50%">
+        <p class="biglink">
+          <a class="biglink" href="{{ pathto("tutorial/tutorial") }}">Getting started with Autopilot</a><br/>
+          <span class="linkdescr">How to write your first Autopilot test.</span>
+        </p>
+      </td>
+      <td width="50%">
+        <p class="biglink">
+          <a class="biglink" href="{{ pathto("api/autopilot") }}">API Reference</a><br/>
+          <span class="linkdescr">API reference documentation for Autopilot.</span>
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <p class="biglink">
+          <a class="biglink" href="{{ pathto("faq/faq") }}">Frequently Asked Questions</a><br/>
+          <span class="linkdescr">...with answers!</span>
+        </p>
+      </td>
+      <td>
+        <p class="biglink">
+          <a class="biglink" href="{{ pathto("porting/porting") }}">Porting Autopilot Tests</a><br/>
+          <span class="linkdescr">How to port your tests from earlier versions of Autopilot.</span>
+        </p>
+      </td>
+    </tr>
+  </table>
+
+  <p><strong>Indices and tables:</strong></p>
+  <table class="contentstable" align="center"><tr>
+    <td width="50%">
+      <p class="biglink"><a class="biglink" href="{{ pathto("py-modindex") }}">Module Index</a><br/>
+         <span class="linkdescr">quick access to all modules</span></p>
+{#      <p class="biglink"><a class="biglink" href="{{ pathto("contents") }}">Complete Table of Contents</a><br/>
+         <span class="linkdescr">lists all sections and subsections</span></p> #}
+    </td></tr>
+  </table>
+{% endblock %}

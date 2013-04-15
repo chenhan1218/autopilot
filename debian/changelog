@@ -1,3 +1,9 @@
+autopilot (1.3) UNRELEASED; urgency=low
+
+  * Create version 1.3 (LP: #1168971)
+
+ -- Thomi Richards <thomi.richards@canonical.com>  Mon, 15 Apr 2013 09:33:21 +1200
+
 autopilot (1.2daily13.03.26-0ubuntu1) raring; urgency=low
 
   * Automatic snapshot from revision 155

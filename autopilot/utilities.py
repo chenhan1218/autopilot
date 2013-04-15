@@ -14,103 +14,26 @@
 
 from __future__ import absolute_import
 
+import inspect
 import logging
 import os
-import sys
 import time
 from functools import wraps
-from Xlib import X, display, protocol
-
-_display = None
-
-def get_display():
-    """Get a Xlib display object. Creating the display prints garbage to stdout."""
-    global _display
-    if _display is None:
-        with Silence():
-            _display = display.Display()
-    return _display
 
 
-
-def make_window_skip_taskbar(window, set_flag=True):
-    """Set the skip-taskbar kint on an X11 window.
-
-    'window' should be an Xlib window object.
-    set_flag should be 'True' to set the flag, 'False' to clear it.
-
-    """
-    state = get_display().get_atom('_NET_WM_STATE_SKIP_TASKBAR', 1)
-    action = int(set_flag)
-    if action == 0:
-        print "Clearing flag"
-    elif action == 1:
-        print "Setting flag"
-    _setProperty('_NET_WM_STATE', [action, state, 0, 1], window)
-    get_display().sync()
-
-
-def get_desktop_viewport():
-    """Get the x,y coordinates for the current desktop viewport top-left corner."""
-    return _getProperty('_NET_DESKTOP_VIEWPORT')
-
-
-def get_desktop_geometry():
-    """Get the full width and height of the desktop, including all the viewports."""
-    return _getProperty('_NET_DESKTOP_GEOMETRY')
-
-
-def _setProperty(_type, data, win=None, mask=None):
-    """ Send a ClientMessage event to a window"""
-    if not win:
-        win = get_display().screen().root
-    if type(data) is str:
-        dataSize = 8
-    else:
-        # data length must be 5 - pad with 0's if it's short, truncate otherwise.
-        data = (data + [0] * (5 - len(data)))[:5]
-        dataSize = 32
-
-    ev = protocol.event.ClientMessage(window=win,
-        client_type=get_display().get_atom(_type),
-        data=(dataSize, data))
-
-    if not mask:
-        mask = (X.SubstructureRedirectMask | X.SubstructureNotifyMask)
-    get_display().screen().root.send_event(ev, event_mask=mask)
-
-
-def _getProperty(_type, win=None):
-    if not win:
-        win = get_display().screen().root
-    atom = win.get_full_property(get_display().get_atom(_type), X.AnyPropertyType)
-    if atom: return atom.value
-
-
-def get_compiz_setting(plugin_name, setting_name):
-    """Get a compiz setting object.
-
-    'plugin_name' is the name of the plugin (e.g. 'core' or 'unityshell')
-    'setting_name' is the name of the setting (e.g. 'alt_tab_timeout')
-
-    This function will raise KeyError if the plugin or setting named does not
-    exist.
-
-    """
-    # circular dependancy:
-    from autopilot.compizconfig import get_setting
-    return get_setting(plugin_name, setting_name)
-
-
-def get_compiz_option(plugin_name, setting_name):
-    """Get a compiz setting value.
-
-    This is the same as calling:
-
-    >>> get_compiz_setting(plugin_name, setting_name).Value
-
-    """
-    return get_compiz_setting(plugin_name, setting_name).Value
+def _pick_variant(variants, preferred_variant):
+    possible_backends = variants.keys()
+    get_debug_logger().debug("Possible variants: %s", ','.join(possible_backends))
+    if preferred_variant in possible_backends:
+        possible_backends.sort(lambda a,b: -1 if a == preferred_variant else 0)
+    failure_reasons = []
+    for be in possible_backends:
+        try:
+            return variants[be]()
+        except Exception as e:
+            get_debug_logger().warning("Can't create variant %s: %r", be, e)
+            failure_reasons.append('%s: %r' % (be, e))
+    raise RuntimeError("Unable to instantiate any backends\n%s" % '\n'.join(failure_reasons))
 
 
 # Taken from http://code.activestate.com/recipes/577564-context-manager-for-low-level-redirection-of-stdou/
@@ -226,7 +149,33 @@ def deprecated(alternative):
     def fdec(fn):
         @wraps(fn)
         def wrapped(*args, **kwargs):
-            sys.stderr.write("WARNING: This function is deprecated. Please use '%s' instead.\n" % alternative)
+            import sys
+            outerframe_details = inspect.getouterframes(inspect.currentframe())[1]
+            filename, line_number, function_name = outerframe_details[1:4]
+            sys.stderr.write("WARNING: in file \"{0}\", line {1} in {2}\n".format(filename, line_number, function_name))
+            sys.stderr.write("This function is deprecated. Please use '%s' instead.\n" % alternative)
             return fn(*args, **kwargs)
         return wrapped
     return fdec
+
+
+class _CleanupWrapper(object):
+    """Support for calling 'addCleanup' outside the test case."""
+
+    def __init__(self):
+        self._test_instance = None
+
+    def __call__(self, callable, *args, **kwargs):
+        if self._test_instance is None:
+            raise RuntimeError("Out-of-test addCleanup can only be called while an autopilot test case is running!")
+        self._test_instance.addCleanup(callable, *args, **kwargs)
+
+    def set_test_instance(self, test_instance):
+        self._test_instance = test_instance
+        test_instance.addCleanup(self._on_test_ended)
+
+    def _on_test_ended(self):
+        self._test_instance = None
+
+
+addCleanup = _CleanupWrapper()

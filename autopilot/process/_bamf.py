@@ -5,7 +5,7 @@
 # under the terms of the GNU General Public License version 3, as published
 # by the Free Software Foundation.
 
-"""Various classes for interacting with BAMF."""
+"""BAMF implementation of the Process Management"""
 
 from __future__ import absolute_import
 
@@ -13,21 +13,25 @@ import dbus
 import dbus.glib
 from gi.repository import Gio
 from gi.repository import GLib
+import logging
 import os
+from time import sleep
 from Xlib import display, X, protocol
 
-from autopilot.emulators.dbus_handler import get_session_bus
-from autopilot.utilities import Silence
+from autopilot.dbus_handler import get_session_bus
+from autopilot.utilities import addCleanup, Silence
 
-__all__ = [
-    "Bamf",
-    "BamfApplication",
-    "BamfWindow",
-    ]
+from autopilot.process import (
+    ProcessManager as ProcessManagerBase,
+    Application as ApplicationBase,
+    Window as WindowBase
+    )
+
 
 _BAMF_BUS_NAME = 'org.ayatana.bamf'
 _X_DISPLAY = None
 
+logger = logging.getLogger(__name__)
 
 def get_display():
     """Create an Xlib display object (silently) and return it."""
@@ -51,7 +55,7 @@ def _filter_user_visible(win):
         return False
 
 
-class Bamf(object):
+class ProcessManager(ProcessManagerBase):
     """High-level class for interacting with Bamf from within a test.
 
     Use this class to inspect the state of running applications and open
@@ -65,6 +69,126 @@ class Bamf(object):
         self.matcher_proxy = get_session_bus().get_object(_BAMF_BUS_NAME, matcher_path)
         self.matcher_interface = dbus.Interface(self.matcher_proxy, self.matcher_interface_name)
 
+    def start_app(self, app_name, files=[], locale=None):
+        """Start one of the known applications, and kill it on tear down.
+
+        .. warning:: This method will clear all instances of this application on
+         tearDown, not just the one opened by this method! We recommend that
+         you use the :meth:`start_app_window` method instead, as it is generally
+         safer.
+
+        :param app_name: The application name. *This name must either already
+         be registered as one of the built-in applications that are supported
+         by autopilot, or must have been registered using*
+         :meth:`register_known_application` *beforehand.*
+        :param files: (Optional) A list of paths to open with the
+         given application. *Not all applications support opening files in this
+         way.*
+        :param locale: (Optional) The locale will to set when the application
+         is launched. *If you want to launch an application without any
+         localisation being applied, set this parameter to 'C'.*
+        :returns: A :class:`~autopilot.process.Application` instance.
+
+        """
+        window = self._open_window(app_name, files, locale)
+        if window:
+            addCleanup(self.close_all_app, app_name)
+            return window.application
+
+        raise AssertionError("No new application window was opened.")
+
+    def start_app_window(self, app_name, files=[], locale=None):
+        """Open a single window for one of the known applications, and close it
+        at the end of the test.
+
+        :param app_name: The application name. *This name must either already
+         be registered as one of the built-in applications that are supported
+         by autopilot, or must have been registered with*
+         :meth:`register_known_application` *beforehand.*
+        :param files: (Optional) Should be a list of paths to open with the
+         given application. *Not all applications support opening files in this
+         way.*
+        :param locale: (Optional) The locale will to set when the application
+         is launched. *If you want to launch an application without any
+         localisation being applied, set this parameter to 'C'.*
+        :raises: **AssertionError** if no window was opened, or more than one
+         window was opened.
+        :returns: A :class:`~autopilot.process.Window` instance.
+
+        """
+        window = self._open_window(app_name, files, locale)
+        if window:
+            addCleanup(window.close)
+            return window
+        raise AssertionError("No window was opened.")
+
+    def _open_window(self, app_name, files, locale):
+        """Open a new 'app_name' window, returning the window instance or None.
+
+        Raises an AssertionError if this creates more than one window.
+
+        """
+        existing_windows = self.get_open_windows_by_application(app_name)
+
+        if locale:
+            os.putenv("LC_ALL", locale)
+            addCleanup(os.unsetenv, "LC_ALL")
+            logger.info("Starting application '%s' with files %r in locale %s", app_name, files, locale)
+        else:
+            logger.info("Starting application '%s' with files %r", app_name, files)
+
+
+        app = self.KNOWN_APPS[app_name]
+        self.launch_application(app['desktop-file'], files)
+        apps = self.get_running_applications_by_desktop_file(app['desktop-file'])
+
+        for i in range(10):
+            try:
+                new_windows = []
+                [new_windows.extend(a.get_windows()) for a in apps]
+                filter_fn = lambda w: w.x_id not in [c.x_id for c in existing_windows]
+                new_wins = filter(filter_fn, new_windows)
+                if new_wins:
+                    assert len(new_wins) == 1
+                    return new_wins[0]
+            except DBusException:
+                pass
+            sleep(1)
+        return None
+
+    def get_open_windows_by_application(self, app_name):
+        """Get a list of ~autopilot.process.Window` instances
+        for the given application name.
+
+        :param app_name: The name of one of the well-known applications.
+        :returns: A list of :class:`~autopilot.process.Window`
+         instances.
+
+        """
+        existing_windows = []
+        [existing_windows.extend(a.get_windows()) for a in self.get_app_instances(app_name)]
+        return existing_windows
+
+    def close_all_app(self, app_name):
+        """Close all instances of the application 'app_name'."""
+        app = self.KNOWN_APPS[app_name]
+        try:
+            pids = check_output(["pidof", app['process-name']]).split()
+            if len(pids):
+                call(["kill"] + pids)
+        except CalledProcessError:
+            logger.warning("Tried to close applicaton '%s' but it wasn't running.", app_name)
+
+    def get_app_instances(self, app_name):
+        """Get `~autopilot.process.Application` instances for app_name."""
+        desktop_file = self.KNOWN_APPS[app_name]['desktop-file']
+        return self.get_running_applications_by_desktop_file(desktop_file)
+
+    def app_is_running(self, app_name):
+        """Return true if an instance of the application is running."""
+        apps = self.get_app_instances(app_name)
+        return len(apps) > 0
+
     def get_running_applications(self, user_visible_only=True):
         """Get a list of the currently running applications.
 
@@ -72,7 +196,7 @@ class Bamf(object):
         visible to the user in the switcher will be returned.
 
         """
-        apps = [BamfApplication(p) for p in self.matcher_interface.RunningApplications()]
+        apps = [Application(p) for p in self.matcher_interface.RunningApplications()]
         if user_visible_only:
             return filter(_filter_user_visible, apps)
         return apps
@@ -80,7 +204,7 @@ class Bamf(object):
     def get_running_applications_by_desktop_file(self, desktop_file):
         """Return a list of applications that have the desktop file *desktop_file*.
 
-        This method may return an empty list, if no applications
+        This method will return an empty list if no applications
         are found with the specified desktop file.
 
         """
@@ -93,14 +217,6 @@ class Bamf(object):
                 pass
         return apps
 
-    def get_application_by_xid(self, xid):
-        """Return the application that has a child with the requested xid or None."""
-
-        app_path = self.matcher_interface.ApplicationForXid(xid)
-        if len(app_path):
-            return BamfApplication(app_path)
-        return None
-
     def get_open_windows(self, user_visible_only=True):
         """Get a list of currently open windows.
 
@@ -111,18 +227,13 @@ class Bamf(object):
 
         """
 
-        windows = [BamfWindow(w) for w in self.matcher_interface.WindowStackForMonitor(-1)]
+        windows = [Window(w) for w in self.matcher_interface.WindowStackForMonitor(-1)]
         if user_visible_only:
             windows = filter(_filter_user_visible, windows)
         # Now sort on stacking order.
         # We explicitly convert to a list from an iterator since tests frequently
         # try and use len() on return values from these methods.
         return list(reversed(windows))
-
-    def get_window_by_xid(self, xid):
-        """Get the BamfWindow that matches the provided *xid*."""
-        windows = [BamfWindow(w) for w in self.matcher_interface.WindowPaths() if BamfWindow(w).x_id == xid]
-        return windows[0] if windows else None
 
     def wait_until_application_is_running(self, desktop_file, timeout):
         """Wait until a given application is running.
@@ -147,7 +258,7 @@ class Bamf(object):
             # No, so define a callback to watch the ViewOpened signal:
             def on_view_added(bamf_path, name):
                 if bamf_path.split('/')[-1].startswith('application'):
-                    app = BamfApplication(bamf_path)
+                    app = Application(bamf_path)
                     if desktop_file == os.path.split(app.desktop_file)[1]:
                         gobject_loop.quit()
 
@@ -192,7 +303,7 @@ class Bamf(object):
         return proc
 
 
-class BamfApplication(object):
+class Application(ApplicationBase):
     """Represents an application, with information as returned by Bamf.
 
     .. important:: Don't instantiate this class yourself. instead, use the
@@ -265,20 +376,20 @@ class BamfApplication(object):
 
     def get_windows(self):
         """Get a list of the application windows."""
-        return [BamfWindow(w) for w in self._view_iface.Children()]
+        return [Window(w) for w in self._view_iface.Children()]
 
     def __repr__(self):
-        return "<BamfApplication '%s'>" % (self.name)
+        return "<Application '%s'>" % (self.name)
 
     def __eq__(self, other):
         return self.desktop_file == other.desktop_file
 
 
-class BamfWindow(object):
+class Window(WindowBase):
     """Represents an application window, as returned by Bamf.
 
     .. important:: Don't instantiate this class yourself. Instead, use the
-     appropriate methods in BamfApplication.
+     appropriate methods in Application.
 
     """
     def __init__(self, window_path):
@@ -364,7 +475,7 @@ class BamfWindow(object):
         # associated application. For these windows we return none.
         parents = self._view_iface.Parents()
         if parents:
-            return BamfApplication(parents[0])
+            return Application(parents[0])
         else:
             return None
 
@@ -423,7 +534,7 @@ class BamfWindow(object):
         self._x_win.configure(stack_mode=X.Above)
 
     def __repr__(self):
-        return "<BamfWindow '%s' Xid: %d>" % (self.title if self._x_win else '', self.x_id)
+        return "<Window '%s' Xid: %d>" % (self.title if self._x_win else '', self.x_id)
 
     def _getProperty(self, _type):
         """Get an X11 property.

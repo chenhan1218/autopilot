@@ -27,13 +27,13 @@ sys.path.insert(0, os.path.abspath('..'))
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.intersphinx',
+    # 'sphinx.ext.intersphinx',
     'sphinx.ext.viewcode',
     ]
 
-intersphinx_mapping = {
-    'testtools': ('http://testtools.readthedocs.org/en/latest/', None),
-    }
+# intersphinx_mapping = {
+#     'testtools': ('http://testtools.readthedocs.org/en/latest/', None),
+#     }
 
 autodoc_member_order='bysource'
 

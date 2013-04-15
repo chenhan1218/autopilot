@@ -5,6 +5,9 @@ Frequently Asked Questions
 
 .. contents::
 
+Autopilot: The Project
+++++++++++++++++++++++
+
 Q. How do I install Autopilot?
 ==============================
 
@@ -33,6 +36,49 @@ Autopilot works with severall different types of applications, including:
  * Qt4, Qt5, and Qml applications.
 
 Autopilot is designed to work across all the form factors Ubuntu runs on, including the phone and tablet.
+
+Autopilot Tests
++++++++++++++++
+
+.. _faq-many-asserts:
+
+Q. Autopilot tests often include multiple assertions. Isn't this bad practise?
+==============================================================================
+
+Maybe. But probably not.
+
+Unit tests should test a single unit of code, and ideally be written such that they can fail in exactly a single way. Therefore, unit tests should have a single assertion that determines whether the test passes or fails.
+
+However, autopilot tests are not unit tests, they are functional tests. Functional test suites tests features, not units of code, so there's several very good reasons to have more than assertion in a single test:
+
+* Some features require several assertions to prove that the feature is working correctly. For example, you may wish to verify that the 'Save' dialog box opens correctly, using the following code::
+
+    self.assertThat(save_win.title, Eventually(Equals("Save Document")))
+    self.assertThat(save_win.visible, Equals(True))
+    self.assertThat(save_win.has_focus, Equals(True))
+
+* Some tests need to wait for the application to respond to user input before the test continues. The easiest way to do this is to use the :class:`~autopilot.matchers.Eventually` matcher in the middle of your interaction with the application. For example, if testing the `Firefox <http://www.mozilla.org/en-US/>`_ browsers ability to print a certain web comic, we might produce a test that looks similar to this::
+
+    def test_firefox_can_print_xkcd(self):
+        """Firefox must be able to print xkcd.com."""
+        # Put keyboard focus in URL bar:
+        self.keyboard.press_and_release('Ctrl+l')
+        self.keyboard.type('http://xkcd.com')
+        self.keyboard.press_and_release('Enter')
+        # wait for page to load:
+        self.assertThat(self.app.loading, Eventually(Equals(False)))
+        # open print dialog:
+        self.keyboard.press_and_release('Ctrl+p')
+        # wait for dialog to open:
+        self.assertThat(self.app.print_dialog.open, Eventually(Equals(True)))
+        self.keyboard.press_and_release('Enter')
+        # ensure something was sent to our faked printer:
+        self.assertThat(self.fake_printer.documents_printed, Equals(1))
+
+In general, autopilot tests are more relaxed about the 'one assertion per test' rule. However, care should still be taken to produce tests that are as small and understandable as possible.
+
+Autopilot Qt & Gtk Support
+++++++++++++++++++++++++++
 
 Q. What is the impact on memory of adding objectNames to QML items?
 ===================================================================

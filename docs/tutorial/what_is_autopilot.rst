@@ -8,9 +8,29 @@ Autopilot is a tool for writing functional tests. Functional tests are tests tha
 * Simulate user interaction. Autopilot provides methods to generate keyboard, mouse, and touch events. These events are delivered to the application under test in exactly the same way as normal input events. The application under test therefore cannot distinguish between a "real" user and an autopilot test case.
 * Validate design decisions. The primary function of a functional test is to determine whether of not an application has met the design criteria. Functional tests evaluate high-level design corectness.
 
+Where is Autopilot used?
+########################
+
+Autopilot was designed to test the `Unity 3D <http://unity.ubuntu.com/>`_ shell. However, since then it has been used to test a number of other applications, including:
+
+* Core Ubuntu GUI applications.
+* Mobile phone applications for the Ubuntu Phone & Ubuntu Tablet.
+
+How does Autopilot fit with other test frameworks?
+##################################################
+
 .. image:: /images/test_pyramid.*
 
-Autopilot exists at the apex of the "testing pyramid". It is designed to test high-level functionality, and complement a solid base of unit and integration tests.
+Autopilot exists at the apex of the "testing pyramid". It is designed to test high-level functionality, and complement a solid base of unit and integration tests. *Using autopilot is not a substitute for testing your application with unit and integration tests!*. Autopilot is a very capable tool for testing high-level feature functionality. It is not an appropriate tool for testing low-level implementation details.
+
+Autopilot is built on top of several other python test frameworks, incuding:
+
+* `Python Testtools <https://pypi.python.org/pypi/testtools>`_ - :class:`~autopilot.testcase.AutopilotTestCase` derives from the testtools :class:`~testtools.TestCase` class, which allows test author to use all the extended features found in testtools. Specifically, Autopilot includes the :class:`~autopilot.matchers.Eventually` matcher class, which allows test authors to make assertions about the application under test without having to worry about the timing between the tests and the application under test.
+
+* `Python Test Scenarios <https://launchpad.net/testscenarios>`_ - :class:`~autopilot.testcase.AutopilotTestCase` contains the necessary plumbing in order to allow test authors to use test scenarios out of the box. This is extremely useful when you want to test several different modes of operation.
+
+What do Autopilot Tests Contain?
+################################
 
 A typical autopilot test has three distinct stages:
 
@@ -25,3 +45,18 @@ Tests may also wish to take other actions in the setup stage, including:
 * Setting environment variables to certain values.
 * Starting external applications that are required for the test to run.
 * Creating files or folders (or any kind of external data) on disk.
+
+The purpose of the setup stage is to make sure that everything that is required for the test to run is in place.
+
+**The Interaction Stage**
+
+Once the setup has been completed, it's time to start interacting with your application. This typicaly involves generating input events. For example, if you are testing a text editor you might have a test whose specification is similar to the following::
+
+ Type some text into the document area, open the 'Edit' menu and click
+ the 'Search and Replace' menu item.
+
+During this stage you will most likely need to read the appliations internal state. For example, your test will need to know where the 'Edit' menu is on the screen. Thankfully, autopilot takes care of the details, allowing you to write expressive tests.
+
+**The Assertion Stage**
+
+The final stage is where you determine if your test should pass or fail. Most tests will contain more than one assertion (:ref:`why? <faq-many-asserts>`). Autopilot contains several custom assertions that make testing high-level concepts easier.

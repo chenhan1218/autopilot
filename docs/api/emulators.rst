@@ -13,8 +13,8 @@ providing the old 'emulators' namespace. However, it's a bad idea to rely on thi
 module continuing to exist. It contains several sub-modules:
 
  * :mod:`autopilot.display`
- * :mod:`autopilot.clipboard`
- * :mod:`autopilot.dbus_handler`
- * :mod:`autopilot.ibus`
+ * autopilot.clipboard (deprecated)
+ * autopilot.dbus_handler (for internal use only)
+ * autopilot.ibus (deprecated)
  * :mod:`autopilot.input`
 

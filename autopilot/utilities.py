@@ -24,6 +24,7 @@ from autopilot import BackendException
 
 
 def _pick_backend(variants, preferred_backend):
+    """Pick a backend and return an instance of it."""
     possible_backends = variants.keys()
     get_debug_logger().debug("Possible backends: %s", ','.join(possible_backends))
     if preferred_backend:

@@ -1,5 +1,5 @@
-``matchers`` - Custom matchers for test assertions
-++++++++++++++++++++++++++++++++++++++++++++++++++
+``autopilot.matchers`` - Custom matchers for test assertions
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 .. automodule:: autopilot.matchers

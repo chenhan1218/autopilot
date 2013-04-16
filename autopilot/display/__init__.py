@@ -90,13 +90,23 @@ class Display:
     def create(preferred_variant=''):
         """Get an instance of the Display class.
 
-        If variant is specified, it should be a string that specifies a backend to
-        use. However, this hint can be ignored - autopilot will prefer to return a
-        variant other than the one requested, rather than fail to return anything at
-        all.
+        :param preferred_variant: A string containing a hint as to which variant you
+            would like. If left blank, autopilolt will pick a suitable
+            variant for you. Specifying a variant will guarantee that either that
+            variant is returned, or an exception is raised.
 
-        If autopilot cannot instantate any of the possible backends, a RuntimeError
-        will be raised.
+            possible variants are:
+
+            * ``X11`` - Get display information from X11.
+            * ``UPA`` - Get display information from the ubuntu platform API.
+
+        :raises: RuntimeError if autopilot cannot instantate any of the possible
+            backends.
+        :raises: RuntimeError if the preferred_variant is specified and is not
+            one of the possible backends for this device class.
+        :raises: :class:`~autopilot.BackendException` if the preferred_variant is
+            set, but that variant could not be instantiated.
+
         """
         def get_x11_display():
             from autopilot.display._X11 import Display

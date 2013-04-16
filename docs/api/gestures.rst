@@ -1,5 +1,5 @@
-``gestures`` - Gestural and multi-touch support
-+++++++++++++++++++++++++++++++++++++++++++++++
+``autopilot.gestures`` - Gestural and multi-touch support
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 .. automodule:: autopilot.gestures

@@ -58,11 +58,21 @@ class ProcessManager(object):
         """Get an instance of the :py:class:`ProcessManager` class.
 
         :param preferred_variant: A string containing a hint as to which variant you
-            would like. However, this hint can be ignored - autopilot will prefer to
-            return a keyboard variant other than the one requested, rather than fail
-            to return anything at all.
-        :raises: a RuntimeError will be raised if autopilot cannot instantate any of
-            the possible backends.
+            would like. If left blank, autopilolt will pick a suitable
+            variant for you. Specifying a variant will guarantee that either that
+            variant is returned, or an exception is raised.
+
+            possible variants are:
+
+            * ``BAMF`` - Get process information using the BAMF Application Matching Framework.
+
+        :raises: RuntimeError if autopilot cannot instantate any of the possible
+            backends.
+        :raises: RuntimeError if the preferred_variant is specified and is not
+            one of the possible backends for this device class.
+        :raises: :class:`~autopilot.BackendException` if the preferred_variant is
+            set, but that variant could not be instantiated.
+
         """
         def get_bamf_pm():
             from autopilot.process._bamf import ProcessManager

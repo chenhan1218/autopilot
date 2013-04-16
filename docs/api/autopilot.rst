@@ -1,10 +1,8 @@
-:orphan:
+``autopilot`` - Global stuff
+++++++++++++++++++++++++++++
 
-Autopilot API Documentation
-===========================
 
-.. toctree::
-   :maxdepth: 1
-   :glob:
+.. automodule:: autopilot
+    :members:
+    :undoc-members:
 
-   *

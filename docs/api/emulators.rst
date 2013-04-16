@@ -1,5 +1,5 @@
-``emulators`` - Backwards compatibility for autopilot v1.2
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+``autopilot.emulators`` - Backwards compatibility for autopilot v1.2
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 .. module autopilot.emulators

@@ -17,9 +17,11 @@ will instantiate input classes class that use something other than X11 to genera
 events (possibly UInput).
 
 Test authors should instantiate the appropriate class using the ``create`` method
-on each class. Tests can provide a hint to this method to suggest that a particular
-subsystem be used. However, autopilot will prefer to return a subsystem other than
-the one specified, if the requested subsystem is unavailable.
+on each class. Calling ``create()`` with  no arguments will get an instance of the
+specified class that suits the current platform. In this case, autopilot will
+do it's best to pick a suitable variant. Calling ``create`` with a variant name
+will result in that specific variant type being returned, or, if it cannot be created,
+an exception will be raised. The exception type varies from variant to variant.
 
 There are three basic input types available:
 
@@ -49,12 +51,23 @@ class Keyboard(object):
     def create(preferred_variant=''):
         """Get an instance of the :py:class:`Keyboard` class.
 
-        :param preferred_variant: A string containing a hint as to which variant you
-            would like. However, this hint can be ignored - autopilot will prefer to
-            return a keyboard variant other than the one requested, rather than fail
-            to return anything at all.
-        :raises: a RuntimeError will be raised if autopilot cannot instantate any of
-            the possible backends.
+        :param preferred_variant: A string containing a hint as to which variant
+            you would like. If left blank, autopilolt will pick a suitable
+            variant for you. Specifying a variant will guarantee that either that
+            variant is returned, or an exception is raised.
+
+            possible variants are:
+
+            * ``X11`` - Generate keyboard events using the X11 client libraries.
+            * ``UInput`` - Use UInput kernel-level device driver.
+
+        :raises: RuntimeError if autopilot cannot instantate any of the possible
+            backends.
+        :raises: RuntimeError if the preferred_variant is specified and is not
+            one of the possible backends for this device class.
+        :raises: :class:`~autopilot.BackendException` if the preferred_variant is
+            set, but that variant could not be instantiated.
+
 
         """
         def get_x11_kb():
@@ -167,11 +180,20 @@ class Mouse(object):
         """Get an instance of the :py:class:`Mouse` class.
 
         :param preferred_variant: A string containing a hint as to which variant you
-            would like. However, this hint can be ignored - autopilot will prefer to
-            return a mouse variant other than the one requested, rather than fail
-            to return anything at all.
-        :raises: a RuntimeError will be raised if autopilot cannot instantate any of
-            the possible backends.
+            would like. If left blank, autopilolt will pick a suitable
+            variant for you. Specifying a variant will guarantee that either that
+            variant is returned, or an exception is raised.
+
+            possible variants are:
+
+            * ``X11`` - Generate mouse events using the X11 client libraries.
+
+        :raises: RuntimeError if autopilot cannot instantate any of the possible
+            backends.
+        :raises: RuntimeError if the preferred_variant is specified and is not
+            one of the possible backends for this device class.
+        :raises: :class:`~autopilot.BackendException` if the preferred_variant is
+            set, but that variant could not be instantiated.
 
         """
         def get_x11_mouse():
@@ -262,11 +284,21 @@ class Touch(object):
         """Get an instance of the :py:class:`Touch` class.
 
         :param preferred_variant: A string containing a hint as to which variant you
-            would like. However, this hint can be ignored - autopilot will prefer to
-            return a touch variant other than the one requested, rather than fail
-            to return anything at all.
-        :raises: a RuntimeError will be raised if autopilot cannot instantate any of
-            the possible backends.
+            would like. If left blank, autopilolt will pick a suitable
+            variant for you. Specifying a variant will guarantee that either that
+            variant is returned, or an exception is raised.
+
+            possible variants are:
+
+            * ``UInput`` - Use UInput kernel-level device driver.
+
+        :raises: RuntimeError if autopilot cannot instantate any of the possible
+            backends.
+        :raises: RuntimeError if the preferred_variant is specified and is not
+            one of the possible backends for this device class.
+        :raises: :class:`~autopilot.BackendException` if the preferred_variant is
+            set, but that variant could not be instantiated.
+
 
         """
         def get_uinput_touch():

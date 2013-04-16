@@ -52,7 +52,7 @@ class Keyboard(object):
         """Get an instance of the :py:class:`Keyboard` class.
 
         :param preferred_variant: A string containing a hint as to which variant
-            you would like. If left blank, autopilolt will pick a suitable
+            you would like. If left blank, autopilot will pick a suitable
             variant for you. Specifying a variant will guarantee that either that
             variant is returned, or an exception is raised.
 
@@ -180,7 +180,7 @@ class Mouse(object):
         """Get an instance of the :py:class:`Mouse` class.
 
         :param preferred_variant: A string containing a hint as to which variant you
-            would like. If left blank, autopilolt will pick a suitable
+            would like. If left blank, autopilot will pick a suitable
             variant for you. Specifying a variant will guarantee that either that
             variant is returned, or an exception is raised.
 
@@ -284,7 +284,7 @@ class Touch(object):
         """Get an instance of the :py:class:`Touch` class.
 
         :param preferred_variant: A string containing a hint as to which variant you
-            would like. If left blank, autopilolt will pick a suitable
+            would like. If left blank, autopilot will pick a suitable
             variant for you. Specifying a variant will guarantee that either that
             variant is returned, or an exception is raised.
 

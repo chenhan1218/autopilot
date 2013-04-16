@@ -7,6 +7,9 @@
 # by the Free Software Foundation.
 
 
+version = '1.3'
+
+
 class BackendException(RuntimeError):
 
     """An error occured while trying to initialise an autopilot backend."""

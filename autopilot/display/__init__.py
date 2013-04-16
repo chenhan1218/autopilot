@@ -87,12 +87,12 @@ class Display:
     """The base class/inteface for the display devices"""
 
     @staticmethod
-    def create(preferred_variant=''):
+    def create(preferred_backend=''):
         """Get an instance of the Display class.
 
         For more infomration on picking specific backends, see :ref:`tut-picking-backends`
 
-        :param preferred_variant: A string containing a hint as to which variant you
+        :param preferred_backend: A string containing a hint as to which backend you
             would like.
 
             possible backends are:
@@ -101,10 +101,10 @@ class Display:
             * ``UPA`` - Get display information from the ubuntu platform API.
         :raises: RuntimeError if autopilot cannot instantate any of the possible
             backends.
-        :raises: RuntimeError if the preferred_variant is specified and is not
+        :raises: RuntimeError if the preferred_backend is specified and is not
             one of the possible backends for this device class.
-        :raises: :class:`~autopilot.BackendException` if the preferred_variant is
-            set, but that variant could not be instantiated.
+        :raises: :class:`~autopilot.BackendException` if the preferred_backend is
+            set, but that backend could not be instantiated.
 
         """
         def get_x11_display():
@@ -118,7 +118,7 @@ class Display:
         backends = OrderedDict()
         backends['X11'] = get_x11_display
         backends['UPA'] = get_upa_display
-        return _pick_backend(backends, preferred_variant)
+        return _pick_backend(backends, preferred_backend)
 
     class BlacklistedDriverError(RuntimeError):
         """Cannot set primary monitor when running drivers listed in the driver blacklist."""

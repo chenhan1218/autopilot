@@ -23,7 +23,7 @@ from functools import wraps
 from autopilot import BackendException
 
 
-def _pick_variant(variants, preferred_variant):
+def _pick_backend(variants, preferred_variant):
     possible_backends = variants.keys()
     get_debug_logger().debug("Possible variants: %s", ','.join(possible_backends))
     if preferred_variant:

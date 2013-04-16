@@ -34,7 +34,7 @@ There are three basic input types available:
 """
 
 from collections import OrderedDict
-from autopilot.utilities import _pick_variant
+from autopilot.utilities import _pick_backend
 
 
 
@@ -81,7 +81,7 @@ class Keyboard(object):
         variants = OrderedDict()
         variants['X11'] = get_x11_kb
         variants['UInput'] = get_uinput_kb
-        return _pick_variant(variants, preferred_variant)
+        return _pick_backend(variants, preferred_variant)
 
     def press(self, keys, delay=0.2):
         """Send key press events only.
@@ -203,7 +203,7 @@ class Mouse(object):
 
         variants = OrderedDict()
         variants['X11'] = get_x11_mouse
-        return _pick_variant(variants, preferred_variant)
+        return _pick_backend(variants, preferred_variant)
 
     @property
     def x(self):
@@ -308,7 +308,7 @@ class Touch(object):
 
         variants = OrderedDict()
         variants['UInput'] = get_uinput_touch
-        return _pick_variant(variants, preferred_variant)
+        return _pick_backend(variants, preferred_variant)
 
     @property
     def pressed(self):

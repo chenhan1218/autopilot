@@ -8,7 +8,7 @@
 
 from collections import OrderedDict
 
-from autopilot.utilities import _pick_variant
+from autopilot.utilities import _pick_backend
 
 
 class ProcessManager(object):
@@ -82,7 +82,7 @@ class ProcessManager(object):
 
         variants = OrderedDict()
         variants['BAMF'] = get_bamf_pm
-        return _pick_variant(variants, preferred_variant)
+        return _pick_backend(variants, preferred_variant)
 
     @classmethod
     def register_known_application(cls, name, desktop_file, process_name):

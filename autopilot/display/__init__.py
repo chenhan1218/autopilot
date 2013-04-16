@@ -9,7 +9,7 @@
 """The display module contaions support for getting screen information."""
 
 from collections import OrderedDict
-from autopilot.utilities import _pick_variant
+from autopilot.utilities import _pick_backend
 from autopilot.input import Mouse
 
 
@@ -118,7 +118,7 @@ class Display:
         variants = OrderedDict()
         variants['X11'] = get_x11_display
         variants['UPA'] = get_upa_display
-        return _pick_variant(variants, preferred_variant)
+        return _pick_backend(variants, preferred_variant)
 
     class BlacklistedDriverError(RuntimeError):
         """Cannot set primary monitor when running drivers listed in the driver blacklist."""

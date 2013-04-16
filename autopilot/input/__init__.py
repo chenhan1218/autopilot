@@ -21,7 +21,8 @@ on each class. Calling ``create()`` with  no arguments will get an instance of t
 specified class that suits the current platform. In this case, autopilot will
 do it's best to pick a suitable variant. Calling ``create`` with a variant name
 will result in that specific variant type being returned, or, if it cannot be created,
-an exception will be raised. The exception type varies from variant to variant.
+an exception will be raised. For more information on creating backends, see
+:ref:`tut-picking-backends`
 
 There are three basic input types available:
 

@@ -90,16 +90,15 @@ class Display:
     def create(preferred_variant=''):
         """Get an instance of the Display class.
 
+        For more infomration on picking specific backends, see :ref:`tut-picking-backends`
+
         :param preferred_variant: A string containing a hint as to which variant you
-            would like. If left blank, autopilot will pick a suitable
-            variant for you. Specifying a variant will guarantee that either that
-            variant is returned, or an exception is raised.
+            would like.
 
             possible variants are:
 
             * ``X11`` - Get display information from X11.
             * ``UPA`` - Get display information from the ubuntu platform API.
-
         :raises: RuntimeError if autopilot cannot instantate any of the possible
             backends.
         :raises: RuntimeError if the preferred_variant is specified and is not

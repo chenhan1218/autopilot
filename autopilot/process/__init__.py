@@ -57,12 +57,10 @@ class ProcessManager(object):
     def create(preferred_variant=""):
         """Get an instance of the :py:class:`ProcessManager` class.
 
-        :param preferred_variant: A string containing a hint as to which variant you
-            would like. If left blank, autopilot will pick a suitable
-            variant for you. Specifying a variant will guarantee that either that
-            variant is returned, or an exception is raised.
+        For more infomration on picking specific backends, see :ref:`tut-picking-backends`
 
-            possible variants are:
+        :param preferred_variant: A string containing a hint as to which variant you
+            would like. Possible variants are:
 
             * ``BAMF`` - Get process information using the BAMF Application Matching Framework.
 

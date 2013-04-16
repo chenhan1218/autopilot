@@ -1,4 +1,4 @@
-``autopilot.Platform`` - Functions for platform detection
+``autopilot.platform`` - Functions for platform detection
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 

@@ -10,5 +10,8 @@ This tutorial will guide users new to Autopilot through creating a minimal autop
 
    what_is_autopilot
    getting_started
-   running_ap
+   advanced_autopilot
    good_tests
+   running_ap
+
+

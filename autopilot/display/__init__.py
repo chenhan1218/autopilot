@@ -95,7 +95,7 @@ class Display:
         :param preferred_variant: A string containing a hint as to which variant you
             would like.
 
-            possible variants are:
+            possible backends are:
 
             * ``X11`` - Get display information from X11.
             * ``UPA`` - Get display information from the ubuntu platform API.
@@ -115,10 +115,10 @@ class Display:
             from autopilot.display._upa import Display
             return Display()
 
-        variants = OrderedDict()
-        variants['X11'] = get_x11_display
-        variants['UPA'] = get_upa_display
-        return _pick_backend(variants, preferred_variant)
+        backends = OrderedDict()
+        backends['X11'] = get_x11_display
+        backends['UPA'] = get_upa_display
+        return _pick_backend(backends, preferred_variant)
 
     class BlacklistedDriverError(RuntimeError):
         """Cannot set primary monitor when running drivers listed in the driver blacklist."""

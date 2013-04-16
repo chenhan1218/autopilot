@@ -17,8 +17,8 @@ from autopilot.utilities import _pick_backend
 
 class PickBackendTests(TestCase):
 
-    def test_raises_runtime_error_on_empty_variants(self):
-        """Must raise a RuntimeError when we pass no variants."""
+    def test_raises_runtime_error_on_empty_backends(self):
+        """Must raise a RuntimeError when we pass no backends."""
         fn = lambda: _pick_backend({}, '')
         self.assertThat(fn, raises(RuntimeError("Unable to instantiate any backends\n")))
 

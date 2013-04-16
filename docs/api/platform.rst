@@ -1,5 +1,5 @@
-``Platform`` - Functions for platform detection
-+++++++++++++++++++++++++++++++++++++++++++++++
+``autopilot.Platform`` - Functions for platform detection
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 .. automodule:: autopilot.platform

@@ -20,12 +20,17 @@ import os
 import time
 from functools import wraps
 
+from autopilot import BackendException
+
 
 def _pick_variant(variants, preferred_variant):
     possible_backends = variants.keys()
     get_debug_logger().debug("Possible variants: %s", ','.join(possible_backends))
-    if preferred_variant in possible_backends:
-        possible_backends.sort(lambda a,b: -1 if a == preferred_variant else 0)
+    if preferred_variant:
+        if preferred_variant in possible_backends:
+            possible_backends.sort(lambda a,b: -1 if a == preferred_variant else 0)
+        else:
+            raise RuntimeError("Unknown backend '%s'" % (preferred_variant))
     failure_reasons = []
     for be in possible_backends:
         try:
@@ -33,6 +38,8 @@ def _pick_variant(variants, preferred_variant):
         except Exception as e:
             get_debug_logger().warning("Can't create variant %s: %r", be, e)
             failure_reasons.append('%s: %r' % (be, e))
+            if preferred_variant != '':
+                raise BackendException(e)
     raise RuntimeError("Unable to instantiate any backends\n%s" % '\n'.join(failure_reasons))
 
 

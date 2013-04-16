@@ -1,5 +1,5 @@
-``input`` - Generate keyboard, mouse, and touch input events
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+``autopilot.input`` - Generate keyboard, mouse, and touch input events
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 .. automodule:: autopilot.input

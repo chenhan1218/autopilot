@@ -1,5 +1,5 @@
-``introspection`` - Autopilot introspection internals
-+++++++++++++++++++++++++++++++++++++++++++++++++++++
+``autopilot.introspection`` - Autopilot introspection internals
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 .. automodule:: autopilot.introspection

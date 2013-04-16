@@ -1,5 +1,5 @@
-``testcase`` - Base class for all Autopilot Test Cases
-++++++++++++++++++++++++++++++++++++++++++++++++++++++
+``autopilot.testcase`` - Base class for all Autopilot Test Cases
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 .. automodule:: autopilot.testcase

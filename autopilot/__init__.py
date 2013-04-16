@@ -6,7 +6,17 @@
 # under the terms of the GNU General Public License version 3, as published
 # by the Free Software Foundation.
 
-"""An automated test runner and driver for Unity"""
+
+version = '1.3'
 
 
-version = "1.0"
+class BackendException(RuntimeError):
+
+    """An error occured while trying to initialise an autopilot backend."""
+
+    def __init__(self, original_exception):
+        super(BackendException, self).__init__(
+            "Error while initialising backend. Original exception was: " \
+            + original_exception.message
+            )
+        self.original_exception = original_exception

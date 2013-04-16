@@ -38,6 +38,8 @@ Depends: ${shlibs:Depends},
          python-xdg,
          python-xlib,
          python-zeitgeist,
+Recommends: libautopilot-gtk,
+            libautopilot-qt,
 Description: Utility to write and run integration tests easily
  The autopilot engine enables to ease the writing of python tests
  for your application manipulating your inputs like the mouse and

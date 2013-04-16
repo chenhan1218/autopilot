@@ -23,9 +23,9 @@ from functools import wraps
 from autopilot import BackendException
 
 
-def _pick_backend(variants, preferred_backend):
+def _pick_backend(backends, preferred_backend):
     """Pick a backend and return an instance of it."""
-    possible_backends = variants.keys()
+    possible_backends = backends.keys()
     get_debug_logger().debug("Possible backends: %s", ','.join(possible_backends))
     if preferred_backend:
         if preferred_backend in possible_backends:
@@ -35,7 +35,7 @@ def _pick_backend(variants, preferred_backend):
     failure_reasons = []
     for be in possible_backends:
         try:
-            return variants[be]()
+            return backends[be]()
         except Exception as e:
             get_debug_logger().warning("Can't create backend %s: %r", be, e)
             failure_reasons.append('%s: %r' % (be, e))

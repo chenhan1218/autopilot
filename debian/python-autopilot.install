@@ -1,10 +1,1 @@
 usr/bin/autopilot /usr/bin/
-usr/lib/python*/*-packages/autopilot*.egg-info
-usr/lib/python*/*-packages/autopilot/*.py
-usr/lib/python*/*-packages/autopilot/display/*.py
-usr/lib/python*/*-packages/autopilot/input/*.py
-usr/lib/python*/*-packages/autopilot/introspection/*.py
-usr/lib/python*/*-packages/autopilot/matchers/*.py
-usr/lib/python*/*-packages/autopilot/process/*.py
-usr/lib/python*/*-packages/autopilot/vis/*.py
-

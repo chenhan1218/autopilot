@@ -1,0 +1,7 @@
+autopilot/*.py
+autopilot/display/*.py
+autopilot/input/*.py
+autopilot/introspection/*.py
+autopilot/matchers/*.py
+autopilot/process/*.py
+autopilot/vis/*.py

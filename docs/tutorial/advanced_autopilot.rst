@@ -6,7 +6,72 @@ This document covers advanced features in autopilot.
 Test Scenarios
 ==============
 
-.. write about using test scenarios here.
+Occasionally test authors will find themselves writing multiple tests that differ in one or two subtle ways. For example, imagine a hypothetical test case that tests a dictionary application. The author wants to test that certain words return no results. Without using test scenarios, there are two basic approaches to this problem. The first is to create many test cases, one for each specific scenario (*don't do this*)::
+
+    class DictionaryResultsTests(AutopilotTestCase):
+
+        def test_empty_string_returns_no_results(self):
+            self.dictionary_app.enter_search_term("")
+            self.assertThat(len(self.dictionary_app.results), Equals(0))
+
+        def test_whitespace_string_returns_no_results(self):
+            self.dictionary_app.enter_search_term(" \t ")
+            self.assertThat(len(self.dictionary_app.results), Equals(0))
+
+        def test_punctuation_string_returns_no_results(self):
+            self.dictionary_app.enter_search_term(".-?<>{}[]")
+            self.assertThat(len(self.dictionary_app.results), Equals(0))
+
+        def test_garbage_string_returns_no_results(self):
+            self.dictionary_app.enter_search_term("ljdzgfhdsgjfhdgjh")
+            self.assertThat(len(self.dictionary_app.results), Equals(0))
+
+The main problem here is that there's a lot of typing in order to change exactly one thing (and this hypothetical test is deliberately short, to ease clarity. Imagine a 100 line test case!). Another approach is to make the entire thing one large test (*don't do this either*)::
+
+    class DictionaryResultsTests(AutopilotTestCase):
+
+        def test_bad_strings_returns_no_results(self):
+            bad_strings = ("",
+                " \t ",
+                ".-?<>{}[]",
+                "ljdzgfhdsgjfhdgjh",
+                )
+            for input in bad_strings:
+                self.dictionary_app.enter_search_term(input)
+                self.assertThat(len(self.dictionary_app.results), Equals(0))
+
+
+This approach makes it easier to add new input strings, but what happens when just one of the input strings stops working? It becomes very hard to find out which input string is broken, and the first string that breaks will prevent the rest of the test from running, since tests stop running when the first assertion fails.
+
+The solution is to use test scenarios. A scenario is a class attribute that specifies one or more scenarios to run on each of the tests. This is best demonstrated with an example::
+
+    class DictionaryResultsTests(AutopilotTestCase):
+
+        scenarios = [
+            ('empty string', {'input': ""}),
+            ('whitespace', {'input': " \t "}),
+            ('punctuation', {'input': ".-?<>{}[]"}),
+            ('garbage', {'input': "ljdzgfhdsgjfhdgjh"}),
+            ]
+
+        def test_bad_strings_return_no_results(self):
+            self.dictionary_app.enter_search_term(self.input)
+            self.assertThat(len(self.dictionary_app.results), Equals(0))
+
+Autopilot will run the ``test_bad_strings_return_no_results`` once for each scenario. On each test, the values from the scenario dictionary will be mapped to attributes of the test case class. In this example, that means that the 'input' dictionary item will be mapped to ``self.input``. Using scenarios has several benefits over either of the other strategies outlined above:
+
+* Tests that use strategies will appear as separate tests in the test output. The test id will be the normal test id, followed by the strategy name in parenthesis. So in the example above, the list of test ids will be::
+
+   DictionaryResultsTests.test_bad_strings_return_no_results(empty string)
+   DictionaryResultsTests.test_bad_strings_return_no_results(whitespace)
+   DictionaryResultsTests.test_bad_strings_return_no_results(punctuation)
+   DictionaryResultsTests.test_bad_strings_return_no_results(garbage)
+
+* Since scenarios are treated as separate tests, it's easier to debug which scenario has broken, and re-run just that one scenario.
+
+* Scenarios get applied before the ``setUp`` method, which means you can use scenario values in the ``setUp`` and ``tearDown`` methods. This makes them more flexible than either of the approaches listed above.
+
+.. TODO: document the use of the multiply_scenarios feature.
 
 Test Logging
 ============

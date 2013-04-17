@@ -46,3 +46,11 @@ Description: Utility to write and run integration tests easily
  keyboard. It also provides a lot of utilities linked to the X server
  and detecting applications.
 
+Package: python-autopilot-tests
+Architecture: all
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         ${python:Depends},
+         python-autopilot
+Description: Tests for the autopilot functional test tool.
+ This package contains tests for the python-autopilot package.

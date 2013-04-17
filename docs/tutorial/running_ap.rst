@@ -27,7 +27,7 @@ where *<modulename>* is the base name of the module you want to look at. The mod
 
          81 total tests.
 
-Some resuls have been omitted for clarity.
+Some results have been omitted for clarity.
 
 The list command takes only one option:
 
@@ -41,7 +41,7 @@ Running autopilot tests is very similar to listing tests::
 
     $ autopilot run <modulename>
 
-However, the run command has many more options to customise the run behavior:
+However, the run command has many more options to customize the run behavior:
 
 -h, --help            show this help message and exit
 
@@ -89,7 +89,7 @@ Common use cases
 Visualise Introspection Tree
 ----------------------------
 
-A very common thing to want to do while writing autopilot tests is see the structure of the application being tested. To support this, autopilot includes a simple application to help visualise the intropection tree. To start it, make sure the application you wish to test is running, and then run::
+A very common thing to want to do while writing autopilot tests is see the structure of the application being tested. To support this, autopilot includes a simple application to help visualize the introspection tree. To start it, make sure the application you wish to test is running, and then run::
 
     $ autopilot vis
 

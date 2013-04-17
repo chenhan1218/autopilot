@@ -120,7 +120,7 @@ Good docstrings
 Test docstrings are used to communicate to other developers what the test is supposed to be testing. Test Docstrings must:
 
  1. Conform to `PEP8 <http://www.python.org/dev/peps/pep-0008/>`_ and `PEP257 <http://www.python.org/dev/peps/pep-0257/>`_ guidelines.
- 2. Avoid words like "should" in favour of stronger words like "must".
+ 2. Avoid words like "should" in favor of stronger words like "must".
  3. Contain a one-line summary of the test.
 
 Additionally, they should:

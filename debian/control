@@ -54,3 +54,6 @@ Depends: ${shlibs:Depends},
          python-autopilot
 Description: Tests for the autopilot functional test tool.
  This package contains tests for the python-autopilot package.
+ You can use this package to verify that autopilot is functioning
+ correctly, or to copy the techniques used in the autopilot tests
+ themselves.

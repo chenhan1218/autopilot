@@ -1,5 +1,3 @@
-:orphan:
-
 Porting Autopilot Tests
 #######################
 

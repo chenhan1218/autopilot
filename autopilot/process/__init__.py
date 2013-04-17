@@ -8,7 +8,7 @@
 
 from collections import OrderedDict
 
-from autopilot.utilities import _pick_variant
+from autopilot.utilities import _pick_backend
 
 
 class ProcessManager(object):
@@ -54,24 +54,22 @@ class ProcessManager(object):
 
 
     @staticmethod
-    def create(preferred_variant=""):
+    def create(preferred_backend=""):
         """Get an instance of the :py:class:`ProcessManager` class.
 
-        :param preferred_variant: A string containing a hint as to which variant you
-            would like. If left blank, autopilot will pick a suitable
-            variant for you. Specifying a variant will guarantee that either that
-            variant is returned, or an exception is raised.
+        For more infomration on picking specific backends, see :ref:`tut-picking-backends`
 
-            possible variants are:
+        :param preferred_backend: A string containing a hint as to which backend you
+            would like. Possible backends are:
 
             * ``BAMF`` - Get process information using the BAMF Application Matching Framework.
 
         :raises: RuntimeError if autopilot cannot instantate any of the possible
             backends.
-        :raises: RuntimeError if the preferred_variant is specified and is not
+        :raises: RuntimeError if the preferred_backend is specified and is not
             one of the possible backends for this device class.
-        :raises: :class:`~autopilot.BackendException` if the preferred_variant is
-            set, but that variant could not be instantiated.
+        :raises: :class:`~autopilot.BackendException` if the preferred_backend is
+            set, but that backend could not be instantiated.
 
         """
         def get_bamf_pm():
@@ -82,9 +80,9 @@ class ProcessManager(object):
             from autopilot.process._upa import ProcessManager
             return ProcessManager()
 
-        variants = OrderedDict()
-        variants['BAMF'] = get_bamf_pm
-        return _pick_variant(variants, preferred_variant)
+        backends = OrderedDict()
+        backends['BAMF'] = get_bamf_pm
+        return _pick_backend(backends, preferred_backend)
 
     @classmethod
     def register_known_application(cls, name, desktop_file, process_name):

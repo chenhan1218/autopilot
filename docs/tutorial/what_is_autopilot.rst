@@ -60,5 +60,3 @@ During this stage you will most likely need to read the applications internal st
 **The Assertion Stage**
 
 The final stage is where you determine if your test should pass or fail. Most tests will contain more than one assertion (:ref:`why? <faq-many-asserts>`). Autopilot contains several custom assertions that make testing high-level concepts easier.
-
-.. otto:: This is a test - can I really speak? awesome!

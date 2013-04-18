@@ -11,6 +11,8 @@ def setup(app):
 
     app.add_directive('otto', OttoSaysDirective)
 
+    app.add_stylesheet('otto.css')
+
 
 class otto(nodes.Admonition, nodes.Element):
     pass

@@ -128,16 +128,11 @@ class DBusIntrospectionObject(object):
     DBUS_SERVICE = None
     DBUS_OBJECT = None
 
-    def __init__(self, state_dict, path_info=None):
+    def __init__(self, state_dict, path):
         self.__state = {}
         self.__refresh_on_attribute = True
         self.set_properties(state_dict)
-        if path_info is None:
-            logger.warning("Constructing object '%s' without path information. This will make \
-queries on this object, and all child objects considerably slower." % self.__class__.__name__)
-            logger.warning("To avoid this, make sure objects are _not_ constructed with the \
-get_all_instances(...) class method.")
-        self.path_info = path_info
+        self.path = path
 
     def set_properties(self, state_dict):
         """Creates and set attributes of *self* based on contents of *state_dict*.
@@ -365,10 +360,7 @@ get_all_instances(...) class method.")
 
     def get_class_query_string(self):
         """Get the XPath query string required to refresh this class's state."""
-        if self.path_info is None:
-            return "//%s[id=%d]" % (self.__class__.__name__, self.id)
-        else:
-            return self.path_info + "[id=%d]" % self.id
+        return self.path + "[id=%d]" % self.id
 
     @classmethod
     def make_introspection_object(cls, dbus_tuple):

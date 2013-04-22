@@ -27,7 +27,7 @@ from textwrap import dedent
 from argparse import ArgumentParser
 from unittest.loader import TestLoader
 from unittest import TestSuite
-from autopilot.introspection import launch_application
+from autopilot.introspection import launch_application, get_application_launcher
 from autopilot.introspection.gtk import GtkApplicationLauncher
 from autopilot.introspection.qt import QtApplicationLauncher
 
@@ -347,13 +347,19 @@ def launch_app(args):
     # We now have a full path to the application.
     launcher = None
     if args.interface == 'Auto':
-        launcher = get_application_introspection_base(app_name)
+        try:
+            launcher = get_application_launcher(app_name)
+        except RuntimeError as e:
+            print "Error detecting launcher: %s" % e.message
+            print "(Perhaps use the '-i' argument to specify an interface.)"
+            exit(1)
     elif args.interface == 'Gtk':
         launcher = GtkApplicationLauncher()
     elif args.interface == 'Qt':
         launcher = QtApplicationLauncher()
     if launcher is None:
         print "Error: Could not determine introspection type to use for application '%s'." % app_name
+        print "(Perhaps use the '-i' argument to specify an interface.)"
         exit(1)
 
     try:
@@ -361,28 +367,6 @@ def launch_app(args):
     except RuntimeError as e:
         print "Error: " + e.message
         exit(1)
-
-
-def get_application_introspection_base(app_path):
-    """Return a base class that knows how to enable introspection for this app,
-    or None.
-
-    """
-    # TODO: this is a teeny bit hacky - we call ldd to check whether this application
-    # links to certain library. We're assuming that linking to libQt* or libGtk*
-    # means the application is introspectable. This excludes any non-dynamically
-    # linked executables, which we may need to fix further down the line.
-    try:
-        ldd_output = subprocess.check_output(["ldd", app_path]).strip().lower()
-    except subprocess.CalledProcessError:
-        print "Error: Cannot auto-detect introspection plugin to load."
-        print "Use the '-i' argument to specify an interface."
-        exit(1)
-    if 'libqtcore' in ldd_output:
-        return QtApplicationLauncher
-    elif 'libgtk' in ldd_output:
-        return GtkApplicationLauncher
-    return None
 
 
 def run_vis(args):

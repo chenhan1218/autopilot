@@ -13,7 +13,6 @@ from tempfile import mktemp
 from textwrap import dedent
 
 from autopilot.testcase import AutopilotTestCase
-from autopilot.introspection.gtk import GtkApplicationLauncher
 
 
 class ApplicationTests(AutopilotTestCase):
@@ -96,6 +95,11 @@ class GtkTests(ApplicationTests):
             self.app_path = subprocess.check_output(['which','gnome-mahjongg']).strip()
         except subprocess.CalledProcessError:
             self.skip("gnome-mahjongg not found.")
+
+    def pick_app_launcher(self, app_path):
+        # force Gtk app introspection:
+        from autopilot.introspection.gtk import GtkApplicationLauncher
+        return GtkApplicationLauncher()
 
     def test_can_launch_gtk_app(self):
         app_proxy = self.launch_test_application(self.app_path)

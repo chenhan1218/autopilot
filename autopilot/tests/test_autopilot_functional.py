@@ -594,7 +594,7 @@ SyntaxError: invalid syntax
 
         self.assertThat(rc, Equals(1))
         self.assertThat(stdout,
-            Contains("Error: Cannot auto-detect introspection plugin to load.\nUse the '-i' argument to specify an interface."))
+            Contains("Error detecting launcher: Command '['ldd', '/usr/bin/tzselect']' returned non-zero exit status 1\n(Perhaps use the '-i' argument to specify an interface.)\n"))
 
 
 class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):

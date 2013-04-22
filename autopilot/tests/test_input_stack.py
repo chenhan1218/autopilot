@@ -55,7 +55,7 @@ class InputStackKeyboardTests(AutopilotTestCase):
         with open(qml_file, 'w') as f:
             f.write(qml_string)
             self.addCleanup(os.remove, qml_file)
-        return self.launch_test_application('qmlscene', qml_file)
+        return self.launch_test_application('/usr/bin/qmlscene', qml_file)
 
     def test_some_text(self):
         app_proxy = self.start_qml_app(simple_qml)

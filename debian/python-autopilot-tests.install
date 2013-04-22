@@ -1,2 +1,0 @@
-testapps/qt/qt*.qml usr/share/python-autopilot-tests/
-qt*/qt*testapp usr/share/python-autopilot-tests/

@@ -32,6 +32,7 @@ from autopilot.introspection.dbus import (
     DBusIntrospectionObject,
     object_passes_filters,
     get_session_bus,
+    get_classname_from_path,
     )
 from autopilot.utilities import get_debug_logger, addCleanup
 
@@ -238,7 +239,8 @@ def get_proxy_object_class_name_and_state(service_name, obj_path):
     """Return the class name and root state dictionary."""
     dbus_object = get_session_bus().get_object(service_name, obj_path)
     dbus_iface = dbus.Interface(dbus_object, AP_INTROSPECTION_IFACE)
-    return dbus_iface.GetState("/")[0]
+    object_path, object_state = dbus_iface.GetState("/")[0]
+    return get_classname_from_path(object_path), object_state
 
 
 class ApplicationProxyObect(DBusIntrospectionObject):

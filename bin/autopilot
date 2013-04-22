@@ -21,15 +21,11 @@ import sys
 import subprocess
 from testtools import iterate_tests
 from testtools import TextTestResult
-from autopilot.testresult import AutopilotVerboseResult
-from autopilot.utilities import LogFormatter
 from textwrap import dedent
 from argparse import ArgumentParser
 from unittest.loader import TestLoader
 from unittest import TestSuite
-from autopilot.introspection import launch_application
-from autopilot.introspection.gtk import GtkApplicationLauncher
-from autopilot.introspection.qt import QtApplicationLauncher
+
 
 # list autopilot depends here, with the form:
 # ('python module name', 'ubuntu package name'),
@@ -191,6 +187,7 @@ def run_tests(args):
 
 def setup_logging(verbose):
     """Configure the root logger and verbose logging to stderr"""
+    from autopilot.utilities import LogFormatter
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
     if verbose == 0:
@@ -215,6 +212,7 @@ def construct_test_runner(args):
 
 def get_output_format(format):
     """Return a Result object for each format we support."""
+    from autopilot.testresult import AutopilotVerboseResult
 
     if format == "text":
         return type('VerboseTextTestResult', (TextTestResult,),
@@ -349,14 +347,17 @@ def launch_app(args):
     if args.interface == 'Auto':
         launcher = get_application_introspection_base(app_name)
     elif args.interface == 'Gtk':
+        from autopilot.introspection.gtk import GtkApplicationLauncher
         launcher = GtkApplicationLauncher()
     elif args.interface == 'Qt':
+        from autopilot.introspection.qt import QtApplicationLauncher
         launcher = QtApplicationLauncher()
     if launcher is None:
         print "Error: Could not determine introspection type to use for application '%s'." % app_name
         exit(1)
 
     try:
+        from autopilot.introspection import launch_application
         launch_application(launcher, app_name, capture_output=False)
     except RuntimeError as e:
         print "Error: " + e.message
@@ -379,8 +380,10 @@ def get_application_introspection_base(app_path):
         print "Use the '-i' argument to specify an interface."
         exit(1)
     if 'libqtcore' in ldd_output:
+        from autopilot.introspection.qt import QtApplicationLauncher
         return QtApplicationLauncher
     elif 'libgtk' in ldd_output:
+        from autopilot.introspection.gtk import GtkApplicationLauncher
         return GtkApplicationLauncher
     return None
 

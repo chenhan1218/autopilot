@@ -99,6 +99,10 @@ def translate_state_keys(state_dict):
     return {k.replace('-','_'):v for k,v in state_dict.iteritems() }
 
 
+def get_classname_from_path(object_path):
+    return object_path.split("/")[-1]
+
+
 def object_passes_filters(instance, **kwargs):
     """Return true if *instance* satisifies all the filters present in kwargs."""
     with instance.no_automatic_refreshing():
@@ -180,7 +184,7 @@ get_all_instances(...) class method.")
 
             time_left = timeout
             while True:
-                name, new_state = self.parent.get_new_state()
+                _, new_state = self.parent.get_new_state()
                 new_state = translate_state_keys(new_state)
                 new_value = new_state[self.name]
                 # Support for testtools.matcher classes:
@@ -274,8 +278,7 @@ get_all_instances(...) class method.")
 
         query = self.get_class_query_string() + "/*"
         state_dicts = self.get_state_by_path(query)
-        path_info = self.path_info + "/" if self.path_info else None
-        children = [self.make_introspection_object(i, path_info) for i in state_dicts]
+        children = [self.make_introspection_object(i) for i in state_dicts]
         return children
 
     def refresh_state(self):
@@ -284,7 +287,7 @@ get_all_instances(...) class method.")
         :raises: **StateNotFound** if the object in unity has been destroyed.
 
         """
-        name, new_state = self.get_new_state()
+        _, new_state = self.get_new_state()
         self.set_properties(new_state)
 
     @classmethod
@@ -313,7 +316,7 @@ get_all_instances(...) class method.")
         if len(instances) != 1:
             logger.error("Could not retrieve root object.")
             return None
-        return cls.make_introspection_object(instances[0], "/")
+        return cls.make_introspection_object(instances[0])
 
     def __getattr__(self, name):
         # avoid recursion if for some reason we have no state set (should never
@@ -368,28 +371,19 @@ get_all_instances(...) class method.")
             return self.path_info + "[id=%d]" % self.id
 
     @classmethod
-    def make_introspection_object(cls, dbus_tuple, path_info=None):
-        """Make an introspection object given a DBus tuple of (name, state_dict).
-
-        The optional 'path_info' parameter can be set to a string that contains
-        the full, absolute path in the introspection tree to this object.
+    def make_introspection_object(cls, dbus_tuple):
+        """Make an introspection object given a DBus tuple of (path, state_dict).
 
         This only works for classes that derive from DBusIntrospectionObject.
         """
-        name, state = dbus_tuple
+        path, state = dbus_tuple
+        name = get_classname_from_path(path)
         try:
             class_type = _object_registry[name]
         except KeyError:
             logger.warning("Generating introspection instance for type '%s' based on generic class.", name)
             class_type = type(str(name), (cls,), {})
-        if isinstance(path_info, basestring):
-            if not path_info.endswith(name):
-                if not path_info.endswith("/"):
-                    logger.error("path_info must end with '/' or class name.")
-                    path_info = None
-                else:
-                    path_info += name
-        return class_type(state, path_info)
+        return class_type(state, path)
 
     @contextmanager
     def no_automatic_refreshing(self):

@@ -6,7 +6,7 @@ Autopilot is a tool for writing functional tests. Functional tests are tests tha
 
 * Run out-of-process. I.e.- the tests run in a separate process to the application under test.
 * Simulate user interaction. Autopilot provides methods to generate keyboard, mouse, and touch events. These events are delivered to the application under test in exactly the same way as normal input events. The application under test therefore cannot distinguish between a "real" user and an autopilot test case.
-* Validate design decisions. The primary function of a functional test is to determine whether of not an application has met the design criteria. Functional tests evaluate high-level design corectness.
+* Validate design decisions. The primary function of a functional test is to determine whether of not an application has met the design criteria. Functional tests evaluate high-level design correctness.
 
 Where is Autopilot used?
 ########################
@@ -23,7 +23,7 @@ How does Autopilot fit with other test frameworks?
 
 Autopilot exists at the apex of the "testing pyramid". It is designed to test high-level functionality, and complement a solid base of unit and integration tests. *Using autopilot is not a substitute for testing your application with unit and integration tests!*. Autopilot is a very capable tool for testing high-level feature functionality. It is not an appropriate tool for testing low-level implementation details.
 
-Autopilot is built on top of several other python test frameworks, incuding:
+Autopilot is built on top of several other python test frameworks, including:
 
 * `Python Testtools <https://pypi.python.org/pypi/testtools>`_ - :class:`~autopilot.testcase.AutopilotTestCase` derives from the testtools :class:`~testtools.TestCase` class, which allows test author to use all the extended features found in testtools. Specifically, Autopilot includes the :class:`~autopilot.matchers.Eventually` matcher class, which allows test authors to make assertions about the application under test without having to worry about the timing between the tests and the application under test.
 
@@ -50,12 +50,12 @@ The purpose of the setup stage is to make sure that everything that is required 
 
 **The Interaction Stage**
 
-Once the setup has been completed, it's time to start interacting with your application. This typicaly involves generating input events. For example, if you are testing a text editor you might have a test whose specification is similar to the following::
+Once the setup has been completed, it's time to start interacting with your application. This typically involves generating input events. For example, if you are testing a text editor you might have a test whose specification is similar to the following::
 
  Type some text into the document area, open the 'Edit' menu and click
  the 'Search and Replace' menu item.
 
-During this stage you will most likely need to read the appliations internal state. For example, your test will need to know where the 'Edit' menu is on the screen. Thankfully, autopilot takes care of the details, allowing you to write expressive tests.
+During this stage you will most likely need to read the applications internal state. For example, your test will need to know where the 'Edit' menu is on the screen. Thankfully, autopilot takes care of the details, allowing you to write expressive tests.
 
 **The Assertion Stage**
 

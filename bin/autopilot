@@ -9,6 +9,12 @@
 
 from __future__ import absolute_import
 
+#
+# NOTE: You MUST NOT import any autopilot modules at global scope, because it
+# cases autopilot to be inserted into sys.modules before we've had a chance to
+# patch sys.path, which in turn means we cannot use autopilot to run our own
+# tests.
+
 from codecs import open
 from datetime import datetime
 import logging
@@ -333,6 +339,7 @@ def patch_python_path():
 
 def launch_app(args):
     """Launch an application, with introspection support."""
+    from autopilot.introspection import launch_application, get_application_launcher
     setup_logging(args.verbose)
     app_name = args.application[0]
     if not isabs(app_name) or not exists(app_name):
@@ -345,7 +352,12 @@ def launch_app(args):
     # We now have a full path to the application.
     launcher = None
     if args.interface == 'Auto':
-        launcher = get_application_introspection_base(app_name)
+        try:
+            launcher = get_application_launcher(app_name)
+        except RuntimeError as e:
+            print "Error detecting launcher: %s" % e.message
+            print "(Perhaps use the '-i' argument to specify an interface.)"
+            exit(1)
     elif args.interface == 'Gtk':
         from autopilot.introspection.gtk import GtkApplicationLauncher
         launcher = GtkApplicationLauncher()
@@ -354,38 +366,14 @@ def launch_app(args):
         launcher = QtApplicationLauncher()
     if launcher is None:
         print "Error: Could not determine introspection type to use for application '%s'." % app_name
+        print "(Perhaps use the '-i' argument to specify an interface.)"
         exit(1)
 
     try:
-        from autopilot.introspection import launch_application
         launch_application(launcher, app_name, capture_output=False)
     except RuntimeError as e:
         print "Error: " + e.message
         exit(1)
-
-
-def get_application_introspection_base(app_path):
-    """Return a base class that knows how to enable introspection for this app,
-    or None.
-
-    """
-    # TODO: this is a teeny bit hacky - we call ldd to check whether this application
-    # links to certain library. We're assuming that linking to libQt* or libGtk*
-    # means the application is introspectable. This excludes any non-dynamically
-    # linked executables, which we may need to fix further down the line.
-    try:
-        ldd_output = subprocess.check_output(["ldd", app_path]).strip().lower()
-    except subprocess.CalledProcessError:
-        print "Error: Cannot auto-detect introspection plugin to load."
-        print "Use the '-i' argument to specify an interface."
-        exit(1)
-    if 'libqtcore' in ldd_output:
-        from autopilot.introspection.qt import QtApplicationLauncher
-        return QtApplicationLauncher
-    elif 'libgtk' in ldd_output:
-        from autopilot.introspection.gtk import GtkApplicationLauncher
-        return GtkApplicationLauncher
-    return None
 
 
 def run_vis(args):

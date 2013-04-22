@@ -50,11 +50,9 @@ def get_application_launcher(app_path):
     # linked executables, which we may need to fix further down the line.
     try:
         ldd_output = subprocess.check_output(["ldd", app_path]).strip().lower()
-    except subprocess.CalledProcessError:
-        print "Error: Cannot auto-detect introspection plugin to load."
-        print "Use the '-i' argument to specify an interface."
-        exit(1) # TODO - don't exit, raise an exception, and handle it appropriately in parent code.
-    if 'libqtcore' in ldd_output:
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(e)
+    if 'libqtcore' in ldd_output or 'libqt5core' in ldd_output:
         from autopilot.introspection.qt import QtApplicationLauncher
         return QtApplicationLauncher()
     elif 'libgtk' in ldd_output:

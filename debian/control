@@ -47,7 +47,7 @@ Description: Utility to write and run integration tests easily
  and detecting applications.
 
 Package: python-autopilot-tests
-Architecture: all
+Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends},
          ${python:Depends},

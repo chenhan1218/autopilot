@@ -7,7 +7,22 @@
 %:
 	dh $@ --with python2
 
+override_dh_auto_configure:
+	mkdir qt4
+	mkdir qt5
+	cd qt4 && qmake -qt=qt4 ../testapps/qt/testapp.pro
+	cd qt5 && qmake -qt=qt5 ../testapps/qt/testapp.pro
+
 override_dh_auto_build:
 	sphinx-build -b html -W  docs/ docs/_build/html/
+	cd qt4 && make
+	cd qt5 && make
 	dh_auto_build
 
+override_dh_clean:
+	dh_clean
+	rm -rf qt4
+	rm -rf qt5
+
+override_dh_install:
+	dh_install --list-missing

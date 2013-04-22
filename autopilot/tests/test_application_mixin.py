@@ -8,8 +8,6 @@
 
 from __future__ import absolute_import
 
-import subprocess
-
 from autopilot.testcase import AutopilotTestCase
 from testtools.matchers import Is, Not, raises
 
@@ -18,10 +16,6 @@ def dummy_addCleanup(*args, **kwargs):
 
 
 class ApplicationSupportTests(AutopilotTestCase):
-
-    def setUp(self):
-        super(ApplicationSupportTests, self).setUp()
-        self.dummy_app_path = subprocess.check_output(['which','gedit']).strip()
 
     def test_launch_with_bad_types_raises_typeerror(self):
         """Calling launch_test_application with something other than a string must
@@ -40,7 +34,7 @@ class ApplicationSupportTests(AutopilotTestCase):
         keyword arguments.
 
         """
-        fn = lambda: self.launch_test_application(self.dummy_app_path, arg1=123, arg2='asd')
+        fn = lambda: self.launch_test_application('gedit', arg1=123, arg2='asd')
         self.assertThat(fn, raises(ValueError("Unknown keyword arguments: 'arg1', 'arg2'.")))
 
     def test_launch_raises_ValueError_on_unknown_kwargs_with_known(self):
@@ -48,5 +42,5 @@ class ApplicationSupportTests(AutopilotTestCase):
         keyword arguments.
 
         """
-        fn = lambda: self.launch_test_application(self.dummy_app_path, arg1=123, arg2='asd', launch_dir='/')
+        fn = lambda: self.launch_test_application('gedit', arg1=123, arg2='asd', launch_dir='/')
         self.assertThat(fn, raises(ValueError("Unknown keyword arguments: 'arg1', 'arg2'.")))

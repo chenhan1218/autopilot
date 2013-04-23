@@ -10,6 +10,7 @@ import os
 import stat
 import subprocess
 from tempfile import mktemp
+from testtools.matchers import raises
 from textwrap import dedent
 
 from autopilot.testcase import AutopilotTestCase
@@ -29,6 +30,22 @@ class ApplicationTests(AutopilotTestCase):
 
         os.chmod(path, os.stat(path).st_mode | stat.S_IXUSR)
         return path
+
+
+class ApplicationLaunchTests(ApplicationTests):
+
+    def test_unknown_app_exception(self):
+        """launch_test_app must raise a RuntimeError when asked to launch an
+        application that has an unknown introspection type.
+
+        """
+        path = self.write_script("")
+        expected_error_message = "Autopilot could not determine the correct \
+introspection type to use. You can specify one by overriding the \
+AutopilotTestCase.pick_app_launcher method."
+
+        self.assertThat(lambda: self.launch_test_application(path),
+            raises(RuntimeError(expected_error_message)))
 
 
 class QtTests(ApplicationTests):

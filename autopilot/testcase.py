@@ -258,7 +258,11 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         """
         app_path = subprocess.check_output(['which',application]).strip()
         # Get a launcher, tests can override this if they need:
-        launcher = self.pick_app_launcher(app_path)
+        launcher = None
+        try:
+            launcher = self.pick_app_launcher(app_path)
+        except RuntimeError:
+            pass
         if launcher is None:
             raise RuntimeError("Autopilot could not determine the correct \
 introspection type to use. You can specify one by overriding the \

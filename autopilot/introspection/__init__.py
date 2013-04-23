@@ -51,7 +51,7 @@ def get_application_launcher(app_path):
     try:
         ldd_output = subprocess.check_output(["ldd", app_path]).strip().lower()
     except subprocess.CalledProcessError as e:
-        return None
+        raise RuntimeError(e)
     if 'libqtcore' in ldd_output or 'libqt5core' in ldd_output:
         from autopilot.introspection.qt import QtApplicationLauncher
         return QtApplicationLauncher()

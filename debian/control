@@ -51,7 +51,9 @@ Architecture: all
 Depends: ${shlibs:Depends},
          ${misc:Depends},
          ${python:Depends},
-         python-autopilot
+         python-autopilot,
+         libautopilot-qt,
+         python-windowmocker,
 Description: Tests for the autopilot functional test tool.
  This package contains tests for the python-autopilot package.
  You can use this package to verify that autopilot is functioning

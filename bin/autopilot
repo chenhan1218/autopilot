@@ -21,6 +21,12 @@
 
 from __future__ import absolute_import
 
+#
+# NOTE: You MUST NOT import any autopilot modules at global scope, because it
+# cases autopilot to be inserted into sys.modules before we've had a chance to
+# patch sys.path, which in turn means we cannot use autopilot to run our own
+# tests.
+
 from codecs import open
 from datetime import datetime
 import logging
@@ -33,15 +39,11 @@ import sys
 import subprocess
 from testtools import iterate_tests
 from testtools import TextTestResult
-from autopilot.testresult import AutopilotVerboseResult
-from autopilot.utilities import LogFormatter
 from textwrap import dedent
 from argparse import ArgumentParser
 from unittest.loader import TestLoader
 from unittest import TestSuite
-from autopilot.introspection import launch_application, get_application_launcher
-from autopilot.introspection.gtk import GtkApplicationLauncher
-from autopilot.introspection.qt import QtApplicationLauncher
+
 
 # list autopilot depends here, with the form:
 # ('python module name', 'ubuntu package name'),
@@ -203,6 +205,7 @@ def run_tests(args):
 
 def setup_logging(verbose):
     """Configure the root logger and verbose logging to stderr"""
+    from autopilot.utilities import LogFormatter
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
     if verbose == 0:
@@ -227,6 +230,7 @@ def construct_test_runner(args):
 
 def get_output_format(format):
     """Return a Result object for each format we support."""
+    from autopilot.testresult import AutopilotVerboseResult
 
     if format == "text":
         return type('VerboseTextTestResult', (TextTestResult,),
@@ -347,6 +351,7 @@ def patch_python_path():
 
 def launch_app(args):
     """Launch an application, with introspection support."""
+    from autopilot.introspection import launch_application, get_application_launcher
     setup_logging(args.verbose)
     app_name = args.application[0]
     if not isabs(app_name) or not exists(app_name):
@@ -366,8 +371,10 @@ def launch_app(args):
             print "(Perhaps use the '-i' argument to specify an interface.)"
             exit(1)
     elif args.interface == 'Gtk':
+        from autopilot.introspection.gtk import GtkApplicationLauncher
         launcher = GtkApplicationLauncher()
     elif args.interface == 'Qt':
+        from autopilot.introspection.qt import QtApplicationLauncher
         launcher = QtApplicationLauncher()
     if launcher is None:
         print "Error: Could not determine introspection type to use for application '%s'." % app_name

@@ -57,6 +57,7 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
             window_spec,
             open(window_spec_file, 'w')
             )
+        self.addCleanup(os.remove, window_spec_file)
 
         return self.launch_test_application('window-mocker', window_spec_file)
 

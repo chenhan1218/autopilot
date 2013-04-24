@@ -91,5 +91,5 @@ class DbusQueryTests(AutopilotTestCase):
         main_win = app.select_single('QMainWindow')
         menu_bar = main_win.select_single('QMenuBar')
         help_menu = menu_bar.select_single('QMenu', title='Help')
-        self.assertThat(len(help_menu), Equals(1))
-        self.assertThat(help_menu[0].title, Equals('Help'))
+        self.assertThat(help_menu, NotEquals(None))
+        self.assertThat(help_menu.title, Equals('Help'))

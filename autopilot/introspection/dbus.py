@@ -276,6 +276,58 @@ class DBusIntrospectionObject(object):
         children = [self.make_introspection_object(i) for i in state_dicts]
         return children
 
+    def select_single(self, type_name='*', **kwargs):
+        """Get a single node from the introspection tree, with type equal to
+        *type_name* and (optionally) matching the keyword filters present in
+        *kwargs*.
+
+        For example:
+
+        >>> app.select_single('QPushButton', objectName='clickme')
+        ... returns a QPushButton whose 'objectName' property is 'clickme'.
+
+        If nothing is returned from the query, this method returns None.
+
+        :raises: **ValueError** if the query returns more than one item. *If you
+         want more than one item, use select_many instead*.
+
+        """
+        instances = self.select_many(type_name, **kwargs)
+        if len(instances) > 1:
+            raise ValueError("More than one item was returned for query")
+        if not instances:
+            return None
+        return instances[0]
+
+    def select_many(self, type_name='*', **kwargs):
+        """Get a list of nodes from the introspection tree, with type equal to
+        *type_name* and (optionally) matching the keyword filters present in
+        *kwargs*.
+
+        For example:
+
+        >>> app.select_many('QPushButton', enabled=True)
+        ... returns a list of QPushButtons that are enabled.
+
+        If you only want to get one item, use select_single instead.
+
+        """
+        logger.debug("Selecting objects of %s with attributes: %r",
+            'any type' if type_name == '*' else 'type ' + type_name,
+            kwargs)
+
+        if type_name == "*" and not kwargs:
+            raise TypeError("You must specify either a type name or a filter.")
+
+        first_param = ''
+        if kwargs:
+            first_param = '[{}={}]'.format(*kwargs.popitem())
+        query_path = "%s//%s%s" % (self.path, type_name, first_param)
+
+        state_dicts = self.get_state_by_path(query_path)
+        instances = [self.make_introspection_object(i) for i in state_dicts]
+        return filter(lambda i: object_passes_filters(i, **kwargs), instances)
+
     def refresh_state(self):
         """Refreshes the object's state from unity.
 

@@ -322,7 +322,9 @@ class DBusIntrospectionObject(object):
         first_param = ''
         if kwargs:
             first_param = '[{}={}]'.format(*kwargs.popitem())
-        query_path = "%s//%s%s" % (self.path, type_name, first_param)
+        query_path = "%s//%s%s" % (self.get_class_query_string(),
+                                   type_name,
+                                   first_param)
 
         state_dicts = self.get_state_by_path(query_path)
         instances = [self.make_introspection_object(i) for i in state_dicts]

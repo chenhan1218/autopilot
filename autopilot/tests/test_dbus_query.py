@@ -93,3 +93,15 @@ class DbusQueryTests(AutopilotTestCase):
         help_menu = menu_bar.select_single('QMenu', title='Help')
         self.assertThat(help_menu, NotEquals(None))
         self.assertThat(help_menu.title, Equals('Help'))
+
+    def test_select_many_uses_unique_object(self):
+        """Given 2 objects of the same type with childen, selection on one will
+        only get its children"""
+        app = self.start_fully_featured_app()
+        main_win = app.select_single('QMainWindow')
+        menu_bar = main_win.select_single('QMenuBar')
+        help_menu = menu_bar.select_single('QMenu', title='Help')
+        actions = help_menu.select_many('QAction')
+        self.assertThat(len(actions), Equals(5))
+
+

@@ -288,7 +288,6 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :return: A proxy object that represents the application. Introspection
          data is retrievable via this object.
 
-
         """
         app_path = subprocess.check_output(['which',application]).strip()
         # Get a launcher, tests can override this if they need:

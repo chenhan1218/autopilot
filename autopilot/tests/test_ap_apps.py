@@ -70,13 +70,8 @@ class QtTests(ApplicationTests):
         except subprocess.CalledProcessError:
             self.skip("qmlscene not found.")
 
-    def pick_app_launcher(self, app_path):
-        # force Qt app introspection:
-        from autopilot.introspection.qt import QtApplicationLauncher
-        return QtApplicationLauncher()
-
     def test_can_launch_qt_app(self):
-        app_proxy = self.launch_test_application(self.app_path)
+        app_proxy = self.launch_test_application(self.app_path, app_type='qt')
         self.assertTrue(app_proxy is not None)
 
     def test_can_launch_qt_script(self):
@@ -90,7 +85,7 @@ class QtTests(ApplicationTests):
             win.show()
             app.exec_()
             """))
-        app_proxy = self.launch_test_application(path)
+        app_proxy = self.launch_test_application(path, app_type='qt')
         self.assertTrue(app_proxy is not None)
 
     def test_can_launch_wrapper_script(self):
@@ -111,7 +106,7 @@ class QtTests(ApplicationTests):
             %s $*
             """ % (path, path)),
             extension=".sh")
-        app_proxy = self.launch_test_application(wrapper_path)
+        app_proxy = self.launch_test_application(wrapper_path, app_type='qt')
         self.assertTrue(app_proxy is not None)
 
 
@@ -124,11 +119,6 @@ class GtkTests(ApplicationTests):
             self.app_path = subprocess.check_output(['which','gnome-mahjongg']).strip()
         except subprocess.CalledProcessError:
             self.skip("gnome-mahjongg not found.")
-
-    def pick_app_launcher(self, app_path):
-        # force Gtk app introspection:
-        from autopilot.introspection.gtk import GtkApplicationLauncher
-        return GtkApplicationLauncher()
 
     def test_can_launch_gtk_app(self):
         app_proxy = self.launch_test_application(self.app_path)
@@ -144,7 +134,7 @@ class GtkTests(ApplicationTests):
             win.show_all()
             Gtk.main()
             """))
-        app_proxy = self.launch_test_application(path)
+        app_proxy = self.launch_test_application(path, app_type='gtk')
         self.assertTrue(app_proxy is not None)
 
     def test_can_launch_wrapper_script(self):
@@ -164,5 +154,5 @@ class GtkTests(ApplicationTests):
             %s
             """ % (path, path)),
             extension=".sh")
-        app_proxy = self.launch_test_application(wrapper_path)
+        app_proxy = self.launch_test_application(wrapper_path, app_type='gtk')
         self.assertTrue(app_proxy is not None)

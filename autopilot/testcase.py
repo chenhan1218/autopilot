@@ -22,8 +22,6 @@
 
 from __future__ import absolute_import
 
-from dbus import DBusException
-from gi.repository import Gio
 import logging
 import os
 import signal
@@ -39,9 +37,9 @@ from autopilot.process import ProcessManager
 from autopilot.input import Keyboard, Mouse
 from autopilot.introspection import (
     get_application_launcher,
+    get_application_launcher_from_string_hint,
     get_autopilot_proxy_object_for_process,
     launch_application,
-    launch_process,
     )
 from autopilot.display import Display
 from autopilot.globals import on_test_started
@@ -237,18 +235,36 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         is launched.
 
         This method is designed to be flexible enough to launch all supported
-        types of applications. For example, to launch a traditional Gtk application,
-        a test might start with::
+        types of applications. Autopilot can automatically determine how to enable
+        introspection support for dynamically linked binary applications. For
+        example, to launch a binary Gtk application, a test might start with::
 
             app_proxy = self.launch_test_application('gedit')
 
-        ... a Qt4 Qml application might be launched like this::
+        Applications can be given command line arguments by supplying positional
+        arguments to this method. For example, if we want to launch ``gedit``
+        with a certain document loaded, we might do this::
 
-            app_proxy = self.launch_test_application('qmlviewer', 'my_scene.qml')
+            app_proxy = self.launch_test_application('gedit', '/tmp/test-document.txt')
 
         ... a Qt5 Qml application is launched in a similar fashion::
 
             app_proxy = self.launch_test_application('qmlscene', 'my_scene.qml')
+
+        If you wish to launch an application that is not a dynamically linked
+        binary, you must specify the application type. For example, a Qt4 python
+        application might be launched like this::
+
+            app_proxy = self.launch_test_application('my_qt_app.py', app_type='qt')
+
+        Similarly, a python/Gtk application is launched like so::
+
+            app_proxy = self.launch_test_application('my_gtk_app.py', app_type='gtk')
+
+        .. seealso::
+
+            Method :py:meth:`AutopilotTestCase.pick_app_launcher`
+                Specify application introspection type globally.
 
         :param application: The application to launch. The application can be
             specified as:
@@ -256,6 +272,11 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
              * A full, absolute path to an executable file. (``/usr/bin/gedit``)
              * A relative path to an executable file. (``./build/my_app``)
              * An app name, which will be searched for in $PATH (``my_app``)
+
+        :keyword app_type: If set, provides a hint to autopilot as to which kind
+            of introspection to enable. This is needed when the application you
+            wish to launch is *not* a dynamically linked binary. Valid values are
+            'gtk' or 'qt'. These strings are case insensitive.
 
         :keyword launch_dir:  If set to a directory that exists the process will be
             launched from that directory.
@@ -267,14 +288,19 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :return: A proxy object that represents the application. Introspection
          data is retrievable via this object.
 
+
         """
         app_path = subprocess.check_output(['which',application]).strip()
         # Get a launcher, tests can override this if they need:
+        launcher_hint = kwargs.pop('app_type', '')
         launcher = None
-        try:
-            launcher = self.pick_app_launcher(app_path)
-        except RuntimeError:
-            pass
+        if launcher_hint != '':
+            launcher = get_application_launcher_from_string_hint(launcher_hint)
+        if launcher is None:
+            try:
+                launcher = self.pick_app_launcher(app_path)
+            except RuntimeError:
+                pass
         if launcher is None:
             raise RuntimeError("Autopilot could not determine the correct \
 introspection type to use. You can specify one by overriding the \

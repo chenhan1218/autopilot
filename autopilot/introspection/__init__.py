@@ -72,6 +72,19 @@ def get_application_launcher(app_path):
     return None
 
 
+def get_application_launcher_from_string_hint(hint):
+    """Return in instance of :class:`ApplicationLauncher` given a string hint."""
+    from autopilot.introspection.qt import QtApplicationLauncher
+    from autopilot.introspection.gtk import GtkApplicationLauncher
+
+    hint = hint.lower()
+    if hint == 'qt':
+        return QtApplicationLauncher()
+    elif hint == 'gtk':
+        return GtkApplicationLauncher()
+    return None
+
+
 def launch_application(launcher, application, *arguments, **kwargs):
     """Launch an application, and return a process object.
 
@@ -117,7 +130,7 @@ class ApplicationLauncher(object):
 
 
 def launch_process(application, args, capture_output, **kwargs):
-    """Launch an autopilot-enabled process and return the proxy object."""
+    """Launch an autopilot-enabled process and return the process object."""
     commandline = [application]
     commandline.extend(args)
     logger.info("Launching process: %r", commandline)

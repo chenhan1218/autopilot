@@ -351,7 +351,8 @@ def patch_python_path():
 
 def launch_app(args):
     """Launch an application, with introspection support."""
-    from autopilot.introspection import launch_application, get_application_launcher
+    from autopilot.introspection import launch_application, get_application_launcher, get_application_launcher_from_string_hint
+
     setup_logging(args.verbose)
     app_name = args.application[0]
     if not isabs(app_name) or not exists(app_name):
@@ -370,12 +371,8 @@ def launch_app(args):
             print "Error detecting launcher: %s" % e.message
             print "(Perhaps use the '-i' argument to specify an interface.)"
             exit(1)
-    elif args.interface == 'Gtk':
-        from autopilot.introspection.gtk import GtkApplicationLauncher
-        launcher = GtkApplicationLauncher()
-    elif args.interface == 'Qt':
-        from autopilot.introspection.qt import QtApplicationLauncher
-        launcher = QtApplicationLauncher()
+    else:
+        launcher = get_application_launcher_from_string_hint(args.interface)
     if launcher is None:
         print "Error: Could not determine introspection type to use for application '%s'." % app_name
         print "(Perhaps use the '-i' argument to specify an interface.)"

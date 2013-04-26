@@ -1,11 +1,22 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
-# Copyright 2012 Canonical
-# Author: Thomi Richards
 #
-# This program is free software: you can redistribute it and/or modify it
-# under the terms of the GNU General Public License version 3, as published
-# by the Free Software Foundation.
+# Autopilot Functional Test Tool
+# Copyright (C) 2012-2013 Canonical
 #
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 
 """Package for introspection support.
 
@@ -61,6 +72,19 @@ def get_application_launcher(app_path):
     return None
 
 
+def get_application_launcher_from_string_hint(hint):
+    """Return in instance of :class:`ApplicationLauncher` given a string hint."""
+    from autopilot.introspection.qt import QtApplicationLauncher
+    from autopilot.introspection.gtk import GtkApplicationLauncher
+
+    hint = hint.lower()
+    if hint == 'qt':
+        return QtApplicationLauncher()
+    elif hint == 'gtk':
+        return GtkApplicationLauncher()
+    return None
+
+
 def launch_application(launcher, application, *arguments, **kwargs):
     """Launch an application, and return a process object.
 
@@ -106,7 +130,7 @@ class ApplicationLauncher(object):
 
 
 def launch_process(application, args, capture_output, **kwargs):
-    """Launch an autopilot-enabled process and return the proxy object."""
+    """Launch an autopilot-enabled process and return the process object."""
     commandline = [application]
     commandline.extend(args)
     logger.info("Launching process: %r", commandline)

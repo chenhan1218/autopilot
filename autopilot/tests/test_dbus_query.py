@@ -18,13 +18,13 @@
 #
 
 
-import windowmocker
 import json
 import os
 from tempfile import mktemp
 
 from autopilot.testcase import AutopilotTestCase
 from testtools.matchers import Equals, NotEquals, raises
+
 
 class DbusQueryTests(AutopilotTestCase):
     """A collection of dbus query tests for autopilot."""
@@ -62,12 +62,7 @@ class DbusQueryTests(AutopilotTestCase):
         json.dump(window_spec, open(file_path, 'w'))
         self.addCleanup(os.remove, file_path)
 
-        return self.launch_test_application('window-mocker', file_path)
-
-    def pick_app_launcher(self, app_path):
-        # force Qt app introspection:
-        from autopilot.introspection.qt import QtApplicationLauncher
-        return QtApplicationLauncher()
+        return self.launch_test_application('window-mocker', file_path, app_type="qt")
 
     def test_select_single_selects_only_available_object(self):
         """Must be able to select a single unique object."""
@@ -123,7 +118,6 @@ class DbusQueryTests(AutopilotTestCase):
         actions = help_menu.select_many('QAction')
         self.assertThat(len(actions), Equals(5))
 
-
     def test_select_single_no_name_no_parameter_raises_exception(self):
         app = self.start_fully_featured_app()
         fn = lambda: app.select_single()
@@ -165,4 +159,3 @@ class DbusQueryTests(AutopilotTestCase):
         app = self.start_fully_featured_app()
         failed_match = app.select_many('QMenu', title='qwerty')
         self.assertThat(failed_match, Equals([]))
-

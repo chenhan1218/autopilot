@@ -293,10 +293,8 @@ class DBusIntrospectionObject(object):
         *kwargs*.
         You must specify either *type_name*, keyword filters or both.
 
-        Searches recursively from the node this method is called on.
-
-
-        For example:
+        Searches recursively from the node this method is called on. For
+        example:
 
         >>> app.select_single('QPushButton', objectName='clickme')
         ... returns a QPushButton whose 'objectName' property is 'clickme'.
@@ -305,6 +303,9 @@ class DBusIntrospectionObject(object):
 
         :raises: **ValueError** if the query returns more than one item. *If you
          want more than one item, use select_many instead*.
+
+        :raises: **TypeError** if neither *type_name* or keyword filters are
+        provided.
 
         """
         instances = self.select_many(type_name, **kwargs)
@@ -329,18 +330,21 @@ class DBusIntrospectionObject(object):
 
         >>> file_menu = app.select_one('QMenu', title='File')
         >>> file_menu.select_many('QAction')
-        ... returns a list of QAction objects whose parent is the File menu.
-
+        ... returns a list of QAction objects who appear below file_menu in the
+        object tree.
 
         If you only want to get one item, use select_single instead.
 
+        :raises: **TypeError** if neither *type_name* or keyword filters are
+        provided.
+
         """
+        if type_name == "*" and not kwargs:
+            raise TypeError("You must specify either a type name or a filter.")
+
         logger.debug("Selecting objects of %s with attributes: %r",
             'any type' if type_name == '*' else 'type ' + type_name,
             kwargs)
-
-        if type_name == "*" and not kwargs:
-            raise TypeError("You must specify either a type name or a filter.")
 
         first_param = ''
         if kwargs:

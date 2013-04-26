@@ -280,6 +280,10 @@ class DBusIntrospectionObject(object):
         """Get a single node from the introspection tree, with type equal to
         *type_name* and (optionally) matching the keyword filters present in
         *kwargs*.
+        You must specify either *type_name*, keyword filters or both.
+
+        Searches recursively from the node this method is called on.
+
 
         For example:
 
@@ -303,11 +307,19 @@ class DBusIntrospectionObject(object):
         """Get a list of nodes from the introspection tree, with type equal to
         *type_name* and (optionally) matching the keyword filters present in
         *kwargs*.
+        You must specify either *type_name*, keyword filters or both.
+
+        Searches recursively from the node this method is called on.
 
         For example:
 
         >>> app.select_many('QPushButton', enabled=True)
         ... returns a list of QPushButtons that are enabled.
+
+        >>> file_menu = app.select_one('QMenu', title='File')
+        >>> file_menu.select_many('QAction')
+        ... returns a list of QAction objects whose parent is the File menu.
+
 
         If you only want to get one item, use select_single instead.
 

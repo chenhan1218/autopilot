@@ -23,8 +23,53 @@ Platform identification utilities for Autopilot.
 ================================================
 
 This module provides functions that give test authors hints as to which platform
-their tests are currently running on. This is useful when tests should only run
-on certain platforms.
+their tests are currently running on. This is useful when a test needs to test
+slight different behavior depending on the system it's running on. For example::
+
+    from autopilot import platform
+
+    ...
+
+    def test_something(self):
+        if platform.model() == "Galaxy Nexus":
+            # do something
+        elif platform.model() == "Desktop":
+            # do something else
+
+Skipping tests based on Platform
+++++++++++++++++++++++++++++++++
+
+Sometimes you want a test to not run on certain platforms, or only run on certain
+platforms. This can be easily achieved with a combination of the functions in this
+module and the ``skipIf`` and ``skipUnless`` decorators. For example, to define
+a test that only runs on the galaxy nexus device, write this::
+
+    from testtools import skipUnless
+
+    ...
+
+    @skipUnless(platform.model() == 'Galaxy Nexus')
+    def test_something(self):
+        # test things!
+
+The inverse is possible as well. To define a test that will run on every device
+except the Galaxy Nexus, write this::
+
+    from testtools import skipIf
+
+    ...
+
+    @skipIf(platform.model() == 'Galaxy Nexus')
+    def test_something(self):
+        # test things!
+
+Tuples of values can be used as well, to select more than one platform. For
+example::
+
+    @skipIf(platform.model() in ('Model One', 'Model Two'))
+        def test_something(self):
+            # test things!
+
 
 """
 

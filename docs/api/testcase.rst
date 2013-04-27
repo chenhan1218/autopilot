@@ -4,4 +4,3 @@
 
 .. automodule:: autopilot.testcase
     :members:
-    :undoc-members:

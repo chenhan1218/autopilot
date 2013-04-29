@@ -242,7 +242,7 @@ def get_proxy_object_base_clases(service_name, obj_path):
 
     """
 
-    bases = [ApplicationProxyObect]
+    bases = [ApplicationProxyObject]
 
     dbus_object = get_session_bus().get_object(service_name, obj_path)
     introspection_iface = dbus.Interface(dbus_object, DBUS_INTROSPECTION_IFACE)
@@ -265,11 +265,11 @@ def get_proxy_object_class_name_and_state(service_name, obj_path):
     return get_classname_from_path(object_path), object_state
 
 
-class ApplicationProxyObect(DBusIntrospectionObject):
+class ApplicationProxyObject(DBusIntrospectionObject):
     """A class that better supports query data from an application."""
 
     def __init__(self, state, path):
-        super(ApplicationProxyObect, self).__init__(state, path)
+        super(ApplicationProxyObject, self).__init__(state, path)
         self._process = None
 
     def set_process(self, process):

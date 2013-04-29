@@ -116,7 +116,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         self.keyboard = Keyboard.create()
         self.mouse = Mouse.create()
 
-        self.screen_geo = Display.create()
+        self.display = Display.create()
         self.addCleanup(self.keyboard.cleanup)
         self.addCleanup(self.mouse.cleanup)
 

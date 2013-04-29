@@ -23,23 +23,25 @@ from __future__ import absolute_import
 from dbus._dbus import BusConnection
 import dbus
 
+from autopilot.introspection.constants import AP_INTROSPECTION_IFACE
+
 
 class DBusAddress(object):
 
     "Store information about an Autopilot dbus backend, from keyword arguments."
 
     @staticmethod
-    def SessionBus(connection=None, object_path=None):
+    def SessionBus(connection, object_path):
         """Construct a DBusAddress that backs on to the session bus."""
         return DBusAddress(dbus.SessionBus(), connection, object_path)
 
     @staticmethod
-    def SystemBus(connection=None, object_path=None):
+    def SystemBus(connection, object_path):
         """Construct a DBusAddress that backs on to the system bus."""
         return DBusAddress(dbus.SystemBus(), connection, object_path)
 
     @staticmethod
-    def CustomBus(bus_address, connection=None, object_path=None):
+    def CustomBus(bus_address, connection, object_path):
         """Construct a DBusAddress that backs on to a custom bus.
 
         :param bus_address: A string representing the address of the dbus bus to
@@ -48,7 +50,7 @@ class DBusAddress(object):
         """
         return DBusAddress(BusConnection(bus_address), connection, object_path)
 
-    def __init__(self, bus, connection=None, object_path=None):
+    def __init__(self, bus, connection, object_path):
         """Construct a DBusAddress instance.
 
         :param bus: A valid DBus bus object.
@@ -64,6 +66,16 @@ class DBusAddress(object):
         self._bus = bus
         self._connection = connection
         self._object_path = object_path
+
+    @property
+    def introspection_iface(self):
+        if not isinstance(self._connection, basestring):
+            raise TypeError("Service name must be a string.")
+        if not isinstance(self._object_path, basestring):
+            raise TypeError("Object name must be a string")
+
+        _debug_proxy_obj = self._bus.get_object(self._connection, self._object_path)
+        return dbus.Interface(_debug_proxy_obj, AP_INTROSPECTION_IFACE)
 
     def __hash__(self):
         return hash((self._bus, self._connection, self._object_path))

@@ -26,11 +26,11 @@ class DBusAddressTests(TestCase):
 
     def test_can_construct(self):
         fake_bus = object()
-        addr = DBusAddress(fake_bus)
+        addr = DBusAddress(fake_bus, "conn", "path")
 
     def test_can_store_address_in_dictionary(self):
         fake_bus = object()
-        addr = DBusAddress(fake_bus)
+        addr = DBusAddress(fake_bus, "conn", "path")
         dict(addr=object())
 
     def test_equality_operator(self):

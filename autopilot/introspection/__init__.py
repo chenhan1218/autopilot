@@ -32,6 +32,7 @@ from time import sleep
 import os
 
 
+from autopilot.introspection.backends import DBusAddress
 from autopilot.introspection.constants import (
     AUTOPILOT_PATH,
     QT_AUTOPILOT_IFACE,
@@ -226,8 +227,7 @@ def make_proxy_object_from_service_name(service_name, obj_path, dbus_addr=None):
 
     clsobj = type(str(cls_name),
         proxy_bases,
-        dict(DBUS_SERVICE=service_name,
-            DBUS_OBJECT=obj_path
+        dict(_Backend = DBusAddress.SessionBus(service_name, obj_path)
             )
         )
     proxy = clsobj.get_root_instance()

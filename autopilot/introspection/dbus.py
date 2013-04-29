@@ -78,31 +78,15 @@ def clear_object_registry():
     # Until that happens, we need to live with this hack: don't delete objects if
     # their DBus service name is com.canonical.Unity
     # - Thomi Richards
-    to_delete = []
-    for k,v in _object_registry.iteritems():
-        if v.DBUS_SERVICE != "com.canonical.Unity":
-            to_delete.append(k)
+    # TODO: fix this!
+    _object_registry.clear()
+    # to_delete = []
+    # for k,v in _object_registry.iteritems():
+    #     if v.DBUS_SERVICE != "com.canonical.Unity":
+    #         to_delete.append(k)
 
-    for k in to_delete:
-        del _object_registry[k]
-
-
-def get_introspection_iface(service_name, object_path):
-    """Get the autopilot introspection interface for the specified service name
-    and object path.
-
-    :param string service_name:
-    :param string object_name:
-    :raises: **TypeError** on invalid parameter type
-
-    """
-    if not isinstance(service_name, basestring):
-        raise TypeError("Service name must be a string.")
-    if not isinstance(object_path, basestring):
-        raise TypeError("Object name must be a string")
-
-    _debug_proxy_obj = get_session_bus().get_object(service_name, object_path)
-    return Interface(_debug_proxy_obj, AP_INTROSPECTION_IFACE)
+    # for k in to_delete:
+    #     del _object_registry[k]
 
 
 def translate_state_keys(state_dict):
@@ -136,8 +120,7 @@ class DBusIntrospectionObject(object):
 
     __metaclass__ = IntrospectableObjectMetaclass
 
-    DBUS_SERVICE = None
-    DBUS_OBJECT = None
+    _Backend = None
 
     def __init__(self, state_dict, path):
         self.__state = {}
@@ -423,10 +406,7 @@ class DBusIntrospectionObject(object):
             raise TypeError("XPath query must be a string, not %r", type(piece))
 
         with Timer("GetState %s" % piece):
-            return get_introspection_iface(
-                cls.DBUS_SERVICE,
-                cls.DBUS_OBJECT
-                ).GetState(piece)
+            return cls._Backend.introspection_iface.GetState(piece)
 
     def get_new_state(self):
         """Retrieve a new state dictionary for this class instance.

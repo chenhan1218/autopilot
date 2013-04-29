@@ -62,12 +62,8 @@ class IntrospectableObjectMetaclass(type):
         return class_object
 
 
-def clear_object_registry():
-    """Clear the object registry.
-
-    .. important:: DO NOT CALL THIS UNLESS YOU REALLY KNOW WHAT YOU ARE DOING!
-     ... and even then, are you *sure*?
-    """
+def clear_object_registry(target_backend):
+    """Delete all class objects from the object registry for a single backend."""
     global _object_registry
 
     # NOTE: We used to do '_object_registry.clear()' here, but that causes issues
@@ -78,15 +74,13 @@ def clear_object_registry():
     # Until that happens, we need to live with this hack: don't delete objects if
     # their DBus service name is com.canonical.Unity
     # - Thomi Richards
-    # TODO: fix this!
-    _object_registry.clear()
-    # to_delete = []
-    # for k,v in _object_registry.iteritems():
-    #     if v.DBUS_SERVICE != "com.canonical.Unity":
-    #         to_delete.append(k)
+    to_delete = []
+    for k,v in _object_registry.iteritems():
+        if v._Backend == target_backend:
+            to_delete.append(k)
 
-    # for k in to_delete:
-    #     del _object_registry[k]
+    for k in to_delete:
+        del _object_registry[k]
 
 
 def translate_state_keys(state_dict):

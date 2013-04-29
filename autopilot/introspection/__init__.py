@@ -214,7 +214,7 @@ def get_child_pids(pid):
     return result
 
 
-def make_proxy_object_from_service_name(service_name, obj_path):
+def make_proxy_object_from_service_name(service_name, obj_path, dbus_addr=None):
     """Returns a root proxy object given a DBus service name."""
     # parameters can sometimes be dbus.String instances, sometimes QString instances.
     # it's easier to convert them here than at the calling sites.
@@ -234,7 +234,7 @@ def make_proxy_object_from_service_name(service_name, obj_path):
     return proxy
 
 
-def get_proxy_object_base_clases(service_name, obj_path):
+def get_proxy_object_base_clases(service_name, obj_path, dbus_addr=None):
     """Return  tuple of the base classes to use when creating a proxy object
     for the given service name & path.
 
@@ -244,6 +244,7 @@ def get_proxy_object_base_clases(service_name, obj_path):
 
     bases = [ApplicationProxyObject]
 
+    # CHANGE THIS:
     dbus_object = get_session_bus().get_object(service_name, obj_path)
     introspection_iface = dbus.Interface(dbus_object, DBUS_INTROSPECTION_IFACE)
     intro_xml = introspection_iface.Introspect()

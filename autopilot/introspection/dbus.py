@@ -34,7 +34,6 @@ from testtools.matchers import Equals
 from time import sleep
 from textwrap import dedent
 
-from autopilot.dbus_handler import get_session_bus
 from autopilot.introspection.constants import AP_INTROSPECTION_IFACE
 from autopilot.utilities import Timer
 
@@ -58,16 +57,15 @@ class IntrospectableObjectMetaclass(type):
     def __new__(cls, classname, bases, classdict):
         """Add class name to type registry."""
         class_object = type.__new__(cls, classname, bases, classdict)
-        _object_registry[classname] = class_object
+        # The DBusIntrospectionObject class always has Backend == None, since it's
+        # not introspectable itself. We need to compensate for this...
+        if class_object._Backend is not None:
+            _object_registry[class_object._Backend] = {classname:class_object}
         return class_object
 
 
-def clear_object_registry():
-    """Clear the object registry.
-
-    .. important:: DO NOT CALL THIS UNLESS YOU REALLY KNOW WHAT YOU ARE DOING!
-     ... and even then, are you *sure*?
-    """
+def clear_object_registry(target_backend):
+    """Delete all class objects from the object registry for a single backend."""
     global _object_registry
 
     # NOTE: We used to do '_object_registry.clear()' here, but that causes issues
@@ -80,29 +78,11 @@ def clear_object_registry():
     # - Thomi Richards
     to_delete = []
     for k,v in _object_registry.iteritems():
-        if v.DBUS_SERVICE != "com.canonical.Unity":
+        if k == target_backend:
             to_delete.append(k)
 
     for k in to_delete:
         del _object_registry[k]
-
-
-def get_introspection_iface(service_name, object_path):
-    """Get the autopilot introspection interface for the specified service name
-    and object path.
-
-    :param string service_name:
-    :param string object_name:
-    :raises: **TypeError** on invalid parameter type
-
-    """
-    if not isinstance(service_name, basestring):
-        raise TypeError("Service name must be a string.")
-    if not isinstance(object_path, basestring):
-        raise TypeError("Object name must be a string")
-
-    _debug_proxy_obj = get_session_bus().get_object(service_name, object_path)
-    return Interface(_debug_proxy_obj, AP_INTROSPECTION_IFACE)
 
 
 def translate_state_keys(state_dict):
@@ -137,8 +117,7 @@ class DBusIntrospectionObject(object):
 
     __metaclass__ = IntrospectableObjectMetaclass
 
-    DBUS_SERVICE = None
-    DBUS_OBJECT = None
+    _Backend = None
 
     def __init__(self, state_dict, path):
         self.__state = {}
@@ -443,10 +422,7 @@ class DBusIntrospectionObject(object):
             raise TypeError("XPath query must be a string, not %r", type(piece))
 
         with Timer("GetState %s" % piece):
-            return get_introspection_iface(
-                cls.DBUS_SERVICE,
-                cls.DBUS_OBJECT
-                ).GetState(piece)
+            return cls._Backend.introspection_iface.GetState(piece)
 
     def get_new_state(self):
         """Retrieve a new state dictionary for this class instance.
@@ -474,7 +450,7 @@ class DBusIntrospectionObject(object):
         path, state = dbus_tuple
         name = get_classname_from_path(path)
         try:
-            class_type = _object_registry[name]
+            class_type = _object_registry[cls._Backend][name]
         except KeyError:
             logger.warning("Generating introspection instance for type '%s' based on generic class.", name)
             class_type = type(str(name), (cls,), {})

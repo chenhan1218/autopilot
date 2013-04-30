@@ -23,14 +23,11 @@
 
 __all__ = ['QtApplicationLauncher']
 
-import dbus
 import functools
 
 import logging
 
 from autopilot.introspection import ApplicationLauncher
-from autopilot.introspection.constants import QT_AUTOPILOT_IFACE
-from autopilot.introspection.dbus import get_session_bus
 
 
 logger = logging.getLogger(__name__)
@@ -102,8 +99,7 @@ class QtObjectProxyMixin(object):
 
         """
 
-        _debug_proxy_obj = get_session_bus().get_object(self.DBUS_SERVICE, self.DBUS_OBJECT)
-        return dbus.Interface(_debug_proxy_obj, QT_AUTOPILOT_IFACE)
+        return self._Backend.qt_introspection_iface
 
     @property
     def slots(self):

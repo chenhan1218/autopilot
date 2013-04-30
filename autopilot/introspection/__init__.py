@@ -42,9 +42,9 @@ from autopilot.introspection.constants import (
 from autopilot.introspection.dbus import (
     clear_object_registry,
     DBusIntrospectionObject,
-    get_session_bus,
     get_classname_from_path,
     )
+from autopilot.dbus_handler import get_session_bus
 from autopilot.utilities import get_debug_logger
 
 

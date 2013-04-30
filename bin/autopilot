@@ -132,12 +132,13 @@ def parse_arguments():
     parser_list.add_argument("suite", nargs="+",
                              help="Specify test suite(s) to run.")
 
-    parser_vis = subparsers.add_parser('vis',
-                                      help="Open the Autopilot visualiser tool")
-    parser_vis.add_argument('-v', '--verbose', required=False, default=False,
-                            action='count', help="Show autopilot log messages. \
-                            Set twice to also log data useful for debugging \
-                            autopilot itself.")
+    if have_vis():
+        parser_vis = subparsers.add_parser('vis',
+                                          help="Open the Autopilot visualiser tool")
+        parser_vis.add_argument('-v', '--verbose', required=False, default=False,
+                                action='count', help="Show autopilot log messages. \
+                                Set twice to also log data useful for debugging \
+                                autopilot itself.")
 
     parser_launch = subparsers.add_parser('launch',
                             help="Launch an application with introspection enabled")
@@ -291,7 +292,6 @@ class ConfigurableTestRunner(object):
 
 def load_test_suite_from_name(test_names):
     """Returns a test suite object given a dotted test names."""
-    patch_python_path()
     loader = TestLoader()
     if isinstance(test_names, basestring):
         test_names = list(test_names)
@@ -385,6 +385,15 @@ def launch_app(args):
         exit(1)
 
 
+def have_vis():
+    """Return true if the vis package is installed."""
+    try:
+        from autopilot.vis import vis_main
+        return True
+    except ImportError:
+        return False
+
+
 def run_vis(args):
     setup_logging(args.verbose)
     # importing this requires that DISPLAY is set. Since we don't always want
@@ -415,6 +424,7 @@ def main():
 
 
 if __name__ == "__main__":
+    patch_python_path()
     if not check_depends():
         exit(1)
     main()

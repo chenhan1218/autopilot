@@ -27,7 +27,7 @@ import autopilot.platform
 
 import logging
 from time import sleep
-from evdev import AbsInfo, UInput, ecodes as e
+from evdev import UInput, ecodes as e
 
 logger = logging.getLogger(__name__)
 
@@ -180,15 +180,13 @@ def create_touch_device(res_x=None, res_y=None):
 
     cap_mt = {
         e.EV_ABS : [
-            (e.ABS_X, AbsInfo(value=0, min=0, max=res_x, fuzz=0, flat=0, resolution=10)),
-            (e.ABS_Y, AbsInfo(value=0, min=0, max=res_y, fuzz=0, flat=0, resolution=10)),
-            (e.ABS_PRESSURE, AbsInfo(value=0, min=0, max=65535, fuzz=0, flat=0, resolution=10)),
-            # (e.ABS_DISTANCE, AbsInfo(value=0, min=0, max=65535, fuzz=0, flat=0)),
-            # (e.ABS_TOOL_WIDTH, AbsInfo(value=0, min=0, max=65535, fuzz=0, flat=0)),
-            (e.ABS_MT_POSITION_X, AbsInfo(value=0, min=0, max=res_x, fuzz=0, flat=0, resolution=10)),
-            (e.ABS_MT_POSITION_Y, AbsInfo(value=0, min=0, max=res_y, fuzz=0, flat=0, resolution=10)),
-            (e.ABS_MT_TOUCH_MAJOR, AbsInfo(value=0, min=0, max=30, fuzz=0, flat=0, resolution=10)),
-            (e.ABS_MT_TRACKING_ID, AbsInfo(value=0, min=0, max=65535, fuzz=0, flat=0, resolution=10)),
+            (e.ABS_X, (0, res_x, 0, 0)),
+            (e.ABS_Y, (0, res_y, 0, 0)),
+            (e.ABS_PRESSURE, (0, 65535, 0, 0)),
+            (e.ABS_MT_POSITION_X, (0, res_x, 0, 0)),
+            (e.ABS_MT_POSITION_Y, (0, res_y, 0, 0)),
+            (e.ABS_MT_TOUCH_MAJOR, (0, 30, 0, 0)),
+            (e.ABS_MT_TRACKING_ID, (0, 65535, 0, 0)),
             (e.ABS_MT_PRESSURE, (0, 255, 0, 0)),
             (e.ABS_MT_SLOT, (0, 9, 0, 0)),
         ],
@@ -359,6 +357,7 @@ class Touch(TouchBase):
         _touch_device.write(e.EV_ABS, e.ABS_MT_TRACKING_ID, -1)
         _touch_device.write(e.EV_KEY, e.BTN_TOOL_FINGER, 0)
         _touch_device.syn()
+        self._touch_finger = None
 
 
 _UINPUT_CODE_TRANSLATIONS = {

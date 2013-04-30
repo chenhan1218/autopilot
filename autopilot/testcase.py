@@ -44,8 +44,6 @@ If you are writing a test for an application, you need to use the
 application, enable introspection, and return a proxy object representing the
 root of the application introspection tree.
 
-
-
 """
 
 from __future__ import absolute_import

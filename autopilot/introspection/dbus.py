@@ -270,7 +270,7 @@ class DBusIntrospectionObject(object):
         """Returns a dictionary of all the properties on this class.
 
         This can be useful when you want to log all the properties exported from
-        your application for a particularr object.
+        your application for a particular object.
 
         """
         # Since we're grabbing __state directly there's no implied state

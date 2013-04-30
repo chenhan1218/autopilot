@@ -23,7 +23,11 @@ from __future__ import absolute_import
 from dbus._dbus import BusConnection
 import dbus
 
-from autopilot.introspection.constants import AP_INTROSPECTION_IFACE, DBUS_INTROSPECTION_IFACE
+from autopilot.introspection.constants import (
+    AP_INTROSPECTION_IFACE,
+    DBUS_INTROSPECTION_IFACE,
+    QT_AUTOPILOT_IFACE,
+    )
 
 
 class DBusAddress(object):
@@ -81,6 +85,11 @@ class DBusAddress(object):
     def dbus_introspection_iface(self):
         dbus_object = self._bus.get_object(self._connection, self._object_path)
         return dbus.Interface(dbus_object, DBUS_INTROSPECTION_IFACE)
+
+    @property
+    def qt_introspection_iface(self):
+        _debug_proxy_obj = self._bus.get_object(self._connection, self._object_path)
+        return dbus.Interface(_debug_proxy_obj, QT_AUTOPILOT_IFACE)
 
     def __hash__(self):
         return hash((self._bus, self._connection, self._object_path))

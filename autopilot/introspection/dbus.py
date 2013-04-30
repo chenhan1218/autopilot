@@ -34,7 +34,6 @@ from testtools.matchers import Equals
 from time import sleep
 from textwrap import dedent
 
-from autopilot.dbus_handler import get_session_bus
 from autopilot.introspection.constants import AP_INTROSPECTION_IFACE
 from autopilot.utilities import Timer
 

@@ -109,16 +109,35 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         super(AutopilotTestCase, self).setUp()
         on_test_started(self)
 
-        self.process_manager = ProcessManager.create()
-        self._app_snapshot = self.process_manager.get_running_applications()
-        self.addCleanup(self._compare_system_with_app_snapshot)
-
-        self.keyboard = Keyboard.create()
-        self.mouse = Mouse.create()
+        self._process_manager = None
+        self._mouse = None
+        self._kb = None
 
         self.display = Display.create()
         self.addCleanup(self.keyboard.cleanup)
         self.addCleanup(self.mouse.cleanup)
+
+    @property
+    def process_manager(self):
+        if self._process_manager is None:
+            self._process_manager = ProcessManager.create()
+            self._app_snapshot = self.process_manager.get_running_applications()
+            self.addCleanup(self._compare_system_with_app_snapshot)
+        return self._process_manager
+
+    @property
+    def keyboard(self):
+        if self._kb is None:
+            self._kb = Keyboard.create()
+            self.addCleanup(self._kb.cleanup)
+        return self._kb
+
+    @property
+    def mouse(self):
+        if self._mouse is None:
+            self._mouse = Mouse.create()
+            self.addCleanup(self._mouse.cleanup)
+        return self._mouse
 
     def _compare_system_with_app_snapshot(self):
         """Compare the currently running application with the last snapshot.

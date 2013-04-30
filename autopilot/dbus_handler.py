@@ -27,7 +27,7 @@ from dbus.mainloop.glib import DBusGMainLoop
 
 _glib_loop_set = False
 
-def get_session_bus(dbus_addr=None):
+def get_session_bus():
     """This function returns a session bus that has had the DBus GLib main loop
     initialised.
 

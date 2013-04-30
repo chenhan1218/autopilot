@@ -357,7 +357,7 @@ class Touch(TouchBase):
         _touch_device.write(e.EV_ABS, e.ABS_MT_TRACKING_ID, -1)
         _touch_device.write(e.EV_KEY, e.BTN_TOOL_FINGER, 0)
         _touch_device.syn()
-        self._touch_finger = None
+        self._touch_finger = _release_touch_finger(self._touch_finger)
 
 
 _UINPUT_CODE_TRANSLATIONS = {

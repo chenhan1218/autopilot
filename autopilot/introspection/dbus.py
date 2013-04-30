@@ -126,11 +126,12 @@ def object_passes_filters(instance, **kwargs):
 
 
 class DBusIntrospectionObject(object):
-    """A class that can be created using a dictionary of state from DBus.
+    """A class that supports transparent data retrieval from the application
+    under test.
 
-    To use this class properly you must set the DBUS_SERVICE and DBUS_OBJECT
-    class attributes. They should be set to the Service name and object path
-    where the autopilot interface is being exposed.
+    This class is the base class for all objects retrieved from the application
+    under test. It handles transparently refreshing attribute values when needed,
+    and contains many methods to select child objects in the introspection tree.
 
     """
 
@@ -142,10 +143,10 @@ class DBusIntrospectionObject(object):
     def __init__(self, state_dict, path):
         self.__state = {}
         self.__refresh_on_attribute = True
-        self.set_properties(state_dict)
+        self._set_properties(state_dict)
         self.path = path
 
-    def set_properties(self, state_dict):
+    def _set_properties(self, state_dict):
         """Creates and set attributes of *self* based on contents of *state_dict*.
 
         .. note:: Translates '-' to '_', so a key of 'icon-type' for example
@@ -198,7 +199,7 @@ class DBusIntrospectionObject(object):
                 if mismatch:
                     failure_msg = mismatch.describe()
                 else:
-                    self.parent.set_properties(new_state)
+                    self.parent._set_properties(new_state)
                     return
 
                 if time_left >= 1:
@@ -234,7 +235,7 @@ class DBusIntrospectionObject(object):
 
         >>> get_children_by_type(Launcher, monitor=1)
 
-        will return only LauncherInstances that have an attribute 'monitor' that
+        will return only Launcher instances that have an attribute 'monitor' that
         is equal to 1. The type can also be specified as a string, which is
         useful if there is no emulator class specified:
 
@@ -243,11 +244,7 @@ class DBusIntrospectionObject(object):
         Note however that if you pass a string, and there is an emulator class
         defined, autopilot will not use it.
 
-        :param desired_type:
-        :type desired_type: subclass of DBusIntrospectionObject, or a string.
-
-        .. important:: *desired_type* **must** be a subclass of
-         DBusIntrospectionObject.
+        :param desired_type: subclass of DBusIntrospectionObject, or a string.
 
         """
         #TODO: if kwargs has exactly one item in it we should specify the
@@ -270,7 +267,12 @@ class DBusIntrospectionObject(object):
         return result
 
     def get_properties(self):
-        """Returns a dictionary of all the properties on this class."""
+        """Returns a dictionary of all the properties on this class.
+
+        This can be useful when you want to log all the properties exported from
+        your application for a particular object.
+
+        """
         # Since we're grabbing __state directly there's no implied state
         # refresh, so do it manually:
         self.refresh_state()
@@ -279,7 +281,14 @@ class DBusIntrospectionObject(object):
         return props
 
     def get_children(self):
-        """Returns a list of all child objects."""
+        """Returns a list of all child objects.
+
+        This returns a list of all children. To return only children of a specific
+        type, use :meth:`get_children_by_type`. To get objects further down the
+        introspection tree (i.e.- nodes that may not necessarily be immeadiate
+        children), use :meth:`select_single` and :meth:`select_many`.
+
+        """
         self.refresh_state()
 
         query = self.get_class_query_string() + "/*"
@@ -302,10 +311,10 @@ class DBusIntrospectionObject(object):
         If nothing is returned from the query, this method returns None.
 
         :raises: **ValueError** if the query returns more than one item. *If you
-         want more than one item, use select_many instead*.
+            want more than one item, use select_many instead*.
 
         :raises: **TypeError** if neither *type_name* or keyword filters are
-        provided.
+            provided.
 
         """
         instances = self.select_many(type_name, **kwargs)
@@ -336,7 +345,7 @@ class DBusIntrospectionObject(object):
         If you only want to get one item, use select_single instead.
 
         :raises: **TypeError** if neither *type_name* or keyword filters are
-        provided.
+            provided.
 
         """
         if type_name == "*" and not kwargs:
@@ -360,25 +369,31 @@ class DBusIntrospectionObject(object):
     def refresh_state(self):
         """Refreshes the object's state from unity.
 
+        You should probably never have to call this directly. Autopilot automatically
+        retrieves new state every time this object's attributes are read.
+
         :raises: **StateNotFound** if the object in unity has been destroyed.
 
         """
         _, new_state = self.get_new_state()
-        self.set_properties(new_state)
+        self._set_properties(new_state)
 
     @classmethod
     def get_all_instances(cls):
-        """Get all instances of this class that exist within the Unity state tree.
+        """Get all instances of this class that exist within the Application state tree.
 
-        For example, to get all the BamfLauncherIcons:
+        For example, to get all the LauncherIcon instances:
 
-        >>> icons = BamfLauncherIcons.get_all_instances()
+        >>> icons = LauncherIcon.get_all_instances()
+
+        .. warning::
+            Using this method is slow - it requires a complete scan of the
+            introspection tree. You should only use this when you're not sure where
+            the objects you are looking for are located. Depending on the application
+            you are testing, you may get duplicate results using this method.
 
         :return: List (possibly empty) of class instances.
 
-        WARNING: Using this method is slow - it requires a complete scan of the
-        introspection tree. Instead, get the root tree object with
-        get_root_instance, and then navigate to the desired node.
 
         """
         cls_name = cls.__name__
@@ -387,7 +402,12 @@ class DBusIntrospectionObject(object):
 
     @classmethod
     def get_root_instance(cls) :
-        """Get the object at the root of this tree."""
+        """Get the object at the root of this tree.
+
+        This will return an object that represents the root of the introspection
+        tree.
+
+        """
         instances = cls.get_state_by_path("/")
         if len(instances) != 1:
             logger.error("Could not retrieve root object.")
@@ -412,10 +432,10 @@ class DBusIntrospectionObject(object):
     def get_state_by_path(cls, piece):
         """Get state for a particular piece of the state tree.
 
-        *piece* is an XPath-like query that specifies which bit of the tree you
-        want to look at.
+        You should probably never need to call this directly.
 
-        :param string piece:
+        :param piece: an XPath-like query that specifies which bit of the tree you
+            want to look at.
         :raises: **TypeError** on invalid *piece* parameter.
 
         """
@@ -430,6 +450,8 @@ class DBusIntrospectionObject(object):
 
     def get_new_state(self):
         """Retrieve a new state dictionary for this class instance.
+
+        You should probably never need to call this directly.
 
         .. note:: The state keys in the returned dictionary are not translated.
 
@@ -466,6 +488,9 @@ class DBusIntrospectionObject(object):
 
         >>> with instance.no_automatic_refreshing():
             # access lots of attributes.
+
+        This can be useful if you need to check lots of attributes in a tight loop,
+        or if you want to atomicaly check several attributes at once.
 
         """
         try:

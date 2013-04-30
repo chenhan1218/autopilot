@@ -3,4 +3,5 @@
 
 
 .. automodule:: autopilot.introspection
-    :members:
+    :members: DBusIntrospectionObject
+

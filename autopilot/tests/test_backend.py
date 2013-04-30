@@ -42,7 +42,6 @@ class DBusAddressTests(TestCase):
         self.assertThat(addr1, Not(Equals(DBusAddress(fake_bus, "conn2", "path"))))
         self.assertThat(addr1, Not(Equals(DBusAddress(object(), "conn", "path"))))
 
-
     def test_inequality_operator(self):
         fake_bus = object()
         addr1 = DBusAddress(fake_bus, "conn", "path")
@@ -51,5 +50,3 @@ class DBusAddressTests(TestCase):
         self.assertThat(addr1, NotEquals(DBusAddress(fake_bus, "conn", "new_path")))
         self.assertThat(addr1, NotEquals(DBusAddress(fake_bus, "conn2", "path")))
         self.assertThat(addr1, NotEquals(DBusAddress(object(), "conn", "path")))
-
-

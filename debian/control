@@ -47,7 +47,7 @@ Description: Utility to write and run integration tests easily
  and detecting applications.
 
 Package: python-autopilot-vis
-Architecture: All
+Architecture: all
 Depends: ${misc:Depends},
          ${python:Depends},
          python-autopilot,

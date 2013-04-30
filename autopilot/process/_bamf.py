@@ -30,6 +30,7 @@ import logging
 import os
 from time import sleep
 from Xlib import display, X, protocol
+from subprocess import check_output, CalledProcessError, call
 
 from autopilot.dbus_handler import get_session_bus
 from autopilot.utilities import addCleanup, Silence

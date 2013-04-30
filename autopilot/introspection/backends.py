@@ -23,7 +23,7 @@ from __future__ import absolute_import
 from dbus._dbus import BusConnection
 import dbus
 
-from autopilot.introspection.constants import AP_INTROSPECTION_IFACE
+from autopilot.introspection.constants import AP_INTROSPECTION_IFACE, DBUS_INTROSPECTION_IFACE
 
 
 class DBusAddress(object):
@@ -77,6 +77,11 @@ class DBusAddress(object):
         _debug_proxy_obj = self._bus.get_object(self._connection, self._object_path)
         return dbus.Interface(_debug_proxy_obj, AP_INTROSPECTION_IFACE)
 
+    @property
+    def dbus_introspection_iface(self):
+        dbus_object = self._bus.get_object(self._connection, self._object_path)
+        return dbus.Interface(dbus_object, DBUS_INTROSPECTION_IFACE)
+
     def __hash__(self):
         return hash((self._bus, self._connection, self._object_path))
 
@@ -89,4 +94,16 @@ class DBusAddress(object):
         return self._object_path != other._object_path or \
             self._connection != other._connection or \
             self._bus != other._bus
+
+    def __str__(self):
+        return repr(self)
+
+    def __repr__(self):
+        if self._bus_type == dbus.Bus.TYPE_SESSION:
+            name = "session"
+        elif self._bus_type == dbus.Bus.TYPE_SYSTEM:
+            name = "system"
+        else:
+            name = "custom"
+        return "<%s bus %s %s>" % (name, self._connection, self._object_path)
 

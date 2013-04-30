@@ -38,7 +38,6 @@ from autopilot.introspection.constants import (
     AUTOPILOT_PATH,
     QT_AUTOPILOT_IFACE,
     AP_INTROSPECTION_IFACE,
-    DBUS_INTROSPECTION_IFACE,
     )
 from autopilot.introspection.dbus import (
     clear_object_registry,
@@ -217,12 +216,18 @@ def make_proxy_object_from_service_name(service_name, obj_path, dbus_addr=None):
     service_name = str(service_name)
     obj_path = str(obj_path)
 
-    proxy_bases = get_proxy_object_base_clases(service_name, obj_path)
-    cls_name, cls_state = get_proxy_object_class_name_and_state(service_name, obj_path)
+    if dbus_addr is not None:
+        be = DBusAddress.CustomBus(dbus_addr, service_name, obj_path)
+    else:
+        be = DBusAddress.SessionBus(service_name, obj_path)
+
+
+    proxy_bases = get_proxy_object_base_clases(be)
+    cls_name, cls_state = get_proxy_object_class_name_and_state(be)
 
     clsobj = type(str(cls_name),
         proxy_bases,
-        dict(_Backend = DBusAddress.SessionBus(service_name, obj_path)
+        dict(_Backend = be
             )
         )
 
@@ -234,7 +239,7 @@ def make_proxy_object_from_service_name(service_name, obj_path, dbus_addr=None):
     return proxy
 
 
-def get_proxy_object_base_clases(service_name, obj_path, dbus_addr=None):
+def get_proxy_object_base_clases(backend):
     """Return  tuple of the base classes to use when creating a proxy object
     for the given service name & path.
 
@@ -244,12 +249,9 @@ def get_proxy_object_base_clases(service_name, obj_path, dbus_addr=None):
 
     bases = [ApplicationProxyObject]
 
-    # CHANGE THIS:
-    dbus_object = get_session_bus().get_object(service_name, obj_path)
-    introspection_iface = dbus.Interface(dbus_object, DBUS_INTROSPECTION_IFACE)
-    intro_xml = introspection_iface.Introspect()
+    intro_xml = backend.dbus_introspection_iface.Introspect()
     if AP_INTROSPECTION_IFACE not in intro_xml:
-        raise RuntimeError("Could not find Autopilot interface on service name '%s'" % service_name)
+        raise RuntimeError("Could not find Autopilot interface on DBus backend '%s'" % backend)
 
     if QT_AUTOPILOT_IFACE in intro_xml:
         from autopilot.introspection.qt import QtObjectProxyMixin
@@ -258,11 +260,9 @@ def get_proxy_object_base_clases(service_name, obj_path, dbus_addr=None):
     return tuple(bases)
 
 
-def get_proxy_object_class_name_and_state(service_name, obj_path):
+def get_proxy_object_class_name_and_state(backend):
     """Return the class name and root state dictionary."""
-    dbus_object = get_session_bus().get_object(service_name, obj_path)
-    dbus_iface = dbus.Interface(dbus_object, AP_INTROSPECTION_IFACE)
-    object_path, object_state = dbus_iface.GetState("/")[0]
+    object_path, object_state = backend.introspection_iface.GetState("/")[0]
     return get_classname_from_path(object_path), object_state
 
 

@@ -132,12 +132,13 @@ def parse_arguments():
     parser_list.add_argument("suite", nargs="+",
                              help="Specify test suite(s) to run.")
 
-    parser_vis = subparsers.add_parser('vis',
-                                      help="Open the Autopilot visualiser tool")
-    parser_vis.add_argument('-v', '--verbose', required=False, default=False,
-                            action='count', help="Show autopilot log messages. \
-                            Set twice to also log data useful for debugging \
-                            autopilot itself.")
+    if have_vis():
+        parser_vis = subparsers.add_parser('vis',
+                                          help="Open the Autopilot visualiser tool")
+        parser_vis.add_argument('-v', '--verbose', required=False, default=False,
+                                action='count', help="Show autopilot log messages. \
+                                Set twice to also log data useful for debugging \
+                                autopilot itself.")
 
     parser_launch = subparsers.add_parser('launch',
                             help="Launch an application with introspection enabled")
@@ -383,6 +384,15 @@ def launch_app(args):
     except RuntimeError as e:
         print "Error: " + e.message
         exit(1)
+
+
+def have_vis():
+    """Return true if the vis package is installed."""
+    try:
+        from autopilot.vis import vis_main
+        return True
+    except ImportError:
+        return False
 
 
 def run_vis(args):

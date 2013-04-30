@@ -18,6 +18,25 @@
 #
 
 
+"""
+.. otto:: **Deprecated Namespace!**
+
+    This module contains modules that were in the ``autopilot.emulators`` package in
+    autopilot version 1.2 and earlier, but have now been moved to the ``autopilot``
+    package.
+
+    This module exists to ease the transition to autopilot 1.3, but is not guaranteed
+    to exist in the future.
+
+    .. seealso::
+
+        Modulule :mod:`autopilot.display`
+            Get display information.
+        Module :mod:`autopilot.input`
+            Create input events to interact with the application under test.
+
+"""
+
 import autopilot.display as display
 import autopilot.clipboard as clipboard
 import autopilot.dbus_handler as dbus_handler
@@ -25,5 +44,3 @@ import autopilot.ibus as ibus
 import autopilot.input as input
 
 
-"""
-"""

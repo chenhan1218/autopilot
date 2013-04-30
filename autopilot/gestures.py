@@ -20,7 +20,7 @@
 
 """Gestural support for autopilot.
 
-This module contains functions that can generate touch and multi-tuch gestures
+This module contains functions that can generate touch and multi-touch gestures
 for you. This is a convenience for the test author - there is nothing to prevent
 you from generating your own gestures!
 

@@ -25,7 +25,7 @@ from testtools.matchers import IsInstance, Equals
 from unittest import SkipTest
 
 from autopilot.testcase import AutopilotTestCase, multiply_scenarios
-from autopilot.input import Keyboard
+from autopilot.input import Keyboard, Pointer, Touch
 from autopilot.matchers import Eventually
 
 
@@ -92,3 +92,12 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
 
         self.assertThat(text_edit.plainText, Eventually(Equals(self.input)))
 
+
+class PointerWrapperTests(AutopilotTestCase):
+
+    def test_can_move_touch_wrapper(self):
+        device = Pointer(Touch.create())
+        device.move(34, 56)
+
+        self.assertThat(device._x, Equals(34))
+        self.assertThat(device._y, Equals(56))

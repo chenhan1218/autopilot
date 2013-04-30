@@ -112,10 +112,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         self._process_manager = None
         self._mouse = None
         self._kb = None
-
-        self.display = Display.create()
-        self.addCleanup(self.keyboard.cleanup)
-        self.addCleanup(self.mouse.cleanup)
+        self._display = None
 
     @property
     def process_manager(self):
@@ -138,6 +135,12 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             self._mouse = Mouse.create()
             self.addCleanup(self._mouse.cleanup)
         return self._mouse
+
+    @property
+    def display(self):
+        if self._display is None:
+            self._display = Display.create()
+        return self._display
 
     def _compare_system_with_app_snapshot(self):
         """Compare the currently running application with the last snapshot.

@@ -21,7 +21,7 @@
 from autopilot.testcase import AutopilotTestCase
 
 from subprocess import Popen, call
-from testtools.matchers import Equals, LessThan
+from testtools.matchers import Equals, NotEquals, LessThan
 from threading import Thread
 from time import sleep, time
 
@@ -62,3 +62,15 @@ class ProcessEmulatorTests(AutopilotTestCase):
 
         self.assertThat(abs(end - start - 5.0), LessThan(1))
         self.assertThat(ret, Equals(False))
+
+    def test_start_app(self):
+        """Ensure we can start an Application and cleanup succesfully."""
+        app = self.process_manager.start_app('Calculator')
+
+        self.assertThat(app, NotEquals(None))
+
+    def test_start_app_window(self):
+        """Ensure we can start an Application Window and cleanup successfully."""
+        app = self.process_manager.start_app_window('Calculator')
+
+        self.assertThat(app, NotEquals(None))

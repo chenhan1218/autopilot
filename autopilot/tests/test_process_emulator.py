@@ -19,9 +19,12 @@
 
 
 from autopilot.testcase import AutopilotTestCase
+from autopilot.process import ProcessManager
+from autopilot.globals import on_test_started
 
-from subprocess import Popen, call
-from testtools.matchers import Equals, NotEquals, LessThan
+from subprocess import Popen, call, CalledProcessError, check_output
+from testtools import TestCase
+from testtools.matchers import Equals, NotEquals, LessThan, Raises
 from threading import Thread
 from time import sleep, time
 
@@ -64,13 +67,42 @@ class ProcessEmulatorTests(AutopilotTestCase):
         self.assertThat(ret, Equals(False))
 
     def test_start_app(self):
-        """Ensure we can start an Application and cleanup succesfully."""
+        """Ensure we can start an Application."""
         app = self.process_manager.start_app('Calculator')
 
         self.assertThat(app, NotEquals(None))
+        self.assertThat(app.name, Equals('Calculator'))
 
     def test_start_app_window(self):
-        """Ensure we can start an Application Window and cleanup successfully."""
+        """Ensure we can start an Application Window."""
         app = self.process_manager.start_app_window('Calculator')
 
         self.assertThat(app, NotEquals(None))
+        self.assertThat(app.name, Equals('Calculator'))
+
+
+class ProcessManagerApplicationNoCleanupTests(TestCase):
+    """Testing the process manager without the automated cleanup that running
+    within as an AutopilotTestCase provides.
+
+    """
+    def setUp(self):
+        # Need to disable the automated cleanup that AutopilotTestCase provides.
+        class FakeTestCase(object):
+            def addCleanup(self, *args, **kwargs):
+                pass
+            def shortDescription(self):
+                pass
+        super(ProcessManagerApplicationNoCleanupTests, self).setUp()
+        on_test_started(FakeTestCase())
+
+    def test_can_close_all_app(self):
+        """Ensure that closing an app actually closes all app instances."""
+        process_manager = ProcessManager.create()
+        process_manager.start_app('Calculator')
+
+        process_manager.close_all_app('Calculator')
+
+        # ps lists gnome-calculator as gnome-calculato
+        check_calc_is_closed = lambda: check_output(["pgrep", "-c", "gnome-calculato"])
+        self.assertRaises(CalledProcessError, check_calc_is_closed)

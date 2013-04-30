@@ -24,6 +24,7 @@ This package contains the internal implementation of the autopilot introspection
 mechanism, and probably isn't useful to most test authors.
 
 """
+from __future__ import absolute_import
 
 import dbus
 import logging
@@ -42,11 +43,10 @@ from autopilot.introspection.constants import (
 from autopilot.introspection.dbus import (
     clear_object_registry,
     DBusIntrospectionObject,
-    object_passes_filters,
     get_session_bus,
     get_classname_from_path,
     )
-from autopilot.utilities import get_debug_logger, addCleanup
+from autopilot.utilities import get_debug_logger
 
 
 logger = logging.getLogger(__name__)

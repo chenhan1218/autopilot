@@ -58,7 +58,10 @@ class IntrospectableObjectMetaclass(type):
     def __new__(cls, classname, bases, classdict):
         """Add class name to type registry."""
         class_object = type.__new__(cls, classname, bases, classdict)
-        _object_registry[classname] = class_object
+        # The DBusIntrospectionObject class always has Backend == None, since it's
+        # not introspectable itself. We need to compensate for this...
+        if class_object._Backend is not None:
+            _object_registry[class_object._Backend] = {classname:class_object}
         return class_object
 
 
@@ -76,7 +79,7 @@ def clear_object_registry(target_backend):
     # - Thomi Richards
     to_delete = []
     for k,v in _object_registry.iteritems():
-        if v._Backend == target_backend:
+        if k == target_backend:
             to_delete.append(k)
 
     for k in to_delete:
@@ -426,7 +429,7 @@ class DBusIntrospectionObject(object):
         path, state = dbus_tuple
         name = get_classname_from_path(path)
         try:
-            class_type = _object_registry[name]
+            class_type = _object_registry[cls._Backend][name]
         except KeyError:
             logger.warning("Generating introspection instance for type '%s' based on generic class.", name)
             class_type = type(str(name), (cls,), {})

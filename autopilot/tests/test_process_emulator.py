@@ -18,6 +18,7 @@
 #
 
 
+from autopilot import BackendException
 from autopilot.testcase import AutopilotTestCase
 from autopilot.process import ProcessManager
 from autopilot.globals import on_test_started
@@ -98,11 +99,17 @@ class ProcessManagerApplicationNoCleanupTests(TestCase):
 
     def test_can_close_all_app(self):
         """Ensure that closing an app actually closes all app instances."""
-        process_manager = ProcessManager.create()
+        try:
+            process_manager = ProcessManager.create(preferred_backend="BAM")
+        except BackendException as e:
+            self.skip("Test is only for BAMF backend ({}).".format(e.message))
+
         process_manager.start_app('Calculator')
 
         process_manager.close_all_app('Calculator')
 
-        # ps lists gnome-calculator as gnome-calculato
-        check_calc_is_closed = lambda: check_output(["pgrep", "-c", "gnome-calculato"])
-        self.assertRaises(CalledProcessError, check_calc_is_closed)
+        # ps/pgrep lists gnome-calculator as gnome-calculato (see lp
+        # bug:1174911)
+        ret_code = call(["pgrep", "-c", "gnome-calculato"])
+        self.assertThat(ret_code, Equals(1), "Application is still running")
+

@@ -456,13 +456,16 @@ class Pointer(object):
     def click(self, button=1, press_duration=0.10):
         """Press and release at the current pointer location.
 
-        If the wrapped device is a mouse, the button specification is used. If it
-        is a touch device, the button specification is ignored.
+        If the wrapped device is a mouse, the button specification is used. If
+        it is a touch device, passing anything other than 1 will raise a ValueError
+        exception.
 
         """
         if isinstance(self._device, Mouse):
             self._device.click(button, press_duration)
         else:
+            if button != 1:
+                raise ValueError("Touch devices do not have button %d" % (button))
             self._device.tap(self._x, self._y)
 
     def move(self, x, y):

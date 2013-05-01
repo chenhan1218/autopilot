@@ -353,7 +353,6 @@ AutopilotTestCase.pick_app_launcher method.")
 
     def _kill_process_and_attach_logs(self, process):
         os.killpg(process.pid, signal.SIGTERM)
-        # process.kill()
         logger.info("waiting for process to exit.")
         for i in range(10):
             process.poll()

@@ -60,7 +60,10 @@ class IntrospectableObjectMetaclass(type):
         # The DBusIntrospectionObject class always has Backend == None, since it's
         # not introspectable itself. We need to compensate for this...
         if class_object._Backend is not None:
-            _object_registry[class_object._Backend] = {classname:class_object}
+            if class_object._Backend in _object_registry:
+                _object_registry[class_object._Backend][classname] = class_object
+            else:
+                _object_registry[class_object._Backend] = {classname:class_object}
         return class_object
 
 

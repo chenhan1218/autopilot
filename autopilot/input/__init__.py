@@ -402,7 +402,7 @@ class Pointer(object):
         """Pointer X coordinate.
 
         If the wrapped device is a :class:`Touch` device, this will return the last
-        known X coordinate.
+        known X coordinate, which may not be a sensible value.
 
         """
         if isinstance(self._device, Mouse):
@@ -415,7 +415,7 @@ class Pointer(object):
         """Pointer Y coordinate.
 
         If the wrapped device is a :class:`Touch` device, this will return the last
-        known Y coordinate
+        known Y coordinate, which may not be a sensible value.
 
         """
         if isinstance(self._device, Mouse):

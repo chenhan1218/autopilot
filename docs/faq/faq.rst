@@ -75,6 +75,34 @@ However, autopilot tests are not unit tests, they are functional tests. Function
 
 In general, autopilot tests are more relaxed about the 'one assertion per test' rule. However, care should still be taken to produce tests that are as small and understandable as possible.
 
+How do I write a test that uses either a Mouse or a Touch device interchangeably?
+==============================================================================================
+
+The :class:`autopilot.input.Pointer` class is a simple wrapper that unifies some of the differences between the :class:`~autopilot.input.Touch` and :class:`~autopilot.input.Mouse` classes. To use it, pass in the device you want to use under the hood, like so::
+
+    pointer1 = Pointer(Touch.create())
+    pointer2 = Pointer(Mouse.create())
+    # pointer1 and pointer2 now have identical APIs
+
+Combined with test scenarios, this can be used to write tests that are run twice - once with a mouse device and once with a touch device::
+
+    from autopilot.input import Mouse, Touch, Pointer
+    from autopilot.testcase import AutopilotTestCase
+
+    class TestCase(AutopilotTestCase):
+
+        scenarios = [
+            ('with mouse', dict(pointer=Pointer(Mouse.create()))),
+            ('with touch', dict(pointer=Pointer(Touch.create()))),
+            ]
+
+        def test_something(self):
+            """Click the pointer at 100,100."""
+            self.pointer.move(100,100)
+            self.pointer.click()
+
+If you only want to use the mouse on certain platforms, use the :mod:`autopilot.platform` module to determine the current platform at runtime.
+
 Autopilot Qt & Gtk Support
 ++++++++++++++++++++++++++
 

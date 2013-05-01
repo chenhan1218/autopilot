@@ -442,7 +442,10 @@ class DBusIntrospectionObject(object):
 
     def get_class_query_string(self):
         """Get the XPath query string required to refresh this class's state."""
-        return self.path + "[id=%d]" % self.id
+        if not self.path.startswith('/'):
+            return "//" + self.path + "[id=%d]" % self.id
+        else:
+            return self.path + "[id=%d]" % self.id
 
     @classmethod
     def make_introspection_object(cls, dbus_tuple):

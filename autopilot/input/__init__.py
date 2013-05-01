@@ -402,9 +402,9 @@ class Pointer(object):
         """Pointer X coordinate.
 
         If the wrapped device is a :class:`Touch` device, this will return the last
-        known X coordinate
+        known X coordinate.
 
-        ."""
+        """
         if isinstance(self._device, Mouse):
             return self._mouse.x
         else:
@@ -475,7 +475,7 @@ class Pointer(object):
 
         """
         if isinstance(self._device, Mouse):
-            self._device.move(x, y, animate, rate, time_between_events)
+            self._device.move(x, y)
         else:
             self._x = x
             self._y = y

@@ -352,14 +352,15 @@ AutopilotTestCase.pick_app_launcher method.")
         return get_application_launcher(app_path)
 
     def _kill_process_and_attach_logs(self, process):
-        process.kill()
+        os.killpg(process.pid, signal.SIGTERM)
         logger.info("waiting for process to exit.")
         for i in range(10):
+            process.poll()
             if process.returncode is not None:
                 break
             if i == 9:
-                logger.info("Terminating process group, since it hasn't exited after 10 seconds.")
-                os.killpg(process.pid, signal.SIGTERM)
+                logger.info("Killing process group, since it hasn't exited after 10 seconds.")
+                os.killpg(process.pid, signal.SIGKILL)
             sleep(1)
         stdout, stderr = process.communicate()
         self.addDetail('process-stdout', text_content(stdout))

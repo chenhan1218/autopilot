@@ -30,7 +30,7 @@ import logging
 from time import sleep
 
 from autopilot.display import is_point_on_any_screen, move_mouse_to_screen
-from autopilot.utilities import Silence, addCleanup
+from autopilot.utilities import Silence
 from autopilot.input import (
     Keyboard as KeyboardBase,
     Mouse as MouseBase,

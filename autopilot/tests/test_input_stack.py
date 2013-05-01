@@ -25,7 +25,8 @@ from testtools.matchers import IsInstance, Equals
 from unittest import SkipTest
 
 from autopilot.testcase import AutopilotTestCase, multiply_scenarios
-from autopilot.input import Keyboard
+from autopilot.input import Keyboard, Pointer, Touch
+from autopilot.input._common import get_center_point
 from autopilot.matchers import Eventually
 
 
@@ -92,3 +93,49 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
 
         self.assertThat(text_edit.plainText, Eventually(Equals(self.input)))
 
+
+class TouchTests(AutopilotTestCase):
+
+    def setUp(self):
+        super(TouchTests, self).setUp()
+        self.device = Touch.create()
+
+        self.app = self.start_mock_app()
+        self.widget = self.app.select_single('MouseTestWidget')
+        self.button_status = self.app.select_single('QLabel', objectName='button_status')
+
+    def start_mock_app(self):
+        window_spec_file = mktemp(suffix='.json')
+        window_spec = { "Contents": "MouseTest" }
+        json.dump(
+            window_spec,
+            open(window_spec_file, 'w')
+            )
+        self.addCleanup(os.remove, window_spec_file)
+
+        return self.launch_test_application('window-mocker', window_spec_file, app_type='qt')
+
+    def test_tap(self):
+        x,y = get_center_point(self.widget)
+        self.device.tap(x,y)
+
+        self.assertThat(self.button_status.text, Eventually(Equals("Touch Release")))
+
+    def test_press_and_release(self):
+        x,y = get_center_point(self.widget)
+        self.device.press(x, y)
+
+        self.assertThat(self.button_status.text, Eventually(Equals("Touch Press")))
+
+        self.device.release()
+        self.assertThat(self.button_status.text, Eventually(Equals("Touch Release")))
+
+
+class PointerWrapperTests(AutopilotTestCase):
+
+    def test_can_move_touch_wrapper(self):
+        device = Pointer(Touch.create())
+        device.move(34, 56)
+
+        self.assertThat(device._x, Equals(34))
+        self.assertThat(device._y, Equals(56))

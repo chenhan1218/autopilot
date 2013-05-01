@@ -40,6 +40,7 @@ PRESSED_KEYS = []
 class Keyboard(KeyboardBase):
 
     def __init__(self):
+        super(Keyboard, self).__init__()
         self._device = UInput()
 
     def _emit(self, event, value):
@@ -168,7 +169,7 @@ def create_touch_device(res_x=None, res_y=None):
 
     if res_x is None or res_y is None:
         from autopilot.display import Display
-        display = Display.create()
+        display = Display.create("UInput")
         res_x = display.get_screen_width()
         res_y = display.get_screen_height()
 
@@ -276,7 +277,7 @@ class Touch(TouchBase):
     """Low level interface to generate single finger touch events."""
 
     def __init__(self):
-        super(TouchBase, self).__init__()
+        super(Touch, self).__init__()
         self._touch_finger = None
 
     @property

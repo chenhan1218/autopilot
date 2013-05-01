@@ -30,7 +30,7 @@ import logging
 from time import sleep
 
 from autopilot.display import is_point_on_any_screen, move_mouse_to_screen
-from autopilot.utilities import Silence
+from autopilot.utilities import Silence, addCleanup
 from autopilot.input import (
     Keyboard as KeyboardBase,
     Mouse as MouseBase,
@@ -115,6 +115,7 @@ class Keyboard(KeyboardBase):
     }
 
     def __init__(self):
+        super(Keyboard, self).__init__()
         self.shifted_keys = [k[1] for k in get_display()._keymap_codes if k]
 
     def press(self, keys, delay=0.2):
@@ -270,6 +271,7 @@ class Mouse(MouseBase):
     """Wrapper around xlib to make moving the mouse easier."""
 
     def __init__(self):
+        super(Mouse, self).__init__()
         # Try to access the screen to see if X11 mouse is supported
         get_display()
 

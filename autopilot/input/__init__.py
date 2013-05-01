@@ -53,7 +53,7 @@ can use either a mouse of a touch device.
 """
 
 from collections import OrderedDict
-from autopilot.utilities import _pick_backend
+from autopilot.utilities import _pick_backend, addCleanup
 from autopilot.input._common import get_center_point
 
 
@@ -67,6 +67,9 @@ class Keyboard(object):
     instance of the keyboard class, call :py:meth:`create` instead.
 
     """
+    def __init__(self):
+        if hasattr(self, 'cleanup') and callable(self.cleanup):
+            addCleanup(self.cleanup)
 
     @staticmethod
     def create(preferred_backend=''):
@@ -86,7 +89,6 @@ class Keyboard(object):
             one of the possible backends for this device class.
         :raises: :class:`~autopilot.BackendException` if the preferred_backend is
             set, but that backend could not be instantiated.
-
 
         """
         def get_x11_kb():
@@ -163,16 +165,6 @@ class Keyboard(object):
         .. note:: Only 'normal' keys can be typed with this method. Control
          characters (such as 'Alt' will be interpreted as an 'A', and 'l',
          and a 't').
-
-        """
-        raise NotImplementedError("You cannot use this class directly.")
-
-    @staticmethod
-    def cleanup():
-        """Generate KeyRelease events for any un-released keys.
-
-        .. important:: Ensure you call this at the end of any test to release any
-         keys that were pressed and not released.
 
         """
         raise NotImplementedError("You cannot use this class directly.")
@@ -279,11 +271,6 @@ class Mouse(object):
     def drag(self, x1, y1, x2, y2):
         """Performs a press, move and release
         This is to keep a common API between Mouse and Finger as long as possible"""
-        raise NotImplementedError("You cannot use this class directly.")
-
-    @staticmethod
-    def cleanup():
-        """Put mouse in a known safe state."""
         raise NotImplementedError("You cannot use this class directly.")
 
 
@@ -516,8 +503,3 @@ class Pointer(object):
 
         """
         self._device.drag(x1, y1, x2, y2)
-
-    @staticmethod
-    def cleanup():
-        """Put mouse in a known safe state."""
-        pass

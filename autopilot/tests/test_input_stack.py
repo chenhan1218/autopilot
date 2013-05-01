@@ -21,6 +21,7 @@
 import json
 import os
 from tempfile import mktemp
+from testtools import TestCase
 from testtools.matchers import IsInstance, Equals
 from unittest import SkipTest
 
@@ -28,6 +29,7 @@ from autopilot.testcase import AutopilotTestCase, multiply_scenarios
 from autopilot.input import Keyboard, Pointer, Touch
 from autopilot.input._common import get_center_point
 from autopilot.matchers import Eventually
+from autopilot.globals import on_test_started
 
 
 class InputStackKeyboardBase(AutopilotTestCase):
@@ -139,3 +141,39 @@ class PointerWrapperTests(AutopilotTestCase):
 
         self.assertThat(device._x, Equals(34))
         self.assertThat(device._y, Equals(56))
+
+
+class InputStackCleanupTests(TestCase):
+
+    def test_cleanup_called(self):
+        """Derived classes cleanup method must be called when interface cleanup
+        method is called.
+
+        """
+
+        class FakeKeyboard(Keyboard):
+
+            cleanup_called = False
+
+            @staticmethod
+            def cleanup():
+                FakeKeyboard.cleanup_called = True
+
+        class FakeTestCase(object):
+            def __init__(self):
+                self.cleanups = []
+
+            def addCleanup(self, callable):
+                self.cleanups.append(callable)
+
+            def doCleanups(self):
+                for c in reversed(self.cleanups):
+                    c()
+
+        tc = FakeTestCase()
+        on_test_started(tc)
+
+        kbd = FakeKeyboard()
+        tc.doCleanups()
+
+        self.assertThat(FakeKeyboard.cleanup_called, Equals(True))

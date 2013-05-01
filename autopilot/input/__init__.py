@@ -41,7 +41,14 @@ There are three basic input types available:
  * :class:`Keyboard` - traditional keyboard devices.
  * :class:`Mouse` - traditional mouse devices.
  * :class:`Touch` - single point-of-contact touch device.
- * For multitouch capabilities, see the :mod:`autopilot.gestures` module.
+
+The :class:`Pointer` class is a wrapper that unifies the API of the :class:`Mouse`
+and :class:`Touch` classes, which can be helpful if you want to write a test that
+can use either a mouse of a touch device.
+
+.. seealso::
+    Module :mod:`autopilot.gestures`
+        Multitouch and gesture support for touch devices.
 
 """
 
@@ -376,6 +383,11 @@ class Pointer(object):
         pointer_device = Pointer(Touch.create())
 
 
+    .. warning::
+        Some operations only make sense for certain devices. This class attempts
+        to minimise the differences between the Mouse and Touch APIs, but there
+        are still some operations that will cause exceptions to be raised. These
+        are documented in the specific methods below.
     """
 
     def __init__(self, device):
@@ -387,7 +399,12 @@ class Pointer(object):
 
     @property
     def x(self):
-        """Mouse position X coordinate."""
+        """Pointer X coordinate.
+
+        If the wrapped device is a :class:`Touch` device, this will return the last
+        known X coordinate
+
+        ."""
         if isinstance(self._device, Mouse):
             return self._mouse.x
         else:
@@ -395,14 +412,25 @@ class Pointer(object):
 
     @property
     def y(self):
-        """Mouse position Y coordinate."""
+        """Pointer Y coordinate.
+
+        If the wrapped device is a :class:`Touch` device, this will return the last
+        known Y coordinate
+
+        """
         if isinstance(self._device, Mouse):
             return self._mouse.y
         else:
             return self._y
 
     def press(self, button=1):
-        """Press mouse button at current mouse location."""
+        """Press the pointer at it's current location.
+
+        If the wrapped device is a mouse, you may pass a button specification. If
+        it is a touch device, passing anything other than 1 will raise a ValueError
+        exception.
+
+        """
         if isinstance(self._device, Mouse):
             self._device.press(button)
         else:
@@ -411,7 +439,13 @@ class Pointer(object):
             self._device.press(self._x, self._y)
 
     def release(self, button=1):
-        """Releases mouse button at current mouse location."""
+        """Releases the pointer at it's current location.
+
+        If the wrapped device is a mouse, you may pass a button specification. If
+        it is a touch device, passing anything other than 1 will raise a ValueError
+        exception.
+
+        """
         if isinstance(self._device, Mouse):
             self._device.release(button)
         else:
@@ -420,17 +454,24 @@ class Pointer(object):
             self._device.release()
 
     def click(self, button=1, press_duration=0.10):
-        """Click mouse at current location."""
+        """Press and release at the current pointer location.
+
+        If the wrapped device is a mouse, the button specification is used. If it
+        is a touch device, the button specification is ignored.
+
+        """
         if isinstance(self._device, Mouse):
             self._device.click(button, press_duration)
         else:
             self._device.tap(self._x, self._y)
 
-    def move(self, x, y, animate=True, rate=10, time_between_events=0.01):
-        """Moves mouse to location (x, y).
+    def move(self, x, y):
+        """Moves the pointer to the specified coordinates.
 
-        Callers should avoid specifying the *rate* or *time_between_events*
-        parameters unless they need a specific rate of movement.
+        If the wrapped device is a mouse, the mouse will animate to the specified
+        coordinates. If the wrapped device is a touch device, this method will
+        determine where the next :meth:`press`, :meth:`release` or :meth:`click`
+        will occur.
 
         """
         if isinstance(self._device, Mouse):
@@ -440,7 +481,7 @@ class Pointer(object):
             self._y = y
 
     def move_to_object(self, object_proxy):
-        """Attempts to move the mouse to 'object_proxy's centre point.
+        """Attempts to move the pointer to 'object_proxy's centre point.
 
         It does this by looking for several attributes, in order. The first
         attribute found will be used. The attributes used are (in order):
@@ -458,7 +499,7 @@ class Pointer(object):
 
     def position(self):
         """
-        Returns the current position of the mouse pointer.
+        Returns the current position of the pointer.
 
         :return: (x,y) tuple
         """
@@ -468,8 +509,9 @@ class Pointer(object):
             return (self._x, self._y)
 
     def drag(self, x1, y1, x2, y2):
-        """Performs a press, move and release
-        This is to keep a common API between Mouse and Finger as long as possible"""
+        """Performs a press, move and release.
+
+        """
         self._device.drag(x1, y1, x2, y2)
 
     @staticmethod

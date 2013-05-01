@@ -30,6 +30,7 @@ import logging
 import os
 from time import sleep
 from Xlib import display, X, protocol
+from subprocess import check_output, CalledProcessError, call
 
 from autopilot.dbus_handler import get_session_bus
 from autopilot.utilities import addCleanup, Silence
@@ -152,7 +153,7 @@ class ProcessManager(ProcessManagerBase):
 
 
         app = self.KNOWN_APPS[app_name]
-        self.launch_application(app['desktop-file'], files)
+        self._launch_application(app['desktop-file'], files)
         apps = self.get_running_applications_by_desktop_file(app['desktop-file'])
 
         for i in range(10):
@@ -292,7 +293,7 @@ class ProcessManager(ProcessManagerBase):
 
         return found_app[0]
 
-    def launch_application(self, desktop_file, files=[], wait=True):
+    def _launch_application(self, desktop_file, files=[], wait=True):
         """Launch an application by specifying a desktop file.
 
         :param files: List of files to pass to the application. *Not all

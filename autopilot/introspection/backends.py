@@ -20,14 +20,12 @@
 "Backend interface for autopilot."
 from __future__ import absolute_import
 
+import dbus
 from autopilot.dbus_handler import (
     get_session_bus,
     get_system_bus,
     get_custom_bus,
     )
-
-import dbus
-
 from autopilot.introspection.constants import (
     AP_INTROSPECTION_IFACE,
     DBUS_INTROSPECTION_IFACE,
@@ -47,7 +45,7 @@ class DBusAddress(object):
     @staticmethod
     def SystemBus(connection, object_path):
         """Construct a DBusAddress that backs on to the system bus."""
-        return DBusAddress(dbus.SystemBus(), connection, object_path)
+        return DBusAddress(get_system_bus(), connection, object_path)
 
     @staticmethod
     def CustomBus(bus_address, connection, object_path):

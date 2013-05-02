@@ -45,45 +45,7 @@ from unittest.loader import TestLoader
 from unittest import TestSuite
 
 
-# list autopilot depends here, with the form:
-# ('python module name', 'ubuntu package name'),
-DEPENDS = [
-    ('dbus', 'python-dbus'),
-    ('gi.repository.GConf', 'gir1.2-gconf-2.0'),
-    ('gi.repository.IBus', 'gir1.2-ibus-1.0'),
-    ('junitxml', 'python-junitxml'),
-    ('testscenarios', 'python-testscenarios'),
-    ('testtools', 'python-testtools'),
-    ('xdg', 'python-xdg'),
-    ('Xlib', 'python-xlib'),
-]
-
 _output_stream=None
-
-def check_depends():
-    """Check for required dependancies, and print a helpful message if any are
-    missing.
-
-    If all required modules are present, return True, False otherwise.
-    """
-    missing = []
-    for module_name, package_name in DEPENDS:
-        try:
-            __import__(module_name)
-        except ImportError:
-            missing.append(package_name)
-    if missing:
-        print dedent("""\
-            You are missing one or more packages required to run autopilot.
-            They are:
-
-            %s
-
-            Please install these packages and re-run this script.
-            """ % (' '.join(missing))
-            )
-        return False
-    return True
 
 
 def parse_arguments():

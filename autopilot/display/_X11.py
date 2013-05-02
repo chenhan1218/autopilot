@@ -32,6 +32,8 @@ class Display(DisplayBase):
         # no DISPlAY environment set in the package builder.
         from gi.repository import Gdk
         self._default_screen = Gdk.Screen.get_default()
+        if self._default_screen is None:
+            raise RuntimeError("Unable to determine default screen information")
         self._blacklisted_drivers = ["NVIDIA"]
 
     def get_num_screens(self):

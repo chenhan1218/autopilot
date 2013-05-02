@@ -387,6 +387,4 @@ def main():
 
 if __name__ == "__main__":
     patch_python_path()
-    if not check_depends():
-        exit(1)
     main()

@@ -1,3 +1,4 @@
+
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
@@ -22,23 +23,47 @@
 
 from __future__ import absolute_import
 
+from dbus._dbus import BusConnection
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 
 _glib_loop_set = False
+
+# DBus has an annoying bug where we need to initialise it with the gobject main
+# loop *before* it's initialised anywhere else. This module exists so we can
+# initialise the dbus module once, and once only.
+
+
+def _ensure_glib_loop_set():
+    global _glib_loop_set
+    if not _glib_loop_set:
+        DBusGMainLoop(set_as_default=True)
+        _glib_loop_set = True
+
 
 def get_session_bus():
     """This function returns a session bus that has had the DBus GLib main loop
     initialised.
 
     """
-    global _glib_loop_set
-    if not _glib_loop_set:
-        #
-        # DBus has an annoying bug where we need to initialise it with the gobject main
-        # loop *before* it's initialised anywhere else. This module exists so we can
-        # initialise the dbus module once, and once only.
-        DBusGMainLoop(set_as_default=True)
-        _glib_loop_set = True
-    # create a global session bus object:
+    _ensure_glib_loop_set()
     return dbus.SessionBus()
+
+
+def get_system_bus():
+    """This function returns a system bus that has had the DBus GLib main loop
+    initialised.
+
+    """
+    _ensure_glib_loop_set()
+    return dbus.SystemBus()
+
+
+def get_custom_bus(bus_address):
+    """This function returns a custom bus that has had the DBus GLib main loop
+    initialised.
+
+    """
+    _ensure_glib_loop_set()
+    return BusConnection(bus_address)
+

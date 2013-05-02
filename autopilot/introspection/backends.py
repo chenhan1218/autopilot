@@ -20,7 +20,12 @@
 "Backend interface for autopilot."
 from __future__ import absolute_import
 
-from dbus._dbus import BusConnection
+from autopilot.dbus_handler import (
+    get_session_bus,
+    get_system_bus,
+    get_custom_bus,
+    )
+
 import dbus
 
 from autopilot.introspection.constants import (
@@ -37,7 +42,7 @@ class DBusAddress(object):
     @staticmethod
     def SessionBus(connection, object_path):
         """Construct a DBusAddress that backs on to the session bus."""
-        return DBusAddress(dbus.SessionBus(), connection, object_path)
+        return DBusAddress(get_session_bus(), connection, object_path)
 
     @staticmethod
     def SystemBus(connection, object_path):
@@ -52,7 +57,7 @@ class DBusAddress(object):
             connect to.
 
         """
-        return DBusAddress(BusConnection(bus_address), connection, object_path)
+        return DBusAddress(get_custom_bus(bus_address), connection, object_path)
 
     def __init__(self, bus, connection, object_path):
         """Construct a DBusAddress instance.
@@ -108,9 +113,9 @@ class DBusAddress(object):
         return repr(self)
 
     def __repr__(self):
-        if self._bus_type == dbus.Bus.TYPE_SESSION:
+        if self._bus._bus_type == dbus.Bus.TYPE_SESSION:
             name = "session"
-        elif self._bus_type == dbus.Bus.TYPE_SYSTEM:
+        elif self._bus._bus_type == dbus.Bus.TYPE_SYSTEM:
             name = "system"
         else:
             name = "custom"

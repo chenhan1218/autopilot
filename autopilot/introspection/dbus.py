@@ -338,8 +338,11 @@ class DBusIntrospectionObject(object):
             kwargs)
 
         first_param = ''
-        if kwargs:
-            first_param = '[{}={}]'.format(*kwargs.popitem())
+        for k,v in kwargs.iteritems():
+            if isinstance(v, str):
+                first_param = '[{}={}]'.format(k,v)
+                kwargs.pop(k)
+                break
         query_path = "%s//%s%s" % (self.get_class_query_string(),
                                    type_name,
                                    first_param)

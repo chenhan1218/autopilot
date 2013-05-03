@@ -42,7 +42,7 @@ Architecture: all
 Section: metapackages
 Depends: ${misc:Depends},
          python-autopilot,
-         python-evedv,
+         python-evdev,
          python-upa,
 Recommends: libautopilot-qt (>= 1.3),
 Description: Autopilot support for the ubuntu Touch platform

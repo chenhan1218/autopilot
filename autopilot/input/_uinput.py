@@ -169,7 +169,7 @@ def create_touch_device(res_x=None, res_y=None):
 
     if res_x is None or res_y is None:
         from autopilot.display import Display
-        display = Display.create("UInput")
+        display = Display.create()
         res_x = display.get_screen_width()
         res_y = display.get_screen_height()
 

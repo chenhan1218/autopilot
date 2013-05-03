@@ -330,6 +330,8 @@ class Mouse(MouseBase):
         dest_x, dest_y = x, y
         curr_x, curr_y = self.position()
         coordinate_valid = is_point_on_any_screen((x,y))
+        if x < -1000 or y < -1000:
+            raise ValueError("Invalid mouse coordinates: %d, %d" % (x, y))
 
         while curr_x != dest_x or curr_y != dest_y:
             dx = abs(dest_x - curr_x)

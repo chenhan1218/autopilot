@@ -29,6 +29,7 @@ Depends: ${misc:Depends},
          python-junitxml,
          python-testscenarios,
          python-testtools,
+         udev,
 Recommends: libautopilot-gtk (>= 1.3),
             libautopilot-qt (>= 1.3),
 Description: Utility to write and run integration tests easily

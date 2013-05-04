@@ -41,7 +41,7 @@ class Keyboard(KeyboardBase):
 
     def __init__(self):
         super(Keyboard, self).__init__()
-        self._device = UInput()
+        self._device = UInput(devnode='/dev/autopilot-uinput')
 
     def _emit(self, event, value):
         self._device.write(e.EV_KEY, event, value)
@@ -196,7 +196,8 @@ def create_touch_device(res_x=None, res_y=None):
         ]
     }
 
-    return UInput(cap_mt, name='autopilot-finger', version=0x2)
+    return UInput(cap_mt, name='autopilot-finger', version=0x2,
+                  devnode='/dev/autopilot-uinput')
 
 _touch_device = create_touch_device()
 

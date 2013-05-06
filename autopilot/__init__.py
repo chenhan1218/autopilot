@@ -97,7 +97,7 @@ def parse_arguments(argv=None):
                             action='count', help="Show autopilot log messages. \
                             Set twice to also log data useful for debugging \
                             autopilot itself.")
-    parser_launch.add_argument('application', nargs=1, type=str,
+    parser_launch.add_argument('application', nargs="+", type=str,
                             help="The application to launch. Can be a full path, \
                             or just an application name (in which case Autopilot \
                                 will search for it in $PATH).")

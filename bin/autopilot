@@ -265,7 +265,7 @@ def launch_app(args):
         exit(1)
 
     try:
-        launch_application(launcher, app_name, capture_output=False)
+        launch_application(launcher, *args.application, capture_output=False)
     except RuntimeError as e:
         print "Error: " + e.message
         exit(1)

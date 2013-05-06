@@ -18,6 +18,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
+"Unit tests for the command line parser in autopilot."
+
+
 from mock import patch
 from StringIO import StringIO
 from testtools import TestCase
@@ -25,6 +29,7 @@ from testtools.matchers import Equals
 from unittest import expectedFailure
 
 from autopilot import parse_arguments
+
 
 class CommandLineArgsTests(TestCase):
 

@@ -1,3 +1,9 @@
+autopilot (1.3daily13.05.06ubuntu.unity.next-0ubuntu1) raring; urgency=low
+
+  * Automatic snapshot from revision 194 (ubuntu-unity/next)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 06 May 2013 00:01:03 +0000
+
 autopilot (1.3daily13.05.03ubuntu.unity.next-0ubuntu1) raring; urgency=low
 
   [ Thomi Richards ]

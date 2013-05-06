@@ -59,6 +59,7 @@ Depends: ${misc:Depends},
          gir1.2-ibus-1.0,
          python-autopilot,
          python-xlib,
+Recommends: python-autopilot-vis,
 Description: Autopilot support for the ubuntu Desktop platform
  This metapackage exists to depend on the packages needed to install and use
  autopilot on the Ubuntu Desktop platform.

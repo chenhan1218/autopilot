@@ -16,7 +16,7 @@ emit_tracepoint(PyObject *self, PyObject *args)
     {
         return NULL;
     }
-    tracepoint(emit_tracepoint, message, mesg_text);
+    tracepoint(com_canonical_autopilot, message, mesg_text);
 
     Py_RETURN_NONE;
 }

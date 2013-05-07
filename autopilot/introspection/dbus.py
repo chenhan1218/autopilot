@@ -339,7 +339,7 @@ class DBusIntrospectionObject(object):
 
         first_param = ''
         for k,v in kwargs.iteritems():
-            if isinstance(v, str):
+            if isinstance(v, str) and '_' not in k:
                 first_param = '[{}={}]'.format(k,v)
                 kwargs.pop(k)
                 break

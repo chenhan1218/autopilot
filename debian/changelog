@@ -1,3 +1,13 @@
+autopilot (1.3daily13.05.07ubuntu.unity.next-0ubuntu1) raring; urgency=low
+
+  [ Thomi Richards ]
+  * split tests into headless and "all" (LP: #1037937)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 197 (ubuntu-unity/next)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 07 May 2013 00:01:09 +0000
+
 autopilot (1.3daily13.05.06ubuntu.unity.next-0ubuntu1) raring; urgency=low
 
   * Automatic snapshot from revision 194 (ubuntu-unity/next)

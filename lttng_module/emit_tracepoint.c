@@ -21,14 +21,14 @@ emit_tracepoint(PyObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
-static PyMethodDef EmitMethods[] = {
-    {"tracepoint", emit_tracepoint, METH_VARARGS, "Generate a tracepoint message."},
+static PyMethodDef TracepointMethods[] = {
+    {"emit", emit_tracepoint, METH_VARARGS, "Generate a tracepoint message."},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
 
 PyMODINIT_FUNC
-initemit(void)
+inittracepoint(void)
 {
-    (void) Py_InitModule("emit", EmitMethods);
+    (void) Py_InitModule("tracepoint", TracepointMethods);
 }

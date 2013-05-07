@@ -1,6 +1,6 @@
 from distutils.core import setup, Extension
 
-autopilot_tracepoint = Extension('emit',
+autopilot_tracepoint = Extension('tracepoint',
                                  libraries=['lttng-ust'],
                                  include_dirs=['./'],
                                  sources = ['emit_tracepoint.c'])

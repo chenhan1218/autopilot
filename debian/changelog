@@ -1,8 +1,73 @@
-autopilot (1.3) UNRELEASED; urgency=low
+autopilot (1.3daily13.05.07ubuntu.unity.next-0ubuntu1) raring; urgency=low
 
+  [ Thomi Richards ]
+  * split tests into headless and "all" (LP: #1037937)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 197 (ubuntu-unity/next)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 07 May 2013 00:01:09 +0000
+
+autopilot (1.3daily13.05.06ubuntu.unity.next-0ubuntu1) raring; urgency=low
+
+  * Automatic snapshot from revision 194 (ubuntu-unity/next)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 06 May 2013 00:01:03 +0000
+
+autopilot (1.3daily13.05.03ubuntu.unity.next-0ubuntu1) raring; urgency=low
+
+  [ Thomi Richards ]
   * Create version 1.3 (LP: #1168971)
 
- -- Thomi Richards <thomi.richards@canonical.com>  Mon, 15 Apr 2013 09:33:21 +1200
+  [ Sebastien Bacher ]
+  * use wrong mahjongg.desktop name (LP: #1165003)
+
+  [ Thomi Richards <thomi.richards@canonical.com>, Barry Warsaw ]
+  * Autopilot tests need to be packaged separately (LP: #1170105)
+
+  [ Leo Arias ]
+  * Typo on code: ApplicationProxyObect (LP: #1173404)
+
+  [ Christopher Lee ]
+  * Cannot launch test applications that are in $PATH (LP: #1171298)
+  * autopilot.introspection get_application_launcher calls exit(1) (LP:
+    #1171290)
+  * DBus wire protocol changes required (LP: #1155351)
+  * Bamf backend of Process Manager start_app is raises Exception (LP:
+    #1174831)
+  * It should be possible to search the object tree recursively starting
+    from a given node (LP: #1144288)
+  * AutopilotTestCase.screen_geo needst o be renamed (LP: #1174552)
+  * DbusSessions created before the GObject main loop causing an
+    exception. (LP: #1175668)
+  * Autopilot tests are failing (LP: #1171294)
+
+  [ Thomi Richards ]
+  * Autopilot copyright header fix (LP: #1171279)
+  * Need wrappers that convert from Mouse <-> Touch interfaces (LP:
+    #1169363)
+  * Asking for a specific autopilot stack backend should either succeed
+    or raise an exception (LP: #1169355)
+  * Bad formatting on exception (LP: #1171303)
+  * Make it easier to select an introspection type. (LP: #1172914)
+  * Autopilot picks the X11 display stack on the phablet devices (LP:
+    #1175663)
+  * must export PYTHONPATH before using autopilot to run it's own tests
+    (LP: #1171292)
+  * Autopilot tests need to be packaged separately (LP: #1170105)
+  * Autopilot is slow to kill Qt apps (LP: #1174931)
+  * Split autopilot vis into a separate package (LP: #1174587)
+  * Autopilot should not install packages not needed for the current
+    platform (LP: #1175694)
+  * Autopilot to support applications from more than one session bus
+    (LP: #1174425)
+  * Autopilot doesn't depend on or recommend introspection libs (LP:
+    #1158983)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 191 (ubuntu-unity/next)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 03 May 2013 00:01:17 +0000
 
 autopilot (1.2daily13.03.26-0ubuntu1) raring; urgency=low
 

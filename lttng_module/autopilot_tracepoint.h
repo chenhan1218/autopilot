@@ -15,10 +15,12 @@ extern "C"{
 
 #include <lttng/tracepoint.h>
 
+
 TRACEPOINT_EVENT(
     com_canonical_autopilot,
-    test,
-    TP_ARGS(char*, started_or_stopped, char *, test_id),
+    test_event,
+    TP_ARGS(const char *, started_or_stopped, const char *, test_id),
+    /* Next are the fields */
     TP_FIELDS(
         ctf_string(started_or_stopped, started_or_stopped)
         ctf_string(test_id, test_id)

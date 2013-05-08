@@ -32,7 +32,7 @@ except ImportError:
 autopilot_tracepoint = Extension('autopilot.tracepoint',
                                  libraries=['lttng-ust'],
                                  include_dirs=['lttng_module'],
-                                 sources = ['lttng_module/emit_tracepoint.c'])
+                                 sources = ['lttng_module/autopilot_tracepoint.c'])
 
 setup(
     name='autopilot',

@@ -1,3 +1,14 @@
+autopilot (1.3daily13.05.08ubuntu.unity.next-0ubuntu1) raring; urgency=low
+
+  [ Thomi Richards ]
+  * Autopilot launch command does not support passing arguments to
+    launched applications (LP: #1177107)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 200 (ubuntu-unity/next)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 08 May 2013 00:01:01 +0000
+
 autopilot (1.3daily13.05.07ubuntu.unity.next-0ubuntu1) raring; urgency=low
 
   [ Thomi Richards ]

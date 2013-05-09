@@ -6,12 +6,11 @@ set -e
 AUTOPILOT_GROUP=autopilot
 
 if [ "$1" = configure ]; then
-    # Add the autopilot user if it doesn't already exist
-    if ! getent passwd "$AUTOPILOT_GROUP" > /dev/null; then
-        addgroup --quiet \
-                 --system \
-                 --group "$AUTOPILOT_GROUP"
-    fi
+    # Add the autopilot group
+    addgroup --quiet \
+             --system \
+             --no-create-home \
+             "$AUTOPILOT_GROUP" || true
 
     # Assume that this is being installed via sudo and that the sudo user
     # wants to use the autopilot-uinput device.

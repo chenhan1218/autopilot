@@ -5,11 +5,7 @@ set -e
 AUTOPILOT_GROUP=autopilot
 
 if [ "$1" = "purge" ]; then
-    for u in $(getent group "$AUTOPILOT_GROUP" | sed -e "s/^.*://" -e "s/,/ /g"); do
-        deluser --quiet "$u" "$AUTOPILOT_GROUP" > /dev/null || true
-    done
-
-    deluser --quiet --system "$AUTOPILOT_GROUP" > /dev/null || true
+    delgroup --quiet --system "$AUTOPILOT_GROUP" > /dev/null || true
 fi
 
 exit 0

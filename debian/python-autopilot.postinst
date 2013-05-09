@@ -12,15 +12,10 @@ if [ "$1" = configure ]; then
              --no-create-home \
              "$AUTOPILOT_GROUP" || true
 
-    # Assume that this is being installed via sudo and that the sudo user
-    # wants to use the autopilot-uinput device.
-    # All other users must be manually added to the autopilot group.
-    if [ ! -z "$SUDO_USER" ]; then
-        if getent passwd "$SUDO_USER" > /dev/null; then
-            adduser --quiet \
-                    "$SUDO_USER" "$AUTOPILOT_GROUP"
-        fi
-    fi
+    # Add each sudo user to the autopilot group
+    for u in $(getent group sudo | sed -e "s/^.*://" -e "s/,/ /g"); do
+        adduser --quiet "$u" "$AUTOPILOT_GROUP" > /dev/null || true
+    done
 
     # udev rules were installed, trigger creation of the /dev node
     udevadm trigger --action=change

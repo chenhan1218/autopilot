@@ -71,6 +71,11 @@ from autopilot.display import Display
 from autopilot.globals import on_test_started
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
+try:
+    from autopilot import tracepoint as tp
+    HAVE_TRACEPOINT=True
+except ImportError:
+    HAVE_TRACEPOINT=False
 
 
 logger = logging.getLogger(__name__)
@@ -101,6 +106,18 @@ except ImportError:
         return result
 
 
+def _lttng_trace_test_started(test_id):
+    if HAVE_TRACEPOINT:
+        tp.emit_test_started(test_id)
+    else:
+        logger.warning("No tracing available - install the python-autopilot-trace package!")
+
+
+def _lttng_trace_test_ended(test_id):
+    if HAVE_TRACEPOINT:
+        tp.emit_test_ended(test_id)
+
+
 class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
     """Wrapper around testtools.TestCase that adds significant functionality.
 
@@ -113,6 +130,9 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
     def setUp(self):
         super(AutopilotTestCase, self).setUp()
         on_test_started(self)
+
+        _lttng_trace_test_started(self.id())
+        self.addCleanup(_lttng_trace_test_ended, self.id())
 
         self._process_manager = None
         self._mouse = None

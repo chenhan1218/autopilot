@@ -9,6 +9,7 @@ Build-Depends: debhelper (>= 9.0.0),
                gir1.2-gtk-2.0,
                python (>= 2.6),
                python-dbus,
+               python-dev,
                python-debian,
                python-mock,
                python-setuptools,
@@ -17,6 +18,7 @@ Build-Depends: debhelper (>= 9.0.0),
                python-testscenarios,
                python-xlib,
                python-zeitgeist,
+               liblttng-ust-dev,
 Standards-Version: 3.9.3
 Homepage: https://launchpad.net/autopilot
 Vcs-bzr: https://code.launchpad.net/+branch/ubuntu/autopilot
@@ -37,6 +39,17 @@ Description: Utility to write and run integration tests easily
  for your application manipulating your inputs like the mouse and
  keyboard. It also provides a lot of utilities linked to the X server
  and detecting applications.
+
+Package: python-autopilot-trace
+Architecture: any
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
+         python-autopilot,
+Description: Support for tracing in autopilot
+ This package contains the binary lttng trace point for tracing
+ autopilot tests. This is useful when using autopilot to exercise
+ an instrumented application.
+
 
 Package: autopilot-touch
 Architecture: all

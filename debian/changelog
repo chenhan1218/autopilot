@@ -1,3 +1,20 @@
+autopilot (1.3daily13.05.10ubuntu.unity.next-0ubuntu1) raring; urgency=low
+
+  [ Thomi Richards ]
+  * Enable support for lttng tracing in autopilot (LP: #1177612)
+
+  [ Francis Ginther ]
+  * Autopilot needs to be run as root to access /dev/uinput (LP:
+    #1143038)
+
+  [ Thomi Richards <thomi.richards@canonical.com>, Christopher Lee ]
+  * Enable support for lttng tracing in autopilot (LP: #1177612)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 204 (ubuntu-unity/next)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 10 May 2013 00:01:08 +0000
+
 autopilot (1.3daily13.05.08ubuntu.unity.next-0ubuntu1) raring; urgency=low
 
   [ Thomi Richards ]

@@ -21,25 +21,10 @@
 from __future__ import absolute_import
 
 from autopilot.testcase import AutopilotTestCase
-from testtools.matchers import Is, Not, raises
-
-def dummy_addCleanup(*args, **kwargs):
-    pass
+from testtools.matchers import raises
 
 
 class ApplicationSupportTests(AutopilotTestCase):
-
-    def test_launch_with_bad_types_raises_typeerror(self):
-        """Calling launch_test_application with something other than a string must
-        raise a TypeError"""
-
-        self.assertThat(lambda: self.launch_test_application(1), raises(TypeError))
-        self.assertThat(lambda: self.launch_test_application(True), raises(TypeError))
-        self.assertThat(lambda: self.launch_test_application(1.0), raises(TypeError))
-        self.assertThat(lambda: self.launch_test_application(object()), raises(TypeError))
-        self.assertThat(lambda: self.launch_test_application(None), raises(TypeError))
-        self.assertThat(lambda: self.launch_test_application([]), raises(TypeError))
-        self.assertThat(lambda: self.launch_test_application((None,)), raises(TypeError))
 
     def test_launch_raises_ValueError_on_unknown_kwargs(self):
         """launch_test_application must raise ValueError when given unknown

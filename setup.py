@@ -18,8 +18,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from distutils.core import setup
-from setuptools import find_packages
+
+from setuptools import find_packages, setup, Extension
 
 try:
     from debian import changelog
@@ -28,6 +28,11 @@ try:
 except ImportError:
     # If we don't have python-debian installed, guess a coarse-grained version string
     version = '1.3'
+
+autopilot_tracepoint = Extension('autopilot.tracepoint',
+                                 libraries=['lttng-ust'],
+                                 include_dirs=['lttng_module'],
+                                 sources = ['lttng_module/autopilot_tracepoint.c'])
 
 setup(
     name='autopilot',
@@ -40,5 +45,6 @@ setup(
     packages=find_packages(),
     test_suite='autopilot.tests',
     scripts=['bin/autopilot',],
+    ext_modules=[autopilot_tracepoint],
 )
 

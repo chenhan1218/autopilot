@@ -41,11 +41,17 @@ class Keyboard(KeyboardBase):
 
     def __init__(self):
         super(Keyboard, self).__init__()
-        self._device = UInput()
+        self._device = UInput(devnode='/dev/autopilot-uinput')
 
     def _emit(self, event, value):
         self._device.write(e.EV_KEY, event, value)
         self._device.syn()
+
+    def _sanitise_keys(self, keys):
+        if keys == '+':
+            return [keys]
+        else:
+            return keys.split('+')
 
     def press(self, keys, delay=0.1):
         """Send key press events only.
@@ -61,7 +67,7 @@ class Keyboard(KeyboardBase):
         if not isinstance(keys, basestring):
             raise TypeError("'keys' argument must be a string.")
 
-        for key in keys.split('+'):
+        for key in self._sanitise_keys(keys):
             for event in Keyboard._get_events_for_key(key):
                 self._emit(event, PRESS)
                 sleep(delay)
@@ -84,7 +90,7 @@ class Keyboard(KeyboardBase):
         # logger.debug("Releasing keys %r with delay %f", keys, delay)
         # # release keys in the reverse order they were pressed in.
         # keys = self.__translate_keys(keys)
-        for key in reversed(keys.split('+')):
+        for key in reversed(self._sanitise_keys(keys)):
             for event in Keyboard._get_events_for_key(key):
                 self._emit(event, RELEASE)
                 sleep(delay)
@@ -143,7 +149,7 @@ class Keyboard(KeyboardBase):
 
         """
         events = []
-        if key.isupper():
+        if key.isupper() or key in _SHIFTED_KEYS:
             events.append(e.KEY_LEFTSHIFT)
         keyname = _UINPUT_CODE_TRANSLATIONS.get(key.upper(), key)
         evt = getattr(e, 'KEY_' + keyname.upper(), None)
@@ -169,7 +175,7 @@ def create_touch_device(res_x=None, res_y=None):
 
     if res_x is None or res_y is None:
         from autopilot.display import Display
-        display = Display.create("UInput")
+        display = Display.create()
         res_x = display.get_screen_width()
         res_y = display.get_screen_height()
 
@@ -196,7 +202,8 @@ def create_touch_device(res_x=None, res_y=None):
         ]
     }
 
-    return UInput(cap_mt, name='autopilot-finger', version=0x2)
+    return UInput(cap_mt, name='autopilot-finger', version=0x2,
+                  devnode='/dev/autopilot-uinput')
 
 _touch_device = create_touch_device()
 
@@ -361,7 +368,43 @@ class Touch(TouchBase):
         self._touch_finger = _release_touch_finger(self._touch_finger)
 
 
+# veebers: there should be a better way to handle this.
+_SHIFTED_KEYS = "~!@#$%^&*()_+{}|:\"?><"
+
+# The double-ups are due to the 'shifted' keys.
 _UINPUT_CODE_TRANSLATIONS = {
+    '/': 'SLASH',
+    '?': 'SLASH',
+    '.': 'DOT',
+    ',': 'COMMA',
+    '>': 'DOT',
+    '<': 'COMMA',
+    '\'': 'APOSTROPHE',
+    '"': 'APOSTROPHE',
+    ';': 'SEMICOLON',
+    ':': 'SEMICOLON',
+    '\\': 'BACKSLASH',
+    '|': 'BACKSLASH',
+    ']': 'RIGHTBRACE',
+    '[': 'LEFTBRACE',
+    '}': 'RIGHTBRACE',
+    '{': 'LEFTBRACE',
+    '=': 'EQUAL',
+    '+': 'EQUAL',
+    '-': 'MINUS',
+    '_': 'MINUS',
+    ')': '0',
+    '(': '9',
+    '*': '8',
+    '&': '7',
+    '^': '6',
+    '%': '5',
+    '$': '4',
+    '#': '3',
+    '@': '2',
+    '!': '1',
+    '~': 'GRAVE',
+    '`': 'GRAVE',
     ' ': 'SPACE',
     '\t': 'TAB',
     'CTRL': 'LEFTCTRL',

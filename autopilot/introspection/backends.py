@@ -20,6 +20,7 @@
 "Backend interface for autopilot."
 from __future__ import absolute_import
 
+from collections import namedtuple
 import dbus
 from autopilot.dbus_handler import (
     get_session_bus,
@@ -28,14 +29,22 @@ from autopilot.dbus_handler import (
     )
 from autopilot.introspection.constants import (
     AP_INTROSPECTION_IFACE,
+    CURRENT_WIRE_PROTOCOL_VERSION,
     DBUS_INTROSPECTION_IFACE,
     QT_AUTOPILOT_IFACE,
     )
 
 
+class WireProtocolVersionMismatch(RuntimeError):
+    """Wire protocols mismatch."""
+
+
 class DBusAddress(object):
 
     "Store information about an Autopilot dbus backend, from keyword arguments."
+    _checked_backends = []
+
+    AddreddTuple = namedtuple('AddressTuple', ['bus', 'connection', 'object_path'])
 
     @staticmethod
     def SessionBus(connection, object_path):
@@ -82,6 +91,18 @@ class DBusAddress(object):
             raise TypeError("Object name must be a string")
 
         _debug_proxy_obj = self._bus.get_object(self._connection, self._object_path)
+        iface = dbus.Interface(_debug_proxy_obj, AP_INTROSPECTION_IFACE)
+        try:
+            version = iface.GetVersion()
+        except dbus.DBusException:
+            version = "1.2"
+        if version != CURRENT_WIRE_PROTOCOL_VERSION:
+            raise WireProtocolVersionMismatch(
+                "Wire protocol mismatch at %r: is %s, expecting %s" % (
+                    self,
+                    version,
+                    CURRENT_WIRE_PROTOCOL_VERSION)
+                )
         return dbus.Interface(_debug_proxy_obj, AP_INTROSPECTION_IFACE)
 
     @property

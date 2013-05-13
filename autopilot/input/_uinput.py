@@ -48,8 +48,8 @@ class Keyboard(KeyboardBase):
         self._device.syn()
 
     def _sanitise_keys(self, keys):
-        if len(keys) == 1:
-            return keys
+        if keys == '+':
+            return [keys]
         else:
             return keys.split('+')
 
@@ -71,7 +71,6 @@ class Keyboard(KeyboardBase):
             for event in Keyboard._get_events_for_key(key):
                 self._emit(event, PRESS)
                 sleep(delay)
-
 
     def release(self, keys, delay=0.1):
         """Send key release events only.

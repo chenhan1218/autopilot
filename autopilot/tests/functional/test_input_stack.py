@@ -86,8 +86,7 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
         text_edit = app_proxy.select_single('QTextEdit')
 
         # make sure the text edit has keyboard focus:
-        self.mouse.move_to_object(text_edit)
-        self.mouse.click()
+        self.mouse.click_object(text_edit)
 
         # create keyboard and type the text.
         keyboard = Keyboard.create(self.backend)

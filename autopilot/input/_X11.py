@@ -399,6 +399,23 @@ class Mouse(MouseBase):
         except (TypeError, ValueError):
             raise ValueError("Object '%r' has x,y attribute, but they are not of the correct type" % object_proxy)
 
+    def click_object(self, object_proxy, button=1, press_duration=0.10):
+        """
+        Attempts to move the pointer to 'object_proxy's centre point.
+        and click a button
+
+        It does this by looking for several attributes, in order. The first
+        attribute found will be used. The attributes used are (in order):
+
+         * globalRect (x,y,w,h)
+         * center_x, center_y
+         * x, y, w, h
+
+        """
+
+        self.move_to_object(object_proxy)
+        self.click(button, press_duration)
+
     def position(self):
         """
         Returns the current position of the mouse pointer.

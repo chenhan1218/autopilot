@@ -102,7 +102,7 @@ class ProcessManagerApplicationNoCleanupTests(TestCase):
     def test_can_close_all_app(self):
         """Ensure that closing an app actually closes all app instances."""
         try:
-            process_manager = ProcessManager.create(preferred_backend="BAM")
+            process_manager = ProcessManager.create(preferred_backend="BAMF")
         except BackendException as e:
             self.skip("Test is only for BAMF backend ({}).".format(e.message))
 

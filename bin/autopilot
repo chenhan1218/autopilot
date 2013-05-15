@@ -226,12 +226,13 @@ def load_test_suite_from_name(test_names):
     return TestSuite(requested_tests.values())
 
 
-def patch_python_path():
+def maybe_patch_python_path():
     """Prepend the current directory to sys.path to ensure that we can load & run
-    autopilot tests if the caller is in the parent directory.
+    autopilot tests if the caller is in the parent directory, but only if we're
+    not somewhere in /usr/...
 
     """
-    if os.getcwd() not in sys.path:
+    if os.getcwd() not in sys.path and not os.getcwd().startswith('/usr/'):
         sys.path.insert(0, os.getcwd())
 
 
@@ -302,5 +303,5 @@ def main():
 
 
 if __name__ == "__main__":
-    patch_python_path()
+    maybe_patch_python_path()
     main()

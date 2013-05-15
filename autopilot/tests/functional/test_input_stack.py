@@ -166,6 +166,9 @@ class InputStackCleanupTests(TestCase):
             def addCleanup(self, callable):
                 self.cleanups.append(callable)
 
+            def addOnException(self, handler):
+                pass
+
             def doCleanups(self):
                 for c in reversed(self.cleanups):
                     c()

@@ -101,6 +101,8 @@ Depends: ${misc:Depends},
          python-autopilot,
          libautopilot-gtk,
          libautopilot-qt,
+         python-evdev,
+         python-mock,
          python-windowmocker,
          recordmydesktop,
 Description: Tests for the autopilot functional test tool.

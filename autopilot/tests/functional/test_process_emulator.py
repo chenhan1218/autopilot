@@ -92,6 +92,8 @@ class ProcessManagerApplicationNoCleanupTests(TestCase):
         class FakeTestCase(object):
             def addCleanup(self, *args, **kwargs):
                 pass
+            def addOnException(self, handler):
+                pass
             def shortDescription(self):
                 pass
         super(ProcessManagerApplicationNoCleanupTests, self).setUp()

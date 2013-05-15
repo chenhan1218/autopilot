@@ -93,10 +93,6 @@ class AutopilotFunctionalTestsBase(AutopilotTestCase):
             )
 
         environment_patch = dict(DISPLAY=':0')
-        # Set PYTHONPATH always, since we can't tell what sys.path will be in the
-        # child process.
-        environment_patch['PYTHONPATH'] = ap_base_path
-
         bin_path = os.path.join(ap_base_path, 'bin', 'autopilot')
         if not os.path.exists(bin_path):
             bin_path = subprocess.check_output(['which', 'autopilot']).strip()

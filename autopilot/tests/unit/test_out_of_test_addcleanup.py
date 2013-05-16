@@ -39,9 +39,9 @@ class AddCleanupTests(TestCase):
                 log = "Hello %r %r" % (args, kwargs)
 
             def test_foo(self):
+                on_test_started(self)
                 addCleanup(self.write_to_log, "arg1", 2, foo='bar')
 
-        on_test_started(self)
         InnerTest('test_foo').run()
         self.assertThat(log, Equals("Hello ('arg1', 2) {'foo': 'bar'}"))
 

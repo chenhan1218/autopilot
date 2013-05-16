@@ -161,7 +161,7 @@ class Keyboard(KeyboardBase):
         return events
 
 
-def _get_devnode_name(self):
+def _get_devnode_name():
     """Provide a fallback uinput node for devices which don't support udev"""
     devnode = '/dev/autopilot-uinput'
     if not os.path.exists(devnode):

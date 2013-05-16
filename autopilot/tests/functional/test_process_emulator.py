@@ -23,9 +23,9 @@ from autopilot.testcase import AutopilotTestCase
 from autopilot.process import ProcessManager
 from autopilot.globals import on_test_started
 
-from subprocess import Popen, call, CalledProcessError, check_output
+from subprocess import Popen, call
 from testtools import TestCase
-from testtools.matchers import Equals, NotEquals, LessThan, Raises
+from testtools.matchers import Equals, NotEquals, LessThan
 from threading import Thread
 from time import sleep, time
 

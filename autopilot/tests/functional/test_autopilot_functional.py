@@ -401,14 +401,19 @@ Loading tests from: %s
 
     def test_record_dir_option_works(self):
         """Must be able to specify record directory flag."""
+
+        # The sleep is to avoid the case where recordmydesktop does not create a
+        # file because it gets stopped before it's even started capturing anything.
         self.create_test_file("test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
+            from time import sleep
 
 
             class SimpleTest(AutopilotTestCase):
 
                 def test_simple(self):
+                    sleep(1)
                     self.fail()
             """
             ))

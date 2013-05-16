@@ -176,8 +176,20 @@ def create_touch_device(res_x=None, res_y=None):
     if res_x is None or res_y is None:
         from autopilot.display import Display
         display = Display.create()
-        res_x = display.get_screen_width()
-        res_y = display.get_screen_height()
+        # TODO: This calculation needs to become part of the display module:
+        l = r = t = b = 0
+        for screen in range(display.get_num_screens()):
+            geometry = display.get_screen_geometry(screen)
+            if geometry[0] < l:
+                l = geometry[0]
+            if geometry[1] < t:
+                t = geometry[1]
+            if geometry[0] + geometry[2] > r:
+                r = geometry[0] + geometry[2]
+            if geometry[1] + geometry[3] > b:
+                b = geometry[1] + geometry[3];
+        res_x = r - l
+        res_y = b - t
 
     # android uses BTN_TOOL_FINGER, whereas desktop uses BTN_TOUCH. I have no
     # idea why...

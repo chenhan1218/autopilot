@@ -28,6 +28,7 @@ import autopilot.platform
 import logging
 from time import sleep
 from evdev import UInput, ecodes as e
+import os.path
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,8 @@ class Keyboard(KeyboardBase):
 
     def __init__(self):
         super(Keyboard, self).__init__()
-        self._device = UInput(devnode='/dev/autopilot-uinput')
+
+        self._device = UInput(devnode=_get_devnode_name())
 
     def _emit(self, event, value):
         self._device.write(e.EV_KEY, event, value)
@@ -159,6 +161,14 @@ class Keyboard(KeyboardBase):
         return events
 
 
+def _get_devnode_name(self):
+    """Provide a fallback uinput node for devices which don't support udev"""
+    devnode = '/dev/autopilot-uinput'
+    if not os.path.exists(devnode):
+        devnode = '/dev/uinput'
+    return devnode
+
+
 last_tracking_id = 0
 def get_next_tracking_id():
     global last_tracking_id
@@ -203,7 +213,7 @@ def create_touch_device(res_x=None, res_y=None):
     }
 
     return UInput(cap_mt, name='autopilot-finger', version=0x2,
-                  devnode='/dev/autopilot-uinput')
+                  devnode=_get_devnode_name())
 
 _touch_device = create_touch_device()
 

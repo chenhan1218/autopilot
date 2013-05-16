@@ -41,8 +41,10 @@ class InputStackKeyboardBase(AutopilotTestCase):
 
     def setUp(self):
         super(InputStackKeyboardBase, self).setUp()
-        if self.backend == 'UInput' and not os.access('/dev/autopilot-uinput', os.W_OK):
-            raise SkipTest("UInput backend currently requires write access to /dev/autopilot-uinput")
+        if self.backend == 'UInput' and not (
+            os.access('/dev/autopilot-uinput', os.W_OK) or
+            os.access('/dev/uinput', os.W_OK)):
+            raise SkipTest("UInput backend currently requires write access to /dev/autopilot-uinput or /dev/uinput")
 
 
 class InputStackKeyboardCreationTests(InputStackKeyboardBase):

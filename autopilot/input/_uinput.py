@@ -43,7 +43,7 @@ class Keyboard(KeyboardBase):
     def __init__(self):
         super(Keyboard, self).__init__()
 
-        self._device = UInput(devnode=_get_devnode_name())
+        self._device = UInput(devnode=_get_devnode_path())
 
     def _emit(self, event, value):
         self._device.write(e.EV_KEY, event, value)
@@ -161,7 +161,7 @@ class Keyboard(KeyboardBase):
         return events
 
 
-def _get_devnode_name():
+def _get_devnode_path():
     """Provide a fallback uinput node for devices which don't support udev"""
     devnode = '/dev/autopilot-uinput'
     if not os.path.exists(devnode):
@@ -213,7 +213,7 @@ def create_touch_device(res_x=None, res_y=None):
     }
 
     return UInput(cap_mt, name='autopilot-finger', version=0x2,
-                  devnode=_get_devnode_name())
+                  devnode=_get_devnode_path())
 
 _touch_device = create_touch_device()
 

@@ -20,9 +20,9 @@
 
 from __future__ import absolute_import
 
+from autopilot.testcase import AutopilotTestCase
 from testtools.matchers import Equals, raises, Not
 
-from autopilot.testcase import AutopilotTestCase
 import logging
 logger = logging.getLogger(__name__)
 

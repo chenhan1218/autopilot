@@ -21,7 +21,7 @@
 from testtools import TestCase
 from testtools.matchers import Equals
 
-from autopilot.testcase import AutopilotTestCase
+from autopilot.globals import on_test_started
 from autopilot.utilities import addCleanup
 
 log = ''
@@ -33,12 +33,13 @@ class AddCleanupTests(TestCase):
         args and kwargs.
 
         """
-        class InnerTest(AutopilotTestCase):
+        class InnerTest(TestCase):
             def write_to_log(self, *args, **kwargs):
                 global log
                 log = "Hello %r %r" % (args, kwargs)
 
             def test_foo(self):
+                on_test_started(self)
                 addCleanup(self.write_to_log, "arg1", 2, foo='bar')
 
         InnerTest('test_foo').run()

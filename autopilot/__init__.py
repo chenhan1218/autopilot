@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from argparse import ArgumentParser, REMAINDER
+from argparse import ArgumentParser, REMAINDER, Action
 
 version = '1.3'
 
@@ -97,13 +97,22 @@ def parse_arguments(argv=None):
                             action='count', help="Show autopilot log messages. \
                             Set twice to also log data useful for debugging \
                             autopilot itself.")
-    parser_launch.add_argument('application', nargs=REMAINDER, type=str,
+    parser_launch.add_argument('application', action=_OneOrMoreArgumentStoreAction,
+                            type=str, nargs=REMAINDER,
                             help="The application to launch. Can be a full path, \
                             or just an application name (in which case Autopilot \
                                 will search for it in $PATH).")
     args = parser.parse_args(args=argv)
 
     return args
+
+
+class _OneOrMoreArgumentStoreAction(Action):
+
+    def __call__(self,  parser, namespace, values, option_string=None):
+        if len(values) == 0:
+            parser.error("Must specify at least one argument to the 'launch' command")
+        setattr(namespace, self.dest, values)
 
 
 def have_vis():

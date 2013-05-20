@@ -139,12 +139,13 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         self._kb = None
         self._display = None
 
+        self._app_snapshot = self.process_manager.get_running_applications()
+        self.addCleanup(self._compare_system_with_app_snapshot)
+
     @property
     def process_manager(self):
         if self._process_manager is None:
             self._process_manager = ProcessManager.create()
-            self._app_snapshot = self.process_manager.get_running_applications()
-            self.addCleanup(self._compare_system_with_app_snapshot)
         return self._process_manager
 
     @property

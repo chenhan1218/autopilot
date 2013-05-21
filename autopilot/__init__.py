@@ -62,6 +62,9 @@ def parse_arguments(argv=None):
                             default="/tmp/autopilot", type=str,
                             help="Directory to put recorded tests \
                             (only if -r) specified.")
+    parser_run.add_argument("-ro", "--random-order", action='store_true',
+                            required=False, default=False,
+                            help="Run the tests in random order")
     parser_run.add_argument('-v', '--verbose', default=False, required=False,
                             action='count',
                             help="If set, autopilot will output test log data \

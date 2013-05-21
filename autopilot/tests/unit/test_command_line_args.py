@@ -224,6 +224,18 @@ class CommandLineArgsTests(TestCase):
         args = self.parse_args("run --record-directory /path/to/dir foo")
         self.assertThat(args.record_directory, Equals("/path/to/dir"))
 
+    def test_run_command_random_order_flag_short(self):
+        args = self.parse_args("run -ro foo")
+        self.assertThat(args.random_order, Equals(True))
+
+    def test_run_command_random_order_flag_long(self):
+        args = self.parse_args("run --random-order foo")
+        self.assertThat(args.random_order, Equals(True))
+
+    def test_run_command_random_order_flag_default(self):
+        args = self.parse_args("run foo")
+        self.assertThat(args.random_order, Equals(False))
+
     def test_run_default_verbosity(self):
         args = self.parse_args('run foo')
         self.assertThat(args.verbose, Equals(False))

@@ -41,7 +41,8 @@ from testtools import iterate_tests
 from testtools import TextTestResult
 from unittest.loader import TestLoader
 from unittest import TestSuite
-from random import random, shuffle
+from random import shuffle
+
 
 _output_stream=None
 
@@ -73,7 +74,7 @@ def run_tests(args):
     test_suite = load_test_suite_from_name(args.suite)
 
     if args.random_order:
-       shuffle(test_suite._tests, random)
+       shuffle(test_suite._tests)
        print "Running tests in random order"
 
     import autopilot.globals

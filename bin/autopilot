@@ -62,7 +62,7 @@ def list_tests(args):
         import re
         from collections import OrderedDict
 
-        suite_names = [re.findall("'([\w.]+)'", str(type(x)))[0] for x in test_list_fn()]
+        suite_names = ["%s.%s" % (t.__module__, t.__class__.__name__) for t in test_list_fn()]
         unique_suite_names = OrderedDict.fromkeys(suite_names).keys()
         num_tests = len(unique_suite_names)
         total_title = "suites"

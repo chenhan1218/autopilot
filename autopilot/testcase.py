@@ -139,8 +139,11 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         self._kb = None
         self._display = None
 
-        self._app_snapshot = self.process_manager.get_running_applications()
-        self.addCleanup(self._compare_system_with_app_snapshot)
+        try:
+            self._app_snapshot = self.process_manager.get_running_applications()
+            self.addCleanup(self._compare_system_with_app_snapshot)
+        except RuntimeError:
+            logger.warning("Process manager backend unavailable, application snapshot support disabled.")
 
     @property
     def process_manager(self):

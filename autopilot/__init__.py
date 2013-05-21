@@ -75,6 +75,9 @@ def parse_arguments(argv=None):
                             action="store_true",
                             help="List tests in run order, rather than alphabetical \
                             order (the default).")
+    parser_list.add_argument("--suites", required=False, action='store_true',
+                             help="Lists only available suites, not tests contained \
+                             within the suite.")
     parser_list.add_argument("suite", nargs="+",
                              help="Specify test suite(s) to run.")
 

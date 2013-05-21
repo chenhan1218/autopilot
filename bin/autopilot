@@ -49,6 +49,7 @@ _output_stream=None
 def list_tests(args):
     """Print a list of tests we find inside autopilot.tests."""
     num_tests = 0
+    total_title = "tests"
     test_suite = load_test_suite_from_name(args.suite)
 
     if args.run_order:
@@ -57,15 +58,25 @@ def list_tests(args):
         test_list_fn = lambda: sorted(iterate_tests(test_suite),
             lambda a, b: cmp(a.id(), b.id()))
 
-    for test in test_list_fn():
-        has_scenarios = hasattr(test, "scenarios") and type(test.scenarios) is list
-        if has_scenarios:
-            num_tests += len(test.scenarios)
-            print " *%d %s" % (len(test.scenarios), test.id())
-        else:
-            num_tests += 1
-            print "   ", test.id()
-    print "\n\n %d total tests." % (num_tests)
+    if args.suites:
+        import re
+        from collections import OrderedDict
+
+        suite_names = ["%s.%s" % (t.__module__, t.__class__.__name__) for t in test_list_fn()]
+        unique_suite_names = OrderedDict.fromkeys(suite_names).keys()
+        num_tests = len(unique_suite_names)
+        total_title = "suites"
+        print "    %s" % ("\n    ".join(unique_suite_names))
+    else:
+        for test in test_list_fn():
+            has_scenarios = hasattr(test, "scenarios") and type(test.scenarios) is list
+            if has_scenarios:
+                num_tests += len(test.scenarios)
+                print " *%d %s" % (len(test.scenarios), test.id())
+            else:
+                num_tests += 1
+                print "   ", test.id()
+    print "\n\n %d total %s." % (num_tests, total_title)
 
 
 def run_tests(args):

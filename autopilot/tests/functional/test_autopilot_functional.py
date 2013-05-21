@@ -21,6 +21,7 @@
 from __future__ import absolute_import
 
 from codecs import open
+import itertools
 import os
 import os.path
 import logging
@@ -150,7 +151,7 @@ class AutopilotFunctionalTests(AutopilotFunctionalTestsBase):
 
     """A collection of functional tests for autopilot."""
 
-    def run_autopilot_list(self, list_spec='tests'):
+    def run_autopilot_list(self, list_spec='tests', extra_args=[]):
         """Run 'autopilot list' in the specified base path.
 
         This patches the environment to ensure that it's *this* version of autopilot
@@ -159,9 +160,10 @@ class AutopilotFunctionalTests(AutopilotFunctionalTestsBase):
         returns a tuple containing: (exit_code, stdout, stderr)
 
         """
-        return self.run_autopilot(["list", list_spec])
+        args_list = ["list"] + extra_args + [list_spec]
+        return self.run_autopilot(args_list)
 
-    def assertTestsInOutput(self, tests, output):
+    def assertTestsInOutput(self, tests, output, total_title='tests'):
         """Asserts that 'tests' are all present in 'output'."""
 
         if type(tests) is not list:
@@ -174,10 +176,11 @@ Loading tests from: %s
 
 %s
 
- %d total tests.
+ %d total %s.
 ''' % (self.base_path,
     ''.join(['    %s\n' % t for t in sorted(tests)]),
-    len(tests))
+    len(tests),
+    total_title)
 
         self.assertThat(output, Equals(expected))
 
@@ -374,6 +377,36 @@ Loading tests from: %s
         self.assertThat(code, Equals(0))
         self.assertThat(error, Equals(''))
         self.assertTestsInOutput(['tests.test_simple.SimpleTest.test_simple'], output)
+
+    def test_can_list_just_suites(self):
+        """Must only list available suites, not the contained tests."""
+        self.create_test_file('test_simple_suites.py', dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    pass
+
+            class AnotherSimpleTest(AutopilotTestCase):
+
+                def test_another_simple(self):
+                    pass
+
+                def test_yet_another_simple(self):
+                    pass
+            """
+            ))
+
+        code, output, error = self.run_autopilot_list(extra_args=['--just-suite'])
+        self.assertThat(code, Equals(0))
+        self.assertThat(error, Equals(''))
+        self.assertTestsInOutput(['tests.test_simple_suites.SimpleTest',
+                                  'tests.test_simple_suites.AnotherSimpleTest'],
+                                 output,
+                                 total_title='suites')
 
     def test_record_flag_works(self):
         """Must be able to record videos when the -r flag is present."""

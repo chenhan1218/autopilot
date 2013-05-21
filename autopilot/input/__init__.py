@@ -249,7 +249,8 @@ class Mouse(object):
          attribute is of an incorrect type.
 
          """
-        raise NotImplementedError("You cannot use this class directly.")
+        self.move_to_object(object_proxy)
+        self.click(button, press_duration)
 
 
     def move(self, x, y, animate=True, rate=10, time_between_events=0.01):

@@ -161,24 +161,13 @@ class InputStackCleanupTests(TestCase):
             def cleanup():
                 FakeKeyboard.cleanup_called = True
 
-        class FakeTestCase(object):
-            def __init__(self):
-                self.cleanups = []
+        class FakeTestCase(TestCase):
 
-            def addCleanup(self, callable):
-                self.cleanups.append(callable)
+            def test_foo(self):
+                on_test_started(self)
 
-            def addOnException(self, handler):
-                pass
+                kbd = FakeKeyboard()
 
-            def doCleanups(self):
-                for c in reversed(self.cleanups):
-                    c()
-
-        tc = FakeTestCase()
-        on_test_started(tc)
-
-        kbd = FakeKeyboard()
-        tc.doCleanups()
+        FakeTestCase("test_foo").run()
 
         self.assertThat(FakeKeyboard.cleanup_called, Equals(True))

@@ -613,6 +613,51 @@ SyntaxError: invalid syntax
         self.assertThat(stdout,
             Contains("Error detecting launcher: Command '['ldd', '/usr/bin/tzselect']' returned non-zero exit status 1\n(Perhaps use the '-i' argument to specify an interface.)\n"))
 
+    def test_run_random_order_flag_works(self):
+        """Must run tests in random order when -ro is used"""
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+            from time import sleep
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple_one(self):
+                    pass
+                def test_simple_two(self):
+                    pass
+            """
+            ))
+
+
+        code, output, error = self.run_autopilot(["run", "-ro", "tests"])
+
+        self.assertThat(code, Equals(0))
+        self.assertThat(output, Contains('Running tests in random order'))
+
+    def test_run_random_flag_not_used(self):
+        """Must not run tests in random order when -ro is not used"""
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+            from time import sleep
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple_one(self):
+                    pass
+                def test_simple_two(self):
+                    pass
+            """
+            ))
+
+
+        code, output, error = self.run_autopilot(["run", "tests"])
+
+        self.assertThat(code, Equals(0))
+        self.assertThat(output, Not(Contains('Running tests in random order')))
+
+
 
 class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
 

@@ -69,7 +69,10 @@ class Keyboard(object):
     """
     def __init__(self):
         if hasattr(self, 'cleanup') and callable(self.cleanup):
-            addCleanup(self.cleanup)
+            try:
+                addCleanup(self.cleanup)
+            except:
+                pass
 
     @staticmethod
     def create(preferred_backend=''):

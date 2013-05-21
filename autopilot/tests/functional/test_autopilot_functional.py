@@ -400,7 +400,7 @@ Loading tests from: %s
             """
             ))
 
-        code, output, error = self.run_autopilot_list(extra_args=['--just-suite'])
+        code, output, error = self.run_autopilot_list(extra_args=['--suites'])
         self.assertThat(code, Equals(0))
         self.assertThat(error, Equals(''))
         self.assertTestsInOutput(['tests.test_simple_suites.SimpleTest',

@@ -147,8 +147,8 @@ class CommandLineArgsTests(TestCase):
         self.assertThat(args.run_order, Equals(False))
 
     def test_list_just_suites_option(self):
-        args = self.parse_args('list --just-suites foo')
-        self.assertThat(args.just_suites, Equals(True))
+        args = self.parse_args('list --suites foo')
+        self.assertThat(args.suites, Equals(True))
 
     def test_run_mode(self):
         args = self.parse_args('run foo')

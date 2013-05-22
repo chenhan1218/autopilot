@@ -1,10 +1,45 @@
-autopilot (1.3daily13.05.10ubuntu.unity.next-0ubuntu2) UNRELEASED; urgency=low
+autopilot (1.3daily13.05.22.1ubuntu.unity.next-0ubuntu1) raring; urgency=low
 
+  [ Łukasz 'sil2100' Zemczak ]
   * debian/control:
     - Add missing dependencies to python-autopilot-tests required for running
       the tests
 
- -- Łukasz 'sil2100' Zemczak <lukasz.zemczak@canonical.com>  Wed, 15 May 2013 12:29:53 +0200
+  [ Thomi Richards ]
+  * fix bug lp:1180124 - don't patch PYTHONPATH when we're running from
+    /usr/ somewhere, and don't explicitly patch it in the functional
+    test suite. (LP: #1180124)
+  * Fix several packaging bugs. (LP: #1180209, #1180210, #1180207)
+  * Branch for fixing the latest failing autopilot tests.
+  * Allow keyboards to be created outside the test case runs, useful for
+    testing. (LP: #1182303)
+
+  [ Francis Ginther ]
+  * Allow fallback to /dev/uinput if /dev/autopilot-uinput does not
+    exist. The touch image does not support udev and therefore does not
+    have /dev/autopilot-udev. It does have /dev/uinput. So the solution
+    is to fallback and attempt to use /dev/uinput. This should be a
+    short-term workaround until the touch images enable udev support.
+    (LP: #1180864)
+
+  [ chris.gagnon ]
+  * add click_object to mouse. (LP: #1175328)
+
+  [ Christopher Lee ]
+  * Fixes bug https://bugs.launchpad.net/autopilot/+bug/1178014. . (LP:
+    #1178014)
+  * Fixed an autopilot test and added debugging logging to uinput
+    backend.
+  * Added --just-suites option to list. Tests also included. (LP:
+    #1175825)
+
+  [ Łukasz 'sil2100' Zemczak ]
+  * Branch for fixing the latest failing autopilot tests.
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 215 (ubuntu-unity/next)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 22 May 2013 09:55:30 +0000
 
 autopilot (1.3daily13.05.10ubuntu.unity.next-0ubuntu1) raring; urgency=low
 

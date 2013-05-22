@@ -41,6 +41,7 @@ from testtools import iterate_tests
 from testtools import TextTestResult
 from unittest.loader import TestLoader
 from unittest import TestSuite
+from random import shuffle
 
 
 _output_stream=None
@@ -82,6 +83,10 @@ def list_tests(args):
 def run_tests(args):
     """Run tests, using input from `args`."""
     test_suite = load_test_suite_from_name(args.suite)
+
+    if args.random_order:
+       shuffle(test_suite._tests)
+       print "Running tests in random order"
 
     import autopilot.globals
 

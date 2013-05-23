@@ -29,11 +29,6 @@ from autopilot.introspection.dbus import CustomEmulatorBase
 class IntrospectionFeatureTests(AutopilotTestCase):
     """Test various features of the introspection code."""
 
-    def setUp(self):
-        super(IntrospectionFeatureTests, self).setUp()
-
-        self.app = self.start_mock_app()
-
     def start_mock_app(self, emulator_base):
         window_spec_file = mktemp(suffix='.json')
         window_spec = { "Contents": "MouseTest" }

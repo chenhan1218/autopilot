@@ -211,7 +211,11 @@ class DBusIntrospectionObject(object):
         Note however that if you pass a string, and there is an emulator class
         defined, autopilot will not use it.
 
-        :param desired_type: subclass of DBusIntrospectionObject, or a string.
+        :param desired_type: Either a string naming the type you want, or a class
+            of the type you want (the latter is used when defining custom emulators)
+
+        .. seealso::
+            Tutorial Section :ref:`custom_emulators`
 
         """
         #TODO: if kwargs has exactly one item in it we should specify the
@@ -237,7 +241,8 @@ class DBusIntrospectionObject(object):
         """Returns a dictionary of all the properties on this class.
 
         This can be useful when you want to log all the properties exported from
-        your application for a particular object.
+        your application for a particular object. Every property in the returned
+        dictionary can be accessed as attributes of the object as well.
 
         """
         # Since we're grabbing __state directly there's no implied state
@@ -267,21 +272,33 @@ class DBusIntrospectionObject(object):
         """Get a single node from the introspection tree, with type equal to
         *type_name* and (optionally) matching the keyword filters present in
         *kwargs*.
+
         You must specify either *type_name*, keyword filters or both.
 
-        Searches recursively from the node this method is called on. For
-        example:
+        This method searches recursively from the instance this method is called
+        on. Calling :meth:`select_single` on the application (root) proxy object
+        will search the entire tree. Calling :meth:`select_single` on an object
+        in the tree will only search it's descendants.
 
-        >>> app.select_single('QPushButton', objectName='clickme')
-        ... returns a QPushButton whose 'objectName' property is 'clickme'.
+        Example usage::
+
+            app.select_single('QPushButton', objectName='clickme')
+            # returns a QPushButton whose 'objectName' property is 'clickme'.
 
         If nothing is returned from the query, this method returns None.
+
+        :param type_name: Either a string naming the type you want, or a class of
+            the appropriate type (the latter case is for overridden emulator
+            classes).
 
         :raises: **ValueError** if the query returns more than one item. *If you
             want more than one item, use select_many instead*.
 
         :raises: **TypeError** if neither *type_name* or keyword filters are
             provided.
+
+        .. seealso::
+            Tutorial Section :ref:`custom_emulators`
 
         """
         instances = self.select_many(type_name, **kwargs)
@@ -295,24 +312,35 @@ class DBusIntrospectionObject(object):
         """Get a list of nodes from the introspection tree, with type equal to
         *type_name* and (optionally) matching the keyword filters present in
         *kwargs*.
+
         You must specify either *type_name*, keyword filters or both.
 
-        Searches recursively from the node this method is called on.
+        This method searches recursively from the instance this method is called
+        on. Calling :meth:`select_many` on the application (root) proxy object
+        will search the entire tree. Calling :meth:`select_many` on an object
+        in the tree will only search it's descendants.
 
-        For example:
+        Example Usage::
 
-        >>> app.select_many('QPushButton', enabled=True)
-        ... returns a list of QPushButtons that are enabled.
+            app.select_many('QPushButton', enabled=True)
+            # returns a list of QPushButtons that are enabled.
 
-        >>> file_menu = app.select_one('QMenu', title='File')
-        >>> file_menu.select_many('QAction')
-        ... returns a list of QAction objects who appear below file_menu in the
-        object tree.
+        As mentioned above, this method searches the object tree recurseivly::
+            file_menu = app.select_one('QMenu', title='File')
+            file_menu.select_many('QAction')
+            # returns a list of QAction objects who appear below file_menu in the object tree.
 
-        If you only want to get one item, use select_single instead.
+        If you only want to get one item, use :meth:`select_single` instead.
+
+        :param type_name: Either a string naming the type you want, or a class of
+            the appropriate type (the latter case is for overridden emulator
+            classes).
 
         :raises: **TypeError** if neither *type_name* or keyword filters are
             provided.
+
+        .. seealso::
+            Tutorial Section :ref:`custom_emulators`
 
         """
         if not isinstance(type_name, str) and issubclass(type_name, DBusIntrospectionObject):
@@ -492,6 +520,12 @@ class _CustomEmulatorMeta(IntrospectableObjectMetaclass):
 
 class CustomEmulatorBase(DBusIntrospectionObject):
 
-    """This class must be derived from if you intend to write a custom emulator."""
+    """This class must be used as a base class for any custom emulators defined
+    within a test case.
+
+    .. seealso::
+        Tutorial Section :ref:`custom_emulators`
+            Information on how to write custom emulators.
+    """
 
     __metaclass__ = _CustomEmulatorMeta

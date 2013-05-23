@@ -249,9 +249,10 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             raise RuntimeError("Autopilot could not determine the correct \
 introspection type to use. You can specify one by overriding the \
 AutopilotTestCase.pick_app_launcher method.")
+        emulator_base = kwargs.pop('emulator_base', None)
         process = launch_application(launcher, app_path, *arguments, **kwargs)
         self.addCleanup(self._kill_process_and_attach_logs, process)
-        return get_autopilot_proxy_object_for_process(process)
+        return get_autopilot_proxy_object_for_process(process, emulator_base)
 
     def _compare_system_with_app_snapshot(self):
         """Compare the currently running application with the last snapshot.

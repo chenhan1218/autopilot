@@ -31,7 +31,6 @@ import logging
 import subprocess
 from time import sleep
 import os
-from uuid import uuid4
 
 
 from autopilot.introspection.backends import DBusAddress
@@ -41,7 +40,7 @@ from autopilot.introspection.constants import (
     AP_INTROSPECTION_IFACE,
     )
 from autopilot.introspection.dbus import (
-    clear_object_registry,
+    CustomEmulatorBase,
     DBusIntrospectionObject,
     get_classname_from_path,
     )
@@ -148,7 +147,7 @@ def launch_process(application, args, capture_output, **kwargs):
     return process
 
 
-def get_autopilot_proxy_object_for_process(process):
+def get_autopilot_proxy_object_for_process(process, emulator_base):
     """Return the autopilot proxy object for the given *process*.
 
     :raises: **RuntimeError** if no autopilot interface was found.
@@ -179,7 +178,8 @@ def get_autopilot_proxy_object_for_process(process):
                 if name_pid in eligible_pids:
                     # We've found at least one connection to the session bus from
                     # this PID. Might not be the one we want however...
-                    proxy = make_proxy_object_from_service_name(name, AUTOPILOT_PATH)
+                    dbus_address_instance = get_dbus_address_object(name, AUTOPILOT_PATH)
+                    proxy = make_proxy_object(dbus_address_instance, emulator_base)
                     proxy.set_process(process)
                     return proxy
             except Exception as e:
@@ -210,8 +210,7 @@ def get_child_pids(pid):
     return result
 
 
-def make_proxy_object_from_service_name(service_name, obj_path, dbus_addr=None):
-    """Returns a root proxy object given a DBus service name."""
+def get_dbus_address_object(service_name, obj_path, dbus_addr=None):
     # parameters can sometimes be dbus.String instances, sometimes QString instances.
     # it's easier to convert them here than at the calling sites.
     service_name = str(service_name)
@@ -221,21 +220,24 @@ def make_proxy_object_from_service_name(service_name, obj_path, dbus_addr=None):
         be = DBusAddress.CustomBus(dbus_addr, service_name, obj_path)
     else:
         be = DBusAddress.SessionBus(service_name, obj_path)
+    return be
 
 
-    proxy_bases = get_proxy_object_base_clases(be)
-    cls_name, cls_state = get_proxy_object_class_name_and_state(be)
+def make_proxy_object(data_source, emulator_base):
+    """Returns a root proxy object given a DBus service name."""
+
+    proxy_bases = get_proxy_object_base_clases(data_source)
+    if emulator_base is None:
+        emulator_base = type('DefaultEmulatorBase', (CustomEmulatorBase,), {})
+    proxy_bases = proxy_bases + (emulator_base, )
+    cls_name, cls_state = get_proxy_object_class_name_and_state(data_source)
 
     clsobj = type(str(cls_name),
         proxy_bases,
-        dict(_Backend = be
+        dict(_Backend = data_source
             )
         )
 
-    # clear the object registry, since it's specific to the dbus service, and we
-    # have just started a new service. We don't want the old types hanging around
-    # in the registry. We need a better method for this however.
-    clear_object_registry(clsobj._Backend)
     proxy = clsobj.get_root_instance()
     return proxy
 

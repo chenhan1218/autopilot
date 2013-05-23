@@ -58,35 +58,19 @@ class IntrospectableObjectMetaclass(type):
     def __new__(cls, classname, bases, classdict):
         """Add class name to type registry."""
         class_object = type.__new__(cls, classname, bases, classdict)
-        # The DBusIntrospectionObject class always has Backend == None, since it's
-        # not introspectable itself. We need to compensate for this...
-        if class_object._Backend is not None:
-            if class_object._Backend in _object_registry:
-                _object_registry[class_object._Backend][classname] = class_object
+        if classname in (
+            'ApplicationProxyObject',
+            'CustomEmulatorBase',
+            'DBusIntrospectionObject',
+            ):
+            return class_object
+
+        if class_object._id is not None:
+            if class_object._id in _object_registry:
+                _object_registry[class_object._id][classname] = class_object
             else:
-                _object_registry[class_object._Backend] = {classname:class_object}
+                _object_registry[class_object._id] = {classname:class_object}
         return class_object
-
-
-def clear_object_registry(target_backend):
-    """Delete all class objects from the object registry for a single backend."""
-    global _object_registry
-
-    # NOTE: We used to do '_object_registry.clear()' here, but that causes issues
-    # when trying to use the unity emulators together with an application backend
-    # since the application launch code clears the object registry. This is a case
-    # of the autopilot backend abstraction leaking through into the visible
-    # implementation. I'm planning on fixing that, but it's a sizable amount of work.
-    # Until that happens, we need to live with this hack: don't delete objects if
-    # their DBus service name is com.canonical.Unity
-    # - Thomi Richards
-    to_delete = []
-    for k,v in _object_registry.iteritems():
-        if k == target_backend:
-            to_delete.append(k)
-
-    for k in to_delete:
-        del _object_registry[k]
 
 
 def translate_state_keys(state_dict):
@@ -460,10 +444,12 @@ class DBusIntrospectionObject(object):
         path, state = dbus_tuple
         name = get_classname_from_path(path)
         try:
-            class_type = _object_registry[cls._Backend][name]
+            class_type = _object_registry[cls._id][name]
         except KeyError:
             logger.warning("Generating introspection instance for type '%s' based on generic class.", name)
-            class_type = type(str(name), (cls,), {})
+            # override the _id attr from cls, since we don't want generated types
+            # to end up in the object registry.
+            class_type = type(str(name), (cls,), {'_id':None})
         return class_type(state, path)
 
     @contextmanager

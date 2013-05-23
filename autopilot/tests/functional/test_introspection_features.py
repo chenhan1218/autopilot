@@ -58,7 +58,7 @@ class IntrospectionFeatureTests(AutopilotTestCase):
             pass
 
         app = self.start_mock_app(EmulatorBase)
-        test_widget = app.select_single(MouseTestWidget)
+        test_widget = app.select_single('MouseTestWidget')
 
         self.assertThat(type(test_widget), Equals(MouseTestWidget))
 

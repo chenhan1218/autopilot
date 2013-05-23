@@ -315,6 +315,9 @@ class DBusIntrospectionObject(object):
             provided.
 
         """
+        if not isinstance(type_name, str) and issubclass(type_name, DBusIntrospectionObject):
+            type_name = type_name.__name__
+
         if type_name == "*" and not kwargs:
             raise TypeError("You must specify either a type name or a filter.")
 

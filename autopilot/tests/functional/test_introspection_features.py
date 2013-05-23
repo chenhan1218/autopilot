@@ -45,11 +45,8 @@ class IntrospectionFeatureTests(AutopilotTestCase):
             emulator_base=emulator_base,
             )
 
-    def test_can_provide_custom_emulators(self):
-        """Must be able to provide custom emulator classes for classes in the
-        introspection tree.
-
-        """
+    def test_can_select_custom_emulators_by_name(self):
+        """Must be able to select a custom emulator type by name."""
 
         class EmulatorBase(CustomEmulatorBase):
             pass
@@ -59,6 +56,20 @@ class IntrospectionFeatureTests(AutopilotTestCase):
 
         app = self.start_mock_app(EmulatorBase)
         test_widget = app.select_single('MouseTestWidget')
+
+        self.assertThat(type(test_widget), Equals(MouseTestWidget))
+
+    def test_can_select_custom_emulators_by_type(self):
+        """Must be able to select a custom emulator type by type."""
+
+        class EmulatorBase(CustomEmulatorBase):
+            pass
+
+        class MouseTestWidget(EmulatorBase):
+            pass
+
+        app = self.start_mock_app(EmulatorBase)
+        test_widget = app.select_single(MouseTestWidget)
 
         self.assertThat(type(test_widget), Equals(MouseTestWidget))
 

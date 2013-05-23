@@ -65,7 +65,7 @@ class IntrospectableObjectMetaclass(type):
             ):
             return class_object
 
-        if class_object._id is not None:
+        if getattr(class_object, '_id', None) is not None:
             if class_object._id in _object_registry:
                 _object_registry[class_object._id][classname] = class_object
             else:
@@ -363,7 +363,6 @@ class DBusIntrospectionObject(object):
             you are testing, you may get duplicate results using this method.
 
         :return: List (possibly empty) of class instances.
-
 
         """
         cls_name = cls.__name__

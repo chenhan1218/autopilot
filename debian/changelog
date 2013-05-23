@@ -1,3 +1,17 @@
+autopilot (1.3daily13.05.23ubuntu.unity.next-0ubuntu1) raring; urgency=low
+
+  [ Thomi Richards ]
+  * Disable processmanager snapshotting if there's no processmanager on
+    the current platform. (LP: #1182488)
+
+  [ chris.gagnon ]
+  * Add option to run tests in random order. (LP: #1175327)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 218 (ubuntu-unity/next)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 23 May 2013 00:01:44 +0000
+
 autopilot (1.3daily13.05.22.1ubuntu.unity.next-0ubuntu1) raring; urgency=low
 
   [ Łukasz 'sil2100' Zemczak ]

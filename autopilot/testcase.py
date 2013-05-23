@@ -226,6 +226,9 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :keyword capture_output: If set to True (the default), the process output
             will be captured and attached to the test as test detail.
 
+        :keyword emulator_base: If set, specifies the base class to be used for
+            all emulators for this loaded application.
+
         :raises: **ValueError** if unknown keyword arguments are passed.
         :return: A proxy object that represents the application. Introspection
          data is retrievable via this object.

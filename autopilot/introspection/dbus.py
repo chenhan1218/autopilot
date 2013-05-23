@@ -33,6 +33,7 @@ import logging
 from testtools.matchers import Equals
 from time import sleep
 from textwrap import dedent
+from uuid import uuid4
 
 from autopilot.introspection.constants import AP_INTROSPECTION_IFACE
 from autopilot.utilities import Timer
@@ -483,3 +484,26 @@ class DBusIntrospectionObject(object):
             yield
         finally:
             self.__refresh_on_attribute = True
+
+
+class _CustomEmulatorMeta(IntrospectableObjectMetaclass):
+
+    def __new__(cls, name, bases, d):
+        # only consider classes derived from CustomEmulatorBase
+        if name != 'CustomEmulatorBase':
+            # and only if they don't already have an Id set.
+            have_id = False
+            for base in bases:
+                if hasattr(base, '_id'):
+                    have_id = True
+                    break
+            if not have_id:
+                d['_id'] = uuid4()
+        return super(_CustomEmulatorMeta, cls).__new__(cls, name, bases, d)
+
+
+class CustomEmulatorBase(DBusIntrospectionObject):
+
+    """This class must be derived from if you intend to write a custom emulator."""
+
+    __metaclass__ = _CustomEmulatorMeta

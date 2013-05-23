@@ -31,6 +31,7 @@ import logging
 import subprocess
 from time import sleep
 import os
+from uuid import uuid4
 
 
 from autopilot.introspection.backends import DBusAddress
@@ -292,3 +293,4 @@ class ApplicationProxyObject(DBusIntrospectionObject):
     def kill_application(self):
         """Kill the running process that this is a proxy for using 'kill `pid`'."""
         subprocess.call(["kill", "%d" % self._process.pid])
+

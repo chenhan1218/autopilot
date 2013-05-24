@@ -431,7 +431,6 @@ Loading tests from: %s
         self.assertThat(code, Equals(1))
         self.assertTrue(os.path.exists('/tmp/autopilot'))
         self.assertTrue(os.path.exists('/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv'))
-        should_delete = not os.path.exists('/tmp/autopilot')
         if should_delete:
             self.addCleanup(remove_if_exists, "/tmp/autopilot") 
 

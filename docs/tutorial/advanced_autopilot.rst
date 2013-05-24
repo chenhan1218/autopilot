@@ -179,3 +179,33 @@ Display Information
 ===================
 
 .. Document the display stack.
+
+.. _custom_emulators:
+
+Writing Custom Emulators
+========================
+
+By default, autopilot will generate an object for every introspectable item in your application under test. These are generated on the fly, and derive from
+:class:`~autopilot.introspection.DBusIntrospectionObject`. This gives you the usual methods of selecting other nodes in the object tree, as well the the means to inspect all the properties in that class.
+
+However, sometimes you want to customize the class used to create these objects. The most common reason to want to do this is to provide methods that make it easier to inspect these objects. Autopilot allows test authors to provide their own custom classes, through a couple of simple steps:
+
+1. First, you must define your own base class, to be used by all emulators in your test suite. This base class can be empty, but must derive from :class:`~autopilot.introspection.CustomEmulatorBase`. An example class might look like this::
+
+    from autopilot.introspection import CustomEmulatorBase
+
+
+    class EmulatorBase(CustomEmulatorBase):
+        """A base class for all emulators within this test suite."""
+
+2. Define the classes you want autopilot to use, instead of the default. The class name must be the same as the type you wish to override. For example, if you want to define your own custom class to be used every time autopilot generates an instance of a 'QLabel' object, the class definition would look like this::
+
+    class QLabel(EmulatorBase):
+
+        # Add custom methods here...
+
+3. As long as this custom class has been seen by the python interpreter (usually by importing it somewhere within the test suite), autopilot will use it every time it needs to generate a ``QLabel`` instance. You can also pass this class to methods like :meth:`~autopilot.introspection.DBusIntrospectionObject.select_single` instead of a string. So, for example, the following is a valid way of selecting the QLabel instances in an application::
+
+    # self.app is the application proxy object.
+    # Get all QLabels in the applicaton:
+    labels = self.app.select_many(QLabel)

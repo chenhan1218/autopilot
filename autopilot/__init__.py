@@ -33,13 +33,6 @@ class BackendException(RuntimeError):
             )
         self.original_exception = original_exception
 
-
-class record_default(Action):
-     def __call__(self, parser, namespace, values, option_string=None):
-         if option_string is None:
-             option_string = str('/tmp/autopilot')
-         setattr(namespace, self.dest, values)
-
 def parse_arguments(argv=None):
     """Parse command-line arguments, and return an argparse arguments
     object.
@@ -64,8 +57,7 @@ def parse_arguments(argv=None):
                             help="Record failing tests. Required \
                             'recordmydesktop' app to be installed.\
                             Videos are stored in /tmp/autopilot.")
-    parser_run.add_argument("-rd", "--record-directory",
-                            required=False, action=record_default,
+    parser_run.add_argument("-rd", "--record-directory", required=False,
                             help="Directory to put recorded tests \
                             specified.")
     parser_run.add_argument("-ro", "--random-order", action='store_true',

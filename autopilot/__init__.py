@@ -59,7 +59,7 @@ def parse_arguments(argv=None):
                             'recordmydesktop' app to be installed.\
                             Videos are stored in /tmp/autopilot.")
     parser_run.add_argument("-rd", "--record-directory", required=False,
-                            help="Directory to put recorded tests")
+                            type=str, help="Directory to put recorded tests")
     parser_run.add_argument("-ro", "--random-order", action='store_true',
                             required=False, default=False,
                             help="Run the tests in random order")

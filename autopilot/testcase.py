@@ -229,6 +229,9 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :keyword capture_output: If set to True (the default), the process output
             will be captured and attached to the test as test detail.
 
+        :keyword emulator_base: If set, specifies the base class to be used for
+            all emulators for this loaded application.
+
         :raises: **ValueError** if unknown keyword arguments are passed.
         :return: A proxy object that represents the application. Introspection
          data is retrievable via this object.
@@ -249,9 +252,10 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             raise RuntimeError("Autopilot could not determine the correct \
 introspection type to use. You can specify one by overriding the \
 AutopilotTestCase.pick_app_launcher method.")
+        emulator_base = kwargs.pop('emulator_base', None)
         process = launch_application(launcher, app_path, *arguments, **kwargs)
         self.addCleanup(self._kill_process_and_attach_logs, process)
-        return get_autopilot_proxy_object_for_process(process)
+        return get_autopilot_proxy_object_for_process(process, emulator_base)
 
     def _compare_system_with_app_snapshot(self):
         """Compare the currently running application with the last snapshot.

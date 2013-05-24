@@ -33,6 +33,7 @@ import logging
 from testtools.matchers import Equals
 from time import sleep
 from textwrap import dedent
+from uuid import uuid4
 
 from autopilot.introspection.constants import AP_INTROSPECTION_IFACE
 from autopilot.utilities import Timer
@@ -57,35 +58,19 @@ class IntrospectableObjectMetaclass(type):
     def __new__(cls, classname, bases, classdict):
         """Add class name to type registry."""
         class_object = type.__new__(cls, classname, bases, classdict)
-        # The DBusIntrospectionObject class always has Backend == None, since it's
-        # not introspectable itself. We need to compensate for this...
-        if class_object._Backend is not None:
-            if class_object._Backend in _object_registry:
-                _object_registry[class_object._Backend][classname] = class_object
+        if classname in (
+            'ApplicationProxyObject',
+            'CustomEmulatorBase',
+            'DBusIntrospectionObject',
+            ):
+            return class_object
+
+        if getattr(class_object, '_id', None) is not None:
+            if class_object._id in _object_registry:
+                _object_registry[class_object._id][classname] = class_object
             else:
-                _object_registry[class_object._Backend] = {classname:class_object}
+                _object_registry[class_object._id] = {classname:class_object}
         return class_object
-
-
-def clear_object_registry(target_backend):
-    """Delete all class objects from the object registry for a single backend."""
-    global _object_registry
-
-    # NOTE: We used to do '_object_registry.clear()' here, but that causes issues
-    # when trying to use the unity emulators together with an application backend
-    # since the application launch code clears the object registry. This is a case
-    # of the autopilot backend abstraction leaking through into the visible
-    # implementation. I'm planning on fixing that, but it's a sizable amount of work.
-    # Until that happens, we need to live with this hack: don't delete objects if
-    # their DBus service name is com.canonical.Unity
-    # - Thomi Richards
-    to_delete = []
-    for k,v in _object_registry.iteritems():
-        if k == target_backend:
-            to_delete.append(k)
-
-    for k in to_delete:
-        del _object_registry[k]
 
 
 def translate_state_keys(state_dict):
@@ -226,7 +211,11 @@ class DBusIntrospectionObject(object):
         Note however that if you pass a string, and there is an emulator class
         defined, autopilot will not use it.
 
-        :param desired_type: subclass of DBusIntrospectionObject, or a string.
+        :param desired_type: Either a string naming the type you want, or a class
+            of the type you want (the latter is used when defining custom emulators)
+
+        .. seealso::
+            Tutorial Section :ref:`custom_emulators`
 
         """
         #TODO: if kwargs has exactly one item in it we should specify the
@@ -252,7 +241,8 @@ class DBusIntrospectionObject(object):
         """Returns a dictionary of all the properties on this class.
 
         This can be useful when you want to log all the properties exported from
-        your application for a particular object.
+        your application for a particular object. Every property in the returned
+        dictionary can be accessed as attributes of the object as well.
 
         """
         # Since we're grabbing __state directly there's no implied state
@@ -282,21 +272,33 @@ class DBusIntrospectionObject(object):
         """Get a single node from the introspection tree, with type equal to
         *type_name* and (optionally) matching the keyword filters present in
         *kwargs*.
+
         You must specify either *type_name*, keyword filters or both.
 
-        Searches recursively from the node this method is called on. For
-        example:
+        This method searches recursively from the instance this method is called
+        on. Calling :meth:`select_single` on the application (root) proxy object
+        will search the entire tree. Calling :meth:`select_single` on an object
+        in the tree will only search it's descendants.
 
-        >>> app.select_single('QPushButton', objectName='clickme')
-        ... returns a QPushButton whose 'objectName' property is 'clickme'.
+        Example usage::
+
+            app.select_single('QPushButton', objectName='clickme')
+            # returns a QPushButton whose 'objectName' property is 'clickme'.
 
         If nothing is returned from the query, this method returns None.
+
+        :param type_name: Either a string naming the type you want, or a class of
+            the appropriate type (the latter case is for overridden emulator
+            classes).
 
         :raises: **ValueError** if the query returns more than one item. *If you
             want more than one item, use select_many instead*.
 
         :raises: **TypeError** if neither *type_name* or keyword filters are
             provided.
+
+        .. seealso::
+            Tutorial Section :ref:`custom_emulators`
 
         """
         instances = self.select_many(type_name, **kwargs)
@@ -310,26 +312,40 @@ class DBusIntrospectionObject(object):
         """Get a list of nodes from the introspection tree, with type equal to
         *type_name* and (optionally) matching the keyword filters present in
         *kwargs*.
+
         You must specify either *type_name*, keyword filters or both.
 
-        Searches recursively from the node this method is called on.
+        This method searches recursively from the instance this method is called
+        on. Calling :meth:`select_many` on the application (root) proxy object
+        will search the entire tree. Calling :meth:`select_many` on an object
+        in the tree will only search it's descendants.
 
-        For example:
+        Example Usage::
 
-        >>> app.select_many('QPushButton', enabled=True)
-        ... returns a list of QPushButtons that are enabled.
+            app.select_many('QPushButton', enabled=True)
+            # returns a list of QPushButtons that are enabled.
 
-        >>> file_menu = app.select_one('QMenu', title='File')
-        >>> file_menu.select_many('QAction')
-        ... returns a list of QAction objects who appear below file_menu in the
-        object tree.
+        As mentioned above, this method searches the object tree recurseivly::
+            file_menu = app.select_one('QMenu', title='File')
+            file_menu.select_many('QAction')
+            # returns a list of QAction objects who appear below file_menu in the object tree.
 
-        If you only want to get one item, use select_single instead.
+        If you only want to get one item, use :meth:`select_single` instead.
+
+        :param type_name: Either a string naming the type you want, or a class of
+            the appropriate type (the latter case is for overridden emulator
+            classes).
 
         :raises: **TypeError** if neither *type_name* or keyword filters are
             provided.
 
+        .. seealso::
+            Tutorial Section :ref:`custom_emulators`
+
         """
+        if not isinstance(type_name, str) and issubclass(type_name, DBusIntrospectionObject):
+            type_name = type_name.__name__
+
         if type_name == "*" and not kwargs:
             raise TypeError("You must specify either a type name or a filter.")
 
@@ -378,7 +394,6 @@ class DBusIntrospectionObject(object):
             you are testing, you may get duplicate results using this method.
 
         :return: List (possibly empty) of class instances.
-
 
         """
         cls_name = cls.__name__
@@ -459,10 +474,12 @@ class DBusIntrospectionObject(object):
         path, state = dbus_tuple
         name = get_classname_from_path(path)
         try:
-            class_type = _object_registry[cls._Backend][name]
+            class_type = _object_registry[cls._id][name]
         except KeyError:
             logger.warning("Generating introspection instance for type '%s' based on generic class.", name)
-            class_type = type(str(name), (cls,), {})
+            # override the _id attr from cls, since we don't want generated types
+            # to end up in the object registry.
+            class_type = type(str(name), (cls,), {'_id':None})
         return class_type(state, path)
 
     @contextmanager
@@ -483,3 +500,32 @@ class DBusIntrospectionObject(object):
             yield
         finally:
             self.__refresh_on_attribute = True
+
+
+class _CustomEmulatorMeta(IntrospectableObjectMetaclass):
+
+    def __new__(cls, name, bases, d):
+        # only consider classes derived from CustomEmulatorBase
+        if name != 'CustomEmulatorBase':
+            # and only if they don't already have an Id set.
+            have_id = False
+            for base in bases:
+                if hasattr(base, '_id'):
+                    have_id = True
+                    break
+            if not have_id:
+                d['_id'] = uuid4()
+        return super(_CustomEmulatorMeta, cls).__new__(cls, name, bases, d)
+
+
+class CustomEmulatorBase(DBusIntrospectionObject):
+
+    """This class must be used as a base class for any custom emulators defined
+    within a test case.
+
+    .. seealso::
+        Tutorial Section :ref:`custom_emulators`
+            Information on how to write custom emulators.
+    """
+
+    __metaclass__ = _CustomEmulatorMeta

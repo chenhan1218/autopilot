@@ -426,6 +426,12 @@ Loading tests from: %s
             ))
 
         should_delete = not os.path.exists('/tmp/autopilot')
+        if should_delete:
+            self.addCleanup(remove_if_exists, "/tmp/autopilot")
+        else:
+            self.addCleanup(remove_if_exists, 
+                            '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv')
+
         code, output, error = self.run_autopilot(["run", "-r", "tests"])
 
         self.assertThat(code, Equals(1))
@@ -466,22 +472,23 @@ Loading tests from: %s
         self.create_test_file("test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
-
+            from time import sleep
 
             class SimpleTest(AutopilotTestCase):
 
                 def test_simple(self):
+                    sleep(1)
                     self.fail()
             """
             ))
-        video_dir = mktemp()
-        self.addCleanup(remove_if_exists, video_dir)
+        self.addCleanup(remove_if_exists,
+            '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv')
 
-        code, output, error = self.run_autopilot(["run", "-rd", video_dir, "tests"])
+        code, output, error = self.run_autopilot(["run", "tests"])
 
         self.assertThat(code, Equals(1))
-        self.assertFalse(os.path.exists(video_dir))
-        self.assertFalse(os.path.exists('%s/tests.test_simple.SimpleTest.test_simple.ogv' % (video_dir)))
+        self.assertFalse(os.path.exists(
+            '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv'))
 
     def test_runs_with_import_errors_fail(self):
         """Import errors inside a test must be considered a test failure."""

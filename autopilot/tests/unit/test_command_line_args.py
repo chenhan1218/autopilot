@@ -220,10 +220,6 @@ class CommandLineArgsTests(TestCase):
         args = self.parse_args("run --record foo")
         self.assertThat(args.record, Equals(True))
 
-    def test_run_command_record_dir_flag_default(self):
-        args = self.parse_args("run foo")
-        self.assertThat(args.record_directory, Equals("/tmp/autopilot"))
-
     def test_run_command_record_dir_flag_short(self):
         args = self.parse_args("run -rd /path/to/dir foo")
         self.assertThat(args.record_directory, Equals("/path/to/dir"))

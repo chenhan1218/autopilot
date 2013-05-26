@@ -90,7 +90,12 @@ def run_tests(args):
 
     import autopilot.globals
 
+    if args.record_directory:
+        args.record = True
+
     if args.record:
+        if not args.record_directory:
+            args.record_directory = '/tmp/autopilot'
         if subprocess.call(['which', 'recordmydesktop'], stdout=subprocess.PIPE) != 0:
             print "ERROR: The application 'recordmydesktop' needs to be installed to record failing jobs."
             exit(1)

@@ -40,6 +40,9 @@ def parse_arguments(argv=None):
     object.
     """
     parser = ArgumentParser(description="Autopilot test tool.")
+    parser.add_argument('-v', '--version', action='version',
+                        version=get_version_string(),
+                        help="Display autopilot version and exit.")
     subparsers = parser.add_subparsers(help='Run modes', dest="mode")
 
     parser_run = subparsers.add_parser('run', help="Run autopilot tests")
@@ -130,10 +133,10 @@ def have_vis():
 
 
 def get_version_string():
-    version_string = "Source Version: " + _get_source_version()
+    version_string = "Autopilot Source Version: " + _get_source_version()
     pkg_version = _get_package_version()
     if pkg_version:
-        version_string += "\nPackage Version: " + pkg_version
+        version_string += "\nAutopilot Package Version: " + pkg_version
     return version_string
 
 

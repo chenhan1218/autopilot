@@ -18,6 +18,7 @@
 #
 
 from argparse import ArgumentParser, REMAINDER, Action
+import subprocess
 
 version = '1.3'
 
@@ -126,3 +127,50 @@ def have_vis():
         return True
     except ImportError:
         return False
+
+
+def get_version_string():
+    version_string = "Source Version: " + _get_source_version()
+    pkg_version = _get_package_version()
+    if pkg_version:
+        version_string += "\nPackage Version: " + pkg_version
+    return version_string
+
+
+def _get_source_version():
+    return version
+
+
+def _get_package_version():
+    """Get the version of the currently installed package version, or None.
+
+    Only returns the package version if the package is installed, *and* we seem
+    to be running the system-wide installed code.
+    """
+    if _running_in_system():
+        return _get_package_installed_version()
+    return None
+
+
+def _running_in_system():
+    """Return True if we're running autopilot from the system installation dir."""
+    return __file__.startswith('/usr/')
+
+
+def _get_package_installed_version():
+    """Get the version string of the system-wide installed package, or None if it
+    is not installed.
+
+    """
+    try:
+        return subprocess.check_output(
+            [
+                "dpkg-query",
+                "--showformat",
+                "${Version}",
+                "--show",
+                "python-autopilot",
+                ]
+            ).strip()
+    except subprocess.CalledProcessError:
+        return None

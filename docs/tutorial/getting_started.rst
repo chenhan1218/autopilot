@@ -83,20 +83,125 @@ Autopilot will try and guess what type of application you are launching, and the
 
 See the documentation for :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application` for more details.
 
-What is a Proxy Object?
-=======================
+The return value from :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application` is a proxy object representing the root of the introspection tree of the application you just launched.
 
-.. TODO: Cover what the return of start_test_application is, and how it works. Draw a pretty diagram thing :)
+.. otto:: **What is a Proxy Object?**
+
+	Whenever you launch an application, autopilot gives you a "proxy object". These are instances of the :class:`~autopilot.introspection.DBusIntrospectionObject` class, with all the data from your application mirrored in the proxy object instances. For example, if you have a proxy object for a push button class (say, ``QPushButton``, for example), the proxy object will have attribute to match every attribute in the class within your application. Autopilot automatically keeps the data in these instances up to date, so you can use them in your test assertions.
+
+	User interfaces are made up of a tree of widgets, and autopilot represents these widgets as a tree of proxy objects. Proxy objects have a number of methods on them for selecting child objects in the introspection tree, so test authors can easily inspect the
 
 A Simple Test
 =============
 
-.. TODO: Write an initial test - something simple - perhaps read the application window title bar. Discuss the basics of how introspection works.
+To demonstrate the material covered so far, this selection will outline a simple application, and a single test for it. Instead of testing a third-party application, we will write the simplest possible application in Python and Qt4. The application, named 'testapp.py', is listed below::
+
+	#!/usr/bin/env python
+
+	from PyQt4 import QtGui
+	from sys import argv
+
+	def main():
+		app = QtGui.QApplication(argv)
+		win = QtGui.QMainWindow()
+		win.show()
+		win.setWindowTitle("Hello World")
+		app.exec_()
+
+	if __name__ == '__main__':
+		main()
+
+As you can see, this is a trivial application, but it serves our purpose. We will write a single autopilot test that asserts that the title of the main window is equal to the string "Hello World". Our test file is named "test_window.py", and contains the following code::
+
+	from autopilot.testcase import AutopilotTestCase
+	from os.path import abspath, dirname, join
+	from testtools.matchers import Equals
+
+	class MainWindowTitleTests(AutopilotTestCase):
+
+	    def launch_application(self):
+	        """Work out the full path to the application and launch it.
+
+	        This is necessary since our test application will not be in $PATH.
+
+	        :returns: The application proxy object.
+
+	        """
+	        full_path = abspath(join(dirname(__file__), '..', '..', 'testapp.py'))
+	        return self.launch_test_application(full_path, app_type='qt')
+
+	    def test_main_window_title_string(self):
+	        """The main window title must be 'Hello World'."""
+	        app_root = self.launch_application()
+	        main_window = app_root.select_single('QMainWindow')
+
+	        self.assertThat(main_window.windowTitle, Equals("Hello World"))
+
+
+Note that we have made the test method as readable as possible by hiding the complexities of finding the full path to the application we want to test. Of course, if you can guarantee that the application is in :envvar:`PATH`, then this step becomes a lot simpler.
+
+The entire directory structure looks like this::
+
+	./example/__init__.py
+	./example/tests/__init__.py
+	./example/tests/test_window.py
+	./testapp.py
+
+The ``__init__.py`` files are empty, and are needed to make these directories importable by python.
 
 Running Autopilot
 +++++++++++++++++
 
-.. TODO: A quick example of how to run this test, with a link to the larger and more complete section on using the autopilot command line utility.
+From the root of this directory structure, we can ask autopilot to list all the tests it can find::
+
+	$ autopilot list example
+	Loading tests from: /home/thomi/code/canonical/autopilot/example_test
+
+	    example.tests.test_window.MainWindowTitleTests.test_main_window_title_string
+
+
+	 1 total tests.
+
+Note that on the first line, autopilot will tell you where it has loaded the test definitions from. Autopilot will look in the current directory for a python package that matches the package name specified on the command line. If it does not find nay suitable packages, it will look in the standard python module search path instead.
+
+To run our test, we use the autopilot 'run' command::
+
+	$ autopilot run example
+	Loading tests from: /home/thomi/code/canonical/autopilot/example_test
+
+	Tests running...
+
+	Ran 1 test in 2.342s
+	OK
+
+You will notice that the test application launches, and then dissapears shortly afterwards. Since this test doesn't manipulate the application in any way, this is a rather boring test to look at. If you ever want more output from the run command, you may specify the '-v' flag::
+
+	$ autopilot run -v example
+	Loading tests from: /home/thomi/code/canonical/autopilot/example_test
+
+	Tests running...
+	13:41:11.614 INFO globals:49 - ************************************************************
+	13:41:11.614 INFO globals:50 - Starting test example.tests.test_window.MainWindowTitleTests.test_main_window_title_string
+	13:41:11.693 INFO __init__:136 - Launching process: ['/home/thomi/code/canonical/autopilot/example_test/testapp.py', '-testability']
+	13:41:11.699 INFO __init__:169 - Looking for autopilot interface for PID 12013 (and children)
+	13:41:11.727 WARNING __init__:185 - Caught exception while searching for autopilot interface: 'DBusException("Could not get PID of name 'org.freedesktop.DBus': no such name",)'
+	13:41:12.773 WARNING __init__:185 - Caught exception while searching for autopilot interface: 'DBusException("Could not get PID of name 'org.freedesktop.DBus': no such name",)'
+	13:41:12.848 WARNING __init__:185 - Caught exception while searching for autopilot interface: 'RuntimeError("Could not find Autopilot interface on DBus backend '<session bus :1.5967 /com/canonical/Autopilot/Introspection>'",)'
+	13:41:12.852 WARNING __init__:185 - Caught exception while searching for autopilot interface: 'RuntimeError("Could not find Autopilot interface on DBus backend '<session bus :1.5968 /com/canonical/Autopilot/Introspection>'",)'
+	13:41:12.863 WARNING dbus:464 - Generating introspection instance for type 'Root' based on generic class.
+	13:41:12.864 DEBUG dbus:338 - Selecting objects of type QMainWindow with attributes: {}
+	13:41:12.871 WARNING dbus:464 - Generating introspection instance for type 'QMainWindow' based on generic class.
+	13:41:12.886 INFO testcase:380 - waiting for process to exit.
+	13:41:13.983 INFO testresult:35 - OK: example.tests.test_window.MainWindowTitleTests.test_main_window_title_string
+
+	Ran 1 test in 2.370s
+	OK
+
+You may also specify '-v' twice for even more output (this is rarely useful for test authors however).
+
+Both the 'list' and 'run' commands take a test id as an argument. You may be as generic, or as specific as you like. In the examples above, we will list and run all tests in the 'example' package (i.e.- all tests), but we could specify a more specific run criteria if we only wanted to run some of the tests. For example, to only run the single test we've written, we can execute::
+
+	$ autopilot run example.tests.test_window.MainWindowTitleTests.test_main_window_title_string
 
 A Test with Interaction
 =======================

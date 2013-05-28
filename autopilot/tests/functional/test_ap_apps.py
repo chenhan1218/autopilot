@@ -66,9 +66,10 @@ class QtTests(ApplicationTests):
         super(QtTests, self).setUp()
 
         try:
-            self.app_path = subprocess.check_output(['which','qmlscene']).strip()
+            self.app_path = subprocess.check_output(['which','qmlviewer']).strip()
         except subprocess.CalledProcessError:
-            self.skip("qmlscene not found.")
+            self.skip("qmlviewer not found.")
+        self.patch_environment("QT_SELECT", "qt4")
 
     def test_can_launch_qt_app(self):
         app_proxy = self.launch_test_application(self.app_path, app_type='qt')

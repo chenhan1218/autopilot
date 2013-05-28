@@ -195,4 +195,41 @@ class _CleanupWrapper(object):
         self._test_instance = None
 
 
+class _FinalCleanupWrapper(object):
+    """Support for having a final cleanup (i.e. after all the test cleanups)."""
+
+    def __init__(self):
+        self._test_instance = None
+        self._final_calls = []
+
+    def __call__(self, callable, *args, **kwargs):
+        self._final_calls.append((callable, args, kwargs))
+
+    def _final_cleanup(self):
+        """Execute all final cleanup functions. (copied from
+        unittest.TestCase)"""
+
+        result = self._test_instance._resultForDoCleanups
+        ok = True
+        while self._final_calls:
+            function, args, kwargs = self._final_calls.pop(-1)
+            try:
+                function(*args, **kwargs)
+            except KeyboardInterrupt:
+                raise
+            except:
+                ok = False
+                result.addError(self, sys.exc_info())
+        return ok
+
+    def set_test_instance(self, test_instance):
+        self._test_instance = test_instance
+        self._test_instance.addCleanup(self._on_test_ended)
+        self._test_instance.addCleanup(self._final_cleanup)
+
+    def _on_test_ended(self):
+        self._test_instance = None
+
+
 addCleanup = _CleanupWrapper()
+addFinalCleanup = _FinalCleanupWrapper()

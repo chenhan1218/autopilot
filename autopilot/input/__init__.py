@@ -53,7 +53,7 @@ can use either a mouse of a touch device.
 """
 
 from collections import OrderedDict
-from autopilot.utilities import _pick_backend, addCleanup
+from autopilot.utilities import _pick_backend, addFinalCleanup
 from autopilot.input._common import get_center_point
 
 
@@ -70,7 +70,7 @@ class Keyboard(object):
     def __init__(self):
         if hasattr(self, 'cleanup') and callable(self.cleanup):
             try:
-                addCleanup(self.cleanup)
+                addFinalCleanup(self.cleanup)
             except:
                 pass
 

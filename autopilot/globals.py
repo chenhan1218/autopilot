@@ -25,7 +25,7 @@ from testtools.content import text_content
 import subprocess
 import os.path
 import logging
-from autopilot.utilities import addCleanup
+from autopilot.utilities import addCleanup, addFinalCleanup
 
 logger = logging.getLogger(__name__)
 
@@ -166,7 +166,7 @@ def configure_video_recording(enable_recording, record_dir):
         _on_test_started_call.append(recorder)
 
 
-_on_test_started_call = [addCleanup.set_test_instance]
+_on_test_started_call = [addFinalCleanup.set_test_instance, addCleanup.set_test_instance]
 
 def on_test_started(test_case_instance):
     global _on_test_started_call

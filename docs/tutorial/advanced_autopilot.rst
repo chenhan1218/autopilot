@@ -3,6 +3,52 @@ Advanced Autopilot Features
 
 This document covers advanced features in autopilot.
 
+.. _cleaning-up:
+
+Cleaning Up
+===========
+
+It is vitally important that every test you run leaves the system in exactly the same state as it found it. This means that:
+
+* Any files written to disk need to be removed.
+* Any environment variables set during the test run need to be un-set.
+* Any applications opened during the test run need to be closed again.
+* Any :class:`~autopilot.input.Keyboard` keys pressed during the test need to be released again.
+
+All of the methods on :class:`~autopilot.testcase.AutopilotTestCase` that alter the system state will automatically revert those changes at the end of the test. Similarly, the various input devices will release any buttons or keys that were pressed during the test. However, for all other changes, it is the responsibility of the test author to clean up those changes.
+
+For example, a test might require that a file with certain content be written to disk at the start of the test. The test case might look something like this::
+
+    class MyTests(AutopilotTestCase):
+
+        def make_data_file(self):
+            open('/tmp/datafile', 'w').write("Some data...")
+
+        def test_application_opens_data_file(self):
+            """Our application must be able to open a data file from disk."""
+            self.make_data_file()
+            # rest of the test code goes here
+
+However this will leave the :file:`/tmp/datafile` on disk after the test has finished. To combat this, use the :meth:`addCleanup` method. The arguments to :meth:`addCleanup` are a callable, and then zero or more positional or keyword arguments. The Callable will be called with the positional and keyword arguments after the test has ended.
+
+Cleanup actions are called in the reverse order in which they are added, and are called regardless of whether the test passed, failed, or raised an uncaught exception. To fix the above test, we might write something similar to::
+
+    import os
+
+
+    class MyTests(AutopilotTestCase):
+
+        def make_data_file(self):
+            open('/tmp/datafile', 'w').write("Some data...")
+            self.addCleanup(os.remove, '/tmp/datafile')
+
+        def test_application_opens_data_file(self):
+            """Our application must be able to open a data file from disk."""
+            self.make_data_file()
+            # rest of the test code goes here
+
+Note that by having the code to generate the ``/tmp/datafile`` file on disk in a separate method, the test itself can ignore the fact that these resources need to be cleaned up. This makes the tests cleaner and easier to read.
+
 Test Scenarios
 ==============
 

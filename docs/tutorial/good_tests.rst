@@ -5,6 +5,47 @@ This document is an introduction to writing good autopilot tests. This should be
 
 Several points in this document are written with respect to the unity autopilot test suite. This is incidental, and doesn't mean that these points do not apply to other test suites!
 
+.. _write-expressive-tests:
+
+Write Expressive Tests
+++++++++++++++++++++++
+
+Unit tests are often used as a reference for how your public API should be used. Functional (Autopilot) tests are no different: they can be used to figure out how your application should work from a functional standpoint. However, this only works if your tests are written in a clear, concise, and most importantly expressive style. There are many things you can do to make your tests easier to read:
+
+**Pick Good Test Case Class Names**
+
+Pick a name that encapsulates all the tests in the class, but is as specific as possible. If necessary, break your tests into several classes, so your class names can be more specific. This is important because when a test fails, the test id is the primary means of identifying the failure. The more descriptive the test id is, the easier it is to find the fault and fix the test.
+
+**Pick Good Test Case Method Names**
+
+Similar to picking good test case class names, picking good method names makes your test id more descriptive. We recommend writing very long test method names, for example:
+
+.. code-block:: python
+
+    # bad example:
+    def test_save_dialog(self):
+        # test goes here
+
+    # better example:
+    def test_save_dialog_can_cancel(self):
+        # test goes here
+
+    # best example:
+    def test_save_dialog_cancels_on_escape_key(self):
+        # test goes here
+
+**Write Docstrings**
+
+You should write docstrings for your tests. Often the test method is enough to describe what the test does, but an English description is still useful when reading the test code. For example:
+
+.. code-block:: python
+
+    def test_save_dialog_cancels_on_escape_key(self):
+        """The Save dialog box must cancel when the escape key is pressed."""
+
+We recommend following :pep:`257` when writing all docstrings.
+
+
 Test One Thing Only
 +++++++++++++++++++
 

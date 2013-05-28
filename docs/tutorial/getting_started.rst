@@ -39,7 +39,7 @@ Autopilot tests follow a similar pattern to other python test libraries: you mus
 
 .. otto:: **Make your tests expressive!**
 
-	It's important to make sure that your tests express your *intent* as clearly as possible. We recommend choosing long, descriptive names for test functions and classes (even breaking PEP8, if you need to), and give your tests a detailed docstring explaining exactly what you are trying to test. For more detailed advice on this point, see :ref:`write-expressive-tests`
+	It's important to make sure that your tests express your *intent* as clearly as possible. We recommend choosing long, descriptive names for test functions and classes (even breaking :pep:`8`, if you need to), and give your tests a detailed docstring explaining exactly what you are trying to test. For more detailed advice on this point, see :ref:`write-expressive-tests`
 
 The Setup Phase
 ===============
@@ -89,7 +89,7 @@ The return value from :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_a
 
 	Whenever you launch an application, autopilot gives you a "proxy object". These are instances of the :class:`~autopilot.introspection.DBusIntrospectionObject` class, with all the data from your application mirrored in the proxy object instances. For example, if you have a proxy object for a push button class (say, ``QPushButton``, for example), the proxy object will have attribute to match every attribute in the class within your application. Autopilot automatically keeps the data in these instances up to date, so you can use them in your test assertions.
 
-	User interfaces are made up of a tree of widgets, and autopilot represents these widgets as a tree of proxy objects. Proxy objects have a number of methods on them for selecting child objects in the introspection tree, so test authors can easily inspect the
+	User interfaces are made up of a tree of widgets, and autopilot represents these widgets as a tree of proxy objects. Proxy objects have a number of methods on them for selecting child objects in the introspection tree, so test authors can easily inspect the parts of the UI tree they care about.
 
 A Simple Test
 =============

@@ -1,3 +1,25 @@
+autopilot (1.3daily13.05.29ubuntu.unity.next-0ubuntu1) raring; urgency=low
+
+  [ Thomi Richards ]
+  * Define a method for defining custom emulator base classes.
+  * Add more documentation (basic tutorial).
+  * Add a -v, --version command line option. (LP: #1183700)
+  * Add python-evdev dependency to autopilot-desktop. (LP: #1183955)
+
+  [ chris.gagnon ]
+  * don't delete the /tmp/autopilot folder during functional tests if it
+    already exists lp:1182755. (LP: #1182755)
+  * don't require -r if -rd is used fixes lp:1183618. (LP: #1183618)
+
+  [ Łukasz 'sil2100' Zemczak ]
+  * I think we should use qmlviewer instead of qmlscene in tests of
+    autopilot - it's safer, as other qt tests use Qt4 anyway.
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 226 (ubuntu-unity/next)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 29 May 2013 00:02:21 +0000
+
 autopilot (1.3daily13.05.23ubuntu.unity.next-0ubuntu1) raring; urgency=low
 
   [ Thomi Richards ]

@@ -214,8 +214,8 @@ class _metaclass_that_register(type):
     def __new__(cls, classname, bases, classdict):
         print "~~~ I have: %s" % classname
         class_object = type.__new__(cls, classname, bases, classdict)
-
         if _has_required_methods(class_object):
+            print "Appending: %s" % classname
             _cleanup_objects.append(class_object)
 
         return class_object

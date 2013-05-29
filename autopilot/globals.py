@@ -20,23 +20,36 @@
 
 from __future__ import absolute_import
 from StringIO import StringIO
-from autopilot.utilities import LogFormatter
+from autopilot.utilities import LogFormatter, BaseClassForCleanup
 from testtools.content import text_content
 import subprocess
 import os.path
 import logging
-from autopilot.utilities import addCleanup
+from autopilot.utilities import addCleanup, action_on_test_start, action_on_test_end
+
 
 logger = logging.getLogger(__name__)
 
 
 # if set to true, autopilot will output all pythong logging to stderr
 __log_verbose = False
+__enable_recording = False
+__recording_dir = ''
 
 def get_log_verbose():
     """Returns true if the user asked for verbose logging."""
     global __log_verbose
     return __log_verbose
+
+
+def _get_video_record():
+    global __enable_recording
+    return __enable_recording
+
+
+def _get_video_record_dir():
+    global __recording_dir
+    return __recording_dir
 
 
 class _TestLogger(object):
@@ -77,9 +90,6 @@ def set_log_verbose(verbose):
         raise TypeError("Verbose flag must be a boolean.")
     global __log_verbose
     __log_verbose = verbose
-    if verbose:
-        logger = _TestLogger()
-        _on_test_started_call.append(logger)
 
 
 class _VideoCaptureTestCase(object):
@@ -161,15 +171,37 @@ def configure_video_recording(enable_recording, record_dir):
     if not isinstance(record_dir, basestring):
         raise TypeError("record_dir must be a string.")
 
-    if enable_recording:
-        recorder = _VideoCaptureTestCase(record_dir)
-        _on_test_started_call.append(recorder)
+    global __enable_recording
+    __enable_recording = enable_recording
+
+    global __recording_dir
+    __recording_dir = record_dir
 
 
-_on_test_started_call = [addCleanup.set_test_instance]
+class _VideoCaptureTestCaseAdapter(BaseClassForCleanup):
+    @classmethod
+    def on_test_start(cls, test_instance):
+        if _get_video_record():
+            logger = _VideoCaptureTestCase(_get_video_record_dir())        # Cache this?
+            logger(test_instance)
+
+    @classmethod
+    def on_test_end(cls, test_instance):
+        pass
+
+
+class _TestLoggerAdapter(BaseClassForCleanup):
+    @classmethod
+    def on_test_start(cls, test_instance):
+        if get_log_verbose():
+            logger = _TestLogger()        # Cache this?
+            logger(test_instance)
+
+    @classmethod
+    def on_test_end(cls, test_instance):
+        pass
+
 
 def on_test_started(test_case_instance):
-    global _on_test_started_call
-    for fun in _on_test_started_call:
-        fun(test_case_instance)
-
+    test_case_instance.addCleanup(action_on_test_end, test_case_instance)
+    action_on_test_start(test_case_instance)

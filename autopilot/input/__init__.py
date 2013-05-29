@@ -53,12 +53,12 @@ can use either a mouse of a touch device.
 """
 
 from collections import OrderedDict
-from autopilot.utilities import _pick_backend, addCleanup
+from autopilot.utilities import _pick_backend, BaseClassForCleanup
 from autopilot.input._common import get_center_point
 
 
 
-class Keyboard(object):
+class Keyboard(BaseClassForCleanup):
 
     """A simple keyboard device class.
 
@@ -67,12 +67,6 @@ class Keyboard(object):
     instance of the keyboard class, call :py:meth:`create` instead.
 
     """
-    def __init__(self):
-        if hasattr(self, 'cleanup') and callable(self.cleanup):
-            try:
-                addCleanup(self.cleanup)
-            except:
-                pass
 
     @staticmethod
     def create(preferred_backend=''):

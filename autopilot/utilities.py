@@ -212,10 +212,8 @@ _cleanup_objects = []
 class _metaclass_that_register(type):
     """Metaclass to inject the object into on test start/end functionality"""
     def __new__(cls, classname, bases, classdict):
-        print "~~~ I have: %s" % classname
         class_object = type.__new__(cls, classname, bases, classdict)
         if _has_required_methods(class_object):
-            print "Appending: %s" % classname
             _cleanup_objects.append(class_object)
 
         return class_object
@@ -233,3 +231,9 @@ def action_on_test_start(test_instance):
 def action_on_test_end(test_instance):
     for obj in _cleanup_objects:
         obj.on_test_end(test_instance)
+
+
+def on_test_started(test_case_instance):
+    test_case_instance.addCleanup(action_on_test_end, test_case_instance)
+    action_on_test_start(test_case_instance)
+    addCleanup.set_test_instance(test_case_instance)

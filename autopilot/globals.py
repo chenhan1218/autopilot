@@ -25,7 +25,6 @@ from testtools.content import text_content
 import subprocess
 import os.path
 import logging
-from autopilot.utilities import addCleanup, action_on_test_start, action_on_test_end
 
 
 logger = logging.getLogger(__name__)
@@ -201,7 +200,3 @@ class _TestLoggerAdapter(BaseClassForCleanup):
     def on_test_end(cls, test_instance):
         pass
 
-
-def on_test_started(test_case_instance):
-    test_case_instance.addCleanup(action_on_test_end, test_case_instance)
-    action_on_test_start(test_case_instance)

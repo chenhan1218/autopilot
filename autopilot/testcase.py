@@ -68,7 +68,7 @@ from autopilot.introspection import (
     launch_application,
     )
 from autopilot.display import Display
-from autopilot.globals import on_test_started
+from autopilot.utilities import on_test_started
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
 try:

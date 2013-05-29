@@ -21,8 +21,7 @@
 from testtools import TestCase
 from testtools.matchers import Equals
 
-from autopilot.globals import on_test_started
-from autopilot.utilities import addCleanup
+from autopilot.utilities import addCleanup, on_test_started
 
 log = ''
 

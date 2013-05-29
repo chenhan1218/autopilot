@@ -62,14 +62,57 @@ AutopilotTestCase.pick_app_launcher method."
 
 class QtTests(ApplicationTests):
 
+    def _find_qt_binary_chooser(self, version, name):
+        # Check for existence of the binary when qtchooser is installed
+        # We cannot use 'which', as qtchooser installs wrappers - we need to check
+        # in the actual library paths
+        env = subprocess.check_output(['qtchooser', '-qt=' + version, '-print-env']).split('\n')
+        for i in env:
+            if i.find('QTTOOLDIR') >= 0:
+                path = i.lstrip("QTTOOLDIR=").strip('"') + "/" + name
+                if os.path.exists(path):
+                    return path
+                return None
+        return None
+
+    def _find_qt_binary_old(self, version, name):
+        # Check for the existence of the binary the old way
+        try:
+            path = subprocess.check_output(['which','qmlviewer']).strip()
+        except subprocess.CalledProcessError:
+            path = None
+        return path
+
+
     def setUp(self):
         super(QtTests, self).setUp()
 
         try:
-            self.app_path = subprocess.check_output(['which','qmlviewer']).strip()
-        except subprocess.CalledProcessError:
-            self.skip("qmlviewer not found.")
-        self.patch_environment("QT_SELECT", "qt4")
+            qtversions = subprocess.check_output(['qtchooser', '-list-versions']).split('\n')
+            check_func = self._find_qt_binary_chooser
+        except OSError:
+            # This means no qtchooser is installed, so let's check for qmlviewer
+            # and qmlscene manually, the old way
+            qtversions = ['qt4', 'qt5']
+            check_func = self._find_qt_binary_old
+
+        not_found = True
+        if 'qt4' in qtversions:
+            path = check_func('qt4', 'qmlviewer')
+            if path:
+                not_found = False
+                self.app_path = path
+                self.patch_environment("QT_SELECT", "qt4")
+
+        if 'qt5' in qtversions:
+            path = check_func('qt5', 'qmlscene')
+            if path:
+                not_found = False
+                self.app_path = path
+                self.patch_environment("QT_SELECT", "qt5")
+
+        if not_found:
+            self.skip("Neither qmlviewer nor qmlscene is installed")
 
     def test_can_launch_qt_app(self):
         app_proxy = self.launch_test_application(self.app_path, app_type='qt')

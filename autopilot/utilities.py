@@ -209,7 +209,7 @@ def _has_required_methods(obj):
 _cleanup_objects = []
 
 
-class _metaclass_that_register(type):
+class _register_for_cleanup(type):
     """Metaclass to inject the object into on test start/end functionality"""
     def __new__(cls, classname, bases, classdict):
         class_object = type.__new__(cls, classname, bases, classdict)
@@ -219,8 +219,8 @@ class _metaclass_that_register(type):
         return class_object
 
 
-class BaseClassForCleanup(object):
-    __metaclass__ = _metaclass_that_register
+class CleanupRegistered(object):
+    __metaclass__ = _register_for_cleanup
 
 
 def action_on_test_start(test_instance):

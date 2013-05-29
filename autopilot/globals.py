@@ -20,7 +20,7 @@
 
 from __future__ import absolute_import
 from StringIO import StringIO
-from autopilot.utilities import LogFormatter, BaseClassForCleanup
+from autopilot.utilities import LogFormatter, CleanupRegistered
 from testtools.content import text_content
 import subprocess
 import os.path
@@ -177,7 +177,7 @@ def configure_video_recording(enable_recording, record_dir):
     __recording_dir = record_dir
 
 
-class _VideoCaptureTestCaseAdapter(BaseClassForCleanup):
+class _VideoCaptureTestCaseAdapter(CleanupRegistered):
     @classmethod
     def on_test_start(cls, test_instance):
         if _get_video_record():
@@ -189,7 +189,7 @@ class _VideoCaptureTestCaseAdapter(BaseClassForCleanup):
         pass
 
 
-class _TestLoggerAdapter(BaseClassForCleanup):
+class _TestLoggerAdapter(CleanupRegistered):
     @classmethod
     def on_test_start(cls, test_instance):
         if get_log_verbose():

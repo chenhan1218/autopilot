@@ -22,7 +22,7 @@ from testtools import TestCase
 from testtools.matchers import Equals, NotEquals
 from mock import patch
 
-from autopilot.utilities import BaseClassForCleanup, _cleanup_objects
+from autopilot.utilities import CleanupRegistered, _cleanup_objects
 from autopilot.testcase import AutopilotTestCase
 
 
@@ -32,20 +32,20 @@ calling_test = None
 class StartFinalExecutionTests(TestCase):
 
     def test_nonconformant_class_isnt_added(self):
-        class MyNonconformant(BaseClassForCleanup):
+        class MyNonconformant(CleanupRegistered):
             """This class doesn't define the required classmethods"""
             pass
 
         self.assertFalse(type(MyNonconformant()) in _cleanup_objects)
 
     def test_half_conformant_class_not_added(self):
-        class HalfConformantStart(BaseClassForCleanup):
+        class HalfConformantStart(CleanupRegistered):
             """This class only on_test_start required classmethod"""
             @classmethod
             def on_test_start(cls, test_instance):
                 pass
 
-        class HalfConformantEnd(BaseClassForCleanup):
+        class HalfConformantEnd(CleanupRegistered):
             """This class only on_test_end required classmethod"""
             @classmethod
             def on_test_End(cls, test_instance):
@@ -55,7 +55,7 @@ class StartFinalExecutionTests(TestCase):
         self.assertFalse(type(HalfConformantEnd()) in _cleanup_objects)
 
     def test_conformant_class_is_added(self):
-        class Conformant(BaseClassForCleanup):
+        class Conformant(CleanupRegistered):
             """This class does define the required classmethods"""
             @classmethod
             def on_test_start(cls, test_instance):
@@ -68,7 +68,7 @@ class StartFinalExecutionTests(TestCase):
         self.assertTrue(type(Conformant()) in _cleanup_objects)
 
     def test_on_test_start_and_end_methods_called(self):
-        class Conformant(BaseClassForCleanup):
+        class Conformant(CleanupRegistered):
             """This class defines the required classmethods"""
             @classmethod
             def on_test_start(cls, test_instance):

@@ -53,12 +53,12 @@ can use either a mouse of a touch device.
 """
 
 from collections import OrderedDict
-from autopilot.utilities import _pick_backend, BaseClassForCleanup
+from autopilot.utilities import _pick_backend, CleanupRegistered
 from autopilot.input._common import get_center_point
 
 
 
-class Keyboard(BaseClassForCleanup):
+class Keyboard(CleanupRegistered):
 
     """A simple keyboard device class.
 

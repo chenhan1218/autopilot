@@ -195,41 +195,41 @@ class _CleanupWrapper(object):
         self._test_instance = None
 
 
-class _FinalCleanupWrapper(object):
-    """Support for having a final cleanup (i.e. after all the test cleanups)."""
-
-    def __init__(self):
-        self._test_instance = None
-        self._final_calls = []
-
-    def __call__(self, callable, *args, **kwargs):
-        self._final_calls.append((callable, args, kwargs))
-
-    def _final_cleanup(self):
-        """Execute all final cleanup functions. (copied from
-        unittest.TestCase)"""
-
-        result = self._test_instance._resultForDoCleanups
-        ok = True
-        while self._final_calls:
-            function, args, kwargs = self._final_calls.pop(-1)
-            try:
-                function(*args, **kwargs)
-            except KeyboardInterrupt:
-                raise
-            except:
-                ok = False
-                result.addError(self, sys.exc_info())
-        return ok
-
-    def set_test_instance(self, test_instance):
-        self._test_instance = test_instance
-        self._test_instance.addCleanup(self._on_test_ended)
-        self._test_instance.addCleanup(self._final_cleanup)
-
-    def _on_test_ended(self):
-        self._test_instance = None
-
-
 addCleanup = _CleanupWrapper()
-addFinalCleanup = _FinalCleanupWrapper()
+
+
+def _callable_attr(obj, attr):
+    return hasattr(obj, attr) and callable(getattr(obj, attr, None))
+
+
+def _has_required_methods(obj):
+    return _callable_attr(obj, 'on_test_start') and _callable_attr(obj, 'on_test_end')
+
+
+_cleanup_objects = []
+
+
+class _metaclass_that_register(type):
+    """Metaclass to inject the object into on test start/end functionality"""
+    def __new__(cls, classname, bases, classdict):
+        print "~~~ I have: %s" % classname
+        class_object = type.__new__(cls, classname, bases, classdict)
+
+        if _has_required_methods(class_object):
+            _cleanup_objects.append(class_object)
+
+        return class_object
+
+
+class BaseClassForCleanup(object):
+    __metaclass__ = _metaclass_that_register
+
+
+def action_on_test_start(test_instance):
+    for obj in _cleanup_objects:
+        obj.on_test_start(test_instance)
+
+
+def action_on_test_end(test_instance):
+    for obj in _cleanup_objects:
+        obj.on_test_end(test_instance)

@@ -201,7 +201,7 @@ addCleanup = _CleanupWrapper()
 _cleanup_objects = []
 
 
-class _register_for_cleanup(type):
+class _TestCleanupMeta(type):
     """Metaclass to inject the object into on test start/end functionality"""
     def __new__(cls, classname, bases, classdict):
         class EmptyStaticMethod(object):
@@ -223,17 +223,16 @@ class _register_for_cleanup(type):
             'on_test_end': EmptyStaticMethod(),
         }
 
-        new_classdict = default_methods.copy()
-        new_classdict.update(classdict)
+        default_methods.update(classdict)
 
-        class_object = type.__new__(cls, classname, bases, new_classdict)
+        class_object = type.__new__(cls, classname, bases, default_methods)
         _cleanup_objects.append(class_object)
 
         return class_object
 
 
 class CleanupRegistered(object):
-    __metaclass__ = _register_for_cleanup
+    __metaclass__ = _TestCleanupMeta
 
 
 def action_on_test_start(test_instance):

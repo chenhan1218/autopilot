@@ -30,35 +30,31 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-# if set to true, autopilot will output all pythong logging to stderr
-__log_verbose = False
-__enable_recording = False
-
 def get_log_verbose():
     """Returns true if the user asked for verbose logging."""
-    global __log_verbose
-    return __log_verbose
-
-
-def _get_video_record():
-    global __enable_recording
-    return __enable_recording
+    return _test_logger._log_verbose
 
 
 class _TestLogger(CleanupRegistered):
     """A class that handles adding test logs as test result content."""
 
+    def __init__(self):
+        self._log_verbose = False
+
     def __call__(self, test_instance):
         self._setUpTestLogging(test_instance)
-        if get_log_verbose():
+        if self._log_verbose:
             global logger
             logger.info("*" * 60)
             logger.info("Starting test %s", test_instance.shortDescription())
 
     @classmethod
     def on_test_start(cls, test_instance):
-        if get_log_verbose():
+        if _test_logger._log_verbose:
             _test_logger(test_instance)
+
+    def log_verbose(self, verbose):
+        self._log_verbose = verbose
 
     def _setUpTestLogging(self, test_instance):
         self._log_buffer = StringIO()
@@ -89,11 +85,10 @@ def set_log_verbose(verbose):
 
     if type(verbose) is not bool:
         raise TypeError("Verbose flag must be a boolean.")
-    global __log_verbose
-    __log_verbose = verbose
+    _test_logger.log_verbose(verbose)
 
 
-class _VideoCaptureTestCase(CleanupRegistered):
+class _VideoLogger(CleanupRegistered):
     """Video capture autopilot tests, saving the results if the test failed."""
 
     _recording_app = '/usr/bin/recordmydesktop'
@@ -110,8 +105,11 @@ class _VideoCaptureTestCase(CleanupRegistered):
 
     @classmethod
     def on_test_start(cls, test_instance):
-        if _get_video_record():
-            _video_capture_test(test_instance)
+        if _video_logger._enable_recording:
+            _video_logger(test_instance)
+
+    def enable_recording(self, enable_recording):
+        self._enable_recording = enable_recording
 
     def set_recording_dir(self, directory):
         self.recording_directory = directory
@@ -165,7 +163,7 @@ class _VideoCaptureTestCase(CleanupRegistered):
         self._test_passed = False
 
 
-_video_capture_test = _VideoCaptureTestCase()
+_video_logger = _VideoLogger()
 
 
 def configure_video_recording(enable_recording, record_dir):
@@ -180,8 +178,6 @@ def configure_video_recording(enable_recording, record_dir):
     if not isinstance(record_dir, basestring):
         raise TypeError("record_dir must be a string.")
 
-    global __enable_recording
-    __enable_recording = enable_recording
-
-    _video_capture_test.set_recording_dir(record_dir)
+    _video_logger.enable_recording(enable_recording)
+    _video_logger.set_recording_dir(record_dir)
 

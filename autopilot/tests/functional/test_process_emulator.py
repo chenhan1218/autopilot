@@ -96,6 +96,8 @@ class ProcessManagerApplicationNoCleanupTests(TestCase):
                 pass
             def shortDescription(self):
                 pass
+            def _report_traceback(self, arg):
+                pass
         super(ProcessManagerApplicationNoCleanupTests, self).setUp()
         on_test_started(FakeTestCase())
 

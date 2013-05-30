@@ -19,7 +19,7 @@
 
 
 from testtools import TestCase
-from testtools.matchers import Equals, NotEquals, Contains
+from testtools.matchers import Equals, Contains
 from mock import patch, Mock
 
 from autopilot.utilities import (

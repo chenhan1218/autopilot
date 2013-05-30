@@ -429,7 +429,7 @@ Loading tests from: %s
         if should_delete:
             self.addCleanup(remove_if_exists, "/tmp/autopilot")
         else:
-            self.addCleanup(remove_if_exists, 
+            self.addCleanup(remove_if_exists,
                             '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv')
 
         code, output, error = self.run_autopilot(["run", "-r", "tests"])
@@ -438,7 +438,7 @@ Loading tests from: %s
         self.assertTrue(os.path.exists('/tmp/autopilot'))
         self.assertTrue(os.path.exists('/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv'))
         if should_delete:
-            self.addCleanup(remove_if_exists, "/tmp/autopilot") 
+            self.addCleanup(remove_if_exists, "/tmp/autopilot")
 
     def test_record_dir_option_works(self):
         """Must be able to specify record directory flag."""

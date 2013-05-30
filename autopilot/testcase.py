@@ -155,14 +155,12 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
     def keyboard(self):
         if self._kb is None:
             self._kb = Keyboard.create()
-            self.addCleanup(self._kb.cleanup)
         return self._kb
 
     @property
     def mouse(self):
         if self._mouse is None:
             self._mouse = Mouse.create()
-            self.addCleanup(self._mouse.cleanup)
         return self._mouse
 
     @property

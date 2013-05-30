@@ -19,18 +19,19 @@
 
 
 from testtools import TestCase
-from testtools.matchers import Equals, NotEquals
-from mock import patch
+from testtools.matchers import Equals, NotEquals, Contains
+from mock import patch, Mock
 
-from autopilot.utilities import CleanupRegistered, _cleanup_objects
+from autopilot.utilities import (
+    CleanupRegistered,
+    _cleanup_objects,
+    action_on_test_start,
+    action_on_test_end,
+    )
 from autopilot.testcase import AutopilotTestCase
 
 
 calling_test = None
-_on_start_test = False
-_on_end_test = False
-
-_should_throw_exception = False
 
 class StartFinalExecutionTests(TestCase):
 
@@ -38,38 +39,25 @@ class StartFinalExecutionTests(TestCase):
         class Conformant(CleanupRegistered):
             pass
 
-        self.assertTrue(Conformant in _cleanup_objects)
-
-    def test_not_defining_class_methods_doesnt_except(self):
-        class Conformant(CleanupRegistered):
-            """This class defines the required classmethods"""
-
-        class InnerTest(AutopilotTestCase):
-            def test_foo(self):
-                global calling_test
-                calling_test = self
-
-        test_run = InnerTest('test_foo').run()
-
-        with patch.object(Conformant, 'on_test_start') as on_test_start:
-            with patch.object(Conformant, 'on_test_end') as on_test_end:
-                InnerTest('test_foo').run()
-                self.assertTrue(test_run.wasSuccessful())
-                on_test_start.assert_called_once_with(calling_test)
-                on_test_end.assert_called_once_with(calling_test)
+        self.assertThat(_cleanup_objects, Contains(Conformant))
 
     def test_on_test_start_and_end_methods_called(self):
         class Conformant(CleanupRegistered):
-            """This class defines the required classmethods"""
+            """This class defines the classmethods to be called at test
+            start/end.
+
+            """
+
+            _on_start_test = False
+            _on_end_test = False
+
             @classmethod
             def on_test_start(cls, test_instance):
-                global _on_start_test
-                _on_start_test = True
+                cls._on_start_test = True
 
             @classmethod
             def on_test_end(cls, test_instance):
-                global _on_end_test
-                _on_end_test = True
+                cls._on_end_test = True
 
         class InnerTest(AutopilotTestCase):
             def test_foo(self):
@@ -79,34 +67,43 @@ class StartFinalExecutionTests(TestCase):
         test_run = InnerTest('test_foo').run()
 
         InnerTest('test_foo').run()
-        self.assertTrue(test_run.wasSuccessful())
-        self.assertTrue(_on_start_test)
-        self.assertTrue(_on_end_test)
+        self.assertThat(test_run.wasSuccessful(), Equals(True))
+        self.assertThat(Conformant._on_start_test, Equals(True))
+        self.assertThat(Conformant._on_end_test, Equals(True))
 
-    def test_on_test_start_raises_exception_handled_nicely(self):
-        class Conformant(CleanupRegistered):
-            """This class defines the required classmethods"""
-            @classmethod
-            def on_test_end(cls, test_instance):
-                if _should_throw_exception:
-                    print "@@@@THROWING!!!!"
-                    raise IndexError
+    def test_action_on_test_start_reports_raised_exception(self):
+        """Any Exceptions raised during action_on_test_start must be caught and
+        reported.
 
-        class InnerTest(AutopilotTestCase):
-            def test_foo(self):
-                global calling_test
-                calling_test = self
+        """
+        class Cleanup(object):
 
-        def _set_throw_exception_false():
-            global _should_throw_exception
-            _should_throw_exception = False
+            def on_test_start(self, test_instance):
+                raise IndexError
 
-        global _should_throw_exception
-        _should_throw_exception = True
+        obj = Cleanup()
+        mockTestCase = Mock(spec=TestCase)
 
-        self.addCleanup(_set_throw_exception_false)
+        with patch('autopilot.utilities._cleanup_objects', new=[obj]):
+            action_on_test_start(mockTestCase)
 
-        test_run = InnerTest('test_foo').run()
+        self.assertThat(mockTestCase._report_traceback.call_count, Equals(1))
 
-        InnerTest('test_foo').run()
-        self.assertTrue(test_run.wasSuccessful())
+    def test_action_on_test_end_reports_raised_exception(self):
+        """Any Exceptions raised during action_on_test_end must be caught and
+        reported.
+
+        """
+
+        class Cleanup(object):
+
+            def on_test_end(self, test_instance):
+                raise IndexError
+
+        obj = Cleanup()
+        mockTestCase = Mock(spec=TestCase)
+
+        with patch('autopilot.utilities._cleanup_objects', new=[obj]):
+            action_on_test_end(mockTestCase)
+
+        self.assertThat(mockTestCase._report_traceback.call_count, Equals(1))

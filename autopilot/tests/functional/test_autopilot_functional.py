@@ -440,6 +440,42 @@ Loading tests from: %s
         if should_delete:
             self.addCleanup(remove_if_exists, "/tmp/autopilot")
 
+    def test_record_dir_option_and_record_works(self):
+        """Must be able to specify record directory flag and record."""
+
+        # The sleep is to avoid the case where recordmydesktop does not create a
+        # file because it gets stopped before it's even started capturing anything.
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+            from time import sleep
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    sleep(1)
+                    self.fail()
+            """
+            ))
+        video_dir = mktemp()
+        ap_dir = '/tmp/autopilot'
+        self.addCleanup(remove_if_exists, video_dir)
+
+        should_delete = not os.path.exists(ap_dir)
+        if should_delete:
+            self.addCleanup(remove_if_exists, ap_dir)
+        else:
+            self.addCleanup(remove_if_exists, 
+                            '%s/tests.test_simple.SimpleTest.test_simple.ogv' % (ap_dir))
+
+        code, output, error = self.run_autopilot(["run", "-r", "-rd", video_dir, "tests"])
+
+        self.assertThat(code, Equals(1))
+        self.assertTrue(os.path.exists(video_dir))
+        self.assertTrue(os.path.exists('%s/tests.test_simple.SimpleTest.test_simple.ogv' % (video_dir)))
+        self.assertFalse(os.path.exists('%s/tests.test_simple.SimpleTest.test_simple.ogv' % (ap_dir)))
+
     def test_record_dir_option_works(self):
         """Must be able to specify record directory flag."""
 
@@ -461,7 +497,7 @@ Loading tests from: %s
         video_dir = mktemp()
         self.addCleanup(remove_if_exists, video_dir)
 
-        code, output, error = self.run_autopilot(["run", "-r", "-rd", video_dir, "tests"])
+        code, output, error = self.run_autopilot(["run", "-rd", video_dir, "tests"])
 
         self.assertThat(code, Equals(1))
         self.assertTrue(os.path.exists(video_dir))

@@ -29,7 +29,7 @@ from autopilot.testcase import AutopilotTestCase, multiply_scenarios
 from autopilot.input import Keyboard, Pointer, Touch
 from autopilot.input._common import get_center_point
 from autopilot.matchers import Eventually
-from autopilot.globals import on_test_started
+from autopilot.utilities import on_test_started
 
 
 class InputStackKeyboardBase(AutopilotTestCase):
@@ -156,9 +156,10 @@ class InputStackCleanupTests(TestCase):
 
             cleanup_called = False
 
-            @staticmethod
-            def cleanup():
+            @classmethod
+            def on_test_end(cls, test_instance):
                 FakeKeyboard.cleanup_called = True
+
 
         class FakeTestCase(TestCase):
 

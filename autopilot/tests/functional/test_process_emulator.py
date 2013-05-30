@@ -21,7 +21,7 @@
 from autopilot import BackendException
 from autopilot.testcase import AutopilotTestCase
 from autopilot.process import ProcessManager
-from autopilot.globals import on_test_started
+from autopilot.utilities import on_test_started
 
 from subprocess import Popen, call
 from testtools import TestCase
@@ -95,6 +95,8 @@ class ProcessManagerApplicationNoCleanupTests(TestCase):
             def addOnException(self, handler):
                 pass
             def shortDescription(self):
+                pass
+            def _report_traceback(self, arg):
                 pass
         super(ProcessManagerApplicationNoCleanupTests, self).setUp()
         on_test_started(FakeTestCase())

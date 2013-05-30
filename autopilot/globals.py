@@ -20,34 +20,41 @@
 
 from __future__ import absolute_import
 from StringIO import StringIO
-from autopilot.utilities import LogFormatter
+from autopilot.utilities import LogFormatter, CleanupRegistered
 from testtools.content import text_content
 import subprocess
 import os.path
 import logging
-from autopilot.utilities import addCleanup
+
 
 logger = logging.getLogger(__name__)
 
 
-# if set to true, autopilot will output all pythong logging to stderr
-__log_verbose = False
-
 def get_log_verbose():
     """Returns true if the user asked for verbose logging."""
-    global __log_verbose
-    return __log_verbose
+    return _test_logger._log_verbose
 
 
-class _TestLogger(object):
+class _TestLogger(CleanupRegistered):
     """A class that handles adding test logs as test result content."""
+
+    def __init__(self):
+        self._log_verbose = False
 
     def __call__(self, test_instance):
         self._setUpTestLogging(test_instance)
-        if get_log_verbose():
+        if self._log_verbose:
             global logger
             logger.info("*" * 60)
             logger.info("Starting test %s", test_instance.shortDescription())
+
+    @classmethod
+    def on_test_start(cls, test_instance):
+        if _test_logger._log_verbose:
+            _test_logger(test_instance)
+
+    def log_verbose(self, verbose):
+        self._log_verbose = verbose
 
     def _setUpTestLogging(self, test_instance):
         self._log_buffer = StringIO()
@@ -70,26 +77,22 @@ class _TestLogger(object):
         del self._log_buffer
 
 
+_test_logger = _TestLogger()
+
+
 def set_log_verbose(verbose):
     """Set whether or not we should log verbosely."""
 
     if type(verbose) is not bool:
         raise TypeError("Verbose flag must be a boolean.")
-    global __log_verbose
-    __log_verbose = verbose
-    if verbose:
-        logger = _TestLogger()
-        _on_test_started_call.append(logger)
+    _test_logger.log_verbose(verbose)
 
 
-class _VideoCaptureTestCase(object):
+class _VideoLogger(CleanupRegistered):
     """Video capture autopilot tests, saving the results if the test failed."""
 
     _recording_app = '/usr/bin/recordmydesktop'
     _recording_opts = ['--no-sound', '--no-frame', '-o',]
-
-    def __init__(self, recording_directory):
-        self.recording_directory = recording_directory
 
     def __call__(self, test_instance):
         if not self._have_recording_app():
@@ -99,6 +102,17 @@ class _VideoCaptureTestCase(object):
         test_instance.addOnException(self._on_test_failed)
         test_instance.addCleanup(self._stop_video_capture, test_instance)
         self._start_video_capture(test_instance.shortDescription())
+
+    @classmethod
+    def on_test_start(cls, test_instance):
+        if _video_logger._enable_recording:
+            _video_logger(test_instance)
+
+    def enable_recording(self, enable_recording):
+        self._enable_recording = enable_recording
+
+    def set_recording_dir(self, directory):
+        self.recording_directory = directory
 
     def _have_recording_app(self):
         return os.path.exists(self._recording_app)
@@ -149,6 +163,9 @@ class _VideoCaptureTestCase(object):
         self._test_passed = False
 
 
+_video_logger = _VideoLogger()
+
+
 def configure_video_recording(enable_recording, record_dir):
     """Configure video logging.
 
@@ -161,14 +178,6 @@ def configure_video_recording(enable_recording, record_dir):
     if not isinstance(record_dir, basestring):
         raise TypeError("record_dir must be a string.")
 
-    if enable_recording:
-        recorder = _VideoCaptureTestCase(record_dir)
-        _on_test_started_call.append(recorder)
+    _video_logger.enable_recording(enable_recording)
+    _video_logger.set_recording_dir(record_dir)
 
-
-_on_test_started_call = [addCleanup.set_test_instance]
-
-def on_test_started(test_case_instance):
-    global _on_test_started_call
-    for fun in _on_test_started_call:
-        fun(test_case_instance)

@@ -27,56 +27,22 @@ from autopilot.testcase import AutopilotTestCase
 
 
 calling_test = None
+_on_start_test = False
+_on_end_test = False
 
+_should_throw_exception = False
 
 class StartFinalExecutionTests(TestCase):
 
-    def test_nonconformant_class_isnt_added(self):
-        class MyNonconformant(CleanupRegistered):
-            """This class doesn't define the required classmethods"""
-            pass
-
-        self.assertFalse(type(MyNonconformant()) in _cleanup_objects)
-
-    def test_half_conformant_class_not_added(self):
-        class HalfConformantStart(CleanupRegistered):
-            """This class only on_test_start required classmethod"""
-            @classmethod
-            def on_test_start(cls, test_instance):
-                pass
-
-        class HalfConformantEnd(CleanupRegistered):
-            """This class only on_test_end required classmethod"""
-            @classmethod
-            def on_test_End(cls, test_instance):
-                pass
-
-        self.assertFalse(type(HalfConformantStart()) in _cleanup_objects)
-        self.assertFalse(type(HalfConformantEnd()) in _cleanup_objects)
-
     def test_conformant_class_is_added(self):
         class Conformant(CleanupRegistered):
-            """This class does define the required classmethods"""
-            @classmethod
-            def on_test_start(cls, test_instance):
-                pass
+            pass
 
-            @classmethod
-            def on_test_end(cls, test_instance):
-                pass
+        self.assertTrue(Conformant in _cleanup_objects)
 
-        self.assertTrue(type(Conformant()) in _cleanup_objects)
-
-    def test_on_test_start_and_end_methods_called(self):
+    def test_not_defining_class_methods_doesnt_except(self):
         class Conformant(CleanupRegistered):
             """This class defines the required classmethods"""
-            @classmethod
-            def on_test_start(cls, test_instance):
-                pass
-
-            @classmethod
-            def on_test_end(cls, test_instance):
-                pass
 
         class InnerTest(AutopilotTestCase):
             def test_foo(self):
@@ -92,4 +58,55 @@ class StartFinalExecutionTests(TestCase):
                 on_test_start.assert_called_once_with(calling_test)
                 on_test_end.assert_called_once_with(calling_test)
 
+    def test_on_test_start_and_end_methods_called(self):
+        class Conformant(CleanupRegistered):
+            """This class defines the required classmethods"""
+            @classmethod
+            def on_test_start(cls, test_instance):
+                global _on_start_test
+                _on_start_test = True
 
+            @classmethod
+            def on_test_end(cls, test_instance):
+                global _on_end_test
+                _on_end_test = True
+
+        class InnerTest(AutopilotTestCase):
+            def test_foo(self):
+                global calling_test
+                calling_test = self
+
+        test_run = InnerTest('test_foo').run()
+
+        InnerTest('test_foo').run()
+        self.assertTrue(test_run.wasSuccessful())
+        self.assertTrue(_on_start_test)
+        self.assertTrue(_on_end_test)
+
+    def test_on_test_start_raises_exception_handled_nicely(self):
+        class Conformant(CleanupRegistered):
+            """This class defines the required classmethods"""
+            @classmethod
+            def on_test_end(cls, test_instance):
+                if _should_throw_exception:
+                    print "@@@@THROWING!!!!"
+                    raise IndexError
+
+        class InnerTest(AutopilotTestCase):
+            def test_foo(self):
+                global calling_test
+                calling_test = self
+
+        def _set_throw_exception_false():
+            global _should_throw_exception
+            _should_throw_exception = False
+
+        global _should_throw_exception
+        _should_throw_exception = True
+
+        self.addCleanup(_set_throw_exception_false)
+
+        test_run = InnerTest('test_foo').run()
+
+        InnerTest('test_foo').run()
+        self.assertTrue(test_run.wasSuccessful())

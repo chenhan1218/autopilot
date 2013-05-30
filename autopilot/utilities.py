@@ -198,23 +198,36 @@ class _CleanupWrapper(object):
 addCleanup = _CleanupWrapper()
 
 
-def _callable_attr(obj, attr):
-    return hasattr(obj, attr) and callable(getattr(obj, attr, None))
-
-
-def _has_required_methods(obj):
-    return _callable_attr(obj, 'on_test_start') and _callable_attr(obj, 'on_test_end')
-
-
 _cleanup_objects = []
 
 
 class _register_for_cleanup(type):
     """Metaclass to inject the object into on test start/end functionality"""
     def __new__(cls, classname, bases, classdict):
-        class_object = type.__new__(cls, classname, bases, classdict)
-        if _has_required_methods(class_object):
-            _cleanup_objects.append(class_object)
+        class EmptyStaticMethod(object):
+            """Class used to give us 'default classmethods' for those that don't
+            provide them.
+
+            """
+            def __get__(self, obj, klass=None):
+                if klass is None:
+                    klass = type(obj)
+
+                def place_holder_method(*args):
+                    pass
+
+                return place_holder_method
+
+        default_methods = {
+            'on_test_start': EmptyStaticMethod(),
+            'on_test_end': EmptyStaticMethod(),
+        }
+
+        new_classdict = default_methods.copy()
+        new_classdict.update(classdict)
+
+        class_object = type.__new__(cls, classname, bases, new_classdict)
+        _cleanup_objects.append(class_object)
 
         return class_object
 
@@ -224,13 +237,25 @@ class CleanupRegistered(object):
 
 
 def action_on_test_start(test_instance):
+    import sys
     for obj in _cleanup_objects:
-        obj.on_test_start(test_instance)
+        try:
+            obj.on_test_start(test_instance)
+        except KeyboardInterrupt:
+            raise
+        except:
+            test_instance._report_traceback(sys.exc_info())
 
 
 def action_on_test_end(test_instance):
+    import sys
     for obj in _cleanup_objects:
-        obj.on_test_end(test_instance)
+        try:
+            obj.on_test_end(test_instance)
+        except KeyboardInterrupt:
+            raise
+        except:
+            test_instance._report_traceback(sys.exc_info())
 
 
 def on_test_started(test_case_instance):

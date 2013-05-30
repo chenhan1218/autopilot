@@ -33,7 +33,6 @@ logger = logging.getLogger(__name__)
 # if set to true, autopilot will output all pythong logging to stderr
 __log_verbose = False
 __enable_recording = False
-__recording_dir = ''
 
 def get_log_verbose():
     """Returns true if the user asked for verbose logging."""
@@ -46,12 +45,7 @@ def _get_video_record():
     return __enable_recording
 
 
-def _get_video_record_dir():
-    global __recording_dir
-    return __recording_dir
-
-
-class _TestLogger(object):
+class _TestLogger(CleanupRegistered):
     """A class that handles adding test logs as test result content."""
 
     def __call__(self, test_instance):
@@ -60,6 +54,11 @@ class _TestLogger(object):
             global logger
             logger.info("*" * 60)
             logger.info("Starting test %s", test_instance.shortDescription())
+
+    @classmethod
+    def on_test_start(cls, test_instance):
+        if get_log_verbose():
+            _test_logger(test_instance)
 
     def _setUpTestLogging(self, test_instance):
         self._log_buffer = StringIO()
@@ -82,6 +81,9 @@ class _TestLogger(object):
         del self._log_buffer
 
 
+_test_logger = _TestLogger()
+
+
 def set_log_verbose(verbose):
     """Set whether or not we should log verbosely."""
 
@@ -91,14 +93,11 @@ def set_log_verbose(verbose):
     __log_verbose = verbose
 
 
-class _VideoCaptureTestCase(object):
+class _VideoCaptureTestCase(CleanupRegistered):
     """Video capture autopilot tests, saving the results if the test failed."""
 
     _recording_app = '/usr/bin/recordmydesktop'
     _recording_opts = ['--no-sound', '--no-frame', '-o',]
-
-    def __init__(self, recording_directory):
-        self.recording_directory = recording_directory
 
     def __call__(self, test_instance):
         if not self._have_recording_app():
@@ -108,6 +107,14 @@ class _VideoCaptureTestCase(object):
         test_instance.addOnException(self._on_test_failed)
         test_instance.addCleanup(self._stop_video_capture, test_instance)
         self._start_video_capture(test_instance.shortDescription())
+
+    @classmethod
+    def on_test_start(cls, test_instance):
+        if _get_video_record():
+            _video_capture_test(test_instance)
+
+    def set_recording_dir(self, directory):
+        self.recording_directory = directory
 
     def _have_recording_app(self):
         return os.path.exists(self._recording_app)
@@ -158,6 +165,9 @@ class _VideoCaptureTestCase(object):
         self._test_passed = False
 
 
+_video_capture_test = _VideoCaptureTestCase()
+
+
 def configure_video_recording(enable_recording, record_dir):
     """Configure video logging.
 
@@ -173,30 +183,5 @@ def configure_video_recording(enable_recording, record_dir):
     global __enable_recording
     __enable_recording = enable_recording
 
-    global __recording_dir
-    __recording_dir = record_dir
-
-
-class _VideoCaptureTestCaseAdapter(CleanupRegistered):
-    @classmethod
-    def on_test_start(cls, test_instance):
-        if _get_video_record():
-            logger = _VideoCaptureTestCase(_get_video_record_dir())        # Cache this?
-            logger(test_instance)
-
-    @classmethod
-    def on_test_end(cls, test_instance):
-        pass
-
-
-class _TestLoggerAdapter(CleanupRegistered):
-    @classmethod
-    def on_test_start(cls, test_instance):
-        if get_log_verbose():
-            logger = _TestLogger()        # Cache this?
-            logger(test_instance)
-
-    @classmethod
-    def on_test_end(cls, test_instance):
-        pass
+    _video_capture_test.set_recording_dir(record_dir)
 

@@ -156,11 +156,6 @@ class InputStackCleanupTests(TestCase):
 
             cleanup_called = False
 
-
-            @classmethod
-            def on_test_start(cls, test_instance):
-                pass
-
             @classmethod
             def on_test_end(cls, test_instance):
                 FakeKeyboard.cleanup_called = True

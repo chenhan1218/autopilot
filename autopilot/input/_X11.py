@@ -196,10 +196,6 @@ class Keyboard(KeyboardBase):
             sleep(delay)
 
     @classmethod
-    def on_test_start(cls, test_instance):
-        pass
-
-    @classmethod
     def on_test_end(cls, test_instance):
         """Generate KeyRelease events for any un-released keys.
 

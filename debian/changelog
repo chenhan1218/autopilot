@@ -1,3 +1,21 @@
+autopilot (1.3daily13.05.30ubuntu.unity.next-0ubuntu1) raring; urgency=low
+
+  [ Didier Roche ]
+  * don't create circular dependency. python-autopilot should recommends
+    -desktop or -touch autopilot, but don't dep on them.
+
+  [ Łukasz 'sil2100' Zemczak ]
+  * This is stupid but... we need to check A LOT of cases to really know
+    if qmlscene/qmlviewer is installed, especially when qtchooser is
+    used. qtchooser makes it all much more complicated because using
+    'which' is not enough, since it installs its wrappers to /usr/bin.
+    We do that since we want to be distro independent.
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 229 (ubuntu-unity/next)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 30 May 2013 00:02:02 +0000
+
 autopilot (1.3daily13.05.29ubuntu.unity.next-0ubuntu1) raring; urgency=low
 
   [ Thomi Richards ]

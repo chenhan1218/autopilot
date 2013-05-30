@@ -130,8 +130,8 @@ class Keyboard(KeyboardBase):
             self.press(key, delay)
             self.release(key, delay)
 
-    @staticmethod
-    def cleanup():
+    @classmethod
+    def on_test_end():
         """Generate KeyRelease events for any un-released keys.
 
         Make sure you call this at the end of any test to release

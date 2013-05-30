@@ -94,6 +94,9 @@ class _VideoLogger(CleanupRegistered):
     _recording_app = '/usr/bin/recordmydesktop'
     _recording_opts = ['--no-sound', '--no-frame', '-o',]
 
+    def __init__(self):
+        self._enable_recording = False
+
     def __call__(self, test_instance):
         if not self._have_recording_app():
             logger.warning("Disabling video capture since '%s' is not present", self._recording_app)

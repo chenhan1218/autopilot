@@ -418,8 +418,8 @@ class Mouse(MouseBase):
         self.move(x2, y2)
         self.release()
 
-    @staticmethod
-    def cleanup():
+    @classmethod
+    def on_test_end():
         """Put mouse in a known safe state."""
         global _PRESSED_MOUSE_BUTTONS
         for btn in _PRESSED_MOUSE_BUTTONS:

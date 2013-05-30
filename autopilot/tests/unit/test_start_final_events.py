@@ -31,8 +31,6 @@ from autopilot.utilities import (
 from autopilot.testcase import AutopilotTestCase
 
 
-calling_test = None
-
 class StartFinalExecutionTests(TestCase):
 
     def test_conformant_class_is_added(self):
@@ -61,8 +59,7 @@ class StartFinalExecutionTests(TestCase):
 
         class InnerTest(AutopilotTestCase):
             def test_foo(self):
-                global calling_test
-                calling_test = self
+                pass
 
         test_run = InnerTest('test_foo').run()
 

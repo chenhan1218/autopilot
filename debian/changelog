@@ -1,3 +1,20 @@
+autopilot (1.3daily13.05.31ubuntu.unity.next-0ubuntu1) raring; urgency=low
+
+  [ chris.gagnon ]
+  * make autopilot vis use utf8 instead of ascii. (LP: #1185991)
+  * Add tests around autopilot video recording command line parameters.
+
+  [ Christopher Lee ]
+  * Adding functionality to have code that runs after a test runs (after
+    the tests addCleanup) as well as before. (LP: #1184491)
+  * Fixes a couple of places where code wasn't updated with the recent
+    cleanup/start/end test code execution changes. . (LP: #1185790)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 234 (ubuntu-unity/next)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 31 May 2013 00:01:40 +0000
+
 autopilot (1.3daily13.05.30ubuntu.unity.next-0ubuntu1) raring; urgency=low
 
   [ Didier Roche ]

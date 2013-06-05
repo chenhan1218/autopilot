@@ -408,7 +408,7 @@ class Pointer(object):
 
         """
         if isinstance(self._device, Mouse):
-            return self._mouse.x
+            return self._device.x
         else:
             return self._x
 
@@ -421,7 +421,7 @@ class Pointer(object):
 
         """
         if isinstance(self._device, Mouse):
-            return self._mouse.y
+            return self._device.y
         else:
             return self._y
 

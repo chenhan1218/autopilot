@@ -32,7 +32,6 @@ import logging
 import subprocess
 from time import sleep
 from functools import partial
-from xml.etree import ElementTree
 import os
 
 from autopilot.introspection.backends import DBusAddress
@@ -51,7 +50,6 @@ from autopilot.dbus_handler import (
     get_system_bus,
     get_custom_bus,
     )
-from autopilot.utilities import get_debug_logger
 
 
 logger = logging.getLogger(__name__)
@@ -162,23 +160,34 @@ def get_autopilot_proxy_object_for_process(process, emulator_base):
     return get_proxy_object_for_already_launched_process(pid, emulator_base=emulator_base)
 
 
-def get_proxy_object_for_already_launched_process(pid=None, dbus_bus='session', connection_name=None, object_path=AUTOPILOT_PATH, application_name=None, **kwargs):
+def get_proxy_object_for_already_launched_process(pid=None, dbus_bus='session', connection_name=None, object_path=AUTOPILOT_PATH, application_name=None, emulator_base=None):
+    """Return a proxy object for an application that has already been launched
+    (i.e. launched outside of Autopilot).
+
+    :raises: **RuntimeError** if no search criteria match.
+    :raises: **RuntimeError** if the search criteria results in many matches.
+
+    """
     dbus_addresses = _get_dbus_addresses_from_search_parameters(pid, dbus_bus, connection_name, object_path)
     if application_name:
-        dbus_addresses = filter(dbus_addresses, lambda i: i.autopilot_interface.GetState('/')[0][0] == appliction_name)
+        dbus_addresses = filter(dbus_addresses, lambda i: i.autopilot_interface.GetState('/')[0][0] == application_name)
 
     if dbus_addresses is None or len(dbus_addresses) == 0:
         raise RuntimeError("Search criteria returned no results")
     if len(dbus_addresses) > 1:
         raise RuntimeError("Search criteria returned multiple results")
 
-    proxy_obj = _make_proxy_object(dbus_addresses[0], kwargs.get('emulator_base', None))
+    proxy_obj = _make_proxy_object(dbus_addresses[0], emulator_base)
     proxy_obj.set_process(pid)
 
     return proxy_obj
 
 
 def _get_dbus_addresses_from_search_parameters(pid, dbus_bus, connection_name, object_path):
+    """Returns a list of :py:class: `DBusAddress` for all successfully matched
+    criteria.
+
+    """
     connection_list = []
 
     def _get_unchecked_connections(all_connections):
@@ -198,18 +207,24 @@ def _get_dbus_addresses_from_search_parameters(pid, dbus_bus, connection_name, o
 
 
 def _get_valid_connections(connections, bus, pid, object_path):
-    valid_connections = []
     filter_fn = partial(_match_connection, bus, pid, object_path)
-    if pid is not None:
-        try:
-            # Grab the first match that we find as the pid will be unique.
-            valid_connections = [next(c for c in connections if filter_fn(c))]
-        except StopIteration:
-            pass
-    else:
-        valid_connections = filter(filter_fn, connections)
+    valid_connections = filter(filter_fn, connections)
 
-    return valid_connections
+    unique_connections = _dedupe_connections_on_pid(valid_connections, bus)
+
+    return unique_connections
+
+
+def _dedupe_connections_on_pid(valid_connections, bus):
+    seen_pids = []
+    deduped_connections = []
+
+    for connection in valid_connections:
+        pid = _get_bus_connections_pid(bus, connection)
+        if pid not in seen_pids:
+            seen_pids.append(pid)
+            deduped_connections.append(connection)
+    return deduped_connections
 
 
 def _get_dbus_address_object(connection_name, object_path, bus):
@@ -231,8 +246,6 @@ def _get_possible_connections(bus, connection_name):
         return all_connection_names
     else:
         matching_connections = [c for c in all_connection_names if c == connection_name]
-        if matching_connections == []:
-            raise RuntimeError("No connections called %s found" % connection_name)
         return matching_connections
 
 
@@ -251,7 +264,7 @@ def _connection_matches_pid(bus, connection_name, pid):
     try:
         if _bus_pid_is_our_pid(bus, connection_name, pid):
             return False
-        bus_pid = _get_bus_pid(bus, connection_name, pid)
+        bus_pid = _get_bus_connections_pid(bus, connection_name)
     except DBusException as e:
         logger.info("DBusException while attempting to get PID for %s: %r" % (connection_name, e))
         return False
@@ -260,11 +273,12 @@ def _connection_matches_pid(bus, connection_name, pid):
 
 
 def _bus_pid_is_our_pid(bus, connection_name, pid):
-    bus_pid = _get_bus_pid(bus, connection_name, pid)
+    """Returns True if this scripts pid is the bus connections pid supplied."""
+    bus_pid = _get_bus_connections_pid(bus, connection_name)
     return bus_pid == os.getpid()
 
 
-def _get_bus_pid(bus, connection_name, pid):
+def _get_bus_connections_pid(bus, connection_name):
     """Returns the pid for the connection **connection_name** on **bus**
 
     :raises: **DBusException** if connection_name is invalid etc.
@@ -285,7 +299,8 @@ def _connection_has_path(bus, connection_name, path):
 
 
 def _check_connection_has_ap_interface(bus, connection_name, path):
-    """Simple check if a bus with connection + path provide the Autopilot Introspection Interface.
+    """Simple check if a bus with connection + path provide the Autopilot
+    Introspection Interface.
 
     :raises: **DBusException** if it does not.
 

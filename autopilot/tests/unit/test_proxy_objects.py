@@ -28,33 +28,46 @@ from autopilot.introspection import (
     _connection_has_path,
     _match_connection,
     _bus_pid_is_our_pid,
-    _get_bus_pid,
+    _get_bus_connections_pid,
 )
 
 class ProxyObjectTests(TestCase):
+    fake_bus = "fake_bus"
+    fake_connection_name = "fake_connection_name"
+    fake_path = "fake_path"
+    fake_pid = 123
 
-    def test_connection_has_path_succeeds_with_valid_connection_path(self):
-        with patch('autopilot.introspection._check_connection_has_ap_interface'):
-            result = _connection_has_path(None, None, None)
-            self.assertThat(result, Equals(True))
+    @patch('autopilot.introspection._check_connection_has_ap_interface')
+    def test_connection_has_path_succeeds_with_valid_connection_path(self, patched_fn):
+        result = _connection_has_path(self.fake_bus, self.fake_connection_name, self.fake_path)
 
-    def test_connection_has_path_fails_with_invalid_connection_name(self):
-        with patch('autopilot.introspection._check_connection_has_ap_interface', side_effect=DBusException):
-            result = _connection_has_path(None, None, None)
-            self.assertThat(result, Equals(False))
+        patched_fn.assert_called_once_with(self.fake_bus, self.fake_connection_name, self.fake_path)
+        self.assertThat(result, Equals(True))
 
-    def test_connection_matches_pid_matches_pid_returns_true(self):
+    @patch('autopilot.introspection._check_connection_has_ap_interface', side_effect=DBusException)
+    def test_connection_has_path_fails_with_invalid_connection_name(self, patched_fn):
+        result = _connection_has_path(self.fake_bus, self.fake_connection_name, self.fake_path)
+
+        patched_fn.assert_called_once_with(self.fake_bus, self.fake_connection_name, self.fake_path)
+        self.assertThat(result, Equals(False))
+
+    @patch('autopilot.introspection._get_child_pids', return_value=[])
+    def test_connection_matches_pid_matches_pid_returns_true(self, child_pid_fn):
         """_connection_matches_pid must return True if the passed pid matches
         the buses Unix pid.
 
         """
         matching_pid = 1
-        with patch('autopilot.introspection._get_child_pids', return_value=[]):
-            with patch('autopilot.introspection._get_bus_pid', return_value=matching_pid):
-                result = _connection_matches_pid(None, "", matching_pid)
-                self.assertThat(result, Equals(True))
+        with patch('autopilot.introspection._get_bus_connections_pid', return_value=matching_pid) as bus_pid_fn:
+            result = _connection_matches_pid(self.fake_bus, self.fake_connection_name, matching_pid)
 
-    def test_connection_matches_pid_child_pid_returns_true(self):
+            child_pid_fn.assert_called_with(matching_pid)
+            bus_pid_fn.assert_called_with(self.fake_bus, self.fake_connection_name)
+            self.assertThat(result, Equals(True))
+
+    @patch('autopilot.introspection._get_child_pids')
+    @patch('autopilot.introspection._get_bus_connections_pid')
+    def test_connection_matches_pid_child_pid_returns_true(self, bus_connection_pid_fn, child_pid_fn):
         """_connection_matches_pid must return True if the passed pid doesn't
         match but a child pid of the pids' process does.
 
@@ -62,91 +75,138 @@ class ProxyObjectTests(TestCase):
         parent_pid = 1
         child_pid = 2
 
-        with patch('autopilot.introspection._get_child_pids', return_value=[2]):
-            with patch('autopilot.introspection._get_bus_pid', return_value=child_pid):
-                result = _connection_matches_pid(None, "", parent_pid)
-                self.assertThat(result, Equals(True))
+        child_pid_fn.return_value = [child_pid]
+        bus_connection_pid_fn.return_value = child_pid
 
-    def test_connection_matches_pid_doesnt_match_with_no_children_pids(self):
+        result = _connection_matches_pid(self.fake_bus, self.fake_connection_name, parent_pid)
+
+        child_pid_fn.assert_called_with(parent_pid)
+        bus_connection_pid_fn.assert_called_with(self.fake_bus, self.fake_connection_name)
+        self.assertThat(result, Equals(True))
+
+    @patch('autopilot.introspection._get_child_pids')
+    @patch('autopilot.introspection._get_bus_connections_pid')
+    def test_connection_matches_pid_doesnt_match_with_no_children_pids(self, bus_connection_pid_fn, child_pid_fn):
         """_connection_matches_pid must return False if passed pid doesn't
         match.
 
         """
         non_matching_pid = 10
 
-        with patch('autopilot.introspection._get_child_pids', return_value=[]):
-            with patch('autopilot.introspection._get_bus_pid', return_value=0):
-                result = _connection_matches_pid(None, "", non_matching_pid)
-                self.assertThat(result, Equals(False))
+        child_pid_fn.return_value = []
+        bus_connection_pid_fn.return_value = 0
 
-    def test_connection_matches_pid_doesnt_match_with_no_matching_children_pids(self):
+        result = _connection_matches_pid(self.fake_bus, self.fake_connection_name, non_matching_pid)
+
+        child_pid_fn.assert_called_with(non_matching_pid)
+        bus_connection_pid_fn.assert_called_with(self.fake_bus, self.fake_connection_name)
+        self.assertThat(result, Equals(False))
+
+    @patch('autopilot.introspection._get_child_pids')
+    @patch('autopilot.introspection._get_bus_connections_pid')
+    def test_connection_matches_pid_doesnt_match_with_no_matching_children_pids(self, bus_connection_pid_fn, child_pid_fn):
         """_connection_matches_pid must return False if neither passed pid or
         pids' processes children match.
 
         """
         non_matching_pid = 10
 
-        with patch('autopilot.introspection._get_child_pids', return_value=[1,2,3,4]):
-            with patch('autopilot.introspection._get_bus_pid', return_value=0):
-                result = _connection_matches_pid(None, "", non_matching_pid)
-                self.assertThat(result, Equals(False))
+        child_pid_fn.return_value=[1,2,3,4]
+        bus_connection_pid_fn.return_value=0
 
-    def test_match_connection_succeeds_with_connection_path_no_pid(self):
-        with patch('autopilot.introspection._connection_matches_pid', side_effect=Exception("Shouldn't be called")):
-            with patch('autopilot.introspection._connection_has_path', return_value=True):
-                result = _match_connection(None, None, None, None)
-                self.assertThat(result, Equals(True))
+        result = _connection_matches_pid(self.fake_bus, self.fake_connection_name, non_matching_pid)
 
-    def test_match_connection_succeeds_with_connection_path_and_pid_match(self):
-        with patch('autopilot.introspection._connection_matches_pid', return_value=True) as match_pid:
-            with patch('autopilot.introspection._connection_has_path', return_value=True):
-                test_pid = 1
-                result = _match_connection(None, test_pid, None, None)
-                match_pid.assert_called_once_with(None, None, test_pid)
-                self.assertThat(result, Equals(True))
+        child_pid_fn.assert_called_with(non_matching_pid)
+        bus_connection_pid_fn.assert_called_with(self.fake_bus, self.fake_connection_name)
+        self.assertThat(result, Equals(False))
 
-    def test_match_connection_fails_path_matches_but_no_pid_match(self):
+    @patch('autopilot.introspection._connection_matches_pid')
+    @patch('autopilot.introspection._connection_has_path')
+    def test_match_connection_succeeds_with_connection_path_no_pid(self, conn_has_path_fn, conn_matches_pid_fn):
+        conn_has_path_fn.return_value = True
+        conn_matches_pid_fn.side_effect = Exception("Shouldn't be called")
+
+        result = _match_connection(self.fake_bus, None, self.fake_path, self.fake_connection_name)
+
+        conn_has_path_fn.assert_called_with(self.fake_bus, self.fake_connection_name, self.fake_path)
+        self.assertThat(conn_matches_pid_fn.called, Equals(False))
+        self.assertThat(result, Equals(True))
+
+    @patch('autopilot.introspection._connection_matches_pid')
+    @patch('autopilot.introspection._connection_has_path')
+    def test_match_connection_succeeds_with_connection_path_and_pid_match(self, conn_has_path_fn, conn_matches_pid_fn):
+        test_pid = 1
+        conn_matches_pid_fn.return_value=True
+        conn_has_path_fn.return_value=True
+
+        result = _match_connection(self.fake_bus, test_pid, self.fake_path, self.fake_connection_name)
+
+        conn_matches_pid_fn.assert_called_once_with(self.fake_bus, self.fake_connection_name, test_pid)
+        self.assertThat(result, Equals(True))
+
+    @patch('autopilot.introspection._connection_matches_pid')
+    @patch('autopilot.introspection._connection_has_path')
+    def test_match_connection_fails_path_matches_but_no_pid_match(self, conn_has_path_fn, conn_matches_pid_fn):
         test_pid = 0
 
-        with patch('autopilot.introspection._connection_matches_pid', return_value=False) as match_pid:
-            with patch('autopilot.introspection._connection_has_path', return_value=True):
-                result = _match_connection(None, test_pid, None, None)
-                match_pid.assert_called_once_with(None, None, test_pid)
+        conn_has_path_fn.return_value=True
+        conn_matches_pid_fn.return_value=False
 
-                self.assertThat(result, Equals(False))
+        result = _match_connection(self.fake_bus, test_pid, self.fake_path, self.fake_connection_name)
 
-    def test_match_connection_fails_no_path_match_but_pid_match(self):
+        conn_matches_pid_fn.assert_called_once_with(self.fake_bus, self.fake_connection_name, test_pid)
+        self.assertThat(result, Equals(False))
+
+    @patch('autopilot.introspection._connection_matches_pid')
+    @patch('autopilot.introspection._connection_has_path')
+    def test_match_connection_fails_no_path_match_but_pid_match(self, conn_has_path_fn, conn_matches_pid_fn):
         test_pid = 0
 
-        with patch('autopilot.introspection._connection_matches_pid', return_value=True) as match_pid:
-            with patch('autopilot.introspection._connection_has_path', return_value=False):
-                result = _match_connection(None, test_pid, None, None)
-                match_pid.assert_called_once_with(None, None, test_pid)
+        conn_has_path_fn.return_value = False
+        conn_matches_pid_fn.return_value=True
 
-                self.assertThat(result, Equals(False))
+        result = _match_connection(self.fake_bus, test_pid, self.fake_path, self.fake_connection_name)
+        conn_matches_pid_fn.assert_called_once_with(self.fake_bus, self.fake_connection_name, test_pid)
+
+        conn_matches_pid_fn.assert_called_once_with(self.fake_bus, self.fake_connection_name, test_pid)
+        self.assertThat(result, Equals(False))
 
 
-    def test_match_connection_fails_bus_pid_is_our_pid(self):
+    @patch('autopilot.introspection._bus_pid_is_our_pid')
+    def test_match_connection_fails_bus_pid_is_our_pid(self, bus_pid_fn):
         test_pid = 0
-        with patch('autopilot.introspection._bus_pid_is_our_pid', return_value=True):
-            result = _match_connection(None, test_pid, None, None)
-            self.assertThat(result, Equals(False))
+        bus_pid_fn.return_value=True
 
+        result = _match_connection(self.fake_bus, test_pid, self.fake_path, self.fake_connection_name)
 
-    def test_bus_pid_is_our_pid_returns_true_when_pids_match(self):
+        bus_pid_fn.assert_called_once_with(self.fake_bus, self.fake_connection_name, test_pid)
+        self.assertThat(result, Equals(False))
+
+    @patch('autopilot.introspection._get_bus_connections_pid')
+    @patch('os.getpid')
+    def test_bus_pid_is_our_pid_returns_true_when_pids_match(self, getpid_fn, get_bus_conn_pid_fn):
         script_pid = 0
-        with patch('autopilot.introspection._get_bus_pid', return_value=script_pid):
-            with patch('os.getpid', return_value=script_pid):
-                result = _bus_pid_is_our_pid(None, None, script_pid)
-                self.assertThat(result, Equals(True))
 
+        getpid_fn.return_value = script_pid
+        get_bus_conn_pid_fn.return_value = script_pid
 
-    def test_bus_pid_is_our_pid_returns_true_when_pids_dont_match(self):
+        result = _bus_pid_is_our_pid(self.fake_bus, self.fake_connection_name, script_pid)
+
+        get_bus_conn_pid_fn.assert_called_with(self.fake_bus, self.fake_connection_name)
+        self.assertThat(result, Equals(True))
+
+    @patch('autopilot.introspection._get_bus_connections_pid')
+    @patch('os.getpid')
+    def test_bus_pid_is_our_pid_returns_false_when_pids_dont_match(self, getpid_fn, get_bus_conn_pid_fn):
         script_pid = 0
-        with patch('autopilot.introspection._get_bus_pid', return_value=3):
-            with patch('os.getpid', return_value=script_pid):
-                result = _bus_pid_is_our_pid(None, None, script_pid)
-                self.assertThat(result, Equals(False))
+
+        getpid_fn.return_value = script_pid
+        get_bus_conn_pid_fn.return_value = 3
+
+        result = _bus_pid_is_our_pid(self.fake_bus, self.fake_connection_name, script_pid)
+
+        get_bus_conn_pid_fn.assert_called_with(self.fake_bus, self.fake_connection_name)
+        self.assertThat(result, Equals(False))
 
 
     def test_get_possible_connections_returns_all_with_none_arg(self):
@@ -176,5 +236,5 @@ class ProxyObjectTests(TestCase):
         test_bus = Mock(spec_set=["list_names"])
         test_bus.list_names.return_value = ["com.test.something", ":1.234"]
 
-        fn = lambda: _get_possible_connections(test_bus, non_matching_connection_name)
-        self.assertThat(fn, raises(RuntimeError("No connections called com.test.failure found")))
+        results = _get_possible_connections(test_bus, non_matching_connection_name)
+        self.assertThat(results, Equals([]))

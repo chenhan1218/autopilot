@@ -20,7 +20,7 @@
 from argparse import ArgumentParser, REMAINDER, Action
 import subprocess
 
-version = '1.3'
+version = '1.3.1'
 
 
 class BackendException(RuntimeError):

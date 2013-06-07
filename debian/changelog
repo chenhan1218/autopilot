@@ -4,6 +4,146 @@ autopilot (1.3.1-0ubuntu1) UNRELEASED; urgency=low
 
  -- Thomi Richards <thomi.richards@canonical.com>  Fri, 07 Jun 2013 08:31:45 +1200
 
+autopilot (1.3daily13.06.05-0ubuntu1) saucy; urgency=low
+
+  [ Barry Warsaw ]
+  * Ship tests in a separate binary package. (LP: #1170105)
+
+  [ chris.gagnon ]
+  * add click_object to mouse. (LP: #1175328)
+  * Add option to run tests in random order. (LP: #1175327)
+  * don't delete the /tmp/autopilot folder during functional tests if it
+    already exists lp:1182755. (LP: #1182755)
+  * don't require -r if -rd is used fixes lp:1183618. (LP: #1183618)
+  * make autopilot vis use utf8 instead of ascii. (LP: #1185991)
+  * Add tests around autopilot video recording command line parameters.
+
+  [ Didier Roche ]
+  * don't create circular dependency. python-autopilot should recommends
+    -desktop or -touch autopilot, but don't dep on them.
+
+  [ Leo Arias ]
+  * Fixed typo: AutopilotProxyObect -> AutopilotProxyObject. (LP:
+    #1173404)
+
+  [ Christopher Lee ]
+  * Add otto directive, for use in the documentation.
+  * Changes to xpathselect mean that the dbus tuple returns the objects
+    full path (was just the object name). (LP: #1155351)
+  * autopilot.introspection get_application_launcher potentially calls
+    exit(1) if it fails to detect the application launcher. This
+    shouldn't exit but do something else (probably raise an exception?).
+    (LP: #1171290)
+  * Fix launch_test_application so it can launch applications from
+    $PATH. (LP: #1171298)
+  * Fix several autopilot tests. (LP: #1171294)
+  * Queries are now recursive from the node itself, not the root. (LP:
+    #1144288)
+  * Fixes bug lp:1174552 Within testcase change self.screen_geo to
+    self.display. (LP: #1174552)
+  * Within AutopilotTestCase, delay creation of input devices, display
+    and process manager until required.
+  * autopilot.clipboard now only imports the Gdk, Gtk modules when the
+    method is actually called.
+  * Fixed exception being thrown by bamf process manager, twas a
+    spelling/import error. (LP: #1174831)
+  * Two minor fixes to allow the Unity 3d tests to work with autopilot
+    1.3.
+  * Fixes expceptions thrown due to dbuss sessions created before
+    gobject main loop. (LP: #1175668)
+  * Add a package with the tracepoint module. (LP: #1177612)
+  * Fixes bug https://bugs.launchpad.net/autopilot/+bug/1178014. . (LP:
+    #1178014)
+  * Fixed an autopilot test and added debugging logging to uinput
+    backend.
+  * Added --just-suites option to list. Tests also included. (LP:
+    #1175825)
+  * Adding functionality to have code that runs after a test runs (after
+    the tests addCleanup) as well as before. (LP: #1184491)
+  * Fixes a couple of places where code wasn't updated with the recent
+    cleanup/start/end test code execution changes. . (LP: #1185790)
+
+  [ Thomi Richards ]
+  * _pick_variant now raises an exception when requested backend was not
+    available. (LP: #1169355)
+  * Recommand installation of libautopilot-gtk and libautopilot-qt. (LP:
+    #1158983)
+  * Several documentation fixes.
+  * Document test scenarios for autopilot.
+  * Add otto directive, for use in the documentation.
+  * Ship tests in a separate binary package. (LP: #1170105)
+  * Fix exception formatting. (LP: #1171303)
+  * Autopilot can now test itself. Adds tests for the input stack. (LP:
+    #1171292)
+  * Fix copyright headers in all files. (LP: #1171279)
+  * Make it easier to specify an introspection type. (LP: #1172914)
+  * Additional porting documents.
+  * Add documentation for the DBusIntrospectionObject class.
+  * Split vis tool. (LP: #1174587)
+  * Changes to Dbus address backend code to make it easier to get a
+    proxy object from a dbus address. (LP: #1174425)
+  * Fix UInput code to work with the latest python-evdev package, and
+    added the Pointer class to unify the Mouse and Touch interfaces.
+    (LP: #1169363)
+  * Make sure applications are closed quickly. (LP: #1174931)
+  * Clean up input stacks.
+  * Make the X11 display module fail to initialise if the display
+    information cannot be retrieved. (LP: #1175663)
+  * Change autopilot packaging to only install packages required on each
+    platform. (LP: #1175694)
+  * Remove the explicit dependency checking code in bin/autopilot.
+  * Remove the un-used check_depends function.
+  * Fix input uinput backend to pick up the correct display backend.
+  * Fix a typo in the autopilot-touch metapackage.
+  * Split tests into unit and functional tests. Make sure unit tests are
+    run as part of the package build. (LP: #1037937)
+  * Install python-autopilot-vis when installing the autopilot-desktop
+    package.
+  * Pass additional arguments to application being launched. (LP:
+    #1177107)
+  * X11 mouse emulator will not move to values far off the screens left
+    side edge.
+  * Update packaging control files to reflect the new test layout.
+  * Add a package with the tracepoint module. (LP: #1177612)
+  * fix bug lp:1180124 - don't patch PYTHONPATH when we're running from
+    /usr/ somewhere, and don't explicitly patch it in the functional
+    test suite. (LP: #1180124)
+  * Fix several packaging bugs. (LP: #1180209, #1180210, #1180207)
+  * Branch for fixing the latest failing autopilot tests.
+  * Allow keyboards to be created outside the test case runs, useful for
+    testing. (LP: #1182303)
+  * Disable processmanager snapshotting if there's no processmanager on
+    the current platform. (LP: #1182488)
+  * Define a method for defining custom emulator base classes.
+  * Add more documentation (basic tutorial).
+  * Add a -v, --version command line option. (LP: #1183700)
+  * Add python-evdev dependency to autopilot-desktop. (LP: #1183955)
+
+  [ Francis Ginther ]
+  * Add udev rules to create an autopilot specific uinput dev node owned
+    by the autopilot group. (LP: #1143038)
+  * Allow fallback to /dev/uinput if /dev/autopilot-uinput does not
+    exist. The touch image does not support udev and therefore does not
+    have /dev/autopilot-udev. It does have /dev/uinput. So the solution
+    is to fallback and attempt to use /dev/uinput. This should be a
+    short-term workaround until the touch images enable udev support.
+    (LP: #1180864)
+
+  [ Łukasz 'sil2100' Zemczak ]
+  * Branch for fixing the latest failing autopilot tests.
+  * I think we should use qmlviewer instead of qmlscene in tests of
+    autopilot - it's safer, as other qt tests use Qt4 anyway.
+  * This is stupid but... we need to check A LOT of cases to really know
+    if qmlscene/qmlviewer is installed, especially when qtchooser is
+    used. qtchooser makes it all much more complicated because using
+    'which' is not enough, since it installs its wrappers to /usr/bin.
+    We do that since we want to be distro independent.
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 236
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 05 Jun 2013 00:02:45 +0000
+
 autopilot (1.3daily13.05.31ubuntu.unity.next-0ubuntu1) raring; urgency=low
 
   [ chris.gagnon ]

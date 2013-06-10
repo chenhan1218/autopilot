@@ -163,7 +163,10 @@ class _VideoLogger(CleanupRegistered):
 
     def _on_test_failed(self, ex_info):
         """Called when a test fails."""
-        self._test_passed = False
+        from unittest.case import SkipTest
+        failure_class_type = ex_info[0]
+        if failure_class_type is not SkipTest:
+            self._test_passed = False
 
 
 _video_logger = _VideoLogger()

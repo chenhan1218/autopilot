@@ -248,20 +248,20 @@ Now lets take a look at some simple tests with some user interaction. First, upd
 	if __name__ == '__main__':
 	        main()
 
-We've reorganized the application code into a class to make the event handling easier. Then we added two input controls, the 'Hello' and 'Goodbye' buttons and an output control, the 'Response' label.
+We've reorganized the application code into a class to make the event handling easier. Then we added two input controls, the ``hello`` and ``goodbye`` buttons and an output control, the ``response`` label.
 
-The operation of the application is still very trivial, but now we can test that it actually does something in response to user input. Clicking either of the two buttons will cause the response text to change. Clicking the 'Hello' button should result in 'Response: Hello' while clicking the 'Goodbye' button should result in 'Response: Goodbye'.
+The operation of the application is still very trivial, but now we can test that it actually does something in response to user input. Clicking either of the two buttons will cause the response text to change. Clicking the ``Hello`` button should result in ``Response: Hello`` while clicking the ``Goodbye`` button should result in ``Response: Goodbye``.
 
-Since we're adding a new category of tests, button response tests, we should organize them into a new class. Our tests now look like::
+Since we're adding a new category of tests, button response tests, we should organize them into a new class. Our tests module now looks like::
 
 	from autopilot.testcase import AutopilotTestCase
 	from os.path import abspath, dirname, join
 	from testtools.matchers import Equals
 
-	from autopilot.input import Mouse, Pointer
+	from autopilot.input import Mouse
 	from autopilot.matchers import Eventually
 
-	class MainWindowTitleTests(AutopilotTestCase):
+	class HelloWorldTestBase(AutopilotTestCase):
 
 	    def launch_application(self):
 	        """Work out the full path to the application and launch it.
@@ -274,6 +274,9 @@ Since we're adding a new category of tests, button response tests, we should org
 	        full_path = abspath(join(dirname(__file__), '..', '..', 'testapp.py'))
 	        return self.launch_test_application(full_path, app_type='qt')
 
+
+	class MainWindowTitleTests(HelloWorldTestBase):
+
 	    def test_main_window_title_string(self):
 	        """The main window title must be 'Hello World'."""
 	        app_root = self.launch_application()
@@ -281,43 +284,39 @@ Since we're adding a new category of tests, button response tests, we should org
 
 	        self.assertThat(main_window.windowTitle, Equals("Hello World"))
 
-	class ButtonResponseTests(AutopilotTestCase):
 
-	    def setUp(self):
-	        """Launches the application and creates an input device."""
-	        super(AutopilotTestCase, self).setUp()
-	        self.pointing_device = Pointer(Mouse.create())
-	        full_path = abspath(join(dirname(__file__), '..', '..', 'testapp.py'))
-	        self.app = self.launch_test_application(full_path, app_type='qt')
+	class ButtonResponseTests(HelloWorldTestBase):
 
 	    def test_hello_response(self):
 	        """The response text must be 'Response: Hello' after a Hello click."""
-	        response = self.app.select_single('QLabel')
-	        hello = self.app.select_single('QPushButton', text='Hello')
+	        app_root = self.launch_application()
+	        response = app_root.select_single('QLabel')
+	        hello = app_root.select_single('QPushButton', text='Hello')
 
-	        self.pointing_device.click_object(hello)
+	        #self.pointing_device.click_object(hello)
+	        self.mouse.click_object(hello)
 
 	        self.assertThat(response.text, Eventually(Equals('Response: Hello')))
 
 	    def test_goodbye_response(self):
 	        """The response text must be 'Response: Goodbye' after a Goodbye
 	        click."""
-	        response = self.app.select_single('QLabel')
-	        goodbye = self.app.select_single('QPushButton', text='Goodbye')
+	        app_root = self.launch_application()
+	        response = app_root.select_single('QLabel')
+	        goodbye = app_root.select_single('QPushButton', text='Goodbye')
 
-	        self.pointing_device.click_object(goodbye)
+	        #self.pointing_device.click_object(goodbye)
+	        self.mouse.click_object(goodbye)
 
 	        self.assertThat(response.text, Eventually(Equals('Response: Goodbye')))
 
-In addition to the new class, ButtonResponseTests, you'll notice two other changes. We added two new import lines and changed the object type of the main window from 'QMainWindow' to 'AutopilotHelloWorld'. The change in object type is a result of our test application being refactored into a class called 'AutopilotHelloWorld'.
+In addition to the new class, ``ButtonResponseTests``, you'll notice a few other changes. First, two new import lines were added to support the new tests. Next, the existing ``MainWindowTitleTests`` class was refactored to subclass from a base class, ``HelloWorldTestBase``. The base class contains the ``launch_application`` method which is used for all test cases. Finally, the object type of the main window changed from ``QMainWindow`` to ``AutopilotHelloWorld``. The change in object type is a result of our test application being refactored into a class called ``AutopilotHelloWorld``.
 
 .. otto:: **Be careful when identifing user interface controls**
 
 	Notice that our simple refactoring of the test application forced a change to the test for the main window. When developing application code, put a little extra thought into how the user interface controls will be identified in the tests. Identify objects with attributes that are likely to remain constant as the application code is developed.
 
-The ButtonResponseTests class adds two new tests and a 'setUp' method which will be called prior to running each test. In addition to launching the application, we also create a pointing device which will be used by the tests to provide input. In this case, the pointer is a mouse but could be changed to use a touch device (see :ref:`tut-picking-backends`)
-
-Each test identifies the user interface controls that need to be used, performs a single, specific action, and then verifies the outcome. In 'test_hello_response', we first identify the 'QLabel' control which contains the output we need to check. We then identify the 'Hello' button. As the application has two 'QPushButton' controls, we must further refine the 'select_single' call by specifing an additional property. In this case, we use the button text. Next, an input action is triggered by instructing the 'pointing_device' to click the 'Hello' button. Finally, the test asserts that the response label text matches the expected string. The second test repeats the same process with the 'Goodbye' button.
+The ``ButtonResponseTests`` class adds two new tests, one for each input control. Each test identifies the user interface controls that need to be used, performs a single, specific action, and then verifies the outcome. In ``test_hello_response``, we first identify the ``QLabel`` control which contains the output we need to check. We then identify the ``Hello`` button. As the application has two ``QPushButton`` controls, we must further refine the ``select_single`` call by specifing an additional property. In this case, we use the button text. Next, an input action is triggered by instructing the ``mouse`` to click the ``Hello`` button. Finally, the test asserts that the response label text matches the expected string. The second test repeats the same process with the ``Goodbye`` button.
 
 The Eventually Matcher
 ======================

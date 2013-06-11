@@ -293,7 +293,6 @@ Since we're adding a new category of tests, button response tests, we should org
 	        response = app_root.select_single('QLabel')
 	        hello = app_root.select_single('QPushButton', text='Hello')
 
-	        #self.pointing_device.click_object(hello)
 	        self.mouse.click_object(hello)
 
 	        self.assertThat(response.text, Eventually(Equals('Response: Hello')))
@@ -305,7 +304,6 @@ Since we're adding a new category of tests, button response tests, we should org
 	        response = app_root.select_single('QLabel')
 	        goodbye = app_root.select_single('QPushButton', text='Goodbye')
 
-	        #self.pointing_device.click_object(goodbye)
 	        self.mouse.click_object(goodbye)
 
 	        self.assertThat(response.text, Eventually(Equals('Response: Goodbye')))

@@ -33,7 +33,7 @@ Autopilot is designed to work across all the form factors Ubuntu runs on, includ
 Q. How can I contribute to autopilot?
 =====================================
 * Documentation: We can always use more documentation.
-    * if you don't know how to submit merge proposal on launchpad you can write a bug `bug <https://bugs.launchpad.net/autopilot/+filebug>`_ with new documentation and someone will submit a merge proposal for you. They will give you credit for your documentation in the merge proposal.
+    * if you don't know how to submit a merge proposal on launchpad, you can write a `bug <https://bugs.launchpad.net/autopilot/+filebug>`_ with new documentation and someone will submit a merge proposal for you. They will give you credit for your documentation in the merge proposal.
 
 
 * New Features: Check out our existing `Blueprints <https://blueprints.launchpad.net/autopilot>`_ or create some yourself... Then code!

@@ -466,7 +466,7 @@ Loading tests from: %s
         if should_delete:
             self.addCleanup(remove_if_exists, ap_dir)
         else:
-            self.addCleanup(remove_if_exists, 
+            self.addCleanup(remove_if_exists,
                             '%s/tests.test_simple.SimpleTest.test_simple.ogv' % (ap_dir))
 
         code, output, error = self.run_autopilot(["run", "-r", "-rd", video_dir, "tests"])
@@ -525,6 +525,32 @@ Loading tests from: %s
         self.assertThat(code, Equals(1))
         self.assertFalse(os.path.exists(
             '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv'))
+
+    def test_no_videos_saved_for_skipped_test(self):
+        """Videos must not be saved if the test has been skipped (not
+        failed).
+
+        """
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+            from time import sleep
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    sleep(1)
+                    self.skip("Skipping Test")
+            """
+            ))
+
+        video_file_path = '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv'
+        self.addCleanup(remove_if_exists, video_file_path)
+
+        code, output, error = self.run_autopilot(["run", "-r", "tests"])
+
+        self.assertThat(code, Equals(0))
+        self.assertThat(os.path.exists(video_file_path), Equals(False))
 
     def test_runs_with_import_errors_fail(self):
         """Import errors inside a test must be considered a test failure."""

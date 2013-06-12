@@ -206,9 +206,123 @@ Both the 'list' and 'run' commands take a test id as an argument. You may be as 
 A Test with Interaction
 =======================
 
-.. TODO: Add a second test, one that adds some keyboard / mouse interaction.
+Now lets take a look at some simple tests with some user interaction. First, update the test application with some input and output controls::
+
+	#!/usr/bin/env python
+
+	from PyQt4 import QtGui
+	from sys import argv
+
+	class AutopilotHelloWorld(QtGui.QWidget):
+	    def __init__(self):
+	        super(AutopilotHelloWorld, self).__init__()
+
+	        self.hello = QtGui.QPushButton("Hello")
+	        self.hello.clicked.connect(self.say_hello)
+
+	        self.goodbye = QtGui.QPushButton("Goodbye")
+	        self.goodbye.clicked.connect(self.say_goodbye)
+
+	        self.response = QtGui.QLabel("Response: None")
+
+	        grid = QtGui.QGridLayout()
+	        grid.addWidget(self.hello, 0, 0)
+	        grid.addWidget(self.goodbye, 0, 1)
+	        grid.addWidget(self.response, 1, 0, 1, 2)
+	        self.setLayout(grid)
+	        self.show()
+	        self.setWindowTitle("Hello World")
+
+	    def say_hello(self):
+	        self.response.setText('Response: Hello')
+
+	    def say_goodbye(self):
+	        self.response.setText('Response: Goodbye')
+
+
+	def main():
+	    app = QtGui.QApplication(argv)
+	    ahw = AutopilotHelloWorld()
+	    app.exec_()
+
+	if __name__ == '__main__':
+	        main()
+
+We've reorganized the application code into a class to make the event handling easier. Then we added two input controls, the ``hello`` and ``goodbye`` buttons and an output control, the ``response`` label.
+
+The operation of the application is still very trivial, but now we can test that it actually does something in response to user input. Clicking either of the two buttons will cause the response text to change. Clicking the ``Hello`` button should result in ``Response: Hello`` while clicking the ``Goodbye`` button should result in ``Response: Goodbye``.
+
+Since we're adding a new category of tests, button response tests, we should organize them into a new class. Our tests module now looks like::
+
+	from autopilot.testcase import AutopilotTestCase
+	from os.path import abspath, dirname, join
+	from testtools.matchers import Equals
+
+	from autopilot.input import Mouse
+	from autopilot.matchers import Eventually
+
+	class HelloWorldTestBase(AutopilotTestCase):
+
+	    def launch_application(self):
+	        """Work out the full path to the application and launch it.
+
+	        This is necessary since our test application will not be in $PATH.
+
+	        :returns: The application proxy object.
+
+	        """
+	        full_path = abspath(join(dirname(__file__), '..', '..', 'testapp.py'))
+	        return self.launch_test_application(full_path, app_type='qt')
+
+
+	class MainWindowTitleTests(HelloWorldTestBase):
+
+	    def test_main_window_title_string(self):
+	        """The main window title must be 'Hello World'."""
+	        app_root = self.launch_application()
+	        main_window = app_root.select_single('AutopilotHelloWorld')
+
+	        self.assertThat(main_window.windowTitle, Equals("Hello World"))
+
+
+	class ButtonResponseTests(HelloWorldTestBase):
+
+	    def test_hello_response(self):
+	        """The response text must be 'Response: Hello' after a Hello click."""
+	        app_root = self.launch_application()
+	        response = app_root.select_single('QLabel')
+	        hello = app_root.select_single('QPushButton', text='Hello')
+
+	        self.mouse.click_object(hello)
+
+	        self.assertThat(response.text, Eventually(Equals('Response: Hello')))
+
+	    def test_goodbye_response(self):
+	        """The response text must be 'Response: Goodbye' after a Goodbye
+	        click."""
+	        app_root = self.launch_application()
+	        response = app_root.select_single('QLabel')
+	        goodbye = app_root.select_single('QPushButton', text='Goodbye')
+
+	        self.mouse.click_object(goodbye)
+
+	        self.assertThat(response.text, Eventually(Equals('Response: Goodbye')))
+
+In addition to the new class, ``ButtonResponseTests``, you'll notice a few other changes. First, two new import lines were added to support the new tests. Next, the existing ``MainWindowTitleTests`` class was refactored to subclass from a base class, ``HelloWorldTestBase``. The base class contains the ``launch_application`` method which is used for all test cases. Finally, the object type of the main window changed from ``QMainWindow`` to ``AutopilotHelloWorld``. The change in object type is a result of our test application being refactored into a class called ``AutopilotHelloWorld``.
+
+.. otto:: **Be careful when identifing user interface controls**
+
+	Notice that our simple refactoring of the test application forced a change to the test for the main window. When developing application code, put a little extra thought into how the user interface controls will be identified in the tests. Identify objects with attributes that are likely to remain constant as the application code is developed.
+
+The ``ButtonResponseTests`` class adds two new tests, one for each input control. Each test identifies the user interface controls that need to be used, performs a single, specific action, and then verifies the outcome. In ``test_hello_response``, we first identify the ``QLabel`` control which contains the output we need to check. We then identify the ``Hello`` button. As the application has two ``QPushButton`` controls, we must further refine the ``select_single`` call by specifing an additional property. In this case, we use the button text. Next, an input action is triggered by instructing the ``mouse`` to click the ``Hello`` button. Finally, the test asserts that the response label text matches the expected string. The second test repeats the same process with the ``Goodbye`` button.
 
 The Eventually Matcher
 ======================
 
-.. TODO: Discuss the issues with running tests & application in separate processes, and how the Eventually matcher helps us overcome these problems. Cover the various ways the matcher can be used.
+Notice that in the ButtonResponseTests tests above, the autopilot method :class:`~autopilot.matchers.Eventually` is used in the assertion. This allows the assertion to be retried continuously until it either becomes true, or times out (the default timout is 10 seconds). This is necessary because the application and the autopilot tests run in different processes. Autopilot could test the assert before the application has completed its action. Using :class:`~autopilot.matchers.Eventually` allows the application to complete its action without having to explicitly add delays to the tests.
+
+.. otto:: **Use Eventually when asserting any user interface condition**
+
+	You may find that when running tests, the application is often ready with the outcome by the time autopilot is able to test the assertion without using :class:`~autopilot.matchers.Eventually`. However, this may not always be true when running your test suite on different hardware.
+
+.. TODO: Continue to discuss the issues with running tests & application in separate processes, and how the Eventually matcher helps us overcome these problems. Cover the various ways the matcher can be used.

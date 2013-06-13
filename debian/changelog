@@ -1,3 +1,18 @@
+autopilot (1.3.1daily13.06.13-0ubuntu1) saucy; urgency=low
+
+  [ Francis Ginther ]
+  * Extends the getting_started tutorial by adding content for "A Test
+    with Interaction" and "The Eventually Matcher" sections.
+
+  [ Christopher Lee ]
+  * Added an extra check so that a 'failing' test wasn't recorded if it
+    was in fact a skipping test. (LP: #1189655)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 243
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 13 Jun 2013 00:02:39 +0000
+
 autopilot (1.3.1daily13.06.12-0ubuntu1) saucy; urgency=low
 
   [ Thomi Richards ]

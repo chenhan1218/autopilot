@@ -5,6 +5,21 @@ Frequently Asked Questions
 
 Autopilot: The Project
 ++++++++++++++++++++++
+Q. How can I contribute to autopilot?
+=====================================
+* Documentation: We can always use more documentation.
+    * if you don't know how to submit a merge proposal on launchpad, you can write a `bug <https://bugs.launchpad.net/autopilot/+filebug>`_ with new documentation and someone will submit a merge proposal for you. They will give you credit for your documentation in the merge proposal.
+
+
+* New Features: Check out our existing `Blueprints <https://blueprints.launchpad.net/autopilot>`_ or create some yourself... Then code!
+
+
+* Test and Fix: No project is perfect, log some `bugs <https://bugs.launch    pad.net/autopilot/+filebug>`_ or `fix some bugs <https://bugs.launchpad.net/autopilot/+filebug>`_.
+
+Q. Where can I get help / support?
+==================================
+
+The developers hang out in the #ubuntu-autopilot IRC channel on irc.freenode.net.
 
 Q. How do I install Autopilot?
 ==============================
@@ -29,23 +44,6 @@ Autopilot works with severall different types of applications, including:
  * Qt4, Qt5, and Qml applications.
 
 Autopilot is designed to work across all the form factors Ubuntu runs on, including the phone and tablet.
-
-Q. How can I contribute to autopilot?
-=====================================
-* Documentation: We can always use more documentation.
-    * if you don't know how to submit a merge proposal on launchpad, you can write a `bug <https://bugs.launchpad.net/autopilot/+filebug>`_ with new documentation and someone will submit a merge proposal for you. They will give you credit for your documentation in the merge proposal.
-
-
-* New Features: Check out our existing `Blueprints <https://blueprints.launchpad.net/autopilot>`_ or create some yourself... Then code!
-
-
-* Test and Fix: No project is perfect, log some `bugs <https://bugs.launch    pad.net/autopilot/+filebug>`_, or `fix some bugs <https://bugs.launchpad.net/autopilot/+filebug>`_.
-
-Q. Where can I get help / support?
-==================================
-
-The developers hang out in the #ubuntu-autopilot IRC channel on irc.freenode.net.
-
 
 Autopilot Tests
 +++++++++++++++

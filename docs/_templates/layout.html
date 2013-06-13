@@ -1,8 +1,16 @@
 {% extends '!layout.html' %}
+{% set css_files = css_files + ["_static/centertext.css"] %}
+
 {% block header %}
-  <a href="{{pathto("faq/faq")}}#q-how-can-i-contribute-to-autopilot">  Learn how you can contribute!</a><br/>
+
+<div class=center_text>
+    <a href="{{pathto("faq/faq") }}">  Learn how you can contribute!</a><br/>
+</div>
 {% endblock %}
 
+
 {% block footer %}
-  <a href="{{pathto("faq/faq")}}#q-how-can-i-contribute-to-autopilot">  Learn how you can contribute!</a><br/>
+ <div class=center_text>
+    <a href="{{pathto("faq/faq") }}">  Learn how you can contribute!</a><br/>
+</div>
 {% endblock %}

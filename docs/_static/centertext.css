@@ -1,6 +1,5 @@
 div.center_text {
     text-align: center;
-    background: #133f52;
     color: #ffffff;
 }
 
@@ -8,6 +7,6 @@ div.center_text a {
     color: #ffffff;
 }
 
-a:link {
+div.center a:link {
     text-decoration: underline;
 }

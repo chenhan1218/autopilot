@@ -14,7 +14,7 @@ Q. How can I contribute to autopilot?
 * New Features: Check out our existing `Blueprints <https://blueprints.launchpad.net/autopilot>`_ or create some yourself... Then code!
 
 
-* Test and Fix: No project is perfect, log some `bugs <https://bugs.launch    pad.net/autopilot/+filebug>`_ or `fix some bugs <https://bugs.launchpad.net/autopilot/+filebug>`_.
+* Test and Fix: No project is perfect, log some `bugs <https://bugs.launchpad.net/autopilot/+filebug>`_ or `fix some bugs <https://bugs.launchpad.net/autopilot>`_.
 
 Q. Where can I get help / support?
 ==================================
@@ -51,7 +51,7 @@ Signup for a `launchpad account <https://help.launchpad.net/YourAccount/NewAccou
     example:
     bzr push lp:~chris.gagnon/autopilot/bug-fix-lp234567
 
-All new features should have unit and/or functional test to make sure someone doesn't remove break your new code with a future commit.
+All new features should have unit and/or functional test to make sure someone doesn't remove or break your new code with a future commit.
 
 Q. How do I list the tests for the autopilot source code?
 =========================================================

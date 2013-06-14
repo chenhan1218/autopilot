@@ -53,13 +53,15 @@ Signup for a `launchpad account <https://help.launchpad.net/YourAccount/NewAccou
 
 All new features should have unit and/or functional test to make sure someone doesn't remove break your new code with a future commit.
 
-Q. How do I run the tests?
-==========================
-From the directory containing the autopilot source code and list the tests::
+Q. How do I list the tests for the autopilot source code?
+=========================================================
+From the directory containing the autopilot source code type::
 
     autopilot list autopilot.tests
 
-To run all the tests type::
+Q. How do I run the tests for the autopilot source code?
+========================================================
+From the directory containing the autopilot source code tests type::
 
     autopilot run autopilot.tests
 

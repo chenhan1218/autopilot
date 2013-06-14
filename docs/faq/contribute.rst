@@ -61,7 +61,7 @@ From the directory containing the autopilot source code type::
 
 Q. How do I run the tests for the autopilot source code?
 ========================================================
-From the directory containing the autopilot source code tests type::
+From the directory containing the autopilot source code type::
 
     autopilot run autopilot.tests
 

@@ -7,3 +7,7 @@ div.center_text {
 div.center_text a {
     color: #ffffff;
 }
+
+a:link {
+    text-decoration: underline;
+}

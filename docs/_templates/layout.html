@@ -1,16 +1,8 @@
 {% extends '!layout.html' %}
 {% set css_files = css_files + ["_static/centertext.css"] %}
 
-{% block header %}
-
-<div class=center_text>
-    <a href="{{pathto("faq/faq") }}">  Learn how you can contribute!</a><br/>
-</div>
-{% endblock %}
-
-
 {% block footer %}
  <div class=center_text>
-    <a href="{{pathto("faq/faq") }}">  Learn how you can contribute!</a><br/>
+    <a href="{{pathto("faq/contribute") }}">  Learn how you can contribute!</a><br/> © Copyright 2012-2013, Canonical. Created using Sphinx
 </div>
 {% endblock %}

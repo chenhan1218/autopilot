@@ -10,3 +10,4 @@ Global Contents
     api/index
     porting/porting
     faq/faq
+    faq/contribute

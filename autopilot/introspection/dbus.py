@@ -475,6 +475,8 @@ class DBusIntrospectionObject(object):
         name = get_classname_from_path(path)
         try:
             class_type = _object_registry[cls._id][name]
+            if class_type._Backend is None:
+                class_type._Backend = cls._Backend
         except KeyError:
             logger.warning("Generating introspection instance for type '%s' based on generic class.", name)
             # override the _id attr from cls, since we don't want generated types

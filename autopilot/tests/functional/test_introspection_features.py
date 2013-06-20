@@ -22,6 +22,7 @@ import os
 from tempfile import mktemp
 from testtools.matchers import Equals
 
+from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase
 from autopilot.introspection.dbus import CustomEmulatorBase
 
@@ -73,3 +74,16 @@ class IntrospectionFeatureTests(AutopilotTestCase):
 
         self.assertThat(type(test_widget), Equals(MouseTestWidget))
 
+    def test_can_access_custom_emulator_properties(self):
+        """Must be able to access properties of a custom emulator."""
+
+        class EmulatorBase(CustomEmulatorBase):
+            pass
+
+        class MouseTestWidget(EmulatorBase):
+            pass
+
+        app = self.start_mock_app(EmulatorBase)
+        test_widget = app.select_single(MouseTestWidget)
+
+        self.assertThat(test_widget.visible, Eventually(Equals(True)))

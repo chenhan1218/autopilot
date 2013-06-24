@@ -203,12 +203,15 @@ Both the 'list' and 'run' commands take a test id as an argument. You may be as 
 
 	$ autopilot run example.tests.test_window.MainWindowTitleTests.test_main_window_title_string
 
+.. _tut_test_with_interaction:
+
 A Test with Interaction
 =======================
 
 Now lets take a look at some simple tests with some user interaction. First, update the test application with some input and output controls::
 
 	#!/usr/bin/env python
+	# File: testapp.py
 
 	from PyQt4 import QtGui
 	from sys import argv

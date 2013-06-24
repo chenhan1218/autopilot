@@ -139,15 +139,11 @@ Platform Selection
 
 .. Document the methods we have to get information about the platform we're running on, and how we can skip tests based on this information.
 
-Due to there being a couple of platforms and form factors to develop for
-(specifically Ubuntu Desktop and Ubuntu Touch) a test author may find that it
-only makes sense to run tests in specific instances.
+Autopilot provides functionality that allows the test author to determine which
+platform a test is running on so that they may either change behaviour within
+the test or skipping the test all together.
 
-Autopilot contains functionality that allows the test author to determine which
-platform the test is running on so that they may react accordingly or even skip
-the test all together.
-
-For examples and API documentaion please checkout :py:mod:`autopilot.platform`.
+For examples and API documentaion please see :py:mod:`autopilot.platform`.
 
 Gestures and Multitouch
 =======================

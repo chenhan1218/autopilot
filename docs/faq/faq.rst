@@ -120,7 +120,7 @@ For instance launching gedit is as easy as::
 or Qt application so that it may enable the correct libraries. If this fails you
 will need to specify the type of application it is.
 
-For example, in out previous example Autopilot was able to automatically
+For example, in our previous example Autopilot was able to automatically
 determine that it is a Gtk application and thus not further arguments are
 required.
 

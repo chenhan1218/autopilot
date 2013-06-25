@@ -89,6 +89,11 @@ class CommandLineArgsTests(TestCase):
         self.assertThat(args.application,
             Equals(["app", "-s", "--long", "--key=val", "arg1", "arg2"]))
 
+    @patch('sys.stderr', new=StringIO())
+    @expectedFailure
+    def test_launch_command_must_specify_app(self):
+        self.parse_args("launch")
+
     @patch('autopilot.have_vis', new=lambda: True)
     def test_vis_present_when_vis_module_installed(self):
         args = self.parse_args('vis')
@@ -140,6 +145,14 @@ class CommandLineArgsTests(TestCase):
     def test_list_no_run_order(self):
         args = self.parse_args('list foo')
         self.assertThat(args.run_order, Equals(False))
+
+    def test_list_suites_option(self):
+        args = self.parse_args('list --suites foo')
+        self.assertThat(args.suites, Equals(True))
+
+    def test_list_not_suites_option(self):
+        args = self.parse_args('list foo')
+        self.assertThat(args.suites, Equals(False))
 
     def test_run_mode(self):
         args = self.parse_args('run foo')
@@ -207,10 +220,6 @@ class CommandLineArgsTests(TestCase):
         args = self.parse_args("run --record foo")
         self.assertThat(args.record, Equals(True))
 
-    def test_run_command_record_dir_flag_default(self):
-        args = self.parse_args("run foo")
-        self.assertThat(args.record_directory, Equals("/tmp/autopilot"))
-
     def test_run_command_record_dir_flag_short(self):
         args = self.parse_args("run -rd /path/to/dir foo")
         self.assertThat(args.record_directory, Equals("/path/to/dir"))
@@ -218,6 +227,18 @@ class CommandLineArgsTests(TestCase):
     def test_run_command_record_dir_flag_long(self):
         args = self.parse_args("run --record-directory /path/to/dir foo")
         self.assertThat(args.record_directory, Equals("/path/to/dir"))
+
+    def test_run_command_random_order_flag_short(self):
+        args = self.parse_args("run -ro foo")
+        self.assertThat(args.random_order, Equals(True))
+
+    def test_run_command_random_order_flag_long(self):
+        args = self.parse_args("run --random-order foo")
+        self.assertThat(args.random_order, Equals(True))
+
+    def test_run_command_random_order_flag_default(self):
+        args = self.parse_args("run foo")
+        self.assertThat(args.random_order, Equals(False))
 
     def test_run_default_verbosity(self):
         args = self.parse_args('run foo')

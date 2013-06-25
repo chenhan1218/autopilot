@@ -41,6 +41,7 @@ from testtools import iterate_tests
 from testtools import TextTestResult
 from unittest.loader import TestLoader
 from unittest import TestSuite
+from random import shuffle
 
 
 _output_stream=None
@@ -49,6 +50,7 @@ _output_stream=None
 def list_tests(args):
     """Print a list of tests we find inside autopilot.tests."""
     num_tests = 0
+    total_title = "tests"
     test_suite = load_test_suite_from_name(args.suite)
 
     if args.run_order:
@@ -57,24 +59,43 @@ def list_tests(args):
         test_list_fn = lambda: sorted(iterate_tests(test_suite),
             lambda a, b: cmp(a.id(), b.id()))
 
-    for test in test_list_fn():
-        has_scenarios = hasattr(test, "scenarios") and type(test.scenarios) is list
-        if has_scenarios:
-            num_tests += len(test.scenarios)
-            print " *%d %s" % (len(test.scenarios), test.id())
-        else:
-            num_tests += 1
-            print "   ", test.id()
-    print "\n\n %d total tests." % (num_tests)
+    if args.suites:
+        import re
+        from collections import OrderedDict
+
+        suite_names = ["%s.%s" % (t.__module__, t.__class__.__name__) for t in test_list_fn()]
+        unique_suite_names = OrderedDict.fromkeys(suite_names).keys()
+        num_tests = len(unique_suite_names)
+        total_title = "suites"
+        print "    %s" % ("\n    ".join(unique_suite_names))
+    else:
+        for test in test_list_fn():
+            has_scenarios = hasattr(test, "scenarios") and type(test.scenarios) is list
+            if has_scenarios:
+                num_tests += len(test.scenarios)
+                print " *%d %s" % (len(test.scenarios), test.id())
+            else:
+                num_tests += 1
+                print "   ", test.id()
+    print "\n\n %d total %s." % (num_tests, total_title)
 
 
 def run_tests(args):
     """Run tests, using input from `args`."""
     test_suite = load_test_suite_from_name(args.suite)
 
+    if args.random_order:
+       shuffle(test_suite._tests)
+       print "Running tests in random order"
+
     import autopilot.globals
 
+    if args.record_directory:
+        args.record = True
+
     if args.record:
+        if not args.record_directory:
+            args.record_directory = '/tmp/autopilot'
         if subprocess.call(['which', 'recordmydesktop'], stdout=subprocess.PIPE) != 0:
             print "ERROR: The application 'recordmydesktop' needs to be installed to record failing jobs."
             exit(1)
@@ -226,12 +247,13 @@ def load_test_suite_from_name(test_names):
     return TestSuite(requested_tests.values())
 
 
-def patch_python_path():
+def maybe_patch_python_path():
     """Prepend the current directory to sys.path to ensure that we can load & run
-    autopilot tests if the caller is in the parent directory.
+    autopilot tests if the caller is in the parent directory, but only if we're
+    not somewhere in /usr/...
 
     """
-    if os.getcwd() not in sys.path:
+    if os.getcwd() not in sys.path and not os.getcwd().startswith('/usr/'):
         sys.path.insert(0, os.getcwd())
 
 
@@ -302,5 +324,5 @@ def main():
 
 
 if __name__ == "__main__":
-    patch_python_path()
+    maybe_patch_python_path()
     main()

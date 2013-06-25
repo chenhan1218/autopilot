@@ -68,7 +68,7 @@ from autopilot.introspection import (
     launch_application,
     )
 from autopilot.display import Display
-from autopilot.globals import on_test_started
+from autopilot.utilities import on_test_started
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
 try:
@@ -139,26 +139,28 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         self._kb = None
         self._display = None
 
+        try:
+            self._app_snapshot = self.process_manager.get_running_applications()
+            self.addCleanup(self._compare_system_with_app_snapshot)
+        except RuntimeError:
+            logger.warning("Process manager backend unavailable, application snapshot support disabled.")
+
     @property
     def process_manager(self):
         if self._process_manager is None:
             self._process_manager = ProcessManager.create()
-            self._app_snapshot = self.process_manager.get_running_applications()
-            self.addCleanup(self._compare_system_with_app_snapshot)
         return self._process_manager
 
     @property
     def keyboard(self):
         if self._kb is None:
             self._kb = Keyboard.create()
-            self.addCleanup(self._kb.cleanup)
         return self._kb
 
     @property
     def mouse(self):
         if self._mouse is None:
             self._mouse = Mouse.create()
-            self.addCleanup(self._mouse.cleanup)
         return self._mouse
 
     @property
@@ -225,6 +227,9 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :keyword capture_output: If set to True (the default), the process output
             will be captured and attached to the test as test detail.
 
+        :keyword emulator_base: If set, specifies the base class to be used for
+            all emulators for this loaded application.
+
         :raises: **ValueError** if unknown keyword arguments are passed.
         :return: A proxy object that represents the application. Introspection
          data is retrievable via this object.
@@ -245,9 +250,10 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             raise RuntimeError("Autopilot could not determine the correct \
 introspection type to use. You can specify one by overriding the \
 AutopilotTestCase.pick_app_launcher method.")
+        emulator_base = kwargs.pop('emulator_base', None)
         process = launch_application(launcher, app_path, *arguments, **kwargs)
         self.addCleanup(self._kill_process_and_attach_logs, process)
-        return get_autopilot_proxy_object_for_process(process)
+        return get_autopilot_proxy_object_for_process(process, emulator_base)
 
     def _compare_system_with_app_snapshot(self):
         """Compare the currently running application with the last snapshot.

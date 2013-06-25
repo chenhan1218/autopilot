@@ -28,6 +28,7 @@ import autopilot.platform
 import logging
 from time import sleep
 from evdev import UInput, ecodes as e
+import os.path
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,8 @@ class Keyboard(KeyboardBase):
 
     def __init__(self):
         super(Keyboard, self).__init__()
-        self._device = UInput(devnode='/dev/autopilot-uinput')
+
+        self._device = UInput(devnode=_get_devnode_path())
 
     def _emit(self, event, value):
         self._device.write(e.EV_KEY, event, value)
@@ -69,6 +71,7 @@ class Keyboard(KeyboardBase):
 
         for key in self._sanitise_keys(keys):
             for event in Keyboard._get_events_for_key(key):
+                logger.debug("Pressing %s (%r)", key, event)
                 self._emit(event, PRESS)
                 sleep(delay)
 
@@ -92,6 +95,7 @@ class Keyboard(KeyboardBase):
         # keys = self.__translate_keys(keys)
         for key in reversed(self._sanitise_keys(keys)):
             for event in Keyboard._get_events_for_key(key):
+                logger.debug("Releasing %s (%r)", key, event)
                 self._emit(event, RELEASE)
                 sleep(delay)
 
@@ -103,12 +107,12 @@ class Keyboard(KeyboardBase):
         The 'keys' argument must be a string of keys you want
         pressed and released.. For example:
 
-        press_and_release('Alt+F2'])
+        press_and_release('Alt+F2')
 
         presses both the 'Alt' and 'F2' keys, and then releases both keys.
 
         """
-
+        logger.debug("Pressing and Releasing: %s", keys)
         self.press(keys, delay)
         self.release(keys, delay)
 
@@ -126,8 +130,8 @@ class Keyboard(KeyboardBase):
             self.press(key, delay)
             self.release(key, delay)
 
-    @staticmethod
-    def cleanup():
+    @classmethod
+    def on_test_end():
         """Generate KeyRelease events for any un-released keys.
 
         Make sure you call this at the end of any test to release
@@ -159,6 +163,14 @@ class Keyboard(KeyboardBase):
         return events
 
 
+def _get_devnode_path():
+    """Provide a fallback uinput node for devices which don't support udev"""
+    devnode = '/dev/autopilot-uinput'
+    if not os.path.exists(devnode):
+        devnode = '/dev/uinput'
+    return devnode
+
+
 last_tracking_id = 0
 def get_next_tracking_id():
     global last_tracking_id
@@ -176,8 +188,20 @@ def create_touch_device(res_x=None, res_y=None):
     if res_x is None or res_y is None:
         from autopilot.display import Display
         display = Display.create()
-        res_x = display.get_screen_width()
-        res_y = display.get_screen_height()
+        # TODO: This calculation needs to become part of the display module:
+        l = r = t = b = 0
+        for screen in range(display.get_num_screens()):
+            geometry = display.get_screen_geometry(screen)
+            if geometry[0] < l:
+                l = geometry[0]
+            if geometry[1] < t:
+                t = geometry[1]
+            if geometry[0] + geometry[2] > r:
+                r = geometry[0] + geometry[2]
+            if geometry[1] + geometry[3] > b:
+                b = geometry[1] + geometry[3];
+        res_x = r - l
+        res_y = b - t
 
     # android uses BTN_TOOL_FINGER, whereas desktop uses BTN_TOUCH. I have no
     # idea why...
@@ -203,7 +227,7 @@ def create_touch_device(res_x=None, res_y=None):
     }
 
     return UInput(cap_mt, name='autopilot-finger', version=0x2,
-                  devnode='/dev/autopilot-uinput')
+                  devnode=_get_devnode_path())
 
 _touch_device = create_touch_device()
 
@@ -293,27 +317,32 @@ class Touch(TouchBase):
 
     def tap(self, x, y):
         """Click (or 'tap') at given x and y coordinates."""
+        logger.debug("Tapping at: %d,%d", x,y)
         self._finger_down(x, y)
         sleep(0.1)
         self._finger_up()
 
     def tap_object(self, object):
         """Click (or 'tap') a given object"""
+        logger.debug("Tapping object: %r", object)
         x,y = get_center_point(object)
         self.tap(x,y)
 
     def press(self, x, y):
         """Press and hold a given object or at the given coordinates
         Call release() when the object has been pressed long enough"""
+        logger.debug("Pressing at: %d,%d", x,y)
         self._finger_down(x, y)
 
     def release(self):
         """Release a previously pressed finger"""
+        logger.debug("Releasing")
         self._finger_up()
 
 
     def drag(self, x1, y1, x2, y2):
         """Perform a drag gesture from (x1,y1) to (x2,y2)"""
+        logger.debug("Dragging from %d,%d to %d,%d", x1, y1, x2, y2)
         self._finger_down(x1, y1)
 
         # Let's drag in 100 steps for now...

@@ -5,6 +5,10 @@ Frequently Asked Questions
 
 Autopilot: The Project
 ++++++++++++++++++++++
+Q. Where can I get help / support?
+==================================
+
+The developers hang out in the #ubuntu-autopilot IRC channel on irc.freenode.net.
 
 Q. How do I install Autopilot?
 ==============================
@@ -19,11 +23,6 @@ Q. Where can I report a bug?
 ============================
 
 Autopilot is hosted on launchpad - bugs can be reported on the `launchpad bug page for autopilot <https://bugs.launchpad.net/autopilot/+filebug>`_ (this requires a launchpad account).
-
-Q. Where can I get help / support?
-==================================
-
-The developers hang out in the #ubuntu-quality IRC channel on irc.freenode.net.
 
 Q. What type of applications can autopilot test?
 ================================================

@@ -3,6 +3,52 @@ Advanced Autopilot Features
 
 This document covers advanced features in autopilot.
 
+.. _cleaning-up:
+
+Cleaning Up
+===========
+
+It is vitally important that every test you run leaves the system in exactly the same state as it found it. This means that:
+
+* Any files written to disk need to be removed.
+* Any environment variables set during the test run need to be un-set.
+* Any applications opened during the test run need to be closed again.
+* Any :class:`~autopilot.input.Keyboard` keys pressed during the test need to be released again.
+
+All of the methods on :class:`~autopilot.testcase.AutopilotTestCase` that alter the system state will automatically revert those changes at the end of the test. Similarly, the various input devices will release any buttons or keys that were pressed during the test. However, for all other changes, it is the responsibility of the test author to clean up those changes.
+
+For example, a test might require that a file with certain content be written to disk at the start of the test. The test case might look something like this::
+
+    class MyTests(AutopilotTestCase):
+
+        def make_data_file(self):
+            open('/tmp/datafile', 'w').write("Some data...")
+
+        def test_application_opens_data_file(self):
+            """Our application must be able to open a data file from disk."""
+            self.make_data_file()
+            # rest of the test code goes here
+
+However this will leave the :file:`/tmp/datafile` on disk after the test has finished. To combat this, use the :meth:`addCleanup` method. The arguments to :meth:`addCleanup` are a callable, and then zero or more positional or keyword arguments. The Callable will be called with the positional and keyword arguments after the test has ended.
+
+Cleanup actions are called in the reverse order in which they are added, and are called regardless of whether the test passed, failed, or raised an uncaught exception. To fix the above test, we might write something similar to::
+
+    import os
+
+
+    class MyTests(AutopilotTestCase):
+
+        def make_data_file(self):
+            open('/tmp/datafile', 'w').write("Some data...")
+            self.addCleanup(os.remove, '/tmp/datafile')
+
+        def test_application_opens_data_file(self):
+            """Our application must be able to open a data file from disk."""
+            self.make_data_file()
+            # rest of the test code goes here
+
+Note that by having the code to generate the ``/tmp/datafile`` file on disk in a separate method, the test itself can ignore the fact that these resources need to be cleaned up. This makes the tests cleaner and easier to read.
+
 Test Scenarios
 ==============
 
@@ -179,3 +225,33 @@ Display Information
 ===================
 
 .. Document the display stack.
+
+.. _custom_emulators:
+
+Writing Custom Emulators
+========================
+
+By default, autopilot will generate an object for every introspectable item in your application under test. These are generated on the fly, and derive from
+:class:`~autopilot.introspection.DBusIntrospectionObject`. This gives you the usual methods of selecting other nodes in the object tree, as well the the means to inspect all the properties in that class.
+
+However, sometimes you want to customize the class used to create these objects. The most common reason to want to do this is to provide methods that make it easier to inspect these objects. Autopilot allows test authors to provide their own custom classes, through a couple of simple steps:
+
+1. First, you must define your own base class, to be used by all emulators in your test suite. This base class can be empty, but must derive from :class:`~autopilot.introspection.CustomEmulatorBase`. An example class might look like this::
+
+    from autopilot.introspection import CustomEmulatorBase
+
+
+    class EmulatorBase(CustomEmulatorBase):
+        """A base class for all emulators within this test suite."""
+
+2. Define the classes you want autopilot to use, instead of the default. The class name must be the same as the type you wish to override. For example, if you want to define your own custom class to be used every time autopilot generates an instance of a 'QLabel' object, the class definition would look like this::
+
+    class QLabel(EmulatorBase):
+
+        # Add custom methods here...
+
+3. As long as this custom class has been seen by the python interpreter (usually by importing it somewhere within the test suite), autopilot will use it every time it needs to generate a ``QLabel`` instance. You can also pass this class to methods like :meth:`~autopilot.introspection.DBusIntrospectionObject.select_single` instead of a string. So, for example, the following is a valid way of selecting the QLabel instances in an application::
+
+    # self.app is the application proxy object.
+    # Get all QLabels in the applicaton:
+    labels = self.app.select_many(QLabel)

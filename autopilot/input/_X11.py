@@ -195,8 +195,8 @@ class Keyboard(KeyboardBase):
             self.__perform_on_key(key, X.KeyRelease)
             sleep(delay)
 
-    @staticmethod
-    def cleanup():
+    @classmethod
+    def on_test_end(cls, test_instance):
         """Generate KeyRelease events for any un-released keys.
 
         .. important:: Ensure you call this at the end of any test to release any
@@ -418,8 +418,8 @@ class Mouse(MouseBase):
         self.move(x2, y2)
         self.release()
 
-    @staticmethod
-    def cleanup():
+    @classmethod
+    def on_test_end():
         """Put mouse in a known safe state."""
         global _PRESSED_MOUSE_BUTTONS
         for btn in _PRESSED_MOUSE_BUTTONS:

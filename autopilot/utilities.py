@@ -196,3 +196,68 @@ class _CleanupWrapper(object):
 
 
 addCleanup = _CleanupWrapper()
+
+
+_cleanup_objects = []
+
+
+class _TestCleanupMeta(type):
+    """Metaclass to inject the object into on test start/end functionality"""
+    def __new__(cls, classname, bases, classdict):
+        class EmptyStaticMethod(object):
+            """Class used to give us 'default classmethods' for those that don't
+            provide them.
+
+            """
+            def __get__(self, obj, klass=None):
+                if klass is None:
+                    klass = type(obj)
+
+                def place_holder_method(*args):
+                    pass
+
+                return place_holder_method
+
+        default_methods = {
+            'on_test_start': EmptyStaticMethod(),
+            'on_test_end': EmptyStaticMethod(),
+        }
+
+        default_methods.update(classdict)
+
+        class_object = type.__new__(cls, classname, bases, default_methods)
+        _cleanup_objects.append(class_object)
+
+        return class_object
+
+
+class CleanupRegistered(object):
+    __metaclass__ = _TestCleanupMeta
+
+
+def action_on_test_start(test_instance):
+    import sys
+    for obj in _cleanup_objects:
+        try:
+            obj.on_test_start(test_instance)
+        except KeyboardInterrupt:
+            raise
+        except:
+            test_instance._report_traceback(sys.exc_info())
+
+
+def action_on_test_end(test_instance):
+    import sys
+    for obj in _cleanup_objects:
+        try:
+            obj.on_test_end(test_instance)
+        except KeyboardInterrupt:
+            raise
+        except:
+            test_instance._report_traceback(sys.exc_info())
+
+
+def on_test_started(test_case_instance):
+    test_case_instance.addCleanup(action_on_test_end, test_case_instance)
+    action_on_test_start(test_case_instance)
+    addCleanup.set_test_instance(test_case_instance)

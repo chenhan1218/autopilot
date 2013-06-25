@@ -53,12 +53,12 @@ can use either a mouse of a touch device.
 """
 
 from collections import OrderedDict
-from autopilot.utilities import _pick_backend, addCleanup
+from autopilot.utilities import _pick_backend, CleanupRegistered
 from autopilot.input._common import get_center_point
 
 
 
-class Keyboard(object):
+class Keyboard(CleanupRegistered):
 
     """A simple keyboard device class.
 
@@ -67,9 +67,6 @@ class Keyboard(object):
     instance of the keyboard class, call :py:meth:`create` instead.
 
     """
-    def __init__(self):
-        if hasattr(self, 'cleanup') and callable(self.cleanup):
-            addCleanup(self.cleanup)
 
     @staticmethod
     def create(preferred_backend=''):
@@ -235,6 +232,24 @@ class Mouse(object):
         """Click mouse at current location."""
         raise NotImplementedError("You cannot use this class directly.")
 
+    def click_object(self, object_proxy, button=1, press_duration=0.10):
+        """Click the center point of a given object.
+
+        It does this by looking for several attributes, in order. The first
+        attribute found will be used. The attributes used are (in order):
+
+         * globalRect (x,y,w,h)
+         * center_x, center_y
+         * x, y, w, h
+
+        :raises: **ValueError** if none of these attributes are found, or if an
+         attribute is of an incorrect type.
+
+         """
+        self.move_to_object(object_proxy)
+        self.click(button, press_duration)
+
+
     def move(self, x, y, animate=True, rate=10, time_between_events=0.01):
         """Moves mouse to location (x, y).
 
@@ -393,7 +408,7 @@ class Pointer(object):
 
         """
         if isinstance(self._device, Mouse):
-            return self._mouse.x
+            return self._device.x
         else:
             return self._x
 
@@ -406,7 +421,7 @@ class Pointer(object):
 
         """
         if isinstance(self._device, Mouse):
-            return self._mouse.y
+            return self._device.y
         else:
             return self._y
 
@@ -469,6 +484,27 @@ class Pointer(object):
         else:
             self._x = x
             self._y = y
+
+    def click_object(self, object_proxy, button=1, press_duration=0.10):
+        """
+        Attempts to move the pointer to 'object_proxy's centre point.
+        and click a button
+
+        It does this by looking for several attributes, in order. The first
+        attribute found will be used. The attributes used are (in order):
+
+         * globalRect (x,y,w,h)
+         * center_x, center_y
+         * x, y, w, h
+
+        If the wrapped device is a mouse, the button specification is used. If
+        it is a touch device, passing anything other than 1 will raise a ValueError
+        exception.
+
+        """
+
+        self.move_to_object(object_proxy)
+        self.click(button, press_duration)
 
     def move_to_object(self, object_proxy):
         """Attempts to move the pointer to 'object_proxy's centre point.

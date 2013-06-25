@@ -21,11 +21,11 @@
 from autopilot import BackendException
 from autopilot.testcase import AutopilotTestCase
 from autopilot.process import ProcessManager
-from autopilot.globals import on_test_started
+from autopilot.utilities import on_test_started
 
-from subprocess import Popen, call, CalledProcessError, check_output
+from subprocess import Popen, call
 from testtools import TestCase
-from testtools.matchers import Equals, NotEquals, LessThan, Raises
+from testtools.matchers import Equals, NotEquals, LessThan
 from threading import Thread
 from time import sleep, time
 
@@ -92,7 +92,11 @@ class ProcessManagerApplicationNoCleanupTests(TestCase):
         class FakeTestCase(object):
             def addCleanup(self, *args, **kwargs):
                 pass
+            def addOnException(self, handler):
+                pass
             def shortDescription(self):
+                pass
+            def _report_traceback(self, arg):
                 pass
         super(ProcessManagerApplicationNoCleanupTests, self).setUp()
         on_test_started(FakeTestCase())
@@ -100,7 +104,7 @@ class ProcessManagerApplicationNoCleanupTests(TestCase):
     def test_can_close_all_app(self):
         """Ensure that closing an app actually closes all app instances."""
         try:
-            process_manager = ProcessManager.create(preferred_backend="BAM")
+            process_manager = ProcessManager.create(preferred_backend="BAMF")
         except BackendException as e:
             self.skip("Test is only for BAMF backend ({}).".format(e.message))
 

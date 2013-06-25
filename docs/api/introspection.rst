@@ -3,5 +3,5 @@
 
 
 .. automodule:: autopilot.introspection
-    :members: DBusIntrospectionObject
+    :members: CustomEmulatorBase, DBusIntrospectionObject
 

@@ -17,9 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from argparse import ArgumentParser, REMAINDER
+from argparse import ArgumentParser, REMAINDER, Action
+import subprocess
 
-version = '1.3'
+version = '1.3.1'
 
 
 class BackendException(RuntimeError):
@@ -39,6 +40,9 @@ def parse_arguments(argv=None):
     object.
     """
     parser = ArgumentParser(description="Autopilot test tool.")
+    parser.add_argument('-v', '--version', action='version',
+                        version=get_version_string(),
+                        help="Display autopilot version and exit.")
     subparsers = parser.add_subparsers(help='Run modes', dest="mode")
 
     parser_run = subparsers.add_parser('run', help="Run autopilot tests")
@@ -59,9 +63,10 @@ def parse_arguments(argv=None):
                             'recordmydesktop' app to be installed.\
                             Videos are stored in /tmp/autopilot.")
     parser_run.add_argument("-rd", "--record-directory", required=False,
-                            default="/tmp/autopilot", type=str,
-                            help="Directory to put recorded tests \
-                            (only if -r) specified.")
+                            type=str, help="Directory to put recorded tests")
+    parser_run.add_argument("-ro", "--random-order", action='store_true',
+                            required=False, default=False,
+                            help="Run the tests in random order")
     parser_run.add_argument('-v', '--verbose', default=False, required=False,
                             action='count',
                             help="If set, autopilot will output test log data \
@@ -75,6 +80,9 @@ def parse_arguments(argv=None):
                             action="store_true",
                             help="List tests in run order, rather than alphabetical \
                             order (the default).")
+    parser_list.add_argument("--suites", required=False, action='store_true',
+                             help="Lists only available suites, not tests contained \
+                             within the suite.")
     parser_list.add_argument("suite", nargs="+",
                              help="Specify test suite(s) to run.")
 
@@ -97,13 +105,22 @@ def parse_arguments(argv=None):
                             action='count', help="Show autopilot log messages. \
                             Set twice to also log data useful for debugging \
                             autopilot itself.")
-    parser_launch.add_argument('application', nargs=REMAINDER, type=str,
+    parser_launch.add_argument('application', action=_OneOrMoreArgumentStoreAction,
+                            type=str, nargs=REMAINDER,
                             help="The application to launch. Can be a full path, \
                             or just an application name (in which case Autopilot \
                                 will search for it in $PATH).")
     args = parser.parse_args(args=argv)
 
     return args
+
+
+class _OneOrMoreArgumentStoreAction(Action):
+
+    def __call__(self,  parser, namespace, values, option_string=None):
+        if len(values) == 0:
+            parser.error("Must specify at least one argument to the 'launch' command")
+        setattr(namespace, self.dest, values)
 
 
 def have_vis():
@@ -113,3 +130,50 @@ def have_vis():
         return True
     except ImportError:
         return False
+
+
+def get_version_string():
+    version_string = "Autopilot Source Version: " + _get_source_version()
+    pkg_version = _get_package_version()
+    if pkg_version:
+        version_string += "\nAutopilot Package Version: " + pkg_version
+    return version_string
+
+
+def _get_source_version():
+    return version
+
+
+def _get_package_version():
+    """Get the version of the currently installed package version, or None.
+
+    Only returns the package version if the package is installed, *and* we seem
+    to be running the system-wide installed code.
+    """
+    if _running_in_system():
+        return _get_package_installed_version()
+    return None
+
+
+def _running_in_system():
+    """Return True if we're running autopilot from the system installation dir."""
+    return __file__.startswith('/usr/')
+
+
+def _get_package_installed_version():
+    """Get the version string of the system-wide installed package, or None if it
+    is not installed.
+
+    """
+    try:
+        return subprocess.check_output(
+            [
+                "dpkg-query",
+                "--showformat",
+                "${Version}",
+                "--show",
+                "python-autopilot",
+                ]
+            ).strip()
+    except subprocess.CalledProcessError:
+        return None

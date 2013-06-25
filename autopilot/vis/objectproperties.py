@@ -118,7 +118,8 @@ class PropertyView(AbstractView):
         for i, key in enumerate(object_details):
             details_string = dbus_string_rep(object_details[key])
             item_name = QtGui.QTableWidgetItem(key)
-            item_details = QtGui.QTableWidgetItem(details_string)
+            item_details = QtGui.QTableWidgetItem(
+                    details_string.decode('utf-8'))
             self.table_view.setItem(i, 0, item_name)
             self.table_view.setItem(i, 1, item_details)
         self.table_view.setSortingEnabled(True)

@@ -29,7 +29,7 @@ from autopilot.testcase import AutopilotTestCase, multiply_scenarios
 from autopilot.input import Keyboard, Pointer, Touch
 from autopilot.input._common import get_center_point
 from autopilot.matchers import Eventually
-from autopilot.globals import on_test_started
+from autopilot.utilities import on_test_started
 
 
 class InputStackKeyboardBase(AutopilotTestCase):
@@ -41,8 +41,10 @@ class InputStackKeyboardBase(AutopilotTestCase):
 
     def setUp(self):
         super(InputStackKeyboardBase, self).setUp()
-        if self.backend == 'UInput' and not os.access('/dev/autopilot-uinput', os.W_OK):
-            raise SkipTest("UInput backend currently requires write access to /dev/autopilot-uinput")
+        if self.backend == 'UInput' and not (
+            os.access('/dev/autopilot-uinput', os.W_OK) or
+            os.access('/dev/uinput', os.W_OK)):
+            raise SkipTest("UInput backend currently requires write access to /dev/autopilot-uinput or /dev/uinput")
 
 
 class InputStackKeyboardCreationTests(InputStackKeyboardBase):
@@ -86,8 +88,7 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
         text_edit = app_proxy.select_single('QTextEdit')
 
         # make sure the text edit has keyboard focus:
-        self.mouse.move_to_object(text_edit)
-        self.mouse.click()
+        self.mouse.click_object(text_edit)
 
         # create keyboard and type the text.
         keyboard = Keyboard.create(self.backend)
@@ -155,25 +156,18 @@ class InputStackCleanupTests(TestCase):
 
             cleanup_called = False
 
-            @staticmethod
-            def cleanup():
+            @classmethod
+            def on_test_end(cls, test_instance):
                 FakeKeyboard.cleanup_called = True
 
-        class FakeTestCase(object):
-            def __init__(self):
-                self.cleanups = []
 
-            def addCleanup(self, callable):
-                self.cleanups.append(callable)
+        class FakeTestCase(TestCase):
 
-            def doCleanups(self):
-                for c in reversed(self.cleanups):
-                    c()
+            def test_foo(self):
+                on_test_started(self)
 
-        tc = FakeTestCase()
-        on_test_started(tc)
+                kbd = FakeKeyboard()
 
-        kbd = FakeKeyboard()
-        tc.doCleanups()
+        FakeTestCase("test_foo").run()
 
         self.assertThat(FakeKeyboard.cleanup_called, Equals(True))

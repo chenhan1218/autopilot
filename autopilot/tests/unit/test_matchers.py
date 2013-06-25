@@ -22,9 +22,10 @@ from __future__ import absolute_import
 
 from autopilot.introspection.dbus import DBusIntrospectionObject
 from autopilot.matchers import Eventually
-from autopilot.testcase import AutopilotTestCase
 
 import dbus
+from testscenarios import TestWithScenarios
+from testtools import TestCase
 from testtools.matchers import (
     Contains,
     Equals,
@@ -60,15 +61,15 @@ def make_fake_attribute_with_result(result, attribute_type='wait_for'):
         return obj.attr
 
 
-class ObjectPatchingMatcherTests(AutopilotTestCase):
+class ObjectPatchingMatcherTests(TestCase):
     """Ensure the core functionality the matchers use is correct."""
 
     def test_default_wait_for_args(self):
-        """Ensure"""
+        """Ensure we can call wait_for with the correct arg."""
         intro_obj = make_fake_attribute_with_result(False)
         intro_obj.wait_for(False)
 
-class EventuallyMatcherTests(AutopilotTestCase):
+class EventuallyMatcherTests(TestWithScenarios, TestCase):
 
     scenarios = [
         ('callable', dict(attribute_type='callable')),
@@ -113,7 +114,7 @@ class EventuallyMatcherTests(AutopilotTestCase):
         self.assertThat(mismatch.describe(), Contains("After 1.0 seconds test"))
 
 
-class EventuallyNonScenariodTests(AutopilotTestCase):
+class EventuallyNonScenariodTests(TestCase):
 
     def test_eventually_matcher_raises_ValueError_on_unknown_kwargs(self):
         self.assertThat(lambda: Eventually(Equals(True), foo=123),

@@ -23,7 +23,7 @@ from __future__ import absolute_import
 import dbus
 from PyQt4 import QtGui, QtCore
 
-from autopilot.introspection import make_proxy_object_from_service_name
+from autopilot.introspection import get_dbus_address_object, make_proxy_object
 from autopilot.introspection.constants import AP_INTROSPECTION_IFACE
 from autopilot.introspection.dbus import StateNotFoundError
 from autopilot.introspection.qt import QtObjectProxyMixin
@@ -71,7 +71,8 @@ class MainWindow(QtGui.QMainWindow):
         if iface == AP_INTROSPECTION_IFACE:
             self.statusBar().showMessage('Updating connection list')
             try:
-                proxy_object = make_proxy_object_from_service_name(conn, obj)
+                dbus_address_instance = get_dbus_address_object(conn, obj)
+                proxy_object = make_proxy_object(dbus_address_instance, None)
                 cls_name = proxy_object.__class__.__name__
                 if not self.selectable_interfaces.has_key(cls_name):
                     self.selectable_interfaces[cls_name] = proxy_object

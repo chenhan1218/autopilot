@@ -88,15 +88,12 @@ class AutopilotFunctionalTestsBase(AutopilotTestCase):
             os.path.join(
                 os.path.dirname(__file__),
                 '..',
+                '..',
                 '..'
                 )
             )
 
         environment_patch = dict(DISPLAY=':0')
-        # Set PYTHONPATH always, since we can't tell what sys.path will be in the
-        # child process.
-        environment_patch['PYTHONPATH'] = ap_base_path
-
         bin_path = os.path.join(ap_base_path, 'bin', 'autopilot')
         if not os.path.exists(bin_path):
             bin_path = subprocess.check_output(['which', 'autopilot']).strip()
@@ -153,7 +150,7 @@ class AutopilotFunctionalTests(AutopilotFunctionalTestsBase):
 
     """A collection of functional tests for autopilot."""
 
-    def run_autopilot_list(self, list_spec='tests'):
+    def run_autopilot_list(self, list_spec='tests', extra_args=[]):
         """Run 'autopilot list' in the specified base path.
 
         This patches the environment to ensure that it's *this* version of autopilot
@@ -162,9 +159,10 @@ class AutopilotFunctionalTests(AutopilotFunctionalTestsBase):
         returns a tuple containing: (exit_code, stdout, stderr)
 
         """
-        return self.run_autopilot(["list", list_spec])
+        args_list = ["list"] + extra_args + [list_spec]
+        return self.run_autopilot(args_list)
 
-    def assertTestsInOutput(self, tests, output):
+    def assertTestsInOutput(self, tests, output, total_title='tests'):
         """Asserts that 'tests' are all present in 'output'."""
 
         if type(tests) is not list:
@@ -177,10 +175,11 @@ Loading tests from: %s
 
 %s
 
- %d total tests.
+ %d total %s.
 ''' % (self.base_path,
     ''.join(['    %s\n' % t for t in sorted(tests)]),
-    len(tests))
+    len(tests),
+    total_title)
 
         self.assertThat(output, Equals(expected))
 
@@ -378,9 +377,9 @@ Loading tests from: %s
         self.assertThat(error, Equals(''))
         self.assertTestsInOutput(['tests.test_simple.SimpleTest.test_simple'], output)
 
-    def test_record_flag_works(self):
-        """Must be able to record videos when the -r flag is present."""
-        self.create_test_file("test_simple.py", dedent("""\
+    def test_can_list_just_suites(self):
+        """Must only list available suites, not the contained tests."""
+        self.create_test_file('test_simple_suites.py', dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
 
@@ -388,34 +387,117 @@ Loading tests from: %s
             class SimpleTest(AutopilotTestCase):
 
                 def test_simple(self):
+                    pass
+
+            class AnotherSimpleTest(AutopilotTestCase):
+
+                def test_another_simple(self):
+                    pass
+
+                def test_yet_another_simple(self):
+                    pass
+            """
+            ))
+
+        code, output, error = self.run_autopilot_list(extra_args=['--suites'])
+        self.assertThat(code, Equals(0))
+        self.assertThat(error, Equals(''))
+        self.assertTestsInOutput(['tests.test_simple_suites.SimpleTest',
+                                  'tests.test_simple_suites.AnotherSimpleTest'],
+                                 output,
+                                 total_title='suites')
+
+    def test_record_flag_works(self):
+        """Must be able to record videos when the -r flag is present."""
+
+        # The sleep is to avoid the case where recordmydesktop does not create a
+        # file because it gets stopped before it's even started capturing anything.
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+            from time import sleep
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    sleep(1)
                     self.fail()
             """
             ))
 
-        self.addCleanup(remove_if_exists, "/tmp/autopilot")
+        should_delete = not os.path.exists('/tmp/autopilot')
+        if should_delete:
+            self.addCleanup(remove_if_exists, "/tmp/autopilot")
+        else:
+            self.addCleanup(remove_if_exists,
+                            '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv')
+
         code, output, error = self.run_autopilot(["run", "-r", "tests"])
 
         self.assertThat(code, Equals(1))
         self.assertTrue(os.path.exists('/tmp/autopilot'))
         self.assertTrue(os.path.exists('/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv'))
+        if should_delete:
+            self.addCleanup(remove_if_exists, "/tmp/autopilot")
 
-    def test_record_dir_option_works(self):
-        """Must be able to specify record directory flag."""
+    def test_record_dir_option_and_record_works(self):
+        """Must be able to specify record directory flag and record."""
+
+        # The sleep is to avoid the case where recordmydesktop does not create a
+        # file because it gets stopped before it's even started capturing anything.
         self.create_test_file("test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
+            from time import sleep
 
 
             class SimpleTest(AutopilotTestCase):
 
                 def test_simple(self):
+                    sleep(1)
+                    self.fail()
+            """
+            ))
+        video_dir = mktemp()
+        ap_dir = '/tmp/autopilot'
+        self.addCleanup(remove_if_exists, video_dir)
+
+        should_delete = not os.path.exists(ap_dir)
+        if should_delete:
+            self.addCleanup(remove_if_exists, ap_dir)
+        else:
+            self.addCleanup(remove_if_exists,
+                            '%s/tests.test_simple.SimpleTest.test_simple.ogv' % (ap_dir))
+
+        code, output, error = self.run_autopilot(["run", "-r", "-rd", video_dir, "tests"])
+
+        self.assertThat(code, Equals(1))
+        self.assertTrue(os.path.exists(video_dir))
+        self.assertTrue(os.path.exists('%s/tests.test_simple.SimpleTest.test_simple.ogv' % (video_dir)))
+        self.assertFalse(os.path.exists('%s/tests.test_simple.SimpleTest.test_simple.ogv' % (ap_dir)))
+
+    def test_record_dir_option_works(self):
+        """Must be able to specify record directory flag."""
+
+        # The sleep is to avoid the case where recordmydesktop does not create a
+        # file because it gets stopped before it's even started capturing anything.
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+            from time import sleep
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    sleep(1)
                     self.fail()
             """
             ))
         video_dir = mktemp()
         self.addCleanup(remove_if_exists, video_dir)
 
-        code, output, error = self.run_autopilot(["run", "-r", "-rd", video_dir, "tests"])
+        code, output, error = self.run_autopilot(["run", "-rd", video_dir, "tests"])
 
         self.assertThat(code, Equals(1))
         self.assertTrue(os.path.exists(video_dir))
@@ -426,22 +508,49 @@ Loading tests from: %s
         self.create_test_file("test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
-
+            from time import sleep
 
             class SimpleTest(AutopilotTestCase):
 
                 def test_simple(self):
+                    sleep(1)
                     self.fail()
             """
             ))
-        video_dir = mktemp()
-        self.addCleanup(remove_if_exists, video_dir)
+        self.addCleanup(remove_if_exists,
+            '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv')
 
-        code, output, error = self.run_autopilot(["run", "-rd", video_dir, "tests"])
+        code, output, error = self.run_autopilot(["run", "tests"])
 
         self.assertThat(code, Equals(1))
-        self.assertFalse(os.path.exists(video_dir))
-        self.assertFalse(os.path.exists('%s/tests.test_simple.SimpleTest.test_simple.ogv' % (video_dir)))
+        self.assertFalse(os.path.exists(
+            '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv'))
+
+    def test_no_videos_saved_for_skipped_test(self):
+        """Videos must not be saved if the test has been skipped (not
+        failed).
+
+        """
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+            from time import sleep
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    sleep(1)
+                    self.skip("Skipping Test")
+            """
+            ))
+
+        video_file_path = '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv'
+        self.addCleanup(remove_if_exists, video_file_path)
+
+        code, output, error = self.run_autopilot(["run", "-r", "tests"])
+
+        self.assertThat(code, Equals(0))
+        self.assertThat(os.path.exists(video_file_path), Equals(False))
 
     def test_runs_with_import_errors_fail(self):
         """Import errors inside a test must be considered a test failure."""
@@ -606,6 +715,51 @@ SyntaxError: invalid syntax
         self.assertThat(rc, Equals(1))
         self.assertThat(stdout,
             Contains("Error detecting launcher: Command '['ldd', '/usr/bin/tzselect']' returned non-zero exit status 1\n(Perhaps use the '-i' argument to specify an interface.)\n"))
+
+    def test_run_random_order_flag_works(self):
+        """Must run tests in random order when -ro is used"""
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+            from time import sleep
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple_one(self):
+                    pass
+                def test_simple_two(self):
+                    pass
+            """
+            ))
+
+
+        code, output, error = self.run_autopilot(["run", "-ro", "tests"])
+
+        self.assertThat(code, Equals(0))
+        self.assertThat(output, Contains('Running tests in random order'))
+
+    def test_run_random_flag_not_used(self):
+        """Must not run tests in random order when -ro is not used"""
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+            from time import sleep
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple_one(self):
+                    pass
+                def test_simple_two(self):
+                    pass
+            """
+            ))
+
+
+        code, output, error = self.run_autopilot(["run", "tests"])
+
+        self.assertThat(code, Equals(0))
+        self.assertThat(output, Not(Contains('Running tests in random order')))
+
 
 
 class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):

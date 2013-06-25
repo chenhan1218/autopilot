@@ -22,7 +22,7 @@ from testtools import TestCase
 from testtools.matchers import Equals, raises
 from mock import patch
 
-from autopilot.input import Mouse
+from autopilot.input import Pointer, Mouse
 
 class Empty(object):
     pass
@@ -43,7 +43,7 @@ class MouseEmulatorTests(TestCase):
 
     def setUp(self):
         super(MouseEmulatorTests, self).setUp()
-        self.mouse = Mouse.create()
+        self.mouse = Pointer(Mouse.create())
 
     def tearDown(self):
         super(MouseEmulatorTests, self).tearDown()
@@ -51,7 +51,7 @@ class MouseEmulatorTests(TestCase):
 
     def test_x_y_properties(self):
         """x and y properties must simply return values from the position() method."""
-        with patch.object(self.mouse, 'position', return_value=(42,37)):
+        with patch.object(self.mouse._device, 'position', return_value=(42,37)):
             self.assertThat(self.mouse.x, Equals(42))
             self.assertThat(self.mouse.y, Equals(37))
 

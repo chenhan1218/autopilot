@@ -27,7 +27,7 @@ try:
     version = str(chl.get_version())
 except ImportError:
     # If we don't have python-debian installed, guess a coarse-grained version string
-    version = '1.3'
+    version = '1.3.1'
 
 autopilot_tracepoint = Extension('autopilot.tracepoint',
                                  libraries=['lttng-ust'],

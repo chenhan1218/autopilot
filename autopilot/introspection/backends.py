@@ -44,7 +44,7 @@ class DBusAddress(object):
     "Store information about an Autopilot dbus backend, from keyword arguments."
     _checked_backends = []
 
-    AddreddTuple = namedtuple('AddressTuple', ['bus', 'connection', 'object_path'])
+    AddrTuple = namedtuple('AddressTuple', ['bus', 'connection', 'object_path'])
 
     @staticmethod
     def SessionBus(connection, object_path):
@@ -79,19 +79,34 @@ class DBusAddress(object):
         # We cannot evaluate kwargs for accuracy now, since this class will be
         # created at module import time, at which point the bus backend probably
         # does not exist yet.
-        self._bus = bus
-        self._connection = connection
-        self._object_path = object_path
+        self._addr_tuple = DBusAddress.AddrTuple(bus, connection, object_path)
 
     @property
     def introspection_iface(self):
-        if not isinstance(self._connection, basestring):
+        if not isinstance(self._addr_tuple.connection, basestring):
             raise TypeError("Service name must be a string.")
-        if not isinstance(self._object_path, basestring):
+        if not isinstance(self._addr_tuple.object_path, basestring):
             raise TypeError("Object name must be a string")
 
-        _debug_proxy_obj = self._bus.get_object(self._connection, self._object_path)
-        iface = dbus.Interface(_debug_proxy_obj, AP_INTROSPECTION_IFACE)
+        proxy_obj = self._addr_tuple.bus.get_object(
+            self._addr_tuple.connection,
+            self._addr_tuple.object_path
+            )
+        iface = dbus.Interface(proxy_obj, AP_INTROSPECTION_IFACE)
+        if self._addr_tuple not in DBusAddress._checked_backends:
+            try:
+                self._check_version(iface)
+            except WireProtocolVersionMismatch:
+                raise
+            else:
+                DBusAddress._checked_backends.append(self._addr_tuple)
+        return iface
+
+    def _check_version(self, iface):
+        """Check the wire protocol version on 'iface', and raise an error if the
+        version does not match what we were expecting.
+
+        """
         try:
             version = iface.GetVersion()
         except dbus.DBusException:
@@ -103,40 +118,45 @@ class DBusAddress(object):
                     version,
                     CURRENT_WIRE_PROTOCOL_VERSION)
                 )
-        return dbus.Interface(_debug_proxy_obj, AP_INTROSPECTION_IFACE)
 
     @property
     def dbus_introspection_iface(self):
-        dbus_object = self._bus.get_object(self._connection, self._object_path)
+        dbus_object = self._addr_tuple.bus.get_object(
+            self._addr_tuple.connection,
+            self.addr_tuple.object_path
+            )
         return dbus.Interface(dbus_object, DBUS_INTROSPECTION_IFACE)
 
     @property
     def qt_introspection_iface(self):
-        _debug_proxy_obj = self._bus.get_object(self._connection, self._object_path)
-        return dbus.Interface(_debug_proxy_obj, QT_AUTOPILOT_IFACE)
+        proxy_obj = self._addr_tuple.bus.get_object(
+            self._addr_tuple.connection,
+            self._addr_tuple.object_path
+            )
+        return dbus.Interface(proxy_obj, QT_AUTOPILOT_IFACE)
 
     def __hash__(self):
-        return hash((self._bus, self._connection, self._object_path))
+        return hash(self._addr_tuple)
 
     def __eq__(self, other):
-        return self._bus == other._bus and \
-            self._connection == other._connection and \
-            self._object_path == other._object_path
+        return self._addr_tuple.bus == other._addr_tuple.bus and \
+            self._addr_tuple.connection == other._addr_tuple.connection and \
+            self._addr_tuple.object_path == other._addr_tuple.object_path
 
     def __ne__(self, other):
-        return self._object_path != other._object_path or \
-            self._connection != other._connection or \
-            self._bus != other._bus
+        return self._addr_tuple.object_path != other._addr_tuple.object_path or \
+            self._addr_tuple.connection != other._addr_tuple.connection or \
+            self._addr_tuple.bus != other._addr_tuple.bus
 
     def __str__(self):
         return repr(self)
 
     def __repr__(self):
-        if self._bus._bus_type == dbus.Bus.TYPE_SESSION:
+        if self._addr_tuple.bus._bus_type == dbus.Bus.TYPE_SESSION:
             name = "session"
-        elif self._bus._bus_type == dbus.Bus.TYPE_SYSTEM:
+        elif self._addr_tuple.bus._bus_type == dbus.Bus.TYPE_SYSTEM:
             name = "system"
         else:
             name = "custom"
-        return "<%s bus %s %s>" % (name, self._connection, self._object_path)
+        return "<%s bus %s %s>" % (name, self._addr_tuple.connection, self._addr_tuple.object_path)
 

@@ -108,20 +108,21 @@ Autopilot Qt & Gtk Support
 Q. How do I launch my application so that I can explore it with the vis tool?
 =============================================================================
 
-Autopilot can launch applications with Autopilot support enabled to allow you to
-explore and introspect the app using the :ref:`vis
+Autopilot can launch applications with Autopilot support enabled allowing you to
+explore and introspect the application using the :ref:`vis
 tool<visualise_introspection_tree>`
 
 For instance launching gedit is as easy as::
 
   $ autopilot launch gedit
 
-*Autopilot launch* attempts to determine wherever you are trying to launch a Gtk
-or Qt application so that it may enable the correct libraries. If this fails you
-will need to specify the type of application it is.
+*Autopilot launch* attempts to detect if you are launching either a Gtk or Qt
+application so that it can enable the correct libraries. If is is unable to
+determine this you will need to specify the type of application it is by using
+the **-i** argument.
 
 For example, in our previous example Autopilot was able to automatically
-determine that it is a Gtk application and thus not further arguments are
+determine that gedit is a Gtk application and thus no further arguments were
 required.
 
 If we want to use the vis tool to introspect something like the :ref:`testapp.py

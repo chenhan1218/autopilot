@@ -123,7 +123,7 @@ class DBusAddress(object):
     def dbus_introspection_iface(self):
         dbus_object = self._addr_tuple.bus.get_object(
             self._addr_tuple.connection,
-            self.addr_tuple.object_path
+            self._addr_tuple.object_path
             )
         return dbus.Interface(dbus_object, DBUS_INTROSPECTION_IFACE)
 

@@ -2,5 +2,5 @@
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. automodule:: autopilot.introspection
-    :members: CustomEmulatorBase, DBusIntrospectionObject, get_proxy_object_for_already_launched_process
+    :members: CustomEmulatorBase, DBusIntrospectionObject, get_proxy_object_for_existing_process
 

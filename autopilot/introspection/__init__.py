@@ -157,20 +157,49 @@ def get_autopilot_proxy_object_for_process(process, emulator_base):
 
     """
     pid = process.pid
-    return get_proxy_object_for_already_launched_process(pid, emulator_base=emulator_base)
+    return get_proxy_object_for_existing_process(pid, emulator_base=emulator_base)
 
 
-def get_proxy_object_for_already_launched_process(pid=None, dbus_bus='session', connection_name=None, object_path=AUTOPILOT_PATH, application_name=None, emulator_base=None):
-    """Return a proxy object for an application that has already been launched
+def get_proxy_object_for_existing_process(pid=None, dbus_bus='session', connection_name=None, object_path=AUTOPILOT_PATH, application_name=None, emulator_base=None):
+    """Return a single proxy object for an application that is already running
     (i.e. launched outside of Autopilot).
 
-    :raises: **RuntimeError** if no search criteria match.
-    :raises: **RuntimeError** if the search criteria results in many matches.
+    Searches on the given bus (supplied by **dbus_bus**) for an application
+    matching the search criteria, creating the proxy object using the supplied
+    custom emulator **emulator_base** (defaults to None).
+
+    For example for an application on the system bus where the applications PID is known::
+
+        app_proxy = get_proxy_object_for_existing_process(pid=app_pid)
+
+    Multiple criteria are allowed, for instance you could search on **pid** and **connection_name**::
+
+        app_proxy = get_proxy_object_for_existing_process(pid=app_pid, connection_name='org.gnome.gedit')
+
+    If the application from the previous example was on the system bus::
+
+        app_proxy = get_proxy_object_for_existing_process(dbus_bus='system', pid=app_pid, connection_name='org.gnome.gedit')
+
+    It is possible to search for the application given just the applications name.
+    An example for an application running on a custom bus searching using the applications name::
+
+        app_proxy = get_proxy_object_for_existing_process(application_name='qmlscene', dbus_bus='unix:abstract=/tmp/dbus-IgothuMHNk')
+
+    :param pid: The PID of the application to search for.
+    :param dbus_bus: A string containing either 'session', 'system' or the custom buses name (i.e. 'unix:abstract=/tmp/dbus-IgothuMHNk').
+    :param connection_name: A string containing the DBus connection name to use with the search criteria.
+    :param object_path: A string containing the object path to use as the search criteria. Defaults to :py:data:`autopilot.introspection.constants.AUTOPILOT_PATH`.
+    :param application_name: A string containing the applications name to search for.
+    :param emulator_base: The custom emulator to create the resulting proxy object with.
+
+    :raises: RuntimeError if no search criteria match.
+    :raises: RuntimeError if the search criteria results in many matches.
 
     """
     dbus_addresses = _get_dbus_addresses_from_search_parameters(pid, dbus_bus, connection_name, object_path)
     if application_name:
-        dbus_addresses = filter(dbus_addresses, lambda i: i.autopilot_interface.GetState('/')[0][0] == application_name)
+        app_name_check_fn = lambda i: get_classname_from_path(i.introspection_iface.GetState('/')[0][0]) == application_name
+        dbus_addresses = filter(app_name_check_fn, dbus_addresses)
 
     if dbus_addresses is None or len(dbus_addresses) == 0:
         raise RuntimeError("Search criteria returned no results")
@@ -334,7 +363,6 @@ def _get_child_pids(pid):
 
 def _make_proxy_object(data_source, emulator_base):
     """Returns a root proxy object given a DBus service name."""
-
     proxy_bases = _get_proxy_object_base_classes(data_source)
     if emulator_base is None:
         emulator_base = type('DefaultEmulatorBase', (CustomEmulatorBase,), {})

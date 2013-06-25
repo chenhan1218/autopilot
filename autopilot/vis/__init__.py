@@ -34,7 +34,7 @@ def vis_main():
     dbus_loop = DBusQtMainLoop()
     session_bus = dbus.SessionBus(mainloop=dbus_loop)
 
-    window = MainWindow()
+    window = MainWindow(session_bus)
 
     bus_enumerator = BusEnumerator(session_bus)
     bus_enumerator.new_interface_found.connect(window.on_interface_found)

@@ -37,6 +37,25 @@ Autopilot is designed to work across all the form factors Ubuntu runs on, includ
 Autopilot Tests
 +++++++++++++++
 
+Q. How do I access an already running application so that I can test/introspect it?
+===================================================================================
+
+To introspect or interact with an application that is already running you can
+use
+:meth:`~autopilot.introspection.get_proxy_object_for_existing_process`.
+
+For instance, to access a long running process that is available before your test starts::
+
+  application_pid = get_long_running_processes_pid()
+  app_proxy = get_proxy_object_for_existing_process(pid=application_pid)
+
+  text_edit = app_proxy.select_single('QTextEdit')
+  # Do somethng with text_edit etc.
+
+.. note:: Remember that this is only if you can't launch the application from
+          within your test, otherwise you would call
+          :meth:`~autopilot.testcase.launch_test_application`.
+
 .. _faq-many-asserts:
 
 Q. Autopilot tests often include multiple assertions. Isn't this bad practise?

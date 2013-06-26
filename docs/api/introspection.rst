@@ -1,7 +1,6 @@
 ``autopilot.introspection`` - Autopilot introspection internals
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-
 .. automodule:: autopilot.introspection
-    :members: CustomEmulatorBase, DBusIntrospectionObject
+    :members: CustomEmulatorBase, DBusIntrospectionObject, get_proxy_object_for_existing_process
 

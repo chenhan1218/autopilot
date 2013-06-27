@@ -26,7 +26,7 @@ from testtools.matchers import IsInstance, Equals
 from unittest import SkipTest
 
 from autopilot.testcase import AutopilotTestCase, multiply_scenarios
-from autopilot.input import Keyboard, Pointer, Touch
+from autopilot.input import Keyboard, Mouse, Pointer, Touch
 from autopilot.input._common import get_center_point
 from autopilot.matchers import Eventually
 from autopilot.utilities import on_test_started
@@ -97,6 +97,14 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
         self.assertThat(text_edit.plainText, Eventually(Equals(self.input)))
 
 
+class MouseTestCase(AutopilotTestCase):
+
+    def test_move_to_nonint_point(self):
+        """Test for bug #1195499."""
+        device = Mouse.create()
+        device.move(10, 10.6)
+        self.assertEqual(device.position(), (10, 10))
+        
 class TouchTests(AutopilotTestCase):
 
     def setUp(self):

@@ -34,7 +34,7 @@ from autopilot.utilities import Silence
 from autopilot.input import (
     Keyboard as KeyboardBase,
     Mouse as MouseBase,
-    )
+)
 from Xlib import X, XK
 from Xlib.display import Display
 from Xlib.ext.xtest import fake_input
@@ -47,7 +47,11 @@ logger = logging.getLogger(__name__)
 
 
 def get_display():
-    """Get the Xlib display object, creating it (silently) if it doesn't exist."""
+    """Return the Xlib display object.
+
+    It is created (silently) if it doesn't exist.
+
+    """
     global _DISPLAY
     if _DISPLAY is None:
         with Silence():
@@ -64,54 +68,54 @@ class Keyboard(KeyboardBase):
     """Wrapper around xlib to make faking keyboard input possible."""
 
     _special_X_keysyms = {
-        ' ' : "space",
-        '\t' : "Tab",
-        '\n' : "Return",  # for some reason this needs to be cr, not lf
-        '\r' : "Return",
-        '\e' : "Escape",
-        '!' : "exclam",
-        '#' : "numbersign",
-        '%' : "percent",
-        '$' : "dollar",
-        '&' : "ampersand",
-        '"' : "quotedbl",
-        '\'' : "apostrophe",
-        '(' : "parenleft",
-        ')' : "parenright",
-        '*' : "asterisk",
-        '=' : "equal",
-        '+' : "plus",
-        ',' : "comma",
-        '-' : "minus",
-        '.' : "period",
-        '/' : "slash",
-        ':' : "colon",
-        ';' : "semicolon",
-        '<' : "less",
-        '>' : "greater",
-        '?' : "question",
-        '@' : "at",
-        '[' : "bracketleft",
-        ']' : "bracketright",
-        '\\' : "backslash",
-        '^' : "asciicircum",
-        '_' : "underscore",
-        '`' : "grave",
-        '{' : "braceleft",
-        '|' : "bar",
-        '}' : "braceright",
-        '~' : "asciitilde"
-        }
+        ' ': "space",
+        '\t': "Tab",
+        '\n': "Return",  # for some reason this needs to be cr, not lf
+        '\r': "Return",
+        '\e': "Escape",
+        '!': "exclam",
+        '#': "numbersign",
+        '%': "percent",
+        '$': "dollar",
+        '&': "ampersand",
+        '"': "quotedbl",
+        '\'': "apostrophe",
+        '(': "parenleft",
+        ')': "parenright",
+        '*': "asterisk",
+        '=': "equal",
+        '+': "plus",
+        ',': "comma",
+        '-': "minus",
+        '.': "period",
+        '/': "slash",
+        ':': "colon",
+        ';': "semicolon",
+        '<': "less",
+        '>': "greater",
+        '?': "question",
+        '@': "at",
+        '[': "bracketleft",
+        ']': "bracketright",
+        '\\': "backslash",
+        '^': "asciicircum",
+        '_': "underscore",
+        '`': "grave",
+        '{': "braceleft",
+        '|': "bar",
+        '}': "braceright",
+        '~': "asciitilde"
+    }
 
     _keysym_translations = {
-        'Control' : 'Control_L',
-        'Ctrl' : 'Control_L',
-        'Alt' : 'Alt_L',
+        'Control': 'Control_L',
+        'Ctrl': 'Control_L',
+        'Alt': 'Alt_L',
         'AltR': 'Alt_R',
-        'Super' : 'Super_L',
-        'Shift' : 'Shift_L',
-        'Enter' : 'Return',
-        'Space' : ' ',
+        'Super': 'Super_L',
+        'Shift': 'Shift_L',
+        'Enter': 'Return',
+        'Space': ' ',
     }
 
     def __init__(self):
@@ -189,7 +193,8 @@ class Keyboard(KeyboardBase):
             raise TypeError("'keys' argument must be a string.")
         logger.debug("Typing text %r", string)
         for key in string:
-            # Don't call press or release here, as they translate keys to keysyms.
+            # Don't call press or release here, as they translate keys to
+            # keysyms.
             self.__perform_on_key(key, X.KeyPress)
             sleep(delay)
             self.__perform_on_key(key, X.KeyRelease)
@@ -199,13 +204,14 @@ class Keyboard(KeyboardBase):
     def on_test_end(cls, test_instance):
         """Generate KeyRelease events for any un-released keys.
 
-        .. important:: Ensure you call this at the end of any test to release any
-         keys that were pressed and not released.
+        .. important:: Ensure you call this at the end of any test to release
+         any keys that were pressed and not released.
 
         """
         global _PRESSED_KEYS
         for keycode in _PRESSED_KEYS:
-            logger.warning("Releasing key %r as part of cleanup call.", keycode)
+            logger.warning(
+                "Releasing key %r as part of cleanup call.", keycode)
             fake_input(get_display(), X.KeyRelease, keycode)
         _PRESSED_KEYS = []
 
@@ -229,7 +235,9 @@ class Keyboard(KeyboardBase):
             if keycode in _PRESSED_KEYS:
                 _PRESSED_KEYS.remove(keycode)
             else:
-                logger.warning("Generating release event for keycode %d that was not pressed.", keycode)
+                logger.warning(
+                    "Generating release event for keycode %d that was not "
+                    "pressed.", keycode)
 
         fake_input(get_display(), event, keycode)
         get_display().sync()
@@ -246,22 +254,23 @@ class Keyboard(KeyboardBase):
     def __is_shifted(self, key):
         return len(key) == 1 and ord(key) in self.shifted_keys and key != '<'
 
-    def __char_to_keycode(self, key) :
+    def __char_to_keycode(self, key):
         keysym = self.__get_keysym(key)
         keycode = get_display().keysym_to_keycode(keysym)
-        if keycode == 0 :
+        if keycode == 0:
             logger.warning("Sorry, can't map '%s'", key)
 
-        if (self.__is_shifted(key)) :
+        if (self.__is_shifted(key)):
             shift_mask = X.ShiftMask
-        else :
+        else:
             shift_mask = 0
 
         return keycode, shift_mask
 
     def __translate_keys(self, key_string):
         if len(key_string) > 1:
-            return [self._keysym_translations.get(k, k) for k in key_string.split('+')]
+            return [self._keysym_translations.get(k, k)
+                    for k in key_string.split('+')]
         else:
             # workaround that lets us press_and_release '+' by itself.
             return [self._keysym_translations.get(key_string, key_string)]
@@ -298,7 +307,9 @@ class Mouse(MouseBase):
         if button in _PRESSED_MOUSE_BUTTONS:
             _PRESSED_MOUSE_BUTTONS.remove(button)
         else:
-            logger.warning("Generating button release event or button %d that was not pressed.", button)
+            logger.warning(
+                "Generating button release event or button %d that was not "
+                "pressed.", button)
         fake_input(get_display(), X.ButtonRelease, button)
         get_display().sync()
 
@@ -316,7 +327,9 @@ class Mouse(MouseBase):
 
         """
         def perform_move(x, y, sync):
-            fake_input(get_display(), X.MotionNotify, sync, X.CurrentTime, X.NONE, x=x, y=y)
+            fake_input(
+                get_display(), X.MotionNotify, sync, X.CurrentTime, X.NONE,
+                x=x, y=y)
             get_display().sync()
             sleep(time_between_events)
 
@@ -372,34 +385,45 @@ class Mouse(MouseBase):
 
         """
         try:
-            x,y,w,h = object_proxy.globalRect
+            x, y, w, h = object_proxy.globalRect
             logger.debug("Moving to object's globalRect coordinates.")
             self.move(x+w/2, y+h/2)
             return
         except AttributeError:
             pass
         except (TypeError, ValueError):
-            raise ValueError("Object '%r' has globalRect attribute, but it is not of the correct type" % object_proxy)
+            raise ValueError(
+                "Object '%r' has globalRect attribute, but it is not of the "
+                "correct type" % object_proxy)
 
         try:
-            x,y = object_proxy.center_x, object_proxy.center_y
+            x, y = object_proxy.center_x, object_proxy.center_y
             logger.debug("Moving to object's center_x, center_y coordinates.")
-            self.move(x,y)
+            self.move(x, y)
             return
         except AttributeError:
             pass
         except (TypeError, ValueError):
-            raise ValueError("Object '%r' has center_x, center_y attributes, but they are not of the correct type" % object_proxy)
+            raise ValueError(
+                "Object '%r' has center_x, center_y attributes, but they are "
+                "not of the correct type" % object_proxy)
 
         try:
-            x,y,w,h = object_proxy.x, object_proxy.y, object_proxy.w, object_proxy.h
-            logger.debug("Moving to object's center point calculated from x,y,w,h attributes.")
-            self.move(x+w/2,y+h/2)
+            x, y, w, h = (
+                object_proxy.x, object_proxy.y, object_proxy.w, object_proxy.h)
+            logger.debug(
+                "Moving to object's center point calculated from x,y,w,h "
+                "attributes.")
+            self.move(x+w/2, y+h/2)
             return
         except AttributeError:
-            raise ValueError("Object '%r' does not have any recognised position attributes" % object_proxy)
+            raise ValueError(
+                "Object '%r' does not have any recognised position "
+                "attributes" % object_proxy)
         except (TypeError, ValueError):
-            raise ValueError("Object '%r' has x,y attribute, but they are not of the correct type" % object_proxy)
+            raise ValueError(
+                "Object '%r' has x,y attribute, but they are not of the "
+                "correct type" % object_proxy)
 
     def position(self):
         """
@@ -413,8 +437,12 @@ class Mouse(MouseBase):
         return x, y
 
     def drag(self, x1, y1, x2, y2):
-        """Performs a press, move and release
-        This is to keep a common API between Mouse and Finger as long as possible"""
+        """Performs a press, move and release.
+
+        This is to keep a common API between Mouse and Finger as long as
+        possible.
+
+        """
         self.move(x1, y1)
         self.press()
         self.move(x2, y2)

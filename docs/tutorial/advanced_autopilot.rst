@@ -250,8 +250,19 @@ However, sometimes you want to customize the class used to create these objects.
 
         # Add custom methods here...
 
-3. As long as this custom class has been seen by the python interpreter (usually by importing it somewhere within the test suite), autopilot will use it every time it needs to generate a ``QLabel`` instance. You can also pass this class to methods like :meth:`~autopilot.introspection.DBusIntrospectionObject.select_single` instead of a string. So, for example, the following is a valid way of selecting the QLabel instances in an application::
+3. Pass the emulator base as an argument to the launch_test_application method on your test class. Something like this::
 
-    # self.app is the application proxy object.
+    from autopilot.testcase import AutopilotTestCase
+
+    class TestCase(AutopilotTestCase):
+
+        def setUp(self):
+            super(TestCase, self).setUp()
+            self.app = self.launch_test_application(
+                '/path/to/the/application',
+                emulator_base=EmulatorBase)
+
+4. You can pass the emulator class to methods like :meth:`~autopilot.introspection.DBusIntrospectionObject.select_single` instead of a string. So, for example, the following is a valid way of selecting the QLabel instances in an application::
+
     # Get all QLabels in the applicaton:
     labels = self.app.select_many(QLabel)

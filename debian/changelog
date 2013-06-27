@@ -1,3 +1,17 @@
+autopilot (1.3.1+13.10.20130627-0ubuntu1) saucy; urgency=low
+
+  [ Thomi Richards ]
+  * Autopilot will now check dbus wire protocol version.
+
+  [ Christopher Lee ]
+  * Public API for getting a proxy object for a launched application.
+    (LP: #1176150)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 250
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 27 Jun 2013 00:01:52 +0000
+
 autopilot (1.3.1daily13.06.25-0ubuntu1) saucy; urgency=low
 
   [ Christopher Lee ]

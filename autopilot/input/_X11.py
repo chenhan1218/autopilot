@@ -328,8 +328,13 @@ class Mouse(MouseBase):
         """
         def perform_move(x, y, sync):
             fake_input(
-                get_display(), X.MotionNotify, sync, X.CurrentTime, X.NONE,
-                x=x, y=y)
+                get_display(),
+                X.MotionNotify,
+                sync,
+                X.CurrentTime,
+                X.NONE,
+                x=x,
+                y=y)
             get_display().sync()
             sleep(time_between_events)
 

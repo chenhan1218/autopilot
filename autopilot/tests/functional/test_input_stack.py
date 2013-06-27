@@ -101,7 +101,11 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
 class MouseTestCase(AutopilotTestCase):
 
     def test_move_to_nonint_point(self):
-        """Test for bug #1195499."""
+        """Test mouse does not get stuck when we move to a non-integer point.
+
+        LP bug #1195499.
+
+        """
         device = Mouse.create()
         device.move(10, 10.6)
         self.assertEqual(device.position(), (10, 10))

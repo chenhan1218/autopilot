@@ -315,19 +315,20 @@ class Mouse(MouseBase):
         parameters unless they need a specific rate of movement.
 
         """
-        logger.debug("Moving mouse to position %d,%d %s animation.", x, y,
-            "with" if animate else "without")
-
         def perform_move(x, y, sync):
             fake_input(get_display(), X.MotionNotify, sync, X.CurrentTime, X.NONE, x=x, y=y)
             get_display().sync()
             sleep(time_between_events)
 
+        dest_x, dest_y = int(x), int(y)
+        logger.debug(
+            "Moving mouse to position %d,%d %s animation.", dest_x, dest_y,
+            "with" if animate else "without")
+
         if not animate:
-            perform_move(x, y, False)
+            perform_move(dest_x, dest_y, False)
             return
 
-        dest_x, dest_y = x, y
         curr_x, curr_y = self.position()
         coordinate_valid = is_point_on_any_screen((x,y))
         if x < -1000 or y < -1000:

@@ -1,3 +1,14 @@
+autopilot (1.3.1+13.10.20130628-0ubuntu1) saucy; urgency=low
+
+  [ Leo Arias ]
+  * Added to the tutorial the step to pass the custom emulator as an
+    argument to the launch_test_application method. (LP: #1195092)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 252
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 28 Jun 2013 00:01:36 +0000
+
 autopilot (1.3.1+13.10.20130627-0ubuntu1) saucy; urgency=low
 
   [ Thomi Richards ]

@@ -26,7 +26,7 @@ from testtools.matchers import IsInstance, Equals
 from unittest import SkipTest
 
 from autopilot.testcase import AutopilotTestCase, multiply_scenarios
-from autopilot.input import Keyboard, Pointer, Touch
+from autopilot.input import Keyboard, Mouse, Pointer, Touch
 from autopilot.input._common import get_center_point
 from autopilot.matchers import Eventually
 from autopilot.utilities import on_test_started
@@ -37,18 +37,19 @@ class InputStackKeyboardBase(AutopilotTestCase):
     scenarios = [
         ('X11', dict(backend='X11')),
         ('UInput', dict(backend='UInput')),
-        ]
+    ]
 
     def setUp(self):
         super(InputStackKeyboardBase, self).setUp()
         if self.backend == 'UInput' and not (
-            os.access('/dev/autopilot-uinput', os.W_OK) or
-            os.access('/dev/uinput', os.W_OK)):
-            raise SkipTest("UInput backend currently requires write access to /dev/autopilot-uinput or /dev/uinput")
+                os.access('/dev/autopilot-uinput', os.W_OK) or
+                os.access('/dev/uinput', os.W_OK)):
+            raise SkipTest(
+                "UInput backend currently requires write access to "
+                "/dev/autopilot-uinput or /dev/uinput")
 
 
 class InputStackKeyboardCreationTests(InputStackKeyboardBase):
-
 
     def test_can_create_backend(self):
         keyboard = Keyboard.create(self.backend)
@@ -65,15 +66,15 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
             ('numeric', dict(input='0123456789')),
             ('punctuation', dict(input='`~!@#$%^&*()_-+={}[]|\\:;"\'<>,.?/'))
         ]
-        )
+    )
 
     def start_mock_app(self):
         window_spec_file = mktemp(suffix='.json')
-        window_spec = { "Contents": "TextEdit" }
+        window_spec = {"Contents": "TextEdit"}
         json.dump(
             window_spec,
             open(window_spec_file, 'w')
-            )
+        )
         self.addCleanup(os.remove, window_spec_file)
 
         return self.launch_test_application('window-mocker', window_spec_file)
@@ -97,6 +98,19 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
         self.assertThat(text_edit.plainText, Eventually(Equals(self.input)))
 
 
+class MouseTestCase(AutopilotTestCase):
+
+    def test_move_to_nonint_point(self):
+        """Test mouse does not get stuck when we move to a non-integer point.
+
+        LP bug #1195499.
+
+        """
+        device = Mouse.create()
+        device.move(10, 10.6)
+        self.assertEqual(device.position(), (10, 10))
+
+
 class TouchTests(AutopilotTestCase):
 
     def setUp(self):
@@ -105,33 +119,38 @@ class TouchTests(AutopilotTestCase):
 
         self.app = self.start_mock_app()
         self.widget = self.app.select_single('MouseTestWidget')
-        self.button_status = self.app.select_single('QLabel', objectName='button_status')
+        self.button_status = self.app.select_single(
+            'QLabel', objectName='button_status')
 
     def start_mock_app(self):
         window_spec_file = mktemp(suffix='.json')
-        window_spec = { "Contents": "MouseTest" }
+        window_spec = {"Contents": "MouseTest"}
         json.dump(
             window_spec,
             open(window_spec_file, 'w')
-            )
+        )
         self.addCleanup(os.remove, window_spec_file)
 
-        return self.launch_test_application('window-mocker', window_spec_file, app_type='qt')
+        return self.launch_test_application(
+            'window-mocker', window_spec_file, app_type='qt')
 
     def test_tap(self):
-        x,y = get_center_point(self.widget)
-        self.device.tap(x,y)
+        x, y = get_center_point(self.widget)
+        self.device.tap(x, y)
 
-        self.assertThat(self.button_status.text, Eventually(Equals("Touch Release")))
+        self.assertThat(
+            self.button_status.text, Eventually(Equals("Touch Release")))
 
     def test_press_and_release(self):
-        x,y = get_center_point(self.widget)
+        x, y = get_center_point(self.widget)
         self.device.press(x, y)
 
-        self.assertThat(self.button_status.text, Eventually(Equals("Touch Press")))
+        self.assertThat(
+            self.button_status.text, Eventually(Equals("Touch Press")))
 
         self.device.release()
-        self.assertThat(self.button_status.text, Eventually(Equals("Touch Release")))
+        self.assertThat(
+            self.button_status.text, Eventually(Equals("Touch Release")))
 
 
 class PointerWrapperTests(AutopilotTestCase):
@@ -159,7 +178,6 @@ class InputStackCleanupTests(TestCase):
             @classmethod
             def on_test_end(cls, test_instance):
                 FakeKeyboard.cleanup_called = True
-
 
         class FakeTestCase(TestCase):
 

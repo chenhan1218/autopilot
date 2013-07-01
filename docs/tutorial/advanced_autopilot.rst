@@ -145,7 +145,18 @@ For more information on the various logging levels, see the `python documentatio
 Environment Patching
 ====================
 
-.. Document TestCase.patch_environment and it's uses.
+Sometimes you need to change the value of an environment variable for the duration of a single test. It is important that the variable is changed back to it's original value when the test has ended, so future tests are run in a pristine environment. The :class:`~autopilot.testcase.AutopilotTestCase` class includes a :meth:`~autopilot.testcase.AutopilotTestCase.patch_environment` method which takes care of this for you. For example, to set the ``FOO`` environment variable to ``"Hello World"`` for the duration of a single test, the code would look something like this::
+
+    from autopilot.testcase import AutopilotTestCase
+
+
+    class MyTests(AutopilotTestCase):
+
+        def test_that_needs_custom_environment(self):
+            self.patch_environment("FOO", "Hello World")
+            # Test code goes here.
+
+The :meth:`~autopilot.testcase.AutopilotTestCase.patch_environment` will revert the value of the environment variable to it's initial value, or will delete it altogether if the environment variable did not exist when :meth:`~autopilot.testcase.AutopilotTestCase.patch_environment` was called.
 
 Custom Assertions
 =================

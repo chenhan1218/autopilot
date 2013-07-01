@@ -122,7 +122,25 @@ Autopilot will run the ``test_bad_strings_return_no_results`` once for each scen
 Test Logging
 ============
 
-.. Write about how tests can write things to the log.
+Autopilot integrates the `python logging framework <http://docs.python.org/2/library/logging.html>`_ into the :class:`~autopilot.testcase.AutopilotTestCase` class. Various autopilot components write log messages to the logging framework, and all these log messages are attached to each test result when the test completes. By default, these log messages are shown when a test fails, or if autopilot is run with the ``-v`` option.
+
+Test authors are encouraged to write to the python logging framework whenever doing so would make failing tests clearer. To do this, there are a few simple steps to follow:
+
+1. Import the logging module::
+
+    import logging
+
+2. Create a ``logger`` object. You can either do this at the file level scope, or within a test case class::
+
+    logger = logging.getLogger(__name__)
+
+3. Log some messages. You may choose which level the messages should be logged at. For example::
+
+    logger.info("This is some information")
+    logger.warning("This is a warning")
+    logger.error("This is an error")
+
+For more information on the various logging levels, see the `python documentation on Logger objects <http://docs.python.org/2/library/logging.html#logger-objects>`_. All messages logged in this way will be picked up by the autopilot test runner. This is a valuable tool when debugging failing tests.
 
 Environment Patching
 ====================

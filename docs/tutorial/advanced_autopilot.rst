@@ -122,12 +122,41 @@ Autopilot will run the ``test_bad_strings_return_no_results`` once for each scen
 Test Logging
 ============
 
-.. Write about how tests can write things to the log.
+Autopilot integrates the `python logging framework <http://docs.python.org/2/library/logging.html>`_ into the :class:`~autopilot.testcase.AutopilotTestCase` class. Various autopilot components write log messages to the logging framework, and all these log messages are attached to each test result when the test completes. By default, these log messages are shown when a test fails, or if autopilot is run with the ``-v`` option.
+
+Test authors are encouraged to write to the python logging framework whenever doing so would make failing tests clearer. To do this, there are a few simple steps to follow:
+
+1. Import the logging module::
+
+    import logging
+
+2. Create a ``logger`` object. You can either do this at the file level scope, or within a test case class::
+
+    logger = logging.getLogger(__name__)
+
+3. Log some messages. You may choose which level the messages should be logged at. For example::
+
+    logger.info("This is some information")
+    logger.warning("This is a warning")
+    logger.error("This is an error")
+
+For more information on the various logging levels, see the `python documentation on Logger objects <http://docs.python.org/2/library/logging.html#logger-objects>`_. All messages logged in this way will be picked up by the autopilot test runner. This is a valuable tool when debugging failing tests.
 
 Environment Patching
 ====================
 
-.. Document TestCase.patch_environment and it's uses.
+Sometimes you need to change the value of an environment variable for the duration of a single test. It is important that the variable is changed back to it's original value when the test has ended, so future tests are run in a pristine environment. The :class:`~autopilot.testcase.AutopilotTestCase` class includes a :meth:`~autopilot.testcase.AutopilotTestCase.patch_environment` method which takes care of this for you. For example, to set the ``FOO`` environment variable to ``"Hello World"`` for the duration of a single test, the code would look something like this::
+
+    from autopilot.testcase import AutopilotTestCase
+
+
+    class MyTests(AutopilotTestCase):
+
+        def test_that_needs_custom_environment(self):
+            self.patch_environment("FOO", "Hello World")
+            # Test code goes here.
+
+The :meth:`~autopilot.testcase.AutopilotTestCase.patch_environment` method will revert the value of the environment variable to it's initial value, or will delete it altogether if the environment variable did not exist when :meth:`~autopilot.testcase.AutopilotTestCase.patch_environment` was called. This happens in the cleanup phase of the test execution.
 
 Custom Assertions
 =================

@@ -156,7 +156,7 @@ Sometimes you need to change the value of an environment variable for the durati
             self.patch_environment("FOO", "Hello World")
             # Test code goes here.
 
-The :meth:`~autopilot.testcase.AutopilotTestCase.patch_environment` will revert the value of the environment variable to it's initial value, or will delete it altogether if the environment variable did not exist when :meth:`~autopilot.testcase.AutopilotTestCase.patch_environment` was called.
+The :meth:`~autopilot.testcase.AutopilotTestCase.patch_environment` method will revert the value of the environment variable to it's initial value, or will delete it altogether if the environment variable did not exist when :meth:`~autopilot.testcase.AutopilotTestCase.patch_environment` was called. This happens in the cleanup phase of the test execution.
 
 Custom Assertions
 =================

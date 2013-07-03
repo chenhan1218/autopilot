@@ -1,3 +1,13 @@
+autopilot (1.3.1+13.10.20130703-0ubuntu1) saucy; urgency=low
+
+  [ Thomi Richards ]
+  * More docs for autopilot.
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 256
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 03 Jul 2013 00:01:38 +0000
+
 autopilot (1.3.1+13.10.20130701-0ubuntu1) saucy; urgency=low
 
   [ Leo Arias ]

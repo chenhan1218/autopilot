@@ -117,6 +117,11 @@ class _VideoLogger(CleanupRegistered):
     def set_recording_dir(self, directory):
         self.recording_directory = directory
 
+    def set_recording_opts(self, opts):
+        if opts is None:
+            return
+        self._recording_opts = opts.split(',') + self._recording_opts
+
     def _have_recording_app(self):
         return os.path.exists(self._recording_app)
 
@@ -172,7 +177,7 @@ class _VideoLogger(CleanupRegistered):
 _video_logger = _VideoLogger()
 
 
-def configure_video_recording(enable_recording, record_dir):
+def configure_video_recording(enable_recording, record_dir, record_opts=None):
     """Configure video logging.
 
     enable_recording is a boolean, and enables or disables recording globally.
@@ -186,4 +191,5 @@ def configure_video_recording(enable_recording, record_dir):
 
     _video_logger.enable_recording(enable_recording)
     _video_logger.set_recording_dir(record_dir)
+    _video_logger.set_recording_opts(record_opts)
 

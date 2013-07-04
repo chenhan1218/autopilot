@@ -19,12 +19,18 @@
 
 import json
 import os
+import subprocess
+import tempfile
 from tempfile import mktemp
 from testtools.matchers import Equals
 
 from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase
 from autopilot.introspection.dbus import CustomEmulatorBase
+
+
+class EmulatorBase(CustomEmulatorBase):
+    pass
 
 
 class IntrospectionFeatureTests(AutopilotTestCase):
@@ -48,10 +54,6 @@ class IntrospectionFeatureTests(AutopilotTestCase):
 
     def test_can_select_custom_emulators_by_name(self):
         """Must be able to select a custom emulator type by name."""
-
-        class EmulatorBase(CustomEmulatorBase):
-            pass
-
         class MouseTestWidget(EmulatorBase):
             pass
 
@@ -62,10 +64,6 @@ class IntrospectionFeatureTests(AutopilotTestCase):
 
     def test_can_select_custom_emulators_by_type(self):
         """Must be able to select a custom emulator type by type."""
-
-        class EmulatorBase(CustomEmulatorBase):
-            pass
-
         class MouseTestWidget(EmulatorBase):
             pass
 
@@ -76,14 +74,52 @@ class IntrospectionFeatureTests(AutopilotTestCase):
 
     def test_can_access_custom_emulator_properties(self):
         """Must be able to access properties of a custom emulator."""
-
-        class EmulatorBase(CustomEmulatorBase):
-            pass
-
         class MouseTestWidget(EmulatorBase):
             pass
 
         app = self.start_mock_app(EmulatorBase)
         test_widget = app.select_single(MouseTestWidget)
 
+        self.assertThat(test_widget.visible, Eventually(Equals(True)))
+
+        
+class QMLCustomEmulatorTestCase(AutopilotTestCase):
+    """Test the introspection of a QML application with a custom emulator."""
+
+    class QQuickView(EmulatorBase):
+        pass
+
+    test_qml = (
+"""
+import QtQuick 2.0
+
+Rectangle {
+}
+
+"""
+)
+
+    def setUp(self):
+        super(QMLCustomEmulatorTestCase, self).setUp()
+        self._launch_test_qml()
+
+    def _launch_test_qml(self):        
+        arch = subprocess.check_output(
+            ["dpkg-architecture", "-qDEB_HOST_MULTIARCH"]).strip()
+        qml_path = tempfile.mktemp(suffix='.qml')
+        open(qml_path, 'w').write(self.test_qml)
+        self.addCleanup(os.remove, qml_path)
+        self.app = self.launch_test_application(
+            "/usr/lib/" + arch + "/qt5/bin/qmlscene",
+            qml_path,
+            emulator_base=EmulatorBase)
+
+    def test_can_access_custom_emulator_properties_twice1(self):
+        test_widget = self.app.select_single(
+            QMLCustomEmulatorTestCase.QQuickView)
+        self.assertThat(test_widget.visible, Eventually(Equals(True)))
+
+    def test_can_access_custom_emulator_properties_twice2(self):
+        test_widget = self.app.select_single(
+            QMLCustomEmulatorTestCase.QQuickView)
         self.assertThat(test_widget.visible, Eventually(Equals(True)))

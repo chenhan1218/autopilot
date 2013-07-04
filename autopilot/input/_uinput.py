@@ -134,18 +134,24 @@ class Keyboard(KeyboardBase):
             self.release(key, delay)
 
     @classmethod
-    def on_test_end():
+    def on_test_end(cls, test_instance):
         """Generate KeyRelease events for any un-released keys.
 
         Make sure you call this at the end of any test to release
         any keys that were pressed and not released.
 
         """
-        # global _PRESSED_KEYS
-        # for keycode in _PRESSED_KEYS:
-        #     logger.warning("Releasing key %r as part of cleanup call.", keycode)
-        #     fake_input(get_display(), X.KeyRelease, keycode)
-        # _PRESSED_KEYS = []
+        global _PRESSED_KEYS
+        if len(_PRESSED_KEYS) == 0:
+            return
+        _device = UInput(devnode=_get_devnode_path())
+        def _release(event):
+            _device.write(e.EV_KEY, event, RELEASE)
+            _device.syn()
+        for event in _PRESSED_KEYS:
+            logger.warning("Releasing key %r as part of cleanup call.", event)
+            _release(event)
+        _PRESSED_KEYS = []
 
     @staticmethod
     def _get_events_for_key(key):

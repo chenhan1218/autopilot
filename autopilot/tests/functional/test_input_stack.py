@@ -189,3 +189,30 @@ class InputStackCleanupTests(TestCase):
         FakeTestCase("test_foo").run()
 
         self.assertThat(FakeKeyboard.cleanup_called, Equals(True))
+
+class InputStackCleanup(InputStackKeyboardBase):
+
+    def _get_pressed_keys(self):
+        if self.backend == 'X11':
+            from autopilot.input._X11 import _PRESSED_KEYS
+            return _PRESSED_KEYS
+        elif self.backend == 'UInput':
+            from autopilot.input._uinput import _PRESSED_KEYS
+            return _PRESSED_KEYS
+        else:
+            raise RuntimeError("Unknown Backend Checked")
+
+    def test_keys_released(self):
+        """Cleanup must release any keys that a keyboard has pressed."""
+        class FakeTestCase(AutopilotTestCase):
+            def test_press_key(self):
+                kb = Keyboard.create(self.backend)
+                kb.press('Shift')
+        FakeTestCase.backend = self.backend
+
+        blah = FakeTestCase("test_press_key").run()
+
+        pressed_keys = self._get_pressed_keys()
+        self.assertThat(pressed_keys, Equals([]))
+
+

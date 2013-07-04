@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 PRESS = 1
 RELEASE = 0
 
-PRESSED_KEYS = []
+_PRESSED_KEYS = []
 
 
 class Keyboard(KeyboardBase):
@@ -72,6 +72,7 @@ class Keyboard(KeyboardBase):
         for key in self._sanitise_keys(keys):
             for event in Keyboard._get_events_for_key(key):
                 logger.debug("Pressing %s (%r)", key, event)
+                _PRESSED_KEYS.append(event)
                 self._emit(event, PRESS)
                 sleep(delay)
 
@@ -96,6 +97,8 @@ class Keyboard(KeyboardBase):
         for key in reversed(self._sanitise_keys(keys)):
             for event in Keyboard._get_events_for_key(key):
                 logger.debug("Releasing %s (%r)", key, event)
+                if key in _PRESSED_KEYS:
+                    _PRESSED_KEYS.remove(key)
                 self._emit(event, RELEASE)
                 sleep(delay)
 

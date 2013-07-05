@@ -879,7 +879,7 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
         self.assertIn("AssertionError: False is not true", error)
 
     def test_verbose_flag_captures_nested_autopilottestcase_classes(self):
-        """Verbose log must contain the log details of a nested AutopilotTestCase class."""
+        """Verbose log must contain the log details of both the nested and parent testcase."""
         self.create_test_file("test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
@@ -904,6 +904,7 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
                                                   "-v", "tests"])
 
         self.assertThat(code, Equals(0))
+        self.assertIn("Starting test tests.test_simple.OuterTestCase.test_nested_classes", error)
         self.assertIn("Starting test tests.test_simple.InnerTestCase.test_produce_log_output", error)
 
     def test_can_enable_debug_output(self):

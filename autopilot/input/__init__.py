@@ -167,7 +167,7 @@ class Keyboard(CleanupRegistered):
         raise NotImplementedError("You cannot use this class directly.")
 
 
-class Mouse(object):
+class Mouse(CleanupRegistered):
 
     """A simple mouse device class.
 

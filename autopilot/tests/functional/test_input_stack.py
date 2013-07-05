@@ -24,6 +24,7 @@ from tempfile import mktemp
 from testtools import TestCase
 from testtools.matchers import IsInstance, Equals
 from unittest import SkipTest
+from mock import patch
 
 from autopilot.testcase import AutopilotTestCase, multiply_scenarios
 from autopilot.input import Keyboard, Mouse, Pointer, Touch
@@ -189,3 +190,45 @@ class InputStackCleanupTests(TestCase):
         FakeTestCase("test_foo").run()
 
         self.assertThat(FakeKeyboard.cleanup_called, Equals(True))
+
+class InputStackCleanup(AutopilotTestCase):
+
+    def test_keyboard_keys_released_X11(self):
+        """Cleanup must release any keys that an X11 keyboard has had pressed."""
+        class FakeTestCase(AutopilotTestCase):
+            def test_press_key(self):
+                kb = Keyboard.create('X11')
+                kb.press('Shift')
+
+        test_result = FakeTestCase("test_press_key").run()
+
+        self.assertThat(test_result.wasSuccessful(), Equals(True))
+        from autopilot.input._X11 import _PRESSED_KEYS
+        self.assertThat(_PRESSED_KEYS, Equals([]))
+
+    def test_keyboard_keys_released_UInput(self):
+        """Cleanup must release any keys that an UInput keyboard has had pressed."""
+        class FakeTestCase(AutopilotTestCase):
+            def test_press_key(self):
+                kb = Keyboard.create('UInput')
+                kb.press('Shift')
+
+        test_result = FakeTestCase("test_press_key").run()
+
+        self.assertThat(test_result.wasSuccessful(), Equals(True))
+        from autopilot.input._uinput import _PRESSED_KEYS
+        self.assertThat(_PRESSED_KEYS, Equals([]))
+
+    @patch('autopilot.input._X11.fake_input', new=lambda *args: None, )
+    def test_mouse_button_released(self):
+        """Cleanup must release any mouse buttons that have been pressed."""
+        class FakeTestCase(AutopilotTestCase):
+            def test_press_button(self):
+                mouse = Mouse.create('X11')
+                mouse.press()
+
+        test_result = FakeTestCase("test_press_button").run()
+
+        from autopilot.input._X11 import _PRESSED_MOUSE_BUTTONS
+        self.assertThat(test_result.wasSuccessful(), Equals(True))
+        self.assertThat(_PRESSED_MOUSE_BUTTONS, Equals([]))

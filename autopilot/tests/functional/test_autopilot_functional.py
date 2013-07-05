@@ -891,7 +891,6 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
                     class InnerTestCase(AutopilotTestCase):
 
                         def test_produce_log_output(self):
-                            get_debug_logger().debug("Hello World")
                             self.assertTrue(True)
 
                     InnerTestCase("test_produce_log_output").run()
@@ -904,8 +903,8 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
                                                   "-v", "tests"])
 
         self.assertThat(code, Equals(0))
-        self.assertIn("Starting test tests.test_simple.OuterTestCase.test_nested_classes", error)
-        self.assertIn("Starting test tests.test_simple.InnerTestCase.test_produce_log_output", error)
+        self.assertThat(error, Contains("Starting test tests.test_simple.OuterTestCase.test_nested_classes"))
+        self.assertThat(error, Contains("Starting test tests.test_simple.InnerTestCase.test_produce_log_output"))
 
     def test_can_enable_debug_output(self):
         """Verbose log must show debug messages if we specify '-vv'."""

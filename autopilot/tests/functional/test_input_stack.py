@@ -24,6 +24,7 @@ from tempfile import mktemp
 from testtools import TestCase
 from testtools.matchers import IsInstance, Equals
 from unittest import SkipTest
+from mock import patch
 
 from autopilot.testcase import AutopilotTestCase, multiply_scenarios
 from autopilot.input import Keyboard, Mouse, Pointer, Touch
@@ -190,29 +191,44 @@ class InputStackCleanupTests(TestCase):
 
         self.assertThat(FakeKeyboard.cleanup_called, Equals(True))
 
-class InputStackCleanup(InputStackKeyboardBase):
+class InputStackCleanup(AutopilotTestCase):
 
-    def _get_pressed_keys(self):
-        if self.backend == 'X11':
-            from autopilot.input._X11 import _PRESSED_KEYS
-            return _PRESSED_KEYS
-        elif self.backend == 'UInput':
-            from autopilot.input._uinput import _PRESSED_KEYS
-            return _PRESSED_KEYS
-        else:
-            raise RuntimeError("Unknown Backend Checked")
-
-    def test_keys_released(self):
-        """Cleanup must release any keys that a keyboard has pressed."""
+    def test_keyboard_keys_released_X11(self):
+        """Cleanup must release any keys that an X11 keyboard has had pressed."""
         class FakeTestCase(AutopilotTestCase):
             def test_press_key(self):
-                kb = Keyboard.create(self.backend)
+                kb = Keyboard.create('X11')
                 kb.press('Shift')
-        FakeTestCase.backend = self.backend
 
-        blah = FakeTestCase("test_press_key").run()
+        test_result = FakeTestCase("test_press_key").run()
 
-        pressed_keys = self._get_pressed_keys()
-        self.assertThat(pressed_keys, Equals([]))
+        self.assertThat(test_result.wasSuccessful(), Equals(True))
+        from autopilot.input._X11 import _PRESSED_KEYS
+        self.assertThat(_PRESSED_KEYS, Equals([]))
 
+    def test_keyboard_keys_released_UInput(self):
+        """Cleanup must release any keys that an UInput keyboard has had pressed."""
+        class FakeTestCase(AutopilotTestCase):
+            def test_press_key(self):
+                kb = Keyboard.create('UInput')
+                kb.press('Shift')
 
+        test_result = FakeTestCase("test_press_key").run()
+
+        self.assertThat(test_result.wasSuccessful(), Equals(True))
+        from autopilot.input._uinput import _PRESSED_KEYS
+        self.assertThat(_PRESSED_KEYS, Equals([]))
+
+    @patch('autopilot.input._X11.fake_input', new=lambda *args: None, )
+    def test_mouse_button_released(self):
+        """Cleanup must release any mouse buttons that have been pressed."""
+        class FakeTestCase(AutopilotTestCase):
+            def test_press_button(self):
+                mouse = Mouse.create('X11')
+                mouse.press()
+
+        test_result = FakeTestCase("test_press_button").run()
+
+        from autopilot.input._X11 import _PRESSED_MOUSE_BUTTONS
+        self.assertThat(test_result.wasSuccessful(), Equals(True))
+        self.assertThat(_PRESSED_MOUSE_BUTTONS, Equals([]))

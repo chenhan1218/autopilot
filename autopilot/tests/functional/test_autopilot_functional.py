@@ -94,6 +94,8 @@ class AutopilotFunctionalTestsBase(AutopilotTestCase):
             )
 
         environment_patch = dict(DISPLAY=':0')
+        if not os.getcwd().startswith('/usr/'):
+            environment_patch['PYTHONPATH'] = ap_base_path
         bin_path = os.path.join(ap_base_path, 'bin', 'autopilot')
         if not os.path.exists(bin_path):
             bin_path = subprocess.check_output(['which', 'autopilot']).strip()
@@ -875,6 +877,34 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
         self.assertIn("FAIL: tests.test_simple.SimpleTest.test_simple", error)
         self.assertIn("traceback:", error)
         self.assertIn("AssertionError: False is not true", error)
+
+    def test_verbose_flag_captures_nested_autopilottestcase_classes(self):
+        """Verbose log must contain the log details of a nested AutopilotTestCase class."""
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+            import os
+
+            class OuterTestCase(AutopilotTestCase):
+
+                def test_nested_classes(self):
+                    class InnerTestCase(AutopilotTestCase):
+
+                        def test_produce_log_output(self):
+                            get_debug_logger().debug("Hello World")
+                            self.assertTrue(True)
+
+                    InnerTestCase("test_produce_log_output").run()
+                    self.assertTrue(True)
+            """
+            ))
+
+        code, output, error = self.run_autopilot(["run",
+                                                  "-f", self.output_format,
+                                                  "-v", "tests"])
+
+        self.assertThat(code, Equals(0))
+        self.assertIn("Starting test tests.test_simple.InnerTestCase.test_produce_log_output", error)
 
     def test_can_enable_debug_output(self):
         """Verbose log must show debug messages if we specify '-vv'."""

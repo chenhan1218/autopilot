@@ -87,38 +87,38 @@ class IntrospectionFeatureTests(AutopilotTestCase):
 class QMLCustomEmulatorTestCase(AutopilotTestCase):
     """Test the introspection of a QML application with a custom emulator."""
 
-    class QQuickView(EmulatorBase):
-        pass
+    def test_can_access_custom_emulator_properties_twice(self):
+        """Must be able to run more than one test with a custom emulator."""
 
-    test_qml = dedent("""\
-        import QtQuick 2.0
+        class InnerTestCase(AutopilotTestCase):
+            class QQuickView(EmulatorBase):
+                pass
 
-        Rectangle {
-        }
+            test_qml = dedent("""\
+                import QtQuick 2.0
 
-        """)
+                Rectangle {
+                }
 
-    def setUp(self):
-        super(QMLCustomEmulatorTestCase, self).setUp()
-        self._launch_test_qml()
+                """)
 
-    def _launch_test_qml(self):
-        arch = subprocess.check_output(
-            ["dpkg-architecture", "-qDEB_HOST_MULTIARCH"]).strip()
-        qml_path = tempfile.mktemp(suffix='.qml')
-        open(qml_path, 'w').write(self.test_qml)
-        self.addCleanup(os.remove, qml_path)
-        self.app = self.launch_test_application(
-            "/usr/lib/" + arch + "/qt5/bin/qmlscene",
-            qml_path,
-            emulator_base=EmulatorBase)
+            def launch_test_qml(self):
+                arch = subprocess.check_output(
+                    ["dpkg-architecture", "-qDEB_HOST_MULTIARCH"]).strip()
+                qml_path = tempfile.mktemp(suffix='.qml')
+                open(qml_path, 'w').write(self.test_qml)
+                self.addCleanup(os.remove, qml_path)
+                return self.launch_test_application(
+                    "/usr/lib/" + arch + "/qt5/bin/qmlscene",
+                    qml_path,
+                    emulator_base=EmulatorBase)
 
-    def test_can_access_custom_emulator_properties_twice1(self):
-        test_widget = self.app.select_single(
-            QMLCustomEmulatorTestCase.QQuickView)
-        self.assertThat(test_widget.visible, Eventually(Equals(True)))
+            def test_custom_emulator(self):
+                app = self.launch_test_qml()
+                test_widget = app.select_single(
+                    QMLCustomEmulatorTestCase.QQuickView)
+                self.assertThat(test_widget.visible, Eventually(Equals(True)))
 
-    def test_can_access_custom_emulator_properties_twice2(self):
-        test_widget = self.app.select_single(
-            QMLCustomEmulatorTestCase.QQuickView)
-        self.assertThat(test_widget.visible, Eventually(Equals(True)))
+        self.assertThat(InnerTestCase('test_custom_emulator').run(), Equals(True))
+        self.assertThat(InnerTestCase('test_custom_emulator').run(), Equals(True))
+

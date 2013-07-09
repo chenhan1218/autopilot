@@ -5,6 +5,9 @@ Frequently Asked Questions
 
 Autopilot: The Project
 ++++++++++++++++++++++
+
+.. _help_and_support:
+
 Q. Where can I get help / support?
 ==================================
 
@@ -29,7 +32,7 @@ Once the PPA has been added to your system, you should be able to install the sa
 
 **I am running some other Linux system!**
 
-You may have to download the source code, and either run from source, or build the packages locally. Your best bet is to ask in the autopilot IRC channel.
+You may have to download the source code, and either run from source, or build the packages locally. Your best bet is to ask in the autopilot IRC channel ( :ref:`help_and_support`).
 
 Q. Where can I report a bug?
 ============================

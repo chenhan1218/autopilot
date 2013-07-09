@@ -23,6 +23,7 @@ import subprocess
 import tempfile
 from tempfile import mktemp
 from testtools.matchers import Equals
+from textwrap import dedent
 
 from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase
@@ -82,28 +83,26 @@ class IntrospectionFeatureTests(AutopilotTestCase):
 
         self.assertThat(test_widget.visible, Eventually(Equals(True)))
 
-        
+
 class QMLCustomEmulatorTestCase(AutopilotTestCase):
     """Test the introspection of a QML application with a custom emulator."""
 
     class QQuickView(EmulatorBase):
         pass
 
-    test_qml = (
-"""
-import QtQuick 2.0
+    test_qml = dedent("""\
+        import QtQuick 2.0
 
-Rectangle {
-}
+        Rectangle {
+        }
 
-"""
-)
+        """)
 
     def setUp(self):
         super(QMLCustomEmulatorTestCase, self).setUp()
         self._launch_test_qml()
 
-    def _launch_test_qml(self):        
+    def _launch_test_qml(self):
         arch = subprocess.check_output(
             ["dpkg-architecture", "-qDEB_HOST_MULTIARCH"]).strip()
         qml_path = tempfile.mktemp(suffix='.qml')

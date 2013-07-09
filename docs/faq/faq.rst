@@ -5,6 +5,9 @@ Frequently Asked Questions
 
 Autopilot: The Project
 ++++++++++++++++++++++
+
+.. _help_and_support:
+
 Q. Where can I get help / support?
 ==================================
 
@@ -13,11 +16,23 @@ The developers hang out in the #ubuntu-autopilot IRC channel on irc.freenode.net
 Q. How do I install Autopilot?
 ==============================
 
-The easiest way is by running Ubuntu Raring, and typing::
+Autopilot is in continuous development, and the best way to get the latest version of autopilot is to be running the latest Ubuntu development image. The autopilot developers traditionally support the Ubuntu release immediately prior to the development release via the autopilot PPA.
 
-    sudo apt-get install python-autopilot
+**I am running the latest development image!**
 
-in a terminal. This will download and install the latest autopilot release, along with the documentation. If you're not running Ubuntu Raring, you can download the source code from the `autopilot project page <http://launchpad.net/autopilot/>`_.
+In that case you can install autopilot directly - either by installing the ``autopilot-desktop`` or ``autopilot-touch`` packages, depending on whether you are installing to a desktop or phablet device.
+
+**I am running the Ubuntu release previous to the development release!**
+
+You may find that there are packages available for your Ubuntu release in the autopilot PPA. To add the PPA to your system, run the following command::
+
+    sudo add-apt-repository ppa:autopilot/ppa && sudo apt-get update
+
+Once the PPA has been added to your system, you should be able to install the same autopilot packages as if you were running the latest development release (see above).
+
+**I am running some other Linux system!**
+
+You may have to download the source code, and either run from source, or build the packages locally. Your best bet is to ask in the autopilot IRC channel ( :ref:`help_and_support`).
 
 Q. Where can I report a bug?
 ============================
@@ -54,7 +69,7 @@ For instance, to access a long running process that is available before your tes
 
 .. note:: Remember that this is only if you can't launch the application from
           within your test, otherwise you would call
-          :meth:`~autopilot.testcase.launch_test_application`.
+          :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application`.
 
 .. _faq-many-asserts:
 

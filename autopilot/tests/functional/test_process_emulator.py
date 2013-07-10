@@ -82,24 +82,11 @@ class ProcessEmulatorTests(AutopilotTestCase):
         self.assertThat(app.name, Equals('Calculator'))
 
 
-class ProcessManagerApplicationNoCleanupTests(TestCase):
+class ProcessManagerApplicationNoCleanupTests(AutopilotTestCase):
     """Testing the process manager without the automated cleanup that running
     within as an AutopilotTestCase provides.
 
     """
-    def setUp(self):
-        # Need to disable the automated cleanup that AutopilotTestCase provides.
-        class FakeTestCase(object):
-            def addCleanup(self, *args, **kwargs):
-                pass
-            def addOnException(self, handler):
-                pass
-            def shortDescription(self):
-                pass
-            def _report_traceback(self, arg):
-                pass
-        super(ProcessManagerApplicationNoCleanupTests, self).setUp()
-        on_test_started(FakeTestCase())
 
     def test_can_close_all_app(self):
         """Ensure that closing an app actually closes all app instances."""

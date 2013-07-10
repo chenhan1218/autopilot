@@ -96,11 +96,17 @@ class _VideoLogger(CleanupRegistered):
 
     def __init__(self):
         self._enable_recording = False
+        self._currently_recording_description = None
 
     def __call__(self, test_instance):
         if not self._have_recording_app():
             logger.warning("Disabling video capture since '%s' is not present", self._recording_app)
 
+        if self._currently_recording_description is not None:
+            logger.warning("Video capture already in progress for %s", self._currently_recording_description)
+            return
+
+        self._currently_recording_description = test_instance.shortDescription()
         self._test_passed = True
         test_instance.addOnException(self._on_test_failed)
         test_instance.addCleanup(self._stop_video_capture, test_instance)
@@ -154,6 +160,7 @@ class _VideoLogger(CleanupRegistered):
             if self._capture_process.returncode != 0:
                 test_instance.addDetail('video capture log', text_content(self._capture_process.stdout.read()))
         self._capture_process = None
+        self._currently_recording_description = None
 
     def _get_capture_command_line(self):
         return [self._recording_app] + self._recording_opts

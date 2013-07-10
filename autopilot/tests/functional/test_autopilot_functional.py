@@ -554,6 +554,41 @@ Loading tests from: %s
         self.assertThat(code, Equals(0))
         self.assertThat(os.path.exists(video_file_path), Equals(False))
 
+    def test_no_video_file_for_nested_testcase_when_parent_and_child_testcase_fail(self):
+        """Test recording must not create a new recording for nested testcases
+        where both the parent and the child testcase fail.
+
+        """
+        self.create_test_file("test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+            import os
+
+            class OuterTestCase(AutopilotTestCase):
+
+                def test_nested_classes(self):
+                    class InnerTestCase(AutopilotTestCase):
+
+                        def test_will_fail(self):
+                            self.assertTrue(False)
+
+                    InnerTestCase("test_will_fail").run()
+                    self.assertTrue(False)
+            """
+            ))
+
+        expected_video_file = '/tmp/autopilot/tests.test_simple.OuterTestCase.test_nested_classes.ogv'
+        erroneous_video_file = '/tmp/autopilot/tests.test_simple.OuterTestCase.test_nested_classes.InnerTestCase.test_will_fail.ogv'
+
+        self.addCleanup(remove_if_exists, expected_video_file)
+        self.addCleanup(remove_if_exists, erroneous_video_file)
+
+        code, output, error = self.run_autopilot(["run", "-v", "-r", "tests"])
+
+        self.assertThat(code, Equals(1))
+        self.assertThat(os.path.exists(expected_video_file), Equals(True))
+        self.assertThat(os.path.exists(erroneous_video_file), Equals(False))
+
     def test_runs_with_import_errors_fail(self):
         """Import errors inside a test must be considered a test failure."""
         self.create_test_file('test_simple.py', dedent("""\

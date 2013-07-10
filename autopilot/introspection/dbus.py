@@ -73,6 +73,20 @@ class IntrospectableObjectMetaclass(type):
         return class_object
 
 
+def _clear_backends_for_proxy_object(proxy_object):
+    """Iterate over the object registry and clear the dbus backend address set on
+    any class that has the same id as the specified proxy_object.
+
+    This is required so consecutive tests do not end up re-using the same dbus
+    backend address as a previous run, which will probably be incorrect.
+
+    """
+    global _object_registry
+    for cls in _object_registry[proxy_object._id].itervalues():
+        if type(proxy_object) is not cls:
+            cls._Backend = None
+
+
 def translate_state_keys(state_dict):
     """Translates the *state_dict* passed in so the keys are usable as python attributes."""
     return {k.replace('-','_'):v for k,v in state_dict.iteritems() }

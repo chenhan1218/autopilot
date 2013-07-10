@@ -41,6 +41,7 @@ from autopilot.introspection.constants import (
     AP_INTROSPECTION_IFACE,
     )
 from autopilot.introspection.dbus import (
+    _clear_backends_for_proxy_object,
     CustomEmulatorBase,
     DBusIntrospectionObject,
     get_classname_from_path,
@@ -369,6 +370,7 @@ def _make_proxy_object(data_source, emulator_base):
     proxy_bases = proxy_bases + (emulator_base, )
     cls_name, cls_state = _get_proxy_object_class_name_and_state(data_source)
 
+    _clear_backends_for_proxy_object(emulator_base)
     clsobj = type(str(cls_name),
         proxy_bases,
         dict(_Backend = data_source

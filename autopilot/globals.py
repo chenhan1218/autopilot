@@ -40,6 +40,7 @@ class _TestLogger(CleanupRegistered):
 
     def __init__(self):
         self._log_verbose = False
+        self._log_buffer = None
 
     def __call__(self, test_instance):
         self._setUpTestLogging(test_instance)
@@ -57,14 +58,15 @@ class _TestLogger(CleanupRegistered):
         self._log_verbose = verbose
 
     def _setUpTestLogging(self, test_instance):
-        self._log_buffer = StringIO()
-        root_logger = logging.getLogger()
-        root_logger.setLevel(logging.DEBUG)
-        formatter = LogFormatter()
-        self._log_handler = logging.StreamHandler(stream=self._log_buffer)
-        self._log_handler.setFormatter(formatter)
-        root_logger.addHandler(self._log_handler)
-        test_instance.addCleanup(self._tearDownLogging, test_instance)
+        if self._log_buffer is None:
+            self._log_buffer = StringIO()
+            root_logger = logging.getLogger()
+            root_logger.setLevel(logging.DEBUG)
+            formatter = LogFormatter()
+            self._log_handler = logging.StreamHandler(stream=self._log_buffer)
+            self._log_handler.setFormatter(formatter)
+            root_logger.addHandler(self._log_handler)
+            test_instance.addCleanup(self._tearDownLogging, test_instance)
 
     def _tearDownLogging(self, test_instance):
         root_logger = logging.getLogger()
@@ -72,9 +74,7 @@ class _TestLogger(CleanupRegistered):
         self._log_buffer.seek(0)
         test_instance.addDetail('test-log', text_content(self._log_buffer.getvalue()))
         root_logger.removeHandler(self._log_handler)
-        # Calling del to remove the handler and flush the buffer.  We are
-        # abusing the log handlers here a little.
-        del self._log_buffer
+        self._log_buffer = None
 
 
 _test_logger = _TestLogger()
@@ -116,6 +116,11 @@ class _VideoLogger(CleanupRegistered):
 
     def set_recording_dir(self, directory):
         self.recording_directory = directory
+
+    def set_recording_opts(self, opts):
+        if opts is None:
+            return
+        self._recording_opts = opts.split(',') + self._recording_opts
 
     def _have_recording_app(self):
         return os.path.exists(self._recording_app)
@@ -172,7 +177,7 @@ class _VideoLogger(CleanupRegistered):
 _video_logger = _VideoLogger()
 
 
-def configure_video_recording(enable_recording, record_dir):
+def configure_video_recording(enable_recording, record_dir, record_opts=None):
     """Configure video logging.
 
     enable_recording is a boolean, and enables or disables recording globally.
@@ -186,4 +191,5 @@ def configure_video_recording(enable_recording, record_dir):
 
     _video_logger.enable_recording(enable_recording)
     _video_logger.set_recording_dir(record_dir)
+    _video_logger.set_recording_opts(record_opts)
 

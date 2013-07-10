@@ -228,6 +228,10 @@ class CommandLineArgsTests(TestCase):
         args = self.parse_args("run --record-directory /path/to/dir foo")
         self.assertThat(args.record_directory, Equals("/path/to/dir"))
 
+    def test_run_command_record_options_flag_long(self):
+        args = self.parse_args("run --record-options=--fps=6,--no-wm-check foo")
+        self.assertThat(args.record_options, Equals("--fps=6,--no-wm-check"))
+
     def test_run_command_random_order_flag_short(self):
         args = self.parse_args("run -ro foo")
         self.assertThat(args.random_order, Equals(True))

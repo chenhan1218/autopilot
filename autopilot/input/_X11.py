@@ -454,7 +454,7 @@ class Mouse(MouseBase):
         self.release()
 
     @classmethod
-    def on_test_end():
+    def on_test_end(cls, test_instance):
         """Put mouse in a known safe state."""
         global _PRESSED_MOUSE_BUTTONS
         for btn in _PRESSED_MOUSE_BUTTONS:

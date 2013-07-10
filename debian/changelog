@@ -1,3 +1,28 @@
+autopilot (1.3.1+13.10.20130710-0ubuntu1) saucy; urgency=low
+
+  [ Jean-Baptiste Lallement ]
+  * Adds option --record-options to 'run' command to pass additional
+    arguments to recordmydesktop. (LP: #1197384)
+
+  [ Thomi Richards ]
+  * Various documentation fixes. (LP: #1198227)
+  * Fix custom emulator dbus address caching. (LP: #1197911)
+
+  [ Leo Arias ]
+  * Fix custom emulator dbus address caching. (LP: #1197911)
+
+  [ Christopher Lee ]
+  * Test logger no longer assumes it will only be used once per test.
+    (LP: #1197993)
+  * Fix on_test_end class methods. (LP: #1197989)
+  * Fixed nested testcases giving grief for video recording. (LP:
+    #1189654, #1198807)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 263
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 10 Jul 2013 06:22:52 +0000
+
 autopilot (1.3.1+13.10.20130703-0ubuntu1) saucy; urgency=low
 
   [ Thomi Richards ]

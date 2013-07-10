@@ -99,12 +99,13 @@ Package: python-autopilot-tests
 Architecture: all
 Depends: ${misc:Depends},
          ${python:Depends},
-         python-autopilot,
          libautopilot-gtk,
          libautopilot-qt,
+         python-autopilot,
          python-evdev,
          python-mock,
          python-windowmocker,
+         qmlscene,
          recordmydesktop,
 Description: Tests for the autopilot functional test tool.
  This package contains tests for the python-autopilot package.

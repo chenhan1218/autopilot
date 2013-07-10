@@ -115,10 +115,11 @@ class QMLCustomEmulatorTestCase(AutopilotTestCase):
 
             def test_custom_emulator(self):
                 app = self.launch_test_qml()
-                test_widget = app.select_single(
-                    QMLCustomEmulatorTestCase.QQuickView)
+                test_widget = app.select_single(InnerTestCase.QQuickView)
                 self.assertThat(test_widget.visible, Eventually(Equals(True)))
 
-        self.assertThat(InnerTestCase('test_custom_emulator').run(), Equals(True))
-        self.assertThat(InnerTestCase('test_custom_emulator').run(), Equals(True))
+        result1 = InnerTestCase('test_custom_emulator').run()
+        self.assertThat(result1.wasSuccessful(), Equals(True))
+        result2 = InnerTestCase('test_custom_emulator').run()
+        self.assertThat(result2.wasSuccessful(), Equals(True))
 

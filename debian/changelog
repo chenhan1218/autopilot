@@ -1,3 +1,14 @@
+autopilot (1.3.1+13.10.20130712-0ubuntu1) saucy; urgency=low
+
+  [ Łukasz 'sil2100' Zemczak ]
+  * I don't like it, but it's the easiest way - make autopilot-touch
+    Arch: any and make the python-ubuntu-platform-api [armhf] dependent.
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 265
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 12 Jul 2013 00:02:34 +0000
+
 autopilot (1.3.1+13.10.20130710-0ubuntu1) saucy; urgency=low
 
   [ Jean-Baptiste Lallement ]

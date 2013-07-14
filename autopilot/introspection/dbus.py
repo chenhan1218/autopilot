@@ -20,8 +20,8 @@
 
 """This module contains the code to retrieve state via DBus calls.
 
-Under normal circumstances, the only thing you should need to use from this module
-is the DBusIntrospectableObject class.
+Under normal circumstances, the only thing you should need to use from this
+module is the DBusIntrospectableObject class.
 
 """
 
@@ -49,7 +49,8 @@ class StateNotFoundError(RuntimeError):
     message = "State not found for class with name '{}' and id '{}'."
 
     def __init__(self, class_name, class_id):
-        super(StateNotFoundError, self).__init__(self.message.format(class_name, class_id))
+        super(StateNotFoundError, self).__init__(
+            self.message.format(class_name, class_id))
 
 
 class IntrospectableObjectMetaclass(type):
@@ -62,20 +63,20 @@ class IntrospectableObjectMetaclass(type):
             'ApplicationProxyObject',
             'CustomEmulatorBase',
             'DBusIntrospectionObject',
-            ):
+        ):
             return class_object
 
         if getattr(class_object, '_id', None) is not None:
             if class_object._id in _object_registry:
                 _object_registry[class_object._id][classname] = class_object
             else:
-                _object_registry[class_object._id] = {classname:class_object}
+                _object_registry[class_object._id] = {classname: class_object}
         return class_object
 
 
 def _clear_backends_for_proxy_object(proxy_object):
-    """Iterate over the object registry and clear the dbus backend address set on
-    any class that has the same id as the specified proxy_object.
+    """Iterate over the object registry and clear the dbus backend address set
+    on any class that has the same id as the specified proxy_object.
 
     This is required so consecutive tests do not end up re-using the same dbus
     backend address as a previous run, which will probably be incorrect.
@@ -88,8 +89,9 @@ def _clear_backends_for_proxy_object(proxy_object):
 
 
 def translate_state_keys(state_dict):
-    """Translates the *state_dict* passed in so the keys are usable as python attributes."""
-    return {k.replace('-','_'):v for k,v in state_dict.iteritems() }
+    """Translates the *state_dict* passed in so the keys are usable as python
+    attributes."""
+    return {k.replace('-', '_'): v for k, v in state_dict.iteritems()}
 
 
 def get_classname_from_path(object_path):
@@ -97,12 +99,14 @@ def get_classname_from_path(object_path):
 
 
 def object_passes_filters(instance, **kwargs):
-    """Return true if *instance* satisifies all the filters present in kwargs."""
+    """Return true if *instance* satisifies all the filters present in
+    kwargs."""
     with instance.no_automatic_refreshing():
         for attr, val in kwargs.iteritems():
             if not hasattr(instance, attr) or getattr(instance, attr) != val:
                 # Either attribute is not present, or is present but with
-                # the wrong value - don't add this instance to the results list.
+                # the wrong value - don't add this instance to the results
+                # list.
                 return False
     return True
 
@@ -112,8 +116,9 @@ class DBusIntrospectionObject(object):
     under test.
 
     This class is the base class for all objects retrieved from the application
-    under test. It handles transparently refreshing attribute values when needed,
-    and contains many methods to select child objects in the introspection tree.
+    under test. It handles transparently refreshing attribute values when
+    needed, and contains many methods to select child objects in the
+    introspection tree.
 
     """
 
@@ -128,7 +133,8 @@ class DBusIntrospectionObject(object):
         self.path = path
 
     def _set_properties(self, state_dict):
-        """Creates and set attributes of *self* based on contents of *state_dict*.
+        """Creates and set attributes of *self* based on contents of
+        *state_dict*.
 
         .. note:: Translates '-' to '_', so a key of 'icon-type' for example
          becomes 'icon_type'.
@@ -136,16 +142,19 @@ class DBusIntrospectionObject(object):
         """
         self.__state = {}
         for key, value in translate_state_keys(state_dict).iteritems():
-            # don't store id in state dictionary -make it a proper instance attribute
+            # don't store id in state dictionary -make it a proper instance
+            # attribute
             if key == 'id':
                 self.id = value
             self.__state[key] = self._make_attribute(key, value)
 
     def _make_attribute(self, name, value):
-        """Make an attribute for *value*, patched with the wait_for function."""
+        """Make an attribute for *value*, patched with the wait_for
+        function."""
 
         def wait_for(self, expected_value, timeout=10):
-            """Wait up to 10 seconds for our value to change to *expected_value*.
+            """Wait up to 10 seconds for our value to change to
+            *expected_value*.
 
             *expected_value* can be a testtools.matcher. Matcher subclass (like
             LessThan, for example), or an ordinary value.
@@ -156,9 +165,9 @@ class DBusIntrospectionObject(object):
              expected value after 10 seconds.
 
             """
-            # It's guaranteed that our value is up to date, since __getattr__ calls
-            # refresh_state. This if statement stops us waiting if the value is
-            # already what we expect:
+            # It's guaranteed that our value is up to date, since __getattr__
+            # calls refresh_state. This if statement stops us waiting if the
+            # value is already what we expect:
             if self == expected_value:
                 return
 
@@ -168,7 +177,6 @@ class DBusIntrospectionObject(object):
             is_matcher = match_fun and callable(match_fun)
             if not is_matcher:
                 expected_value = Equals(expected_value)
-
 
             time_left = timeout
             while True:
@@ -190,8 +198,10 @@ class DBusIntrospectionObject(object):
                     sleep(time_left)
                     break
 
-            raise AssertionError("After %.1f seconds test on %s.%s failed: %s"
-                % (timeout, self.parent.__class__.__name__, self.name, failure_msg))
+            raise AssertionError(
+                "After %.1f seconds test on %s.%s failed: %s" % (
+                    timeout, self.parent.__class__.__name__, self.name,
+                    failure_msg))
 
         # This looks like magic, but it's really not. We're creating a new type
         # on the fly that derives from the type of 'value' with a couple of
@@ -203,30 +213,32 @@ class DBusIntrospectionObject(object):
         # override __call__ in the meta class, but that doesn't buy us anything
         # extra).
         #
-        # A better way to do this would be with functools.partial, which I tried
-        # initially, but doesn't work well with bound methods.
+        # A better way to do this would be with functools.partial, which I
+        # tried initially, but doesn't work well with bound methods.
         t = type(value)
-        attrs = {'wait_for': wait_for, 'parent':self, 'name':name}
+        attrs = {'wait_for': wait_for, 'parent': self, 'name': name}
         return type(t.__name__, (t,), attrs)(value)
 
     def get_children_by_type(self, desired_type, **kwargs):
         """Get a list of children of the specified type.
 
-        Keyword arguments can be used to restrict returned instances. For example:
+        Keyword arguments can be used to restrict returned instances. For
+        example:
 
         >>> get_children_by_type(Launcher, monitor=1)
 
-        will return only Launcher instances that have an attribute 'monitor' that
-        is equal to 1. The type can also be specified as a string, which is
-        useful if there is no emulator class specified:
+        will return only Launcher instances that have an attribute 'monitor'
+        that is equal to 1. The type can also be specified as a string, which
+        is useful if there is no emulator class specified:
 
         >>> get_children_by_type('Launcher', monitor=1)
 
         Note however that if you pass a string, and there is an emulator class
         defined, autopilot will not use it.
 
-        :param desired_type: Either a string naming the type you want, or a class
-            of the type you want (the latter is used when defining custom emulators)
+        :param desired_type: Either a string naming the type you want, or a
+            class of the type you want (the latter is used when defining
+            custom emulators)
 
         .. seealso::
             Tutorial Section :ref:`custom_emulators`
@@ -254,9 +266,10 @@ class DBusIntrospectionObject(object):
     def get_properties(self):
         """Returns a dictionary of all the properties on this class.
 
-        This can be useful when you want to log all the properties exported from
-        your application for a particular object. Every property in the returned
-        dictionary can be accessed as attributes of the object as well.
+        This can be useful when you want to log all the properties exported
+        from your application for a particular object. Every property in the
+        returned dictionary can be accessed as attributes of the object as
+        well.
 
         """
         # Since we're grabbing __state directly there's no implied state
@@ -269,10 +282,11 @@ class DBusIntrospectionObject(object):
     def get_children(self):
         """Returns a list of all child objects.
 
-        This returns a list of all children. To return only children of a specific
-        type, use :meth:`get_children_by_type`. To get objects further down the
-        introspection tree (i.e.- nodes that may not necessarily be immeadiate
-        children), use :meth:`select_single` and :meth:`select_many`.
+        This returns a list of all children. To return only children of a
+        specific type, use :meth:`get_children_by_type`. To get objects
+        further down the introspection tree (i.e.- nodes that may not
+        necessarily be immeadiate children), use :meth:`select_single` and
+        :meth:`select_many`.
 
         """
         self.refresh_state()
@@ -289,10 +303,11 @@ class DBusIntrospectionObject(object):
 
         You must specify either *type_name*, keyword filters or both.
 
-        This method searches recursively from the instance this method is called
-        on. Calling :meth:`select_single` on the application (root) proxy object
-        will search the entire tree. Calling :meth:`select_single` on an object
-        in the tree will only search it's descendants.
+        This method searches recursively from the instance this method is
+        called on. Calling :meth:`select_single` on the application (root)
+        proxy object will search the entire tree. Calling
+        :meth:`select_single` on an object in the tree will only search it's
+        descendants.
 
         Example usage::
 
@@ -301,12 +316,12 @@ class DBusIntrospectionObject(object):
 
         If nothing is returned from the query, this method returns None.
 
-        :param type_name: Either a string naming the type you want, or a class of
-            the appropriate type (the latter case is for overridden emulator
+        :param type_name: Either a string naming the type you want, or a class
+            of the appropriate type (the latter case is for overridden emulator
             classes).
 
-        :raises: **ValueError** if the query returns more than one item. *If you
-            want more than one item, use select_many instead*.
+        :raises: **ValueError** if the query returns more than one item. *If
+            you want more than one item, use select_many instead*.
 
         :raises: **TypeError** if neither *type_name* or keyword filters are
             provided.
@@ -329,10 +344,10 @@ class DBusIntrospectionObject(object):
 
         You must specify either *type_name*, keyword filters or both.
 
-        This method searches recursively from the instance this method is called
-        on. Calling :meth:`select_many` on the application (root) proxy object
-        will search the entire tree. Calling :meth:`select_many` on an object
-        in the tree will only search it's descendants.
+        This method searches recursively from the instance this method is
+        called on. Calling :meth:`select_many` on the application (root) proxy
+        object will search the entire tree. Calling :meth:`select_many` on an
+        object in the tree will only search it's descendants.
 
         Example Usage::
 
@@ -342,12 +357,13 @@ class DBusIntrospectionObject(object):
         As mentioned above, this method searches the object tree recurseivly::
             file_menu = app.select_one('QMenu', title='File')
             file_menu.select_many('QAction')
-            # returns a list of QAction objects who appear below file_menu in the object tree.
+            # returns a list of QAction objects who appear below file_menu in
+            the object tree.
 
         If you only want to get one item, use :meth:`select_single` instead.
 
-        :param type_name: Either a string naming the type you want, or a class of
-            the appropriate type (the latter case is for overridden emulator
+        :param type_name: Either a string naming the type you want, or a class
+            of the appropriate type (the latter case is for overridden emulator
             classes).
 
         :raises: **TypeError** if neither *type_name* or keyword filters are
@@ -357,20 +373,21 @@ class DBusIntrospectionObject(object):
             Tutorial Section :ref:`custom_emulators`
 
         """
-        if not isinstance(type_name, str) and issubclass(type_name, DBusIntrospectionObject):
+        if not isinstance(type_name, str) and issubclass(
+                type_name, DBusIntrospectionObject):
             type_name = type_name.__name__
 
         if type_name == "*" and not kwargs:
             raise TypeError("You must specify either a type name or a filter.")
 
-        logger.debug("Selecting objects of %s with attributes: %r",
-            'any type' if type_name == '*' else 'type ' + type_name,
-            kwargs)
+        logger.debug(
+            "Selecting objects of %s with attributes: %r",
+            'any type' if type_name == '*' else 'type ' + type_name, kwargs)
 
         first_param = ''
-        for k,v in kwargs.iteritems():
+        for k, v in kwargs.iteritems():
             if isinstance(v, str) and '_' not in k:
-                first_param = '[{}={}]'.format(k,v)
+                first_param = '[{}={}]'.format(k, v)
                 kwargs.pop(k)
                 break
         query_path = "%s//%s%s" % (self.get_class_query_string(),
@@ -384,8 +401,9 @@ class DBusIntrospectionObject(object):
     def refresh_state(self):
         """Refreshes the object's state from unity.
 
-        You should probably never have to call this directly. Autopilot automatically
-        retrieves new state every time this object's attributes are read.
+        You should probably never have to call this directly. Autopilot
+        automatically retrieves new state every time this object's attributes
+        are read.
 
         :raises: **StateNotFound** if the object in unity has been destroyed.
 
@@ -395,7 +413,8 @@ class DBusIntrospectionObject(object):
 
     @classmethod
     def get_all_instances(cls):
-        """Get all instances of this class that exist within the Application state tree.
+        """Get all instances of this class that exist within the Application
+        state tree.
 
         For example, to get all the LauncherIcon instances:
 
@@ -403,9 +422,10 @@ class DBusIntrospectionObject(object):
 
         .. warning::
             Using this method is slow - it requires a complete scan of the
-            introspection tree. You should only use this when you're not sure where
-            the objects you are looking for are located. Depending on the application
-            you are testing, you may get duplicate results using this method.
+            introspection tree. You should only use this when you're not sure
+            where the objects you are looking for are located. Depending on
+            the application you are testing, you may get duplicate results
+            using this method.
 
         :return: List (possibly empty) of class instances.
 
@@ -415,11 +435,11 @@ class DBusIntrospectionObject(object):
         return [cls.make_introspection_object(i) for i in instances]
 
     @classmethod
-    def get_root_instance(cls) :
+    def get_root_instance(cls):
         """Get the object at the root of this tree.
 
-        This will return an object that represents the root of the introspection
-        tree.
+        This will return an object that represents the root of the
+        introspection tree.
 
         """
         instances = cls.get_state_by_path("/")
@@ -439,7 +459,8 @@ class DBusIntrospectionObject(object):
                 self.refresh_state()
             return self.__state[name]
         # attribute not found.
-        raise AttributeError("Class '%s' has no attribute '%s'." %
+        raise AttributeError(
+            "Class '%s' has no attribute '%s'." %
             (self.__class__.__name__, name))
 
     @classmethod
@@ -448,13 +469,14 @@ class DBusIntrospectionObject(object):
 
         You should probably never need to call this directly.
 
-        :param piece: an XPath-like query that specifies which bit of the tree you
-            want to look at.
+        :param piece: an XPath-like query that specifies which bit of the tree
+            you want to look at.
         :raises: **TypeError** on invalid *piece* parameter.
 
         """
         if not isinstance(piece, basestring):
-            raise TypeError("XPath query must be a string, not %r", type(piece))
+            raise TypeError(
+                "XPath query must be a string, not %r", type(piece))
 
         with Timer("GetState %s" % piece):
             return cls._Backend.introspection_iface.GetState(piece)
@@ -473,7 +495,8 @@ class DBusIntrospectionObject(object):
             raise StateNotFoundError(self.__class__.__name__, self.id)
 
     def get_class_query_string(self):
-        """Get the XPath query string required to refresh this class's state."""
+        """Get the XPath query string required to refresh this class's
+        state."""
         if not self.path.startswith('/'):
             return "//" + self.path + "[id=%d]" % self.id
         else:
@@ -481,7 +504,8 @@ class DBusIntrospectionObject(object):
 
     @classmethod
     def make_introspection_object(cls, dbus_tuple):
-        """Make an introspection object given a DBus tuple of (path, state_dict).
+        """Make an introspection object given a DBus tuple of
+        (path, state_dict).
 
         This only works for classes that derive from DBusIntrospectionObject.
         """
@@ -492,23 +516,26 @@ class DBusIntrospectionObject(object):
             if class_type._Backend is None:
                 class_type._Backend = cls._Backend
         except KeyError:
-            logger.warning("Generating introspection instance for type '%s' based on generic class.", name)
-            # override the _id attr from cls, since we don't want generated types
-            # to end up in the object registry.
-            class_type = type(str(name), (cls,), {'_id':None})
+            logger.warning(
+                "Generating introspection instance for type '%s' based on "
+                "generic class.", name)
+            # override the _id attr from cls, since we don't want generated
+            # types to end up in the object registry.
+            class_type = type(str(name), (cls,), {'_id': None})
         return class_type(state, path)
 
     @contextmanager
     def no_automatic_refreshing(self):
-        """Context manager function to disable automatic DBus refreshing when retrieving attributes.
+        """Context manager function to disable automatic DBus refreshing when
+        retrieving attributes.
 
         Example usage:
 
         >>> with instance.no_automatic_refreshing():
             # access lots of attributes.
 
-        This can be useful if you need to check lots of attributes in a tight loop,
-        or if you want to atomicaly check several attributes at once.
+        This can be useful if you need to check lots of attributes in a tight
+        loop, or if you want to atomicaly check several attributes at once.
 
         """
         try:

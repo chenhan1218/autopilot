@@ -18,6 +18,7 @@
 #
 
 "Backend interface for autopilot."
+
 from __future__ import absolute_import
 
 from collections import namedtuple
@@ -26,13 +27,13 @@ from autopilot.dbus_handler import (
     get_session_bus,
     get_system_bus,
     get_custom_bus,
-    )
+)
 from autopilot.introspection.constants import (
     AP_INTROSPECTION_IFACE,
     CURRENT_WIRE_PROTOCOL_VERSION,
     DBUS_INTROSPECTION_IFACE,
     QT_AUTOPILOT_IFACE,
-    )
+)
 
 
 class WireProtocolVersionMismatch(RuntimeError):
@@ -40,11 +41,12 @@ class WireProtocolVersionMismatch(RuntimeError):
 
 
 class DBusAddress(object):
-
-    "Store information about an Autopilot dbus backend, from keyword arguments."
+    """Store information about an Autopilot dbus backend, from keyword
+    arguments."""
     _checked_backends = []
 
-    AddrTuple = namedtuple('AddressTuple', ['bus', 'connection', 'object_path'])
+    AddrTuple = namedtuple(
+        'AddressTuple', ['bus', 'connection', 'object_path'])
 
     @staticmethod
     def SessionBus(connection, object_path):
@@ -60,25 +62,27 @@ class DBusAddress(object):
     def CustomBus(bus_address, connection, object_path):
         """Construct a DBusAddress that backs on to a custom bus.
 
-        :param bus_address: A string representing the address of the dbus bus to
-            connect to.
+        :param bus_address: A string representing the address of the dbus bus
+            to connect to.
 
         """
-        return DBusAddress(get_custom_bus(bus_address), connection, object_path)
+        return DBusAddress(
+            get_custom_bus(bus_address), connection, object_path)
 
     def __init__(self, bus, connection, object_path):
         """Construct a DBusAddress instance.
 
         :param bus: A valid DBus bus object.
-        :param connection: A string connection name to look at, or None to search
-            all dbus connections for objects that resemble an autopilot conection.
+        :param connection: A string connection name to look at, or None to
+            search all dbus connections for objects that resemble an autopilot
+            conection.
         :param object_path: The path to the object that provides the autopilot
             interface, or None to search for the object.
 
         """
         # We cannot evaluate kwargs for accuracy now, since this class will be
-        # created at module import time, at which point the bus backend probably
-        # does not exist yet.
+        # created at module import time, at which point the bus backend
+        # probably does not exist yet.
         self._addr_tuple = DBusAddress.AddrTuple(bus, connection, object_path)
 
     @property
@@ -91,7 +95,7 @@ class DBusAddress(object):
         proxy_obj = self._addr_tuple.bus.get_object(
             self._addr_tuple.connection,
             self._addr_tuple.object_path
-            )
+        )
         iface = dbus.Interface(proxy_obj, AP_INTROSPECTION_IFACE)
         if self._addr_tuple not in DBusAddress._checked_backends:
             try:
@@ -103,8 +107,8 @@ class DBusAddress(object):
         return iface
 
     def _check_version(self, iface):
-        """Check the wire protocol version on 'iface', and raise an error if the
-        version does not match what we were expecting.
+        """Check the wire protocol version on 'iface', and raise an error if
+        the version does not match what we were expecting.
 
         """
         try:
@@ -117,14 +121,14 @@ class DBusAddress(object):
                     self,
                     version,
                     CURRENT_WIRE_PROTOCOL_VERSION)
-                )
+            )
 
     @property
     def dbus_introspection_iface(self):
         dbus_object = self._addr_tuple.bus.get_object(
             self._addr_tuple.connection,
             self._addr_tuple.object_path
-            )
+        )
         return dbus.Interface(dbus_object, DBUS_INTROSPECTION_IFACE)
 
     @property
@@ -132,7 +136,7 @@ class DBusAddress(object):
         proxy_obj = self._addr_tuple.bus.get_object(
             self._addr_tuple.connection,
             self._addr_tuple.object_path
-            )
+        )
         return dbus.Interface(proxy_obj, QT_AUTOPILOT_IFACE)
 
     def __hash__(self):
@@ -144,9 +148,10 @@ class DBusAddress(object):
             self._addr_tuple.object_path == other._addr_tuple.object_path
 
     def __ne__(self, other):
-        return self._addr_tuple.object_path != other._addr_tuple.object_path or \
-            self._addr_tuple.connection != other._addr_tuple.connection or \
-            self._addr_tuple.bus != other._addr_tuple.bus
+        return (self._addr_tuple.object_path !=
+                other._addr_tuple.object_path or
+                self._addr_tuple.connection != other._addr_tuple.connection or
+                self._addr_tuple.bus != other._addr_tuple.bus)
 
     def __str__(self):
         return repr(self)
@@ -158,5 +163,5 @@ class DBusAddress(object):
             name = "system"
         else:
             name = "custom"
-        return "<%s bus %s %s>" % (name, self._addr_tuple.connection, self._addr_tuple.object_path)
-
+        return "<%s bus %s %s>" % (
+            name, self._addr_tuple.connection, self._addr_tuple.object_path)

@@ -27,7 +27,8 @@ class GtkApplicationLauncher(ApplicationLauncher):
     """A mix-in class to make Gtk application introspection easier."""
 
     def prepare_environment(self, app_path, arguments):
-        """Prepare the application, or environment to launch with autopilot-support.
+        """Prepare the application, or environment to launch with
+        autopilot-support.
 
         """
         modules = os.getenv('GTK_MODULES', '').split(':')
@@ -35,7 +36,4 @@ class GtkApplicationLauncher(ApplicationLauncher):
             modules.append('autopilot')
             os.putenv('GTK_MODULES', ':'.join(modules))
 
-
         return app_path, arguments
-
-

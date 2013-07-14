@@ -33,7 +33,6 @@ from testtools.matchers import Contains, Equals, MatchesRegex, Not
 from textwrap import dedent
 import re
 
-
 from autopilot.testcase import AutopilotTestCase
 
 
@@ -47,6 +46,7 @@ def remove_if_exists(path):
 
 logger = logging.getLogger(__name__)
 
+
 class AutopilotFunctionalTestsBase(AutopilotTestCase):
 
     """The base class for the autopilot functional tests."""
@@ -56,7 +56,8 @@ class AutopilotFunctionalTestsBase(AutopilotTestCase):
         self.base_path = self.create_empty_test_module()
 
     def create_empty_test_module(self):
-        """Create an empty temp directory, with an empty test directory inside it.
+        """Create an empty temp directory, with an empty test directory inside
+        it.
 
         This method handles cleaning up the directory once the test completes.
 
@@ -72,7 +73,7 @@ class AutopilotFunctionalTestsBase(AutopilotTestCase):
         # create the tests directory:
         os.mkdir(
             os.path.join(base_path, 'tests')
-            )
+        )
 
         # make tests importable:
         open(
@@ -90,8 +91,8 @@ class AutopilotFunctionalTestsBase(AutopilotTestCase):
                 '..',
                 '..',
                 '..'
-                )
             )
+        )
 
         environment_patch = dict(DISPLAY=':0')
         if not os.getcwd().startswith('/usr/'):
@@ -99,7 +100,8 @@ class AutopilotFunctionalTestsBase(AutopilotTestCase):
         bin_path = os.path.join(ap_base_path, 'bin', 'autopilot')
         if not os.path.exists(bin_path):
             bin_path = subprocess.check_output(['which', 'autopilot']).strip()
-            logger.info("Not running from source, setting bin_path to %s", bin_path)
+            logger.info(
+                "Not running from source, setting bin_path to %s", bin_path)
 
         environ = os.environ
         environ.update(environment_patch)
@@ -117,18 +119,20 @@ class AutopilotFunctionalTestsBase(AutopilotTestCase):
             env=environ,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            )
+        )
 
         stdout, stderr = process.communicate()
         retcode = process.poll()
 
         self.addDetail('retcode', text_content(str(retcode)))
-        self.addDetail('stdout', Content(
-            ContentType('text', 'plain', {'charset': 'iso-8859-1'}),
-            lambda:[stdout]))
-        self.addDetail('stderr', Content(
-            ContentType('text', 'plain', {'charset': 'iso-8859-1'}),
-            lambda:[stderr]))
+        self.addDetail(
+            'stdout', Content(
+                ContentType('text', 'plain', {'charset': 'iso-8859-1'}),
+            lambda: [stdout]))
+        self.addDetail(
+            'stderr', Content(
+                ContentType('text', 'plain', {'charset': 'iso-8859-1'}),
+            lambda: [stderr]))
 
         return (retcode, stdout, stderr)
 
@@ -155,8 +159,8 @@ class AutopilotFunctionalTests(AutopilotFunctionalTestsBase):
     def run_autopilot_list(self, list_spec='tests', extra_args=[]):
         """Run 'autopilot list' in the specified base path.
 
-        This patches the environment to ensure that it's *this* version of autopilot
-        that's run.
+        This patches the environment to ensure that it's *this* version of
+        autopilot that's run.
 
         returns a tuple containing: (exit_code, stdout, stderr)
 
@@ -179,14 +183,15 @@ Loading tests from: %s
 
  %d total %s.
 ''' % (self.base_path,
-    ''.join(['    %s\n' % t for t in sorted(tests)]),
-    len(tests),
-    total_title)
+       ''.join(['    %s\n' % t for t in sorted(tests)]),
+       len(tests),
+       total_title)
 
         self.assertThat(output, Equals(expected))
 
     def test_can_list_empty_test_dir(self):
-        """Autopilot list must report 0 tests found with an empty test module."""
+        """Autopilot list must report 0 tests found with an empty test
+        module."""
         code, output, error = self.run_autopilot_list()
 
         self.assertThat(code, Equals(0))
@@ -195,7 +200,8 @@ Loading tests from: %s
 
     def test_can_list_tests(self):
         """Autopilot must find tests in a file."""
-        self.create_test_file('test_simple.py', dedent("""\
+        self.create_test_file(
+            'test_simple.py', dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
 
@@ -204,8 +210,8 @@ Loading tests from: %s
 
                 def test_simple(self):
                     pass
-            """
-            ))
+            """)
+        )
 
         # ideally these would be different tests, but I'm lazy:
         valid_test_specs = [
@@ -213,15 +219,17 @@ Loading tests from: %s
             'tests.test_simple',
             'tests.test_simple.SimpleTest',
             'tests.test_simple.SimpleTest.test_simple',
-            ]
+        ]
         for test_spec in valid_test_specs:
             code, output, error = self.run_autopilot_list(test_spec)
             self.assertThat(code, Equals(0))
             self.assertThat(error, Equals(''))
-            self.assertTestsInOutput(['tests.test_simple.SimpleTest.test_simple'], output)
+            self.assertTestsInOutput(
+                ['tests.test_simple.SimpleTest.test_simple'], output)
 
     def test_list_tests_with_import_error(self):
-        self.create_test_file('test_simple.py', dedent("""\
+        self.create_test_file(
+            'test_simple.py', dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
             # create an import error:
@@ -231,8 +239,8 @@ Loading tests from: %s
 
                 def test_simple(self):
                     pass
-            """
-            ))
+            """)
+        )
         code, output, error = self.run_autopilot_list()
         expected_regex = '''\
 Loading tests from: %s
@@ -241,7 +249,8 @@ Failed to import test module: tests.test_simple
 Traceback \(most recent call last\):
   File "/usr/lib/python2.7/unittest/loader.py", line 252, in _find_tests
     module = self._get_module_from_name\(name\)
-  File "/usr/lib/python2.7/unittest/loader.py", line 230, in _get_module_from_name
+  File "/usr/lib/python2.7/unittest/loader.py", line 230, in \
+_get_module_from_name
     __import__\(name\)
   File "/tmp/\w*/tests/test_simple.py", line 4, in <module>
     import asdjkhdfjgsdhfjhsd
@@ -253,7 +262,8 @@ ImportError: No module named asdjkhdfjgsdhfjhsd
         self.assertTrue(re.search(expected_regex, output, re.MULTILINE))
 
     def test_list_tests_with_syntax_error(self):
-        self.create_test_file('test_simple.py', dedent("""\
+        self.create_test_file(
+            'test_simple.py', dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
             # create a syntax error:
@@ -263,8 +273,8 @@ ImportError: No module named asdjkhdfjgsdhfjhsd
 
                 def test_simple(self):
                     pass
-            """
-            ))
+            """)
+        )
         code, output, error = self.run_autopilot_list()
         expected_regex = '''\
 Loading tests from: %s
@@ -273,7 +283,8 @@ Failed to import test module: tests.test_simple
 Traceback \(most recent call last\):
   File "/usr/lib/python2.7/unittest/loader.py", line 252, in _find_tests
     module = self._get_module_from_name\(name\)
-  File "/usr/lib/python2.7/unittest/loader.py", line 230, in _get_module_from_name
+  File "/usr/lib/python2.7/unittest/loader.py", line 230, in \
+_get_module_from_name
     __import__\(name\)
   File "/tmp/\w*/tests/test_simple.py", line 4
     \.\.
@@ -286,8 +297,10 @@ SyntaxError: invalid syntax
         self.assertTrue(re.search(expected_regex, output, re.MULTILINE))
 
     def test_can_list_scenariod_tests(self):
-        """Autopilot must show scenario counts next to tests that have scenarios."""
-        self.create_test_file('test_simple.py', dedent("""\
+        """Autopilot must show scenario counts next to tests that have
+        scenarios."""
+        self.create_test_file(
+            'test_simple.py', dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
 
@@ -300,8 +313,8 @@ SyntaxError: invalid syntax
 
                 def test_simple(self):
                     pass
-            """
-            ))
+            """)
+        )
 
         expected_output = '''\
 Loading tests from: %s
@@ -318,12 +331,15 @@ Loading tests from: %s
         self.assertThat(output, Equals(expected_output))
 
     def test_can_list_scenariod_tests_with_multiple_scenarios(self):
-        """Autopilot must show scenario counts next to tests that have scenarios.
+        """Autopilot must show scenario counts next to tests that have
+        scenarios.
 
-        Tests multiple scenarios on a single test suite with multiple test cases.
+        Tests multiple scenarios on a single test suite with multiple test
+        cases.
 
         """
-        self.create_test_file('test_simple.py', dedent("""\
+        self.create_test_file(
+            'test_simple.py', dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
 
@@ -340,8 +356,8 @@ Loading tests from: %s
 
                 def test_simple_two(self):
                     pass
-            """
-            ))
+            """)
+        )
 
         expected_output = '''\
 Loading tests from: %s
@@ -360,7 +376,8 @@ Loading tests from: %s
 
     def test_can_list_invalid_scenarios(self):
         """Autopilot must ignore scenarios that are not lists."""
-        self.create_test_file('test_simple.py', dedent("""\
+        self.create_test_file(
+            'test_simple.py', dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
 
@@ -371,17 +388,19 @@ Loading tests from: %s
 
                 def test_simple(self):
                     pass
-            """
-            ))
+            """)
+        )
 
         code, output, error = self.run_autopilot_list()
         self.assertThat(code, Equals(0))
         self.assertThat(error, Equals(''))
-        self.assertTestsInOutput(['tests.test_simple.SimpleTest.test_simple'], output)
+        self.assertTestsInOutput(
+            ['tests.test_simple.SimpleTest.test_simple'], output)
 
     def test_can_list_just_suites(self):
         """Must only list available suites, not the contained tests."""
-        self.create_test_file('test_simple_suites.py', dedent("""\
+        self.create_test_file(
+            'test_simple_suites.py', dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
 
@@ -398,23 +417,25 @@ Loading tests from: %s
 
                 def test_yet_another_simple(self):
                     pass
-            """
-            ))
+            """)
+        )
 
         code, output, error = self.run_autopilot_list(extra_args=['--suites'])
         self.assertThat(code, Equals(0))
         self.assertThat(error, Equals(''))
-        self.assertTestsInOutput(['tests.test_simple_suites.SimpleTest',
-                                  'tests.test_simple_suites.AnotherSimpleTest'],
-                                 output,
-                                 total_title='suites')
+        self.assertTestsInOutput(
+            ['tests.test_simple_suites.SimpleTest',
+             'tests.test_simple_suites.AnotherSimpleTest'],
+            output, total_title='suites')
 
     def test_record_flag_works(self):
         """Must be able to record videos when the -r flag is present."""
 
-        # The sleep is to avoid the case where recordmydesktop does not create a
-        # file because it gets stopped before it's even started capturing anything.
-        self.create_test_file("test_simple.py", dedent("""\
+        # The sleep is to avoid the case where recordmydesktop does not create
+        # a file because it gets stopped before it's even started capturing
+        # anything.
+        self.create_test_file(
+            "test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
             from time import sleep
@@ -424,30 +445,34 @@ Loading tests from: %s
                 def test_simple(self):
                     sleep(1)
                     self.fail()
-            """
-            ))
+            """)
+        )
 
         should_delete = not os.path.exists('/tmp/autopilot')
         if should_delete:
             self.addCleanup(remove_if_exists, "/tmp/autopilot")
         else:
-            self.addCleanup(remove_if_exists,
-                            '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv')
+            self.addCleanup(
+                remove_if_exists,
+                '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv')
 
         code, output, error = self.run_autopilot(["run", "-r", "tests"])
 
         self.assertThat(code, Equals(1))
         self.assertTrue(os.path.exists('/tmp/autopilot'))
-        self.assertTrue(os.path.exists('/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv'))
+        self.assertTrue(os.path.exists(
+            '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv'))
         if should_delete:
             self.addCleanup(remove_if_exists, "/tmp/autopilot")
 
     def test_record_dir_option_and_record_works(self):
         """Must be able to specify record directory flag and record."""
 
-        # The sleep is to avoid the case where recordmydesktop does not create a
-        # file because it gets stopped before it's even started capturing anything.
-        self.create_test_file("test_simple.py", dedent("""\
+        # The sleep is to avoid the case where recordmydesktop does not create
+        # a file because it gets stopped before it's even started capturing
+        # anything.
+        self.create_test_file(
+            "test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
             from time import sleep
@@ -458,8 +483,8 @@ Loading tests from: %s
                 def test_simple(self):
                     sleep(1)
                     self.fail()
-            """
-            ))
+            """)
+        )
         video_dir = mktemp()
         ap_dir = '/tmp/autopilot'
         self.addCleanup(remove_if_exists, video_dir)
@@ -468,22 +493,29 @@ Loading tests from: %s
         if should_delete:
             self.addCleanup(remove_if_exists, ap_dir)
         else:
-            self.addCleanup(remove_if_exists,
-                            '%s/tests.test_simple.SimpleTest.test_simple.ogv' % (ap_dir))
+            self.addCleanup(
+                remove_if_exists,
+                '%s/tests.test_simple.SimpleTest.test_simple.ogv' % (ap_dir))
 
-        code, output, error = self.run_autopilot(["run", "-r", "-rd", video_dir, "tests"])
+        code, output, error = self.run_autopilot(
+            ["run", "-r", "-rd", video_dir, "tests"])
 
         self.assertThat(code, Equals(1))
         self.assertTrue(os.path.exists(video_dir))
-        self.assertTrue(os.path.exists('%s/tests.test_simple.SimpleTest.test_simple.ogv' % (video_dir)))
-        self.assertFalse(os.path.exists('%s/tests.test_simple.SimpleTest.test_simple.ogv' % (ap_dir)))
+        self.assertTrue(os.path.exists(
+            '%s/tests.test_simple.SimpleTest.test_simple.ogv' % (video_dir)))
+        self.assertFalse(
+            os.path.exists(
+                '%s/tests.test_simple.SimpleTest.test_simple.ogv' % (ap_dir)))
 
     def test_record_dir_option_works(self):
         """Must be able to specify record directory flag."""
 
-        # The sleep is to avoid the case where recordmydesktop does not create a
-        # file because it gets stopped before it's even started capturing anything.
-        self.create_test_file("test_simple.py", dedent("""\
+        # The sleep is to avoid the case where recordmydesktop does not create
+        # a file because it gets stopped before it's even started capturing
+        # anything.
+        self.create_test_file(
+            "test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
             from time import sleep
@@ -494,20 +526,25 @@ Loading tests from: %s
                 def test_simple(self):
                     sleep(1)
                     self.fail()
-            """
-            ))
+            """)
+        )
         video_dir = mktemp()
         self.addCleanup(remove_if_exists, video_dir)
 
-        code, output, error = self.run_autopilot(["run", "-rd", video_dir, "tests"])
+        code, output, error = self.run_autopilot(
+            ["run", "-rd", video_dir, "tests"])
 
         self.assertThat(code, Equals(1))
         self.assertTrue(os.path.exists(video_dir))
-        self.assertTrue(os.path.exists('%s/tests.test_simple.SimpleTest.test_simple.ogv' % (video_dir)))
+        self.assertTrue(
+            os.path.exists(
+                '%s/tests.test_simple.SimpleTest.test_simple.ogv' %
+                (video_dir)))
 
     def test_no_videos_saved_when_record_option_is_not_present(self):
         """Videos must not be saved if the '-r' option is not specified."""
-        self.create_test_file("test_simple.py", dedent("""\
+        self.create_test_file(
+            "test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
             from time import sleep
@@ -517,9 +554,10 @@ Loading tests from: %s
                 def test_simple(self):
                     sleep(1)
                     self.fail()
-            """
-            ))
-        self.addCleanup(remove_if_exists,
+            """)
+        )
+        self.addCleanup(
+            remove_if_exists,
             '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv')
 
         code, output, error = self.run_autopilot(["run", "tests"])
@@ -533,7 +571,8 @@ Loading tests from: %s
         failed).
 
         """
-        self.create_test_file("test_simple.py", dedent("""\
+        self.create_test_file(
+            "test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
             from time import sleep
@@ -543,10 +582,11 @@ Loading tests from: %s
                 def test_simple(self):
                     sleep(1)
                     self.skip("Skipping Test")
-            """
-            ))
+            """)
+        )
 
-        video_file_path = '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv'
+        video_file_path = (
+            '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv')
         self.addCleanup(remove_if_exists, video_file_path)
 
         code, output, error = self.run_autopilot(["run", "-r", "tests"])
@@ -554,12 +594,13 @@ Loading tests from: %s
         self.assertThat(code, Equals(0))
         self.assertThat(os.path.exists(video_file_path), Equals(False))
 
-    def test_no_video_file_for_nested_testcase_when_parent_and_child_testcase_fail(self):
+    def test_no_video_for_nested_testcase_when_parent_and_child_fail(self):
         """Test recording must not create a new recording for nested testcases
         where both the parent and the child testcase fail.
 
         """
-        self.create_test_file("test_simple.py", dedent("""\
+        self.create_test_file(
+            "test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
             import os
@@ -574,11 +615,15 @@ Loading tests from: %s
 
                     InnerTestCase("test_will_fail").run()
                     self.assertTrue(False)
-            """
-            ))
+            """)
+        )
 
-        expected_video_file = '/tmp/autopilot/tests.test_simple.OuterTestCase.test_nested_classes.ogv'
-        erroneous_video_file = '/tmp/autopilot/tests.test_simple.OuterTestCase.test_nested_classes.InnerTestCase.test_will_fail.ogv'
+        expected_video_file = (
+            '/tmp/autopilot/tests.test_simple.OuterTestCase.'
+            'test_nested_classes.ogv')
+        erroneous_video_file = (
+            '/tmp/autopilot/tests.test_simple.OuterTestCase.'
+            'test_nested_classes.InnerTestCase.test_will_fail.ogv')
 
         self.addCleanup(remove_if_exists, expected_video_file)
         self.addCleanup(remove_if_exists, erroneous_video_file)
@@ -591,7 +636,8 @@ Loading tests from: %s
 
     def test_runs_with_import_errors_fail(self):
         """Import errors inside a test must be considered a test failure."""
-        self.create_test_file('test_simple.py', dedent("""\
+        self.create_test_file(
+            'test_simple.py', dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
             # create an import error:
@@ -601,8 +647,8 @@ Loading tests from: %s
 
                 def test_simple(self):
                     pass
-            """
-            ))
+            """)
+        )
 
         code, output, error = self.run_autopilot(["run", "tests"])
 
@@ -613,7 +659,8 @@ Failed to import test module: tests.test_simple
 Traceback \(most recent call last\):
   File "/usr/lib/python2.7/unittest/loader.py", line 252, in _find_tests
     module = self._get_module_from_name\(name\)
-  File "/usr/lib/python2.7/unittest/loader.py", line 230, in _get_module_from_name
+  File "/usr/lib/python2.7/unittest/loader.py", line 230, in \
+_get_module_from_name
     __import__\(name\)
   File "/tmp/\w*/tests/test_simple.py", line 4, in <module>
     import asdjkhdfjgsdhfjhsd
@@ -628,7 +675,8 @@ ImportError: No module named asdjkhdfjgsdhfjhsd
 
     def test_runs_with_syntax_errors_fail(self):
         """Import errors inside a test must be considered a test failure."""
-        self.create_test_file('test_simple.py', dedent("""\
+        self.create_test_file(
+            'test_simple.py', dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
             # create a syntax error:
@@ -638,8 +686,8 @@ ImportError: No module named asdjkhdfjgsdhfjhsd
 
                 def test_simple(self):
                     pass
-            """
-            ))
+            """)
+        )
 
         code, output, error = self.run_autopilot(["run", "tests"])
 
@@ -650,7 +698,8 @@ Failed to import test module: tests.test_simple
 Traceback \(most recent call last\):
   File "/usr/lib/python2.7/unittest/loader.py", line 252, in _find_tests
     module = self._get_module_from_name\(name\)
-  File "/usr/lib/python2.7/unittest/loader.py", line 230, in _get_module_from_name
+  File "/usr/lib/python2.7/unittest/loader.py", line 230, in \
+_get_module_from_name
     __import__\(name\)
   File "/tmp/\w*/tests/test_simple.py", line 4
     \.\.
@@ -665,8 +714,10 @@ SyntaxError: invalid syntax
         self.assertThat(output, Contains("FAILED (failures=1)"))
 
     def test_can_error_with_unicode_data(self):
-        """Tests that assert with unicode errors must get saved to a log file."""
-        self.create_test_file("test_simple.py", dedent(u"""\
+        """Tests that assert with unicode errors must get saved to a log
+        file."""
+        self.create_test_file(
+            "test_simple.py", dedent(u"""\
             # encoding: utf-8
 
             # from autopilot.testcase import AutopilotTestCase
@@ -675,24 +726,30 @@ SyntaxError: invalid syntax
             class SimpleTest(TestCase):
 
                 def test_simple(self):
-                    self.fail(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH')
+                    self.fail(
+                        u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll'
+                        u'\u01ddH')
 
-            """
-            ))
+            """)
+        )
         output_file_path = mktemp()
         self.addCleanup(remove_if_exists, output_file_path)
 
-        code, output, error = self.run_autopilot(["run", "-o", output_file_path, "tests"])
+        code, output, error = self.run_autopilot(
+            ["run", "-o", output_file_path, "tests"])
 
         self.assertThat(code, Equals(1))
         self.assertTrue(os.path.exists(output_file_path))
         log_contents = unicode(open(output_file_path, encoding='utf-8').read())
-        self.assertThat(log_contents,
+        self.assertThat(
+            log_contents,
             Contains(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH'))
 
     def test_can_write_xml_error_with_unicode_data(self):
-        """Tests that assert with unicode errors must get saved to XML log file."""
-        self.create_test_file("test_simple.py", dedent(u"""\
+        """Tests that assert with unicode errors must get saved to XML log
+        file."""
+        self.create_test_file(
+            "test_simple.py", dedent(u"""\
             # encoding: utf-8
 
             # from autopilot.testcase import AutopilotTestCase
@@ -701,10 +758,12 @@ SyntaxError: invalid syntax
             class SimpleTest(TestCase):
 
                 def test_simple(self):
-                    self.fail(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH')
+                    error = (u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u'
+                        u'\u2229 oll\u01ddH')
+                    self.fail(error)
 
-            """
-            ))
+            """)
+        )
         output_file_path = mktemp()
         self.addCleanup(remove_if_exists, output_file_path)
 
@@ -717,45 +776,58 @@ SyntaxError: invalid syntax
         self.assertThat(code, Equals(1))
         self.assertTrue(os.path.exists(output_file_path))
         log_contents = unicode(open(output_file_path, encoding='utf-8').read())
-        self.assertThat(log_contents,
+        self.assertThat(
+            log_contents,
             Contains(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH'))
 
     def test_launch_needs_arguments(self):
-        """Autopilot launch must complain if not given an application to launch."""
+        """Autopilot launch must complain if not given an application to
+        launch."""
         rc, _, _ = self.run_autopilot(["launch"])
         self.assertThat(rc, Equals(2))
 
     def test_complains_on_unknown_introspection_type(self):
-        """Launching a binary that does not support an introspection type we are
-        familiar with must result in a nice error message.
+        """Launching a binary that does not support an introspection type we
+        are familiar with must result in a nice error message.
 
         """
         rc, stdout, _ = self.run_autopilot(["launch", "yes"])
 
         self.assertThat(rc, Equals(1))
-        self.assertThat(stdout,
-            Contains("Error: Could not determine introspection type to use for application '/usr/bin/yes'"))
+        self.assertThat(
+            stdout,
+            Contains(
+                "Error: Could not determine introspection type to use for "
+                "application '/usr/bin/yes'"))
 
     def test_complains_on_missing_file(self):
-        """Must give a nice error message if we try and launch a binary that's missing."""
+        """Must give a nice error message if we try and launch a binary that's
+        missing."""
         rc, stdout, _ = self.run_autopilot(["launch", "DoEsNotExist"])
 
         self.assertThat(rc, Equals(1))
-        self.assertThat(stdout,
-            Contains("Error: cannot find application 'DoEsNotExist'"))
+        self.assertThat(
+            stdout, Contains("Error: cannot find application 'DoEsNotExist'"))
 
     def test_complains_on_non_dynamic_binary(self):
-        """Must give a nice error message when passing in a non-dynamic binary."""
-        #tzselect is a bash script, and is in the base system, so should always exist.
+        """Must give a nice error message when passing in a non-dynamic
+        binary."""
+        # tzselect is a bash script, and is in the base system, so should
+        # always exist.
         rc, stdout, _ = self.run_autopilot(["launch", "tzselect"])
 
         self.assertThat(rc, Equals(1))
-        self.assertThat(stdout,
-            Contains("Error detecting launcher: Command '['ldd', '/usr/bin/tzselect']' returned non-zero exit status 1\n(Perhaps use the '-i' argument to specify an interface.)\n"))
+        self.assertThat(
+            stdout, Contains(
+                "Error detecting launcher: Command '['ldd', "
+                "'/usr/bin/tzselect']' returned non-zero exit status 1\n"
+                "(Perhaps use the '-i' argument to specify an interface.)\n")
+        )
 
     def test_run_random_order_flag_works(self):
         """Must run tests in random order when -ro is used"""
-        self.create_test_file("test_simple.py", dedent("""\
+        self.create_test_file(
+            "test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
             from time import sleep
@@ -766,9 +838,8 @@ SyntaxError: invalid syntax
                     pass
                 def test_simple_two(self):
                     pass
-            """
-            ))
-
+            """)
+        )
 
         code, output, error = self.run_autopilot(["run", "-ro", "tests"])
 
@@ -777,7 +848,8 @@ SyntaxError: invalid syntax
 
     def test_run_random_flag_not_used(self):
         """Must not run tests in random order when -ro is not used"""
-        self.create_test_file("test_simple.py", dedent("""\
+        self.create_test_file(
+            "test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
             from time import sleep
@@ -788,15 +860,13 @@ SyntaxError: invalid syntax
                     pass
                 def test_simple_two(self):
                     pass
-            """
-            ))
-
+            """)
+        )
 
         code, output, error = self.run_autopilot(["run", "tests"])
 
         self.assertThat(code, Equals(0))
         self.assertThat(output, Not(Contains('Running tests in random order')))
-
 
 
 class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
@@ -810,7 +880,8 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
 
     def test_verbose_flag_works(self):
         """Verbose flag must log to stderr."""
-        self.create_test_file("test_simple.py", dedent("""\
+        self.create_test_file(
+            "test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
 
@@ -819,19 +890,22 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
 
                 def test_simple(self):
                     pass
-            """
-            ))
+            """)
+        )
 
         code, output, error = self.run_autopilot(["run",
                                                   "-f", self.output_format,
                                                   "-v", "tests"])
 
         self.assertThat(code, Equals(0))
-        self.assertThat(error, Contains("Starting test tests.test_simple.SimpleTest.test_simple"))
+        self.assertThat(
+            error, Contains(
+                "Starting test tests.test_simple.SimpleTest.test_simple"))
 
     def test_verbose_flag_shows_timestamps(self):
         """Verbose log must include timestamps."""
-        self.create_test_file("test_simple.py", dedent("""\
+        self.create_test_file(
+            "test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
 
@@ -840,8 +914,8 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
 
                 def test_simple(self):
                     pass
-            """
-            ))
+            """)
+        )
 
         code, output, error = self.run_autopilot(["run",
                                                   "-f", self.output_format,
@@ -851,7 +925,8 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
 
     def test_verbose_flag_shows_success(self):
         """Verbose log must indicate successful tests (text format)."""
-        self.create_test_file("test_simple.py", dedent("""\
+        self.create_test_file(
+            "test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
 
@@ -860,18 +935,20 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
 
                 def test_simple(self):
                     pass
-            """
-            ))
+            """)
+        )
 
         code, output, error = self.run_autopilot(["run",
                                                   "-f", self.output_format,
                                                   "-v", "tests"])
 
-        self.assertThat(error, Contains("OK: tests.test_simple.SimpleTest.test_simple"))
+        self.assertThat(
+            error, Contains("OK: tests.test_simple.SimpleTest.test_simple"))
 
     def test_verbose_flag_shows_error(self):
         """Verbose log must indicate test error with a traceback."""
-        self.create_test_file("test_simple.py", dedent("""\
+        self.create_test_file(
+            "test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
 
@@ -880,20 +957,25 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
 
                 def test_simple(self):
                     self.assertTrue()
-            """
-            ))
+            """)
+        )
 
         code, output, error = self.run_autopilot(["run",
                                                   "-f", self.output_format,
                                                   "-v", "tests"])
 
-        self.assertThat(error, Contains("ERROR: tests.test_simple.SimpleTest.test_simple"))
+        self.assertThat(
+            error, Contains("ERROR: tests.test_simple.SimpleTest.test_simple"))
         self.assertThat(error, Contains("traceback:"))
-        self.assertThat(error, Contains("TypeError: assertTrue() takes at least 2 arguments (1 given)"))
+        self.assertThat(
+            error, Contains("TypeError: assertTrue() takes at least 2 "
+                            "arguments (1 given)"))
 
     def test_verbose_flag_shows_failure(self):
-        """Verbose log must indicate a test failure with a traceback (xml format)."""
-        self.create_test_file("test_simple.py", dedent("""\
+        """Verbose log must indicate a test failure with a traceback (xml
+        format)."""
+        self.create_test_file(
+            "test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
 
@@ -902,8 +984,8 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
 
                 def test_simple(self):
                     self.assertTrue(False)
-            """
-            ))
+            """)
+        )
 
         code, output, error = self.run_autopilot(["run",
                                                   "-f", self.output_format,
@@ -914,8 +996,10 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
         self.assertIn("AssertionError: False is not true", error)
 
     def test_verbose_flag_captures_nested_autopilottestcase_classes(self):
-        """Verbose log must contain the log details of both the nested and parent testcase."""
-        self.create_test_file("test_simple.py", dedent("""\
+        """Verbose log must contain the log details of both the nested and
+        parent testcase."""
+        self.create_test_file(
+            "test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
             import os
@@ -930,20 +1014,27 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
 
                     InnerTestCase("test_produce_log_output").run()
                     self.assertTrue(True)
-            """
-            ))
+            """)
+        )
 
         code, output, error = self.run_autopilot(["run",
                                                   "-f", self.output_format,
                                                   "-v", "tests"])
 
         self.assertThat(code, Equals(0))
-        self.assertThat(error, Contains("Starting test tests.test_simple.OuterTestCase.test_nested_classes"))
-        self.assertThat(error, Contains("Starting test tests.test_simple.InnerTestCase.test_produce_log_output"))
+        self.assertThat(
+            error, Contains(
+                "Starting test tests.test_simple.OuterTestCase."
+                "test_nested_classes"))
+        self.assertThat(
+            error, Contains(
+                "Starting test tests.test_simple.InnerTestCase."
+                "test_produce_log_output"))
 
     def test_can_enable_debug_output(self):
         """Verbose log must show debug messages if we specify '-vv'."""
-        self.create_test_file("test_simple.py", dedent("""\
+        self.create_test_file(
+            "test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
             from autopilot.utilities import get_debug_logger
@@ -953,8 +1044,8 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
 
                 def test_simple(self):
                     get_debug_logger().debug("Hello World")
-            """
-            ))
+            """)
+        )
 
         code, output, error = self.run_autopilot(["run",
                                                   "-f", self.output_format,
@@ -964,7 +1055,8 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
 
     def test_debug_output_not_shown_by_default(self):
         """Verbose log must not show debug messages unless we specify '-vv'."""
-        self.create_test_file("test_simple.py", dedent("""\
+        self.create_test_file(
+            "test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
             from autopilot.utilities import get_debug_logger
@@ -974,8 +1066,8 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
 
                 def test_simple(self):
                     get_debug_logger().debug("Hello World")
-            """
-            ))
+            """)
+        )
 
         code, output, error = self.run_autopilot(["run",
                                                   "-f", self.output_format,

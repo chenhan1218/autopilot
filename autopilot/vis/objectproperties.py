@@ -42,8 +42,8 @@ class TreeNodeDetailWidget(QtGui.QTabWidget):
     def tree_node_changed(self, new_node):
         """Call when the selected tree node has changed.
 
-        This method will update the available tabs to reflect those suitable for
-        the new tree node selected.
+        This method will update the available tabs to reflect those suitable
+        for the new tree node selected.
 
         """
         for view in self.views:
@@ -70,7 +70,8 @@ class AbstractView(QtGui.QWidget):
 
     def name(self):
         """Return the name of the view."""
-        raise NotImplementedError("This method must be implemented in subclasses!")
+        raise NotImplementedError(
+            "This method must be implemented in subclasses!")
 
     def icon(self):
         """Return the icon for the view (optionsla)."""
@@ -78,10 +79,12 @@ class AbstractView(QtGui.QWidget):
 
     def is_relevant(self, node):
         """Return true if the view can display data about this tree node."""
-        raise NotImplementedError("This method must be implemented in subclasses!")
+        raise NotImplementedError(
+            "This method must be implemented in subclasses!")
 
     def new_node_selected(self, node):
-        raise NotImplementedError("This method must be implemented in subclasses!")
+        raise NotImplementedError(
+            "This method must be implemented in subclasses!")
 
 
 class PropertyView(AbstractView):
@@ -119,7 +122,7 @@ class PropertyView(AbstractView):
             details_string = dbus_string_rep(object_details[key])
             item_name = QtGui.QTableWidgetItem(key)
             item_details = QtGui.QTableWidgetItem(
-                    details_string.decode('utf-8'))
+                details_string.decode('utf-8'))
             self.table_view.setItem(i, 0, item_name)
             self.table_view.setItem(i, 1, item_details)
         self.table_view.setSortingEnabled(True)
@@ -141,7 +144,8 @@ class SignalView(AbstractView):
         self.signals_table.verticalHeader().setVisible(False)
         self.signals_table.setAlternatingRowColors(True)
         self.signals_table.setHorizontalHeaderLabels(["Signal Signature"])
-        self.signals_table.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+        self.signals_table.setEditTriggers(
+            QtGui.QAbstractItemView.NoEditTriggers)
         self.details_layout.addWidget(self.signals_table)
 
     def name(self):
@@ -159,7 +163,8 @@ class SignalView(AbstractView):
         signals = node.get_signals()
         self.signals_table.setRowCount(len(signals))
         for i, signal in enumerate(signals):
-            self.signals_table.setItem(i, 0, QtGui.QTableWidgetItem(str(signal)))
+            self.signals_table.setItem(
+                i, 0, QtGui.QTableWidgetItem(str(signal)))
         self.signals_table.setSortingEnabled(True)
         self.signals_table.sortByColumn(0, QtCore.Qt.AscendingOrder)
         self.signals_table.resizeColumnsToContents()
@@ -179,7 +184,8 @@ class SlotView(AbstractView):
         self.slots_table.verticalHeader().setVisible(False)
         self.slots_table.setAlternatingRowColors(True)
         self.slots_table.setHorizontalHeaderLabels(["Slot Signature"])
-        self.slots_table.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+        self.slots_table.setEditTriggers(
+            QtGui.QAbstractItemView.NoEditTriggers)
         self.details_layout.addWidget(self.slots_table)
 
     def name(self):
@@ -207,4 +213,4 @@ ALL_VIEWS = [
     PropertyView,
     SignalView,
     SlotView,
-    ]
+]

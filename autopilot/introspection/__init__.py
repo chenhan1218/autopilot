@@ -20,10 +20,11 @@
 
 """Package for introspection support.
 
-This package contains the internal implementation of the autopilot introspection
-mechanism, and probably isn't useful to most test authors.
+This package contains the internal implementation of the autopilot
+introspection mechanism, and probably isn't useful to most test authors.
 
 """
+
 from __future__ import absolute_import
 
 import dbus
@@ -39,31 +40,32 @@ from autopilot.introspection.constants import (
     AUTOPILOT_PATH,
     QT_AUTOPILOT_IFACE,
     AP_INTROSPECTION_IFACE,
-    )
+)
 from autopilot.introspection.dbus import (
     _clear_backends_for_proxy_object,
     CustomEmulatorBase,
     DBusIntrospectionObject,
     get_classname_from_path,
-    )
+)
 from autopilot.dbus_handler import (
     get_session_bus,
     get_system_bus,
     get_custom_bus,
-    )
+)
 
 
 logger = logging.getLogger(__name__)
 
 
 def get_application_launcher(app_path):
-    """Return an instance of :class:`ApplicationLauncher` that knows how to launch
-    the application at 'app_path'.
+    """Return an instance of :class:`ApplicationLauncher` that knows how to
+    launch the application at 'app_path'.
     """
-    # TODO: this is a teeny bit hacky - we call ldd to check whether this application
-    # links to certain library. We're assuming that linking to libQt* or libGtk*
-    # means the application is introspectable. This excludes any non-dynamically
-    # linked executables, which we may need to fix further down the line.
+    # TODO: this is a teeny bit hacky - we call ldd to check whether this
+    # application links to certain library. We're assuming that linking to
+    # libQt* or libGtk* means the application is introspectable. This excludes
+    # any non-dynamically linked executables, which we may need to fix further
+    # down the line.
     try:
         ldd_output = subprocess.check_output(["ldd", app_path]).strip().lower()
     except subprocess.CalledProcessError as e:
@@ -78,7 +80,8 @@ def get_application_launcher(app_path):
 
 
 def get_application_launcher_from_string_hint(hint):
-    """Return in instance of :class:`ApplicationLauncher` given a string hint."""
+    """Return in instance of :class:`ApplicationLauncher` given a string
+    hint."""
     from autopilot.introspection.qt import QtApplicationLauncher
     from autopilot.introspection.gtk import GtkApplicationLauncher
 
@@ -102,16 +105,18 @@ def launch_application(launcher, application, *arguments, **kwargs):
     cwd = kwargs.pop('launch_dir', None)
     capture_output = kwargs.pop('capture_output', True)
     if kwargs:
-        raise ValueError("Unknown keyword arguments: %s." %
-            (', '.join( repr(k) for k in kwargs.keys())))
+        raise ValueError(
+            "Unknown keyword arguments: %s." %
+            (', '.join(repr(k) for k in kwargs.keys())))
 
     path, args = launcher.prepare_environment(application, list(arguments))
 
-    process = launch_process(path,
+    process = launch_process(
+        path,
         args,
         capture_output,
         cwd=cwd
-        )
+    )
     return process
 
 
@@ -122,12 +127,13 @@ class ApplicationLauncher(object):
     """
 
     def prepare_environment(self, app_path, arguments):
-        """Prepare the application, or environment to launch with autopilot-support.
+        """Prepare the application, or environment to launch with
+        autopilot-support.
 
         This method does nothing - it exists so child classes can override it.
 
-        The method *must* return a tuple of (*app_path*, *arguments*). Either of
-        these can be altered by this method.
+        The method *must* return a tuple of (*app_path*, *arguments*). Either
+        of these can be altered by this method.
 
         """
         raise NotImplementedError("Sub-classes must implement this method.")
@@ -141,13 +147,15 @@ def launch_process(application, args, capture_output, **kwargs):
     cap_mode = None
     if capture_output:
         cap_mode = subprocess.PIPE
-    process = subprocess.Popen(commandline,
+    process = subprocess.Popen(
+        commandline,
         stdin=subprocess.PIPE,
         stdout=cap_mode,
         stderr=cap_mode,
         close_fds=True,
         preexec_fn=os.setsid,
-        **kwargs)
+        **kwargs
+    )
     return process
 
 
@@ -158,10 +166,13 @@ def get_autopilot_proxy_object_for_process(process, emulator_base):
 
     """
     pid = process.pid
-    return get_proxy_object_for_existing_process(pid, emulator_base=emulator_base)
+    return get_proxy_object_for_existing_process(
+        pid, emulator_base=emulator_base)
 
 
-def get_proxy_object_for_existing_process(pid=None, dbus_bus='session', connection_name=None, object_path=AUTOPILOT_PATH, application_name=None, emulator_base=None):
+def get_proxy_object_for_existing_process(
+        pid=None, dbus_bus='session', connection_name=None,
+        object_path=AUTOPILOT_PATH, application_name=None, emulator_base=None):
     """Return a single proxy object for an application that is already running
     (i.e. launched outside of Autopilot).
 
@@ -169,37 +180,53 @@ def get_proxy_object_for_existing_process(pid=None, dbus_bus='session', connecti
     matching the search criteria, creating the proxy object using the supplied
     custom emulator **emulator_base** (defaults to None).
 
-    For example for an application on the system bus where the applications PID is known::
+    For example for an application on the system bus where the applications
+    PID is known::
 
         app_proxy = get_proxy_object_for_existing_process(pid=app_pid)
 
-    Multiple criteria are allowed, for instance you could search on **pid** and **connection_name**::
+    Multiple criteria are allowed, for instance you could search on **pid**
+    and **connection_name**::
 
-        app_proxy = get_proxy_object_for_existing_process(pid=app_pid, connection_name='org.gnome.gedit')
+        app_proxy = get_proxy_object_for_existing_process(
+            pid=app_pid, connection_name='org.gnome.gedit')
 
     If the application from the previous example was on the system bus::
 
-        app_proxy = get_proxy_object_for_existing_process(dbus_bus='system', pid=app_pid, connection_name='org.gnome.gedit')
+        app_proxy = get_proxy_object_for_existing_process(
+            dbus_bus='system', pid=app_pid, connection_name='org.gnome.gedit')
 
-    It is possible to search for the application given just the applications name.
-    An example for an application running on a custom bus searching using the applications name::
+    It is possible to search for the application given just the applications
+    name.
+    An example for an application running on a custom bus searching using the
+    applications name::
 
-        app_proxy = get_proxy_object_for_existing_process(application_name='qmlscene', dbus_bus='unix:abstract=/tmp/dbus-IgothuMHNk')
+        app_proxy = get_proxy_object_for_existing_process(
+            application_name='qmlscene',
+            dbus_bus='unix:abstract=/tmp/dbus-IgothuMHNk')
 
     :param pid: The PID of the application to search for.
-    :param dbus_bus: A string containing either 'session', 'system' or the custom buses name (i.e. 'unix:abstract=/tmp/dbus-IgothuMHNk').
-    :param connection_name: A string containing the DBus connection name to use with the search criteria.
-    :param object_path: A string containing the object path to use as the search criteria. Defaults to :py:data:`autopilot.introspection.constants.AUTOPILOT_PATH`.
-    :param application_name: A string containing the applications name to search for.
-    :param emulator_base: The custom emulator to create the resulting proxy object with.
+    :param dbus_bus: A string containing either 'session', 'system' or the
+        custom buses name (i.e. 'unix:abstract=/tmp/dbus-IgothuMHNk').
+    :param connection_name: A string containing the DBus connection name to
+        use with the search criteria.
+    :param object_path: A string containing the object path to use as the
+        search criteria. Defaults to
+        :py:data:`autopilot.introspection.constants.AUTOPILOT_PATH`.
+    :param application_name: A string containing the applications name to
+        search for.
+    :param emulator_base: The custom emulator to create the resulting proxy
+        object with.
 
     :raises: RuntimeError if no search criteria match.
     :raises: RuntimeError if the search criteria results in many matches.
 
     """
-    dbus_addresses = _get_dbus_addresses_from_search_parameters(pid, dbus_bus, connection_name, object_path)
+    dbus_addresses = _get_dbus_addresses_from_search_parameters(
+        pid, dbus_bus, connection_name, object_path)
     if application_name:
-        app_name_check_fn = lambda i: get_classname_from_path(i.introspection_iface.GetState('/')[0][0]) == application_name
+        app_name_check_fn = lambda i: get_classname_from_path(
+            i.introspection_iface.GetState('/')[0][0]) == application_name
         dbus_addresses = filter(app_name_check_fn, dbus_addresses)
 
     if dbus_addresses is None or len(dbus_addresses) == 0:
@@ -213,7 +240,8 @@ def get_proxy_object_for_existing_process(pid=None, dbus_bus='session', connecti
     return proxy_obj
 
 
-def _get_dbus_addresses_from_search_parameters(pid, dbus_bus, connection_name, object_path):
+def _get_dbus_addresses_from_search_parameters(
+        pid, dbus_bus, connection_name, object_path):
     """Returns a list of :py:class: `DBusAddress` for all successfully matched
     criteria.
 
@@ -227,10 +255,12 @@ def _get_dbus_addresses_from_search_parameters(pid, dbus_bus, connection_name, o
         bus = _get_dbus_bus_from_string(dbus_bus)
         possible_connections = _get_possible_connections(bus, connection_name)
         connection_list = _get_unchecked_connections(possible_connections)
-        valid_connections = _get_valid_connections(connection_list, bus, pid, object_path)
+        valid_connections = _get_valid_connections(
+            connection_list, bus, pid, object_path)
 
         if len(valid_connections) >= 1:
-            return [_get_dbus_address_object(name, object_path, bus) for name in valid_connections]
+            return [_get_dbus_address_object(name, object_path, bus) for name
+                    in valid_connections]
 
         sleep(1)
     return []
@@ -275,7 +305,8 @@ def _get_possible_connections(bus, connection_name):
     if connection_name is None:
         return all_connection_names
     else:
-        matching_connections = [c for c in all_connection_names if c == connection_name]
+        matching_connections = [
+            c for c in all_connection_names if c == connection_name]
         return matching_connections
 
 
@@ -290,13 +321,16 @@ def _match_connection(bus, pid, path, connection_name):
 
 
 def _connection_matches_pid(bus, connection_name, pid):
-    """Given a PID checks wherever it or its children are connected on this bus."""
+    """Given a PID checks wherever it or its children are connected on this
+    bus."""
     try:
         if _bus_pid_is_our_pid(bus, connection_name, pid):
             return False
         bus_pid = _get_bus_connections_pid(bus, connection_name)
     except DBusException as e:
-        logger.info("DBusException while attempting to get PID for %s: %r" % (connection_name, e))
+        logger.info(
+            "DBusException while attempting to get PID for %s: %r" %
+            (connection_name, e))
         return False
     eligible_pids = [pid] + _get_child_pids(pid)
     return bus_pid in eligible_pids
@@ -371,11 +405,9 @@ def _make_proxy_object(data_source, emulator_base):
     cls_name, cls_state = _get_proxy_object_class_name_and_state(data_source)
 
     _clear_backends_for_proxy_object(emulator_base)
-    clsobj = type(str(cls_name),
-        proxy_bases,
-        dict(_Backend = data_source
-            )
-        )
+    clsobj = type(
+        str(cls_name), proxy_bases, dict(_Backend=data_source)
+    )
 
     proxy = clsobj.get_root_instance()
     return proxy
@@ -393,7 +425,9 @@ def _get_proxy_object_base_classes(backend):
 
     intro_xml = backend.dbus_introspection_iface.Introspect()
     if AP_INTROSPECTION_IFACE not in intro_xml:
-        raise RuntimeError("Could not find Autopilot interface on DBus backend '%s'" % backend)
+        raise RuntimeError(
+            "Could not find Autopilot interface on DBus backend '%s'" %
+            backend)
 
     if QT_AUTOPILOT_IFACE in intro_xml:
         from autopilot.introspection.qt import QtObjectProxyMixin
@@ -416,7 +450,8 @@ class ApplicationProxyObject(DBusIntrospectionObject):
         self._process = None
 
     def set_process(self, process):
-        """Set the subprocess.Popen object of the process that this is a proxy for.
+        """Set the subprocess.Popen object of the process that this is a proxy
+        for.
 
         You should never normally need to call this method.
 
@@ -432,5 +467,6 @@ class ApplicationProxyObject(DBusIntrospectionObject):
         return self._process
 
     def kill_application(self):
-        """Kill the running process that this is a proxy for using 'kill `pid`'."""
+        """Kill the running process that this is a proxy for using
+        'kill `pid`'."""
         subprocess.call(["kill", "%d" % self._process.pid])

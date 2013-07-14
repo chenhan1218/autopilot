@@ -44,9 +44,11 @@ class AssertionTests(AutopilotTestCase):
     test_object = TestObject()
 
     def test_assertProperty_raises_valueerror_on_empty_test(self):
-        """assertProperty must raise ValueError if called without any kwargs."""
+        """assertProperty must raise ValueError if called without any
+        kwargs."""
 
-        self.assertThat(lambda: self.assertProperty(self.test_object), raises(ValueError))
+        self.assertThat(
+            lambda: self.assertProperty(self.test_object), raises(ValueError))
 
     def test_assertProperty_raises_valueerror_on_callable(self):
         """assertProperty must raise ValueError when called with a callable
@@ -54,15 +56,17 @@ class AssertionTests(AutopilotTestCase):
 
         """
 
-        self.assertThat(lambda: self.assertProperty(self.test_object, test_method=456),
+        self.assertThat(
+            lambda: self.assertProperty(self.test_object, test_method=456),
             raises(ValueError))
 
     def test_assertProperty_raises_assert_with_single_property(self):
-        """assertProperty must raise an AssertionError when called with a single
-        property.
+        """assertProperty must raise an AssertionError when called with a
+        single property.
 
         """
-        self.assertThat(lambda: self.assertProperty(self.test_object, test_property=234),
+        self.assertThat(
+            lambda: self.assertProperty(self.test_object, test_property=234),
             raises(AssertionError))
 
     def test_assertProperty_doesnt_raise(self):
@@ -71,7 +75,8 @@ class AssertionTests(AutopilotTestCase):
 
         """
 
-        self.assertThat(lambda: self.assertProperty(self.test_object, test_property=123),
+        self.assertThat(
+            lambda: self.assertProperty(self.test_object, test_property=123),
             Not(raises(AssertionError)))
 
     def test_assertProperty_doesnt_raise_multiples(self):
@@ -80,29 +85,41 @@ class AssertionTests(AutopilotTestCase):
 
         """
 
-        self.assertThat(lambda: self.assertProperty(self.test_object, test_property=123, another_property="foobar"),
+        self.assertThat(
+            lambda: self.assertProperty(
+                self.test_object, test_property=123,
+                another_property="foobar"),
             Not(raises(AssertionError)))
 
     def test_assertProperty_raises_assert_with_double_properties(self):
-        """assertProperty must raise an AssertionError when called with multiple
-        properties.
+        """assertProperty must raise an AssertionError when called with
+        multiple properties.
 
         """
-        self.assertThat(lambda: self.assertProperty(self.test_object, test_property=234, another_property=123),
+        self.assertThat(
+            lambda: self.assertProperty(
+                self.test_object, test_property=234, another_property=123),
             raises(AssertionError))
 
     def test_assertProperties_works(self):
-        """Asserts that the assertProperties method is a synonym for assertProperty."""
+        """Asserts that the assertProperties method is a synonym for
+        assertProperty."""
         self.assertThat(callable(self.assertProperties), Equals(True))
-        self.assertThat(lambda: self.assertProperties(self.test_object, test_property=123, another_property="foobar"),
+        self.assertThat(
+            lambda: self.assertProperties(
+                self.test_object, test_property=123,
+                another_property="foobar"),
             Not(raises(AssertionError)))
 
     def test_assertProperty_raises_assertionerror_on_no_such_property(self):
-        """AssertProperty must rise an AssertionError if the property is not found."""
-        self.assertThat(lambda: self.assertProperty(self.test_object, foo="bar"),
+        """AssertProperty must rise an AssertionError if the property is not
+        found."""
+        self.assertThat(
+            lambda: self.assertProperty(self.test_object, foo="bar"),
             raises(AssertionError))
 
     def test_assertProperty_works_for_None_properties(self):
         """Must be able to match properties whose values are None."""
-        self.assertThat(lambda: self.assertProperties(self.test_object, none_prop=None),
+        self.assertThat(
+            lambda: self.assertProperties(self.test_object, none_prop=None),
             Not(raises(AssertionError)))

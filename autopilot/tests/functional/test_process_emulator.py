@@ -34,9 +34,11 @@ class ProcessEmulatorTests(AutopilotTestCase):
 
     def ensure_gedit_not_running(self):
         """Close any open gedit applications."""
-        apps = self.process_manager.get_running_applications_by_desktop_file('gedit.desktop')
+        apps = self.process_manager.get_running_applications_by_desktop_file(
+            'gedit.desktop')
         if apps:
-            # this is a bit brutal, but easier in this context than the alternative.
+            # this is a bit brutal, but easier in this context than the
+            # alternative.
             call(['killall', 'gedit'])
 
     def test_wait_for_app_running_works(self):
@@ -49,7 +51,8 @@ class ProcessEmulatorTests(AutopilotTestCase):
         start = time()
         t = Thread(target=start_gedit())
         t.start()
-        ret = self.process_manager.wait_until_application_is_running('gedit.desktop', 10)
+        ret = self.process_manager.wait_until_application_is_running(
+            'gedit.desktop', 10)
         end = time()
         t.join()
 
@@ -57,11 +60,13 @@ class ProcessEmulatorTests(AutopilotTestCase):
         self.assertThat(abs(end - start - 5.0), LessThan(1))
 
     def test_wait_for_app_running_times_out_correctly(self):
-        """Make sure the bamf emulator times out correctly if no app is started."""
+        """Make sure the bamf emulator times out correctly if no app is
+        started."""
         self.ensure_gedit_not_running()
 
         start = time()
-        ret = self.process_manager.wait_until_application_is_running('gedit.desktop', 5)
+        ret = self.process_manager.wait_until_application_is_running(
+            'gedit.desktop', 5)
         end = time()
 
         self.assertThat(abs(end - start - 5.0), LessThan(1))
@@ -103,4 +108,3 @@ class ProcessManagerApplicationNoCleanupTests(AutopilotTestCase):
         # bug:1174911)
         ret_code = call(["pgrep", "-c", "gnome-calculato"])
         self.assertThat(ret_code, Equals(1), "Application is still running")
-

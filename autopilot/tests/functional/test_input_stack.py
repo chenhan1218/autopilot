@@ -191,10 +191,12 @@ class InputStackCleanupTests(TestCase):
 
         self.assertThat(FakeKeyboard.cleanup_called, Equals(True))
 
+
 class InputStackCleanup(AutopilotTestCase):
 
     def test_keyboard_keys_released_X11(self):
-        """Cleanup must release any keys that an X11 keyboard has had pressed."""
+        """Cleanup must release any keys that an X11 keyboard has had
+        pressed."""
         class FakeTestCase(AutopilotTestCase):
             def test_press_key(self):
                 kb = Keyboard.create('X11')
@@ -207,7 +209,8 @@ class InputStackCleanup(AutopilotTestCase):
         self.assertThat(_PRESSED_KEYS, Equals([]))
 
     def test_keyboard_keys_released_UInput(self):
-        """Cleanup must release any keys that an UInput keyboard has had pressed."""
+        """Cleanup must release any keys that an UInput keyboard has had
+        pressed."""
         class FakeTestCase(AutopilotTestCase):
             def test_press_key(self):
                 kb = Keyboard.create('UInput')

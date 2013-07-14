@@ -39,11 +39,11 @@ class IntrospectionFeatureTests(AutopilotTestCase):
 
     def start_mock_app(self, emulator_base):
         window_spec_file = mktemp(suffix='.json')
-        window_spec = { "Contents": "MouseTest" }
+        window_spec = {"Contents": "MouseTest"}
         json.dump(
             window_spec,
             open(window_spec_file, 'w')
-            )
+        )
         self.addCleanup(os.remove, window_spec_file)
 
         return self.launch_test_application(
@@ -51,7 +51,7 @@ class IntrospectionFeatureTests(AutopilotTestCase):
             window_spec_file,
             app_type='qt',
             emulator_base=emulator_base,
-            )
+        )
 
     def test_can_select_custom_emulators_by_name(self):
         """Must be able to select a custom emulator type by name."""
@@ -122,4 +122,3 @@ class QMLCustomEmulatorTestCase(AutopilotTestCase):
         self.assertThat(result1.wasSuccessful(), Equals(True))
         result2 = InnerTestCase('test_custom_emulator').run()
         self.assertThat(result2.wasSuccessful(), Equals(True))
-

@@ -56,7 +56,8 @@ class ApplicationLaunchTests(ApplicationTests):
 introspection type to use. You can specify one by overriding the \
 AutopilotTestCase.pick_app_launcher method."
 
-        self.assertThat(lambda: self.launch_test_application(path),
+        self.assertThat(
+            lambda: self.launch_test_application(path),
             raises(RuntimeError(expected_error_message)))
 
 
@@ -64,9 +65,10 @@ class QtTests(ApplicationTests):
 
     def _find_qt_binary_chooser(self, version, name):
         # Check for existence of the binary when qtchooser is installed
-        # We cannot use 'which', as qtchooser installs wrappers - we need to check
-        # in the actual library paths
-        env = subprocess.check_output(['qtchooser', '-qt=' + version, '-print-env']).split('\n')
+        # We cannot use 'which', as qtchooser installs wrappers - we need to
+        # check in the actual library paths
+        env = subprocess.check_output(
+            ['qtchooser', '-qt=' + version, '-print-env']).split('\n')
         for i in env:
             if i.find('QTTOOLDIR') >= 0:
                 path = i.lstrip("QTTOOLDIR=").strip('"') + "/" + name
@@ -78,21 +80,21 @@ class QtTests(ApplicationTests):
     def _find_qt_binary_old(self, version, name):
         # Check for the existence of the binary the old way
         try:
-            path = subprocess.check_output(['which','qmlviewer']).strip()
+            path = subprocess.check_output(['which', 'qmlviewer']).strip()
         except subprocess.CalledProcessError:
             path = None
         return path
-
 
     def setUp(self):
         super(QtTests, self).setUp()
 
         try:
-            qtversions = subprocess.check_output(['qtchooser', '-list-versions']).split('\n')
+            qtversions = subprocess.check_output(
+                ['qtchooser', '-list-versions']).split('\n')
             check_func = self._find_qt_binary_chooser
         except OSError:
-            # This means no qtchooser is installed, so let's check for qmlviewer
-            # and qmlscene manually, the old way
+            # This means no qtchooser is installed, so let's check for
+            # qmlviewer and qmlscene manually, the old way
             qtversions = ['qt4', 'qt5']
             check_func = self._find_qt_binary_old
 
@@ -160,7 +162,8 @@ class GtkTests(ApplicationTests):
         super(GtkTests, self).setUp()
 
         try:
-            self.app_path = subprocess.check_output(['which','gnome-mahjongg']).strip()
+            self.app_path = subprocess.check_output(
+                ['which', 'gnome-mahjongg']).strip()
         except subprocess.CalledProcessError:
             self.skip("gnome-mahjongg not found.")
 

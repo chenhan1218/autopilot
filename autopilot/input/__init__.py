@@ -25,16 +25,16 @@ Autopilot unified input system.
 This package provides input methods for various platforms. Autopilot aims to
 provide an appropriate implementation for the currently running system. For
 example, not all systems have an X11 stack running: on those systems, autopilot
-will instantiate input classes class that use something other than X11 to generate
-events (possibly UInput).
+will instantiate input classes class that use something other than X11 to
+generate events (possibly UInput).
 
-Test authors should instantiate the appropriate class using the ``create`` method
-on each class. Calling ``create()`` with  no arguments will get an instance of the
-specified class that suits the current platform. In this case, autopilot will
-do it's best to pick a suitable backend. Calling ``create`` with a backend name
-will result in that specific backend type being returned, or, if it cannot be created,
-an exception will be raised. For more information on creating backends, see
-:ref:`tut-picking-backends`
+Test authors should instantiate the appropriate class using the ``create``
+method on each class. Calling ``create()`` with  no arguments will get an
+instance of the specified class that suits the current platform. In this case,
+autopilot will do it's best to pick a suitable backend. Calling ``create``
+with a backend name will result in that specific backend type being returned,
+or, if it cannot be created, an exception will be raised. For more information
+on creating backends, see :ref:`tut-picking-backends`
 
 There are three basic input types available:
 
@@ -42,9 +42,9 @@ There are three basic input types available:
  * :class:`Mouse` - traditional mouse devices.
  * :class:`Touch` - single point-of-contact touch device.
 
-The :class:`Pointer` class is a wrapper that unifies the API of the :class:`Mouse`
-and :class:`Touch` classes, which can be helpful if you want to write a test that
-can use either a mouse of a touch device.
+The :class:`Pointer` class is a wrapper that unifies the API of the
+:class:`Mouse` and :class:`Touch` classes, which can be helpful if you want to
+write a test that can use either a mouse of a touch device.
 
 .. seealso::
     Module :mod:`autopilot.gestures`
@@ -55,7 +55,6 @@ can use either a mouse of a touch device.
 from collections import OrderedDict
 from autopilot.utilities import _pick_backend, CleanupRegistered
 from autopilot.input._common import get_center_point
-
 
 
 class Keyboard(CleanupRegistered):
@@ -72,25 +71,28 @@ class Keyboard(CleanupRegistered):
     def create(preferred_backend=''):
         """Get an instance of the :py:class:`Keyboard` class.
 
-        For more infomration on picking specific backends, see :ref:`tut-picking-backends`
+        For more infomration on picking specific backends, see
+        :ref:`tut-picking-backends`
 
-        :param preferred_backend: A string containing a hint as to which backend
-            you would like. Possible backends are:
+        :param preferred_backend: A string containing a hint as to which
+            backend you would like. Possible backends are:
 
-            * ``X11`` - Generate keyboard events using the X11 client libraries.
+            * ``X11`` - Generate keyboard events using the X11 client
+                libraries.
             * ``UInput`` - Use UInput kernel-level device driver.
 
-        :raises: RuntimeError if autopilot cannot instantate any of the possible
-            backends.
+        :raises: RuntimeError if autopilot cannot instantate any of the
+            possible backends.
         :raises: RuntimeError if the preferred_backend is specified and is not
             one of the possible backends for this device class.
-        :raises: :class:`~autopilot.BackendException` if the preferred_backend is
-            set, but that backend could not be instantiated.
+        :raises: :class:`~autopilot.BackendException` if the preferred_backend
+            is set, but that backend could not be instantiated.
 
         """
         def get_x11_kb():
             from autopilot.input._X11 import Keyboard
             return Keyboard()
+
         def get_uinput_kb():
             from autopilot.input._uinput import Keyboard
             return Keyboard()
@@ -156,8 +158,8 @@ class Keyboard(CleanupRegistered):
 
         :param string: The string to text to type.
         :param delay: The delay (in Seconds) after pressing and releasing each
-            key. Note that the default value here is shorter than for the press,
-            release and press_and_release methods.
+            key. Note that the default value here is shorter than for the
+            press, release and press_and_release methods.
 
         .. note:: Only 'normal' keys can be typed with this method. Control
          characters (such as 'Alt' will be interpreted as an 'A', and 'l',
@@ -187,19 +189,20 @@ class Mouse(CleanupRegistered):
     def create(preferred_backend=''):
         """Get an instance of the :py:class:`Mouse` class.
 
-        For more infomration on picking specific backends, see :ref:`tut-picking-backends`
+        For more infomration on picking specific backends, see
+        :ref:`tut-picking-backends`
 
-        :param preferred_backend: A string containing a hint as to which backend you
-            would like. Possible backends are:
+        :param preferred_backend: A string containing a hint as to which
+            backend you would like. Possible backends are:
 
             * ``X11`` - Generate mouse events using the X11 client libraries.
 
-        :raises: RuntimeError if autopilot cannot instantate any of the possible
-            backends.
+        :raises: RuntimeError if autopilot cannot instantate any of the
+            possible backends.
         :raises: RuntimeError if the preferred_backend is specified and is not
             one of the possible backends for this device class.
-        :raises: :class:`~autopilot.BackendException` if the preferred_backend is
-            set, but that backend could not be instantiated.
+        :raises: :class:`~autopilot.BackendException` if the preferred_backend
+            is set, but that backend could not be instantiated.
 
         """
         def get_x11_mouse():
@@ -249,7 +252,6 @@ class Mouse(CleanupRegistered):
         self.move_to_object(object_proxy)
         self.click(button, press_duration)
 
-
     def move(self, x, y, animate=True, rate=10, time_between_events=0.01):
         """Moves mouse to location (x, y).
 
@@ -284,8 +286,12 @@ class Mouse(CleanupRegistered):
         raise NotImplementedError("You cannot use this class directly.")
 
     def drag(self, x1, y1, x2, y2):
-        """Performs a press, move and release
-        This is to keep a common API between Mouse and Finger as long as possible"""
+        """Performs a press, move and release.
+
+        This is to keep a common API between Mouse and Finger as long as
+        possible.
+
+        """
         raise NotImplementedError("You cannot use this class directly.")
 
 
@@ -302,22 +308,21 @@ class Touch(object):
     def create(preferred_backend=''):
         """Get an instance of the :py:class:`Touch` class.
 
-        :param preferred_backend: A string containing a hint as to which backend you
-            would like. If left blank, autopilot will pick a suitable
-            backend for you. Specifying a backend will guarantee that either that
-            backend is returned, or an exception is raised.
+        :param preferred_backend: A string containing a hint as to which
+            backend you would like. If left blank, autopilot will pick a
+            suitable backend for you. Specifying a backend will guarantee that
+            either that backend is returned, or an exception is raised.
 
             possible backends are:
 
             * ``UInput`` - Use UInput kernel-level device driver.
 
-        :raises: RuntimeError if autopilot cannot instantate any of the possible
-            backends.
+        :raises: RuntimeError if autopilot cannot instantate any of the
+            possible backends.
         :raises: RuntimeError if the preferred_backend is specified and is not
             one of the possible backends for this device class.
-        :raises: :class:`~autopilot.BackendException` if the preferred_backend is
-            set, but that backend could not be instantiated.
-
+        :raises: :class:`~autopilot.BackendException` if the preferred_backend
+            is set, but that backend could not be instantiated.
 
         """
         def get_uinput_touch():
@@ -374,9 +379,9 @@ class Pointer(object):
     """A wrapper class that represents a pointing device which can either be a
     mouse or a touch, and provides a unified API.
 
-    This class is useful if you want to run tests with either a mouse or a touch
-    device, and want to write your tests to use a single API. Create this wrapper
-    by passing it either a mouse or a touch device, like so::
+    This class is useful if you want to run tests with either a mouse or a
+    touch device, and want to write your tests to use a single API. Create
+    this wrapper by passing it either a mouse or a touch device, like so::
 
         pointer_device = Pointer(Mouse.create())
 
@@ -386,15 +391,17 @@ class Pointer(object):
 
 
     .. warning::
-        Some operations only make sense for certain devices. This class attempts
-        to minimise the differences between the Mouse and Touch APIs, but there
-        are still some operations that will cause exceptions to be raised. These
-        are documented in the specific methods below.
+        Some operations only make sense for certain devices. This class
+        attempts to minimise the differences between the Mouse and Touch APIs,
+        but there are still some operations that will cause exceptions to be
+        raised. These are documented in the specific methods below.
+
     """
 
     def __init__(self, device):
         if not isinstance(device, Mouse) and not isinstance(device, Touch):
-            raise TypeError("`device` must be either a Touch or a Mouse instance.")
+            raise TypeError(
+                "`device` must be either a Touch or a Mouse instance.")
         self._device = device
         self._x = 0
         self._y = 0
@@ -403,8 +410,8 @@ class Pointer(object):
     def x(self):
         """Pointer X coordinate.
 
-        If the wrapped device is a :class:`Touch` device, this will return the last
-        known X coordinate, which may not be a sensible value.
+        If the wrapped device is a :class:`Touch` device, this will return the
+        last known X coordinate, which may not be a sensible value.
 
         """
         if isinstance(self._device, Mouse):
@@ -416,8 +423,8 @@ class Pointer(object):
     def y(self):
         """Pointer Y coordinate.
 
-        If the wrapped device is a :class:`Touch` device, this will return the last
-        known Y coordinate, which may not be a sensible value.
+        If the wrapped device is a :class:`Touch` device, this will return the
+        last known Y coordinate, which may not be a sensible value.
 
         """
         if isinstance(self._device, Mouse):
@@ -428,55 +435,58 @@ class Pointer(object):
     def press(self, button=1):
         """Press the pointer at it's current location.
 
-        If the wrapped device is a mouse, you may pass a button specification. If
-        it is a touch device, passing anything other than 1 will raise a ValueError
-        exception.
+        If the wrapped device is a mouse, you may pass a button specification.
+        If it is a touch device, passing anything other than 1 will raise a
+        ValueError exception.
 
         """
         if isinstance(self._device, Mouse):
             self._device.press(button)
         else:
             if button != 1:
-                raise ValueError("Touch devices do not have button %d" % (button))
+                raise ValueError(
+                    "Touch devices do not have button %d" % (button))
             self._device.press(self._x, self._y)
 
     def release(self, button=1):
         """Releases the pointer at it's current location.
 
-        If the wrapped device is a mouse, you may pass a button specification. If
-        it is a touch device, passing anything other than 1 will raise a ValueError
-        exception.
+        If the wrapped device is a mouse, you may pass a button specification.
+        If it is a touch device, passing anything other than 1 will raise a
+        ValueError exception.
 
         """
         if isinstance(self._device, Mouse):
             self._device.release(button)
         else:
             if button != 1:
-                raise ValueError("Touch devices do not have button %d" % (button))
+                raise ValueError(
+                    "Touch devices do not have button %d" % (button))
             self._device.release()
 
     def click(self, button=1, press_duration=0.10):
         """Press and release at the current pointer location.
 
         If the wrapped device is a mouse, the button specification is used. If
-        it is a touch device, passing anything other than 1 will raise a ValueError
-        exception.
+        it is a touch device, passing anything other than 1 will raise a
+        ValueError exception.
 
         """
         if isinstance(self._device, Mouse):
             self._device.click(button, press_duration)
         else:
             if button != 1:
-                raise ValueError("Touch devices do not have button %d" % (button))
+                raise ValueError(
+                    "Touch devices do not have button %d" % (button))
             self._device.tap(self._x, self._y)
 
     def move(self, x, y):
         """Moves the pointer to the specified coordinates.
 
-        If the wrapped device is a mouse, the mouse will animate to the specified
-        coordinates. If the wrapped device is a touch device, this method will
-        determine where the next :meth:`press`, :meth:`release` or :meth:`click`
-        will occur.
+        If the wrapped device is a mouse, the mouse will animate to the
+        specified coordinates. If the wrapped device is a touch device, this
+        method will determine where the next :meth:`press`, :meth:`release` or
+        :meth:`click` will occur.
 
         """
         if isinstance(self._device, Mouse):
@@ -498,8 +508,8 @@ class Pointer(object):
          * x, y, w, h
 
         If the wrapped device is a mouse, the button specification is used. If
-        it is a touch device, passing anything other than 1 will raise a ValueError
-        exception.
+        it is a touch device, passing anything other than 1 will raise a
+        ValueError exception.
 
         """
 
@@ -520,8 +530,8 @@ class Pointer(object):
          attribute is of an incorrect type.
 
         """
-        x,y = get_center_point(object_proxy)
-        self.move(x,y)
+        x, y = get_center_point(object_proxy)
+        self.move(x, y)
 
     def position(self):
         """
@@ -535,7 +545,5 @@ class Pointer(object):
             return (self._x, self._y)
 
     def drag(self, x1, y1, x2, y2):
-        """Performs a press, move and release.
-
-        """
+        """Performs a press, move and release."""
         self._device.drag(x1, y1, x2, y2)

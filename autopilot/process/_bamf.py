@@ -39,13 +39,14 @@ from autopilot.process import (
     ProcessManager as ProcessManagerBase,
     Application as ApplicationBase,
     Window as WindowBase
-    )
+)
 
 
 _BAMF_BUS_NAME = 'org.ayatana.bamf'
 _X_DISPLAY = None
 
 logger = logging.getLogger(__name__)
+
 
 def get_display():
     """Create an Xlib display object (silently) and return it."""
@@ -80,16 +81,18 @@ class ProcessManager(ProcessManagerBase):
     def __init__(self):
         matcher_path = '/org/ayatana/bamf/matcher'
         self.matcher_interface_name = 'org.ayatana.bamf.matcher'
-        self.matcher_proxy = get_session_bus().get_object(_BAMF_BUS_NAME, matcher_path)
-        self.matcher_interface = dbus.Interface(self.matcher_proxy, self.matcher_interface_name)
+        self.matcher_proxy = get_session_bus().get_object(
+            _BAMF_BUS_NAME, matcher_path)
+        self.matcher_interface = dbus.Interface(
+            self.matcher_proxy, self.matcher_interface_name)
 
     def start_app(self, app_name, files=[], locale=None):
         """Start one of the known applications, and kill it on tear down.
 
-        .. warning:: This method will clear all instances of this application on
-         tearDown, not just the one opened by this method! We recommend that
-         you use the :meth:`start_app_window` method instead, as it is generally
-         safer.
+        .. warning:: This method will clear all instances of this application
+         on tearDown, not just the one opened by this method! We recommend that
+         you use the :meth:`start_app_window` method instead, as it is
+         generally safer.
 
         :param app_name: The application name. *This name must either already
          be registered as one of the built-in applications that are supported
@@ -147,20 +150,24 @@ class ProcessManager(ProcessManagerBase):
         if locale:
             os.putenv("LC_ALL", locale)
             addCleanup(os.unsetenv, "LC_ALL")
-            logger.info("Starting application '%s' with files %r in locale %s", app_name, files, locale)
+            logger.info(
+                "Starting application '%s' with files %r in locale %s",
+                app_name, files, locale)
         else:
-            logger.info("Starting application '%s' with files %r", app_name, files)
-
+            logger.info(
+                "Starting application '%s' with files %r", app_name, files)
 
         app = self.KNOWN_APPS[app_name]
         self._launch_application(app['desktop-file'], files)
-        apps = self.get_running_applications_by_desktop_file(app['desktop-file'])
+        apps = self.get_running_applications_by_desktop_file(
+            app['desktop-file'])
 
         for i in range(10):
             try:
                 new_windows = []
                 [new_windows.extend(a.get_windows()) for a in apps]
-                filter_fn = lambda w: w.x_id not in [c.x_id for c in existing_windows]
+                filter_fn = lambda w: w.x_id not in [
+                    c.x_id for c in existing_windows]
                 new_wins = filter(filter_fn, new_windows)
                 if new_wins:
                     assert len(new_wins) == 1
@@ -180,7 +187,8 @@ class ProcessManager(ProcessManagerBase):
 
         """
         existing_windows = []
-        [existing_windows.extend(a.get_windows()) for a in self.get_app_instances(app_name)]
+        [existing_windows.extend(a.get_windows()) for a in
+         self.get_app_instances(app_name)]
         return existing_windows
 
     def close_all_app(self, app_name):
@@ -191,7 +199,9 @@ class ProcessManager(ProcessManagerBase):
             if len(pids):
                 call(["kill"] + pids)
         except CalledProcessError:
-            logger.warning("Tried to close applicaton '%s' but it wasn't running.", app_name)
+            logger.warning(
+                "Tried to close applicaton '%s' but it wasn't running.",
+                app_name)
 
     def get_app_instances(self, app_name):
         """Get `~autopilot.process.Application` instances for app_name."""
@@ -210,16 +220,17 @@ class ProcessManager(ProcessManagerBase):
         visible to the user in the switcher will be returned.
 
         """
-        apps = [Application(p) for p in self.matcher_interface.RunningApplications()]
+        apps = [Application(p) for p in
+                self.matcher_interface.RunningApplications()]
         if user_visible_only:
             return filter(_filter_user_visible, apps)
         return apps
 
     def get_running_applications_by_desktop_file(self, desktop_file):
-        """Return a list of applications that have the desktop file *desktop_file*.
+        """Return a list of applications with the desktop file *desktop_file*.
 
-        This method will return an empty list if no applications
-        are found with the specified desktop file.
+        This method will return an empty list if no applications are found
+        with the specified desktop file.
 
         """
         apps = []
@@ -241,31 +252,34 @@ class ProcessManager(ProcessManagerBase):
 
         """
 
-        windows = [Window(w) for w in self.matcher_interface.WindowStackForMonitor(-1)]
+        windows = [Window(w) for w in
+                   self.matcher_interface.WindowStackForMonitor(-1)]
         if user_visible_only:
             windows = filter(_filter_user_visible, windows)
         # Now sort on stacking order.
-        # We explicitly convert to a list from an iterator since tests frequently
-        # try and use len() on return values from these methods.
+        # We explicitly convert to a list from an iterator since tests
+        # frequently try and use len() on return values from these methods.
         return list(reversed(windows))
 
     def wait_until_application_is_running(self, desktop_file, timeout):
         """Wait until a given application is running.
 
         :param string desktop_file: The name of the application desktop file.
-        :param integer timeout: The maximum time to wait, in seconds. *If set to
-         something less than 0, this method will wait forever.*
+        :param integer timeout: The maximum time to wait, in seconds. *If set
+         to something less than 0, this method will wait forever.*
 
-        :return: true once the application is found, or false if the application
-         was not found until the timeout was reached.
+        :return: true once the application is found, or false if the
+         application was not found until the timeout was reached.
         """
         desktop_file = os.path.split(desktop_file)[1]
-        # python workaround since you can't assign to variables in the enclosing scope:
-        # see on_timeout_reached below...
+        # python workaround since you can't assign to variables in the
+        # enclosing scope: see on_timeout_reached below...
         found_app = [True]
 
         # maybe the app is running already?
-        if len(self.get_running_applications_by_desktop_file(desktop_file)) == 0:
+        running_applications = self.get_running_applications_by_desktop_file(
+            desktop_file)
+        if len(running_applications) == 0:
             wait_forever = timeout < 0
             gobject_loop = GLib.MainLoop()
 
@@ -287,8 +301,8 @@ class ProcessManager(ProcessManagerBase):
                 GLib.timeout_add(timeout * 1000, on_timeout_reached)
             # connect signal handler:
             get_session_bus().add_signal_receiver(on_view_added, 'ViewOpened')
-            # pump the gobject main loop until either the correct signal is emitted, or the
-            # timeout happens.
+            # pump the gobject main loop until either the correct signal is
+            # emitted, or the timeout happens.
             gobject_loop.run()
 
         return found_app[0]
@@ -329,9 +343,12 @@ class Application(ApplicationBase):
     def __init__(self, bamf_app_path):
         self.bamf_app_path = bamf_app_path
         try:
-            self._app_proxy = get_session_bus().get_object(_BAMF_BUS_NAME, bamf_app_path)
-            self._view_iface = dbus.Interface(self._app_proxy, 'org.ayatana.bamf.view')
-            self._app_iface = dbus.Interface(self._app_proxy, 'org.ayatana.bamf.application')
+            self._app_proxy = get_session_bus().get_object(
+                _BAMF_BUS_NAME, bamf_app_path)
+            self._view_iface = dbus.Interface(
+                self._app_proxy, 'org.ayatana.bamf.view')
+            self._app_iface = dbus.Interface(
+                self._app_proxy, 'org.ayatana.bamf.application')
         except dbus.DBusException, e:
             e.message += 'bamf_app_path=%r' % (bamf_app_path)
             raise
@@ -352,8 +369,8 @@ class Application(ApplicationBase):
     def name(self):
         """Get the application name.
 
-        .. note:: This may change according to the current locale. If you want a
-         unique string to match applications against, use the desktop_file
+        .. note:: This may change according to the current locale. If you want
+         a unique string to match applications against, use the desktop_file
          instead.
 
         """
@@ -408,13 +425,17 @@ class Window(WindowBase):
     """
     def __init__(self, window_path):
         self._bamf_win_path = window_path
-        self._app_proxy = get_session_bus().get_object(_BAMF_BUS_NAME, window_path)
-        self._window_iface = dbus.Interface(self._app_proxy, 'org.ayatana.bamf.window')
-        self._view_iface = dbus.Interface(self._app_proxy, 'org.ayatana.bamf.view')
+        self._app_proxy = get_session_bus().get_object(
+            _BAMF_BUS_NAME, window_path)
+        self._window_iface = dbus.Interface(
+            self._app_proxy, 'org.ayatana.bamf.window')
+        self._view_iface = dbus.Interface(
+            self._app_proxy, 'org.ayatana.bamf.view')
 
         self._xid = int(self._window_iface.GetXid())
         self._x_root_win = get_display().screen().root
-        self._x_win = get_display().create_resource_object('window', self._xid)
+        self._x_win = get_display().create_resource_object(
+            'window', self._xid)
 
     @property
     def x_id(self):
@@ -430,8 +451,8 @@ class Window(WindowBase):
     def name(self):
         """Get the window name.
 
-        .. note:: This may change according to the current locale. If you want a
-         unique string to match windows against, use the x_id instead.
+        .. note:: This may change according to the current locale. If you want
+         a unique string to match windows against, use the x_id instead.
 
         """
         return self._view_iface.Name()
@@ -454,14 +475,16 @@ class Window(WindowBase):
         :return: Tuple containing (x, y, width, height).
 
         """
-        # Note: MUST import these here, rather than at the top of the file. Why?
-        # Because sphinx imports these modules to build the API documentation,
-        # which in turn tries to import Gdk, which in turn fails because there's
-        # no DISPlAY environment set in the package builder.
+        # Note: MUST import these here, rather than at the top of the file.
+        # Why? Because sphinx imports these modules to build the API
+        # documentation, which in turn tries to import Gdk, which in turn
+        # fails because there's no DISPlAY environment set in the package
+        # builder.
         from gi.repository import GdkX11
         # FIXME: We need to use the gdk window here to get the real coordinates
         geometry = self._x_win.get_geometry()
-        origin = GdkX11.X11Window.foreign_new_for_display(get_display(), self._xid).get_origin()
+        origin = GdkX11.X11Window.foreign_new_for_display(
+            get_display(), self._xid).get_origin()
         return (origin[0], origin[1], geometry.width, geometry.height)
 
     @property
@@ -518,8 +541,8 @@ class Window(WindowBase):
     def is_valid(self):
         """Is this window object valid?
 
-        Invalid windows are caused by windows closing during the construction of
-        this object instance.
+        Invalid windows are caused by windows closing during the construction
+        of this object instance.
 
         """
         return not self._x_win is None
@@ -532,7 +555,8 @@ class Window(WindowBase):
     @property
     def closed(self):
         """Returns True if the window has been closed"""
-        # This will return False when the window is closed and then removed from BUS
+        # This will return False when the window is closed and then removed
+        # from BUS.
         try:
             return (self._window_iface.GetXid() != self.x_id)
         except:
@@ -548,15 +572,18 @@ class Window(WindowBase):
         self._x_win.configure(stack_mode=X.Above)
 
     def __repr__(self):
-        return "<Window '%s' Xid: %d>" % (self.title if self._x_win else '', self.x_id)
+        return "<Window '%s' Xid: %d>" % (
+            self.title if self._x_win else '', self.x_id)
 
     def _getProperty(self, _type):
         """Get an X11 property.
 
-        _type is a string naming the property type. win is the X11 window object.
+        _type is a string naming the property type. win is the X11 window
+        object.
 
         """
-        atom = self._x_win.get_full_property(get_display().get_atom(_type), X.AnyPropertyType)
+        atom = self._x_win.get_full_property(
+            get_display().get_atom(_type), X.AnyPropertyType)
         if atom:
             return atom.value
 
@@ -564,11 +591,14 @@ class Window(WindowBase):
         if type(data) is str:
             dataSize = 8
         else:
-            # data length must be 5 - pad with 0's if it's short, truncate otherwise.
+            # data length must be 5 - pad with 0's if it's short, truncate
+            # otherwise.
             data = (data + [0] * (5 - len(data)))[:5]
             dataSize = 32
 
-        ev = protocol.event.ClientMessage(window=self._x_win, client_type=get_display().get_atom(_type), data=(dataSize, data))
+        ev = protocol.event.ClientMessage(
+            window=self._x_win, client_type=get_display().get_atom(_type),
+            data=(dataSize, data))
 
         if not mask:
             mask = (X.SubstructureRedirectMask | X.SubstructureNotifyMask)
@@ -579,4 +609,5 @@ class Window(WindowBase):
         """Return a list of strings representing the current window state."""
 
         get_display().sync()
-        return map(get_display().get_atom_name, self._getProperty('_NET_WM_STATE'))
+        return map(get_display().get_atom_name, self._getProperty(
+            '_NET_WM_STATE'))

@@ -34,54 +34,55 @@ class ProcessManager(object):
     """
 
     KNOWN_APPS = {
-        'Character Map' : {
+        'Character Map': {
             'desktop-file': 'gucharmap.desktop',
             'process-name': 'gucharmap',
-            },
-        'Calculator' : {
+        },
+        'Calculator': {
             'desktop-file': 'gcalctool.desktop',
             'process-name': 'gnome-calculator',
-            },
-        'Mahjongg' : {
+        },
+        'Mahjongg': {
             'desktop-file': 'mahjongg.desktop',
             'process-name': 'gnome-mahjongg',
-            },
-        'Remmina' : {
+        },
+        'Remmina': {
             'desktop-file': 'remmina.desktop',
             'process-name': 'remmina',
-            },
-        'System Settings' : {
+        },
+        'System Settings': {
             'desktop-file': 'gnome-control-center.desktop',
             'process-name': 'gnome-control-center',
-            },
-        'Text Editor' : {
+        },
+        'Text Editor': {
             'desktop-file': 'gedit.desktop',
             'process-name': 'gedit',
-            },
-        'Terminal' : {
+        },
+        'Terminal': {
             'desktop-file': 'gnome-terminal.desktop',
             'process-name': 'gnome-terminal',
-            },
-        }
-
+        },
+    }
 
     @staticmethod
     def create(preferred_backend=""):
         """Get an instance of the :py:class:`ProcessManager` class.
 
-        For more infomration on picking specific backends, see :ref:`tut-picking-backends`
+        For more infomration on picking specific backends, see
+        :ref:`tut-picking-backends`
 
-        :param preferred_backend: A string containing a hint as to which backend you
-            would like. Possible backends are:
+        :param preferred_backend: A string containing a hint as to which
+            backend you would like. Possible backends are:
 
-            * ``BAMF`` - Get process information using the BAMF Application Matching Framework.
+            * ``BAMF`` - Get process information using the BAMF Application
+                Matching Framework.
 
-        :raises: RuntimeError if autopilot cannot instantate any of the possible
-            backends.
+        :raises: RuntimeError if autopilot cannot instantate any of the
+            possible backends.
         :raises: RuntimeError if the preferred_backend is specified and is not
             one of the possible backends for this device class.
-        :raises: :class:`~autopilot.BackendException` if the preferred_backend is
-            set, but that backend could not be instantiated.
+        :raises: :class:`~autopilot.BackendException` if the preferred_backend
+            is set, but that backend could not be instantiated.
 
         """
         def get_bamf_pm():
@@ -107,7 +108,8 @@ class ProcessManager(object):
         remain registerred until the test run ends.
 
         :param name: The name to be used when launching the application.
-        :param desktop_file: The filename (without path component) of the desktop file used to launch the application.
+        :param desktop_file: The filename (without path component) of the
+         desktop file used to launch the application.
         :param process_name: The name of the executable process that gets run.
         :raises: **KeyError** if application has been registered already
 
@@ -116,9 +118,9 @@ class ProcessManager(object):
             raise KeyError("Application has been registered already")
         else:
             cls.KNOWN_APPS[name] = {
-                                     "desktop-file" : desktop_file,
-                                     "process-name" : process_name
-                                   }
+                "desktop-file": desktop_file,
+                "process-name": process_name
+            }
 
     @classmethod
     def unregister_known_application(cls, name):
@@ -136,10 +138,10 @@ class ProcessManager(object):
     def start_app(self, app_name, files=[], locale=None):
         """Start one of the known applications, and kill it on tear down.
 
-        .. warning:: This method will clear all instances of this application on
-         tearDown, not just the one opened by this method! We recommend that
-         you use the :meth:`start_app_window` method instead, as it is generally
-         safer.
+        .. warning:: This method will clear all instances of this application
+         on tearDown, not just the one opened by this method! We recommend that
+         you use the :meth:`start_app_window` method instead, as it is
+         generally safer.
 
         :param app_name: The application name. *This name must either already
          be registered as one of the built-in applications that are supported
@@ -207,7 +209,7 @@ class ProcessManager(object):
         raise NotImplementedError("You cannot use this class directly.")
 
     def get_running_applications_by_desktop_file(self, desktop_file):
-        """Return a list of applications that have the desktop file *desktop_file*.
+        """Return a list of applications with the desktop file *desktop_file*.
 
         This method will return an empty list if no applications
         are found with the specified desktop file.
@@ -230,11 +232,11 @@ class ProcessManager(object):
         """Wait until a given application is running.
 
         :param string desktop_file: The name of the application desktop file.
-        :param integer timeout: The maximum time to wait, in seconds. *If set to
-         something less than 0, this method will wait forever.*
+        :param integer timeout: The maximum time to wait, in seconds. *If set
+         to something less than 0, this method will wait forever.*
 
-        :return: true once the application is found, or false if the application
-         was not found until the timeout was reached.
+        :return: true once the application is found, or false if the
+         application was not found until the timeout was reached.
         """
         raise NotImplementedError("You cannot use this class directly.")
 
@@ -268,8 +270,9 @@ class Application(object):
     def name(self):
         """Get the application name.
 
-        .. note:: This may change according to the current locale. If you want a
-         unique string to match applications against, use desktop_file instead.
+        .. note:: This may change according to the current locale. If you want
+         a unique string to match applications against, use desktop_file
+         instead.
 
         """
         raise NotImplementedError("You cannot use this class directly.")
@@ -308,7 +311,6 @@ class Application(object):
         raise NotImplementedError("You cannot use this class directly.")
 
 
-
 class Window(object):
     @property
     def x_id(self):
@@ -329,8 +331,8 @@ class Window(object):
     def name(self):
         """Get the window name.
 
-        .. note:: This may change according to the current locale. If you want a
-         unique string to match windows against, use the x_id instead.
+        .. note:: This may change according to the current locale. If you want
+         a unique string to match windows against, use the x_id instead.
 
         """
         raise NotImplementedError("You cannot use this class directly.")
@@ -399,8 +401,8 @@ class Window(object):
     def is_valid(self):
         """Is this window object valid?
 
-        Invalid windows are caused by windows closing during the construction of
-        this object instance.
+        Invalid windows are caused by windows closing during the construction
+        of this object instance.
 
         """
         raise NotImplementedError("You cannot use this class directly.")

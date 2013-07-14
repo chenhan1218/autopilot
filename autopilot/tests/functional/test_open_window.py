@@ -30,7 +30,8 @@ logger = logging.getLogger(__name__)
 
 class OpenWindowTests(AutopilotTestCase):
 
-    scenarios = [(k, {'app_name': k}) for k in ProcessManager.KNOWN_APPS.iterkeys()]
+    scenarios = [
+        (k, {'app_name': k}) for k in ProcessManager.KNOWN_APPS.iterkeys()]
 
     def test_open_window(self):
         """self.start_app_window must open a new window of the given app."""

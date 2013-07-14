@@ -62,7 +62,8 @@ class DbusQueryTests(AutopilotTestCase):
         json.dump(window_spec, open(file_path, 'w'))
         self.addCleanup(os.remove, file_path)
 
-        return self.launch_test_application('window-mocker', file_path, app_type="qt")
+        return self.launch_test_application(
+            'window-mocker', file_path, app_type="qt")
 
     def test_select_single_selects_only_available_object(self):
         """Must be able to select a single unique object."""

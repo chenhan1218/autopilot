@@ -26,7 +26,8 @@ from autopilot.input import Mouse
 
 
 def is_rect_on_screen(screen_number, rect):
-    """Returns True if *rect* is **entirely** on the specified screen, with no overlap."""
+    """Returns True if *rect* is **entirely** on the specified screen, with no
+    overlap."""
     (x, y, w, h) = rect
     (mx, my, mw, mh) = Display.create().get_screen_geometry(screen_number)
     return (x >= mx and x + w <= mx + mw and y >= my and y + h <= my + mh)
@@ -45,7 +46,8 @@ def is_point_on_screen(screen_number, point):
 
 def is_point_on_any_screen(point):
     """Returns true if *point* is on any currently configured screen."""
-    return any([is_point_on_screen(m, point) for m in range(Display.create().get_num_screens())])
+    return any([is_point_on_screen(m, point) for m in
+                range(Display.create().get_num_screens())])
 
 
 def move_mouse_to_screen(screen_number):
@@ -70,7 +72,8 @@ def move_mouse_to_screen(screen_number):
 #         raise TypeError("Window must be a BamfWindow")
 
 #     if window.monitor == screen:
-#         logger.debug("Window %r is already on screen %d." % (window.x_id, screen))
+#         logger.debug(
+#             "Window %r is already on screen %d." % (window.x_id, screen))
 #         return
 
 #     assert(not window.is_maximized)
@@ -102,21 +105,22 @@ class Display:
     def create(preferred_backend=''):
         """Get an instance of the Display class.
 
-        For more infomration on picking specific backends, see :ref:`tut-picking-backends`
+        For more infomration on picking specific backends, see
+        :ref:`tut-picking-backends`
 
-        :param preferred_backend: A string containing a hint as to which backend you
-            would like.
+        :param preferred_backend: A string containing a hint as to which
+            backend you would like.
 
             possible backends are:
 
             * ``X11`` - Get display information from X11.
             * ``UPA`` - Get display information from the ubuntu platform API.
-        :raises: RuntimeError if autopilot cannot instantate any of the possible
-            backends.
+        :raises: RuntimeError if autopilot cannot instantate any of the
+            possible backends.
         :raises: RuntimeError if the preferred_backend is specified and is not
             one of the possible backends for this device class.
-        :raises: :class:`~autopilot.BackendException` if the preferred_backend is
-            set, but that backend could not be instantiated.
+        :raises: :class:`~autopilot.BackendException` if the preferred_backend
+            is set, but that backend could not be instantiated.
 
         """
         def get_x11_display():
@@ -133,7 +137,8 @@ class Display:
         return _pick_backend(backends, preferred_backend)
 
     class BlacklistedDriverError(RuntimeError):
-        """Cannot set primary monitor when running drivers listed in the driver blacklist."""
+        """Cannot set primary monitor when running drivers listed in the
+        driver blacklist."""
 
     def get_num_screens(self):
         """Get the number of screens attached to the PC."""

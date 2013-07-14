@@ -109,7 +109,7 @@ class ProcessManager(object):
 
         :param name: The name to be used when launching the application.
         :param desktop_file: The filename (without path component) of the
-        desktop file used to launch the application.
+         desktop file used to launch the application.
         :param process_name: The name of the executable process that gets run.
         :raises: **KeyError** if application has been registered already
 

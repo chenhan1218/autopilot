@@ -42,7 +42,8 @@ class QtApplicationLauncher(ApplicationLauncher):
     """
 
     def prepare_environment(self, app_path, arguments):
-        """Prepare the application, or environment to launch with autopilot-support.
+        """Prepare the application, or environment to launch with
+        autopilot-support.
 
         """
         if '-testability' not in arguments:
@@ -63,8 +64,8 @@ class QtSignalWatcher(object):
         'proxy' is an instance of QtObjectProxyMixin.
         'signal_name' is the name of the signal being monitored.
 
-        Do not construct this object yourself. Instead, call 'watch_signal' on a
-        QtObjectProxyMixin instance.
+        Do not construct this object yourself. Instead, call 'watch_signal' on
+        a QtObjectProxyMixin instance.
 
         """
         self._proxy = proxy
@@ -94,8 +95,8 @@ class QtObjectProxyMixin(object):
     """A class containing methods specific to querying Qt applications."""
 
     def _get_qt_iface(self):
-        """Get the autopilot Qt-specific interface for the specified service name
-        and object path.
+        """Get the autopilot Qt-specific interface for the specified service
+        name and object path.
 
         """
 
@@ -103,7 +104,8 @@ class QtObjectProxyMixin(object):
 
     @property
     def slots(self):
-        """An object that contains all the slots available to be called in this object."""
+        """An object that contains all the slots available to be called in
+        this object."""
         if getattr(self, '_slots', None) is None:
             self._slots = QtSlotProxy(self)
         return self._slots
@@ -117,18 +119,20 @@ class QtObjectProxyMixin(object):
          * 'clicked(bool)'
          * 'pressed()'
 
-        A list of valid signal names can be retrieved from 'get_signals()'. If an
-        invalid signal name is given ValueError will be raised.
+        A list of valid signal names can be retrieved from 'get_signals()'. If
+        an invalid signal name is given ValueError will be raised.
 
         This method returns a QtSignalWatcher instance.
 
-        By default, no signals are monitored. You must call this method once for
-        each signal you are interested in.
+        By default, no signals are monitored. You must call this method once
+        for each signal you are interested in.
 
         """
         valid_signals = self.get_signals()
         if signal_name not in valid_signals:
-            raise ValueError("Signal name %r is not in the valid signal list of %r" % (signal_name, valid_signals))
+            raise ValueError(
+                "Signal name %r is not in the valid signal list of %r" %
+                (signal_name, valid_signals))
 
         self._get_qt_iface().RegisterSignalInterest(self.id, signal_name)
         return QtSignalWatcher(self, signal_name)
@@ -142,19 +146,21 @@ class QtObjectProxyMixin(object):
         this method directly. A QtSignalWatcher instance is returned from
         'watch_signal'.
 
-        Each item in the returned list is a tuple containing the arguments in the
-        emission (possibly an empty list if the signal has no arguments).
+        Each item in the returned list is a tuple containing the arguments in
+        the emission (possibly an empty list if the signal has no arguments).
 
         If the signal was not emitted, the list will be empty. You must first
         call 'watch_signal(signal_name)' in order to monitor this signal.
 
-        Note: Some signal arguments may not be marshallable over DBus. If this is
-        the case, they will be omitted from the argument list.
+        Note: Some signal arguments may not be marshallable over DBus. If this
+        is the case, they will be omitted from the argument list.
 
         """
         valid_signals = self.get_signals()
         if signal_name not in valid_signals:
-            raise ValueError("Signal name %r is not in the valid signal list of %r" % (signal_name, valid_signals))
+            raise ValueError(
+                "Signal name %r is not in the valid signal list of %r" %
+                (signal_name, valid_signals))
 
         return self._get_qt_iface().GetSignalEmissions(self.id, signal_name)
 

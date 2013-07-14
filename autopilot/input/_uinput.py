@@ -145,6 +145,7 @@ class Keyboard(KeyboardBase):
         if len(_PRESSED_KEYS) == 0:
             return
         _device = UInput(devnode=_get_devnode_path())
+
         def _release(event):
             _device.write(e.EV_KEY, event, RELEASE)
             _device.syn()
@@ -157,8 +158,8 @@ class Keyboard(KeyboardBase):
     def _get_events_for_key(key):
         """Return a list of events required to generate 'key' as an input.
 
-        Multiple keys will be returned when the key specified requires more than one
-        keypress to generate (for example, upper-case letters).
+        Multiple keys will be returned when the key specified requires more
+        than one keypress to generate (for example, upper-case letters).
 
         """
         events = []
@@ -181,6 +182,8 @@ def _get_devnode_path():
 
 
 last_tracking_id = 0
+
+
 def get_next_tracking_id():
     global last_tracking_id
     last_tracking_id += 1
@@ -208,7 +211,7 @@ def create_touch_device(res_x=None, res_y=None):
             if geometry[0] + geometry[2] > r:
                 r = geometry[0] + geometry[2]
             if geometry[1] + geometry[3] > b:
-                b = geometry[1] + geometry[3];
+                b = geometry[1] + geometry[3]
         res_x = r - l
         res_y = b - t
 
@@ -219,7 +222,7 @@ def create_touch_device(res_x=None, res_y=None):
         touch_tool = e.BTN_TOUCH
 
     cap_mt = {
-        e.EV_ABS : [
+        e.EV_ABS: [
             (e.ABS_X, (0, res_x, 0, 0)),
             (e.ABS_Y, (0, res_y, 0, 0)),
             (e.ABS_PRESSURE, (0, 65535, 0, 0)),
@@ -250,17 +253,17 @@ _touch_device = create_touch_device()
 # separate touches, we'll do the same.
 
 # Each finger contact starts by registering a slot number (0-8) with a tracking
-# Id. The Id should be unique for this touch - this can be an auto-inctrementing
-# integer. The very first packets to tell the kernel that we have a touch happening
-# should look like this:
+# Id. The Id should be unique for this touch - this can be an
+# auto-inctrementing integer. The very first packets to tell the kernel that
+# we have a touch happening should look like this:
 
 #    ABS_MT_SLOT 0
 #    ABS_MT_TRACKING_ID 45
 #    ABS_MT_POSITION_X x[0]
 #    ABS_MT_POSITION_Y y[0]
 
-# This associates Tracking id 45 (could be any number) with slot 0. Slot 0 can now
-# not be use by any other touch until it is released.
+# This associates Tracking id 45 (could be any number) with slot 0. Slot 0 can
+# now not be use by any other touch until it is released.
 
 # If we want to move this contact's coordinates, we do this:
 
@@ -268,22 +271,24 @@ _touch_device = create_touch_device()
 #    ABS_MT_POSITION_X 123
 #    ABS_MT_POSITION_Y 234
 
-# Technically, the 'SLOT 0' part isn't needed, since we're already in slot 0, but
-# it doesn't hurt to have it there.
+# Technically, the 'SLOT 0' part isn't needed, since we're already in slot 0,
+# but it doesn't hurt to have it there.
 
 # To lift the contact, we simply specify a tracking Id of -1:
 
 #    ABS_MT_SLOT 0
 #    ABS_MT_TRACKING_ID -1
 
-# The initial association between slot and tracking Id is made when the 'finger'
-# first makes contact with the device (well, not technically true, but close
-# enough). Multiple touches can be active simultaniously, as long as they all have
-# unique slots, and tracking Ids. The simplest way to think about this is that the
-# SLOT refers to a finger number, and the TRACKING_ID identifies a unique touch
-# for the duration of it's existance.
+# The initial association between slot and tracking Id is made when the
+# 'finger' first makes contact with the device (well, not technically true,
+# but close enough). Multiple touches can be active simultaniously, as long
+# as they all have unique slots, and tracking Ids. The simplest way to think
+# about this is that the SLOT refers to a finger number, and the TRACKING_ID
+# identifies a unique touch for the duration of it's existance.
 
 _touch_fingers_in_use = []
+
+
 def _get_touch_finger():
     """Claim a touch finger id for use.
 
@@ -298,6 +303,7 @@ def _get_touch_finger():
             return i
     raise RuntimeError("All available fingers have been used already.")
 
+
 def _release_touch_finger(finger_num):
     """Relase a previously-claimed finger id.
 
@@ -308,7 +314,9 @@ def _release_touch_finger(finger_num):
     global _touch_fingers_in_use
 
     if finger_num not in _touch_fingers_in_use:
-        raise RuntimeError("Finger %d was never claimed, or has already been released." % (finger_num))
+        raise RuntimeError(
+            "Finger %d was never claimed, or has already been released." %
+            (finger_num))
     _touch_fingers_in_use.remove(finger_num)
     assert(finger_num not in _touch_fingers_in_use)
 
@@ -326,7 +334,7 @@ class Touch(TouchBase):
 
     def tap(self, x, y):
         """Click (or 'tap') at given x and y coordinates."""
-        logger.debug("Tapping at: %d,%d", x,y)
+        logger.debug("Tapping at: %d,%d", x, y)
         self._finger_down(x, y)
         sleep(0.1)
         self._finger_up()
@@ -334,20 +342,19 @@ class Touch(TouchBase):
     def tap_object(self, object):
         """Click (or 'tap') a given object"""
         logger.debug("Tapping object: %r", object)
-        x,y = get_center_point(object)
-        self.tap(x,y)
+        x, y = get_center_point(object)
+        self.tap(x, y)
 
     def press(self, x, y):
         """Press and hold a given object or at the given coordinates
         Call release() when the object has been pressed long enough"""
-        logger.debug("Pressing at: %d,%d", x,y)
+        logger.debug("Pressing at: %d,%d", x, y)
         self._finger_down(x, y)
 
     def release(self):
         """Release a previously pressed finger"""
         logger.debug("Releasing")
         self._finger_up()
-
 
     def drag(self, x1, y1, x2, y2):
         """Perform a drag gesture from (x1,y1) to (x2,y2)"""
@@ -368,22 +375,25 @@ class Touch(TouchBase):
         self._finger_move(x2, y2)
         self._finger_up()
 
-
-
     def _finger_down(self, x, y):
-        """Internal: moves finger "finger" down to the touchscreen at pos (x,y)"""
+        """Internal: moves finger "finger" down on the touchscreen.
+
+        :param x: The finger will be moved to this x coordinate.
+        :param y: The finger will be moved to this y coordinate.
+
+        """
         if self._touch_finger is not None:
             raise RuntimeError("Cannot press finger: it's already pressed.")
         self._touch_finger = _get_touch_finger()
 
         _touch_device.write(e.EV_ABS, e.ABS_MT_SLOT, self._touch_finger)
-        _touch_device.write(e.EV_ABS, e.ABS_MT_TRACKING_ID, get_next_tracking_id())
+        _touch_device.write(
+            e.EV_ABS, e.ABS_MT_TRACKING_ID, get_next_tracking_id())
         _touch_device.write(e.EV_KEY, e.BTN_TOOL_FINGER, 1)
         _touch_device.write(e.EV_ABS, e.ABS_MT_POSITION_X, int(x))
         _touch_device.write(e.EV_ABS, e.ABS_MT_POSITION_Y, int(y))
         _touch_device.write(e.EV_ABS, e.ABS_MT_PRESSURE, 400)
         _touch_device.syn()
-
 
     def _finger_move(self, x, y):
         """Internal: moves finger "finger" on the touchscreen to pos (x,y)
@@ -393,7 +403,6 @@ class Touch(TouchBase):
             _touch_device.write(e.EV_ABS, e.ABS_MT_POSITION_X, int(x))
             _touch_device.write(e.EV_ABS, e.ABS_MT_POSITION_Y, int(y))
             _touch_device.syn()
-
 
     def _finger_up(self):
         """Internal: moves finger "finger" up from the touchscreen"""

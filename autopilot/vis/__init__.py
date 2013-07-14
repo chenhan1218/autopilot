@@ -26,6 +26,7 @@ import sys
 from autopilot.vis.bus_enumerator import BusEnumerator
 from autopilot.vis.main_window import MainWindow
 
+
 def vis_main():
     app = QtGui.QApplication(sys.argv)
     app.setApplicationName("Autopilot")
@@ -42,4 +43,3 @@ def vis_main():
 
     window.show()
     sys.exit(app.exec_())
-

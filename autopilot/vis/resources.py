@@ -33,17 +33,17 @@ def dbus_string_rep(dbus_type):
         return repr(bool(dbus_type))
     if isinstance(dbus_type, dbus.String):
         return dbus_type.encode('utf-8', errors='ignore')
-    if (isinstance(dbus_type, dbus.Int16)
-        or isinstance(dbus_type, dbus.UInt16)
-        or isinstance(dbus_type, dbus.Int32)
-        or isinstance(dbus_type, dbus.UInt32)
-        or isinstance(dbus_type, dbus.Int64)
-        or isinstance(dbus_type, dbus.UInt64)):
+    if (isinstance(dbus_type, dbus.Int16) or
+            isinstance(dbus_type, dbus.UInt16) or
+            isinstance(dbus_type, dbus.Int32) or
+            isinstance(dbus_type, dbus.UInt32) or
+            isinstance(dbus_type, dbus.Int64) or
+            isinstance(dbus_type, dbus.UInt64)):
         return repr(int(dbus_type))
     if isinstance(dbus_type, dbus.Double):
         return repr(float(dbus_type))
-    if (isinstance(dbus_type, dbus.Array)
-        or isinstance(dbus_type, dbus.Struct)):
+    if (isinstance(dbus_type, dbus.Array) or
+            isinstance(dbus_type, dbus.Struct)):
         return ', '.join([dbus_string_rep(i) for i in dbus_type])
     else:
         return repr(dbus_type)

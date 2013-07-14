@@ -25,7 +25,7 @@ from PyQt4.QtCore import (
     pyqtSignal,
     qDebug,
     QObject,
-    )
+)
 from xml.etree import ElementTree
 
 
@@ -51,12 +51,12 @@ class BusEnumerator(QObject):
             self._get_objects_and_interfaces(connection)
 
     def _get_objects_and_interfaces(self, conn_name, obj_name='/'):
-        """Return a list of objects and their interfaces.
-
-        """
+        """Return a list of objects and their interfaces."""
         obj = self._bus.get_object(conn_name, obj_name)
-        obj.Introspect(dbus_interface='org.freedesktop.DBus.Introspectable',
-            reply_handler=lambda xml: self._reply_handler(conn_name, obj_name, xml),
+        obj.Introspect(
+            dbus_interface='org.freedesktop.DBus.Introspectable',
+            reply_handler=lambda xml: self._reply_handler(
+                conn_name, obj_name, xml),
             error_handler=self._error_handler)
 
     def _error_handler(self, *error):
@@ -68,9 +68,7 @@ class BusEnumerator(QObject):
         for child in root.getchildren():
             child_name = join(obj_name, child.attrib['name'])
             if child.tag == 'node':
-                self._get_objects_and_interfaces(
-                                                conn_name,
-                                                child_name)
+                self._get_objects_and_interfaces(conn_name, child_name)
             elif child.tag == 'interface':
                 iface_name = child_name.split('/')[-1]
                 self._add_hit(conn_name, obj_name, iface_name)
@@ -103,7 +101,7 @@ class BusEnumerator(QObject):
         if connection_string not in self._data.keys():
             raise KeyError("connection %s not in results" % connection_string)
         if object_path not in self._data[connection_string].keys():
-            raise KeyError("object %s not in results for connection %s" % (object_path, connection_string))
+            raise KeyError(
+                "object %s not in results for connection %s" %
+                (object_path, connection_string))
         return self._data[connection_string][object_path]
-
-

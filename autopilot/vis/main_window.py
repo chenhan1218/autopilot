@@ -23,7 +23,10 @@ from __future__ import absolute_import
 import dbus
 from PyQt4 import QtGui, QtCore
 
-from autopilot.introspection import _get_dbus_address_object, _make_proxy_object
+from autopilot.introspection import (
+    _get_dbus_address_object,
+    _make_proxy_object
+)
 from autopilot.introspection.constants import AP_INTROSPECTION_IFACE
 from autopilot.introspection.dbus import StateNotFoundError
 from autopilot.introspection.qt import QtObjectProxyMixin
@@ -41,8 +44,8 @@ class MainWindow(QtGui.QMainWindow):
 
     def readSettings(self):
         settings = QtCore.QSettings()
-        self.restoreGeometry(settings.value("geometry").toByteArray());
-        self.restoreState(settings.value("windowState").toByteArray());
+        self.restoreGeometry(settings.value("geometry").toByteArray())
+        self.restoreState(settings.value("windowState").toByteArray())
 
     def closeEvent(self, event):
         settings = QtCore.QSettings()
@@ -61,7 +64,8 @@ class MainWindow(QtGui.QMainWindow):
         self.setCentralWidget(self.splitter)
 
         self.connection_list = QtGui.QComboBox()
-        self.connection_list.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
+        self.connection_list.setSizeAdjustPolicy(
+            QtGui.QComboBox.AdjustToContents)
         self.connection_list.activated.connect(self.conn_list_activated)
 
         self.toolbar = self.addToolBar('Connection')
@@ -72,10 +76,11 @@ class MainWindow(QtGui.QMainWindow):
         if iface == AP_INTROSPECTION_IFACE:
             self.statusBar().showMessage('Updating connection list')
             try:
-                dbus_address_instance = _get_dbus_address_object(str(conn), str(obj), self._dbus_bus)
+                dbus_address_instance = _get_dbus_address_object(
+                    str(conn), str(obj), self._dbus_bus)
                 proxy_object = _make_proxy_object(dbus_address_instance, None)
                 cls_name = proxy_object.__class__.__name__
-                if not self.selectable_interfaces.has_key(cls_name):
+                if not cls_name in self.selectable_interfaces:
                     self.selectable_interfaces[cls_name] = proxy_object
                     self.update_selectable_interfaces()
             except (dbus.DBusException, RuntimeError):
@@ -93,7 +98,7 @@ class MainWindow(QtGui.QMainWindow):
                     get_qt_icon(),
                     name,
                     QtCore.QVariant(proxy_obj)
-                    )
+                )
             else:
                 self.connection_list.addItem(name, QtCore.QVariant(proxy_obj))
 
@@ -108,7 +113,8 @@ class MainWindow(QtGui.QMainWindow):
         if dbus_details:
             self.tree_model = VisTreeModel(dbus_details)
             self.tree_view.setModel(self.tree_model)
-            self.tree_view.selectionModel().currentChanged.connect(self.tree_item_changed)
+            self.tree_view.selectionModel().currentChanged.connect(
+                self.tree_item_changed)
 
     def tree_item_changed(self, current, previous):
         proxy = current.internalPointer().dbus_object
@@ -145,8 +151,8 @@ class TreeNode(object):
     def num_children(self):
         """An optimisation that allows us to get the number of children without
         actually retrieving them all. This is useful since Qt needs to know if
-        there are children (to draw the drop-down triangle thingie), but doesn't
-        need to know about the details.
+        there are children (to draw the drop-down triangle thingie), but
+        doesn't need to know about the details.
 
         """
         num_children = 0
@@ -211,7 +217,7 @@ class VisTreeModel(QtCore.QAbstractItemModel):
 
     def headerData(self, column, orientation, role):
         if (orientation == QtCore.Qt.Horizontal and
-            role == QtCore.Qt.DisplayRole):
+                role == QtCore.Qt.DisplayRole):
             try:
                 return QtCore.QVariant("Tree Node")
             except IndexError:

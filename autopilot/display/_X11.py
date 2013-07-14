@@ -24,16 +24,19 @@ from autopilot.display import Display as DisplayBase
 
 logger = logging.getLogger(__name__)
 
+
 class Display(DisplayBase):
     def __init__(self):
-        # Note: MUST import these here, rather than at the top of the file. Why?
-        # Because sphinx imports these modules to build the API documentation,
-        # which in turn tries to import Gdk, which in turn fails because there's
-        # no DISPlAY environment set in the package builder.
+        # Note: MUST import these here, rather than at the top of the file.
+        # Why? Because sphinx imports these modules to build the API
+        # documentation, which in turn tries to import Gdk, which in turn
+        # fails because there's no DISPlAY environment set in the package
+        # builder.
         from gi.repository import Gdk
         self._default_screen = Gdk.Screen.get_default()
         if self._default_screen is None:
-            raise RuntimeError("Unable to determine default screen information")
+            raise RuntimeError(
+                "Unable to determine default screen information")
         self._blacklisted_drivers = ["NVIDIA"]
 
     def get_num_screens(self):

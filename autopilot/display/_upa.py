@@ -25,6 +25,7 @@ from upa import get_resolution
 
 logger = logging.getLogger(__name__)
 
+
 class Display(DisplayBase):
     """The base class/inteface for the display devices"""
 

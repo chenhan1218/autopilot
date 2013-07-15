@@ -1,3 +1,19 @@
+autopilot (1.3.1+13.10.20130715-0ubuntu1) saucy; urgency=low
+
+  [ Leo Arias ]
+  * Fixed pep8 errors in autopilot/input. (LP: #1201057)
+  * Fixed pep8 errors in autopilot/process and autopilot/matchers. (LP:
+    #1201057)
+  * Fixed pep8 errors in autopilto/vis and autopilot/display. (LP:
+    #1201057)
+  * Fixed pep8 errors in autopilot/introspection. (LP: #1201057)
+  * Fixed pep8 errors in autopilot/functional. (LP: #1201057)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 271
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 15 Jul 2013 00:01:56 +0000
+
 autopilot (1.3.1+13.10.20130712-0ubuntu1) saucy; urgency=low
 
   [ Łukasz 'sil2100' Zemczak ]

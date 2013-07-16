@@ -166,8 +166,11 @@ def get_autopilot_proxy_object_for_process(process, emulator_base):
 
     """
     pid = process.pid
-    return get_proxy_object_for_existing_process(
+    proxy_obj =  get_proxy_object_for_existing_process(
         pid, emulator_base=emulator_base)
+    proxy_obj.set_process(process)
+
+    return proxy_obj
 
 
 def get_proxy_object_for_existing_process(
@@ -234,10 +237,7 @@ def get_proxy_object_for_existing_process(
     if len(dbus_addresses) > 1:
         raise RuntimeError("Search criteria returned multiple results")
 
-    proxy_obj = _make_proxy_object(dbus_addresses[0], emulator_base)
-    proxy_obj.set_process(pid)
-
-    return proxy_obj
+    return _make_proxy_object(dbus_addresses[0], emulator_base)
 
 
 def _get_dbus_addresses_from_search_parameters(

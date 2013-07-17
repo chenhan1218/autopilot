@@ -1,3 +1,14 @@
+autopilot (1.3.1+13.10.20130717-0ubuntu1) saucy; urgency=low
+
+  [ Christopher Lee ]
+  * Fixes bug where the proxy process object wasn't being set properly.
+    (LP: #1200560)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 273
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 17 Jul 2013 00:02:12 +0000
+
 autopilot (1.3.1+13.10.20130715-0ubuntu1) saucy; urgency=low
 
   [ Leo Arias ]

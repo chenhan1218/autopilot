@@ -26,6 +26,22 @@ from testtools.matchers import raises
 from textwrap import dedent
 
 from autopilot.testcase import AutopilotTestCase
+from autopilot.introspection import (
+    get_proxy_object_for_existing_process,
+    _pid_is_still_running
+)
+
+
+def _get_unused_pid():
+    """Returns a Process ID number that isn't currently running.
+
+    :raises: **RuntimeError** if unable to produce a number that doesn't
+     correspond to a currently running process.
+    """
+    for i in xrange(10000, 20000):
+        if not _pid_is_still_running(i):
+            return i
+    raise RuntimeError("Unable to find test PID.")
 
 
 class ApplicationTests(AutopilotTestCase):
@@ -59,6 +75,18 @@ AutopilotTestCase.pick_app_launcher method."
         self.assertThat(
             lambda: self.launch_test_application(path),
             raises(RuntimeError(expected_error_message)))
+
+    def test_creating_app_for_non_running_app_fails(self):
+        """Attempting to create an application proxy object for a process
+        (using a PID) that isn't running must raise an exception.
+
+        """
+        pid = _get_unused_pid()
+
+        self.assertThat(
+            lambda: get_proxy_object_for_existing_process(pid=pid),
+            raises(RuntimeError("While searching PID %d could not be found, perhaps it has segfaulted?" % pid))
+        )
 
 
 class QtTests(ApplicationTests):

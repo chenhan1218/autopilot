@@ -480,6 +480,8 @@ class Window(WindowBase):
         # documentation, which in turn tries to import Gdk, which in turn
         # fails because there's no DISPlAY environment set in the package
         # builder.
+        from gi import require_version
+        require_version('GdkX11', '3.0')
         from gi.repository import GdkX11
         # FIXME: We need to use the gdk window here to get the real coordinates
         geometry = self._x_win.get_geometry()

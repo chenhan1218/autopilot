@@ -34,6 +34,8 @@ class Display(DisplayBase):
         # fails because there's no DISPLAY environment set in the package
         # builder.
         with Silence():
+            from gi import require_version
+            require_version('Gdk', '3.0')
             from gi.repository import Gdk
         self._default_screen = Gdk.Screen.get_default()
         if self._default_screen is None:

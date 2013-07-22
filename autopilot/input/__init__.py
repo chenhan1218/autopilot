@@ -59,6 +59,9 @@ from collections import OrderedDict
 from autopilot.utilities import _pick_backend, CleanupRegistered
 from autopilot.input._common import get_center_point
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Keyboard(CleanupRegistered):
 
@@ -214,6 +217,11 @@ class Mouse(CleanupRegistered):
 
         from autopilot.platform import model
         if model() != 'Desktop':
+            logger.info("You cannot create a Mouse on the phablet devices. " \
+                "consider using a Touch or Pointer device. " \
+                "For more information, see: " \
+                "http://unity.ubuntu.com/autopilot/api/input.html#autopilot-unified-input-system"
+            )
             raise RuntimeError(
                 "Cannot create a mouse on the phablet devices."
             )

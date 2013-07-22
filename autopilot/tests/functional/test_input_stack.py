@@ -22,7 +22,7 @@ import json
 import os
 from tempfile import mktemp
 from testtools import TestCase
-from testtools.matchers import IsInstance, Equals
+from testtools.matchers import IsInstance, Equals, raises
 from unittest import SkipTest
 from mock import patch
 
@@ -110,6 +110,19 @@ class MouseTestCase(AutopilotTestCase):
         device = Mouse.create()
         device.move(10, 10.6)
         self.assertEqual(device.position(), (10, 10))
+
+    @patch('autopilot.platform.model', new=lambda *args: "Not Desktop", )
+    def test_mouse_creation_on_device_raises_useful_error(self):
+        """Trying to create a mouse device on the phablet devices must raise an
+        explicit exception.
+
+        """
+        expected_exception = RuntimeError(
+            "Cannot create a mouse on the phablet devices."
+        )
+        self.assertThat(lambda: Mouse.create(),
+            raises(expected_exception))
+
 
 
 class TouchTests(AutopilotTestCase):

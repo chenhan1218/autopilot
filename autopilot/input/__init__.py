@@ -39,12 +39,15 @@ on creating backends, see :ref:`tut-picking-backends`
 There are three basic input types available:
 
  * :class:`Keyboard` - traditional keyboard devices.
- * :class:`Mouse` - traditional mouse devices.
+ * :class:`Mouse` - traditional mouse devices (Currently only avaialble on the
+    desktop).
  * :class:`Touch` - single point-of-contact touch device.
 
 The :class:`Pointer` class is a wrapper that unifies the API of the
 :class:`Mouse` and :class:`Touch` classes, which can be helpful if you want to
-write a test that can use either a mouse of a touch device.
+write a test that can use either a mouse of a touch device. A common pattern is
+to use a Touch device when running on a mobile device, and a Mouse device when
+running on a desktop.
 
 .. seealso::
     Module :mod:`autopilot.gestures`
@@ -55,6 +58,10 @@ write a test that can use either a mouse of a touch device.
 from collections import OrderedDict
 from autopilot.utilities import _pick_backend, CleanupRegistered
 from autopilot.input._common import get_center_point
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Keyboard(CleanupRegistered):
@@ -208,6 +215,19 @@ class Mouse(CleanupRegistered):
         def get_x11_mouse():
             from autopilot.input._X11 import Mouse
             return Mouse()
+
+        from autopilot.platform import model
+        if model() != 'Desktop':
+            logger.info(
+                "You cannot create a Mouse on the phablet devices. "
+                "consider using a Touch or Pointer device. "
+                "For more information, see: "
+                "http://unity.ubuntu.com/autopilot/api/input.html"
+                "#autopilot-unified-input-system"
+            )
+            raise RuntimeError(
+                "Cannot create a Mouse on the phablet devices."
+            )
 
         backends = OrderedDict()
         backends['X11'] = get_x11_mouse

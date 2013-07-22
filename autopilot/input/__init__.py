@@ -63,6 +63,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class Keyboard(CleanupRegistered):
 
     """A simple keyboard device class.
@@ -217,10 +218,12 @@ class Mouse(CleanupRegistered):
 
         from autopilot.platform import model
         if model() != 'Desktop':
-            logger.info("You cannot create a Mouse on the phablet devices. " \
-                "consider using a Touch or Pointer device. " \
-                "For more information, see: " \
-                "http://unity.ubuntu.com/autopilot/api/input.html#autopilot-unified-input-system"
+            logger.info(
+                "You cannot create a Mouse on the phablet devices. "
+                "consider using a Touch or Pointer device. "
+                "For more information, see: "
+                "http://unity.ubuntu.com/autopilot/api/input.html"
+                "#autopilot-unified-input-system"
             )
             raise RuntimeError(
                 "Cannot create a mouse on the phablet devices."

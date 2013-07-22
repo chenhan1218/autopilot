@@ -65,7 +65,8 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
             ('lower_alpha', dict(input='abcdefghijklmnopqrstuvwxyz')),
             ('upper_alpha', dict(input='ABCDEFGHIJKLMNOPQRSTUVWXYZ')),
             ('numeric', dict(input='0123456789')),
-            ('punctuation', dict(input='`~!@#$%^&*()_-+={}[]|\\:;"\'<>,.?/'))
+            ('punctuation', dict(input='`~!@#$%^&*()_-+={}[]|\\:;"\'<>,.?/')),
+            ('whitespace', dict(input='\t\n'))
         ]
     )
 

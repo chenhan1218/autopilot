@@ -166,7 +166,7 @@ def get_autopilot_proxy_object_for_process(process, emulator_base):
 
     """
     pid = process.pid
-    proxy_obj =  get_proxy_object_for_existing_process(
+    proxy_obj = get_proxy_object_for_existing_process(
         pid, emulator_base=emulator_base)
     proxy_obj.set_process(process)
 

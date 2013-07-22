@@ -869,6 +869,65 @@ SyntaxError: invalid syntax
         self.assertThat(output, Not(Contains('Running tests in random order')))
 
 
+    def test_patch_environment_new_patch_is_unset_to_none(self):
+        """patch_environment must unset the environment variable if previously
+        was unset.
+
+        """
+
+        self.create_test_file(
+            "test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+            from testtools.matchers import Equals
+            import os
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_a(self):
+                    self.patch_environment('TEST_ENV', 'Foo')
+                    self.assertTrue(True)
+
+                def test_b(self):
+                    self.assertThat(os.getenv('TEST_ENV'), Equals(None))
+            """)
+        )
+
+        code, output, error = self.run_autopilot(["run", "-r", "-v", "tests"])
+
+        self.assertThat(code, Equals(0))
+
+    def test_patch_environment_existing_patch_is_reset(self):
+        """patch_environment must reset the environment back to it's previous
+        value.
+
+        """
+
+        self.create_test_file(
+            "test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+            from testtools.matchers import Equals
+            import os
+
+            os.environ['TEST_ENV'] = 'Original'
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_a(self):
+                    self.patch_environment('TEST_ENV', 'New')
+                    self.assertThat(os.getenv('TEST_ENV'), Equals('New'))
+
+                def test_b(self):
+                    self.assertThat(os.getenv('TEST_ENV'), Equals('Original'))
+            """)
+        )
+
+        code, output, error = self.run_autopilot(["run", "-r", "-v", "tests"])
+
+        self.assertThat(code, Equals(0))
+
+
 class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
 
     """Scenarioed functional tests for autopilot's verbose logging."""

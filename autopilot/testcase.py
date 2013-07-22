@@ -300,10 +300,26 @@ AutopilotTestCase.pick_app_launcher method.")
 
         """
         if key in os.environ:
+            def _undo_patch(key, old_value):
+                logger.info(
+                    "Resetting environment variable '%s' to '%s'",
+                    key,
+                    old_value
+                )
+                os.environ[key] = old_value
             old_value = os.environ[key]
-            self.addCleanup(os.putenv, key, old_value)
+            self.addCleanup(_undo_patch, key, old_value)
         else:
-            self.addCleanup(os.unsetenv, key)
+            def _remove_patch(key):
+                try:
+                    del os.environ[key]
+                except KeyError:
+                    logger.warning(
+                        "Attempted to delete environment key '%s' that doesn't"
+                        "exist in the environment",
+                        key
+                    )
+            self.addCleanup(_remove_patch, key)
         os.environ[key] = value
 
     def assertVisibleWindowStack(self, stack_start):

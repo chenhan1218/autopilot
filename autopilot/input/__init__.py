@@ -39,12 +39,15 @@ on creating backends, see :ref:`tut-picking-backends`
 There are three basic input types available:
 
  * :class:`Keyboard` - traditional keyboard devices.
- * :class:`Mouse` - traditional mouse devices.
+ * :class:`Mouse` - traditional mouse devices (Currently only avaialble on the
+    desktop).
  * :class:`Touch` - single point-of-contact touch device.
 
 The :class:`Pointer` class is a wrapper that unifies the API of the
 :class:`Mouse` and :class:`Touch` classes, which can be helpful if you want to
-write a test that can use either a mouse of a touch device.
+write a test that can use either a mouse of a touch device. A common pattern is
+to use a Touch device when running on a mobile device, and a Mouse device when
+running on a desktop.
 
 .. seealso::
     Module :mod:`autopilot.gestures`

@@ -21,8 +21,8 @@
 """Utility functions to get shortcut keybindings for various parts of Unity.
 
 Inside Autopilot we deal with keybindings by naming them with unique names. For
-example, instead of hard-coding the fact that 'Alt+F2' opens the command lens, we
-might call:
+example, instead of hard-coding the fact that 'Alt+F2' opens the command lens,
+we might call:
 
 >>> keybindings.get('lens_reveal/command')
 'Alt+F2'
@@ -117,7 +117,7 @@ _keys = {
     "workspace/move_up": ("wall", "up_key"),
     "workspace/move_down": ("wall", "down_key"),
     # Window management:
-    "window/show_desktop" : ("core", "show_desktop_key"),
+    "window/show_desktop": ("core", "show_desktop_key"),
     "window/minimize": ("core", "minimize_window_key"),
     "window/maximize": ("core", "maximize_window_key"),
     "window/restore": ("core", "unmaximize_or_minimize_window_key"),
@@ -129,7 +129,6 @@ _keys = {
     "spread/start": ("scale", "initiate_key"),
     "spread/cancel": "Escape",
 }
-
 
 
 def get(binding_name):
@@ -154,8 +153,8 @@ def get(binding_name):
 def get_hold_part(binding_name):
     """Returns the part of a keybinding that must be held permanently.
 
-    Use this function to split bindings like "Alt+Tab" into the part that must be
-    held down. See :meth:`get_tap_part` for the part that must be tapped.
+    Use this function to split bindings like "Alt+Tab" into the part that must
+    be held down. See :meth:`get_tap_part` for the part that must be tapped.
 
     :raises: **ValueError** if the binding specified does not have multiple
      parts.
@@ -164,7 +163,8 @@ def get_hold_part(binding_name):
     binding = get(binding_name)
     parts = binding.split('+')
     if len(parts) == 1:
-        logger.warning("Key binding '%s' does not have a hold part.", binding_name)
+        logger.warning(
+            "Key binding '%s' does not have a hold part.", binding_name)
         return parts[0]
     return '+'.join(parts[:-1])
 
@@ -172,8 +172,9 @@ def get_hold_part(binding_name):
 def get_tap_part(binding_name):
     """Returns the part of a keybinding that must be tapped.
 
-    Use this function to split bindings like "Alt+Tab" into the part that must be
-    held tapped. See :meth:`get_hold_part` for the part that must be held down.
+    Use this function to split bindings like "Alt+Tab" into the part that must
+    be held tapped. See :meth:`get_hold_part` for the part that must be held
+    down.
 
     :Raises: **ValueError** if the binding specified does not have multiple
      parts.
@@ -182,13 +183,15 @@ def get_tap_part(binding_name):
     binding = get(binding_name)
     parts = binding.split('+')
     if len(parts) == 1:
-        logger.warning("Key binding '%s' does not have a tap part.", binding_name)
+        logger.warning(
+            "Key binding '%s' does not have a tap part.", binding_name)
         return parts[0]
     return parts[-1]
 
 
 def _get_compiz_keybinding(compiz_tuple):
-    """Given a keybinding name, get the keybinding string from the compiz option.
+    """Given a keybinding name, get the keybinding string from the compiz
+    option.
 
     :raises: **ValueError** if the compiz setting described does not hold a
      keybinding.
@@ -199,13 +202,17 @@ def _get_compiz_keybinding(compiz_tuple):
     plugin = _get_compiz_plugin(plugin_name)
     setting = _get_compiz_setting(plugin_name, setting_name)
     if setting.Type != 'Key':
-        raise ValueError("Key binding maps to a compiz option that does not hold a keybinding.")
+        raise ValueError(
+            "Key binding maps to a compiz option that does not hold a "
+            "keybinding.")
     if not plugin.Enabled:
-        logger.warning("Returning keybinding for '%s' which is in un-enabled plugin '%s'",
+        logger.warning(
+            "Returning keybinding for '%s' which is in un-enabled plugin '%s'",
             setting.ShortDesc,
             plugin.ShortDesc)
     if setting.Value == "Disabled":
-        raise RuntimeError("Keybinding '%s' in compiz plugin '%s' has been disabled." %
+        raise RuntimeError(
+            "Keybinding '%s' in compiz plugin '%s' has been disabled." %
             (setting.ShortDesc, plugin.ShortDesc))
 
     return _translate_compiz_keystroke_string(setting.Value)
@@ -254,7 +261,8 @@ class KeybindingsHelper(object):
 
         """
         if type(delay) not in (float, NoneType):
-            raise TypeError("delay parameter must be a float if it is defined.")
+            raise TypeError(
+                "delay parameter must be a float if it is defined.")
         if delay:
             self._keyboard.press_and_release(get(binding_name), delay)
         else:
@@ -282,6 +290,7 @@ class KeybindingsHelper(object):
 # future.
 _global_compiz_context = None
 
+
 def _get_global_compiz_context():
     """Get the compizconfig global context object."""
     global _global_compiz_context
@@ -303,7 +312,8 @@ def _get_compiz_plugin(plugin_name):
         try:
             return ctx.Plugins[plugin_name]
         except KeyError:
-            raise KeyError("Compiz plugin '%s' does not exist." % (plugin_name))
+            raise KeyError(
+                "Compiz plugin '%s' does not exist." % (plugin_name))
 
 
 def _get_compiz_setting(plugin_name, setting_name):
@@ -317,6 +327,6 @@ def _get_compiz_setting(plugin_name, setting_name):
         try:
             return plugin.Screen[setting_name]
         except KeyError:
-            raise KeyError("Compiz setting '%s' does not exist in plugin '%s'." % (setting_name, plugin_name))
-
-
+            raise KeyError(
+                "Compiz setting '%s' does not exist in plugin '%s'." %
+                (setting_name, plugin_name))

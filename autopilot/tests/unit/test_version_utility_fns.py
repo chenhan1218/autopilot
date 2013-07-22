@@ -26,7 +26,8 @@ from autopilot import (
     _get_package_installed_version,
     _get_package_version,
     get_version_string,
-    )
+)
+
 
 class VersionFnTests(TestCase):
 
@@ -52,8 +53,10 @@ class VersionFnTests(TestCase):
         the dpkg-query function.
 
         """
-        with patch('subprocess.check_output', new=lambda *a: "1.3daily13.05.22\n"):
-            self.assertThat(_get_package_installed_version(), Equals("1.3daily13.05.22"))
+        with patch('subprocess.check_output',
+                   new=lambda *a: "1.3daily13.05.22\n"):
+            self.assertThat(
+                _get_package_installed_version(), Equals("1.3daily13.05.22"))
 
     def test_get_version_string_shows_source_version(self):
         """The get_version_string function must only show the source version if
@@ -63,14 +66,18 @@ class VersionFnTests(TestCase):
         with patch('autopilot._get_package_version', new=lambda: None):
             with patch('autopilot._get_source_version', new=lambda: "1.3.1"):
                 version_string = get_version_string()
-        self.assertThat(version_string, Equals("Autopilot Source Version: 1.3.1"))
+        self.assertThat(
+            version_string, Equals("Autopilot Source Version: 1.3.1"))
 
     def test_get_version_string_shows_both_versions(self):
         """The get_version_string function must show both source and package
         versions, when the package version is avaialble.capitalize
         """
-        with patch('autopilot._get_package_version', new=lambda: "1.3.1daily13.05.22"):
+        with patch('autopilot._get_package_version',
+                   new=lambda: "1.3.1daily13.05.22"):
             with patch('autopilot._get_source_version', new=lambda: "1.3.1"):
                 version_string = get_version_string()
-        self.assertThat(version_string,
-            Equals("Autopilot Source Version: 1.3.1\nAutopilot Package Version: 1.3.1daily13.05.22"))
+        self.assertThat(
+            version_string,
+            Equals("Autopilot Source Version: 1.3.1\nAutopilot Package "
+                   "Version: 1.3.1daily13.05.22"))

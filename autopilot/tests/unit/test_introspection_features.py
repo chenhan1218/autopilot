@@ -23,6 +23,7 @@ from testtools.matchers import Equals, NotEquals
 
 from autopilot.introspection.dbus import CustomEmulatorBase
 
+
 class IntrospectionFeatureTests(TestCase):
 
     def test_custom_emulator_base_does_not_have_id(self):
@@ -36,8 +37,10 @@ class IntrospectionFeatureTests(TestCase):
     def test_derived_children_have_same_id(self):
         class MyEmulatorBase(CustomEmulatorBase):
             pass
+
         class MyEmulator(MyEmulatorBase):
             pass
+
         class MyEmulator2(MyEmulatorBase):
             pass
 
@@ -47,6 +50,7 @@ class IntrospectionFeatureTests(TestCase):
     def test_children_have_different_ids(self):
         class MyEmulatorBase(CustomEmulatorBase):
             pass
+
         class MyEmulatorBase2(CustomEmulatorBase):
             pass
 

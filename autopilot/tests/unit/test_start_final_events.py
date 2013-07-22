@@ -27,7 +27,7 @@ from autopilot.utilities import (
     _cleanup_objects,
     action_on_test_start,
     action_on_test_end,
-    )
+)
 from autopilot.testcase import AutopilotTestCase
 
 

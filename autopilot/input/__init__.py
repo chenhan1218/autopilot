@@ -209,6 +209,12 @@ class Mouse(CleanupRegistered):
             from autopilot.input._X11 import Mouse
             return Mouse()
 
+        from autopilot.platform import model
+        if model() != 'Desktop':
+            raise RuntimeError(
+                "Cannot create a mouse on the phablet devices."
+            )
+
         backends = OrderedDict()
         backends['X11'] = get_x11_mouse
         return _pick_backend(backends, preferred_backend)

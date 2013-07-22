@@ -23,6 +23,7 @@ from testtools.matchers import Equals, IsInstance
 
 from autopilot import BackendException
 
+
 class BackendExceptionTests(TestCase):
 
     def test_must_wrap_exception(self):
@@ -33,10 +34,14 @@ class BackendExceptionTests(TestCase):
 
     def test_dunder_str(self):
         err = BackendException(RuntimeError("Hello World"))
-        self.assertThat(str(err),
-            Equals("Error while initialising backend. Original exception was: Hello World"))
+        self.assertThat(
+            str(err), Equals(
+                "Error while initialising backend. Original exception was: "
+                "Hello World"))
 
     def test_dunder_repr(self):
         err = BackendException(RuntimeError("Hello World"))
-        self.assertThat(repr(err),
-            Equals("BackendException('Error while initialising backend. Original exception was: Hello World',)"))
+        self.assertThat(
+            repr(err), Equals(
+                "BackendException('Error while initialising backend. Original "
+                "exception was: Hello World',)"))

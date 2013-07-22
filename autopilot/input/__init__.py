@@ -226,7 +226,7 @@ class Mouse(CleanupRegistered):
                 "#autopilot-unified-input-system"
             )
             raise RuntimeError(
-                "Cannot create a mouse on the phablet devices."
+                "Cannot create a Mouse on the phablet devices."
             )
 
         backends = OrderedDict()

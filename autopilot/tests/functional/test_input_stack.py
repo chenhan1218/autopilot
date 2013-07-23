@@ -118,7 +118,7 @@ class MouseTestCase(AutopilotTestCase):
 
         """
         expected_exception = RuntimeError(
-            "Cannot create a mouse on the phablet devices."
+            "Cannot create a Mouse on the phablet devices."
         )
         self.assertThat(lambda: Mouse.create(),
             raises(expected_exception))

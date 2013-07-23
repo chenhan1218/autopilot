@@ -86,7 +86,8 @@ class CommandLineArgsTests(TestCase):
 
     def test_launch_command_accepts_different_app_arg_formats(self):
         args = self.parse_args("launch app -s --long --key=val arg1 arg2")
-        self.assertThat(args.application,
+        self.assertThat(
+            args.application,
             Equals(["app", "-s", "--long", "--key=val", "arg1", "arg2"]))
 
     @patch('sys.stderr', new=StringIO())
@@ -229,7 +230,8 @@ class CommandLineArgsTests(TestCase):
         self.assertThat(args.record_directory, Equals("/path/to/dir"))
 
     def test_run_command_record_options_flag_long(self):
-        args = self.parse_args("run --record-options=--fps=6,--no-wm-check foo")
+        args = self.parse_args(
+            "run --record-options=--fps=6,--no-wm-check foo")
         self.assertThat(args.record_options, Equals("--fps=6,--no-wm-check"))
 
     def test_run_command_random_order_flag_short(self):

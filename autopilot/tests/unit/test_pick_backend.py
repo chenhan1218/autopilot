@@ -32,13 +32,14 @@ class PickBackendTests(TestCase):
     def test_raises_runtime_error_on_empty_backends(self):
         """Must raise a RuntimeError when we pass no backends."""
         fn = lambda: _pick_backend({}, '')
-        self.assertThat(fn, raises(RuntimeError("Unable to instantiate any backends\n")))
+        self.assertThat(
+            fn, raises(RuntimeError("Unable to instantiate any backends\n")))
 
     def test_single_backend(self):
         """Must return a backend when called with a single backend."""
         class Backend(object):
             pass
-        _create_backend = lambda:Backend()
+        _create_backend = lambda: Backend()
         backend = _pick_backend(dict(foo=_create_backend), '')
         self.assertThat(backend, IsInstance(Backend))
 
@@ -46,52 +47,58 @@ class PickBackendTests(TestCase):
         """Must return the first backend when called with a two backends."""
         class Backend1(object):
             pass
+
         class Backend2(object):
             pass
         backend_dict = OrderedDict()
-        backend_dict['be1'] = lambda:Backend1()
-        backend_dict['be2'] = lambda:Backend2()
+        backend_dict['be1'] = lambda: Backend1()
+        backend_dict['be2'] = lambda: Backend2()
 
         backend = _pick_backend(backend_dict, '')
         self.assertThat(backend, IsInstance(Backend1))
 
     def test_preferred_backend(self):
-        """Must return the preferred backend when called with a two backends."""
+        """Must return the preferred backend when called with a two
+        backends."""
         class Backend1(object):
             pass
+
         class Backend2(object):
             pass
         backend_dict = OrderedDict()
-        backend_dict['be1'] = lambda:Backend1()
-        backend_dict['be2'] = lambda:Backend2()
+        backend_dict['be1'] = lambda: Backend1()
+        backend_dict['be2'] = lambda: Backend2()
 
         backend = _pick_backend(backend_dict, 'be2')
         self.assertThat(backend, IsInstance(Backend2))
 
     def test_raises_backend_exception_on_preferred_backend(self):
-        """Must raise a BackendException when the preferred backendcannot be created."""
+        """Must raise a BackendException when the preferred backendcannot be
+        created."""
         class Backend1(object):
             pass
+
         class Backend2(object):
             def __init__(self):
                 raise ValueError("Foo")
         backend_dict = OrderedDict()
-        backend_dict['be1'] = lambda:Backend1()
-        backend_dict['be2'] = lambda:Backend2()
+        backend_dict['be1'] = lambda: Backend1()
+        backend_dict['be2'] = lambda: Backend2()
 
-        fn = lambda:_pick_backend(backend_dict, 'be2')
+        fn = lambda: _pick_backend(backend_dict, 'be2')
         self.assertThat(fn, raises(BackendException))
 
     def test_backend_exception_wraps_original_exception(self):
         """Raised backend Exception must wrap exception from backend."""
         class Backend1(object):
             pass
+
         class Backend2(object):
             def __init__(self):
                 raise ValueError("Foo")
         backend_dict = OrderedDict()
-        backend_dict['be1'] = lambda:Backend1()
-        backend_dict['be2'] = lambda:Backend2()
+        backend_dict['be1'] = lambda: Backend1()
+        backend_dict['be2'] = lambda: Backend2()
 
         raised = False
         try:
@@ -109,8 +116,8 @@ class PickBackendTests(TestCase):
             def __init__(self):
                 raise ValueError("Foo")
         backend_dict = OrderedDict()
-        backend_dict['be1'] = lambda:BadBackend()
-        backend_dict['be2'] = lambda:BadBackend()
+        backend_dict['be1'] = lambda: BadBackend()
+        backend_dict['be2'] = lambda: BadBackend()
 
         fn = lambda: _pick_backend(backend_dict, '')
         expected_exception = RuntimeError(dedent("""\

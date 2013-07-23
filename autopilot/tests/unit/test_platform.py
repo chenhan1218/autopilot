@@ -30,10 +30,14 @@ from mock import patch
 
 class PlatformDetectorTests(TestCase):
 
-    def tearDown(self):
-        super(PlatformDetectorTests, self).tearDown()
-        # platform detector is cached, so destroy the cache at the end of each
-        # test:
+    def setUp(self):
+        super(PlatformDetectorTests, self).setUp()
+        # platform detector is cached, so make sure we destroy the cache before
+        # each test runs, and after each test completes.
+        self._destroy_platform_detector_cache()
+        self.addCleanup(self._destroy_platform_detector_cache)
+
+    def _destroy_platform_detector_cache(self):
         platform._PlatformDetector._cached_detector = None
 
     def test_platform_detector_is_cached(self):

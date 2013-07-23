@@ -176,6 +176,23 @@ class PointerWrapperTests(AutopilotTestCase):
         self.assertThat(device._x, Equals(34))
         self.assertThat(device._y, Equals(56))
 
+    def test_touch_drag_updates_coordinates(self):
+        """The Pointer wrapper must update it's x and y properties when wrapping
+        a touch object and performing a drag operation.
+
+        """
+        class FakeTouch(Touch):
+            def __init__(self):
+                pass
+
+            def drag(self, x1,y1,x2,y2):
+                pass
+
+        p = Pointer(FakeTouch())
+        p.drag(0, 0, 100, 123)
+        self.assertThat(p.x, Equals(100))
+        self.assertThat(p.y, Equals(123))
+
 
 class InputStackCleanupTests(TestCase):
 

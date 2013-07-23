@@ -567,3 +567,6 @@ class Pointer(object):
     def drag(self, x1, y1, x2, y2):
         """Performs a press, move and release."""
         self._device.drag(x1, y1, x2, y2)
+        if isinstance(self._device, Touch):
+            self._x = x2
+            self._y = y2

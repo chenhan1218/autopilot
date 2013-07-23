@@ -28,7 +28,7 @@ from textwrap import dedent
 from autopilot.testcase import AutopilotTestCase
 from autopilot.introspection import (
     get_proxy_object_for_existing_process,
-    _pid_is_still_running
+    _pid_is_running
 )
 
 
@@ -39,7 +39,7 @@ def _get_unused_pid():
      correspond to a currently running process.
     """
     for i in xrange(10000, 20000):
-        if not _pid_is_still_running(i):
+        if not _pid_is_running(i):
             return i
     raise RuntimeError("Unable to find test PID.")
 

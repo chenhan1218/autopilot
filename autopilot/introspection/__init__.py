@@ -252,7 +252,7 @@ def _get_dbus_addresses_from_search_parameters(
         return list(set(all_connections).difference(set(connection_list)))
 
     for i in range(10):
-        if pid is not None and not _pid_is_still_running(pid):
+        if pid is not None and not _pid_is_running(pid):
             raise RuntimeError("While searching PID %d could not be found, perhaps it has segfaulted?" % pid)
         bus = _get_dbus_bus_from_string(dbus_bus)
         possible_connections = _get_possible_connections(bus, connection_name)
@@ -268,7 +268,7 @@ def _get_dbus_addresses_from_search_parameters(
     return []
 
 
-def _pid_is_still_running(pid):
+def _pid_is_running(pid):
     """Check for the existence of a currently running PID.
 
     :returns: **True** if PID is running **False** otherwise.

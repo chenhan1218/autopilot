@@ -27,7 +27,8 @@ from autopilot.globals import get_log_verbose
 
 
 class AutopilotVerboseResult(object):
-    """A result class that logs failures, errors and success via the python logging framework."""
+    """A result class that logs failures, errors and success via the python
+    logging framework."""
 
     def _log(self, level, message):
         """Performs the actual message logging"""

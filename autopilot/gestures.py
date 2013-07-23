@@ -21,8 +21,8 @@
 """Gestural support for autopilot.
 
 This module contains functions that can generate touch and multi-touch gestures
-for you. This is a convenience for the test author - there is nothing to prevent
-you from generating your own gestures!
+for you. This is a convenience for the test author - there is nothing to
+prevent you from generating your own gestures!
 
 """
 
@@ -34,8 +34,10 @@ def pinch(center, vector_start, vector_end):
     """Perform a two finger pinch (zoom) gesture.
 
     :param center: The coordinates (x,y) of the center of the pinch gesture.
-    :param vector_start: The (x,y) values to move away from the center for the start.
-    :param vector_end: The (x,y) values to move away from the center for the end.
+    :param vector_start: The (x,y) values to move away from the center for the
+     start.
+    :param vector_end: The (x,y) values to move away from the center for the
+     end.
 
     The fingers will move in 100 steps between the start and the end points.
     If start is smaller than end, the gesture will zoom in, otherwise it

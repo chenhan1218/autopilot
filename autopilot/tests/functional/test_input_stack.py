@@ -98,6 +98,36 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
 
         self.assertThat(text_edit.plainText, Eventually(Equals(self.input)))
 
+    def test_keyboard_keys_are_released(self):
+        app_proxy = self.start_mock_app()
+        text_edit = app_proxy.select_single('QTextEdit')
+
+        # make sure the text edit has keyboard focus:
+        self.mouse.click_object(text_edit)
+        keyboard = Keyboard.create(self.backend)
+
+        for character in self.input:
+            self.assertThat(self._get_pressed_keys_list(), Equals([]))
+            keyboard.type(character, 0.01)
+            self.assertThat(self._get_pressed_keys_list(), Equals([]))
+
+
+    def _get_pressed_keys_list(self):
+        """Get a list of keys pressed, but not released from the backend we're
+        using.
+
+        """
+        if self.backend == 'X11':
+            from autopilot.input._X11 import _PRESSED_KEYS
+            return _PRESSED_KEYS
+        elif self.backend == 'UInput':
+            from autopilot.input._uinput import _PRESSED_KEYS
+            return _PRESSED_KEYS
+        else:
+            self.fail("Don't know how to get pressed keys list for backend "
+                + self.backend
+            )
+
 
 class MouseTestCase(AutopilotTestCase):
 

@@ -273,13 +273,7 @@ def _pid_is_still_running(pid):
 
     :returns: **True** if PID is running **False** otherwise.
     """
-    try:
-        # Won't actually kill the process.
-        os.kill(pid, 0)
-    except OSError:
-        return False
-    else:
-        return True
+    return os.path.exists("/proc/%d" % pid)
 
 
 def _get_valid_connections(connections, bus, pid, object_path):

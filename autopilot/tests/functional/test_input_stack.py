@@ -86,6 +86,7 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
         return QtApplicationLauncher()
 
     def test_text_typing(self):
+        """Typing text must produce the correct characters in the target app."""
         app_proxy = self.start_mock_app()
         text_edit = app_proxy.select_single('QTextEdit')
 
@@ -99,6 +100,7 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
         self.assertThat(text_edit.plainText, Eventually(Equals(self.input)))
 
     def test_keyboard_keys_are_released(self):
+        """Typing characters must not leave keys pressed."""
         app_proxy = self.start_mock_app()
         text_edit = app_proxy.select_single('QTextEdit')
 

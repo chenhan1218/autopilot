@@ -85,7 +85,7 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
         from autopilot.introspection.qt import QtApplicationLauncher
         return QtApplicationLauncher()
 
-    def test_some_text(self):
+    def test_text_typing(self):
         app_proxy = self.start_mock_app()
         text_edit = app_proxy.select_single('QTextEdit')
 

@@ -97,8 +97,8 @@ class Keyboard(KeyboardBase):
         for key in reversed(self._sanitise_keys(keys)):
             for event in Keyboard._get_events_for_key(key):
                 logger.debug("Releasing %s (%r)", key, event)
-                if key in _PRESSED_KEYS:
-                    _PRESSED_KEYS.remove(key)
+                if event in _PRESSED_KEYS:
+                    _PRESSED_KEYS.remove(event)
                 self._emit(event, RELEASE)
                 sleep(delay)
 

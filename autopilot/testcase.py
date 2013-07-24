@@ -66,7 +66,8 @@ from autopilot.introspection import (
     get_application_launcher_from_string_hint,
     get_autopilot_proxy_object_for_process,
     launch_application,
-    )
+    ProcessSearchError,
+)
 from autopilot.display import Display
 from autopilot.utilities import on_test_started
 from autopilot.keybindings import KeybindingsHelper
@@ -253,7 +254,10 @@ AutopilotTestCase.pick_app_launcher method.")
         emulator_base = kwargs.pop('emulator_base', None)
         process = launch_application(launcher, app_path, *arguments, **kwargs)
         self.addCleanup(self._kill_process_and_attach_logs, process)
-        return get_autopilot_proxy_object_for_process(process, emulator_base)
+
+        app_proxy = get_autopilot_proxy_object_for_process(process, emulator_base)
+
+        return app_proxy
 
     def _compare_system_with_app_snapshot(self):
         """Compare the currently running application with the last snapshot.
@@ -377,9 +381,21 @@ AutopilotTestCase.pick_app_launcher method.")
         # default implementation is in autopilot.introspection:
         return get_application_launcher(app_path)
 
-    def _kill_process_and_attach_logs(self, process):
-        os.killpg(process.pid, signal.SIGTERM)
+    def _attach_process_logs(self, process):
+        stdout, stderr = process.communicate()
+        return_code = process.returncode
+        if return_code is not None and return_code != 0:
+            logger.warning("Process returned non-zero return code.")
+        self.addDetail('process-return-code', text_content(str(return_code)))
+        self.addDetail('process-stdout', text_content(stdout))
+        self.addDetail('process-stderr', text_content(stderr))
+
+    def _kill_process(self, process):
         logger.info("waiting for process to exit.")
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except OSError:
+            logger.info("Appears process has already exited.")
         for i in range(10):
             process.poll()
             if process.returncode is not None:
@@ -388,6 +404,7 @@ AutopilotTestCase.pick_app_launcher method.")
                 logger.info("Killing process group, since it hasn't exited after 10 seconds.")
                 os.killpg(process.pid, signal.SIGKILL)
             sleep(1)
-        stdout, stderr = process.communicate()
-        self.addDetail('process-stdout', text_content(stdout))
-        self.addDetail('process-stderr', text_content(stderr))
+
+    def _kill_process_and_attach_logs(self, process):
+        self._kill_process(process)
+        self._attach_process_logs(process)

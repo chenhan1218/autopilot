@@ -26,13 +26,16 @@ try:
     chl = changelog.Changelog(open('debian/changelog'))
     version = str(chl.get_version())
 except ImportError:
-    # If we don't have python-debian installed, guess a coarse-grained version string
+    # If we don't have python-debian installed, guess a coarse-grained version
+    # string
     version = '1.3.1'
 
-autopilot_tracepoint = Extension('autopilot.tracepoint',
-                                 libraries=['lttng-ust'],
-                                 include_dirs=['lttng_module'],
-                                 sources = ['lttng_module/autopilot_tracepoint.c'])
+autopilot_tracepoint = Extension(
+    'autopilot.tracepoint',
+    libraries=['lttng-ust'],
+    include_dirs=['lttng_module'],
+    sources=['lttng_module/autopilot_tracepoint.c']
+)
 
 setup(
     name='autopilot',
@@ -44,7 +47,6 @@ setup(
     license='GPLv3',
     packages=find_packages(),
     test_suite='autopilot.tests',
-    scripts=['bin/autopilot',],
+    scripts=['bin/autopilot'],
     ext_modules=[autopilot_tracepoint],
 )
-

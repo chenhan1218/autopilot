@@ -54,7 +54,8 @@ def get_ibus_bus():
     main_loop.run()
 
     if not bus.is_connected():
-        raise RuntimeError("Could not start ibus-daemon after %d seconds." % (timeout))
+        raise RuntimeError(
+            "Could not start ibus-daemon after %d seconds." % (timeout))
     return bus
 
 
@@ -79,9 +80,9 @@ def set_active_engines(engine_list):
 
     .. note:: This function removes all other engines.
 
-    This function returns the list of engines installed before this function was
-    called. The caller should pass this list to set_active_engines to restore
-    ibus to it's old state once the test has finished.
+    This function returns the list of engines installed before this function
+    was called. The caller should pass this list to set_active_engines to
+    restore ibus to it's old state once the test has finished.
 
     :param engine_list: List of engine names
     :type engine_list: List of strings
@@ -96,7 +97,8 @@ def set_active_engines(engine_list):
         if not isinstance(engine, basestring):
             raise TypeError("Engines in engine_list must all be strings.")
         if engine not in available_engines:
-            raise ValueError("engine_list contains invalid engine name: '%s'", engine)
+            raise ValueError(
+                "engine_list contains invalid engine name: '%s'", engine)
 
     bus = get_ibus_bus()
     config = bus.get_config()
@@ -106,20 +108,18 @@ def set_active_engines(engine_list):
                      GLib.Variant.new_int32(IBus.PreloadEngineMode.USER))
 
     old_engines = get_active_input_engines()
-    config.set_value("general",
-                    "preload_engines",
-                    GLib.Variant("as", engine_list)
-                    )
+    config.set_value(
+        "general", "preload_engines", GLib.Variant("as", engine_list))
     # need to restart the ibus bus before it'll pick up the new engine.
     # see bug report here:
-    # http://code.google.com/p/ibus/issues/detail?id=1418&thanks=1418&ts=1329885137
+    # http://code.google.com/p/ibus/issues/detail?id=1418
     bus.exit(restart=True)
     return old_engines
 
 
 def set_gconf_option(path, value):
     """Set the gconf setting on `path` to the defined `value`"""
-    _set_gconf_list (path, value)
+    _set_gconf_list(path, value)
 
 
 def get_gconf_option(path):
@@ -131,7 +131,9 @@ def get_gconf_option(path):
 
 def _set_gconf_list(path, values):
     gconf_value = '[%s]' % ','.join(values)
-    subprocess.check_output(["gconftool-2", "--set", "--type=list", "--list-type=string", path, gconf_value])
+    subprocess.check_output(
+        ["gconftool-2", "--set", "--type=list", "--list-type=string", path,
+         gconf_value])
 
 
 def _get_native_gconf_value(value):

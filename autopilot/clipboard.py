@@ -24,8 +24,8 @@
 def get_clipboard_contents():
     """Get the contents of the clipboard.
 
-    This function returns the text copied to the 'CLIPBOARD' clipboard. Text can
-    be added to this clipbaord using Ctrl+C.
+    This function returns the text copied to the 'CLIPBOARD' clipboard. Text
+    can be added to this clipbaord using Ctrl+C.
 
     """
     from gi import require_version

@@ -22,9 +22,10 @@
 Platform identification utilities for Autopilot.
 ================================================
 
-This module provides functions that give test authors hints as to which platform
-their tests are currently running on. This is useful when a test needs to test
-slight different behavior depending on the system it's running on. For example::
+This module provides functions that give test authors hints as to which
+platform their tests are currently running on. This is useful when a test
+needs to test slight different behavior depending on the system it's running
+on. For example::
 
     from autopilot import platform
 
@@ -39,10 +40,11 @@ slight different behavior depending on the system it's running on. For example::
 Skipping tests based on Platform
 ++++++++++++++++++++++++++++++++
 
-Sometimes you want a test to not run on certain platforms, or only run on certain
-platforms. This can be easily achieved with a combination of the functions in this
-module and the ``skipIf`` and ``skipUnless`` decorators. For example, to define
-a test that only runs on the galaxy nexus device, write this::
+Sometimes you want a test to not run on certain platforms, or only run on
+certain platforms. This can be easily achieved with a combination of the
+functions in this module and the ``skipIf`` and ``skipUnless`` decorators. For
+example, to define a test that only runs on the galaxy nexus device, write
+this::
 
     from testtools import skipUnless
 
@@ -109,7 +111,8 @@ class _PlatformDetector(object):
 
     @staticmethod
     def create():
-        """Create a platform detector object, or return one we baked earlier."""
+        """Create a platform detector object, or return one we baked
+        earlier."""
         if _PlatformDetector._cached_detector is None:
             _PlatformDetector._cached_detector = _PlatformDetector()
         return _PlatformDetector._cached_detector
@@ -130,8 +133,8 @@ class _PlatformDetector(object):
 
 
 def _get_property_file():
-    """Return a file-like object that contains the contents of the build properties
-    file, if it exists, or None.
+    """Return a file-like object that contains the contents of the build
+    properties file, if it exists, or None.
 
     """
     if exists('/system/build.prop'):
@@ -159,4 +162,3 @@ def _parse_build_properties_file(property_file):
 
         properties[key] = value
     return properties
-

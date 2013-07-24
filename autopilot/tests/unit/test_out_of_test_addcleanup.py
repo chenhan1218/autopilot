@@ -23,13 +23,15 @@ from testtools.matchers import Equals
 
 from autopilot.utilities import addCleanup, on_test_started
 
+
 log = ''
+
 
 class AddCleanupTests(TestCase):
 
     def test_addCleanup_called_with_args_and_kwargs(self):
-        """Test that out-of-test addClenaup works as expected, and is passed both
-        args and kwargs.
+        """Test that out-of-test addClenaup works as expected, and is passed
+        both args and kwargs.
 
         """
         class InnerTest(TestCase):
@@ -43,4 +45,3 @@ class AddCleanupTests(TestCase):
 
         InnerTest('test_foo').run()
         self.assertThat(log, Equals("Hello ('arg1', 2) {'foo': 'bar'}"))
-

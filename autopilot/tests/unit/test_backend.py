@@ -22,6 +22,7 @@ from testtools import TestCase
 from testtools.matchers import Equals, Not, NotEquals
 from autopilot.introspection.backends import DBusAddress
 
+
 class DBusAddressTests(TestCase):
 
     def test_can_construct(self):
@@ -37,16 +38,24 @@ class DBusAddressTests(TestCase):
         fake_bus = object()
         addr1 = DBusAddress(fake_bus, "conn", "path")
 
-        self.assertThat(addr1, Equals(DBusAddress(fake_bus, "conn", "path")))
-        self.assertThat(addr1, Not(Equals(DBusAddress(fake_bus, "conn", "new_path"))))
-        self.assertThat(addr1, Not(Equals(DBusAddress(fake_bus, "conn2", "path"))))
-        self.assertThat(addr1, Not(Equals(DBusAddress(object(), "conn", "path"))))
+        self.assertThat(
+            addr1, Equals(DBusAddress(fake_bus, "conn", "path")))
+        self.assertThat(
+            addr1, Not(Equals(DBusAddress(fake_bus, "conn", "new_path"))))
+        self.assertThat(
+            addr1, Not(Equals(DBusAddress(fake_bus, "conn2", "path"))))
+        self.assertThat(
+            addr1, Not(Equals(DBusAddress(object(), "conn", "path"))))
 
     def test_inequality_operator(self):
         fake_bus = object()
         addr1 = DBusAddress(fake_bus, "conn", "path")
 
-        self.assertThat(addr1, Not(NotEquals(DBusAddress(fake_bus, "conn", "path"))))
-        self.assertThat(addr1, NotEquals(DBusAddress(fake_bus, "conn", "new_path")))
-        self.assertThat(addr1, NotEquals(DBusAddress(fake_bus, "conn2", "path")))
-        self.assertThat(addr1, NotEquals(DBusAddress(object(), "conn", "path")))
+        self.assertThat(
+            addr1, Not(NotEquals(DBusAddress(fake_bus, "conn", "path"))))
+        self.assertThat(
+            addr1, NotEquals(DBusAddress(fake_bus, "conn", "new_path")))
+        self.assertThat(
+            addr1, NotEquals(DBusAddress(fake_bus, "conn2", "path")))
+        self.assertThat(
+            addr1, NotEquals(DBusAddress(object(), "conn", "path")))

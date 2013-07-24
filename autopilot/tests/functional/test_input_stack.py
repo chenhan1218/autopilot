@@ -251,7 +251,7 @@ class InputStackCleanupTests(TestCase):
             def test_foo(self):
                 on_test_started(self)
 
-                kbd = FakeKeyboard()
+                FakeKeyboard()
 
         FakeTestCase("test_foo").run()
 

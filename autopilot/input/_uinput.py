@@ -38,16 +38,21 @@ RELEASE = 0
 _PRESSED_KEYS = []
 
 
+def _get_devnode_path():
+    """Provide a fallback uinput node for devices which don't support udev"""
+    devnode = '/dev/autopilot-uinput'
+    if not os.path.exists(devnode):
+        devnode = '/dev/uinput'
+    return devnode
+
+
 class Keyboard(KeyboardBase):
 
-    def __init__(self):
-        super(Keyboard, self).__init__()
-
-        self._device = UInput(devnode=_get_devnode_path())
+    _device = UInput(devnode=_get_devnode_path())
 
     def _emit(self, event, value):
-        self._device.write(e.EV_KEY, event, value)
-        self._device.syn()
+        Keyboard._device.write(e.EV_KEY, event, value)
+        Keyboard._device.syn()
 
     def _sanitise_keys(self, keys):
         if keys == '+':
@@ -91,14 +96,12 @@ class Keyboard(KeyboardBase):
         """
         if not isinstance(keys, basestring):
             raise TypeError("'keys' argument must be a string.")
-        # logger.debug("Releasing keys %r with delay %f", keys, delay)
-        # # release keys in the reverse order they were pressed in.
-        # keys = self.__translate_keys(keys)
+
         for key in reversed(self._sanitise_keys(keys)):
             for event in Keyboard._get_events_for_key(key):
                 logger.debug("Releasing %s (%r)", key, event)
-                if key in _PRESSED_KEYS:
-                    _PRESSED_KEYS.remove(key)
+                if event in _PRESSED_KEYS:
+                    _PRESSED_KEYS.remove(event)
                 self._emit(event, RELEASE)
                 sleep(delay)
 
@@ -144,11 +147,10 @@ class Keyboard(KeyboardBase):
         global _PRESSED_KEYS
         if len(_PRESSED_KEYS) == 0:
             return
-        _device = UInput(devnode=_get_devnode_path())
 
         def _release(event):
-            _device.write(e.EV_KEY, event, RELEASE)
-            _device.syn()
+            Keyboard._device.write(e.EV_KEY, event, RELEASE)
+            Keyboard._device.syn()
         for event in _PRESSED_KEYS:
             logger.warning("Releasing key %r as part of cleanup call.", event)
             _release(event)
@@ -171,14 +173,6 @@ class Keyboard(KeyboardBase):
             raise ValueError("Unknown key name: '%s'" % key)
         events.append(evt)
         return events
-
-
-def _get_devnode_path():
-    """Provide a fallback uinput node for devices which don't support udev"""
-    devnode = '/dev/autopilot-uinput'
-    if not os.path.exists(devnode):
-        devnode = '/dev/uinput'
-    return devnode
 
 
 last_tracking_id = 0

@@ -100,7 +100,10 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
         keyboard = Keyboard.create(self.backend)
         keyboard.type(self.input, 0.01)
 
-        self.assertThat(text_edit.plainText, Eventually(Equals(self.input)))
+        self.assertThat(text_edit.plainText,
+                        Eventually(Equals(self.input)),
+                        "app shows: " + text_edit.plainText
+                        )
 
     def test_keyboard_keys_are_released(self):
         """Typing characters must not leave keys pressed."""

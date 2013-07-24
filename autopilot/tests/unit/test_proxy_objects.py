@@ -19,7 +19,7 @@
 
 from dbus import DBusException
 from testtools import TestCase
-from testtools.matchers import Equals, Not, raises
+from testtools.matchers import Equals
 from mock import patch, Mock
 
 from autopilot.introspection import (
@@ -28,7 +28,6 @@ from autopilot.introspection import (
     _connection_has_path,
     _match_connection,
     _bus_pid_is_our_pid,
-    _get_bus_connections_pid,
 )
 
 

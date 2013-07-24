@@ -28,14 +28,11 @@ module is the DBusIntrospectableObject class.
 from __future__ import absolute_import
 
 from contextlib import contextmanager
-from dbus import Interface
 import logging
 from testtools.matchers import Equals
 from time import sleep
-from textwrap import dedent
 from uuid import uuid4
 
-from autopilot.introspection.constants import AP_INTROSPECTION_IFACE
 from autopilot.utilities import Timer
 
 

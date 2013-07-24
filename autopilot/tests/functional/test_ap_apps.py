@@ -103,7 +103,7 @@ AutopilotTestCase.pick_app_launcher method."
 
         self.assertThat(
             lambda: get_proxy_object_for_existing_process(pid=pid),
-            raises(ProcessSearchError("While searching PID %d could not be found" % pid))
+            raises(ProcessSearchError("PID %d could not be found" % pid))
         )
 
     def test_creating_proxy_for_segfaulted_app_failed(self):
@@ -117,7 +117,7 @@ AutopilotTestCase.pick_app_launcher method."
             sys.exit(1)
         """))
 
-        expected_error = "Process exited with non-zero returncode: 1"
+        expected_error = "Process exited with exit code: 1"
         self.assertThat(
             lambda: self.launch_test_application(path, app_type='qt'),
             raises(ProcessSearchError(expected_error))

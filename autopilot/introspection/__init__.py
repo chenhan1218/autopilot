@@ -239,7 +239,7 @@ def get_proxy_object_for_existing_process(
             raise RuntimeError("Supplied PID and process.pid do not match.")
 
     if pid is not None and not _pid_is_running(pid):
-        raise ProcessSearchError("While searching PID %d could not be found" % pid)
+        raise ProcessSearchError("PID %d could not be found" % pid)
 
     dbus_addresses = _get_dbus_addresses_from_search_parameters(
         pid,
@@ -276,7 +276,7 @@ def _get_dbus_addresses_from_search_parameters(
     for i in range(10):
         if process is not None and not _process_is_running(process):
             return_code = process.poll()
-            raise ProcessSearchError("Process exited with non-zero returncode: %d" % return_code)
+            raise ProcessSearchError("Process exited with exit code: %d" % return_code)
         bus = _get_dbus_bus_from_string(dbus_bus)
         possible_connections = _get_possible_connections(bus, connection_name)
         connection_list = _get_unchecked_connections(possible_connections)

@@ -26,6 +26,7 @@ from dbus._dbus import BusConnection
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 
+
 _glib_loop_set = False
 
 # DBus has an annoying bug where we need to initialise it with the gobject main
@@ -65,4 +66,3 @@ def get_custom_bus(bus_address):
     """
     _ensure_glib_loop_set()
     return BusConnection(bus_address)
-

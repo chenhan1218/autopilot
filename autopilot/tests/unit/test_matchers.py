@@ -34,7 +34,7 @@ from testtools.matchers import (
     MatchesException,
     Mismatch,
     Raises,
-    )
+)
 from time import time
 
 
@@ -57,7 +57,7 @@ def make_fake_attribute_with_result(result, attribute_type='wait_for'):
     if attribute_type == 'callable':
         return lambda: result
     elif attribute_type == 'wait_for':
-        obj = FakeObject(dict(id=123,attr=dbus.Boolean(result)))
+        obj = FakeObject(dict(id=123, attr=dbus.Boolean(result)))
         return obj.attr
 
 
@@ -68,6 +68,7 @@ class ObjectPatchingMatcherTests(TestCase):
         """Ensure we can call wait_for with the correct arg."""
         intro_obj = make_fake_attribute_with_result(False)
         intro_obj.wait_for(False)
+
 
 class EventuallyMatcherTests(TestWithScenarios, TestCase):
 
@@ -92,7 +93,8 @@ class EventuallyMatcherTests(TestWithScenarios, TestCase):
         self.assertThat(abs(time() - start - 10.0), LessThan(1))
 
     def test_eventually_passes_immeadiately(self):
-        """Eventually matcher must not wait if the assertion passes initially."""
+        """Eventually matcher must not wait if the assertion passes
+        initially."""
         start = time()
         attr = make_fake_attribute_with_result(True, self.attribute_type)
         Eventually(Equals(True)).match(attr)
@@ -111,11 +113,14 @@ class EventuallyMatcherTests(TestWithScenarios, TestCase):
         """The mismatch value must have the correct timeout value in it."""
         attr = make_fake_attribute_with_result(False, self.attribute_type)
         mismatch = Eventually(Equals(True), timeout=1).match(attr)
-        self.assertThat(mismatch.describe(), Contains("After 1.0 seconds test"))
+        self.assertThat(
+            mismatch.describe(), Contains("After 1.0 seconds test"))
 
 
 class EventuallyNonScenariodTests(TestCase):
 
     def test_eventually_matcher_raises_ValueError_on_unknown_kwargs(self):
-        self.assertThat(lambda: Eventually(Equals(True), foo=123),
-            Raises(MatchesException(ValueError, "Unknown keyword arguments: foo")))
+        self.assertThat(
+            lambda: Eventually(Equals(True), foo=123),
+            Raises(MatchesException(
+                ValueError, "Unknown keyword arguments: foo")))

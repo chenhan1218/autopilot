@@ -22,17 +22,17 @@
 Quick Start
 ===========
 
-The :class:`AutopilotTestCase` is the main class test authors will be interacting
-with. Every autopilot test case should derive from this class.
+The :class:`AutopilotTestCase` is the main class test authors will be
+interacting with. Every autopilot test case should derive from this class.
 :class:`AutopilotTestCase` derives from :class:`testtools.TestCase`, so test
 authors can use all the methods defined in that class as well.
 
 **Writing tests**
 
 Tests must be named: ``test_<testname>``, where *<testname>* is the name of the
-test. Test runners (including autopilot itself) look for methods with this naming
-convention. It is recommended that you make your test names descriptive of what
-each test is testing. For example, possible test names include::
+test. Test runners (including autopilot itself) look for methods with this
+naming convention. It is recommended that you make your test names descriptive
+of what each test is testing. For example, possible test names include::
 
     test_ctrl_p_opens_print_dialog
     test_dash_remembers_maximized_state
@@ -74,9 +74,9 @@ from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
 try:
     from autopilot import tracepoint as tp
-    HAVE_TRACEPOINT=True
+    HAVE_TRACEPOINT = True
 except ImportError:
-    HAVE_TRACEPOINT=False
+    HAVE_TRACEPOINT = False
 
 
 logger = logging.getLogger(__name__)
@@ -86,6 +86,7 @@ try:
     from testscenarios.scenarios import multiply_scenarios
 except ImportError:
     from itertools import product
+
     def multiply_scenarios(*scenarios):
         """Multiply two or more iterables of scenarios.
 
@@ -111,7 +112,9 @@ def _lttng_trace_test_started(test_id):
     if HAVE_TRACEPOINT:
         tp.emit_test_started(test_id)
     else:
-        logger.warning("No tracing available - install the python-autopilot-trace package!")
+        logger.warning(
+            "No tracing available - install the python-autopilot-trace "
+            "package!")
 
 
 def _lttng_trace_test_ended(test_id):
@@ -122,9 +125,10 @@ def _lttng_trace_test_ended(test_id):
 class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
     """Wrapper around testtools.TestCase that adds significant functionality.
 
-    This class should be the base class for all autopilot test case classes. Not
-    using this class as the base class disables several important convenience
-    methods, and also prevents the use of the failed-test recording tools.
+    This class should be the base class for all autopilot test case classes.
+    Not using this class as the base class disables several important
+    convenience methods, and also prevents the use of the failed-test
+    recording tools.
 
     """
 
@@ -141,10 +145,13 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         self._display = None
 
         try:
-            self._app_snapshot = self.process_manager.get_running_applications()
+            self._app_snapshot = \
+                self.process_manager.get_running_applications()
             self.addCleanup(self._compare_system_with_app_snapshot)
         except RuntimeError:
-            logger.warning("Process manager backend unavailable, application snapshot support disabled.")
+            logger.warning(
+                "Process manager backend unavailable, application snapshot "
+                "support disabled.")
 
     @property
     def process_manager(self):
@@ -171,39 +178,45 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         return self._display
 
     def launch_test_application(self, application, *arguments, **kwargs):
-        """Launch ``application`` and return a proxy object for the application.
+        """Launch ``application`` and return a proxy object for the
+        application.
 
         Use this method to launch an application and start testing it. The
         positional arguments are used as arguments to the application to lanch.
-        Keyword arguments are used to control the manner in which the application
-        is launched.
+        Keyword arguments are used to control the manner in which the
+        application is launched.
 
         This method is designed to be flexible enough to launch all supported
-        types of applications. Autopilot can automatically determine how to enable
-        introspection support for dynamically linked binary applications. For
-        example, to launch a binary Gtk application, a test might start with::
+        types of applications. Autopilot can automatically determine how to
+        enable introspection support for dynamically linked binary
+        applications. For example, to launch a binary Gtk application, a test
+        might start with::
 
             app_proxy = self.launch_test_application('gedit')
 
-        Applications can be given command line arguments by supplying positional
-        arguments to this method. For example, if we want to launch ``gedit``
-        with a certain document loaded, we might do this::
+        Applications can be given command line arguments by supplying
+        positional arguments to this method. For example, if we want to launch
+        ``gedit`` with a certain document loaded, we might do this::
 
-            app_proxy = self.launch_test_application('gedit', '/tmp/test-document.txt')
+            app_proxy = self.launch_test_application(
+                'gedit', '/tmp/test-document.txt')
 
         ... a Qt5 Qml application is launched in a similar fashion::
 
-            app_proxy = self.launch_test_application('qmlscene', 'my_scene.qml')
+            app_proxy = self.launch_test_application(
+                'qmlscene', 'my_scene.qml')
 
         If you wish to launch an application that is not a dynamically linked
-        binary, you must specify the application type. For example, a Qt4 python
-        application might be launched like this::
+        binary, you must specify the application type. For example, a Qt4
+        python application might be launched like this::
 
-            app_proxy = self.launch_test_application('my_qt_app.py', app_type='qt')
+            app_proxy = self.launch_test_application(
+                'my_qt_app.py', app_type='qt')
 
         Similarly, a python/Gtk application is launched like so::
 
-            app_proxy = self.launch_test_application('my_gtk_app.py', app_type='gtk')
+            app_proxy = self.launch_test_application(
+                'my_gtk_app.py', app_type='gtk')
 
         .. seealso::
 
@@ -213,20 +226,23 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :param application: The application to launch. The application can be
             specified as:
 
-             * A full, absolute path to an executable file. (``/usr/bin/gedit``)
-             * A relative path to an executable file. (``./build/my_app``)
+             * A full, absolute path to an executable file.
+               (``/usr/bin/gedit``)
+             * A relative path to an executable file.
+               (``./build/my_app``)
              * An app name, which will be searched for in $PATH (``my_app``)
 
-        :keyword app_type: If set, provides a hint to autopilot as to which kind
-            of introspection to enable. This is needed when the application you
-            wish to launch is *not* a dynamically linked binary. Valid values are
-            'gtk' or 'qt'. These strings are case insensitive.
+        :keyword app_type: If set, provides a hint to autopilot as to which
+            kind of introspection to enable. This is needed when the
+            application you wish to launch is *not* a dynamically linked
+            binary. Valid values are 'gtk' or 'qt'. These strings are case
+            insensitive.
 
-        :keyword launch_dir:  If set to a directory that exists the process will be
-            launched from that directory.
+        :keyword launch_dir: If set to a directory that exists the process
+            will be launched from that directory.
 
-        :keyword capture_output: If set to True (the default), the process output
-            will be captured and attached to the test as test detail.
+        :keyword capture_output: If set to True (the default), the process
+            output will be captured and attached to the test as test detail.
 
         :keyword emulator_base: If set, specifies the base class to be used for
             all emulators for this loaded application.
@@ -236,7 +252,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
          data is retrievable via this object.
 
         """
-        app_path = subprocess.check_output(['which',application]).strip()
+        app_path = subprocess.check_output(['which', application]).strip()
         # Get a launcher, tests can override this if they need:
         launcher_hint = kwargs.pop('app_type', '')
         launcher = None
@@ -248,22 +264,21 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             except RuntimeError:
                 pass
         if launcher is None:
-            raise RuntimeError("Autopilot could not determine the correct \
-introspection type to use. You can specify one by overriding the \
-AutopilotTestCase.pick_app_launcher method.")
+            raise RuntimeError(
+                "Autopilot could not determine the correct introspection type "
+                "to use. You can specify one by overriding the "
+                "AutopilotTestCase.pick_app_launcher method.")
         emulator_base = kwargs.pop('emulator_base', None)
         process = launch_application(launcher, app_path, *arguments, **kwargs)
         self.addCleanup(self._kill_process_and_attach_logs, process)
-
-        app_proxy = get_autopilot_proxy_object_for_process(process, emulator_base)
-
-        return app_proxy
+        return get_autopilot_proxy_object_for_process(process, emulator_base)
 
     def _compare_system_with_app_snapshot(self):
         """Compare the currently running application with the last snapshot.
 
-        This method will raise an AssertionError if there are any new applications
-        currently running that were not running when the snapshot was taken.
+        This method will raise an AssertionError if there are any new
+        applications currently running that were not running when the snapshot
+        was taken.
         """
         if self._app_snapshot is None:
             raise RuntimeError("No snapshot to match against.")
@@ -271,19 +286,22 @@ AutopilotTestCase.pick_app_launcher method.")
         new_apps = []
         for i in range(10):
             current_apps = self.process_manager.get_running_applications()
-            new_apps = filter(lambda i: i not in self._app_snapshot, current_apps)
+            new_apps = filter(
+                lambda i: i not in self._app_snapshot, current_apps)
             if not new_apps:
                 self._app_snapshot = None
                 return
             sleep(1)
         self._app_snapshot = None
-        raise AssertionError("The following apps were started during the test and not closed: %r", new_apps)
+        raise AssertionError(
+            "The following apps were started during the test and not closed: "
+            "%r", new_apps)
 
     def patch_environment(self, key, value):
         """Patch the process environment, setting *key* with value *value*.
 
-        This patches os.environ for the duration of the test only. After calling
-        this method, the following should be True::
+        This patches os.environ for the duration of the test only. After
+        calling this method, the following should be True::
 
             os.environ[key] == value
 
@@ -294,12 +312,12 @@ AutopilotTestCase.pick_app_launcher method.")
          affects the current autopilot process, and any processes spawned by
          autopilot. If you are planing on starting an application from within
          autopilot and you want this new application to read the patched
-         environment variable, you must patch the environment *before* launching
-         the new process.
+         environment variable, you must patch the environment *before*
+         launching the new process.
 
-        :param string key: The name of the key you wish to set. If the key does not
-         already exist in the process environment it will be created (and then
-         deleted when the test ends).
+        :param string key: The name of the key you wish to set. If the key
+         does not already exist in the process environment it will be created
+         (and then deleted when the test ends).
         :param string value: The value you wish to set.
 
         """
@@ -311,7 +329,8 @@ AutopilotTestCase.pick_app_launcher method.")
         os.environ[key] = value
 
     def assertVisibleWindowStack(self, stack_start):
-        """Check that the visible window stack starts with the windows passed in.
+        """Check that the visible window stack starts with the windows passed
+        in.
 
         .. note:: Minimised windows are skipped.
 
@@ -321,13 +340,17 @@ AutopilotTestCase.pick_app_launcher method.")
          match the contents of the stack_start parameter.
 
         """
-        stack = [win for win in self.process_manager.get_open_windows() if not win.is_hidden]
+        stack = [
+            win for win in
+            self.process_manager.get_open_windows() if not win.is_hidden]
         for pos, win in enumerate(stack_start):
-            self.assertThat(stack[pos].x_id, Equals(win.x_id),
-                            "%r at %d does not equal %r" % (stack[pos], pos, win))
+            self.assertThat(
+                stack[pos].x_id, Equals(win.x_id),
+                "%r at %d does not equal %r" % (stack[pos], pos, win))
 
     def assertProperty(self, obj, **kwargs):
-        """Assert that *obj* has properties equal to the key/value pairs in kwargs.
+        """Assert that *obj* has properties equal to the key/value pairs in
+        kwargs.
 
         This method is intended to be used on objects whose attributes do not
         have the :meth:`wait_for` method (i.e.- objects that do not come from
@@ -356,12 +379,16 @@ AutopilotTestCase.pick_app_launcher method.")
             none_val = object()
             attr = getattr(obj, prop_name, none_val)
             if attr == none_val:
-                raise AssertionError("Object %r does not have an attribute named '%s'"
+                raise AssertionError(
+                    "Object %r does not have an attribute named '%s'"
                     % (obj, prop_name))
             if callable(attr):
-                raise ValueError("Object %r's '%s' attribute is a callable. It must be a property."
-                    % (obj, prop_name))
-            self.assertThat(lambda: getattr(obj, prop_name), Eventually(Equals(desired_value)))
+                raise ValueError(
+                    "Object %r's '%s' attribute is a callable. It must be a "
+                    "property." % (obj, prop_name))
+            self.assertThat(
+                lambda: getattr(obj, prop_name),
+                Eventually(Equals(desired_value)))
 
     assertProperties = assertProperty
 

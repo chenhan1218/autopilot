@@ -21,6 +21,7 @@
 import logging
 
 from autopilot.display import Display as DisplayBase
+from autopilot.utilities import Silence
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +31,12 @@ class Display(DisplayBase):
         # Note: MUST import these here, rather than at the top of the file.
         # Why? Because sphinx imports these modules to build the API
         # documentation, which in turn tries to import Gdk, which in turn
-        # fails because there's no DISPlAY environment set in the package
+        # fails because there's no DISPLAY environment set in the package
         # builder.
-        from gi.repository import Gdk
+        with Silence():
+            from gi import require_version
+            require_version('Gdk', '3.0')
+            from gi.repository import Gdk
         self._default_screen = Gdk.Screen.get_default()
         if self._default_screen is None:
             raise RuntimeError(

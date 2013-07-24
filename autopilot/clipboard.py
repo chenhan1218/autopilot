@@ -24,10 +24,13 @@
 def get_clipboard_contents():
     """Get the contents of the clipboard.
 
-    This function returns the text copied to the 'CLIPBOARD' clipboard. Text can
-    be added to this clipbaord using Ctrl+C.
+    This function returns the text copied to the 'CLIPBOARD' clipboard. Text
+    can be added to this clipbaord using Ctrl+C.
 
     """
+    from gi import require_version
+    require_version('Gdk', '3.0')
+    require_version('Gtk', '3.0')
     from gi.repository import Gtk, Gdk
     cb = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
     return cb.wait_for_text()

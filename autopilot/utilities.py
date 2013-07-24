@@ -35,10 +35,12 @@ from autopilot import BackendException
 def _pick_backend(backends, preferred_backend):
     """Pick a backend and return an instance of it."""
     possible_backends = backends.keys()
-    get_debug_logger().debug("Possible backends: %s", ','.join(possible_backends))
+    get_debug_logger().debug(
+        "Possible backends: %s", ','.join(possible_backends))
     if preferred_backend:
         if preferred_backend in possible_backends:
-            possible_backends.sort(lambda a,b: -1 if a == preferred_backend else 0)
+            possible_backends.sort(
+                lambda a, b: -1 if a == preferred_backend else 0)
         else:
             raise RuntimeError("Unknown backend '%s'" % (preferred_backend))
     failure_reasons = []
@@ -50,10 +52,11 @@ def _pick_backend(backends, preferred_backend):
             failure_reasons.append('%s: %r' % (be, e))
             if preferred_backend != '':
                 raise BackendException(e)
-    raise RuntimeError("Unable to instantiate any backends\n%s" % '\n'.join(failure_reasons))
+    raise RuntimeError(
+        "Unable to instantiate any backends\n%s" % '\n'.join(failure_reasons))
 
 
-# Taken from http://code.activestate.com/recipes/577564-context-manager-for-low-level-redirection-of-stdou/
+# Taken from http://ur1.ca/eqapv
 # licensed under the MIT license.
 class Silence(object):
     """Context manager which uses low-level file descriptors to suppress
@@ -77,7 +80,8 @@ class Silence(object):
         self.fds = fds = [s.fileno() for s in saved_streams]
         self.saved_fds = map(os.dup, fds)
         # flush any pending output
-        for s in saved_streams: s.flush()
+        for s in saved_streams:
+            s.flush()
 
         # open surrogate files
         if self.combine:
@@ -85,7 +89,8 @@ class Silence(object):
             if self.outfiles[0] != os.devnull:
                 # disable buffering so output is merged immediately
                 sys.stdout, sys.stderr = map(os.fdopen, fds, ['w']*2, [0]*2)
-        else: null_streams = [open(f, self.mode, 0) for f in self.outfiles]
+        else:
+            null_streams = [open(f, self.mode, 0) for f in self.outfiles]
         self.null_fds = null_fds = [s.fileno() for s in null_streams]
         self.null_streams = null_streams
 
@@ -95,20 +100,24 @@ class Silence(object):
     def __exit__(self, *args):
         sys = self.sys
         # flush any pending output
-        for s in self.saved_streams: s.flush()
+        for s in self.saved_streams:
+            s.flush()
         # restore original streams and file descriptors
         map(os.dup2, self.saved_fds, self.fds)
         sys.stdout, sys.stderr = self.saved_streams
         # clean up
-        for s in self.null_streams: s.close()
-        for fd in self.saved_fds: os.close(fd)
+        for s in self.null_streams:
+            s.close()
+        for fd in self.saved_fds:
+            os.close(fd)
         return False
 
 
 class LogFormatter(logging.Formatter):
 
     # this is the default format to use for logging
-    log_format = "%(asctime)s %(levelname)s %(module)s:%(lineno)d - %(message)s"
+    log_format = (
+        "%(asctime)s %(levelname)s %(module)s:%(lineno)d - %(message)s")
 
     def __init__(self):
         super(LogFormatter, self).__init__(self.log_format)
@@ -124,8 +133,8 @@ class LogFormatter(logging.Formatter):
 
 
 class Timer(object):
-
-    """A context-manager that times a block of code, writing the results to the log."""
+    """A context-manager that times a block of code, writing the results to
+    the log."""
 
     def __init__(self, code_name, log_level=logging.DEBUG):
         self.code_name = code_name
@@ -138,7 +147,9 @@ class Timer(object):
 
     def __exit__(self, *args):
         self.end = time.time()
-        self.logger.log(self.log_level, "'%s' took %.3fS", self.code_name, self.end - self.start)
+        self.logger.log(
+            self.log_level, "'%s' took %.3fS", self.code_name,
+            self.end - self.start)
 
 
 def get_debug_logger():
@@ -167,10 +178,15 @@ def deprecated(alternative):
         @wraps(fn)
         def wrapped(*args, **kwargs):
             import sys
-            outerframe_details = inspect.getouterframes(inspect.currentframe())[1]
+            outerframe_details = inspect.getouterframes(
+                inspect.currentframe())[1]
             filename, line_number, function_name = outerframe_details[1:4]
-            sys.stderr.write("WARNING: in file \"{0}\", line {1} in {2}\n".format(filename, line_number, function_name))
-            sys.stderr.write("This function is deprecated. Please use '%s' instead.\n" % alternative)
+            sys.stderr.write(
+                "WARNING: in file \"{0}\", line {1} in {2}\n".format(
+                    filename, line_number, function_name))
+            sys.stderr.write(
+                "This function is deprecated. Please use '%s' instead.\n" %
+                alternative)
             return fn(*args, **kwargs)
         return wrapped
     return fdec
@@ -184,7 +200,9 @@ class _CleanupWrapper(object):
 
     def __call__(self, callable, *args, **kwargs):
         if self._test_instance is None:
-            raise RuntimeError("Out-of-test addCleanup can only be called while an autopilot test case is running!")
+            raise RuntimeError(
+                "Out-of-test addCleanup can only be called while an autopilot "
+                "test case is running!")
         self._test_instance.addCleanup(callable, *args, **kwargs)
 
     def set_test_instance(self, test_instance):
@@ -205,8 +223,8 @@ class _TestCleanupMeta(type):
     """Metaclass to inject the object into on test start/end functionality"""
     def __new__(cls, classname, bases, classdict):
         class EmptyStaticMethod(object):
-            """Class used to give us 'default classmethods' for those that don't
-            provide them.
+            """Class used to give us 'default classmethods' for those that
+            don't provide them.
 
             """
             def __get__(self, obj, klass=None):
@@ -232,6 +250,7 @@ class _TestCleanupMeta(type):
 
 
 class CleanupRegistered(object):
+
     __metaclass__ = _TestCleanupMeta
 
 

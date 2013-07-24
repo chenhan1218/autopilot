@@ -65,7 +65,8 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
             ('lower_alpha', dict(input='abcdefghijklmnopqrstuvwxyz')),
             ('upper_alpha', dict(input='ABCDEFGHIJKLMNOPQRSTUVWXYZ')),
             ('numeric', dict(input='0123456789')),
-            ('punctuation', dict(input='`~!@#$%^&*()_-+={}[]|\\:;"\'<>,.?/'))
+            ('punctuation', dict(input='`~!@#$%^&*()_-+={}[]|\\:;"\'<>,.?/')),
+            ('whitespace', dict(input='\t\n'))
         ]
     )
 
@@ -251,7 +252,7 @@ class InputStackCleanupTests(TestCase):
             def test_foo(self):
                 on_test_started(self)
 
-                kbd = FakeKeyboard()
+                FakeKeyboard()
 
         FakeTestCase("test_foo").run()
 

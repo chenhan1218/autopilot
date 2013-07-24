@@ -27,8 +27,7 @@ introspection mechanism, and probably isn't useful to most test authors.
 
 from __future__ import absolute_import
 
-import dbus
-from dbus import DBusException
+from dbus import DBusException, Interface
 import logging
 import subprocess
 from time import sleep
@@ -364,7 +363,7 @@ def _connection_matches_pid(bus, connection_name, pid):
         bus_pid = _get_bus_connections_pid(bus, connection_name)
     except DBusException as e:
         logger.info(
-            "DBusException while attempting to get PID for %s: %r" %
+            "dbus.DBusException while attempting to get PID for %s: %r" %
             (connection_name, e))
         return False
     eligible_pids = [pid] + _get_child_pids(pid)
@@ -384,7 +383,7 @@ def _get_bus_connections_pid(bus, connection_name):
 
     """
     bus_obj = bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
-    bus_iface = dbus.Interface(bus_obj, 'org.freedesktop.DBus')
+    bus_iface = Interface(bus_obj, 'org.freedesktop.DBus')
     return bus_iface.GetConnectionUnixProcessID(connection_name)
 
 
@@ -405,7 +404,7 @@ def _check_connection_has_ap_interface(bus, connection_name, path):
 
     """
     obj = bus.get_object(connection_name, path)
-    obj_iface = dbus.Interface(obj, 'com.canonical.Autopilot.Introspection')
+    obj_iface = Interface(obj, 'com.canonical.Autopilot.Introspection')
     obj_iface.GetVersion()
 
 

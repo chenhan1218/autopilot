@@ -21,7 +21,6 @@
 """Autopilot test result classes"""
 
 import logging
-import sys
 
 from autopilot.globals import get_log_verbose
 

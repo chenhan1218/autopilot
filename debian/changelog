@@ -1,3 +1,25 @@
+autopilot (1.3.1+13.10.20130724.1-0ubuntu1) saucy; urgency=low
+
+  [ Thomi Richards ]
+  * Add mouse log message. (LP: #1203613)
+  * Update Pointer wrapper coordinates when performing drag operation on
+    a touch device. (LP: #1203808)
+  * Fix failing tests. (LP: #1204031)
+
+  [ Leo Arias ]
+  * Fixed pep8 errors in autopilot/tests/unit, part 1. (LP: #1201057)
+  * Fixed pep8 errors in autopilot/tests/unit, part 2. (LP: #1201057)
+  * Fixed pep8 errors in the autopilot folder. (LP: #1201057)
+
+  [ Christopher Lee ]
+  * Fixes bug 1203716 where patch_environment didn't cleanup after
+    itself. (LP: #1203716)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 284
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 24 Jul 2013 07:35:34 +0000
+
 autopilot (1.3.1+13.10.20130722-0ubuntu1) saucy; urgency=low
 
   [ Christopher Lee ]

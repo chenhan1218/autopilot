@@ -44,7 +44,7 @@ from unittest import TestSuite
 from random import shuffle
 
 
-_output_stream=None
+_output_stream = None
 
 
 def list_tests(args):
@@ -56,21 +56,24 @@ def list_tests(args):
     if args.run_order:
         test_list_fn = lambda: iterate_tests(test_suite)
     else:
-        test_list_fn = lambda: sorted(iterate_tests(test_suite),
-            lambda a, b: cmp(a.id(), b.id()))
+        test_list_fn = lambda: sorted(
+            iterate_tests(test_suite),
+            lambda a, b: cmp(a.id(), b.id())
+        )
 
     if args.suites:
-        import re
         from collections import OrderedDict
 
-        suite_names = ["%s.%s" % (t.__module__, t.__class__.__name__) for t in test_list_fn()]
+        suite_names = ["%s.%s" % (t.__module__, t.__class__.__name__)
+                       for t in test_list_fn()]
         unique_suite_names = OrderedDict.fromkeys(suite_names).keys()
         num_tests = len(unique_suite_names)
         total_title = "suites"
         print "    %s" % ("\n    ".join(unique_suite_names))
     else:
         for test in test_list_fn():
-            has_scenarios = hasattr(test, "scenarios") and type(test.scenarios) is list
+            has_scenarios = (hasattr(test, "scenarios")
+                             and type(test.scenarios) is list)
             if has_scenarios:
                 num_tests += len(test.scenarios)
                 print " *%d %s" % (len(test.scenarios), test.id())
@@ -85,8 +88,8 @@ def run_tests(args):
     test_suite = load_test_suite_from_name(args.suite)
 
     if args.random_order:
-       shuffle(test_suite._tests)
-       print "Running tests in random order"
+        shuffle(test_suite._tests)
+        print "Running tests in random order"
 
     import autopilot.globals
 
@@ -96,8 +99,13 @@ def run_tests(args):
     if args.record:
         if not args.record_directory:
             args.record_directory = '/tmp/autopilot'
-        if subprocess.call(['which', 'recordmydesktop'], stdout=subprocess.PIPE) != 0:
-            print "ERROR: The application 'recordmydesktop' needs to be installed to record failing jobs."
+        call_ret_code = subprocess.call(
+            ['which', 'recordmydesktop'],
+            stdout=subprocess.PIPE
+        )
+        if call_ret_code != 0:
+            print "ERROR: The application 'recordmydesktop' needs to be " \
+                  "installed to record failing jobs."
             exit(1)
         autopilot.globals.configure_video_recording(True,
                                                     args.record_directory,
@@ -131,9 +139,10 @@ def setup_logging(verbose):
 
 
 def construct_test_runner(args):
-    kwargs = dict(stdout=get_output_stream(args),
+    kwargs = dict(
+        stdout=get_output_stream(args),
         output_format=get_output_format(args.format),
-        )
+    )
 
     return ConfigurableTestRunner(**kwargs)
 
@@ -164,8 +173,10 @@ def get_output_stream(args):
                 os.makedirs(path)
             log_file = args.output
             if os.path.isdir(log_file):
-                default_log = "%s_%s.log" % (node(),
-                                             datetime.now().strftime("%d.%m.%y-%H%M%S"))
+                default_log = "%s_%s.log" % (
+                    node(),
+                    datetime.now().strftime("%d.%m.%y-%H%M%S")
+                )
                 log_file = os.path.join(log_file, default_log)
                 print "Using default log filename: %s " % default_log
             if args.format == 'xml':
@@ -217,11 +228,13 @@ def load_test_suite_from_name(test_names):
             os.path.join(
                 os.path.dirname(package.__file__),
                 '..'
-                )
             )
+        )
         if package_parent_path not in test_package_locations:
             test_package_locations.append(package_parent_path)
-        tests.append(loader.discover(top_level_pkg, top_level_dir=package_parent_path))
+        tests.append(
+            loader.discover(top_level_pkg, top_level_dir=package_parent_path)
+        )
     all_tests = TestSuite(tests)
 
     test_dirs = ", ".join(sorted(test_package_locations))
@@ -230,11 +243,11 @@ def load_test_suite_from_name(test_names):
 
     requested_tests = {}
     for test in iterate_tests(all_tests):
-        # The test loader returns tests that start with 'unittest.loader' if for
-        # whatever reason the test failed to load. We run the tests without the
-        # built-in exception catching turned on, so we can get at the raised
-        # exception, which we print, so the user knows that something in their
-        # tests is broken.
+        # The test loader returns tests that start with 'unittest.loader' if
+        # for whatever reason the test failed to load. We run the tests without
+        # the built-in exception catching turned on, so we can get at the
+        # raised exception, which we print, so the user knows that something in
+        # their tests is broken.
         if test.id().startswith('unittest.loader'):
             test_id = test._testMethodName
             try:
@@ -250,9 +263,9 @@ def load_test_suite_from_name(test_names):
 
 
 def maybe_patch_python_path():
-    """Prepend the current directory to sys.path to ensure that we can load & run
-    autopilot tests if the caller is in the parent directory, but only if we're
-    not somewhere in /usr/...
+    """Prepend the current directory to sys.path to ensure that we can load &
+    run autopilot tests if the caller is in the parent directory, but only if
+    we're not somewhere in /usr/...
 
     """
     if os.getcwd() not in sys.path and not os.getcwd().startswith('/usr/'):
@@ -261,7 +274,11 @@ def maybe_patch_python_path():
 
 def launch_app(args):
     """Launch an application, with introspection support."""
-    from autopilot.introspection import launch_application, get_application_launcher, get_application_launcher_from_string_hint
+    from autopilot.introspection import (
+        launch_application,
+        get_application_launcher,
+        get_application_launcher_from_string_hint,
+    )
 
     setup_logging(args.verbose)
     app_name = args.application[0]
@@ -284,7 +301,8 @@ def launch_app(args):
     else:
         launcher = get_application_launcher_from_string_hint(args.interface)
     if launcher is None:
-        print "Error: Could not determine introspection type to use for application '%s'." % app_name
+        print "Error: Could not determine introspection type to use for " \
+              "application '%s'." % app_name
         print "(Perhaps use the '-i' argument to specify an interface.)"
         exit(1)
 

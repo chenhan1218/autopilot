@@ -38,16 +38,21 @@ RELEASE = 0
 _PRESSED_KEYS = []
 
 
+def _get_devnode_path():
+    """Provide a fallback uinput node for devices which don't support udev"""
+    devnode = '/dev/autopilot-uinput'
+    if not os.path.exists(devnode):
+        devnode = '/dev/uinput'
+    return devnode
+
+
 class Keyboard(KeyboardBase):
 
-    def __init__(self):
-        super(Keyboard, self).__init__()
-
-        self._device = UInput(devnode=_get_devnode_path())
+    _device = UInput(devnode=_get_devnode_path())
 
     def _emit(self, event, value):
-        self._device.write(e.EV_KEY, event, value)
-        self._device.syn()
+        Keyboard._device.write(e.EV_KEY, event, value)
+        Keyboard._device.syn()
 
     def _sanitise_keys(self, keys):
         if keys == '+':
@@ -142,11 +147,10 @@ class Keyboard(KeyboardBase):
         global _PRESSED_KEYS
         if len(_PRESSED_KEYS) == 0:
             return
-        _device = UInput(devnode=_get_devnode_path())
 
         def _release(event):
-            _device.write(e.EV_KEY, event, RELEASE)
-            _device.syn()
+            Keyboard._device.write(e.EV_KEY, event, RELEASE)
+            Keyboard._device.syn()
         for event in _PRESSED_KEYS:
             logger.warning("Releasing key %r as part of cleanup call.", event)
             _release(event)
@@ -171,12 +175,6 @@ class Keyboard(KeyboardBase):
         return events
 
 
-def _get_devnode_path():
-    """Provide a fallback uinput node for devices which don't support udev"""
-    devnode = '/dev/autopilot-uinput'
-    if not os.path.exists(devnode):
-        devnode = '/dev/uinput'
-    return devnode
 
 
 last_tracking_id = 0

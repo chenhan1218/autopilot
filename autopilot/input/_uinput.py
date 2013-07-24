@@ -91,9 +91,7 @@ class Keyboard(KeyboardBase):
         """
         if not isinstance(keys, basestring):
             raise TypeError("'keys' argument must be a string.")
-        # logger.debug("Releasing keys %r with delay %f", keys, delay)
-        # # release keys in the reverse order they were pressed in.
-        # keys = self.__translate_keys(keys)
+
         for key in reversed(self._sanitise_keys(keys)):
             for event in Keyboard._get_events_for_key(key):
                 logger.debug("Releasing %s (%r)", key, event)

@@ -85,7 +85,11 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
         from autopilot.introspection.qt import QtApplicationLauncher
         return QtApplicationLauncher()
 
-    def test_some_text(self):
+    def test_text_typing(self):
+        """Typing text must produce the correct characters in the target
+        app.
+
+        """
         app_proxy = self.start_mock_app()
         text_edit = app_proxy.select_single('QTextEdit')
 
@@ -96,7 +100,40 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
         keyboard = Keyboard.create(self.backend)
         keyboard.type(self.input, 0.01)
 
-        self.assertThat(text_edit.plainText, Eventually(Equals(self.input)))
+        self.assertThat(text_edit.plainText,
+                        Eventually(Equals(self.input)),
+                        "app shows: " + text_edit.plainText
+                        )
+
+    def test_keyboard_keys_are_released(self):
+        """Typing characters must not leave keys pressed."""
+        app_proxy = self.start_mock_app()
+        text_edit = app_proxy.select_single('QTextEdit')
+
+        # make sure the text edit has keyboard focus:
+        self.mouse.click_object(text_edit)
+        keyboard = Keyboard.create(self.backend)
+
+        for character in self.input:
+            self.assertThat(self._get_pressed_keys_list(), Equals([]))
+            keyboard.type(character, 0.01)
+            self.assertThat(self._get_pressed_keys_list(), Equals([]))
+
+    def _get_pressed_keys_list(self):
+        """Get a list of keys pressed, but not released from the backend we're
+        using.
+
+        """
+        if self.backend == 'X11':
+            from autopilot.input._X11 import _PRESSED_KEYS
+            return _PRESSED_KEYS
+        elif self.backend == 'UInput':
+            from autopilot.input._uinput import _PRESSED_KEYS
+            return _PRESSED_KEYS
+        else:
+            self.fail("Don't know how to get pressed keys list for backend "
+                      + self.backend
+                      )
 
 
 class MouseTestCase(AutopilotTestCase):
@@ -118,11 +155,10 @@ class MouseTestCase(AutopilotTestCase):
 
         """
         expected_exception = RuntimeError(
-            "Cannot create a mouse on the phablet devices."
+            "Cannot create a Mouse on the phablet devices."
         )
         self.assertThat(lambda: Mouse.create(),
-            raises(expected_exception))
-
+                        raises(expected_exception))
 
 
 class TouchTests(AutopilotTestCase):
@@ -177,15 +213,15 @@ class PointerWrapperTests(AutopilotTestCase):
         self.assertThat(device._y, Equals(56))
 
     def test_touch_drag_updates_coordinates(self):
-        """The Pointer wrapper must update it's x and y properties when wrapping
-        a touch object and performing a drag operation.
+        """The Pointer wrapper must update it's x and y properties when
+        wrapping a touch object and performing a drag operation.
 
         """
         class FakeTouch(Touch):
             def __init__(self):
                 pass
 
-            def drag(self, x1,y1,x2,y2):
+            def drag(self, x1, y1, x2, y2):
                 pass
 
         p = Pointer(FakeTouch())

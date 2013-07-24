@@ -86,6 +86,8 @@ Common use cases
 
   The file 'results.xml' will be created when all the tests have completed, and will be in the jUnitXml file format. This is useful when running the autopilot tests within a jenkins environment.
 
+.. _visualise_introspection_tree:
+
 Visualise Introspection Tree
 ----------------------------
 

@@ -168,6 +168,12 @@ Platform Selection
 
 .. Document the methods we have to get information about the platform we're running on, and how we can skip tests based on this information.
 
+Autopilot provides functionality that allows the test author to determine which
+platform a test is running on so that they may either change behaviour within
+the test or skipping the test all together.
+
+For examples and API documentaion please see :py:mod:`autopilot.platform`.
+
 Gestures and Multitouch
 =======================
 

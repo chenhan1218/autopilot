@@ -139,6 +139,37 @@ If you only want to use the mouse on certain platforms, use the :mod:`autopilot.
 Autopilot Qt & Gtk Support
 ++++++++++++++++++++++++++
 
+Q. How do I launch my application so that I can explore it with the vis tool?
+=============================================================================
+
+Autopilot can launch applications with Autopilot support enabled allowing you to
+explore and introspect the application using the :ref:`vis
+tool<visualise_introspection_tree>`
+
+For instance launching gedit is as easy as::
+
+  $ autopilot launch gedit
+
+*Autopilot launch* attempts to detect if you are launching either a Gtk or Qt
+application so that it can enable the correct libraries. If is is unable to
+determine this you will need to specify the type of application it is by using
+the **-i** argument.
+
+For example, in our previous example Autopilot was able to automatically
+determine that gedit is a Gtk application and thus no further arguments were
+required.
+
+If we want to use the vis tool to introspect something like the :ref:`testapp.py
+script <tut_test_with_interaction>` from an earlier tutorial we will need to
+inform autopilot that it is a Qt application so that it can enable the correct
+support::
+
+  $ autopilot launch -i Qt testapp.py
+
+Now that it has been launched with Autopilot support we can introspect and
+explore out application using the :ref:`vis tool <visualise_introspection_tree>`.
+
+
 Q. What is the impact on memory of adding objectNames to QML items?
 ===================================================================
 

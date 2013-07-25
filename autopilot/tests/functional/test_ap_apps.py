@@ -18,11 +18,12 @@
 #
 
 
+import datetime
 import os
 import stat
 import subprocess
 from tempfile import mktemp
-from testtools.matchers import raises
+from testtools.matchers import raises, LessThan
 from textwrap import dedent
 
 from autopilot.testcase import AutopilotTestCase
@@ -78,6 +79,10 @@ AutopilotTestCase.pick_app_launcher method."
             raises(RuntimeError(expected_error_message)))
 
     def test_creating_app_proxy_for_running_app_not_on_dbus_fails(self):
+        """Creating app proxy object for an application that isn't connected to
+        the dbus session must raise a ProcessSearchError exception.
+
+        """
         path = self.write_script(dedent("""\
             #!/usr/bin/python
 
@@ -107,6 +112,10 @@ AutopilotTestCase.pick_app_launcher method."
         )
 
     def test_creating_proxy_for_segfaulted_app_failed(self):
+        """Creating a proxy object for an application that has died since
+        launching must throw ProcessSearchError exception.
+
+        """
         path = self.write_script(dedent("""\
             #!/usr/bin/python
 
@@ -122,6 +131,32 @@ AutopilotTestCase.pick_app_launcher method."
             lambda: self.launch_test_application(path, app_type='qt'),
             raises(ProcessSearchError(expected_error))
         )
+
+    def test_creating_proxy_for_segfaulted_app_fails_quicker(self):
+        """Searching for a process that has died since launching, the search
+        must fail before the 10 second timeout.
+
+        """
+        path = self.write_script(dedent("""\
+            #!/usr/bin/python
+
+            from time import sleep
+            import sys
+
+            sleep(1)
+            sys.exit(1)
+        """))
+        start = datetime.datetime.now()
+
+        try:
+            self.launch_test_application(path, app_type='qt')
+        except ProcessSearchError:
+            end = datetime.datetime.now()
+        else:
+            self.fail("launch_test_application didn't raise expected exception")
+
+        difference = end - start
+        self.assertThat(difference.total_seconds(), LessThan(10))
 
 class QtTests(ApplicationTests):
 

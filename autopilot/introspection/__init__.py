@@ -275,7 +275,10 @@ def _get_dbus_addresses_from_search_parameters(
     for i in range(10):
         if process is not None and not _process_is_running(process):
             return_code = process.poll()
-            raise ProcessSearchError("Process exited with exit code: %d" % return_code)
+            raise ProcessSearchError(
+                "Process exited with exit code: %d"
+                % return_code
+            )
         bus = _get_dbus_bus_from_string(dbus_bus)
         possible_connections = _get_possible_connections(bus, connection_name)
         connection_list = _get_unchecked_connections(possible_connections)
@@ -297,8 +300,10 @@ def _pid_is_running(pid):
     """
     return os.path.exists("/proc/%d" % pid)
 
+
 def _process_is_running(process):
     return process.poll() is None
+
 
 def _get_valid_connections(connections, bus, pid, object_path):
     filter_fn = partial(_match_connection, bus, pid, object_path)

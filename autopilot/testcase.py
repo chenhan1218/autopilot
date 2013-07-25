@@ -66,7 +66,6 @@ from autopilot.introspection import (
     get_application_launcher_from_string_hint,
     get_autopilot_proxy_object_for_process,
     launch_application,
-    ProcessSearchError,
 )
 from autopilot.display import Display
 from autopilot.utilities import on_test_started
@@ -442,7 +441,10 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             if process.returncode is not None:
                 break
             if i == 9:
-                logger.info("Killing process group, since it hasn't exited after 10 seconds.")
+                logger.info(
+                    "Killing process group, since it hasn't exited after "
+                    "10 seconds."
+                )
                 os.killpg(process.pid, signal.SIGKILL)
             sleep(1)
 

@@ -153,10 +153,13 @@ AutopilotTestCase.pick_app_launcher method."
         except ProcessSearchError:
             end = datetime.datetime.now()
         else:
-            self.fail("launch_test_application didn't raise expected exception")
+            self.fail(
+                "launch_test_application didn't raise expected exception"
+            )
 
         difference = end - start
         self.assertThat(difference.total_seconds(), LessThan(10))
+
 
 class QtTests(ApplicationTests):
 

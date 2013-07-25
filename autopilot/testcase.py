@@ -427,8 +427,6 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
     def _attach_process_logs(self, process):
         stdout, stderr = process.communicate()
         return_code = process.returncode
-        if return_code != 0:
-            logger.warning("Process exited with exit code: %d", return_code)
         self.addDetail('process-return-code', text_content(str(return_code)))
         self.addDetail('process-stdout', text_content(stdout))
         self.addDetail('process-stderr', text_content(stderr))

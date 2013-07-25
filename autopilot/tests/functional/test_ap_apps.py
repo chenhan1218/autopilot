@@ -22,6 +22,7 @@ import datetime
 import os
 import stat
 import subprocess
+from mock import patch
 from tempfile import mktemp
 from testtools.matchers import raises, LessThan
 from textwrap import dedent
@@ -132,6 +133,10 @@ AutopilotTestCase.pick_app_launcher method."
             raises(ProcessSearchError(expected_error))
         )
 
+    @patch(
+        'autopilot.introspection._search_for_valid_connections',
+        new=lambda *args: []
+    )
     def test_creating_proxy_for_segfaulted_app_fails_quicker(self):
         """Searching for a process that has died since launching, the search
         must fail before the 10 second timeout.
@@ -158,7 +163,7 @@ AutopilotTestCase.pick_app_launcher method."
             )
 
         difference = end - start
-        self.assertThat(difference.total_seconds(), LessThan(10))
+        self.assertThat(difference.total_seconds(), LessThan(5))
 
 
 class QtTests(ApplicationTests):

@@ -62,7 +62,6 @@ class OttoSaysDirective(Directive):
         outer_container.children.extend(
             [image_container]
             + ad
-            )
+        )
         outer_container['classes'] = ['otto-says-container']
         return [outer_container]
-

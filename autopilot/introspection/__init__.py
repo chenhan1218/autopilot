@@ -55,6 +55,9 @@ from autopilot.dbus_handler import (
 
 logger = logging.getLogger(__name__)
 
+# Keep track of known connections during search
+connection_list = []
+
 
 class ProcessSearchError(RuntimeError):
     pass
@@ -267,10 +270,7 @@ def _get_dbus_addresses_from_search_parameters(
     criteria.
 
     """
-    connection_list = []
-
-    def _get_unchecked_connections(all_connections):
-        return list(set(all_connections).difference(set(connection_list)))
+    _reset_known_connection_list()
 
     for i in range(10):
         if process is not None and not _process_is_running(process):
@@ -279,11 +279,15 @@ def _get_dbus_addresses_from_search_parameters(
                 "Process exited with exit code: %d"
                 % return_code
             )
+
         bus = _get_dbus_bus_from_string(dbus_bus)
-        possible_connections = _get_possible_connections(bus, connection_name)
-        connection_list = _get_unchecked_connections(possible_connections)
-        valid_connections = _get_valid_connections(
-            connection_list, bus, pid, object_path)
+
+        valid_connections = _search_for_valid_connections(
+            pid,
+            bus,
+            connection_name,
+            object_path
+        )
 
         if len(valid_connections) >= 1:
             return [_get_dbus_address_object(name, object_path, bus) for name
@@ -291,6 +295,29 @@ def _get_dbus_addresses_from_search_parameters(
 
         sleep(1)
     return []
+
+
+def _reset_known_connection_list():
+    global connection_list
+    del connection_list[:]
+
+
+def _search_for_valid_connections(pid, bus, connection_name, object_path):
+    global connection_list
+
+    def _get_unchecked_connections(all_connections):
+        return list(set(all_connections).difference(set(connection_list)))
+
+    possible_connections = _get_possible_connections(bus, connection_name)
+    connection_list = _get_unchecked_connections(possible_connections)
+    valid_connections = _get_valid_connections(
+        connection_list,
+        bus,
+        pid,
+        object_path
+    )
+
+    return valid_connections
 
 
 def _pid_is_running(pid):

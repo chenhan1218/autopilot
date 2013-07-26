@@ -18,14 +18,33 @@
 #
 
 
+import datetime
 import os
 import stat
 import subprocess
+from mock import patch
 from tempfile import mktemp
-from testtools.matchers import raises
+from testtools.matchers import raises, LessThan
 from textwrap import dedent
 
 from autopilot.testcase import AutopilotTestCase
+from autopilot.introspection import (
+    get_proxy_object_for_existing_process,
+    ProcessSearchError,
+    _pid_is_running,
+)
+
+
+def _get_unused_pid():
+    """Returns a Process ID number that isn't currently running.
+
+    :raises: **RuntimeError** if unable to produce a number that doesn't
+     correspond to a currently running process.
+    """
+    for i in xrange(10000, 20000):
+        if not _pid_is_running(i):
+            return i
+    raise RuntimeError("Unable to find test PID.")
 
 
 class ApplicationTests(AutopilotTestCase):
@@ -59,6 +78,92 @@ AutopilotTestCase.pick_app_launcher method."
         self.assertThat(
             lambda: self.launch_test_application(path),
             raises(RuntimeError(expected_error_message)))
+
+    def test_creating_app_proxy_for_running_app_not_on_dbus_fails(self):
+        """Creating app proxy object for an application that isn't connected to
+        the dbus session must raise a ProcessSearchError exception.
+
+        """
+        path = self.write_script(dedent("""\
+            #!/usr/bin/python
+
+            from time import sleep
+
+            while True:
+                print "Still running"
+                sleep(1)
+        """))
+
+        expected_error = "Search criteria returned no results"
+        self.assertThat(
+            lambda: self.launch_test_application(path, app_type='qt'),
+            raises(ProcessSearchError(expected_error))
+        )
+
+    def test_creating_app_for_non_running_app_fails(self):
+        """Attempting to create an application proxy object for a process
+        (using a PID) that isn't running must raise an exception.
+
+        """
+        pid = _get_unused_pid()
+
+        self.assertThat(
+            lambda: get_proxy_object_for_existing_process(pid=pid),
+            raises(ProcessSearchError("PID %d could not be found" % pid))
+        )
+
+    def test_creating_proxy_for_segfaulted_app_failed(self):
+        """Creating a proxy object for an application that has died since
+        launching must throw ProcessSearchError exception.
+
+        """
+        path = self.write_script(dedent("""\
+            #!/usr/bin/python
+
+            from time import sleep
+            import sys
+
+            sleep(5)
+            sys.exit(1)
+        """))
+
+        expected_error = "Process exited with exit code: 1"
+        self.assertThat(
+            lambda: self.launch_test_application(path, app_type='qt'),
+            raises(ProcessSearchError(expected_error))
+        )
+
+    @patch(
+        'autopilot.introspection._search_for_valid_connections',
+        new=lambda *args: []
+    )
+    def test_creating_proxy_for_segfaulted_app_fails_quicker(self):
+        """Searching for a process that has died since launching, the search
+        must fail before the 10 second timeout.
+
+        """
+        path = self.write_script(dedent("""\
+            #!/usr/bin/python
+
+            from time import sleep
+            import sys
+
+            sleep(1)
+            sys.exit(1)
+        """))
+        start = datetime.datetime.now()
+
+        try:
+            self.launch_test_application(path, app_type='qt')
+        except ProcessSearchError:
+            end = datetime.datetime.now()
+        else:
+            self.fail(
+                "launch_test_application didn't raise expected exception"
+            )
+
+        difference = end - start
+        self.assertThat(difference.total_seconds(), LessThan(5))
 
 
 class QtTests(ApplicationTests):

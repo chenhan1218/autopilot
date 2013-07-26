@@ -423,19 +423,31 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         # default implementation is in autopilot.introspection:
         return get_application_launcher(app_path)
 
-    def _kill_process_and_attach_logs(self, process):
-        os.killpg(process.pid, signal.SIGTERM)
+    def _attach_process_logs(self, process):
+        stdout, stderr = process.communicate()
+        return_code = process.returncode
+        self.addDetail('process-return-code', text_content(str(return_code)))
+        self.addDetail('process-stdout', text_content(stdout))
+        self.addDetail('process-stderr', text_content(stderr))
+
+    def _kill_process(self, process):
         logger.info("waiting for process to exit.")
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except OSError:
+            logger.info("Appears process has already exited.")
         for i in range(10):
             process.poll()
             if process.returncode is not None:
                 break
             if i == 9:
                 logger.info(
-                    "Killing process group, since it hasn't exited after 10 "
-                    "seconds.")
+                    "Killing process group, since it hasn't exited after "
+                    "10 seconds."
+                )
                 os.killpg(process.pid, signal.SIGKILL)
             sleep(1)
-        stdout, stderr = process.communicate()
-        self.addDetail('process-stdout', text_content(stdout))
-        self.addDetail('process-stderr', text_content(stderr))
+
+    def _kill_process_and_attach_logs(self, process):
+        self._kill_process(process)
+        self._attach_process_logs(process)

@@ -55,6 +55,13 @@ from autopilot.dbus_handler import (
 
 logger = logging.getLogger(__name__)
 
+# Keep track of known connections during search
+connection_list = []
+
+
+class ProcessSearchError(RuntimeError):
+    pass
+
 
 def get_application_launcher(app_path):
     """Return an instance of :class:`ApplicationLauncher` that knows how to
@@ -166,14 +173,17 @@ def get_autopilot_proxy_object_for_process(process, emulator_base):
     """
     pid = process.pid
     proxy_obj = get_proxy_object_for_existing_process(
-        pid, emulator_base=emulator_base)
+        pid,
+        process=process,
+        emulator_base=emulator_base
+    )
     proxy_obj.set_process(process)
 
     return proxy_obj
 
 
 def get_proxy_object_for_existing_process(
-        pid=None, dbus_bus='session', connection_name=None,
+        pid=None, dbus_bus='session', connection_name=None, process=None,
         object_path=AUTOPILOT_PATH, application_name=None, emulator_base=None):
     """Return a single proxy object for an application that is already running
     (i.e. launched outside of Autopilot).
@@ -224,15 +234,30 @@ def get_proxy_object_for_existing_process(
     :raises: RuntimeError if the search criteria results in many matches.
 
     """
+    if process is not None:
+        if pid is None:
+            pid = process.pid
+        elif pid != process.pid:
+            raise RuntimeError("Supplied PID and process.pid do not match.")
+
+    if pid is not None and not _pid_is_running(pid):
+        raise ProcessSearchError("PID %d could not be found" % pid)
+
     dbus_addresses = _get_dbus_addresses_from_search_parameters(
-        pid, dbus_bus, connection_name, object_path)
+        pid,
+        dbus_bus,
+        connection_name,
+        object_path,
+        process
+    )
+
     if application_name:
         app_name_check_fn = lambda i: get_classname_from_path(
             i.introspection_iface.GetState('/')[0][0]) == application_name
         dbus_addresses = filter(app_name_check_fn, dbus_addresses)
 
     if dbus_addresses is None or len(dbus_addresses) == 0:
-        raise RuntimeError("Search criteria returned no results")
+        raise ProcessSearchError("Search criteria returned no results")
     if len(dbus_addresses) > 1:
         raise RuntimeError("Search criteria returned multiple results")
 
@@ -240,22 +265,29 @@ def get_proxy_object_for_existing_process(
 
 
 def _get_dbus_addresses_from_search_parameters(
-        pid, dbus_bus, connection_name, object_path):
+        pid, dbus_bus, connection_name, object_path, process):
     """Returns a list of :py:class: `DBusAddress` for all successfully matched
     criteria.
 
     """
-    connection_list = []
-
-    def _get_unchecked_connections(all_connections):
-        return list(set(all_connections).difference(set(connection_list)))
+    _reset_known_connection_list()
 
     for i in range(10):
+        if process is not None and not _process_is_running(process):
+            return_code = process.poll()
+            raise ProcessSearchError(
+                "Process exited with exit code: %d"
+                % return_code
+            )
+
         bus = _get_dbus_bus_from_string(dbus_bus)
-        possible_connections = _get_possible_connections(bus, connection_name)
-        connection_list = _get_unchecked_connections(possible_connections)
-        valid_connections = _get_valid_connections(
-            connection_list, bus, pid, object_path)
+
+        valid_connections = _search_for_valid_connections(
+            pid,
+            bus,
+            connection_name,
+            object_path
+        )
 
         if len(valid_connections) >= 1:
             return [_get_dbus_address_object(name, object_path, bus) for name
@@ -263,6 +295,41 @@ def _get_dbus_addresses_from_search_parameters(
 
         sleep(1)
     return []
+
+
+def _reset_known_connection_list():
+    global connection_list
+    del connection_list[:]
+
+
+def _search_for_valid_connections(pid, bus, connection_name, object_path):
+    global connection_list
+
+    def _get_unchecked_connections(all_connections):
+        return list(set(all_connections).difference(set(connection_list)))
+
+    possible_connections = _get_possible_connections(bus, connection_name)
+    connection_list = _get_unchecked_connections(possible_connections)
+    valid_connections = _get_valid_connections(
+        connection_list,
+        bus,
+        pid,
+        object_path
+    )
+
+    return valid_connections
+
+
+def _pid_is_running(pid):
+    """Check for the existence of a currently running PID.
+
+    :returns: **True** if PID is running **False** otherwise.
+    """
+    return os.path.exists("/proc/%d" % pid)
+
+
+def _process_is_running(process):
+    return process.poll() is None
 
 
 def _get_valid_connections(connections, bus, pid, object_path):

@@ -165,7 +165,11 @@ def launch_process(application, args, capture_output, **kwargs):
     return process
 
 
-def get_autopilot_proxy_object_for_process(process, emulator_base):
+def get_autopilot_proxy_object_for_process(
+    process,
+    emulator_base,
+    dbus_bus='session'
+):
     """Return the autopilot proxy object for the given *process*.
 
     :raises: **RuntimeError** if no autopilot interface was found.
@@ -175,7 +179,8 @@ def get_autopilot_proxy_object_for_process(process, emulator_base):
     proxy_obj = get_proxy_object_for_existing_process(
         pid,
         process=process,
-        emulator_base=emulator_base
+        emulator_base=emulator_base,
+        dbus_bus=dbus_bus,
     )
     proxy_obj.set_process(process)
 

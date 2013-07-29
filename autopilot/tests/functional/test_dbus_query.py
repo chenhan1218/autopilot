@@ -20,6 +20,8 @@
 
 import json
 import os
+import subprocess
+import signal
 from tempfile import mktemp
 
 from autopilot.testcase import AutopilotTestCase
@@ -160,3 +162,45 @@ class DbusQueryTests(AutopilotTestCase):
         app = self.start_fully_featured_app()
         failed_match = app.select_many('QMenu', title='qwerty')
         self.assertThat(failed_match, Equals([]))
+
+
+class DbusCustomBusTests(AutopilotTestCase):
+    """Test the ability to use custom dbus buses during a test."""
+
+    def setUp(self):
+        self.dbus_bus_addr = self._enable_custom_dbus_bus()
+        super(DbusCustomBusTests, self).setUp()
+
+    def _enable_custom_dbus_bus(self):
+        p = subprocess.Popen(['dbus-launch'], stdout=subprocess.PIPE)
+        output = p.communicate()
+        results = output[0].split("\n")
+        dbus_pid = int(results[1].split("=")[1])
+        dbus_address = results[0].split("=", 1)[1]
+
+        self.patch_environment("DBUS_SESSION_BUS_ADDRESS", dbus_address)
+
+        kill_dbus = lambda pid: os.killpg(pid, signal.SIGTERM)
+        self.addCleanup(kill_dbus, dbus_pid)
+
+        return dbus_address
+
+    def _start_mock_app(self, dbus_bus):
+        window_spec = {
+            "Contents": "TextEdit"
+        }
+
+        file_path = mktemp()
+        json.dump(window_spec, open(file_path, 'w'))
+        self.addCleanup(os.remove, file_path)
+
+        return self.launch_test_application(
+            'window-mocker',
+            file_path,
+            app_type="qt",
+            dbus_bus=dbus_bus,
+        )
+
+    def test_can_use_custom_dbus_bus(self):
+        app = self._start_mock_app(self.dbus_bus_addr)
+        self.assertThat(app, NotEquals(None))

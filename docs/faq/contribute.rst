@@ -55,8 +55,8 @@ All new features should have unit and/or functional test to make sure someone do
 
 .. _listing_source_tests:
 
-Q. How do I list the tests for the autopilot source code?
-=========================================================
+Q. How do I list or run the tests for the autopilot source code?
+================================================================
 Running autopilot from the source code root directory (the directory containing
 the autopilot/ bin/ docs/ debian/ etc. directories) will use the local copy and
 not the system installed version.
@@ -78,17 +78,16 @@ An example from branching to running::
 
     255 total tests.
 
-.. note:: The 'Loading tests from:' line will inform you where autopilot is
-          loading the tests from.
+.. note:: The 'Loading tests from:' or 'Running tests from:' line will inform
+          you where autopilot is loading the tests from.
 
-Q. How do I run the tests for the autopilot source code?
-========================================================
-Run autopilot from the source codes root directory (see :ref:`listing_source_tests`).
+To run a specific suite or a single test in a suite be more specific with the
+tests path.
 
-For example::
+For example running just the 'InputStackKeyboardTypingTests' suite::
 
-    autopilot run autopilot.tests
+    autopilot run autopilot.tests.functional.test_input_stack.InputStackKeyboardTypingTests
 
-To run a single test::
+Or running a single test in the 'test_version_utility_fns' suite::
 
-    autopilot run autopilot.tests.unit.test_version_utility_fns.VersionFnTests.test_get_version_string_shows_source_version
+    autopilot run autopilot.tests.unit.test_version_utility_fns.VersionFnTests.test_package_version_returns_none_when_running_from_source

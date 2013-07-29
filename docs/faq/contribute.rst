@@ -53,15 +53,39 @@ Signup for a `launchpad account <https://help.launchpad.net/YourAccount/NewAccou
 
 All new features should have unit and/or functional test to make sure someone doesn't remove or break your new code with a future commit.
 
+.. _listing_source_tests:
+
 Q. How do I list the tests for the autopilot source code?
 =========================================================
-From the directory containing the autopilot source code type::
+Running autopilot from the source code root directory (the directory containing
+the autopilot/ bin/ docs/ debian/ etc. directories) will use the local copy and
+not the system installed version.
 
-    autopilot list autopilot.tests
+An example from branching to running::
+
+    $ bzr branch lp:autopilot ~/src/autopilot/trunk
+    $ cd ~/src/autopilot/trunk
+    $ autopilot list autopilot.tests
+
+    Loading tests from: /home/example/src/autopilot/trunk
+
+    autopilot.tests.functional.test_ap_apps.ApplicationLaunchTests.test_creating_app_for_non_running_app_fails
+    autopilot.tests.functional.test_ap_apps.ApplicationLaunchTests.test_creating_app_proxy_for_running_app_not_on_dbus_fails
+
+    # .. snip ..
+
+    autopilot.tests.unit.test_version_utility_fns.VersionFnTests.test_package_version_returns_none_when_running_from_source
+
+    255 total tests.
+
+.. note:: The 'Loading tests from:' line will inform you where autopilot is
+          loading the tests from.
 
 Q. How do I run the tests for the autopilot source code?
 ========================================================
-From the directory containing the autopilot source code type::
+Run autopilot from the source codes root directory (see :ref:`listing_source_tests`).
+
+For example::
 
     autopilot run autopilot.tests
 

@@ -385,6 +385,10 @@ class Touch(object):
         """Press and hold."""
         raise NotImplementedError("You cannot use this class directly.")
 
+    def move(self, x, y):
+        """Move the pointer coords to (x,y)"""
+        raise NotImplementedError("You cannot use this class directly.")
+
     def release(self):
         """Release a previously pressed finger"""
         raise NotImplementedError("You cannot use this class directly.")

@@ -53,18 +53,41 @@ Signup for a `launchpad account <https://help.launchpad.net/YourAccount/NewAccou
 
 All new features should have unit and/or functional test to make sure someone doesn't remove or break your new code with a future commit.
 
-Q. How do I list the tests for the autopilot source code?
-=========================================================
-From the directory containing the autopilot source code type::
+.. _listing_source_tests:
 
-    autopilot list autopilot.tests
+Q. How do I list or run the tests for the autopilot source code?
+================================================================
+Running autopilot from the source code root directory (the directory containing
+the autopilot/ bin/ docs/ debian/ etc. directories) will use the local copy and
+not the system installed version.
 
-Q. How do I run the tests for the autopilot source code?
-========================================================
-From the directory containing the autopilot source code type::
+An example from branching to running::
 
-    autopilot run autopilot.tests
+    $ bzr branch lp:autopilot ~/src/autopilot/trunk
+    $ cd ~/src/autopilot/trunk
+    $ autopilot list autopilot.tests
 
-To run a single test::
+    Loading tests from: /home/example/src/autopilot/trunk
 
-    autopilot run autopilot.tests.unit.test_version_utility_fns.VersionFnTests.test_get_version_string_shows_source_version
+    autopilot.tests.functional.test_ap_apps.ApplicationLaunchTests.test_creating_app_for_non_running_app_fails
+    autopilot.tests.functional.test_ap_apps.ApplicationLaunchTests.test_creating_app_proxy_for_running_app_not_on_dbus_fails
+
+    # .. snip ..
+
+    autopilot.tests.unit.test_version_utility_fns.VersionFnTests.test_package_version_returns_none_when_running_from_source
+
+    255 total tests.
+
+.. note:: The 'Loading tests from:' or 'Running tests from:' line will inform
+          you where autopilot is loading the tests from.
+
+To run a specific suite or a single test in a suite be more specific with the
+tests path.
+
+For example running just the 'InputStackKeyboardTypingTests' suite::
+
+    autopilot run autopilot.tests.functional.test_input_stack.InputStackKeyboardTypingTests
+
+Or running a single test in the 'test_version_utility_fns' suite::
+
+    autopilot run autopilot.tests.unit.test_version_utility_fns.VersionFnTests.test_package_version_returns_none_when_running_from_source

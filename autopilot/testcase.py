@@ -269,6 +269,10 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                 "AutopilotTestCase.pick_app_launcher method.")
         emulator_base = kwargs.pop('emulator_base', None)
         dbus_bus = kwargs.pop('dbus_bus', 'session')
+
+        if dbus_bus != 'session':
+            self.patch_environment("DBUS_SESSION_BUS_ADDRESS", dbus_bus)
+
         process = launch_application(launcher, app_path, *arguments, **kwargs)
         self.addCleanup(self._kill_process_and_attach_logs, process)
         return get_autopilot_proxy_object_for_process(

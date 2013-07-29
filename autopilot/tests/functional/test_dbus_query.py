@@ -178,8 +178,6 @@ class DbusCustomBusTests(AutopilotTestCase):
         dbus_pid = int(results[1].split("=")[1])
         dbus_address = results[0].split("=", 1)[1]
 
-        self.patch_environment("DBUS_SESSION_BUS_ADDRESS", dbus_address)
-
         kill_dbus = lambda pid: os.killpg(pid, signal.SIGTERM)
         self.addCleanup(kill_dbus, dbus_pid)
 

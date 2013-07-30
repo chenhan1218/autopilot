@@ -191,17 +191,20 @@ AutopilotTestCase.pick_app_launcher method."
             """))
         app_proxy = self.launch_test_application(path, app_type='qt')
         self.assertTrue(app_proxy is not None)
-        try:
+
+        def crashing_fn():
             for i in range(10):
                 logger.debug("%d %r", i, app_proxy.get_state_by_path("/"))
                 sleep(1)
-        except AssertionError as e:
-            self.assertThat(
-                e.message,
-                Equals("Application under test exited with return code 0")
+
+        self.assertThat(
+            crashing_fn,
+            raises(
+                RuntimeError(
+                    "Application under test exited with return code 0"
+                )
             )
-        else:
-            self.fail("Expected application to exit, but it didn't!")
+        )
 
 
 class QtTests(ApplicationTests):

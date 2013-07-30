@@ -117,7 +117,7 @@ _keys = {
     "workspace/move_up": ("wall", "up_key"),
     "workspace/move_down": ("wall", "down_key"),
     # Window management:
-    "window/show_desktop": ("core", "show_desktop_key"),
+    "window/show_desktop": ("unityshell", "show_desktop_key"),
     "window/minimize": ("core", "minimize_window_key"),
     "window/maximize": ("core", "maximize_window_key"),
     "window/restore": ("core", "unmaximize_or_minimize_window_key"),

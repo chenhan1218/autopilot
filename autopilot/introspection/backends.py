@@ -140,7 +140,8 @@ class DBusAddress(object):
             )
             return _pid_is_running(process_pid)
         except dbus.DBusException as e:
-            if e.get_dbus_name() == 'org.freedesktop.DBus.Error.NameHasNoOwner':
+            if e.get_dbus_name() == \
+                    'org.freedesktop.DBus.Error.NameHasNoOwner':
                 return False
             else:
                 raise

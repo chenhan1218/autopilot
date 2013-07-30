@@ -46,6 +46,10 @@ from autopilot.introspection.dbus import (
     DBusIntrospectionObject,
     get_classname_from_path,
 )
+from autopilot.introspection.utilities import (
+    _get_bus_connections_pid,
+    _pid_is_running,
+)
 from autopilot.dbus_handler import (
     get_session_bus,
     get_system_bus,
@@ -325,14 +329,6 @@ def _search_for_valid_connections(pid, bus, connection_name, object_path):
     return valid_connections
 
 
-def _pid_is_running(pid):
-    """Check for the existence of a currently running PID.
-
-    :returns: **True** if PID is running **False** otherwise.
-    """
-    return os.path.exists("/proc/%d" % pid)
-
-
 def _process_is_running(process):
     return process.poll() is None
 
@@ -411,17 +407,6 @@ def _bus_pid_is_our_pid(bus, connection_name, pid):
     """Returns True if this scripts pid is the bus connections pid supplied."""
     bus_pid = _get_bus_connections_pid(bus, connection_name)
     return bus_pid == os.getpid()
-
-
-def _get_bus_connections_pid(bus, connection_name):
-    """Returns the pid for the connection **connection_name** on **bus**
-
-    :raises: **DBusException** if connection_name is invalid etc.
-
-    """
-    bus_obj = bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
-    bus_iface = Interface(bus_obj, 'org.freedesktop.DBus')
-    return bus_iface.GetConnectionUnixProcessID(connection_name)
 
 
 def _connection_has_path(bus, connection_name, path):

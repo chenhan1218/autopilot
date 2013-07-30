@@ -34,6 +34,10 @@ from autopilot.introspection.constants import (
     DBUS_INTROSPECTION_IFACE,
     QT_AUTOPILOT_IFACE,
 )
+from autopilot.introspection.utilities import (
+    _pid_is_running,
+    _get_bus_connections_pid,
+)
 
 
 class WireProtocolVersionMismatch(RuntimeError):
@@ -92,6 +96,11 @@ class DBusAddress(object):
         if not isinstance(self._addr_tuple.object_path, basestring):
             raise TypeError("Object name must be a string")
 
+        if not self._check_pid_running():
+            raise RuntimeError(
+                "Application under test exited before the test finished!"
+            )
+
         proxy_obj = self._addr_tuple.bus.get_object(
             self._addr_tuple.connection,
             self._addr_tuple.object_path
@@ -122,6 +131,19 @@ class DBusAddress(object):
                     version,
                     CURRENT_WIRE_PROTOCOL_VERSION)
             )
+
+    def _check_pid_running(self):
+        try:
+            process_pid = _get_bus_connections_pid(
+                self._addr_tuple.bus,
+                self._addr_tuple.connection
+            )
+            return _pid_is_running(process_pid)
+        except dbus.DBusException as e:
+            if e.get_dbus_name() == 'org.freedesktop.DBus.Error.NameHasNoOwner':
+                return False
+            else:
+                raise
 
     @property
     def dbus_introspection_iface(self):

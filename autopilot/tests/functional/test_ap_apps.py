@@ -186,7 +186,7 @@ AutopilotTestCase.pick_app_launcher method."
             app = QApplication(argv)
             win = QMainWindow()
             win.show()
-            QTimer.singleShot(5000, app.exit)
+            QTimer.singleShot(8000, app.exit)
             app.exec_()
             """))
         app_proxy = self.launch_test_application(path, app_type='qt')
@@ -201,7 +201,7 @@ AutopilotTestCase.pick_app_launcher method."
             crashing_fn,
             raises(
                 RuntimeError(
-                    "Application under test exited with return code 0"
+                    "Application under test exited before the test finished!"
                 )
             )
         )

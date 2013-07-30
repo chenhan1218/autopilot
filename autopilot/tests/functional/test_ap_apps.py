@@ -22,10 +22,12 @@ import datetime
 import os
 import stat
 import subprocess
+import logging
 from mock import patch
 from tempfile import mktemp
-from testtools.matchers import raises, LessThan
+from testtools.matchers import raises, LessThan, Equals
 from textwrap import dedent
+from time import sleep
 
 from autopilot.testcase import AutopilotTestCase
 from autopilot.introspection import (
@@ -33,6 +35,9 @@ from autopilot.introspection import (
     ProcessSearchError,
     _pid_is_running,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 def _get_unused_pid():
@@ -164,6 +169,39 @@ AutopilotTestCase.pick_app_launcher method."
 
         difference = end - start
         self.assertThat(difference.total_seconds(), LessThan(5))
+
+    def test_closing_app_produces_good_error_from_get_state_by_path(self):
+        """Testing an application that closes before the test ends must
+        produce a good error message when calling get_state_by_path on the
+        application proxy object.
+
+        """
+        path = self.write_script(dedent("""\
+            #!/usr/bin/python
+            from PyQt4.QtGui import QMainWindow, QApplication
+            from PyQt4.QtCore import QTimer
+
+            from sys import argv
+
+            app = QApplication(argv)
+            win = QMainWindow()
+            win.show()
+            QTimer.singleShot(5000, app.exit)
+            app.exec_()
+            """))
+        app_proxy = self.launch_test_application(path, app_type='qt')
+        self.assertTrue(app_proxy is not None)
+        try:
+            for i in range(10):
+                logger.debug("%d %r", i, app_proxy.get_state_by_path("/"))
+                sleep(1)
+        except AssertionError as e:
+            self.assertThat(
+                e.message,
+                Equals("Application under test exited with return code 0")
+            )
+        else:
+            self.fail("Expected application to exit, but it didn't!")
 
 
 class QtTests(ApplicationTests):

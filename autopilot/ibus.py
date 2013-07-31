@@ -110,10 +110,7 @@ def set_active_engines(engine_list):
     old_engines = get_active_input_engines()
     config.set_value(
         "general", "preload_engines", GLib.Variant("as", engine_list))
-    # need to restart the ibus bus before it'll pick up the new engine.
-    # see bug report here:
-    # http://code.google.com/p/ibus/issues/detail?id=1418
-    bus.exit(restart=True)
+
     return old_engines
 
 

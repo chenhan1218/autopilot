@@ -268,9 +268,18 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                 "to use. You can specify one by overriding the "
                 "AutopilotTestCase.pick_app_launcher method.")
         emulator_base = kwargs.pop('emulator_base', None)
+        dbus_bus = kwargs.pop('dbus_bus', 'session')
+
+        if dbus_bus != 'session':
+            self.patch_environment("DBUS_SESSION_BUS_ADDRESS", dbus_bus)
+
         process = launch_application(launcher, app_path, *arguments, **kwargs)
         self.addCleanup(self._kill_process_and_attach_logs, process)
-        return get_autopilot_proxy_object_for_process(process, emulator_base)
+        return get_autopilot_proxy_object_for_process(
+            process,
+            emulator_base,
+            dbus_bus
+        )
 
     def _compare_system_with_app_snapshot(self):
         """Compare the currently running application with the last snapshot.

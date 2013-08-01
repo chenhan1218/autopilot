@@ -20,13 +20,16 @@
 
 import json
 import os
+import subprocess
 from tempfile import mktemp
 from testtools import TestCase
 from testtools.matchers import IsInstance, Equals, raises
+from textwrap import dedent
 from unittest import SkipTest
 from mock import patch
 
 from autopilot.testcase import AutopilotTestCase, multiply_scenarios
+from autopilot.gestures import pinch
 from autopilot.input import Keyboard, Mouse, Pointer, Touch
 from autopilot.input._common import get_center_point
 from autopilot.matchers import Eventually
@@ -202,6 +205,57 @@ class TouchTests(AutopilotTestCase):
         self.device.release()
         self.assertThat(
             self.button_status.text, Eventually(Equals("Touch Release")))
+
+
+class TouchGesturesTests(AutopilotTestCase):
+    def _start_qml_script(self, script_contents):
+        """Launch a qml script."""
+        arch = subprocess.check_output(
+            ["dpkg-architecture", "-qDEB_HOST_MULTIARCH"]
+        ).strip()
+        qml_path = mktemp(suffix='.qml')
+        open(qml_path, 'w').write(script_contents)
+        self.addCleanup(os.remove, qml_path)
+
+        return self.launch_test_application(
+            "/usr/lib/" + arch + "/qt5/bin/qmlscene",
+            qml_path,
+        )
+
+    def test_pinch_gesture(self):
+        """Ensure that the pinch gesture pinches as expected."""
+
+        test_qml = dedent("""\
+            import QtQuick 2.0
+
+            Rectangle {
+                id: colorBox
+                width: 250
+                height: 250
+                color: "darkgreen"
+
+                PinchArea {
+                    anchors.fill: parent
+                    onPinchFinished: {
+                        colorBox.color = "lightgreen"
+                    }
+                }
+            }
+            """)
+
+        darkgreen_bg = [0, 100, 0, 255]
+        lightgreen_bg = [144, 238, 144, 255]
+
+        app = self._start_qml_script(test_qml)
+        pinch_widget = app.select_single("QQuickRectangle")
+        widget_bg_colour = lambda: pinch_widget.color
+
+        self.assertThat(widget_bg_colour, Eventually(Equals(darkgreen_bg)))
+
+        x, y = get_center_point(pinch_widget)
+        pinch((x, y), (10, 0), (100, 0))
+
+        self.assertThat(widget_bg_colour, Eventually(Equals(lightgreen_bg)))
 
 
 class PointerWrapperTests(AutopilotTestCase):

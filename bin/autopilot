@@ -124,6 +124,7 @@ def run_tests(args):
 def setup_logging(verbose):
     """Configure the root logger and verbose logging to stderr"""
     from autopilot.utilities import LogFormatter
+    from autopilot import get_version_string
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
     if verbose == 0:
@@ -136,6 +137,8 @@ def setup_logging(verbose):
     if verbose >= 2:
         from autopilot.utilities import DebugLogFilter
         DebugLogFilter.debug_log_enabled = True
+    #log autopilot version
+    root_logger.info(get_version_string())
 
 
 def construct_test_runner(args):

@@ -1118,3 +1118,25 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
                                                   "-v", "tests"])
 
         self.assertThat(error, Not(Contains("Hello World")))
+
+    def test_verbose_flag_shows_autopilot_version(self):
+        from autopilot import get_version_string
+        """Verbose log must indicate successful tests (text format)."""
+        self.create_test_file(
+            "test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    pass
+            """)
+        )
+
+        code, output, error = self.run_autopilot(["run",
+                                                  "-f", self.output_format,
+                                                  "-v", "tests"])
+        self.assertThat(
+            error, Contains(get_version_string()))

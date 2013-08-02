@@ -134,7 +134,6 @@ class EventuallyNonScenariodTests(TestCase):
         start = time()
         attr = make_fake_attribute_with_result(
             unicode(str("阿布从").decode('utf8')), 'wait_for')
-        print attr
         Eventually(
             Equals(unicode(u'\u963f\u5e03\u4ece').encode('utf8'))).match(attr)
         #this should not take more than 1 second
@@ -145,7 +144,6 @@ class EventuallyNonScenariodTests(TestCase):
         start = time()
         attr = make_fake_attribute_with_result(
             str("阿布从"), 'wait_for')
-        print attr
         Eventually(Equals(unicode(u'\u963f\u5e03\u4ece'))).match(attr)
         # this should not take more than 1 second
         self.assertThat(abs(time() - start), LessThan(1))

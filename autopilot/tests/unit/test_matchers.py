@@ -57,8 +57,12 @@ def make_fake_attribute_with_result(result, attribute_type='wait_for'):
     if attribute_type == 'callable':
         return lambda: result
     elif attribute_type == 'wait_for':
-        obj = FakeObject(dict(id=123, attr=dbus.Boolean(result)))
-        return obj.attr
+        if isinstance(result, bool):
+            obj = FakeObject(dict(id=123, attr=dbus.Boolean(result)))
+            return obj.attr
+        else:
+            obj = FakeObject(dict(id=123, attr=result))
+            return obj.attr
 
 
 class ObjectPatchingMatcherTests(TestCase):
@@ -124,3 +128,47 @@ class EventuallyNonScenariodTests(TestCase):
             lambda: Eventually(Equals(True), foo=123),
             Raises(MatchesException(
                 ValueError, "Unknown keyword arguments: foo")))
+
+    def test_match_with_expected_value_unicode(self):
+        """The mismatch value must have the correct timeout value in it."""
+        start = time()
+        attr = make_fake_attribute_with_result(
+            unicode(str("阿布从").decode('utf8')), 'wait_for')
+        print attr
+        Eventually(
+            Equals(unicode(u'\u963f\u5e03\u4ece').encode('ascii'))).match(attr)
+        #this should not take more than 1 second
+        self.assertThat(abs(time() - start), LessThan(1))
+
+    def test_match_with_new_value_unicode(self):
+        """The mismatch value must have the correct timeout value in it."""
+        start = time()
+        attr = make_fake_attribute_with_result(
+            str("阿布从"), 'wait_for')
+        print attr
+        Eventually(Equals(unicode(u'\u963f\u5e03\u4ece'))).match(attr)
+        # this should not take more than 1 second
+        self.assertThat(abs(time() - start), LessThan(1))
+
+    def test_mismatch_with_bool(self):
+        """The mismatch value must have the correct timeout value in it."""
+        attr = make_fake_attribute_with_result(False, 'wait_for')
+        mismatch = Eventually(Equals(True), timeout=1).match(attr)
+        self.assertThat(
+            mismatch.describe(), Contains("failed"))
+
+    def test_mismatch_with_unicode(self):
+        """The mismatch value must have the correct timeout value in it."""
+        attr = make_fake_attribute_with_result(str("阿布从1"), 'wait_for')
+        mismatch = Eventually(Equals(
+            unicode(u'\u963f\u5e03\u4ece')), timeout=.5).match(attr)
+        self.assertThat(
+            mismatch.describe(), Contains('failed'))
+
+    def test_output_utf8(self):
+        """The mismatch value must have the correct timeout value in it."""
+        attr = make_fake_attribute_with_result(str("阿布从1"), 'wait_for')
+        mismatch = Eventually(Equals(
+            unicode(u'\u963f\u5e03\u4ece')), timeout=.5).match(attr)
+        self.assertThat(
+            mismatch.describe(), Contains("阿布从11"))

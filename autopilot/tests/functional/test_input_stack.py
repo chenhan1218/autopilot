@@ -20,7 +20,6 @@
 
 import json
 import os
-import subprocess
 from tempfile import mktemp
 from testtools import TestCase
 from testtools.matchers import IsInstance, Equals, raises
@@ -210,16 +209,14 @@ class TouchTests(AutopilotTestCase):
 class TouchGesturesTests(AutopilotTestCase):
     def _start_qml_script(self, script_contents):
         """Launch a qml script."""
-        arch = subprocess.check_output(
-            ["dpkg-architecture", "-qDEB_HOST_MULTIARCH"]
-        ).strip()
         qml_path = mktemp(suffix='.qml')
         open(qml_path, 'w').write(script_contents)
         self.addCleanup(os.remove, qml_path)
 
         return self.launch_test_application(
-            "/usr/lib/" + arch + "/qt5/bin/qmlscene",
+            "qmlscene",
             qml_path,
+            app_type='qt',
         )
 
     def test_pinch_gesture(self):
@@ -232,30 +229,31 @@ class TouchGesturesTests(AutopilotTestCase):
                 id: colorBox
                 width: 250
                 height: 250
-                color: "darkgreen"
+                color: "#00FF00"
 
                 PinchArea {
                     anchors.fill: parent
                     onPinchFinished: {
-                        colorBox.color = "lightgreen"
+                        colorBox.color = "#0000FF"
                     }
                 }
             }
             """)
 
-        darkgreen_bg = [0, 100, 0, 255]
-        lightgreen_bg = [144, 238, 144, 255]
+        # Returned results include the alpha (RGBA)
+        start_green_bg = [0, 255, 0, 255]
+        end_blue_bg = [0, 0, 255, 255]
 
         app = self._start_qml_script(test_qml)
         pinch_widget = app.select_single("QQuickRectangle")
         widget_bg_colour = lambda: pinch_widget.color
 
-        self.assertThat(widget_bg_colour, Eventually(Equals(darkgreen_bg)))
+        self.assertThat(widget_bg_colour, Eventually(Equals(start_green_bg)))
 
         x, y = get_center_point(pinch_widget)
         pinch((x, y), (10, 0), (100, 0))
 
-        self.assertThat(widget_bg_colour, Eventually(Equals(lightgreen_bg)))
+        self.assertThat(widget_bg_colour, Eventually(Equals(end_blue_bg)))
 
 
 class PointerWrapperTests(AutopilotTestCase):

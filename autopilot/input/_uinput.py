@@ -356,7 +356,8 @@ class Touch(TouchBase):
         NOTE: The finger has to be down for this to have any effect.
 
         """
-        logger.debug("Moving finger %d to: %d,%d", self._touch_finger, x, y)
+        if self._touch_finger is None:
+            raise RuntimeError("Attempting to move without finger being down.")
         self._finger_move(x, y)
 
     def drag(self, x1, y1, x2, y2):

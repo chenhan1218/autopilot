@@ -180,7 +180,7 @@ class DBusIntrospectionObject(object):
             match_fun = getattr(expected_value, 'match', None)
             is_matcher = match_fun and callable(match_fun)
             if not is_matcher:
-                expected_value = make_unicode(Equals(expected_value))
+                expected_value = Equals(expected_value)
 
             time_left = timeout
             while True:

@@ -136,7 +136,7 @@ class EventuallyNonScenariodTests(TestCase):
             unicode(str("阿布从").decode('utf8')), 'wait_for')
         print attr
         Eventually(
-            Equals(unicode(u'\u963f\u5e03\u4ece').encode('ascii'))).match(attr)
+            Equals(unicode(u'\u963f\u5e03\u4ece').encode('utf8'))).match(attr)
         #this should not take more than 1 second
         self.assertThat(abs(time() - start), LessThan(1))
 
@@ -167,6 +167,7 @@ class EventuallyNonScenariodTests(TestCase):
 
     def test_output_utf8(self):
         """The mismatch value must have the correct timeout value in it."""
+        self.skip("output is in utf8")
         attr = make_fake_attribute_with_result(str("阿布从1"), 'wait_for')
         mismatch = Eventually(Equals(
             unicode(u'\u963f\u5e03\u4ece')), timeout=.5).match(attr)

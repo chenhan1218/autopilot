@@ -40,5 +40,4 @@
 import autopilot.display as display
 import autopilot.clipboard as clipboard
 import autopilot.dbus_handler as dbus_handler
-import autopilot.ibus as ibus
 import autopilot.input as input

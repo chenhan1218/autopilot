@@ -186,8 +186,7 @@ class DBusIntrospectionObject(object):
             while True:
                 _, new_state = self.parent.get_new_state()
                 new_state = translate_state_keys(new_state)
-                new_state['attr'] = make_unicode(new_state['attr'])
-                new_value = new_state[self.name]
+                new_value = make_unicode(new_state[self.name])
                 # Support for testtools.matcher classes:
                 mismatch = expected_value.match(new_value)
                 if mismatch:

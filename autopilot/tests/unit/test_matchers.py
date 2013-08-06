@@ -57,11 +57,14 @@ def make_fake_attribute_with_result(result, attribute_type='wait_for'):
     if attribute_type == 'callable':
         return lambda: result
     elif attribute_type == 'wait_for':
-        if isinstance(result, bool):
-            obj = FakeObject(dict(id=123, attr=dbus.Boolean(result)))
+        if isinstance(result, unicode):
+            obj = FakeObject(dict(id=123, attr=dbus.String(result)))
+            return obj.attr
+        elif isinstance(result, str):
+            obj = FakeObject(dict(id=123, attr=dbus.UTF8String(result)))
             return obj.attr
         else:
-            obj = FakeObject(dict(id=123, attr=result))
+            obj = FakeObject(dict(id=123, attr=dbus.Boolean(result)))
             return obj.attr
 
 

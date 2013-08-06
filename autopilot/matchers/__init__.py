@@ -108,7 +108,7 @@ class Eventually(Matcher):
         try:
             wait_fun(self.matcher, self.timeout)
         except AssertionError as e:
-            return Mismatch(str(e).encode('utf8'))
+                return Mismatch(unicode(e))
         return None
 
     def __str__(self):

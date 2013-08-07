@@ -168,6 +168,14 @@ class DBusIntrospectionObject(object):
             if self == expected_value:
                 return
 
+            def make_unicode(value):
+                if isinstance(value, str):
+                    return unicode(value.decode('utf8'))
+                return value
+
+            if hasattr(expected_value, 'expected'):
+                expected_value.expected = make_unicode(expected_value.expected)
+
             # unfortunately not all testtools matchers derive from the Matcher
             # class, so we can't use issubclass, isinstance for this:
             match_fun = getattr(expected_value, 'match', None)
@@ -179,7 +187,7 @@ class DBusIntrospectionObject(object):
             while True:
                 _, new_state = self.parent.get_new_state()
                 new_state = translate_state_keys(new_state)
-                new_value = new_state[self.name]
+                new_value = make_unicode(new_state[self.name])
                 # Support for testtools.matcher classes:
                 mismatch = expected_value.match(new_value)
                 if mismatch:

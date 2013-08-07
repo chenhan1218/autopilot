@@ -136,17 +136,15 @@ class EventuallyNonScenariodTests(TestCase):
         """The expected unicode value matches new value string."""
         start = time()
         attr = make_fake_attribute_with_result(
-            unicode(str("阿布从").decode('utf8')), 'wait_for')
-        Eventually(
-            Equals(unicode(u'\u963f\u5e03\u4ece').encode('utf8'))).match(attr)
+            unicode(u'\u963f\u5e03\u4ece'), 'wait_for')
+        Eventually(Equals(str("阿布从"))).match(attr)
         #this should not take more than 1 second
         self.assertThat(abs(time() - start), LessThan(1))
 
     def test_match_with_new_value_unicode(self):
         """new value with unicode must match expected value string."""
         start = time()
-        attr = make_fake_attribute_with_result(
-            str("阿布从"), 'wait_for')
+        attr = make_fake_attribute_with_result(str("阿布从"), 'wait_for')
         Eventually(Equals(unicode(u'\u963f\u5e03\u4ece'))).match(attr)
         # this should not take more than 1 second
         self.assertThat(abs(time() - start), LessThan(1))

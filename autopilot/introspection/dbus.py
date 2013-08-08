@@ -29,6 +29,7 @@ from __future__ import absolute_import
 
 from contextlib import contextmanager
 import logging
+import re
 from testtools.matchers import Equals
 from time import sleep
 from uuid import uuid4
@@ -391,7 +392,13 @@ class DBusIntrospectionObject(object):
 
         first_param = ''
         for k, v in kwargs.iteritems():
-            if isinstance(v, str) and '_' not in k:
+            # LP Bug 1209029: The XPathSelect protocol does not allow all valid
+            # node names or values. We need to decide here whether the filter
+            # parameters are going to work on the backend or not. If not, we
+            # just do the processing client-side. See the
+            # _is_valid_server_side_filter_param function (below) for the
+            # specific requirements.
+            if _is_valid_server_side_filter_param(k, v):
                 first_param = '[{}={}]'.format(k, v)
                 kwargs.pop(k)
                 break
@@ -548,6 +555,17 @@ class DBusIntrospectionObject(object):
             yield
         finally:
             self.__refresh_on_attribute = True
+
+
+def _is_valid_server_side_filter_param(key, value):
+    """Return True if the key and value parameters are valid for server-side
+    processing.
+
+    """
+    return (
+        isinstance(value, str) and
+        re.match(r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$', key) is not None and
+        re.match(r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$', value) is not None)
 
 
 class _CustomEmulatorMeta(IntrospectableObjectMetaclass):

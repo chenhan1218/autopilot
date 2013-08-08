@@ -554,10 +554,10 @@ def _is_valid_server_side_filter_param(key, value):
     processing.
 
     """
-    return (isinstance(value, str) and
-            re.match(r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$', key) and
-            re.match(r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$', value)
-            )
+    return (
+        isinstance(value, str) and
+        re.match(r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$', key) is not None and
+        re.match(r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$', value) is not None)
 
 
 class _CustomEmulatorMeta(IntrospectableObjectMetaclass):

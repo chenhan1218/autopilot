@@ -555,6 +555,7 @@ def _is_valid_server_side_filter_param(key, value):
 
     """
     return (
+        isinstance(key, str) and
         isinstance(value, str) and
         re.match(r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$', key) is not None and
         re.match(r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$', value) is not None)

@@ -386,7 +386,7 @@ class DBusIntrospectionObject(object):
         for k, v in kwargs.iteritems():
             # LP Bug 1209029: The XPathSelect protocol does not allow all valid
             # node names or values. We need to decide here whether the filter
-            # parameters are going to work onn the backend or not. If not, we
+            # parameters are going to work on the backend or not. If not, we
             # just do the processing client-side. See the
             # _is_valid_server_side_filter_param function (below) for the
             # specific requirements.
@@ -555,9 +555,9 @@ def _is_valid_server_side_filter_param(key, value):
 
     """
     return (isinstance(value, str) and
-        re.match(r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$', key) and
-        re.match(r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$', value)
-    )
+            re.match(r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$', key) and
+            re.match(r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$', value)
+            )
 
 
 class _CustomEmulatorMeta(IntrospectableObjectMetaclass):

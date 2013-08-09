@@ -87,6 +87,7 @@ class Keyboard(CleanupRegistered):
             * ``X11`` - Generate keyboard events using the X11 client
                 libraries.
             * ``UInput`` - Use UInput kernel-level device driver.
+            * ``OSK`` - Use the OSK as a backend.
 
         :raises: RuntimeError if autopilot cannot instantate any of the
             possible backends.
@@ -104,9 +105,14 @@ class Keyboard(CleanupRegistered):
             from autopilot.input._uinput import Keyboard
             return Keyboard()
 
+        def get_osk_kb():
+            from autopilot.input._osk import Keyboard
+            return Keyboard()
+
         backends = OrderedDict()
         backends['X11'] = get_x11_kb
         backends['UInput'] = get_uinput_kb
+        backends['OSK'] = get_osk_kb
         return _pick_backend(backends, preferred_backend)
 
     def press(self, keys, delay=0.2):

@@ -33,12 +33,12 @@ class Keyboard(KeyboardBase):
 
     def press(self, keys, delay=0.2):
         raise NotImplementedError(
-            "OSK Keyboard does not support the press method"
+            "OSK Backend does not support the press method"
         )
 
     def release(self, keys, delay=0.2):
         raise NotImplementedError(
-            "OSK Keyboard does not support the release method"
+            "OSK Backend does not support the release method"
         )
 
     def press_and_release(self, keys, delay=0.2):
@@ -75,6 +75,12 @@ class Keyboard(KeyboardBase):
             raise TypeError("'string' argument must be a string.")
         logger.debug("Typing text: %s", string)
         self._keyboard.type(string, delay)
+
+    @classmethod
+    def on_test_end(cls, test_instance):
+        """Hide (swipe hide) the keyboard so we're clear for the next test."""
+        logger.debug("Hiding the OSK with a swipe.")
+        cls._keyboard.hide()
 
     def _sanitise_keys(self, keys):
         if keys == '+':

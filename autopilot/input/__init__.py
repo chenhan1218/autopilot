@@ -81,13 +81,17 @@ class Keyboard(CleanupRegistered):
         For more infomration on picking specific backends, see
         :ref:`tut-picking-backends`
 
+        .. warning:: The **OSK** (On Screen Keyboard) backend option does not
+         implement either :py:meth:`press` or :py:meth:`release` methods due to
+         technical implementation details and will raise a RuntimeError if used.
+
         :param preferred_backend: A string containing a hint as to which
             backend you would like. Possible backends are:
 
             * ``X11`` - Generate keyboard events using the X11 client
                 libraries.
             * ``UInput`` - Use UInput kernel-level device driver.
-            * ``OSK`` - Use the OSK as a backend.
+            * ``OSK`` - Use the graphical On Screen Keyboard as a backend.
 
         :raises: RuntimeError if autopilot cannot instantate any of the
             possible backends.
@@ -121,6 +125,10 @@ class Keyboard(CleanupRegistered):
         :param keys: Keys you want pressed.
         :param delay: The delay (in Seconds) after pressing the keys before
             returning control to the caller.
+        :raises: RuntimeError If called when using the OSK Backend.
+
+        .. warning:: The **OSK** backend does not implement the press method and will raise a
+         RuntimeError if called.
 
         Example:
 
@@ -137,6 +145,10 @@ class Keyboard(CleanupRegistered):
         :param keys: Keys you want released.
         :param delay: The delay (in Seconds) after releasing the keys before
             returning control to the caller.
+        :raises: RuntimeError If called when using the OSK Backend.
+
+        .. warning:: The **OSK** backend does not implement the press method and will raise a
+         RuntimeError if called.
 
         Example:
 

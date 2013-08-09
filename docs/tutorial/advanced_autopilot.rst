@@ -202,7 +202,7 @@ The code snippet above will create an instance of the Keyboard class that uses X
 Picking a Backend
 +++++++++++++++++
 
-Test authors may sometimes want to pick a specific backend. The possible backends are documented in the API documentation for each class. For example, the documentation for the :meth:`autopilot.input.Keyboard.create` method says there are two backends available: the ``X11`` backend, and the ``UInput`` backend. These backends can be specified in the create method. For example, to specify that you want a Keyboard that uses X11 to generate it's input events::
+Test authors may sometimes want to pick a specific backend. The possible backends are documented in the API documentation for each class. For example, the documentation for the :meth:`autopilot.input.Keyboard.create` method says there are three backends available: the ``X11`` backend, the ``UInput`` backend, and the ``OSK`` backend. These backends can be specified in the create method. For example, to specify that you want a Keyboard that uses X11 to generate it's input events::
 
     >>> from autopilot.input import Keyboard
     >>> kbd = Keyboard.create("X11")
@@ -213,6 +213,8 @@ Similarly, to specify that a UInput keyboard should be created::
     >>> kbd = Keyboard.create("UInput")
 
 .. warning:: Care must be taken when specifying specific backends. There is no guarantee that the backend you ask for is going to be available across all platforms. For that reason, using the default creation method is encouraged.
+
+.. warning:: The **OSK** backend has some known implementation limitations, please see :meth:`autopilot.input.Keyboard.create` method documenation for further details.
 
 Possible Errors when Creating Backends
 ++++++++++++++++++++++++++++++++++++++

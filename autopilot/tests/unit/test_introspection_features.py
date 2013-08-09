@@ -20,8 +20,13 @@
 
 from testtools import TestCase
 from testtools.matchers import Equals, NotEquals
+from testscenarios import TestWithScenarios
 
-from autopilot.introspection.dbus import CustomEmulatorBase
+
+from autopilot.introspection.dbus import (
+    CustomEmulatorBase,
+    _is_valid_server_side_filter_param,
+)
 
 
 class IntrospectionFeatureTests(TestCase):
@@ -55,3 +60,23 @@ class IntrospectionFeatureTests(TestCase):
             pass
 
         self.assertThat(MyEmulatorBase._id, NotEquals(MyEmulatorBase2._id))
+
+
+class ServerSideParamMatchingTests(TestWithScenarios, TestCase):
+
+    """Tests for the server side matching decision function."""
+
+    scenarios = [
+        ('should work', dict(key='keyname', value='value', result=True)),
+        ('invalid key', dict(key='k  e', value='value', result=False)),
+        ('invalid value', dict(key='key', value='v  e', result=False)),
+        ('invalid value2', dict(key='key', value='v?e', result=False)),
+        ('invalid value3', dict(key='key', value='1/2', result=False)),
+        ('invalid value type', dict(key='key', value=False, result=False)),
+    ]
+
+    def test_valid_server_side_param(self):
+        self.assertThat(
+            _is_valid_server_side_filter_param(self.key, self.value),
+            Equals(self.result)
+        )

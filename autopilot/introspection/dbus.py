@@ -34,7 +34,7 @@ from testtools.matchers import Equals
 from time import sleep
 from uuid import uuid4
 
-from autopilot.utilities import Timer
+from autopilot.utilities import Timer, get_debug_logger
 
 
 _object_registry = {}
@@ -528,7 +528,7 @@ class DBusIntrospectionObject(object):
             if class_type._Backend is None:
                 class_type._Backend = cls._Backend
         except KeyError:
-            logger.warning(
+            get_debug_logger().warning(
                 "Generating introspection instance for type '%s' based on "
                 "generic class.", name)
             # override the _id attr from cls, since we don't want generated

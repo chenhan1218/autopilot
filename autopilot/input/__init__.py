@@ -56,6 +56,7 @@ running on a desktop.
 """
 
 from collections import OrderedDict
+from contextlib import contextmanager
 from autopilot.utilities import _pick_backend, CleanupRegistered
 from autopilot.input._common import get_center_point
 
@@ -118,6 +119,23 @@ class Keyboard(CleanupRegistered):
         backends['UInput'] = get_uinput_kb
         backends['OSK'] = get_osk_kb
         return _pick_backend(backends, preferred_backend)
+
+    @contextmanager
+    def focused_type(self, input_target,  pointer=None):
+        """ContextManager method allowing expected cleanup to happen (specifically
+        for the OSK backend.).
+
+        """
+        if pointer is None:
+            from autopilot.platform import model
+            if model() == 'Desktop':
+                pointer = Pointer(Mouse.create())
+            else:
+                pointer = Pointer(Touch.create())
+
+        pointer.click_object(input_target)
+        # input_target.focus.wait_for(True)
+        yield self
 
     def press(self, keys, delay=0.2):
         """Send key press events only.

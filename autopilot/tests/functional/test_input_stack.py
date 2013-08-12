@@ -106,6 +106,23 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
                         "app shows: " + text_edit.plainText
                         )
 
+    def test_typing_with_contextmanager(self):
+        """Typing text must produce the correct characters in the target
+        app.
+
+        """
+        app_proxy = self.start_mock_app()
+        text_edit = app_proxy.select_single('QTextEdit')
+
+        keyboard = Keyboard.create(self.backend)
+        with keyboard.focused_type(text_edit) as kb:
+            kb.type(self.input, 0.01)
+
+            self.assertThat(text_edit.plainText,
+                Eventually(Equals(self.input)),
+                "app shows: " + text_edit.plainText
+            )
+
     def test_keyboard_keys_are_released(self):
         """Typing characters must not leave keys pressed."""
         app_proxy = self.start_mock_app()

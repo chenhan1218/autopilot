@@ -31,6 +31,14 @@ class Keyboard(KeyboardBase):
 
     _keyboard = OSK()
 
+    @contextmanager
+    def focused_type(self, input_target, pointer=None)
+        with super(Keyboard, self).focused_type(input_target, pointer):
+            try:
+                yield self
+            finally:
+                self._keyboard.dismiss()
+
     def press(self, keys, delay=0.2):
         raise NotImplementedError(
             "OSK Backend does not support the press method"
@@ -78,9 +86,12 @@ class Keyboard(KeyboardBase):
 
     @classmethod
     def on_test_end(cls, test_instance):
-        """Hide (swipe hide) the keyboard so we're clear for the next test."""
-        logger.debug("Hiding the OSK with a swipe.")
-        cls._keyboard.hide()
+        """Dismiss (swipe hide) the keyboard so we're clear for the next
+        test.
+
+        """
+        logger.debug("Dismissing the OSK with a swipe.")
+        cls._keyboard.dismiss()
 
     def _sanitise_keys(self, keys):
         if keys == '+':

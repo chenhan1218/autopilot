@@ -390,7 +390,8 @@ class DBusIntrospectionObject(object):
             "Selecting objects of %s with attributes: %r",
             'any type' if type_name == '*' else 'type ' + type_name, kwargs)
 
-        first_param = ''
+        server_side_filters = []
+        client_side_filters = {}
         for k, v in kwargs.iteritems():
             # LP Bug 1209029: The XPathSelect protocol does not allow all valid
             # node names or values. We need to decide here whether the filter
@@ -399,16 +400,20 @@ class DBusIntrospectionObject(object):
             # _is_valid_server_side_filter_param function (below) for the
             # specific requirements.
             if _is_valid_server_side_filter_param(k, v):
-                first_param = '[{}={}]'.format(k, v)
-                kwargs.pop(k)
-                break
+                server_side_filters.append(
+                    _get_filter_string_for_key_value_pair(k,v)
+                )
+            else:
+                client_side_filters[k] = v
+        filter_str = '[{}]'.format(','.join(server_side_filters)) if server_side_filters else ""
         query_path = "%s//%s%s" % (self.get_class_query_string(),
                                    type_name,
-                                   first_param)
+                                   filter_str
+                                    )
 
         state_dicts = self.get_state_by_path(query_path)
         instances = [self.make_introspection_object(i) for i in state_dicts]
-        return filter(lambda i: object_passes_filters(i, **kwargs), instances)
+        return filter(lambda i: object_passes_filters(i, **client_side_filters), instances)
 
     def refresh_state(self):
         """Refreshes the object's state from unity.
@@ -563,9 +568,28 @@ def _is_valid_server_side_filter_param(key, value):
 
     """
     return (
-        isinstance(value, str) and
-        re.match(r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$', key) is not None and
-        re.match(r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$', value) is not None)
+        type(value) in (str, int, bool) and
+        re.match(r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$', key) is not None)
+
+
+def _get_filter_string_for_key_value_pair(key, value):
+    """Return a string representing the filter query for this key/value pair.
+
+    The value must be suitable for server-side filtering. Raises ValueError if
+    this is not the case.
+
+    """
+    if isinstance(value, str):
+        # TODO: this may need optimising. We cannot use
+        # 'value.encode("string_escape")' since it doesn't do the right thing
+        #
+        escaped_value = value.encode("string_escape")
+        escaped_value = escaped_value.replace('"', r'\"').replace("'", r"\'")
+        return '{}="{}"'.format(key, escaped_value)
+    elif isinstance(value, int) or isinstance(value, bool):
+        return "{}={}".format(key, repr(value))
+    else:
+        raise ValueError("Unsupported value type: {}".format(type(value)))
 
 
 class _CustomEmulatorMeta(IntrospectableObjectMetaclass):

@@ -401,19 +401,24 @@ class DBusIntrospectionObject(object):
             # specific requirements.
             if _is_valid_server_side_filter_param(k, v):
                 server_side_filters.append(
-                    _get_filter_string_for_key_value_pair(k,v)
+                    _get_filter_string_for_key_value_pair(k, v)
                 )
             else:
                 client_side_filters[k] = v
-        filter_str = '[{}]'.format(','.join(server_side_filters)) if server_side_filters else ""
-        query_path = "%s//%s%s" % (self.get_class_query_string(),
-                                   type_name,
-                                   filter_str
-                                    )
+        filter_str = '[{}]'.format(','.join(server_side_filters)) \
+            if server_side_filters else ""
+        query_path = "%s//%s%s" % (
+            self.get_class_query_string(),
+            type_name,
+            filter_str
+        )
 
         state_dicts = self.get_state_by_path(query_path)
         instances = [self.make_introspection_object(i) for i in state_dicts]
-        return filter(lambda i: object_passes_filters(i, **client_side_filters), instances)
+        return filter(
+            lambda i: object_passes_filters(i, **client_side_filters),
+            instances
+        )
 
     def refresh_state(self):
         """Refreshes the object's state from unity.

@@ -1,3 +1,10 @@
+autopilot (1.4-0ubuntu1) saucy; urgency=low
+
+  [ Thomi Richards ]
+  * Update to new DBus wire protocol, bump autopilot version number.
+
+ -- Thomi Richards <thomi.richards@canonical.com>  Fri, 16 Aug 2013 08:47:12 +1200
+
 autopilot (1.3.1+13.10.20130812-0ubuntu1) saucy; urgency=low
 
   [ Andrea Azzarone ]

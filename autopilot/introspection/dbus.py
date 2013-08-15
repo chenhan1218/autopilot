@@ -580,11 +580,9 @@ def _get_filter_string_for_key_value_pair(key, value):
 
     """
     if isinstance(value, str):
-        # TODO: this may need optimising. We cannot use
-        # 'value.encode("string_escape")' since it doesn't do the right thing
-        #
         escaped_value = value.encode("string_escape")
-        escaped_value = escaped_value.replace('"', r'\"').replace("'", r"\'")
+        # note: string_escape codec escapes "'" but not '"'...
+        escaped_value = escaped_value.replace('"', r'\"')
         return '{}="{}"'.format(key, escaped_value)
     elif isinstance(value, int) or isinstance(value, bool):
         return "{}={}".format(key, repr(value))

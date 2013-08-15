@@ -99,8 +99,9 @@ class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):
         ('string space', dict(k='Name', v="a b  c ", r="Name=\"a b  c \"")),
         ('str escapes', dict(
             k='a',
-            v="\a\b\f\n\r\t\v\\'\"",
-            r=r'a="\x07\x08\x0c\n\r\t\x0b\\\'\""')),
+            v="\a\b\f\n\r\t\v\\",
+            r=r'a="\x07\x08\x0c\n\r\t\x0b\\"')),
+        ('escape quotes', dict(k='b', v="'", r='b="\\' + "'" + '"')),
     ]
 
     def test_query_string(self):

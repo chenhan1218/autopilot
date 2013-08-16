@@ -574,7 +574,8 @@ def _is_valid_server_side_filter_param(key, value):
     """
     return (
         type(value) in (str, int, bool) and
-        re.match(r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$', key) is not None)
+        re.match(r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$', key) is not None and
+        (type(value) != int or -2**31 <= value <= 2**31 - 1))
 
 
 def _get_filter_string_for_key_value_pair(key, value):

@@ -79,6 +79,10 @@ class ServerSideParamMatchingTests(TestWithScenarios, TestCase):
         ('float value', dict(key='key', value=1.0, result=False)),
         ('dict value', dict(key='key', value={}, result=False)),
         ('obj value', dict(key='key', value=TestCase, result=False)),
+        ('int overflow 1', dict(key='key', value=-2147483648, result=True)),
+        ('int overflow 2', dict(key='key', value=-2147483649, result=False)),
+        ('int overflow 3', dict(key='key', value=2147483647, result=True)),
+        ('int overflow 4', dict(key='key', value=2147483648, result=False)),
     ]
 
     def test_valid_server_side_param(self):

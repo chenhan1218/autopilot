@@ -19,6 +19,8 @@
 
 import logging
 from time import sleep
+from contextlib import contextmanager
+
 from maliit_keyboard.emulators.osk import OSK, OSKUnsupportedKey
 
 from autopilot.input import Keyboard as KeyboardBase
@@ -32,7 +34,7 @@ class Keyboard(KeyboardBase):
     _keyboard = OSK()
 
     @contextmanager
-    def focused_type(self, input_target, pointer=None)
+    def focused_type(self, input_target, pointer=None):
         with super(Keyboard, self).focused_type(input_target, pointer):
             try:
                 yield self

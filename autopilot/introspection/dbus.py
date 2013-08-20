@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 
 class StateNotFoundError(RuntimeError):
-    """Raised when a piece of state information from unity is not found."""
+    """Raised when a piece of state information is not found."""
 
     message = "State not found for class with name '{}' and id '{}'."
 
@@ -421,13 +421,14 @@ class DBusIntrospectionObject(object):
         )
 
     def refresh_state(self):
-        """Refreshes the object's state from unity.
+        """Refreshes the object's state.
 
         You should probably never have to call this directly. Autopilot
         automatically retrieves new state every time this object's attributes
         are read.
 
-        :raises: **StateNotFound** if the object in unity has been destroyed.
+        :raises: **StateNotFound** if the object in the application under test
+            has been destroyed.
 
         """
         _, new_state = self.get_new_state()

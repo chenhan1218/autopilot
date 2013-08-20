@@ -21,7 +21,7 @@ import logging
 from time import sleep
 from contextlib import contextmanager
 
-from maliit_keyboard.emulators.osk import OSK, OSKUnsupportedKey
+from ubuntu_keyboard.emulators.keyboard import Keyboard, UnsupportedKey
 
 from autopilot.input import Keyboard as KeyboardBase
 
@@ -31,12 +31,17 @@ logger = logging.getLogger(__name__)
 
 class Keyboard(KeyboardBase):
 
-    _keyboard = OSK()
+    _keyboard = Keyboard()
 
     @contextmanager
     def focused_type(self, input_target, pointer=None):
+        """Ensures that the keyboard is up and ready for input as well as
+        dismisses the keyboard afterward.
+
+        """
         with super(Keyboard, self).focused_type(input_target, pointer):
             try:
+                self._keyboard.wait_for_keyboard_ready()
                 yield self
             finally:
                 self._keyboard.dismiss()
@@ -57,16 +62,16 @@ class Keyboard(KeyboardBase):
         The 'keys' argument must be a string of keys you want
         pressed and released.. For example:
 
-        press_and_release('Alt+F2')
+        press_and_release('A+B')
 
-        presses both the 'Alt' and 'F2' keys, and then releases both keys.
+        presses both the 'A' and 'B' keys, and then releases both keys.
 
         """
         for key in self._sanitise_keys(keys):
             try:
                 self._keyboard.press_key(key)
                 sleep(delay)
-            except OSKUnsupportedKey:
+            except UnsupportedKey:
                 logger.warning(
                     "OSK Backend is unable to type the key '%s" % key
                 )
@@ -77,7 +82,7 @@ class Keyboard(KeyboardBase):
         Only 'normal' keys can be typed with this method. Control characters
         (such as 'Alt' will be interpreted as an 'A', and 'l', and a 't').
 
-        The osk class back end will take care of ensureing that capitalized
+        The osk class back end will take care of ensuring that capitalized
         keys are in fact capitalized.
 
         """

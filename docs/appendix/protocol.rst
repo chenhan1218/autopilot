@@ -154,6 +154,44 @@ Attribute queries are done inside square brackets (``[...]``) next to the object
 .. note::
 	While the XPathSelect protocol has a fairly limited list of supported types for attribute matching queries, it is important to note that autopilot transparently supports matching object attributes of any type. Autopilot will send attribute filters to the application under test using the XPathSelect protocol only if the attribute filters are supported by XPathSelect. In all other cases, the filtering will be done within autopilot. At worst, the test author may notice that some queries take longer than others.
 
+Wildcard Nodes
+==============
+
+As well as selecting a node in the introspection tree by node name, one can also use ``*`` to select any node. However, there are a few restrictions on this feature, to stop the inadvertent selection of the entire tree.
+
+Selecting All Children
+++++++++++++++++++++++
+
+Wildcard nodes are often used to select all the children of a particular object. For example, if the query ``/path/to/object[id=123]`` returns the parent object you are interested in, then the query ``/path/to/object[id=123]/*`` will return all the immediate children of that object.
+
+Selecting Nodes based on Attributes
++++++++++++++++++++++++++++++++++++
+
+The second use of wildcard nodes is to select nodes based purely on their attributes, rather than their type. For example, to select every object with a 'visible' property set to 'True', the following query will work: ``//*[visible=True]``. However, care must be taken - this query will traverse the entire introspection tree, and may take a long time. Additionally, a large amount of data may be returned over DBus.
+
+Invalid Wildcard Queries
+++++++++++++++++++++++++
+
+The wildcard specifier may only be used after a search separator if you have also specified attribute filters. For example, all the following queries are invalid:
+
+**Invalid Queries**
+
+* ``//*``
+
+* ``/path/to/some/node//*``
+
+* ``//node//*``
+
+However, the following queries are all valid:
+
+**Valid Queries**
+
+* ``//node/*``
+
+* ``/node//*[key="value"]``
+
+* ``//node//*[key=True]``
+
 Returning State Data
 ====================
 

@@ -285,7 +285,7 @@ class ProcessManager(ProcessManagerBase):
 
             # No, so define a callback to watch the ViewOpened signal:
             def on_view_added(bamf_path, name):
-                if bamf_path.split('/')[-1].startswith('application'):
+                if bamf_path.split('/')[-2].startswith('application'):
                     app = Application(bamf_path)
                     if desktop_file == os.path.split(app.desktop_file)[1]:
                         gobject_loop.quit()

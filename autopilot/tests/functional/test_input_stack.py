@@ -159,8 +159,11 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
 
 @skipIf(platform.model() == 'Desktop', "Only on device")
 class OSKBackendTests(AutopilotTestCase):
-    """Really, typing lower/uppercase/at. al is tested in the OSK backend.
-    Does it really need to be re-done here? Perhaps.
+    """Testing the Onscreen Keyboard (Ubuntu Keyboard) backend specifically.
+
+    There are limitations (i.e. on device only, window-mocker doesn't work on
+    the device, can't type all the characters that X11/UInput can.) that
+    necessitate this split into it's own test class.
 
     """
 
@@ -228,6 +231,11 @@ class OSKBackendTests(AutopilotTestCase):
         return self._start_qml_script(simple_script)
 
     def test_can_type_string(self):
+        """Typing text must produce the expected characters in the input
+        field.
+
+        """
+
         text_area = self.launch_test_input_area()
         keyboard = Keyboard.create('OSK')
         pointer = Pointer(Touch.create())
@@ -239,6 +247,11 @@ class OSKBackendTests(AutopilotTestCase):
         self.assertThat(text_area.text, Eventually(Equals(self.input)))
 
     def test_focused_typing_contextmanager(self):
+        """Typing text using the 'focused_typing' context manager must not only
+        produce the expected characters in the input field but also cleanup the
+        OSK afterwards too.
+
+        """
         text_area = self.launch_test_input_area()
         keyboard = Keyboard.create('OSK')
         with keyboard.focused_type(text_area) as kb:

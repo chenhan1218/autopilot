@@ -38,8 +38,10 @@ objects.
 """
 
 from __future__ import absolute_import
-from functools import partial
+
+from datetime import datetime
 import dbus
+from functools import partial
 
 
 class ValueType(object):
@@ -422,7 +424,85 @@ class Color(_array_packed_type(4)):
 
 
 class DateTime(_array_packed_type(1)):
-    pass
+
+    """The DateTime class represents a date and time in the UTC timezone.
+
+    DateTime is constructed by passing a unix timestamp in to the constructor.
+    Timestamps are expressed as the number of seconds since 1970-01-01T00:00:00
+    in the UTC timezone::
+
+        >>> my_dt = DateTime(1377209927)
+
+    This timestamp can always be accessed either using index access or via a
+    named property::
+
+        >>> my_dt[0] == my_dt.timestamp == 1377209927
+        True
+
+    DateTime objects also expose the usual named properties you would expect on
+    a date/time object::
+
+        >>> my_dt.year
+        2013
+        >>> my_dt.month
+        8
+        >>> my_dt.day
+        22
+        >>> my_dt.hour
+        22
+        >>> my_dt.minute
+        18
+        >>> my_dt.second
+        47
+
+    Two DateTime objects can be compared for equality::
+
+        >>> my_dt == DateTime(1377209927)
+        True
+
+    You can also compare a DateTime with any mutable sequence type containing
+    the timestamp (although this probably isn't very useful for test authors)::
+
+        >>> my_dt == [1377209927]
+        True
+
+    """
+    def __init__(self, *args, **kwargs):
+        super(DateTime, self).__init__(*args, **kwargs)
+        self._cached_dt = datetime.utcfromtimestamp(self[0])
+
+    @property
+    def year(self):
+        return self._cached_dt.year
+
+    @property
+    def month(self):
+        return self._cached_dt.month
+
+    @property
+    def day(self):
+        return self._cached_dt.day
+
+    @property
+    def hour(self):
+        return self._cached_dt.hour
+
+    @property
+    def minute(self):
+        return self._cached_dt.minute
+
+    @property
+    def second(self):
+        return self._cached_dt.second
+
+    @property
+    def timestamp(self):
+        return self[0]
+
+    def __eq__(self, other):
+        if isinstance(other, datetime):
+            return other == self._cached_dt
+        return super(DateTime, self).__eq__(other)
 
 
 class Time(_array_packed_type(3)):

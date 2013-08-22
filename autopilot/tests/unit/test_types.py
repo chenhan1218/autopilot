@@ -19,17 +19,20 @@
 
 from __future__ import absolute_import
 
+from datetime import datetime
 from testscenarios import TestWithScenarios
 from testtools import TestCase
-from testtools.matchers import Equals, IsInstance
+from testtools.matchers import Equals, IsInstance, NotEquals
 import dbus
 
 from autopilot.introspection.types import (
-    PlainType,
-    Rectangle,
-    Point,
-    Size,
     Color,
+    DateTime,
+    PlainType,
+    Point,
+    Rectangle,
+    Size,
+    Time
 )
 
 
@@ -202,3 +205,47 @@ class ColorTypeTests(TestCase):
         c2 = [123, 234, 55, 255]
 
         self.assertThat(c1, Equals(c2))
+
+
+class DateTimeTests(TestCase):
+
+    def test_can_construct_datetime(self):
+        dt = DateTime(1377209927)
+        self.assertThat(dt, IsInstance(dbus.Array))
+
+    def test_datetime_has_slice_access(self):
+        dt = DateTime(1377209927)
+
+        self.assertThat(dt[0], Equals(1377209927))
+
+    def test_datetime_has_properties(self):
+        dt = DateTime(1377209927)
+
+        self.assertThat(dt.timestamp, Equals(1377209927))
+        self.assertThat(dt.year, Equals(2013))
+        self.assertThat(dt.month, Equals(8))
+        self.assertThat(dt.day, Equals(22))
+        self.assertThat(dt.hour, Equals(22))
+        self.assertThat(dt.minute, Equals(18))
+        self.assertThat(dt.second, Equals(47))
+
+    def test_equality_with_datetime(self):
+        dt1 = DateTime(1377209927)
+        dt2 = DateTime(1377209927)
+
+        self.assertThat(dt1, Equals(dt2))
+
+    def test_equality_with_list(self):
+        dt1 = DateTime(1377209927)
+        dt2 = [1377209927]
+
+        self.assertThat(dt1, Equals(dt2))
+
+    def test_equality_with_datetime(self):
+        dt1 = DateTime(1377209927)
+        dt2 = datetime.utcfromtimestamp(1377209927)
+        dt3 = datetime.utcfromtimestamp(1377209928)
+
+        self.assertThat(dt1, Equals(dt2))
+        self.assertThat(dt1, NotEquals(dt3))
+

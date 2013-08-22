@@ -118,7 +118,8 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
         with keyboard.focused_type(text_edit) as kb:
             kb.type(self.input, 0.01)
 
-            self.assertThat(text_edit.plainText,
+            self.assertThat(
+                text_edit.plainText,
                 Eventually(Equals(self.input)),
                 "app shows: " + text_edit.plainText
             )

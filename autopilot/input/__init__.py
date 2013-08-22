@@ -84,7 +84,8 @@ class Keyboard(CleanupRegistered):
 
         .. warning:: The **OSK** (On Screen Keyboard) backend option does not
          implement either :py:meth:`press` or :py:meth:`release` methods due to
-         technical implementation details and will raise a RuntimeError if used.
+         technical implementation details and will raise a RuntimeError if
+         used.
 
         :param preferred_backend: A string containing a hint as to which
             backend you would like. Possible backends are:
@@ -122,8 +123,8 @@ class Keyboard(CleanupRegistered):
 
     @contextmanager
     def focused_type(self, input_target,  pointer=None):
-        """ContextManager method allowing expected cleanup to happen (specifically
-        for the OSK backend.).
+        """ContextManager method allowing expected cleanup to happen
+        (specifically for the OSK backend.).
 
         """
         if pointer is None:
@@ -145,8 +146,8 @@ class Keyboard(CleanupRegistered):
             returning control to the caller.
         :raises: RuntimeError If called when using the OSK Backend.
 
-        .. warning:: The **OSK** backend does not implement the press method and will raise a
-         RuntimeError if called.
+        .. warning:: The **OSK** backend does not implement the press method
+          and will raise a RuntimeError if called.
 
         Example:
 
@@ -165,8 +166,8 @@ class Keyboard(CleanupRegistered):
             returning control to the caller.
         :raises: RuntimeError If called when using the OSK Backend.
 
-        .. warning:: The **OSK** backend does not implement the press method and will raise a
-         RuntimeError if called.
+        .. warning:: The **OSK** backend does not implement the press method
+         and will raise a RuntimeError if called.
 
         Example:
 

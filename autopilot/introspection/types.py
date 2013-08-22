@@ -18,14 +18,27 @@
 #
 
 
-"""Autopilot proxy type support.
+"""
+Autopilot proxy type support.
+=============================
 
 This module defines the classes that are used for all attributes on proxy
+objects. All proxy objects contain attributes that transparently mirror the
+values present in the application under test. Autopilot takes care of keeping
+these values up to date.
+
+Object attributes fall into two categories. Attributes that are a single
+string, boolean, or integer property are sent directly across DBus. These are
+called "plain" types, and are stored in autopilot as instnaces of the
+:class:`PlainType` class. Attributes that are more complex (a rectangle, for
+example) are called "complex" types, and are split into several component
+values, sent across dbus, and are then reconstituted in autopilot into useful
 objects.
 
 """
 
 from __future__ import absolute_import
+from functools import partial
 import dbus
 
 
@@ -66,7 +79,7 @@ def create_value_instance(value, parent, name):
     type_id = value[0]
     value = value[1:]
     # TODO: deal with type Ids that are not in the dictionary more cleanly.
-    return type_dict[type_id](value, parent, name)
+    return type_dict[type_id](*value, parent=parent, name=name)
 
 
 class TypeBase(object):
@@ -185,17 +198,72 @@ class PlainType(TypeBase):
         return type(new_type_name, new_type_bases, new_type_dict)(value)
 
 
-class _ArrayPackedType(dbus.Array, TypeBase):
+def _array_packed_type(num_args):
+    """Return a base class that accepts 'num_args' and is packed into a dbus
+    Array type.
 
-    def __init__(self, value, parent=None, name=None):
-        super(_ArrayPackedType, self).__init__(value)
-        self.parent = parent
-        self.name = name
+    """
+    class _ArrayPackedType(dbus.Array, TypeBase):
+
+        def __init__(self, *args, **kwargs):
+            if len(args) != self._required_arg_count:
+                raise ValueError(
+                    "%s must be constructed with %d arguments, not %d"
+                    % (
+                        self.__class__.__name__,
+                        self._required_arg_count,
+                        len(args)
+                    )
+                )
+            super(_ArrayPackedType, self).__init__(args)
+            # TODO: pop instead of get, and raise on unknown kwarg
+            self.parent = kwargs.get("parent", None)
+            self.name = kwargs.get("name", None)
+    return type(
+        "_ArrayPackedType_{}".format(num_args),
+        (_ArrayPackedType,),
+        dict(_required_arg_count=num_args)
+    )
 
 
-class Rectangle(_ArrayPackedType):
+class Rectangle(_array_packed_type(4)):
 
-    """The RectangleType represents a rectangle in cartesian space."""
+    """The RectangleType class represents a rectangle in cartesian space.
+
+    To construct a rectangle, pass the x, y, width and height parameters in to
+    the class constructor::
+
+        my_rect = Rectangle(12,13,100,150)
+
+    These attributes can be accessed either using named attributes, or via
+    sequence indexes::
+
+        >>> my_rect.x == my_rect[0] == 12
+        True
+        >>> my_rect.y == my_rect[1] == 13
+        True
+        >>> my_rect.w == my_rect[2] == 100
+        True
+        >>> my_rect.h == my_rect[3] == 150
+        True
+
+    You may also access the width and height values using the ``width`` and
+    ``height`` properties::
+
+        >>> my_rect.width == my_rect.w
+        True
+        >>> my_rect.height == my_rect.h
+        True
+
+    Rectangles can be compared using ``==`` and ``!=``, either to another
+    Rectangle instance, or to any mutable sequence type::
+
+        >>> my_rect == [12, 13, 100, 150]
+        True
+        >>> my_rect != Rectangle(1,2,3,4)
+        True
+
+    """
 
     @property
     def x(self):
@@ -210,11 +278,45 @@ class Rectangle(_ArrayPackedType):
         return self[2]
 
     @property
+    def width(self):
+        return self[2]
+
+    @property
     def h(self):
         return self[3]
 
+    @property
+    def height(self):
+        return self[3]
 
-class Point(_ArrayPackedType):
+
+class Point(_array_packed_type(2)):
+
+    """The Point class represents a 2D point in cartesian space.
+
+    To construct a Point, pass in the x, y parameters to the class
+    constructor::
+
+        >>> my_point = Point(50,100)
+
+    These attributes can be accessed either using named attributes, or via
+    sequence indexes::
+
+        >>> my_point.x == my_point[0] == 50
+        True
+        >>> my_point.y == my_point[1] == 100
+        True
+
+    Point instances can be compared using ``==`` and ``!=``, either to another
+    Point instance, or to any mutable sequence type with the correct number of
+    items::
+
+        >>> my_point == [50, 100]
+        True
+        >>> my_point != Point(5, 10)
+        True
+
+    """
 
     @property
     def x(self):
@@ -225,18 +327,82 @@ class Point(_ArrayPackedType):
         return self[1]
 
 
-class Size(_ArrayPackedType):
+class Size(_array_packed_type(2)):
+
+    """The Size class represents a 2D size in cartesian space.
+
+    To construct a Size, pass in the width, height parameters to the class
+    constructor::
+
+        >>> my_size = Size(50,100)
+
+    These attributes can be accessed either using named attributes, or via
+    sequence indexes::
+
+        >>> my_size.width == my_size.w == my_size[0] == 50
+        True
+        >>> my_size.height == my_size.h == my_size[1] == 100
+        True
+
+    Size instances can be compared using ``==`` and ``!=``, either to another
+    Size instance, or to any mutable sequence type with the correct number of
+    items::
+
+        >>> my_size == [50, 100]
+        True
+        >>> my_size != Size(5, 10)
+        True
+
+    """
 
     @property
     def w(self):
         return self[0]
 
     @property
+    def width(self):
+        return self[0]
+
+    @property
     def h(self):
         return self[1]
 
+    @property
+    def height(self):
+        return self[1]
 
-class Color(_ArrayPackedType):
+
+class Color(_array_packed_type(4)):
+
+    """The Color class represents an RGBA Color.
+
+    To construct a Color, pass in the red, green, blue and alpha parameters to
+    the class constructor::
+
+        >>> my_color = Color(50, 100, 200, 255)
+
+    These attributes can be accessed either using named attributes, or via
+    sequence indexes::
+
+        >>> my_color.red == my_color[0] == 50
+        True
+        >>> my_color.green == my_color[1] == 100
+        True
+        >>> my_color.blue == my_color[2] == 200
+        True
+        >>> my_color.alpha == my_color[3] == 255
+        True
+
+    Color instances can be compared using ``==`` and ``!=``, either to another
+    Color instance, or to any mutable sequence type with the correct number of
+    items::
+
+        >>> my_color == [50, 100, 200, 255]
+        True
+        >>> my_color != Color(5, 10, 0, 0)
+        True
+
+    """
 
     @property
     def red(self):
@@ -255,9 +421,9 @@ class Color(_ArrayPackedType):
         return self[3]
 
 
-class DateTime(_ArrayPackedType):
+class DateTime(_array_packed_type(1)):
     pass
 
 
-class Time(_ArrayPackedType):
+class Time(_array_packed_type(3)):
     pass

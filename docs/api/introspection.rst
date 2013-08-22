@@ -6,4 +6,4 @@
 
 
 .. automodule:: autopilot.introspection.types
-	:members: create_value_instance, PlainType, Rectangle, Point, Size, DateTime, Time
+	:members: PlainType, Rectangle, Point, Size, DateTime, Time

@@ -123,8 +123,23 @@ class Keyboard(CleanupRegistered):
 
     @contextmanager
     def focused_type(self, input_target,  pointer=None):
-        """ContextManager method allowing expected cleanup to happen
-        (specifically for the OSK backend.).
+        """This context manager takes care of 'clicking' the supplied
+        *input_target* into focus and any cleanup that the input backend may
+        require.
+
+        One example is with the OSK backend which extends this method and
+        dismisses the GUI component of the OSK once the scope of the context
+        manager as a cleanup step.
+
+        An example of using the context manager::
+
+            from autopilot.input import Keyboard
+
+            text_area = self._launch_test_input_area()
+            keyboard = Keyboard.create('OSK')
+            with keyboard.focused_type(text_area) as kb:
+                kb.type("Hello World.")
+                self.assertThat(text_area.text, Equals("Hello World"))
 
         """
         if pointer is None:
@@ -135,7 +150,6 @@ class Keyboard(CleanupRegistered):
                 pointer = Pointer(Touch.create())
 
         pointer.click_object(input_target)
-        # input_target.focus.wait_for(True)
         yield self
 
     def press(self, keys, delay=0.2):

@@ -108,8 +108,8 @@ However, autopilot tests are not unit tests, they are functional tests. Function
 
 In general, autopilot tests are more relaxed about the 'one assertion per test' rule. However, care should still be taken to produce tests that are as small and understandable as possible.
 
-How do I write a test that uses either a Mouse or a Touch device interchangeably?
-==============================================================================================
+Q. How do I write a test that uses either a Mouse or a Touch device interchangeably?
+====================================================================================
 
 The :class:`autopilot.input.Pointer` class is a simple wrapper that unifies some of the differences between the :class:`~autopilot.input.Touch` and :class:`~autopilot.input.Mouse` classes. To use it, pass in the device you want to use under the hood, like so::
 
@@ -135,6 +135,33 @@ Combined with test scenarios, this can be used to write tests that are run twice
             self.pointer.click()
 
 If you only want to use the mouse on certain platforms, use the :mod:`autopilot.platform` module to determine the current platform at runtime.
+
+Q. How do I use the Onscreen Keyboard (OSK) to input text in my test?
+=====================================================================
+
+The OSK is an backend option for the :meth:`autopilot.input.Keyboard.create`
+method (see this :ref:`Advanced Autopilot<adv_picking_backend>` section for
+details regarding backend selection.)
+
+Unlike the other backends (X11, UInput) the OSK has a GUI presence and thus can
+be displayed on the screen.
+
+The :class:`autopilot.input.Keyboard` class provides a context manager that
+handles any cleanup required when dealing with the input backends.
+
+For example in the instance when the backend is the OSK, when leaving the scope
+of the context manager the OSK will be dismissed with a swipe::
+
+  from autopilot.input import Keyboard
+
+  text_area = self._launch_test_input_area()
+  keyboard = Keyboard.create('OSK')
+  with keyboard.focused_type(text_area) as kb:
+      kb.type("Hello World.")
+      self.assertThat(text_area.text, Equals("Hello World"))
+  # At this point now the OSK has been swiped away.
+  self.assertThat()
+
 
 Autopilot Qt & Gtk Support
 ++++++++++++++++++++++++++

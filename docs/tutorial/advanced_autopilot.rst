@@ -199,6 +199,8 @@ By default, calling the ``create()`` method with no arguments will return an ins
 
 The code snippet above will create an instance of the Keyboard class that uses X11 on Desktop systems, and UInput on other systems. On the rare occaison when test authors need to construct these objects themselves, we expect that the default creation pattern to be used.
 
+.. _adv_picking_backend:
+
 Picking a Backend
 +++++++++++++++++
 
@@ -211,6 +213,11 @@ Similarly, to specify that a UInput keyboard should be created::
 
     >>> from autopilot.input import Keyboard
     >>> kbd = Keyboard.create("UInput")
+
+Finally, for the Onscreen Keyboard::
+
+    >>> from autopilot.input import Keyboard
+    >>> kbd = Keyboard.create("OSK")
 
 .. warning:: Care must be taken when specifying specific backends. There is no guarantee that the backend you ask for is going to be available across all platforms. For that reason, using the default creation method is encouraged.
 

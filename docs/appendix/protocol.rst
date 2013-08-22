@@ -197,13 +197,55 @@ Returning State Data
 
 Once the application under test has parsed the XPathSleect query, and has a list (possibly empty!) of objects that match the given query, it must serialize those objects back across DBus as the return value from the ``GetState`` method. The data structure used is reasonably complex, and is described below:
 
- * At the top level, the return type must be an array of DBus structures. Each item in the array represents an object that matched the supplied query. If no objects matched the supplied query, an empty array must be returned.
+* At the top level, the return type must be an array of objects. Each item in the array represents an object that matched the supplied query. If no objects matched the supplied query, an empty array must be returned.
 
-  * Each DBus structure has two parts: a string, and a Variant.
+ * Each object is a DBus structure that has two parts: a string, and a map. The string specifies the full tree path to the object being returned (for example "/path/to/object").
 
-    The string specifies the full tree path to the object being returned.
+   * The map represents the object state, and is a map of strings to arrays. The keys in this map are property names (for example "visible").
 
-    * The variant must be a map of strings to variants. This structure represents the state of the object. The strings are the attribute names, and the variants are the attribute values.
+    * The arrays represents the property value. It contains at least two parts, a value type id (see below for a list of these ids and what they mean), and one or more values. The values can be any type representable over dbus. Some values may actually be arrays of values, for example.
+
+.. graphviz::
+
+   digraph dbus_data {
+      node [shape=record];
+
+      objects [label="Object|<f1>Object|..."];
+      object2 [label="Object_name|<f1>Object_state"];
+      object_state [label="property|<f0>property|..."]
+      property [label="key|value_type|value|..."]
+
+      objects:f1 -> object2;
+      object2:f1 -> object_state;
+      object_state:f0 -> property;
+   }
+
+
+Valid IDs
++++++++++
+
+The following table lists the various type Ids, and their meaning.
+
+.. list-table:: **Autopilot Type IDs and their meaning**
+	:header-rows: 1
+	:widths: 5 90
+
+	* - Type ID:
+	  - Meaning:
+	* - 0
+	  - Simple Type. The value is a DBus integer, boolean, or string, and that is exactly how it should be represented to the user.
+	* - 1
+	  - Rectangle. The next four values are all integers, and represent a rectangle in cartesian space. The four numbers must represent the x, y, width and height of the rectangle, respectively. Autopilot will likely present the four values as 'x', 'y', 'w' and 'h' to test authors. Autopilot makes no assumptions about the coordinate space used.
+	* - 2
+	  - Point. The next two values are integers, and represent an X, Y, point in catesian space.
+	* - 3
+	  - Size. The next two value are integers, and represent a width,height pair, describing a size in catesian space.
+	* - 4
+	  - Color. The next four values are all integers, and represent the red, green, blue, and alpha components of the color, respectively. Each component is bounded between 0 and 255.
+	* - 5
+	  - Date or Date/Time. The next value is an integer representing the number of seconds since the unix epoch (1970-01-011 00:00:00), UTC time.
+	* - 6
+	  - Time. The next values are all integers, and represent hours, minutes, seconds, milliseconds.
 
 Special Attributes
 ++++++++++++++++++

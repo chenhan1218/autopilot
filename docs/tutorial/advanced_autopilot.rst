@@ -258,6 +258,53 @@ Finally, if the test author specifies a preferred backend, but that backend coul
     'UInputError(\'"/dev/uinput" cannot be opened for writing\',)'
     'BackendException(\'Error while initialising backend. Original exception was: "/dev/uinput" cannot be opened for writing\',)'
 
+.. _keyboard_backend_limitations:
+
+Limitations of the different Keyboard backends
+++++++++++++++++++++++++++++++++++++++++++++++
+
+While every effort has been made so that the Keyboard devices act the same
+regardless of which backend or platform is in use, the simple fact is that
+there can be some technical limitations for some backends.
+
+Some of these limitations are hidden when using the "create" method and won't
+cause any concern (i.e. X11 backend on desktop, UInput on phablet device.)
+while others will raise exceptions (that are fully documented in the API docs).
+
+Here is a list of known limitations:
+
+**X11**
+
+   * Only available on desktop platforms
+
+     - X11 isn't available on the phablet devices
+
+**OSK**
+
+   * Currently only available on phablet devices
+
+     - At the time of writing this the OSK/Ubuntu Keyboard is only
+       supported/available on the phablet devices. It is possible that it will
+       be available on the desktop in the near future.
+
+   * Unable to type 'special' keys i.e. Alt
+
+     - This shouldn't be an issue as applications running on phablet devices
+       will be using the expected the expected patterns of use on these
+       platforms
+
+   * The following methods have limitations or are not implemented:
+
+     - :meth:`autopilot.input.Keyboard.press`: Raises NotImplementedError if
+       called.
+
+     - :meth:`autopilot.input.Keyboard.release`: Raises NotImplementedError if
+       called.
+
+     - :meth:`autopilot.input.Keyboard.press_and_release`: can can only handle
+       single keys/characters. Raises either ValueError if passed more than a
+       single character key or UnsupportedKey if passed a key that is not
+       supported by the OSK backend (or the current language layout.)
 
 
 Process Control

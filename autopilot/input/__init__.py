@@ -83,10 +83,13 @@ class Keyboard(CleanupRegistered):
         For more infomration on picking specific backends, see
         :ref:`tut-picking-backends`
 
+        For details regarding backend limitations please see:
+        :ref:`Keyboard backend limitations<keyboard_backend_limitations>`
+
         .. warning:: The **OSK** (On Screen Keyboard) backend option does not
          implement either :py:meth:`press` or :py:meth:`release` methods due to
-         technical implementation details and will raise a RuntimeError if
-         used.
+         technical implementation details and will raise a NotImplementedError
+         exception if used.
 
         :param preferred_backend: A string containing a hint as to which
             backend you would like. Possible backends are:
@@ -166,7 +169,7 @@ class Keyboard(CleanupRegistered):
         :raises: NotImplementedError If called when using the OSK Backend.
 
         .. warning:: The **OSK** backend does not implement the press method
-          and will raise a RuntimeError if called.
+          and will raise a NotImplementedError if called.
 
         Example:
 
@@ -186,7 +189,7 @@ class Keyboard(CleanupRegistered):
         :raises: NotImplementedError If called when using the OSK Backend.
 
         .. warning:: The **OSK** backend does not implement the press method
-         and will raise a RuntimeError if called.
+         and will raise a NotImplementedError if called.
 
         Example:
 

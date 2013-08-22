@@ -34,6 +34,7 @@ from testtools.matchers import Equals
 from time import sleep
 from uuid import uuid4
 
+from autopilot.introspection.types import create_value_instance
 from autopilot.utilities import Timer, get_debug_logger
 
 
@@ -150,80 +151,7 @@ class DBusIntrospectionObject(object):
         """Make an attribute for *value*, patched with the wait_for
         function."""
 
-        def wait_for(self, expected_value, timeout=10):
-            """Wait up to 10 seconds for our value to change to
-            *expected_value*.
-
-            *expected_value* can be a testtools.matcher. Matcher subclass (like
-            LessThan, for example), or an ordinary value.
-
-            This works by refreshing the value using repeated dbus calls.
-
-            :raises: **RuntimeError** if the attribute was not equal to the
-             expected value after 10 seconds.
-
-            """
-            # It's guaranteed that our value is up to date, since __getattr__
-            # calls refresh_state. This if statement stops us waiting if the
-            # value is already what we expect:
-            if self == expected_value:
-                return
-
-            def make_unicode(value):
-                if isinstance(value, str):
-                    return unicode(value.decode('utf8'))
-                return value
-
-            if hasattr(expected_value, 'expected'):
-                expected_value.expected = make_unicode(expected_value.expected)
-
-            # unfortunately not all testtools matchers derive from the Matcher
-            # class, so we can't use issubclass, isinstance for this:
-            match_fun = getattr(expected_value, 'match', None)
-            is_matcher = match_fun and callable(match_fun)
-            if not is_matcher:
-                expected_value = Equals(expected_value)
-
-            time_left = timeout
-            while True:
-                _, new_state = self.parent.get_new_state()
-                new_state = translate_state_keys(new_state)
-                new_value = make_unicode(new_state[self.name])
-                # Support for testtools.matcher classes:
-                mismatch = expected_value.match(new_value)
-                if mismatch:
-                    failure_msg = mismatch.describe()
-                else:
-                    self.parent._set_properties(new_state)
-                    return
-
-                if time_left >= 1:
-                    sleep(1)
-                    time_left -= 1
-                else:
-                    sleep(time_left)
-                    break
-
-            raise AssertionError(
-                "After %.1f seconds test on %s.%s failed: %s" % (
-                    timeout, self.parent.__class__.__name__, self.name,
-                    failure_msg))
-
-        # This looks like magic, but it's really not. We're creating a new type
-        # on the fly that derives from the type of 'value' with a couple of
-        # extra attributes: wait_for is the wait_for method above. 'parent' and
-        # 'name' are needed by the wait_for method.
-        #
-        # We can't use traditional meta-classes here, since the type we're
-        # deriving from is only known at call time, not at parse time (we could
-        # override __call__ in the meta class, but that doesn't buy us anything
-        # extra).
-        #
-        # A better way to do this would be with functools.partial, which I
-        # tried initially, but doesn't work well with bound methods.
-        t = type(value)
-        attrs = {'wait_for': wait_for, 'parent': self, 'name': name}
-        return type(t.__name__, (t,), attrs)(value)
+        return create_value_instance(self, name, value)
 
     def get_children_by_type(self, desired_type, **kwargs):
         """Get a list of children of the specified type.

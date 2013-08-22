@@ -61,7 +61,6 @@ class PlainTypeTests(TestWithScenarios, TestCase):
     ]
 
     def test_can_construct(self):
-        """Must be able to create a PlainType instance from a parent instance."""
         obj = FakeObject()
         p = PlainType(self.t(self.v))
 
@@ -70,17 +69,16 @@ class PlainTypeTests(TestWithScenarios, TestCase):
         self.assertThat(p, IsInstance(self.t))
 
 
-
 class RectangleTypeTests(TestCase):
 
     def test_can_construct_rectangle(self):
         obj = FakeObject()
-        r = Rectangle([1,2,3,4])
+        r = Rectangle([1, 2, 3, 4])
         self.assertThat(r, IsInstance(dbus.Array))
 
     def test_rectangle_has_xywh_properties(self):
         obj = FakeObject()
-        r = Rectangle([1,2,3,4])
+        r = Rectangle([1, 2, 3, 4])
 
         self.assertThat(r.x, Equals(1))
         self.assertThat(r.y, Equals(2))
@@ -89,7 +87,7 @@ class RectangleTypeTests(TestCase):
 
     def test_rectangle_has_slice_access(self):
         obj = FakeObject()
-        r = Rectangle([1,2,3,4])
+        r = Rectangle([1, 2, 3, 4])
 
         self.assertThat(r[0], Equals(1))
         self.assertThat(r[1], Equals(2))
@@ -100,17 +98,17 @@ class RectangleTypeTests(TestCase):
 class PointTypeTests(TestCase):
 
     def test_can_construct_point(self):
-        r = Point([1,2,3,4])
+        r = Point([1, 2])
         self.assertThat(r, IsInstance(dbus.Array))
 
     def test_point_has_xy_properties(self):
-        r = Point([1,2])
+        r = Point([1, 2])
 
         self.assertThat(r.x, Equals(1))
         self.assertThat(r.y, Equals(2))
 
     def test_point_has_slice_access(self):
-        r = Point([1,2])
+        r = Point([1, 2])
 
         self.assertThat(r[0], Equals(1))
         self.assertThat(r[1], Equals(2))
@@ -119,31 +117,30 @@ class PointTypeTests(TestCase):
 class SizeTypeTests(TestCase):
 
     def test_can_construct_size(self):
-        r = Size([1,2,3,4])
+        r = Size([1, 2, 3, 4])
         self.assertThat(r, IsInstance(dbus.Array))
 
     def test_size_has_wh_properties(self):
-        r = Size([1,2])
+        r = Size([1, 2])
 
         self.assertThat(r.w, Equals(1))
         self.assertThat(r.h, Equals(2))
 
     def test_size_has_slice_access(self):
-        r = Size([1,2])
+        r = Size([1, 2])
 
         self.assertThat(r[0], Equals(1))
         self.assertThat(r[1], Equals(2))
 
 
-
 class ColorTypeTests(TestCase):
 
     def test_can_construct_color(self):
-        r = Color([123,234,55,255])
+        r = Color([123, 234, 55, 255])
         self.assertThat(r, IsInstance(dbus.Array))
 
     def test_color_has_rgba_properties(self):
-        r = Color([123,234,55,255])
+        r = Color([123, 234, 55, 255])
 
         self.assertThat(r.red, Equals(123))
         self.assertThat(r.green, Equals(234))
@@ -151,7 +148,7 @@ class ColorTypeTests(TestCase):
         self.assertThat(r.alpha, Equals(255))
 
     def test_color_has_slice_access(self):
-        r = Color([123,234,55,255])
+        r = Color([123, 234, 55, 255])
 
         self.assertThat(r[0], Equals(123))
         self.assertThat(r[1], Equals(234))

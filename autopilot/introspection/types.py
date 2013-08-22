@@ -42,12 +42,13 @@ class ValueType(object):
     POINT = 2
     SIZE = 3
     COLOR = 4
-    DATETIME =5
+    DATETIME = 5
     TIME = 6
 
+
 def create_value_instance(value, parent, name):
-    """Create an object that exposes the interesing part of the value specified,
-    given the value_type_id.
+    """Create an object that exposes the interesing part of the value
+    specified, given the value_type_id.
 
     :param parent: The object this attribute belongs to.
     :param name: The name of this attribute.
@@ -171,7 +172,7 @@ class PlainType(TypeBase):
 
     """
 
-    def __new__(cls, value, parent=None, name=None ):
+    def __new__(cls, value, parent=None, name=None):
         # PlainType is used for strings, ints, bools, and anything else that
         # does not have a more specialised representation. We want to return
         # an instance of PlainType that derives from the actual value.
@@ -253,9 +254,10 @@ class Color(_ArrayPackedType):
     def alpha(self):
         return self[3]
 
+
 class DateTime(_ArrayPackedType):
     pass
 
+
 class Time(_ArrayPackedType):
     pass
-

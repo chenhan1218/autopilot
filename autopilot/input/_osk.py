@@ -21,7 +21,10 @@ import logging
 from time import sleep
 from contextlib import contextmanager
 
-from ubuntu_keyboard.emulators.keyboard import KeyboardDriver, UnsupportedKey
+from ubuntu_keyboard.emulators.keyboard import (
+    Keyboard as KeyboardDriver,
+    UnsupportedKey,
+)
 
 from autopilot.input import Keyboard as KeyboardBase
 

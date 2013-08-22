@@ -21,11 +21,13 @@
 import json
 import os
 from tempfile import mktemp
-from testtools import TestCase
+from testtools import TestCase, skipIf
 from testtools.matchers import IsInstance, Equals, raises
+from textwrap import dedent
 from unittest import SkipTest
 from mock import patch
 
+from autopilot import platform
 from autopilot.testcase import AutopilotTestCase, multiply_scenarios
 from autopilot.input import Keyboard, Mouse, Pointer, Touch
 from autopilot.input._common import get_center_point
@@ -153,6 +155,80 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
             self.fail("Don't know how to get pressed keys list for backend "
                       + self.backend
                       )
+
+
+@skipIf(platform.model() == 'Desktop', "Only on device")
+class OSKBackendTests(AutopilotTestCase):
+    """Really, typing lower/uppercase/at. al is tested in the OSK backend.
+    Does it really need to be re-done here? Perhaps.
+
+    """
+    def launch_test_input_area(self):
+        self.app = self._launch_simple_input()
+        text_area = self.app.select_single("QQuickTextInput")
+
+        return text_area
+
+    def _start_qml_script(self, script_contents):
+        """Launch a qml script."""
+        qml_path = mktemp(suffix='.qml')
+        open(qml_path, 'w').write(script_contents)
+        self.addCleanup(os.remove, qml_path)
+
+        return self.launch_test_application(
+            "qmlscene",
+            qml_path,
+            app_type='qt',
+        )
+
+    def _launch_simple_input(self):
+        simple_script = dedent("""
+        import QtQuick 2.0
+        import Ubuntu.Components 0.1
+
+        Rectangle {
+            id: window
+            objectName: "windowRectangle"
+            color: "lightgrey"
+
+            Text {
+                id: inputLabel
+                text: "OSK Tests"
+                font.pixelSize: units.gu(3)
+                anchors {
+                    left: input.left
+                    top: parent.top
+                    topMargin: 25
+                    bottomMargin: 25
+                }
+            }
+
+            TextField {
+                id: input;
+                objectName: "input"
+                anchors {
+                    top: inputLabel.bottom
+                    horizontalCenter: parent.horizontalCenter
+                    topMargin: 10
+                }
+                inputMethodHints: Qt.ImhNoPredictiveText
+            }
+        }
+
+        """)
+
+        return self._start_qml_script(simple_script)
+
+    def test_focused_typing_contextmanager(self):
+        text_area = self.launch_test_input_area()
+        keyboard = Keyboard.create('OSK')
+        with keyboard.focused_type(text_area) as kb:
+            kb.type("abcdefghijklmnopqrstuvwxyz")
+            self.assertThat(
+                text_area.text,
+                Eventually(Equals("abcdefghijklmnopqrstuvwxyz"))
+            )
+        self.assertThat(keyboard._keyboard.is_available, Eventually(Equals(False)))
 
 
 class MouseTestCase(AutopilotTestCase):

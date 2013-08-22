@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2013 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ import logging
 from time import sleep
 from contextlib import contextmanager
 
-from ubuntu_keyboard.emulators.keyboard import Keyboard, UnsupportedKey
+from ubuntu_keyboard.emulators.keyboard import KeyboardDriver, UnsupportedKey
 
 from autopilot.input import Keyboard as KeyboardBase
 
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 class Keyboard(KeyboardBase):
 
-    _keyboard = Keyboard()
+    _keyboard = KeyboardDriver()
 
     @contextmanager
     def focused_type(self, input_target, pointer=None):
@@ -56,33 +56,40 @@ class Keyboard(KeyboardBase):
             "OSK Backend does not support the release method"
         )
 
-    def press_and_release(self, keys, delay=0.2):
-        """Press and release all items in 'keys'.
+    def press_and_release(self, key, delay=0.2):
+        """Press and release the key *key*.
 
-        The 'keys' argument must be a string of keys you want
-        pressed and released.. For example:
+        The 'key' argument must be a string of key you want pressed and
+        released.. For example:
 
-        press_and_release('A+B')
+        press_and_release('A')
 
-        presses both the 'A' and 'B' keys, and then releases both keys.
+        presses then releases the 'A' key.
+
+        :raises: *UnsupportedKey* if the provided key is not supported by the
+         OSK Backend (or the current OSK langauge layout.)
+        :raises: *ValueError* if there is more than a single key supplied in
+         the *key* argument.
 
         """
-        for key in self._sanitise_keys(keys):
-            try:
-                self._keyboard.press_key(key)
-                sleep(delay)
-            except UnsupportedKey:
-                logger.warning(
-                    "OSK Backend is unable to type the key '%s" % key
-                )
+
+        if len(self._sanitise_keys(key)) != 1:
+            raise ValueError("Only a single key can be passed in.")
+
+        try:
+            self._keyboard.press_key(key)
+            sleep(delay)
+        except UnsupportedKey as e:
+            e.args += ("OSK Backend is unable to type the key '%s" % key,)
+            raise
 
     def type(self, string, delay=0.1):
         """Simulate a user typing a string of text.
 
-        Only 'normal' keys can be typed with this method. Control characters
-        (such as 'Alt' will be interpreted as an 'A', and 'l', and a 't').
+        Only 'normal' keys can be typed with this method. There is no such
+        thing as Alt or Ctrl on the Onscreen Keyboard.
 
-        The osk class back end will take care of ensuring that capitalized
+        The OSK class back end will take care of ensuring that capitalized
         keys are in fact capitalized.
 
         """

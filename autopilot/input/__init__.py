@@ -57,6 +57,7 @@ running on a desktop.
 
 from collections import OrderedDict
 from contextlib import contextmanager
+from autopilot import BackendException
 from autopilot.utilities import _pick_backend, CleanupRegistered
 from autopilot.input._common import get_center_point
 
@@ -112,8 +113,12 @@ class Keyboard(CleanupRegistered):
             return Keyboard()
 
         def get_osk_kb():
-            from autopilot.input._osk import Keyboard
-            return Keyboard()
+            try:
+                from autopilot.input._osk import Keyboard
+                return Keyboard()
+            except ImportError as e:
+                error_msg = "Unable to import the OSK backend: " + e.message
+                raise BackendException(error_msg)
 
         backends = OrderedDict()
         backends['X11'] = get_x11_kb
@@ -158,7 +163,7 @@ class Keyboard(CleanupRegistered):
         :param keys: Keys you want pressed.
         :param delay: The delay (in Seconds) after pressing the keys before
             returning control to the caller.
-        :raises: RuntimeError If called when using the OSK Backend.
+        :raises: NotImplementedError If called when using the OSK Backend.
 
         .. warning:: The **OSK** backend does not implement the press method
           and will raise a RuntimeError if called.
@@ -178,7 +183,7 @@ class Keyboard(CleanupRegistered):
         :param keys: Keys you want released.
         :param delay: The delay (in Seconds) after releasing the keys before
             returning control to the caller.
-        :raises: RuntimeError If called when using the OSK Backend.
+        :raises: NotImplementedError If called when using the OSK Backend.
 
         .. warning:: The **OSK** backend does not implement the press method
          and will raise a RuntimeError if called.

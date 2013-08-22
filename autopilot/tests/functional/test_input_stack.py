@@ -163,6 +163,14 @@ class OSKBackendTests(AutopilotTestCase):
     Does it really need to be re-done here? Perhaps.
 
     """
+
+    scenarios = [
+        ('lower_alpha', dict(input='abcdefghijklmnopqrstuvwxyz')),
+        ('upper_alpha', dict(input='ABCDEFGHIJKLMNOPQRSTUVWXYZ')),
+        ('numeric', dict(input='0123456789')),
+        ('punctuation', dict(input='`~!@#$%^&*()_-+={}[]|\\:;"\'<>,.?/')),
+    ]
+
     def launch_test_input_area(self):
         self.app = self._launch_simple_input()
         text_area = self.app.select_single("QQuickTextInput")
@@ -219,16 +227,30 @@ class OSKBackendTests(AutopilotTestCase):
 
         return self._start_qml_script(simple_script)
 
+    def test_can_type_string(self):
+        text_area = self.launch_test_input_area()
+        keyboard = Keyboard.create('OSK')
+        pointer = Pointer(Touch.create())
+        pointer.click_object(text_area)
+        keyboard._keyboard.wait_for_keyboard_ready()
+
+        keyboard.type(self.input)
+
+        self.assertThat(text_area.text, Eventually(Equals(self.input)))
+
     def test_focused_typing_contextmanager(self):
         text_area = self.launch_test_input_area()
         keyboard = Keyboard.create('OSK')
         with keyboard.focused_type(text_area) as kb:
-            kb.type("abcdefghijklmnopqrstuvwxyz")
+            kb.type(self.input)
             self.assertThat(
                 text_area.text,
-                Eventually(Equals("abcdefghijklmnopqrstuvwxyz"))
+                Eventually(Equals(self.input))
             )
-        self.assertThat(keyboard._keyboard.is_available, Eventually(Equals(False)))
+        self.assertThat(
+            keyboard._keyboard.is_available,
+            Eventually(Equals(False))
+        )
 
 
 class MouseTestCase(AutopilotTestCase):

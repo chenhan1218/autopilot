@@ -62,10 +62,12 @@ class Keyboard(KeyboardBase):
     def press_and_release(self, key, delay=0.2):
         """Press and release the key *key*.
 
-        The 'key' argument must be a string of key you want pressed and
-        released.. For example:
+        The 'key' argument must be a string of the single key you want pressed
+        and released.
 
-        press_and_release('A')
+        For example::
+
+            press_and_release('A')
 
         presses then releases the 'A' key.
 
@@ -95,6 +97,9 @@ class Keyboard(KeyboardBase):
         The OSK class back end will take care of ensuring that capitalized
         keys are in fact capitalized.
 
+        :raises: *UnsupportedKey* if there is a key within the string that is
+        not supported by the OSK Backend (or the current OSK langauge layout.)
+
         """
         if not isinstance(string, basestring):
             raise TypeError("'string' argument must be a string.")
@@ -103,8 +108,7 @@ class Keyboard(KeyboardBase):
 
     @classmethod
     def on_test_end(cls, test_instance):
-        """Dismiss (swipe hide) the keyboard so we're clear for the next
-        test.
+        """Dismiss (swipe hide) the keyboard.
 
         """
         logger.debug("Dismissing the OSK with a swipe.")

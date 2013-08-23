@@ -120,8 +120,8 @@ class Keyboard(CleanupRegistered):
                 from autopilot.input._osk import Keyboard
                 return Keyboard()
             except ImportError as e:
-                error_msg = "Unable to import the OSK backend: " + e.message
-                raise BackendException(error_msg)
+                e.args += ("Unable to import the OSK backend",)
+                raise
 
         backends = OrderedDict()
         backends['X11'] = get_x11_kb
@@ -139,6 +139,9 @@ class Keyboard(CleanupRegistered):
         dismisses the GUI component of the OSK once the scope of the context
         manager as a cleanup step.
 
+        If the *pointer* argument is None (default) then either a Mouse or
+        Touch pointer will be created based on the current platform.
+
         An example of using the context manager::
 
             from autopilot.input import Keyboard
@@ -148,6 +151,8 @@ class Keyboard(CleanupRegistered):
             with keyboard.focused_type(text_area) as kb:
                 kb.type("Hello World.")
                 self.assertThat(text_area.text, Equals("Hello World"))
+            # Upon leaving the context managers scope the keyboard is dismissed
+            # with a swipe
 
         """
         if pointer is None:

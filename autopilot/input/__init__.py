@@ -57,7 +57,6 @@ running on a desktop.
 
 from collections import OrderedDict
 from contextlib import contextmanager
-from autopilot import BackendException
 from autopilot.utilities import _pick_backend, CleanupRegistered
 from autopilot.input._common import get_center_point
 
@@ -125,24 +124,25 @@ class Keyboard(CleanupRegistered):
 
         backends = OrderedDict()
         backends['X11'] = get_x11_kb
-        backends['UInput'] = get_uinput_kb
         backends['OSK'] = get_osk_kb
+        backends['UInput'] = get_uinput_kb
         return _pick_backend(backends, preferred_backend)
 
     @contextmanager
     def focused_type(self, input_target,  pointer=None):
-        """This context manager takes care of 'clicking' the supplied
-        *input_target* into focus and any cleanup that the input backend may
-        require.
+        """Type into an input widget.
 
-        One example is with the OSK backend which extends this method and
-        dismisses the GUI component of the OSK once the scope of the context
-        manager as a cleanup step.
+        This context manager takes care of making sure a particular
+        *input_target* UI control is selected before any text is entered.
+
+        Some backends extend this method to perform cleanup actions at the end
+        of the context manager block. For example, the OSK backend dismisses
+        the keyboard.
 
         If the *pointer* argument is None (default) then either a Mouse or
         Touch pointer will be created based on the current platform.
 
-        An example of using the context manager::
+        An example of using the context manager (with an OSK backend)::
 
             from autopilot.input import Keyboard
 
@@ -283,14 +283,14 @@ class Mouse(CleanupRegistered):
         from autopilot.platform import model
         if model() != 'Desktop':
             logger.info(
-                "You cannot create a Mouse on the phablet devices. "
-                "consider using a Touch or Pointer device. "
+                "You cannot create a Mouse on the devices where X11 is not "
+                "available. consider using a Touch or Pointer device. "
                 "For more information, see: "
                 "http://unity.ubuntu.com/autopilot/api/input.html"
                 "#autopilot-unified-input-system"
             )
             raise RuntimeError(
-                "Cannot create a Mouse on the phablet devices."
+                "Cannot create a Mouse on devices where X11 is not supported."
             )
 
         backends = OrderedDict()

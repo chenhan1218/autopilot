@@ -20,7 +20,7 @@ Autopilot is in continuous development, and the best way to get the latest versi
 
 **I am running the latest development image!**
 
-In that case you can install autopilot directly - either by installing the ``autopilot-desktop`` or ``autopilot-touch`` packages, depending on whether you are installing to a desktop or phablet device.
+In that case you can install autopilot directly - either by installing the ``autopilot-desktop`` or ``autopilot-touch`` packages, depending on whether you are installing to a desktop or an Ubuntu Touch device.
 
 **I am running the Ubuntu release previous to the development release!**
 

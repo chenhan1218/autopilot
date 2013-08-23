@@ -22,17 +22,19 @@ from __future__ import absolute_import
 from datetime import datetime, time
 from testscenarios import TestWithScenarios
 from testtools import TestCase
-from testtools.matchers import Equals, IsInstance, NotEquals
+from testtools.matchers import Equals, IsInstance, NotEquals, raises
 import dbus
 
 from autopilot.introspection.types import (
     Color,
+    create_value_instance,
     DateTime,
     PlainType,
     Point,
     Rectangle,
     Size,
-    Time
+    Time,
+    ValueType,
 )
 
 
@@ -305,3 +307,227 @@ class TimeTests(TestCase):
         dt1 = Time(1, 2, 3, 4)
 
         self.assertThat(dt1.time, IsInstance(time))
+
+
+class CreateValueInstanceTests(TestCase):
+
+    """Tests to check that create_value_instance does the right thing."""
+
+    def test_plain_string(self):
+        data = dbus.Array([dbus.Int32(ValueType.PLAIN), dbus.String("Hello")])
+        attr = create_value_instance(data, None, None)
+
+        self.assertThat(attr, Equals("Hello"))
+        self.assertThat(attr, IsInstance(PlainType))
+
+    def test_plain_boolean(self):
+        data = dbus.Array([dbus.Int32(ValueType.PLAIN), dbus.Boolean(False)])
+        attr = create_value_instance(data, None, None)
+
+        self.assertThat(attr, Equals(False))
+        self.assertThat(attr, IsInstance(PlainType))
+
+    def test_plain_int16(self):
+        data = dbus.Array([dbus.Int32(ValueType.PLAIN), dbus.Int16(-2**14)])
+        attr = create_value_instance(data, None, None)
+
+        self.assertThat(attr, Equals(-2**14))
+        self.assertThat(attr, IsInstance(PlainType))
+
+    def test_plain_int32(self):
+        data = dbus.Array([dbus.Int32(ValueType.PLAIN), dbus.Int32(-2**30)])
+        attr = create_value_instance(data, None, None)
+
+        self.assertThat(attr, Equals(-2**30))
+        self.assertThat(attr, IsInstance(PlainType))
+
+    def test_plain_int64(self):
+        data = dbus.Array([dbus.Int32(ValueType.PLAIN), dbus.Int64(-2**40)])
+        attr = create_value_instance(data, None, None)
+
+        self.assertThat(attr, Equals(-2**40))
+        self.assertThat(attr, IsInstance(PlainType))
+
+    def test_plain_uint16(self):
+        data = dbus.Array([dbus.Int32(ValueType.PLAIN), dbus.UInt16(2**14)])
+        attr = create_value_instance(data, None, None)
+
+        self.assertThat(attr, Equals(2**14))
+        self.assertThat(attr, IsInstance(PlainType))
+
+    def test_plain_uint32(self):
+        data = dbus.Array([dbus.Int32(ValueType.PLAIN), dbus.UInt32(2**30)])
+        attr = create_value_instance(data, None, None)
+
+        self.assertThat(attr, Equals(2**30))
+        self.assertThat(attr, IsInstance(PlainType))
+
+    def test_plain_uint64(self):
+        data = dbus.Array([dbus.Int32(ValueType.PLAIN), dbus.UInt64(2**40)])
+        attr = create_value_instance(data, None, None)
+
+        self.assertThat(attr, Equals(2**40))
+        self.assertThat(attr, IsInstance(PlainType))
+
+    def test_rectangle(self):
+        data = dbus.Array(
+            [
+                dbus.Int32(ValueType.RECTANGLE),
+                dbus.Int32(0),
+                dbus.Int32(10),
+                dbus.Int32(20),
+                dbus.Int32(30),
+            ]
+        )
+
+        attr = create_value_instance(data, None, None)
+
+        self.assertThat(attr, IsInstance(Rectangle))
+
+    def test_invalid_rectanlge(self):
+        data = dbus.Array(
+            [
+                dbus.Int32(ValueType.RECTANGLE),
+                dbus.Int32(0),
+            ]
+        )
+
+        fn = lambda: create_value_instance(data, None, None)
+
+        self.assertThat(fn, raises(
+            ValueError("Rectangle must be constructed with 4 arguments, not 1")
+        ))
+
+    def test_point(self):
+        data = dbus.Array(
+            [
+                dbus.Int32(ValueType.POINT),
+                dbus.Int32(0),
+                dbus.Int32(10),
+            ]
+        )
+
+        attr = create_value_instance(data, None, None)
+
+        self.assertThat(attr, IsInstance(Point))
+
+    def test_invalid_point(self):
+        data = dbus.Array(
+            [
+                dbus.Int32(ValueType.POINT),
+                dbus.Int32(0),
+                dbus.Int32(0),
+                dbus.Int32(0),
+            ]
+        )
+
+        fn = lambda: create_value_instance(data, None, None)
+
+        self.assertThat(fn, raises(
+            ValueError("Point must be constructed with 2 arguments, not 3")
+        ))
+
+    def test_size(self):
+        data = dbus.Array(
+            [
+                dbus.Int32(ValueType.SIZE),
+                dbus.Int32(0),
+                dbus.Int32(10),
+            ]
+        )
+
+        attr = create_value_instance(data, None, None)
+
+        self.assertThat(attr, IsInstance(Size))
+
+    def test_invalid_size(self):
+        data = dbus.Array(
+            [
+                dbus.Int32(ValueType.SIZE),
+                dbus.Int32(0),
+            ]
+        )
+
+        fn = lambda: create_value_instance(data, None, None)
+
+        self.assertThat(fn, raises(
+            ValueError("Size must be constructed with 2 arguments, not 1")
+        ))
+
+    def test_date_time(self):
+        data = dbus.Array(
+            [
+                dbus.Int32(ValueType.DATETIME),
+                dbus.Int32(0),
+            ]
+        )
+
+        attr = create_value_instance(data, None, None)
+
+        self.assertThat(attr, IsInstance(DateTime))
+
+    def test_invalid_date_time(self):
+        data = dbus.Array(
+            [
+                dbus.Int32(ValueType.DATETIME),
+                dbus.Int32(0),
+                dbus.Int32(0),
+                dbus.Int32(0),
+            ]
+        )
+
+        fn = lambda: create_value_instance(data, None, None)
+
+        self.assertThat(fn, raises(
+            ValueError("DateTime must be constructed with 1 arguments, not 3")
+        ))
+
+    def test_time(self):
+        data = dbus.Array(
+            [
+                dbus.Int32(ValueType.TIME),
+                dbus.Int32(0),
+                dbus.Int32(0),
+                dbus.Int32(0),
+                dbus.Int32(0),
+            ]
+        )
+
+        attr = create_value_instance(data, None, None)
+
+        self.assertThat(attr, IsInstance(Time))
+
+    def test_invalid_time(self):
+        data = dbus.Array(
+            [
+                dbus.Int32(ValueType.TIME),
+                dbus.Int32(0),
+                dbus.Int32(0),
+                dbus.Int32(0),
+            ]
+        )
+
+        fn = lambda: create_value_instance(data, None, None)
+
+        self.assertThat(fn, raises(
+            ValueError("Time must be constructed with 4 arguments, not 3")
+        ))
+
+    def test_unknown_type_id(self):
+        """Unknown type Ids should result in a plain type, along with a log
+        message.
+
+        """
+
+        data = dbus.Array(
+            [
+                dbus.Int32(543),
+                dbus.Int32(0),
+                dbus.Boolean(False),
+                dbus.String("Hello World")
+            ]
+        )
+        attr = create_value_instance(data, None, None)
+        self.assertThat(attr, IsInstance(PlainType))
+        self.assertThat(attr, IsInstance(dbus.Array))
+        self.assertThat(attr, Equals([0, False, "Hello World"]))

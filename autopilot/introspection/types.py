@@ -42,6 +42,10 @@ from __future__ import absolute_import
 from datetime import datetime, time
 import dbus
 from functools import partial
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class ValueType(object):
@@ -80,8 +84,11 @@ def create_value_instance(value, parent, name):
     }
     type_id = value[0]
     value = value[1:]
-    # TODO: deal with type Ids that are not in the dictionary more cleanly.
-    return type_dict[type_id](*value, parent=parent, name=name)
+    type_class = type_dict.get(type_id, None)
+    if type_class is None:
+        logger.warning("Unknown type id %d")
+        return PlainType(dbus.Array(value), parent, name)
+    return type_class(*value, parent=parent, name=name)
 
 
 class TypeBase(object):

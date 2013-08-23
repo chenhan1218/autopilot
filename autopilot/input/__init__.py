@@ -290,7 +290,7 @@ class Mouse(CleanupRegistered):
                 "#autopilot-unified-input-system"
             )
             raise RuntimeError(
-                "Cannot create a Mouse on devices where X11 is not supported."
+                "Cannot create a Mouse on devices where X11 is not available."
             )
 
         backends = OrderedDict()

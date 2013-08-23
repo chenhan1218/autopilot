@@ -56,6 +56,7 @@ running on a desktop.
 """
 
 from collections import OrderedDict
+from contextlib import contextmanager
 from autopilot.utilities import _pick_backend, CleanupRegistered
 from autopilot.input._common import get_center_point
 
@@ -81,12 +82,21 @@ class Keyboard(CleanupRegistered):
         For more infomration on picking specific backends, see
         :ref:`tut-picking-backends`
 
+        For details regarding backend limitations please see:
+        :ref:`Keyboard backend limitations<keyboard_backend_limitations>`
+
+        .. warning:: The **OSK** (On Screen Keyboard) backend option does not
+         implement either :py:meth:`press` or :py:meth:`release` methods due to
+         technical implementation details and will raise a NotImplementedError
+         exception if used.
+
         :param preferred_backend: A string containing a hint as to which
             backend you would like. Possible backends are:
 
             * ``X11`` - Generate keyboard events using the X11 client
                 libraries.
             * ``UInput`` - Use UInput kernel-level device driver.
+            * ``OSK`` - Use the graphical On Screen Keyboard as a backend.
 
         :raises: RuntimeError if autopilot cannot instantate any of the
             possible backends.
@@ -104,10 +114,56 @@ class Keyboard(CleanupRegistered):
             from autopilot.input._uinput import Keyboard
             return Keyboard()
 
+        def get_osk_kb():
+            try:
+                from autopilot.input._osk import Keyboard
+                return Keyboard()
+            except ImportError as e:
+                e.args += ("Unable to import the OSK backend",)
+                raise
+
         backends = OrderedDict()
         backends['X11'] = get_x11_kb
         backends['UInput'] = get_uinput_kb
+        backends['OSK'] = get_osk_kb
         return _pick_backend(backends, preferred_backend)
+
+    @contextmanager
+    def focused_type(self, input_target,  pointer=None):
+        """Type into an input widget.
+
+        This context manager takes care of making sure a particular
+        *input_target* UI control is selected before any text is entered.
+
+        Some backends extend this method to perform cleanup actions at the end
+        of the context manager block. For example, the OSK backend dismisses
+        the keyboard.
+
+        If the *pointer* argument is None (default) then either a Mouse or
+        Touch pointer will be created based on the current platform.
+
+        An example of using the context manager (with an OSK backend)::
+
+            from autopilot.input import Keyboard
+
+            text_area = self._launch_test_input_area()
+            keyboard = Keyboard.create('OSK')
+            with keyboard.focused_type(text_area) as kb:
+                kb.type("Hello World.")
+                self.assertThat(text_area.text, Equals("Hello World"))
+            # Upon leaving the context managers scope the keyboard is dismissed
+            # with a swipe
+
+        """
+        if pointer is None:
+            from autopilot.platform import model
+            if model() == 'Desktop':
+                pointer = Pointer(Mouse.create())
+            else:
+                pointer = Pointer(Touch.create())
+
+        pointer.click_object(input_target)
+        yield self
 
     def press(self, keys, delay=0.2):
         """Send key press events only.
@@ -115,6 +171,10 @@ class Keyboard(CleanupRegistered):
         :param keys: Keys you want pressed.
         :param delay: The delay (in Seconds) after pressing the keys before
             returning control to the caller.
+        :raises: NotImplementedError If called when using the OSK Backend.
+
+        .. warning:: The **OSK** backend does not implement the press method
+          and will raise a NotImplementedError if called.
 
         Example:
 
@@ -131,6 +191,10 @@ class Keyboard(CleanupRegistered):
         :param keys: Keys you want released.
         :param delay: The delay (in Seconds) after releasing the keys before
             returning control to the caller.
+        :raises: NotImplementedError If called when using the OSK Backend.
+
+        .. warning:: The **OSK** backend does not implement the press method
+         and will raise a NotImplementedError if called.
 
         Example:
 
@@ -219,14 +283,14 @@ class Mouse(CleanupRegistered):
         from autopilot.platform import model
         if model() != 'Desktop':
             logger.info(
-                "You cannot create a Mouse on the phablet devices. "
-                "consider using a Touch or Pointer device. "
+                "You cannot create a Mouse on the devices where X11 is not "
+                "available. consider using a Touch or Pointer device. "
                 "For more information, see: "
                 "http://unity.ubuntu.com/autopilot/api/input.html"
                 "#autopilot-unified-input-system"
             )
             raise RuntimeError(
-                "Cannot create a Mouse on the phablet devices."
+                "Cannot create a Mouse on devices where X11 is not available."
             )
 
         backends = OrderedDict()

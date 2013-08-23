@@ -39,7 +39,7 @@ objects.
 
 from __future__ import absolute_import
 
-from datetime import datetime
+from datetime import datetime, time
 import dbus
 from functools import partial
 
@@ -466,6 +466,17 @@ class DateTime(_array_packed_type(1)):
         >>> my_dt == [1377209927]
         True
 
+    Finally, you can also compare a DateTime instance with a python datetime
+    instance::
+
+        >>> my_datetime = datetime.datetime.fromutctimestamp(1377209927)
+        True
+
+    DateTime instances can be converted to datetime instances:
+
+        >>> isinstance(my_dt.datetime, datetime.datetime)
+        True
+
     """
     def __init__(self, *args, **kwargs):
         super(DateTime, self).__init__(*args, **kwargs)
@@ -499,11 +510,91 @@ class DateTime(_array_packed_type(1)):
     def timestamp(self):
         return self[0]
 
+    @property
+    def datetime(self):
+        return self._cached_dt
+
     def __eq__(self, other):
         if isinstance(other, datetime):
             return other == self._cached_dt
         return super(DateTime, self).__eq__(other)
 
 
-class Time(_array_packed_type(3)):
-    pass
+class Time(_array_packed_type(4)):
+
+    """The Time class represents a time, without a date component.
+
+    You can construct a Time instnace by passing the hours, minutes, seconds,
+    and milliseconds to the class constructor::
+
+        >>> my_time = Time(12, 34, 01, 23)
+
+    The values passed in must be valid for their positions (ie..- 0-23 for
+    hours, 0-59 for minutes and seconds, and 0-999 for milliseconds). Passing
+    invalid values will cause a ValueError to be raised.
+
+    The hours, minutes, seconds, and milliseconds can be accessed using either
+    index access or named properties::
+
+        >>> my_time.hours == my_time[0] == 12
+        True
+        >>> my_time.minutes == my_time[1] == 34
+        True
+        >>> my_time.seconds == my_time[2] == 01
+        True
+        >>> my_time.milliseconds == my_time[3] == 23
+        True
+
+    Time instances can be compared to other time instances, any mutable
+    sequence containing four integers, or datetime.time instances::
+
+        >>> my_time == Time(12, 34, 01, 23)
+        True
+        >>> my_time == Time(1,2,3,4)
+        False
+
+        >>> my_time == [12, 34, 01, 23]
+        True
+
+        >>> my_time == datetime.time(12, 34, 01, 23000)
+        True
+
+    Note that the Time class stores milliseconds, while the ``datettime.time``
+    class stores microseconds.
+
+    Finally, you can get a ``datetime.time`` instance from a Time instance::
+
+        >>> isinstance(my_time.time, datetime.time)
+        True
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(Time, self).__init__(*args, **kwargs)
+        # datetime.time uses microseconds, instead of mulliseconds:
+        self._cached_time = time(self[0], self[1], self[2], self[3] * 1000)
+
+    @property
+    def hour(self):
+        return self._cached_time.hour
+
+    @property
+    def minute(self):
+        return self._cached_time.minute
+
+    @property
+    def second(self):
+        return self._cached_time.second
+
+    @property
+    def millisecond(self):
+        return self._cached_time.microsecond / 1000
+
+    @property
+    def time(self):
+        return self._cached_time
+
+    def __eq__(self, other):
+        if isinstance(other, time):
+            return other == self._cached_time
+        return super(DateTime, self).__eq__(other)

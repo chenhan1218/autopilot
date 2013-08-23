@@ -19,7 +19,7 @@
 
 from __future__ import absolute_import
 
-from datetime import datetime
+from datetime import datetime, time
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import Equals, IsInstance, NotEquals
@@ -249,3 +249,59 @@ class DateTimeTests(TestCase):
         self.assertThat(dt1, Equals(dt2))
         self.assertThat(dt1, NotEquals(dt3))
 
+    def test_can_convert_to_datetime(self):
+        dt1 = DateTime(1377209927)
+
+        self.assertThat(dt1.datetime, IsInstance(datetime))
+
+
+class TimeTests(TestCase):
+
+    def test_can_construct_time(self):
+        dt = Time(0, 0, 0, 0)
+        self.assertThat(dt, IsInstance(dbus.Array))
+
+    def test_time_has_slice_access(self):
+        dt = Time(0, 1, 2, 3)
+
+        self.assertThat(dt[0], Equals(0))
+        self.assertThat(dt[1], Equals(1))
+        self.assertThat(dt[2], Equals(2))
+        self.assertThat(dt[3], Equals(3))
+
+    def test_time_has_properties(self):
+        dt = Time(0, 1, 2, 3)
+
+        self.assertThat(dt.hour, Equals(0))
+        self.assertThat(dt.minute, Equals(1))
+        self.assertThat(dt.second, Equals(2))
+        self.assertThat(dt.millisecond, Equals(3))
+
+    def test_equality_with_time(self):
+        dt1 = Time(0, 1, 2, 3)
+        dt2 = Time(0, 1, 2, 3)
+        dt3 = Time(4, 1, 2, 3)
+
+        self.assertThat(dt1, Equals(dt2))
+        self.assertThat(dt1, NotEquals(dt3))
+
+    def test_equality_with_time(self):
+        dt1 = Time(0, 1, 2, 3)
+        dt2 = [0, 1, 2, 3]
+        dt3 = [4, 1, 2, 3]
+
+        self.assertThat(dt1, Equals(dt2))
+        self.assertThat(dt1, NotEquals(dt3))
+
+    def test_equality_with_time(self):
+        dt1 = Time(2, 3, 4, 5)
+        dt2 = time(2, 3, 4, 5000)
+        dt3 = time(5, 4, 3, 2000)
+
+        self.assertThat(dt1, Equals(dt2))
+        self.assertThat(dt1, NotEquals(dt3))
+
+    def test_can_convert_to_time(self):
+        dt1 = Time(1, 2, 3, 4)
+
+        self.assertThat(dt1.time, IsInstance(time))

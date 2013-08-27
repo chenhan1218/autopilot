@@ -1,2 +1,2 @@
 # Creates autopilot group specific access to /dev/uinput
-KERNEL=="uinput", SUBSYSTEM=="misc", NAME="autopilot-uinput", GROUP="autopilot", MODE="0660"
+KERNEL=="uinput", SUBSYSTEM=="misc", SYMLINK="autopilot-uinput", GROUP="autopilot", MODE="0660"

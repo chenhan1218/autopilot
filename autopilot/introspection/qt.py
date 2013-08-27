@@ -26,6 +26,7 @@ __all__ = ['QtApplicationLauncher']
 import functools
 
 import logging
+import subprocess
 
 from autopilot.introspection import ApplicationLauncher
 
@@ -49,6 +50,28 @@ class QtApplicationLauncher(ApplicationLauncher):
         if '-testability' not in arguments:
             arguments.insert(0, '-testability')
 
+        return app_path, arguments
+
+
+class QtUpstartApplicationLauncher(ApplicationLauncher):
+    """A mix-in class to make Qt application introspection easier.
+
+    Inherit from this class if you want to launch and test Qt application with
+    autopilot.
+
+    """
+
+    def prepare_environment(self, app_path, arguments):
+        """Prepare the application, or environment to launch with
+        autopilot-support.
+
+        """
+
+        subprocess.call([
+            "/sbin/initctl",
+            "set-env",
+            "QT_LOAD_TESTABILITY=1",
+        ])
         return app_path, arguments
 
 

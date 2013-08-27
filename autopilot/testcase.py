@@ -67,6 +67,7 @@ from autopilot.introspection import (
     get_autopilot_proxy_object_for_process,
     launch_application,
 )
+from autopilot.introspection.utilities import _get_click_manifest
 from autopilot.display import Display
 from autopilot.utilities import on_test_started
 from autopilot.keybindings import KeybindingsHelper
@@ -279,6 +280,59 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             process,
             emulator_base,
             dbus_bus
+        )
+
+    def launch_click_package(self, package_id, app_name=None, **kwargs):
+        """Launch a click package application with introspection enabled.
+
+        This method takes care of launching a click package with introspection
+        exabled. You probably want to use this method if your application is
+        packaged in a click application, or is started via upstart.
+
+        Usage is similar to the
+        :py:meth:`AutopilotTestCase.launch_test_application`::
+
+            app_proxy = self.launch_click_application(
+                "com.ubuntu.dropping-letters"
+            )
+
+        :param package_id: The Click package name you want to launch. For
+            example: ``com.ubuntu.dropping-letters``
+        :param app_name: Currently, only one application can be packaged in a
+            click package, and this parameter can be left at None. If
+            specified, it should be the application name you wish to launch.
+
+        :raises RuntimeError: If the specified package_id cannot be found in
+            the click package manifest.
+        :raises RuntimeError: If the specified app_name cannot be found within
+            the specified click package.
+
+        """
+        click_manifest = _get_click_manifest()
+        for package in click_manifest:
+            if package['name'] == package_id:
+                if app_name is None:
+                    app_name = package['hooks'].keys()[0]
+                elif app_name not in package['hooks']:
+                    raise RuntimeError(
+                        "Application '{}' is not present within the click "
+                        "package '{}'.".format(app_name, package_id))
+
+                app_id = "{0}_{1}_{2}".formtat(
+                    package_id,
+                    app_name,
+                    package['version']
+                )
+                return self.launch_test_application(
+                    "start",
+                    "application",
+                    "APP_ID={}".format(app_id),
+                    app_type="qt-upstart",
+                    **kwargs
+                )
+        raise RuntimeError(
+            "Unable to find package '{}' in the click manifest."
+            .format(package_id)
         )
 
     def _compare_system_with_app_snapshot(self):

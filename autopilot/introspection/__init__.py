@@ -92,17 +92,12 @@ def get_application_launcher(app_path):
 def get_application_launcher_from_string_hint(hint):
     """Return in instance of :class:`ApplicationLauncher` given a string
     hint."""
-    from autopilot.introspection.qt import (
-        QtApplicationLauncher,
-        QtUpstartApplicationLauncher,
-    )
+    from autopilot.introspection.qt import QtApplicationLauncher
     from autopilot.introspection.gtk import GtkApplicationLauncher
 
     hint = hint.lower()
     if hint == 'qt':
         return QtApplicationLauncher()
-    elif hint == 'qt-upstart':
-        return QtUpstartApplicationLauncher()
     elif hint == 'gtk':
         return GtkApplicationLauncher()
     return None

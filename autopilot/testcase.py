@@ -65,6 +65,7 @@ from autopilot.introspection import (
     get_application_launcher,
     get_application_launcher_from_string_hint,
     get_autopilot_proxy_object_for_process,
+    get_proxy_object_for_existing_process,
     launch_application,
 )
 from autopilot.introspection.utilities import _get_click_manifest
@@ -302,6 +303,9 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             click package, and this parameter can be left at None. If
             specified, it should be the application name you wish to launch.
 
+        :keyword emulator_base: If set, specifies the base class to be used for
+            all emulators for this loaded application.
+
         :raises RuntimeError: If the specified package_id cannot be found in
             the click package manifest.
         :raises RuntimeError: If the specified app_name cannot be found within
@@ -323,13 +327,49 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                     app_name,
                     package['version']
                 )
-                return self.launch_test_application(
-                    "start",
+                emulator_base = kwargs.pop('emulator_base', None)
+                # sadly, we cannot re-use the existing launch_test_application
+                # since upstart is a little odd.
+                # set the qt testability env:
+                subprocess.call([
+                    "/sbin/initctl",
+                    "set-env",
+                    "QT_LOAD_TESTABILITY=1",
+                ])
+                # launch the application:
+                subprocess.call([
+                    "/sbin/start",
                     "application",
                     "APP_ID={}".format(app_id),
-                    app_type="qt-upstart",
-                    **kwargs
-                )
+                ])
+                # reset the upstart env, and hope no one else launched...
+                subprocess.call([
+                    "/sbin/initctl",
+                    "reset-env",
+                ])
+
+                target_pid = -1
+                # perhaps we should do this with a regular expression instead?
+                for i in range(10):
+                    list_output = subprocess.check_output([
+                        "/sbin/initctl",
+                        "list"])
+                    for line in list_output.split('\n'):
+                        if app_id in line:
+                            target_pid = int(line.split()[-1])
+                            break
+                    if target_pid != -1:
+                        break
+                    # give the app time to launch - maybe this is not needed?:
+                    sleep(1)
+                if target_pid == -1:
+                    raise RuntimeError(
+                        "Could not find autopilot interface for click package"
+                        " '{}' after 10 seconds.".format(app_id)
+                    )
+
+                return get_proxy_object_for_existing_process(pid=target_pid)
+
         raise RuntimeError(
             "Unable to find package '{}' in the click manifest."
             .format(package_id)

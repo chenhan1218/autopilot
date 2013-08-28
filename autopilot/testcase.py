@@ -318,7 +318,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                         "Application '{}' is not present within the click "
                         "package '{}'.".format(app_name, package_id))
 
-                app_id = "{0}_{1}_{2}".formtat(
+                app_id = "{0}_{1}_{2}".format(
                     package_id,
                     app_name,
                     package['version']

@@ -369,6 +369,19 @@ class CreateValueInstanceTests(TestCase):
         self.assertThat(attr, Equals(2**40))
         self.assertThat(attr, IsInstance(PlainType))
 
+    def test_plain_array(self):
+        # import pdb; pdb.set_trace()
+        data = dbus.Array([
+            dbus.Int32(ValueType.PLAIN),
+            dbus.Array([
+                dbus.String("Hello"),
+                dbus.String("World")
+            ])
+        ])
+        attr = create_value_instance(data, None, None)
+        self.assertThat(attr, Equals(["Hello", "World"]))
+        self.assertThat(attr, IsInstance(PlainType))
+
     def test_rectangle(self):
         data = dbus.Array(
             [

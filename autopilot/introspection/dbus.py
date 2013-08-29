@@ -35,6 +35,7 @@ from time import sleep
 from uuid import uuid4
 
 from autopilot.introspection.types import create_value_instance
+from autopilot.introspection.utilities import translate_state_keys
 from autopilot.utilities import Timer, get_debug_logger
 
 
@@ -85,12 +86,6 @@ def _clear_backends_for_proxy_object(proxy_object):
     for cls in _object_registry[proxy_object._id].itervalues():
         if type(proxy_object) is not cls:
             cls._Backend = None
-
-
-def translate_state_keys(state_dict):
-    """Translates the *state_dict* passed in so the keys are usable as python
-    attributes."""
-    return {k.replace('-', '_'): v for k, v in state_dict.iteritems()}
 
 
 def get_classname_from_path(object_path):
@@ -144,14 +139,14 @@ class DBusIntrospectionObject(object):
             # don't store id in state dictionary -make it a proper instance
             # attribute
             if key == 'id':
-                self.id = value
+                self.id = int(value[1])
             self.__state[key] = self._make_attribute(key, value)
 
     def _make_attribute(self, name, value):
         """Make an attribute for *value*, patched with the wait_for
         function."""
 
-        return create_value_instance(self, name, value)
+        return create_value_instance(value, self, name)
 
     def get_children_by_type(self, desired_type, **kwargs):
         """Get a list of children of the specified type.

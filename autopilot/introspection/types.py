@@ -43,6 +43,9 @@ from datetime import datetime, time
 import dbus
 from functools import partial
 import logging
+from time import sleep
+
+from autopilot.introspection.utilities import translate_state_keys
 
 
 logger = logging.getLogger(__name__)
@@ -63,6 +66,7 @@ class ValueType(object):
     COLOR = 4
     DATETIME = 5
     TIME = 6
+    UNKNOWN = -1
 
 
 def create_value_instance(value, parent, name):
@@ -75,19 +79,24 @@ def create_value_instance(value, parent, name):
 
     """
     type_dict = {
-        ValueType.PLAIN: PlainType,
+        ValueType.PLAIN: _make_plain_type,
         ValueType.RECTANGLE: Rectangle,
         ValueType.POINT: Point,
         ValueType.SIZE: Size,
         ValueType.DATETIME: DateTime,
         ValueType.TIME: Time,
+        ValueType.UNKNOWN: _make_plain_type,
     }
     type_id = value[0]
     value = value[1:]
+
+    if type_id not in type_dict:
+        logger.warning("Unknown type id %d", type_id)
+        type_id = ValueType.UNKNOWN
+
     type_class = type_dict.get(type_id, None)
-    if type_class is None:
-        logger.warning("Unknown type id %d")
-        return PlainType(dbus.Array(value), parent, name)
+    if type_id == ValueType.UNKNOWN:
+        value = [dbus.Array(value)]
     return type_class(*value, parent=parent, name=name)
 
 
@@ -138,9 +147,11 @@ class TypeBase(object):
 
         time_left = timeout
         while True:
+            # TODO: These next three lines are duplicated from the parent...
+            # can we just have this code once somewhere?
             _, new_state = self.parent.get_new_state()
             new_state = translate_state_keys(new_state)
-            new_value = make_unicode(new_state[self.name])
+            new_value = make_unicode(new_state[self.name][1]) # [1] is the val
             # Support for testtools.matcher classes:
             mismatch = expected_value.match(new_value)
             if mismatch:
@@ -195,16 +206,15 @@ class PlainType(TypeBase):
     """
 
     def __new__(cls, value, parent=None, name=None):
-        # PlainType is used for strings, ints, bools, and anything else that
-        # does not have a more specialised representation. We want to return
-        # an instance of PlainType that derives from the actual value.
+        return _make_plain_type(value, parent=parent, name=name)
+
+
+def _make_plain_type(value, parent=None, name=None):
         new_type_name = type(value).__name__
-        new_type_bases = (type(value), cls)
-        new_type_dict = {
-            "name": name,
-            "parent": parent
-        }
-        return type(new_type_name, new_type_bases, new_type_dict)(value)
+        new_type_bases = (type(value), PlainType)
+        new_type_dict = dict(parent=parent, name=name)
+        new_type = type(new_type_name, new_type_bases, new_type_dict)
+        return new_type(value)
 
 
 def _array_packed_type(num_args):

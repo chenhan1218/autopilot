@@ -26,10 +26,11 @@ from testtools.matchers import IsInstance, Equals, raises
 from unittest import SkipTest
 from mock import patch
 
-from autopilot.testcase import AutopilotTestCase, multiply_scenarios
+from autopilot.display import Display
 from autopilot.input import Keyboard, Mouse, Pointer, Touch
 from autopilot.input._common import get_center_point
 from autopilot.matchers import Eventually
+from autopilot.testcase import AutopilotTestCase, multiply_scenarios
 from autopilot.utilities import on_test_started
 
 
@@ -145,9 +146,12 @@ class MouseTestCase(AutopilotTestCase):
         LP bug #1195499.
 
         """
+        screen_geometry = Display.create().get_screen_geometry(0)
         device = Mouse.create()
-        device.move(10, 10.6)
-        self.assertEqual(device.position(), (10, 10))
+        target_x = screen_geometry[0] + 10
+        target_y = screen_geometry[1] + 10.6
+        device.move(target_x, target_y)
+        self.assertEqual(device.position(), (target_x, int(target_y)))
 
     @patch('autopilot.platform.model', new=lambda *args: "Not Desktop", )
     def test_mouse_creation_on_device_raises_useful_error(self):

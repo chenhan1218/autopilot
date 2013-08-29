@@ -5,6 +5,33 @@ autopilot (1.4-0ubuntu1) saucy; urgency=low
 
  -- Thomi Richards <thomi.richards@canonical.com>  Fri, 16 Aug 2013 08:47:12 +1200
 
+autopilot (1.3.1+13.10.20130827-0ubuntu1) saucy; urgency=low
+
+  [ Alexander Sack ]
+  * Fix autopilot udev rules. Use SYMLINK= instead of NAME= to prevent
+    udev falling over. This most likely will fix autopilot unity8 having
+    issues with accessing /dev/uinput as phablet user. Fix: systemd-
+    udevd[554]: NAME=autopilot-uinput ignored, kernel device nodes can
+    not be renamed; please fix it in /lib/udev/rules.d/61-autopilot-
+    uinput.rules:2 See autopilot failing:
+    https://jenkins.qa.ubuntu.com/job/saucy-touch-maguro-smoke-unity8-
+    autopilot/lastSuccessfulBuild/artifact/clientlogs/dmesg.log.
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 315
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 27 Aug 2013 10:04:03 +0000
+
+autopilot (1.3.1+13.10.20130823-0ubuntu1) saucy; urgency=low
+
+  [ Christopher Lee ]
+  * Adds the Ubuntu Keyboard OSK as an input backend .
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 313
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 23 Aug 2013 06:04:06 +0000
+
 autopilot (1.3.1+13.10.20130812-0ubuntu1) saucy; urgency=low
 
   [ Andrea Azzarone ]

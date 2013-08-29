@@ -10,6 +10,7 @@ Build-Depends: debhelper (>= 9.0.0),
                gir1.2-ibus-1.0,
                graphviz,
                liblttng-ust-dev,
+               liblttng-ust-dev,
                python (>= 2.6),
                python-dbus,
                python-debian,
@@ -21,8 +22,9 @@ Build-Depends: debhelper (>= 9.0.0),
                python-testtools,
                python-xlib,
                python-zeitgeist,
+               python-zeitgeist,
                texlive-latex-base,
-Standards-Version: 3.9.3
+Standards-Version: 3.9.4
 Homepage: https://launchpad.net/autopilot
 Vcs-bzr: https://code.launchpad.net/+branch/ubuntu/autopilot
 

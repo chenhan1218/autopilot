@@ -17,9 +17,9 @@ Build-Depends: debhelper (>= 9.0.0),
                python-testtools,
                python-testscenarios,
                python-xlib,
-               python-zeitgeist,
+               python-gi,
                liblttng-ust-dev,
-Standards-Version: 3.9.3
+Standards-Version: 3.9.4
 Homepage: https://launchpad.net/autopilot
 Vcs-bzr: https://code.launchpad.net/+branch/ubuntu/autopilot
 

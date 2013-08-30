@@ -112,7 +112,7 @@ class EventuallyMatcherTests(TestWithScenarios, TestCase):
     def test_eventually_default_timeout(self):
         """Eventually matcher must default to 10 second timeout."""
         attr = make_fake_attribute_with_result(False, self.attribute_type)
-        with expected_runtime(10.0, 11.0):
+        with expected_runtime(9.5, 11.0):
             Eventually(Equals(True)).match(attr)
 
     def test_eventually_passes_immeadiately(self):
@@ -125,7 +125,7 @@ class EventuallyMatcherTests(TestWithScenarios, TestCase):
     def test_eventually_matcher_allows_non_default_timeout(self):
         """Eventually matcher must allow a non-default timeout value."""
         attr = make_fake_attribute_with_result(False, self.attribute_type)
-        with expected_runtime(5.0, 6.0):
+        with expected_runtime(4.5, 6.0):
             Eventually(Equals(True), timeout=5).match(attr)
 
     def test_mismatch_message_has_correct_timeout_value(self):

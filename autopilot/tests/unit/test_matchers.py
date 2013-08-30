@@ -48,7 +48,10 @@ def expected_runtime(tmin, tmax):
         yield
     finally:
         elapsed_time = abs(time() - start)
-        assert tmin < elapsed_time < tmax
+        if not tmin < elapsed_time < tmax:
+            raise AssertionError(
+                "Runtime of %f is not between %f and %f"
+                % (elapsed_time, tmin, tmax))
 
 
 def make_fake_attribute_with_result(result, attribute_type='wait_for'):
@@ -74,7 +77,9 @@ def make_fake_attribute_with_result(result, attribute_type='wait_for'):
             obj = FakeObject(dict(id=[0, 123], attr=[0, dbus.String(result)]))
             return obj.attr
         elif isinstance(result, str):
-            obj = FakeObject(dict(id=[0, 123], attr=[0, dbus.UTF8String(result)]))
+            obj = FakeObject(
+                dict(id=[0, 123], attr=[0, dbus.UTF8String(result)])
+            )
             return obj.attr
         else:
             obj = FakeObject(dict(id=[0, 123], attr=[0, dbus.Boolean(result)]))

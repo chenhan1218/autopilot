@@ -1,3 +1,16 @@
+autopilot (1.3.1+13.10.20130830-0ubuntu1) saucy; urgency=low
+
+  [ Martin Pitt ]
+  * Miscellaneous packaging fixes: - Drop unused python-zeitgeist
+    dependency - Add missing debhelper tokens - Add missing python-gi
+    build dependency to fix FTBFS - debian/copyright: Update to 1.0
+    standard - Bump Standards-Version to 3.9.4.
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 317
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 30 Aug 2013 02:04:00 +0000
+
 autopilot (1.3.1+13.10.20130827-0ubuntu1) saucy; urgency=low
 
   [ Alexander Sack ]

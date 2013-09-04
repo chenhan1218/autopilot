@@ -141,7 +141,7 @@ class DBusIntrospectionObject(object):
             if key == 'id':
                 self.id = int(value[1])
             try:
-                create_value_instance(value, self, key)
+                self.__state[key] = create_value_instance(value, self, key)
             except ValueError as e:
                 logger.warning(
                     "While constructing attribute '%s.%s': %s",
@@ -149,12 +149,6 @@ class DBusIntrospectionObject(object):
                     key,
                     str(e)
                 )
-
-    def _make_attribute(self, name, value):
-        """Make an attribute for *value*, patched with the wait_for
-        function."""
-
-        return
 
     def get_children_by_type(self, desired_type, **kwargs):
         """Get a list of children of the specified type.

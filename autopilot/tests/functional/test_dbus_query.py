@@ -156,7 +156,7 @@ class DbusQueryTests(AutopilotTestCase):
     def test_select_many_only_using_parameters(self):
         app = self.start_fully_featured_app()
         many_help_menus = app.select_many(title='Help')
-        self.assertThat(len(many_help_menus), Equals(2))
+        self.assertThat(len(many_help_menus), Equals(1))
 
     def test_select_many_with_no_parameter_matches_returns_empty_list(self):
         app = self.start_fully_featured_app()

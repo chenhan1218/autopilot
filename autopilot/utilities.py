@@ -155,6 +155,21 @@ class Timer(object):
 class StagnantStateDetector(object):
     """Detect when the state of something doesn't change over many iterations.
 
+
+    Example of use::
+
+    state_check = StagnantStateDetector(threshold=5)
+    x, y = get_current_position()
+    while not at_position(target_x, target_y):
+        move_toward_position(target_x, target_y)
+        x, y = get_current_position()
+        try:
+            # this will raise an exception after the current position hasn't
+            # changed on the 6th time the check is performed.
+            loop_detector.check_state(x, y)
+        except StagnantStateDetector.StagnantState as e:
+            e.args = ("Position has not moved.", )
+            raise
     """
 
     class StagnantState(Exception):

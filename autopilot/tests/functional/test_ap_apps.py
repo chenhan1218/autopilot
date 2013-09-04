@@ -23,6 +23,7 @@ import os
 import stat
 import subprocess
 import logging
+import sys
 from mock import patch
 from tempfile import mktemp
 from testtools.matchers import raises, LessThan, Equals
@@ -90,14 +91,14 @@ AutopilotTestCase.pick_app_launcher method."
 
         """
         path = self.write_script(dedent("""\
-            #!/usr/bin/python
+            #!%s
 
             from time import sleep
 
             while True:
                 print("Still running")
                 sleep(1)
-        """))
+        """ % sys.executable))
 
         expected_error = "Search criteria returned no results"
         self.assertThat(
@@ -123,14 +124,14 @@ AutopilotTestCase.pick_app_launcher method."
 
         """
         path = self.write_script(dedent("""\
-            #!/usr/bin/python
+            #!%s
 
             from time import sleep
             import sys
 
             sleep(5)
             sys.exit(1)
-        """))
+        """ % sys.executable))
 
         expected_error = "Process exited with exit code: 1"
         self.assertThat(
@@ -148,14 +149,14 @@ AutopilotTestCase.pick_app_launcher method."
 
         """
         path = self.write_script(dedent("""\
-            #!/usr/bin/python
+            #!%s
 
             from time import sleep
             import sys
 
             sleep(1)
             sys.exit(1)
-        """))
+        """ % sys.executable))
         start = datetime.datetime.now()
 
         try:
@@ -177,7 +178,7 @@ AutopilotTestCase.pick_app_launcher method."
 
         """
         path = self.write_script(dedent("""\
-            #!/usr/bin/python
+            #!%s
             from PyQt4.QtGui import QMainWindow, QApplication
             from PyQt4.QtCore import QTimer
 
@@ -188,7 +189,7 @@ AutopilotTestCase.pick_app_launcher method."
             win.show()
             QTimer.singleShot(8000, app.exit)
             app.exec_()
-            """))
+            """ % sys.executable))
         app_proxy = self.launch_test_application(path, app_type='qt')
         self.assertTrue(app_proxy is not None)
 
@@ -268,7 +269,7 @@ class QtTests(ApplicationTests):
 
     def test_can_launch_qt_script(self):
         path = self.write_script(dedent("""\
-            #!/usr/bin/python
+            #!%s
             from PyQt4.QtGui import QMainWindow, QApplication
             from sys import argv
 
@@ -276,13 +277,13 @@ class QtTests(ApplicationTests):
             win = QMainWindow()
             win.show()
             app.exec_()
-            """))
+            """ % sys.executable))
         app_proxy = self.launch_test_application(path, app_type='qt')
         self.assertTrue(app_proxy is not None)
 
     def test_can_launch_wrapper_script(self):
         path = self.write_script(dedent("""\
-            #!/usr/bin/python
+            #!%s
             from PyQt4.QtGui import QMainWindow, QApplication
             from sys import argv
 
@@ -290,7 +291,7 @@ class QtTests(ApplicationTests):
             win = QMainWindow()
             win.show()
             app.exec_()
-            """))
+            """ % sys.executable))
         wrapper_path = self.write_script(dedent("""\
             #!/bin/sh
 
@@ -319,27 +320,27 @@ class GtkTests(ApplicationTests):
 
     def test_can_launch_gtk_script(self):
         path = self.write_script(dedent("""\
-            #!/usr/bin/python
+            #!%s
             from gi.repository import Gtk
 
             win = Gtk.Window()
             win.connect("delete-event", Gtk.main_quit)
             win.show_all()
             Gtk.main()
-            """))
+            """ % sys.executable))
         app_proxy = self.launch_test_application(path, app_type='gtk')
         self.assertTrue(app_proxy is not None)
 
     def test_can_launch_wrapper_script(self):
         path = self.write_script(dedent("""\
-            #!/usr/bin/python
+            #!%s
             from gi.repository import Gtk
 
             win = Gtk.Window()
             win.connect("delete-event", Gtk.main_quit)
             win.show_all()
             Gtk.main()
-            """))
+            """ % sys.executable))
         wrapper_path = self.write_script(dedent("""\
             #!/bin/sh
 

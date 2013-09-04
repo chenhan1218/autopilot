@@ -227,6 +227,19 @@ class DBusIntrospectionObject(object):
         children = [self.make_introspection_object(i) for i in state_dicts]
         return children
 
+    def get_parent(self):
+        """Returns the parent of this object.
+
+        If this object has no parent (i.e.- it is the root of the introspection
+        tree). Then it returns itself.
+
+        """
+        query = self.get_class_query_string() + "/.."
+        parent_state_dicts = self.get_state_by_path(query)
+
+        parent = self.make_introspection_object(parent_state_dicts[0])
+        return parent
+
     def select_single(self, type_name='*', **kwargs):
         """Get a single node from the introspection tree, with type equal to
         *type_name* and (optionally) matching the keyword filters present in

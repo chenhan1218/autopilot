@@ -73,6 +73,18 @@ class DbusQueryTests(AutopilotTestCase):
         main_window = app.select_single('QMainWindow')
         self.assertThat(main_window, NotEquals(None))
 
+    def test_can_select_parent_of_root(self):
+        """Must be able to select the parent of the root object."""
+        root = self.start_fully_featured_app()
+        root_parent = root.get_parent()
+        self.assertThat(root.id, Equals(root_parent.id))
+
+    def test_can_select_parent_of_normal_node(self):
+        root = self.start_fully_featured_app()
+        main_window = root.select_single('QMainWindow')
+        window_parent = main_window.get_parent()
+        self.assertThat(window_parent.id, Equals(root.id))
+
     def test_single_select_on_object(self):
         """Must be able to select a single unique child of an object."""
         app = self.start_fully_featured_app()

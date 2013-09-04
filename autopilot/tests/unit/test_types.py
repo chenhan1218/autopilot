@@ -20,6 +20,7 @@
 from __future__ import absolute_import
 
 from datetime import datetime, time
+from mock import patch
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import Equals, IsInstance, NotEquals, raises
@@ -36,6 +37,7 @@ from autopilot.introspection.types import (
     Time,
     ValueType,
 )
+from autopilot.introspection.dbus import DBusIntrospectionObject
 
 
 class FakeObject(object):
@@ -555,3 +557,23 @@ class CreateValueInstanceTests(TestCase):
         self.assertThat(fn, raises(
             ValueError("Cannot create attribute, no data supplied")
         ))
+
+
+class DBusIntrospectionObjectTests(TestCase):
+
+    @patch('autopilot.introspection.dbus.logger.warning')
+    def test_dbus_introspection_object_logs_bad_data(self, error_logger):
+        """The DBusIntrospectionObject class must log an error when it gets
+        bad data from the autopilot backend.
+
+        """
+        my_obj = DBusIntrospectionObject(
+            dict(foo=[0]),
+            '/some/dummy/path'
+        )
+        error_logger.assert_called_once_with(
+            "While constructing attribute '%s.%s': %s",
+            "DBusIntrospectionObject",
+            "foo",
+            "Cannot create attribute, no data supplied"
+        )

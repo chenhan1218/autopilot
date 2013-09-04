@@ -58,10 +58,10 @@ Package: autopilot-touch
 Architecture: any
 Section: metapackages
 Depends: ${misc:Depends},
+         libautopilot-qt (>= 1.3),
          python-autopilot,
          python-evdev,
          python-ubuntu-platform-api [armhf],
-Recommends: libautopilot-qt (>= 1.3),
 Description: Autopilot support for the ubuntu Touch platform
  This metapackage exists to depend on the packages needed to install and use
  autopilot on the Ubuntu Touch platform.

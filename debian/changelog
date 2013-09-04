@@ -1,3 +1,15 @@
+autopilot (1.3.1+13.10.20130904-0ubuntu1) saucy; urgency=low
+
+  [ Andy Doan ]
+  * make autopilot-touch require libautopilot-qt This is pretty much
+    required for all touch testing and will allow libautopilot-qt to be
+    included in our read-only system-images.
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 319
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 04 Sep 2013 02:04:15 +0000
+
 autopilot (1.3.1+13.10.20130830-0ubuntu1) saucy; urgency=low
 
   [ Martin Pitt ]

@@ -370,7 +370,6 @@ class CreateValueInstanceTests(TestCase):
         self.assertThat(attr, IsInstance(PlainType))
 
     def test_plain_array(self):
-        # import pdb; pdb.set_trace()
         data = dbus.Array([
             dbus.Int32(ValueType.PLAIN),
             dbus.Array([
@@ -544,3 +543,15 @@ class CreateValueInstanceTests(TestCase):
         self.assertThat(attr, IsInstance(PlainType))
         self.assertThat(attr, IsInstance(dbus.Array))
         self.assertThat(attr, Equals([0, False, "Hello World"]))
+
+    def test_invalid_no_data(self):
+        data = dbus.Array(
+            [
+                dbus.Int32(0),
+            ]
+        )
+        fn = lambda: create_value_instance(data, None, None)
+
+        self.assertThat(fn, raises(
+            ValueError("Cannot create attribute, no data supplied")
+        ))

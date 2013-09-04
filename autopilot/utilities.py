@@ -158,18 +158,18 @@ class StagnantStateDetector(object):
 
     Example of use::
 
-    state_check = StagnantStateDetector(threshold=5)
-    x, y = get_current_position()
-    while not at_position(target_x, target_y):
-        move_toward_position(target_x, target_y)
+        state_check = StagnantStateDetector(threshold=5)
         x, y = get_current_position()
-        try:
-            # this will raise an exception after the current position hasn't
-            # changed on the 6th time the check is performed.
-            loop_detector.check_state(x, y)
-        except StagnantStateDetector.StagnantState as e:
-            e.args = ("Position has not moved.", )
-            raise
+        while not at_position(target_x, target_y):
+            move_toward_position(target_x, target_y)
+            x, y = get_current_position()
+            try:
+                # this will raise an exception after the current position
+                # hasn't changed on the 6th time the check is performed.
+                loop_detector.check_state(x, y)
+            except StagnantStateDetector.StagnantState as e:
+                e.args = ("Position has not moved.", )
+                raise
     """
 
     class StagnantState(Exception):
@@ -177,7 +177,6 @@ class StagnantStateDetector(object):
 
     def __init__(self, threshold):
         """
-        Arguments:
         :param threshold: Amount of times the updated state can fail to
           differ consecutively before raising an exception.
 
@@ -192,13 +191,12 @@ class StagnantStateDetector(object):
 
     def check_state(self, *state):
         """Checks if there is a difference between the previous state and
-        *state.
+        state.
 
-        Arguments:
-        :param *state: Hashable state argument to compare against the previous
+        :param state: Hashable state argument to compare against the previous
           iteration
 
-        :raises: **TypeError** when *state is unhashable
+        :raises: **TypeError** when state is unhashable
 
         """
         state_hash = hash(state)

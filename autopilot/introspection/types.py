@@ -97,6 +97,8 @@ def create_value_instance(value, parent, name):
     type_class = type_dict.get(type_id, None)
     if type_id == ValueType.UNKNOWN:
         value = [dbus.Array(value)]
+    if len(value) == 0:
+        raise ValueError("Cannot create attribute, no data supplied")
     return type_class(*value, parent=parent, name=name)
 
 

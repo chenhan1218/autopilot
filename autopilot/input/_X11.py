@@ -30,11 +30,10 @@ import logging
 from time import sleep
 
 from autopilot.display import is_point_on_any_screen, move_mouse_to_screen
-from autopilot.utilities import Silence
+from autopilot.utilities import Silence, StagnantStateDetector
 from autopilot.input import (
     Keyboard as KeyboardBase,
     Mouse as MouseBase,
-    StagnantStateDetector,
 )
 from Xlib import X, XK
 from Xlib.display import Display

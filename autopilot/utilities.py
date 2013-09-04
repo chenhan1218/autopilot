@@ -152,6 +152,53 @@ class Timer(object):
             self.end - self.start)
 
 
+class StagnantStateDetector(object):
+    """Detect when the state of something doesn't change over many iterations.
+
+    """
+
+    class StagnantState(Exception):
+        pass
+
+    def __init__(self, threshold):
+        """
+        Arguments:
+        :param threshold: Amount of times the updated state can fail to
+          differ consecutively before raising an exception.
+
+        :raises: **ValueError** if *threshold* isn't a positive integer.
+
+        """
+        if type(threshold) is not int or threshold <= 0:
+            raise ValueError("Threshold must be a positive integer.")
+        self._threshold = threshold
+        self._stagnant_count = 0
+        self._previous_state_hash = -1
+
+    def check_state(self, *state):
+        """Checks if there is a difference between the previous state and
+        *state.
+
+        Arguments:
+        :param *state: Hashable state argument to compare against the previous
+          iteration
+
+        :raises: **TypeError** when *state is unhashable
+
+        """
+        state_hash = hash(state)
+        if state_hash == self._previous_state_hash:
+            self._stagnant_count += 1
+            if self._stagnant_count >= self._threshold:
+                raise StagnantStateDetector.StagnantState(
+                    "State has been the same for %d iterations"
+                    % self._threshold
+                )
+        else:
+            self._stagnant_count = 0
+            self._previous_state_hash = state_hash
+
+
 def get_debug_logger():
     """Get a logging object to be used as a debug logger only."""
     logger = logging.getLogger("autopilot.debug")

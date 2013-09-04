@@ -20,7 +20,7 @@
 
 from testtools import TestCase
 from testtools.matchers import Equals, raises
-from autopilot.input import StagnantStateDetector
+from autopilot.utilities import StagnantStateDetector
 
 
 class StagnantCheckTests(TestCase):
@@ -28,7 +28,7 @@ class StagnantCheckTests(TestCase):
     def test_state_change_resets_counter(self):
         state_check = StagnantStateDetector(threshold=5)
         x, y = (1, 1)
-        for i in xrange(1, 5):
+        for i in range(4):
             state_check.check_state(x, y)
         self.assertThat(state_check._stagnant_count, Equals(3))
 
@@ -55,5 +55,14 @@ class StagnantCheckTests(TestCase):
         fn = lambda: StagnantStateDetector(threshold=0)
         self.assertThat(
             fn,
-            raises(ValueError("Threshold must be greater than 0"))
+            raises(ValueError("Threshold must be a positive integer."))
         )
+
+    def test_passing_nonhashable_data_raises_exception(self):
+        class UnHashable(object):
+            __hash__ = None
+        no_hash = UnHashable()
+        state_check = StagnantStateDetector(threshold=5)
+
+        fn = lambda: state_check.check_state(no_hash)
+        self.assertThat(fn, raises(TypeError("unhashable type: 'UnHashable'")))

@@ -634,3 +634,47 @@ class Pointer(object):
         if isinstance(self._device, Touch):
             self._x = x2
             self._y = y2
+
+
+class StagnantStateDetector(object):
+    """Detect when the state of something doesn't change over many iterations.
+
+    """
+
+    class StagnantState(Exception):
+        pass
+
+    def __init__(self, threshold):
+        """
+        Arguments:
+        :param threshold: Amount of times the updated state can fail to
+          differ consecutively before raising an exception.
+
+        """
+        if threshold <= 0:
+            raise ValueError("Threshold must be greater than 0")
+        self._threshold = threshold
+        self._stagnant_count = 0
+        self._original_state = -1
+
+    def check_state(self, *state):
+        """Checks if there is a difference between the previous state and
+        *state.
+
+        Arguments:
+        :param *state: Hashable state argument to compare against the previous
+          iteration
+
+        """
+        state_hash = hash(state)
+        if state_hash == self._original_state:
+            self._stagnant_count += 1
+            if self._stagnant_count >= self._threshold:
+                raise StagnantStateDetector.StagnantState(
+                    "State has been the same for %d iterations"
+                    % self._threshold
+                )
+        else:
+            self._stagnant_count = 0
+
+        self._original_state = state_hash

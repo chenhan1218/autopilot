@@ -431,3 +431,4 @@ class InputStackCleanup(AutopilotTestCase):
         from autopilot.input._X11 import _PRESSED_MOUSE_BUTTONS
         self.assertThat(test_result.wasSuccessful(), Equals(True))
         self.assertThat(_PRESSED_MOUSE_BUTTONS, Equals([]))
+

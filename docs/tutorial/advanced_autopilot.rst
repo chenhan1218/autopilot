@@ -236,7 +236,7 @@ If a preferred backend was specified, but that backend doesn't exist (probably t
     >>> try:
     ...     kbd = Keyboard.create("uinput")
     ... except RuntimeError as e:
-    ...     print "Unable to create keyboard:", e
+    ...     print("Unable to create keyboard: " + str(e))
     ...
     Unable to create keyboard: Unknown backend 'uinput'
 

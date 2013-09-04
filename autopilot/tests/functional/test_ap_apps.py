@@ -95,7 +95,7 @@ AutopilotTestCase.pick_app_launcher method."
             from time import sleep
 
             while True:
-                print "Still running"
+                print("Still running")
                 sleep(1)
         """))
 

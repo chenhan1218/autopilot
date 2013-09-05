@@ -399,7 +399,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         if not kwargs:
             raise ValueError("At least one keyword argument must be present.")
 
-        for prop_name, desired_value in kwargs.iteritems():
+        for prop_name, desired_value in kwargs.items():
             none_val = object()
             attr = getattr(obj, prop_name, none_val)
             if attr == none_val:

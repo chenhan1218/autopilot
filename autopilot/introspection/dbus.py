@@ -89,7 +89,7 @@ def _clear_backends_for_proxy_object(proxy_object):
 
     """
     global _object_registry
-    for cls in _object_registry[proxy_object._id].itervalues():
+    for cls in _object_registry[proxy_object._id].values():
         if type(proxy_object) is not cls:
             cls._Backend = None
 
@@ -102,7 +102,7 @@ def object_passes_filters(instance, **kwargs):
     """Return true if *instance* satisifies all the filters present in
     kwargs."""
     with instance.no_automatic_refreshing():
-        for attr, val in kwargs.iteritems():
+        for attr, val in kwargs.items():
             if not hasattr(instance, attr) or getattr(instance, attr) != val:
                 # Either attribute is not present, or is present but with
                 # the wrong value - don't add this instance to the results
@@ -143,7 +143,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         """
         self.__state = {}
-        for key, value in translate_state_keys(state_dict).iteritems():
+        for key, value in translate_state_keys(state_dict).items():
             # don't store id in state dictionary -make it a proper instance
             # attribute
             if key == 'id':
@@ -338,7 +338,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         server_side_filters = []
         client_side_filters = {}
-        for k, v in kwargs.iteritems():
+        for k, v in kwargs.items():
             # LP Bug 1209029: The XPathSelect protocol does not allow all valid
             # node names or values. We need to decide here whether the filter
             # parameters are going to work on the backend or not. If not, we
@@ -361,10 +361,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         state_dicts = self.get_state_by_path(query_path)
         instances = [self.make_introspection_object(i) for i in state_dicts]
-        return filter(
-            lambda i: object_passes_filters(i, **client_side_filters),
-            instances
-        )
+        return [i for i in instances
+                if object_passes_filters(i, **client_side_filters)]
 
     def refresh_state(self):
         """Refreshes the object's state.

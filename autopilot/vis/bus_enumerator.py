@@ -79,7 +79,7 @@ class BusEnumerator(QObject):
 
     def get_found_connections(self):
         """Get a list of found connection names. This may not be up to date."""
-        return self._data.keys()
+        return list(self._data.keys())
 
     def get_found_objects(self, connection_string):
         """Get a list of found objects for a particular connection name.
@@ -87,9 +87,9 @@ class BusEnumerator(QObject):
         This may be out of date.
 
         """
-        if connection_string not in self._data.keys():
+        if connection_string not in self._data:
             raise KeyError("%s not in results" % connection_string)
-        return self._data[connection_string].keys()
+        return list(self._data[connection_string].keys())
 
     def get_found_interfaces(self, connection_string, object_path):
         """Get a list of found interfaces for a particular connection name and
@@ -98,9 +98,9 @@ class BusEnumerator(QObject):
         This may be out of date.
 
         """
-        if connection_string not in self._data.keys():
+        if connection_string not in self._data:
             raise KeyError("connection %s not in results" % connection_string)
-        if object_path not in self._data[connection_string].keys():
+        if object_path not in self._data[connection_string]:
             raise KeyError(
                 "object %s not in results for connection %s" %
                 (object_path, connection_string))

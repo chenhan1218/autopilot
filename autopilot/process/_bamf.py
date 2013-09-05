@@ -168,7 +168,7 @@ class ProcessManager(ProcessManagerBase):
                 [new_windows.extend(a.get_windows()) for a in apps]
                 filter_fn = lambda w: w.x_id not in [
                     c.x_id for c in existing_windows]
-                new_wins = filter(filter_fn, new_windows)
+                new_wins = list(filter(filter_fn, new_windows))
                 if new_wins:
                     assert len(new_wins) == 1
                     return new_wins[0]
@@ -223,7 +223,7 @@ class ProcessManager(ProcessManagerBase):
         apps = [Application(p) for p in
                 self.matcher_interface.RunningApplications()]
         if user_visible_only:
-            return filter(_filter_user_visible, apps)
+            return list(filter(_filter_user_visible, apps))
         return apps
 
     def get_running_applications_by_desktop_file(self, desktop_file):
@@ -255,7 +255,7 @@ class ProcessManager(ProcessManagerBase):
         windows = [Window(w) for w in
                    self.matcher_interface.WindowStackForMonitor(-1)]
         if user_visible_only:
-            windows = filter(_filter_user_visible, windows)
+            windows = list(filter(_filter_user_visible, windows))
         # Now sort on stacking order.
         # We explicitly convert to a list from an iterator since tests
         # frequently try and use len() on return values from these methods.
@@ -611,5 +611,5 @@ class Window(WindowBase):
         """Return a list of strings representing the current window state."""
 
         get_display().sync()
-        return map(get_display().get_atom_name, self._getProperty(
-            '_NET_WM_STATE'))
+        return [get_display().get_atom_name(p)
+                for p in self._getProperty('_NET_WM_STATE')]

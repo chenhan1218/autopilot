@@ -92,7 +92,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connection_list.clear()
         self.connection_list.addItem("Please select a connection",
                                      QtCore.QVariant(None))
-        for name, proxy_obj in self.selectable_interfaces.iteritems():
+        for name, proxy_obj in self.selectable_interfaces.items():
             if isinstance(proxy_obj, QtObjectProxyMixin):
                 self.connection_list.addItem(
                     get_qt_icon(),

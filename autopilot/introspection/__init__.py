@@ -268,7 +268,7 @@ def get_proxy_object_for_existing_process(
     if application_name:
         app_name_check_fn = lambda i: get_classname_from_path(
             i.introspection_iface.GetState('/')[0][0]) == application_name
-        dbus_addresses = filter(app_name_check_fn, dbus_addresses)
+        dbus_addresses = list(filter(app_name_check_fn, dbus_addresses))
 
     if dbus_addresses is None or len(dbus_addresses) == 0:
         raise ProcessSearchError("Search criteria returned no results")

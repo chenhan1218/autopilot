@@ -38,6 +38,10 @@ from autopilot.introspection import (
 )
 
 
+# backwards compatible alias for Python 3
+if sys.version > '3':
+    xrange = range
+
 logger = logging.getLogger(__name__)
 
 

@@ -294,8 +294,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         new_apps = []
         for i in range(10):
             current_apps = self.process_manager.get_running_applications()
-            new_apps = filter(
-                lambda i: i not in self._app_snapshot, current_apps)
+            new_apps = list(filter(
+                lambda i: i not in self._app_snapshot, current_apps))
             if not new_apps:
                 self._app_snapshot = None
                 return

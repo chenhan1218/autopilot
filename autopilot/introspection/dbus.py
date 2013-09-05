@@ -30,6 +30,7 @@ from __future__ import absolute_import
 from contextlib import contextmanager
 import logging
 import re
+import sys
 from testtools.matchers import Equals
 from time import sleep
 from uuid import uuid4
@@ -41,6 +42,11 @@ from autopilot.utilities import Timer, get_debug_logger
 
 _object_registry = {}
 logger = logging.getLogger(__name__)
+
+
+# py2 compatible alias for py3
+if sys.version >= '3':
+    basestring = str
 
 
 class StateNotFoundError(RuntimeError):

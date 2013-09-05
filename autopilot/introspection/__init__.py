@@ -33,6 +33,7 @@ import subprocess
 from time import sleep
 from functools import partial
 import os
+import sys
 
 from autopilot.introspection.backends import DBusAddress
 from autopilot.introspection.constants import (
@@ -61,6 +62,10 @@ logger = logging.getLogger(__name__)
 
 # Keep track of known connections during search
 connection_list = []
+
+# py2 compatible alias for py3
+if sys.version >= '3':
+    basestring = str
 
 
 class ProcessSearchError(RuntimeError):

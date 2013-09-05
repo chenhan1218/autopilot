@@ -27,6 +27,7 @@ In the future we may also need other devices.
 from __future__ import absolute_import
 
 import logging
+import sys
 from time import sleep
 
 from autopilot.display import is_point_on_any_screen, move_mouse_to_screen
@@ -44,6 +45,10 @@ _PRESSED_KEYS = []
 _PRESSED_MOUSE_BUTTONS = []
 _DISPLAY = None
 logger = logging.getLogger(__name__)
+
+# py2 compatible alias for py3
+if sys.version >= '3':
+    basestring = str
 
 
 def get_display():

@@ -37,12 +37,17 @@ from __future__ import absolute_import
 
 import logging
 import re
+import sys
 
 from autopilot.input import Keyboard
 from autopilot.utilities import Silence
 
 logger = logging.getLogger(__name__)
 
+
+# py2 compatible alias for py3
+if sys.version >= '3':
+    basestring = str
 
 #
 # Fill this dictionary with keybindings we want to store.

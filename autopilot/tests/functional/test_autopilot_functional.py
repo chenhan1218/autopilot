@@ -173,7 +173,7 @@ class AutopilotFunctionalTests(AutopilotFunctionalTestsBase):
 
         if type(tests) is not list:
             raise TypeError("tests must be a list, not %r" % type(tests))
-        if not isinstance(output, basestring):
+        if not isinstance(output, str):
             raise TypeError("output must be a string, not %r" % type(output))
 
         test_names = ''.join(['    %s\n' % t for t in sorted(tests)])

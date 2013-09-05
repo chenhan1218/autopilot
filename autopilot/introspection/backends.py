@@ -91,9 +91,9 @@ class DBusAddress(object):
 
     @property
     def introspection_iface(self):
-        if not isinstance(self._addr_tuple.connection, basestring):
+        if not isinstance(self._addr_tuple.connection, str):
             raise TypeError("Service name must be a string.")
-        if not isinstance(self._addr_tuple.object_path, basestring):
+        if not isinstance(self._addr_tuple.object_path, str):
             raise TypeError("Object name must be a string")
 
         if not self._check_pid_running():

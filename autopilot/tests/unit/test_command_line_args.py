@@ -41,7 +41,7 @@ from autopilot import parse_arguments
 class CommandLineArgsTests(TestCase):
 
     def parse_args(self, args):
-        if isinstance(args, basestring):
+        if isinstance(args, str):
             args = args.split()
         try:
             return parse_arguments(args)

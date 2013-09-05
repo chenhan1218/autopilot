@@ -36,7 +36,6 @@ Keybindings come from two different places:
 from __future__ import absolute_import
 
 import logging
-from types import NoneType
 import re
 
 from autopilot.input import Keyboard
@@ -260,7 +259,7 @@ class KeybindingsHelper(object):
         keyboard emulator.
 
         """
-        if type(delay) not in (float, NoneType):
+        if delay is not None and type(delay) != float:
             raise TypeError(
                 "delay parameter must be a float if it is defined.")
         if delay:

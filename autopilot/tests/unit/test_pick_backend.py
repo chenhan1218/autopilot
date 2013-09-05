@@ -107,7 +107,7 @@ class PickBackendTests(TestCase):
             raised = True
             self.assertTrue(hasattr(e, 'original_exception'))
             self.assertThat(e.original_exception, IsInstance(ValueError))
-            self.assertThat(e.original_exception.message, Equals("Foo"))
+            self.assertThat(str(e.original_exception), Equals("Foo"))
         self.assertTrue(raised)
 
     def test_failure_of_all_backends(self):

@@ -30,7 +30,7 @@ import logging
 from time import sleep
 
 from autopilot.display import is_point_on_any_screen, move_mouse_to_screen
-from autopilot.utilities import Silence
+from autopilot.utilities import Silence, StagnantStateDetector
 from autopilot.input import (
     Keyboard as KeyboardBase,
     Mouse as MouseBase,
@@ -347,12 +347,14 @@ class Mouse(MouseBase):
             perform_move(dest_x, dest_y, False)
             return
 
-        curr_x, curr_y = self.position()
         coordinate_valid = is_point_on_any_screen((dest_x, dest_y))
         if x < -1000 or y < -1000:
             raise ValueError(
                 "Invalid mouse coordinates: %d, %d" % (dest_x, dest_y))
 
+        loop_detector = StagnantStateDetector(threshold=1000)
+
+        curr_x, curr_y = self.position()
         while curr_x != dest_x or curr_y != dest_y:
             dx = abs(dest_x - curr_x)
             dy = abs(dest_y - curr_y)
@@ -374,6 +376,12 @@ class Mouse(MouseBase):
             else:
                 curr_x += step_x
                 curr_y += step_y
+
+            try:
+                loop_detector.check_state(curr_x, curr_y)
+            except StagnantStateDetector.StagnantState as e:
+                e.args = ("Mouse cursor is stuck.", )
+                raise
 
     def move_to_object(self, object_proxy):
         """Attempts to move the mouse to 'object_proxy's centre point.

@@ -42,7 +42,7 @@ from __future__ import absolute_import
 from datetime import datetime, time
 import dbus
 import logging
-from testtools.matcher import Equals
+from testtools.matchers import Equals
 from time import sleep
 
 from autopilot.introspection.utilities import translate_state_keys

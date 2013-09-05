@@ -30,7 +30,7 @@ class BackendExceptionTests(TestCase):
         """BackendException must be able to wrap another exception instance."""
         err = BackendException(RuntimeError("Hello World"))
         self.assertThat(err.original_exception, IsInstance(RuntimeError))
-        self.assertThat(err.original_exception.message, Equals("Hello World"))
+        self.assertThat(str(err.original_exception), Equals("Hello World"))
 
     def test_dunder_str(self):
         err = BackendException(RuntimeError("Hello World"))

@@ -298,7 +298,7 @@ def launch_app(args):
         try:
             launcher = get_application_launcher(app_name)
         except RuntimeError as e:
-            print("Error detecting launcher: %s" % e.message)
+            print("Error detecting launcher: %s" % str(e))
             print("(Perhaps use the '-i' argument to specify an interface.)")
             exit(1)
     else:
@@ -312,7 +312,7 @@ def launch_app(args):
     try:
         launch_application(launcher, *args.application, capture_output=False)
     except RuntimeError as e:
-        print("Error: " + e.message)
+        print("Error: " + str(e))
         exit(1)
 
 

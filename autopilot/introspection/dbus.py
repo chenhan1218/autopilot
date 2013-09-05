@@ -46,7 +46,10 @@ logger = logging.getLogger(__name__)
 
 # py2 compatible alias for py3
 if sys.version >= '3':
+    _PY3 = True
     basestring = str
+else:
+    _PY3 = False
 
 
 class StateNotFoundError(RuntimeError):
@@ -531,9 +534,12 @@ def _get_filter_string_for_key_value_pair(key, value):
 
     """
     if isinstance(value, str):
-        escaped_value = value.encode("string_escape")
-        # note: string_escape codec escapes "'" but not '"'...
-        escaped_value = escaped_value.replace('"', r'\"')
+        if _PY3:
+            escaped_value = value.encode("unicode_escape").decode('ASCII').replace("'", "\\'")
+        else:
+            escaped_value = value.encode("string_escape")
+            # note: string_escape codec escapes "'" but not '"'...
+            escaped_value = escaped_value.replace('"', r'\"')
         return '{}="{}"'.format(key, escaped_value)
     elif isinstance(value, int) or isinstance(value, bool):
         return "{}={}".format(key, repr(value))

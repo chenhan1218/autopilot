@@ -133,8 +133,8 @@ class TypeBase(object):
             )
 
         def make_unicode(value):
-            if isinstance(value, str):
-                return unicode(value.decode('utf8'))
+            if isinstance(value, bytes):
+                return value.decode('utf8')
             return value
 
         if hasattr(expected_value, 'expected'):

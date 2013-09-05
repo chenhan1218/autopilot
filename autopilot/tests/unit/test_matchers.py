@@ -20,6 +20,8 @@
 
 from __future__ import absolute_import
 
+import sys
+
 from autopilot.introspection.dbus import DBusIntrospectionObject
 from autopilot.matchers import Eventually
 
@@ -40,6 +42,9 @@ from testtools.matchers import (
 from time import time
 from mock import patch
 
+
+if sys.version >= '3':
+    unicode = str
 
 @contextmanager
 def expected_runtime(tmin, tmax):
@@ -76,7 +81,7 @@ def make_fake_attribute_with_result(result, attribute_type='wait_for'):
         if isinstance(result, unicode):
             obj = FakeObject(dict(id=[0, 123], attr=[0, dbus.String(result)]))
             return obj.attr
-        elif isinstance(result, str):
+        elif isinstance(result, bytes):
             obj = FakeObject(
                 dict(id=[0, 123], attr=[0, dbus.UTF8String(result)])
             )
@@ -147,15 +152,15 @@ class EventuallyNonScenariodTests(TestCase):
     def test_match_with_expected_value_unicode(self):
         """The expected unicode value matches new value string."""
         attr = make_fake_attribute_with_result(
-            unicode(u'\u963f\u5e03\u4ece'), 'wait_for')
+            u'\u963f\u5e03\u4ece', 'wait_for')
         with expected_runtime(0.0, 1.0):
-            Eventually(Equals(str("阿布从"))).match(attr)
+            Eventually(Equals("阿布从")).match(attr)
 
     def test_match_with_new_value_unicode(self):
         """new value with unicode must match expected value string."""
         attr = make_fake_attribute_with_result(str("阿布从"), 'wait_for')
         with expected_runtime(0.0, 1.0):
-            Eventually(Equals(unicode(u'\u963f\u5e03\u4ece'))).match(attr)
+            Eventually(Equals(u'\u963f\u5e03\u4ece')).match(attr)
 
     def test_mismatch_with_bool(self):
         """The mismatch value must fail boolean values."""
@@ -168,7 +173,7 @@ class EventuallyNonScenariodTests(TestCase):
         """The mismatch value must fail with str and unicode mix."""
         attr = make_fake_attribute_with_result(str("阿布从1"), 'wait_for')
         mismatch = Eventually(Equals(
-            unicode(u'\u963f\u5e03\u4ece')), timeout=.5).match(attr)
+            u'\u963f\u5e03\u4ece'), timeout=.5).match(attr)
         self.assertThat(
             mismatch.describe(), Contains('failed'))
 
@@ -177,6 +182,6 @@ class EventuallyNonScenariodTests(TestCase):
         self.skip("mismatch Contains returns ascii error")
         attr = make_fake_attribute_with_result(str("阿布从1"), 'wait_for')
         mismatch = Eventually(Equals(
-            unicode(u'\u963f\u5e03\u4ece')), timeout=.5).match(attr)
+            u'\u963f\u5e03\u4ece'), timeout=.5).match(attr)
         self.assertThat(
             mismatch.describe(), Contains("阿布从11"))

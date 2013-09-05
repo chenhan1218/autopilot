@@ -738,7 +738,7 @@ SyntaxError: invalid syntax
 
         self.assertThat(code, Equals(1))
         self.assertTrue(os.path.exists(output_file_path))
-        log_contents = unicode(open(output_file_path, encoding='utf-8').read())
+        log_contents = open(output_file_path, encoding='utf-8').read()
         self.assertThat(
             log_contents,
             Contains(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH'))
@@ -773,7 +773,7 @@ SyntaxError: invalid syntax
 
         self.assertThat(code, Equals(1))
         self.assertTrue(os.path.exists(output_file_path))
-        log_contents = unicode(open(output_file_path, encoding='utf-8').read())
+        log_contents = open(output_file_path, encoding='utf-8').read()
         self.assertThat(
             log_contents,
             Contains(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH'))

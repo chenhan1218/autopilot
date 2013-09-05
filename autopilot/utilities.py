@@ -39,8 +39,9 @@ def _pick_backend(backends, preferred_backend):
         "Possible backends: %s", ','.join(possible_backends))
     if preferred_backend:
         if preferred_backend in possible_backends:
-            possible_backends.sort(
-                lambda a, b: -1 if a == preferred_backend else 0)
+            # make preferred_backend the first list item
+            possible_backends.remove(preferred_backend)
+            possible_backends.insert(0, preferred_backend)
         else:
             raise RuntimeError("Unknown backend '%s'" % (preferred_backend))
     failure_reasons = []

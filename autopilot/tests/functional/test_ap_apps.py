@@ -25,7 +25,7 @@ import subprocess
 import logging
 from mock import patch
 from tempfile import mktemp
-from testtools.matchers import raises, LessThan, Equals
+from testtools.matchers import raises, LessThan
 from textwrap import dedent
 from time import sleep
 

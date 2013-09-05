@@ -41,7 +41,6 @@ from __future__ import absolute_import
 
 from datetime import datetime, time
 import dbus
-from functools import partial
 import logging
 from testtools.matcher import Equals
 from time import sleep

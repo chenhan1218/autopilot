@@ -172,7 +172,7 @@ class ProcessManager(ProcessManagerBase):
                 if new_wins:
                     assert len(new_wins) == 1
                     return new_wins[0]
-            except DBusException:
+            except dbus.DBusException:
                 pass
             sleep(1)
         return None

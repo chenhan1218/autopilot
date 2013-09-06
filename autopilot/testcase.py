@@ -344,7 +344,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         # reset the upstart env, and hope no one else launched...
         subprocess.call([
             "/sbin/initctl",
-            "reset-env",
+            "unset-env",
+            "QT_LOAD_TESTABILITY",
         ])
         if target_pid == -1:
             raise RuntimeError(

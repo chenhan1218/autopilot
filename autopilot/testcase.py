@@ -327,7 +327,6 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                     app_name,
                     package['version']
                 )
-                emulator_base = kwargs.pop('emulator_base', None)
                 # sadly, we cannot re-use the existing launch_test_application
                 # since upstart is a little odd.
                 # set the qt testability env:
@@ -342,12 +341,6 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                     "application",
                     "APP_ID={}".format(app_id),
                 ])
-                # reset the upstart env, and hope no one else launched...
-                subprocess.call([
-                    "/sbin/initctl",
-                    "reset-env",
-                ])
-
                 target_pid = -1
                 # perhaps we should do this with a regular expression instead?
                 for i in range(10):
@@ -362,6 +355,11 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                         break
                     # give the app time to launch - maybe this is not needed?:
                     sleep(1)
+                # reset the upstart env, and hope no one else launched...
+                subprocess.call([
+                    "/sbin/initctl",
+                    "reset-env",
+                ])
                 if target_pid == -1:
                     raise RuntimeError(
                         "Could not find autopilot interface for click package"

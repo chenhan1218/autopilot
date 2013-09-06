@@ -413,6 +413,8 @@ class Application(ApplicationBase):
         return "<Application '%s'>" % (self.name)
 
     def __eq__(self, other):
+        if other is None:
+            return False
         return self.desktop_file == other.desktop_file
 
 

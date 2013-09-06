@@ -1,3 +1,14 @@
+autopilot (1.3.1+13.10.20130906.1-0ubuntu1) saucy; urgency=low
+
+  [ Christopher Lee ]
+  * This addition adds a checking mechanism that will fail a test if the
+    mouse is caught in an endless loop. (LP: #1220494)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 321
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 06 Sep 2013 10:03:57 +0000
+
 autopilot (1.3.1+13.10.20130904-0ubuntu1) saucy; urgency=low
 
   [ Andy Doan ]

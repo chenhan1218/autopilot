@@ -41,8 +41,8 @@ from __future__ import absolute_import
 
 from datetime import datetime, time
 import dbus
-from functools import partial
 import logging
+from testtools.matchers import Equals
 from time import sleep
 
 from autopilot.introspection.utilities import translate_state_keys

@@ -249,9 +249,7 @@ class _TestCleanupMeta(type):
         return class_object
 
 
-class CleanupRegistered(object):
-
-    __metaclass__ = _TestCleanupMeta
+CleanupRegistered = _TestCleanupMeta('CleanupRegistered', (object,), {})
 
 
 def action_on_test_start(test_instance):

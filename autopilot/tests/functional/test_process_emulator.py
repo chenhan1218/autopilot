@@ -96,7 +96,7 @@ class ProcessManagerApplicationNoCleanupTests(AutopilotTestCase):
         try:
             process_manager = ProcessManager.create(preferred_backend="BAMF")
         except BackendException as e:
-            self.skip("Test is only for BAMF backend ({}).".format(e.message))
+            self.skip("Test is only for BAMF backend ({}).".format(str(e)))
 
         process_manager.start_app('Calculator')
 

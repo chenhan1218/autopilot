@@ -19,7 +19,14 @@
 
 
 from __future__ import absolute_import
-from StringIO import StringIO
+
+try:
+    # Python 2
+    from StringIO import StringIO
+except ImportError:
+    # Python 3
+    from io import StringIO
+
 from autopilot.utilities import LogFormatter, CleanupRegistered
 from testtools.content import text_content
 import subprocess

@@ -349,8 +349,8 @@ class Application(ApplicationBase):
                 self._app_proxy, 'org.ayatana.bamf.view')
             self._app_iface = dbus.Interface(
                 self._app_proxy, 'org.ayatana.bamf.application')
-        except dbus.DBusException, e:
-            e.message += 'bamf_app_path=%r' % (bamf_app_path)
+        except dbus.DBusException as e:
+            e.args += ('bamf_app_path=%r' % (bamf_app_path),)
             raise
 
     @property

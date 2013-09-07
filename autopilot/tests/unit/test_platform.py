@@ -21,7 +21,13 @@
 
 import autopilot.platform as platform
 
-from StringIO import StringIO
+try:
+    # Python 2
+    from StringIO import StringIO
+except ImportError:
+    # Python 3
+    from io import StringIO
+
 from testtools import TestCase
 from testtools.matchers import Equals
 

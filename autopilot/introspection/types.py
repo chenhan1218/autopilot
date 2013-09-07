@@ -191,9 +191,9 @@ class PlainType(TypeBase):
         True
         >>> isinstance(object.length, int)
         True
-        >>> print object.length
+        >>> print(object.length)
         123
-        >>> print object.length + 32
+        >>> print(object.length + 32)
         155
 
     However, a special case exists for boolean values: because you cannot

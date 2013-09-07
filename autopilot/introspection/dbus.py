@@ -104,8 +104,12 @@ def object_passes_filters(instance, **kwargs):
                 return False
     return True
 
+DBusIntrospectionObjectBase = IntrospectableObjectMetaclass('DBusIntrospectionObjectBase',
+                                                            (object,),
+                                                            {})
 
-class DBusIntrospectionObject(object):
+
+class DBusIntrospectionObject(DBusIntrospectionObjectBase):
     """A class that supports transparent data retrieval from the application
     under test.
 
@@ -115,8 +119,6 @@ class DBusIntrospectionObject(object):
     introspection tree.
 
     """
-
-    __metaclass__ = IntrospectableObjectMetaclass
 
     _Backend = None
 
@@ -550,9 +552,10 @@ class _CustomEmulatorMeta(IntrospectableObjectMetaclass):
                 d['_id'] = uuid4()
         return super(_CustomEmulatorMeta, cls).__new__(cls, name, bases, d)
 
-
-class CustomEmulatorBase(DBusIntrospectionObject):
-
+CustomEmulatorBase = _CustomEmulatorMeta('CustomEmulatorBase',
+                                         (DBusIntrospectionObject, ),
+                                         {})
+CustomEmulatorBase.__doc__ = \
     """This class must be used as a base class for any custom emulators defined
     within a test case.
 
@@ -560,5 +563,3 @@ class CustomEmulatorBase(DBusIntrospectionObject):
         Tutorial Section :ref:`custom_emulators`
             Information on how to write custom emulators.
     """
-
-    __metaclass__ = _CustomEmulatorMeta

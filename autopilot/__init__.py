@@ -30,7 +30,7 @@ class BackendException(RuntimeError):
     def __init__(self, original_exception):
         super(BackendException, self).__init__(
             "Error while initialising backend. Original exception was: " +
-            original_exception.message)
+            str(original_exception))
         self.original_exception = original_exception
 
 

@@ -338,8 +338,8 @@ class Mouse(MouseBase):
                 sync,
                 X.CurrentTime,
                 X.NONE,
-                x=x,
-                y=y)
+                x=int(x),
+                y=int(y))
             get_display().sync()
             sleep(time_between_events)
 

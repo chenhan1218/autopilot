@@ -179,7 +179,8 @@ def _get_package_installed_version():
                 "${Version}",
                 "--show",
                 "python-autopilot",
-            ]
+            ],
+            universal_newlines=True
         ).strip()
     except subprocess.CalledProcessError:
         return None

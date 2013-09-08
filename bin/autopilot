@@ -287,7 +287,8 @@ def launch_app(args):
     app_name = args.application[0]
     if not isabs(app_name) or not exists(app_name):
         try:
-            app_name = subprocess.check_output(["which", app_name]).strip()
+            app_name = subprocess.check_output(["which", app_name],
+                                               universal_newlines=True).strip()
         except subprocess.CalledProcessError:
             print("Error: cannot find application '%s'" % (app_name))
             exit(1)

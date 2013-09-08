@@ -99,7 +99,8 @@ class AutopilotFunctionalTestsBase(AutopilotTestCase):
             environment_patch['PYTHONPATH'] = ap_base_path
         bin_path = os.path.join(ap_base_path, 'bin', 'autopilot')
         if not os.path.exists(bin_path):
-            bin_path = subprocess.check_output(['which', 'autopilot']).strip()
+            bin_path = subprocess.check_output(['which', 'autopilot'],
+                                               universal_newlines=True).strip()
             logger.info(
                 "Not running from source, setting bin_path to %s", bin_path)
 
@@ -119,6 +120,7 @@ class AutopilotFunctionalTestsBase(AutopilotTestCase):
             env=environ,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            universal_newlines=True,
         )
 
         stdout, stderr = process.communicate()

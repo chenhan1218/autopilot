@@ -251,7 +251,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
          data is retrievable via this object.
 
         """
-        app_path = subprocess.check_output(['which', application]).strip()
+        app_path = subprocess.check_output(['which', application],
+                                           universal_newlines=True).strip()
         # Get a launcher, tests can override this if they need:
         launcher_hint = kwargs.pop('app_type', '')
         launcher = None

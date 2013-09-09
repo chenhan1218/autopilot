@@ -43,7 +43,7 @@ class VersionFnTests(TestCase):
         """The _get_package_installed_version function must return None when
         subprocess raises an error while calling dpkg-query.
         """
-        def raise_error(*args):
+        def raise_error(*args, **kwargs):
             raise subprocess.CalledProcessError(1, "dpkg-query")
         with patch('subprocess.check_output', new=raise_error):
             self.assertThat(_get_package_installed_version(), Equals(None))
@@ -54,7 +54,7 @@ class VersionFnTests(TestCase):
 
         """
         with patch('subprocess.check_output',
-                   new=lambda *a: "1.3daily13.05.22\n"):
+                   new=lambda *a, **kwargs: "1.3daily13.05.22\n"):
             self.assertThat(
                 _get_package_installed_version(), Equals("1.3daily13.05.22"))
 

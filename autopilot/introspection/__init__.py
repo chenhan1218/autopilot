@@ -121,9 +121,11 @@ def launch_application(launcher, application, *arguments, **kwargs):
     cwd = kwargs.pop('launch_dir', None)
     capture_output = kwargs.pop('capture_output', True)
     if kwargs:
+        arglist = [repr(k) for k in kwargs.keys()]
+        arglist.sort()
         raise ValueError(
             "Unknown keyword arguments: %s." %
-            (', '.join(repr(k) for k in kwargs.keys())))
+            (', '.join(arglist)))
 
     path, args = launcher.prepare_environment(application, list(arguments))
 

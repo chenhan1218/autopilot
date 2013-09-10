@@ -31,8 +31,6 @@ from contextlib import contextmanager
 import logging
 import re
 import sys
-from testtools.matchers import Equals
-from time import sleep
 from uuid import uuid4
 
 from autopilot.introspection.types import create_value_instance

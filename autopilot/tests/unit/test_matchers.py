@@ -33,14 +33,11 @@ from testtools.matchers import (
     Contains,
     Equals,
     IsInstance,
-    LessThan,
     MatchesException,
     Mismatch,
-    MismatchError,
     Raises,
 )
 from time import time
-from mock import patch
 
 
 if sys.version >= '3':

@@ -252,6 +252,7 @@ def get_proxy_object_for_existing_process(
     if pid is not None and not _pid_is_running(pid):
         raise ProcessSearchError("PID %d could not be found" % pid)
 
+    logger.info("Search criteria are: pid=%d, bus=%s, process=%r", pid, bus, process)
     dbus_addresses = _get_dbus_addresses_from_search_parameters(
         pid,
         dbus_bus,

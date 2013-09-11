@@ -332,9 +332,12 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         for i in range(10):
             list_output = subprocess.check_output([
                 "/sbin/initctl",
-                "list"])
+                "status",
+                "application-click",
+                "APP_ID={}".format(app_id)
+            ])
             for line in list_output.split('\n'):
-                if app_id in line:
+                if app_id in line and "start/running" in line:
                     target_pid = int(line.split()[-1])
                     break
             if target_pid != -1:

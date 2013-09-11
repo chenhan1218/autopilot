@@ -68,7 +68,7 @@ class ApplicationSupportTests(AutopilotTestCase):
             fn,
             raises(ValueError("Unknown keyword arguments: 'arg1', 'arg2'.")))
 
-    @patch('autopilot.testcase._get_click_manifest', new=lambda: [])
+    @patch('autopilot.introspection.utilities._get_click_manifest', new=lambda: [])
     def test_launch_click_package_raises_runtimeerror_on_missing_package(self):
         """launch_click_package must raise a RuntimeError if the requested
         package id is not found in the click manifest.
@@ -85,7 +85,7 @@ class ApplicationSupportTests(AutopilotTestCase):
             )
         )
 
-    @patch('autopilot.testcase._get_click_manifest')
+    @patch('autopilot.introspection.utilities._get_click_manifest')
     def test_launch_click_package_raises_runtimeerror_on_wrong_app(self, cm):
         """launch_click_package must raise a RuntimeError if the requested
         package id is not found in the click manifest.

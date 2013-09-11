@@ -51,3 +51,20 @@ def _get_click_manifest():
         ["click", "list", "--manifest"]
     )
     return json.loads(click_manifest_str)
+
+
+def _get_click_app_id(package_id, app_name=None):
+    for pkg in _get_click_manifest():
+        if pkg['name'] == package_id:
+            if app_name is None:
+                app_name = pkg['hooks'].keys()[0]
+            elif app_name not in pkg['hooks']:
+                raise RuntimeError(
+                    "Application '{}' is not present within the click "
+                    "package '{}'.".format(app_name, package_id))
+
+            return "{0}_{1}_{2}".format(package_id, app_name, pkg['version'])
+    raise RuntimeError(
+        "Unable to find package '{}' in the click manifest."
+        .format(package_id)
+    )

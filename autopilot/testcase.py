@@ -330,18 +330,22 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         target_pid = -1
         # perhaps we should do this with a regular expression instead?
         for i in range(10):
-            list_output = subprocess.check_output([
-                "/sbin/initctl",
-                "status",
-                "application-click",
-                "APP_ID={}".format(app_id)
-            ])
-            for line in list_output.split('\n'):
-                if app_id in line and "start/running" in line:
-                    target_pid = int(line.split()[-1])
+            try:
+                list_output = subprocess.check_output([
+                    "/sbin/initctl",
+                    "status",
+                    "application-click",
+                    "APP_ID={}".format(app_id)
+                ])
+            except subprocess.CalledProcessError:
+                pass
+            else:
+                for line in list_output.split('\n'):
+                    if app_id in line and "start/running" in line:
+                        target_pid = int(line.split()[-1])
+                        break
+                if target_pid != -1:
                     break
-            if target_pid != -1:
-                break
             # give the app time to launch - maybe this is not needed?:
             sleep(1)
         # reset the upstart env, and hope no one else launched...

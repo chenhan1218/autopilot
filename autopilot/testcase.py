@@ -357,7 +357,10 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             )
 
         emulator_base = kwargs.pop('emulator_base', None)
-        proxy = get_proxy_object_for_existing_process(pid=target_pid, )
+        proxy = get_proxy_object_for_existing_process(
+            pid=target_pid,
+            emulator_base=emulator_base
+        )
         # reset the upstart env, and hope no one else launched...
         subprocess.call([
             "/sbin/initctl",

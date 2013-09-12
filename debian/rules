@@ -18,7 +18,9 @@ ifeq (, $(findstring nocheck, $(DEB_BUILD_OPTIONS)))
 endif
 
 override_dh_install:
-	dh_install -X.pyc --list-missing
+	# note, egg-info isn't important unless we have entry_points or other
+	# things that runtime wants to inspect
+	dh_install -X.pyc -X.egg-info --fail-missing
 	# provide python3-ized runner
 	cd debian/python3-autopilot/usr/bin && mv autopilot autopilot-py3 && sed -i '1 s/python$$/python3/' autopilot-py3
 	# avoid file conflicts

@@ -50,6 +50,7 @@ from __future__ import absolute_import
 
 import logging
 import os
+import psutil
 import signal
 import subprocess
 
@@ -345,6 +346,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                         target_pid = int(line.split()[-1])
                         break
                 if target_pid != -1:
+                    self.addCleanup(self._kill_process, target_pid)
                     break
             # give the app time to launch - maybe this is not needed?:
             sleep(1)
@@ -520,24 +522,27 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         self.addDetail('process-stdout', text_content(stdout))
         self.addDetail('process-stderr', text_content(stderr))
 
-    def _kill_process(self, process):
+    def _kill_process(self, pid):
         logger.info("waiting for process to exit.")
         try:
-            os.killpg(process.pid, signal.SIGTERM)
+            os.killpg(pid, signal.SIGTERM)
         except OSError:
             logger.info("Appears process has already exited.")
         for i in range(10):
-            process.poll()
-            if process.returncode is not None:
+            if not _is_process_running(pid):
                 break
             if i == 9:
                 logger.info(
                     "Killing process group, since it hasn't exited after "
                     "10 seconds."
                 )
-                os.killpg(process.pid, signal.SIGKILL)
+                os.killpg(pid, signal.SIGKILL)
             sleep(1)
 
     def _kill_process_and_attach_logs(self, process):
-        self._kill_process(process)
+        self._kill_process(process.pid)
         self._attach_process_logs(process)
+
+
+def _is_process_running(pid):
+    return pid in psutil.get_pid_list()

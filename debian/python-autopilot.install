@@ -1,2 +1,3 @@
 usr/bin/autopilot /usr/bin/
+usr/bin/autopilot-sandbox-run /usr/bin/
 debian/61-autopilot-uinput.rules /lib/udev/rules.d

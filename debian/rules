@@ -5,14 +5,21 @@
 # export DH_VERBOSE=1
 
 %:
-	dh $@ --with python2
+	dh $@ --with python2,python3 --buildsystem=pybuild
 
 override_dh_auto_build:
 	sphinx-build -b html -W  docs/ docs/_build/html/
 	dh_auto_build
 
 override_dh_auto_test:
+ifeq (, $(findstring nocheck, $(DEB_BUILD_OPTIONS)))
 	python -m testtools.run discover autopilot.tests.unit
+	python3 -m testtools.run discover autopilot.tests.unit
+endif
 
 override_dh_install:
-	dh_install --list-missing
+	dh_install -X.pyc --list-missing
+	# provide python3-ized runner
+	cd debian/python3-autopilot/usr/bin && mv autopilot autopilot-py3 && sed -i '1 s/python$$/python3/' autopilot-py3
+	# avoid file conflicts
+	cd debian/python3-autopilot/lib/udev/rules.d && mv 61-autopilot-uinput.rules 61-autopilot-py3-uinput.rules

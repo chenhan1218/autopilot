@@ -357,9 +357,9 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                             pid=target_pid,
                             emulator_base=emulator_base
                         )
-                        # reset the upstart env, and hope no one else launched, or they'll have
-                        # introspection enabled as well, although this isn't the worth thing in
-                        # the world.
+                        # reset the upstart env, and hope no one else launched,
+                        # or they'll have introspection enabled as well,
+                        # although this isn't the worth thing in the world.
                         subprocess.call([
                             "/sbin/initctl",
                             "unset-env",

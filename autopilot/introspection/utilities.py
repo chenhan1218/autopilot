@@ -20,6 +20,8 @@
 from __future__ import absolute_import
 from dbus import Interface
 import os.path
+import subprocess
+import json
 
 
 def _pid_is_running(pid):
@@ -39,3 +41,30 @@ def _get_bus_connections_pid(bus, connection_name):
     bus_obj = bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
     bus_iface = Interface(bus_obj, 'org.freedesktop.DBus')
     return bus_iface.GetConnectionUnixProcessID(connection_name)
+
+
+def _get_click_manifest():
+    """Return the click package manifest as a python list."""
+    # get the whole click package manifest every time - it seems fast enough
+    # but this is a potential optimisation point for the future:
+    click_manifest_str = subprocess.check_output(
+        ["click", "list", "--manifest"]
+    )
+    return json.loads(click_manifest_str)
+
+
+def _get_click_app_id(package_id, app_name=None):
+    for pkg in _get_click_manifest():
+        if pkg['name'] == package_id:
+            if app_name is None:
+                app_name = pkg['hooks'].keys()[0]
+            elif app_name not in pkg['hooks']:
+                raise RuntimeError(
+                    "Application '{}' is not present within the click "
+                    "package '{}'.".format(app_name, package_id))
+
+            return "{0}_{1}_{2}".format(package_id, app_name, pkg['version'])
+    raise RuntimeError(
+        "Unable to find package '{}' in the click manifest."
+        .format(package_id)
+    )

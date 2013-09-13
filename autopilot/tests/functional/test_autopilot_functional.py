@@ -126,13 +126,19 @@ class AutopilotFunctionalTestsBase(AutopilotTestCase):
 
         self.addDetail('retcode', text_content(str(retcode)))
         self.addDetail(
-            'stdout', Content(
+            'stdout',
+            Content(
                 ContentType('text', 'plain', {'charset': 'iso-8859-1'}),
-                lambda: [stdout]))
+                lambda: [stdout]
+            )
+        )
         self.addDetail(
-            'stderr', Content(
+            'stderr',
+            Content(
                 ContentType('text', 'plain', {'charset': 'iso-8859-1'}),
-                lambda: [stderr]))
+                lambda: [stderr]
+            )
+        )
 
         return (retcode, stdout, stderr)
 

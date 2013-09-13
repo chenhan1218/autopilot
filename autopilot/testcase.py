@@ -347,8 +347,11 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                         break
                 if target_pid != -1:
                     self.addCleanup(self._kill_process, target_pid)
-                    logger.info("Click package %s has been launched with PID %d",
-                        app_id, target_pid)
+                    logger.info(
+                        "Click package %s has been launched with PID %d",
+                        app_id,
+                        target_pid
+                    )
                     break
             # give the app time to launch - maybe this is not needed?:
             sleep(1)

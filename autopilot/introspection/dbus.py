@@ -128,7 +128,7 @@ class DBusIntrospectionObject(object):
         self.__state = {}
         self.__refresh_on_attribute = True
         self._set_properties(state_dict)
-        self.path = path
+        self._path = path
 
     def _set_properties(self, state_dict):
         """Creates and set attributes of *self* based on contents of
@@ -509,10 +509,10 @@ class DBusIntrospectionObject(object):
     def get_class_query_string(self):
         """Get the XPath query string required to refresh this class's
         state."""
-        if not self.path.startswith('/'):
-            return "//" + self.path + "[id=%d]" % self.id
+        if not self._path.startswith('/'):
+            return "//" + self._path + "[id=%d]" % self.id
         else:
-            return self.path + "[id=%d]" % self.id
+            return self._path + "[id=%d]" % self.id
 
     @classmethod
     def make_introspection_object(cls, dbus_tuple):

@@ -323,7 +323,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             "QT_LOAD_TESTABILITY=1",
         ])
         # launch the application:
-        subprocess.call([
+        subprocess.check_output([
             "/sbin/start",
             "application",
             "APP_ID={}".format(app_id),
@@ -338,42 +338,41 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                     "APP_ID={}".format(app_id)
                 ])
             except subprocess.CalledProcessError:
+                # application not started yet.
                 pass
             else:
                 for line in list_output.split('\n'):
                     if app_id in line and "start/running" in line:
                         target_pid = int(line.split()[-1])
-                        break
-                else:
-                    raise RuntimeError(
-                        "Could not find autopilot interface for click package"
-                        " '{}' after 10 seconds.".format(app_id)
-                    )
-                if target_pid != -1:
-                    self.addCleanup(self._kill_process, target_pid)
-                    logger.info(
-                        "Click package %s has been launched with PID %d",
-                        app_id,
-                        target_pid
-                    )
-                    break
+
+                        self.addCleanup(self._kill_process, target_pid)
+                        logger.info(
+                            "Click package %s has been launched with PID %d",
+                            app_id,
+                            target_pid
+                        )
+
+                        emulator_base = kwargs.pop('emulator_base', None)
+                        proxy = get_proxy_object_for_existing_process(
+                            pid=target_pid,
+                            emulator_base=emulator_base
+                        )
+                        # reset the upstart env, and hope no one else launched, or they'll have
+                        # introspection enabled as well, although this isn't the worth thing in
+                        # the world.
+                        subprocess.call([
+                            "/sbin/initctl",
+                            "unset-env",
+                            "QT_LOAD_TESTABILITY",
+                        ])
+                        return proxy
             # give the app time to launch - maybe this is not needed?:
             sleep(1)
-
-        emulator_base = kwargs.pop('emulator_base', None)
-        proxy = get_proxy_object_for_existing_process(
-            pid=target_pid,
-            emulator_base=emulator_base
-        )
-        # reset the upstart env, and hope no one else launched, or they'll have
-        # introspection enabled as well, although this isn't the worth thing in
-        # the world.
-        subprocess.call([
-            "/sbin/initctl",
-            "unset-env",
-            "QT_LOAD_TESTABILITY",
-        ])
-        return proxy
+        else:
+            raise RuntimeError(
+                "Could not find autopilot interface for click package"
+                " '{}' after 10 seconds.".format(app_id)
+            )
 
     def _compare_system_with_app_snapshot(self):
         """Compare the currently running application with the last snapshot.

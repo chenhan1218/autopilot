@@ -25,6 +25,7 @@ from testscenarios import TestWithScenarios
 
 from autopilot.introspection.dbus import (
     CustomEmulatorBase,
+    DBusIntrospectionObject,
     _is_valid_server_side_filter_param,
 )
 
@@ -80,3 +81,14 @@ class ServerSideParamMatchingTests(TestWithScenarios, TestCase):
             _is_valid_server_side_filter_param(self.key, self.value),
             Equals(self.result)
         )
+
+
+class DBusIntrospectionObjectTests(TestCase):
+
+    def test_can_access_path_attribute(self):
+        fake_object = DBusIntrospectionObject(
+            dict(id=123, path='/some/path'),
+            '/'
+        )
+        with fake_object.no_automatic_refreshing():
+            self.assertThat(fake_object.path, Equals('/some/path'))

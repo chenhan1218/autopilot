@@ -294,7 +294,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         Usage is similar to the
         :py:meth:`AutopilotTestCase.launch_test_application`::
 
-            app_proxy = self.launch_click_application(
+            app_proxy = self.launch_click_package(
                 "com.ubuntu.dropping-letters"
             )
 
@@ -328,7 +328,6 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             "application",
             "APP_ID={}".format(app_id),
         ])
-        target_pid = -1
         # perhaps we should do this with a regular expression instead?
         for i in range(10):
             try:
@@ -345,6 +344,11 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                     if app_id in line and "start/running" in line:
                         target_pid = int(line.split()[-1])
                         break
+                else:
+                    raise RuntimeError(
+                        "Could not find autopilot interface for click package"
+                        " '{}' after 10 seconds.".format(app_id)
+                    )
                 if target_pid != -1:
                     self.addCleanup(self._kill_process, target_pid)
                     logger.info(
@@ -355,18 +359,15 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                     break
             # give the app time to launch - maybe this is not needed?:
             sleep(1)
-        if target_pid == -1:
-            raise RuntimeError(
-                "Could not find autopilot interface for click package"
-                " '{}' after 10 seconds.".format(app_id)
-            )
 
         emulator_base = kwargs.pop('emulator_base', None)
         proxy = get_proxy_object_for_existing_process(
             pid=target_pid,
             emulator_base=emulator_base
         )
-        # reset the upstart env, and hope no one else launched...
+        # reset the upstart env, and hope no one else launched, or they'll have
+        # introspection enabled as well, although this isn't the worth thing in
+        # the world.
         subprocess.call([
             "/sbin/initctl",
             "unset-env",

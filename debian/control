@@ -8,10 +8,12 @@ Build-Depends: debhelper (>= 9.0.0),
                gir1.2-gtk-3.0,
                gir1.2-ibus-1.0,
                liblttng-ust-dev,
+               liblttng-ust-dev,
                python (>= 2.6),
                python-dbus,
                python-debian,
                python-dev,
+               python-gi,
                python-mock,
                python-psutil,
                python-setuptools,
@@ -19,8 +21,7 @@ Build-Depends: debhelper (>= 9.0.0),
                python-testscenarios,
                python-testtools,
                python-xlib,
-               python-zeitgeist,
-Standards-Version: 3.9.3
+Standards-Version: 3.9.4
 Homepage: https://launchpad.net/autopilot
 Vcs-bzr: https://code.launchpad.net/+branch/ubuntu/autopilot
 
@@ -60,6 +61,7 @@ Package: autopilot-touch
 Architecture: any
 Section: metapackages
 Depends: ${misc:Depends},
+         libautopilot-qt (>= 1.3) [!powerpc],
          python-autopilot,
          python-evdev,
          python-ubuntu-platform-api [armhf],

@@ -21,11 +21,13 @@
 import json
 import os
 from tempfile import mktemp
-from testtools import TestCase
+from testtools import TestCase, skipIf
 from testtools.matchers import IsInstance, Equals, raises
+from textwrap import dedent
 from unittest import SkipTest
 from mock import patch
 
+from autopilot import platform
 from autopilot.testcase import AutopilotTestCase, multiply_scenarios
 from autopilot.input import Keyboard, Mouse, Pointer, Touch
 from autopilot.input._common import get_center_point
@@ -106,6 +108,24 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
                         "app shows: " + text_edit.plainText
                         )
 
+    def test_typing_with_contextmanager(self):
+        """Typing text must produce the correct characters in the target
+        app.
+
+        """
+        app_proxy = self.start_mock_app()
+        text_edit = app_proxy.select_single('QTextEdit')
+
+        keyboard = Keyboard.create(self.backend)
+        with keyboard.focused_type(text_edit) as kb:
+            kb.type(self.input, 0.01)
+
+            self.assertThat(
+                text_edit.plainText,
+                Eventually(Equals(self.input)),
+                "app shows: " + text_edit.plainText
+            )
+
     def test_keyboard_keys_are_released(self):
         """Typing characters must not leave keys pressed."""
         app_proxy = self.start_mock_app()
@@ -137,6 +157,115 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
                       )
 
 
+@skipIf(platform.model() == 'Desktop', "Only on device")
+class OSKBackendTests(AutopilotTestCase):
+    """Testing the Onscreen Keyboard (Ubuntu Keyboard) backend specifically.
+
+    There are limitations (i.e. on device only, window-mocker doesn't work on
+    the device, can't type all the characters that X11/UInput can.) that
+    necessitate this split into it's own test class.
+
+    """
+
+    scenarios = [
+        ('lower_alpha', dict(input='abcdefghijklmnopqrstuvwxyz')),
+        ('upper_alpha', dict(input='ABCDEFGHIJKLMNOPQRSTUVWXYZ')),
+        ('numeric', dict(input='0123456789')),
+        ('punctuation', dict(input='`~!@#$%^&*()_-+={}[]|\\:;"\'<>,.?/')),
+    ]
+
+    def launch_test_input_area(self):
+        self.app = self._launch_simple_input()
+        text_area = self.app.select_single("QQuickTextInput")
+
+        return text_area
+
+    def _start_qml_script(self, script_contents):
+        """Launch a qml script."""
+        qml_path = mktemp(suffix='.qml')
+        open(qml_path, 'w').write(script_contents)
+        self.addCleanup(os.remove, qml_path)
+
+        return self.launch_test_application(
+            "qmlscene",
+            qml_path,
+            app_type='qt',
+        )
+
+    def _launch_simple_input(self):
+        simple_script = dedent("""
+        import QtQuick 2.0
+        import Ubuntu.Components 0.1
+
+        Rectangle {
+            id: window
+            objectName: "windowRectangle"
+            color: "lightgrey"
+
+            Text {
+                id: inputLabel
+                text: "OSK Tests"
+                font.pixelSize: units.gu(3)
+                anchors {
+                    left: input.left
+                    top: parent.top
+                    topMargin: 25
+                    bottomMargin: 25
+                }
+            }
+
+            TextField {
+                id: input;
+                objectName: "input"
+                anchors {
+                    top: inputLabel.bottom
+                    horizontalCenter: parent.horizontalCenter
+                    topMargin: 10
+                }
+                inputMethodHints: Qt.ImhNoPredictiveText
+            }
+        }
+
+        """)
+
+        return self._start_qml_script(simple_script)
+
+    def test_can_type_string(self):
+        """Typing text must produce the expected characters in the input
+        field.
+
+        """
+
+        text_area = self.launch_test_input_area()
+        keyboard = Keyboard.create('OSK')
+        pointer = Pointer(Touch.create())
+        pointer.click_object(text_area)
+        keyboard._keyboard.wait_for_keyboard_ready()
+
+        keyboard.type(self.input)
+
+        self.assertThat(text_area.text, Eventually(Equals(self.input)))
+
+    def test_focused_typing_contextmanager(self):
+        """Typing text using the 'focused_typing' context manager must not only
+        produce the expected characters in the input field but also cleanup the
+        OSK afterwards too.
+
+        """
+        text_area = self.launch_test_input_area()
+        keyboard = Keyboard.create('OSK')
+        with keyboard.focused_type(text_area) as kb:
+            kb.type(self.input)
+            self.assertThat(
+                text_area.text,
+                Eventually(Equals(self.input))
+            )
+        self.assertThat(
+            keyboard._keyboard.is_available,
+            Eventually(Equals(False))
+        )
+
+
 class MouseTestCase(AutopilotTestCase):
 
     def test_move_to_nonint_point(self):
@@ -156,7 +285,7 @@ class MouseTestCase(AutopilotTestCase):
 
         """
         expected_exception = RuntimeError(
-            "Cannot create a Mouse on the phablet devices."
+            "Cannot create a Mouse on devices where X11 is not available."
         )
         self.assertThat(lambda: Mouse.create(),
                         raises(expected_exception))

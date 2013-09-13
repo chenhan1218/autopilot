@@ -182,18 +182,14 @@ class AutopilotFunctionalTests(AutopilotFunctionalTestsBase):
         if not isinstance(output, basestring):
             raise TypeError("output must be a string, not %r" % type(output))
 
+        test_names = ''.join(['    %s\n' % t for t in sorted(tests)])
         expected = '''\
 Loading tests from: %s
 
 %s
 
  %d total %s.
-''' % (
-            self.base_path,
-            ''.join(['    %s\n' % t for t in sorted(tests)]),
-            len(tests),
-            total_title
-        )
+''' % (self.base_path, test_names, len(tests), total_title)
 
         self.assertThat(output, Equals(expected))
 

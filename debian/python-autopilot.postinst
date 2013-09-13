@@ -20,3 +20,5 @@ if [ "$1" = configure ]; then
     # udev rules were installed, trigger creation of the /dev node
     udevadm trigger --action=change
 fi
+
+#DEBHELPER#

@@ -86,6 +86,9 @@ class ServerSideParamMatchingTests(TestWithScenarios, TestCase):
 class DBusIntrospectionObjectTests(TestCase):
 
     def test_can_access_path_attribute(self):
-        fake_object = DBusIntrospectionObject(dict(id=123, path='/some/path'), '/')
+        fake_object = DBusIntrospectionObject(
+            dict(id=123, path='/some/path'),
+            '/'
+        )
         with fake_object.no_automatic_refreshing():
             self.assertThat(fake_object.path, Equals('/some/path'))

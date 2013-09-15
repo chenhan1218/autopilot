@@ -19,7 +19,7 @@
 
 
 from testtools import TestCase
-from testtools.matchers import raises
+from testtools.matchers import raises, Equals
 
 from autopilot.introspection.dbus import StateNotFoundError
 
@@ -34,4 +34,12 @@ class StateNotFoundTests(TestCase):
         self.assertThat(
             lambda: StateNotFoundError(),
             raises(TypeError('__init__() takes exactly 3 arguments (1 given)'))
+        )
+
+    def test_can_be_constructed_with_class_name_only(self):
+        """Must be able to construct error class with a class name only."""
+        err = StateNotFoundError("MyClass")
+        self.assertThat(
+            err.message,
+            Equals("State not found for class 'MyClass'.")
         )

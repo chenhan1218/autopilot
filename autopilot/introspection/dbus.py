@@ -326,10 +326,10 @@ class DBusIntrospectionObject(object):
             of the appropriate type (the latter case is for overridden emulator
             classes).
 
-        :raises: **ValueError** if the query returns more than one item. *If
+        :raises ValueError: if the query returns more than one item. *If
             you want more than one item, use select_many instead*.
 
-        :raises: **TypeError** if neither *type_name* or keyword filters are
+        :raises TypeError: if neither *type_name* or keyword filters are
             provided.
 
         .. seealso::

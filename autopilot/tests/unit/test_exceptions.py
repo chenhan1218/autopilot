@@ -65,7 +65,7 @@ class StateNotFoundTests(TestCase):
         )
         self.assertThat(
             unicode(err),
-            Equals("State not found with filters {'foo': 'bar'}.")
+            Equals(u"State not found with filters {'foo': 'bar'}.")
         )
 
     def test_can_be_constructed_with_class_name_and_filters(self):
@@ -83,6 +83,6 @@ class StateNotFoundTests(TestCase):
         )
         self.assertThat(
             unicode(err),
-            Equals("State not found for class 'MyClass'"
+            Equals(u"State not found for class 'MyClass'"
                    " and filters {'foo': 'bar'}.")
         )

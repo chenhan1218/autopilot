@@ -22,10 +22,11 @@ import json
 import os
 import subprocess
 import signal
+from time import time
 from tempfile import mktemp
 
 from autopilot.testcase import AutopilotTestCase
-from testtools.matchers import Equals, NotEquals, raises
+from testtools.matchers import Equals, NotEquals, raises, LessThan, GreaterThan
 from autopilot.introspection.dbus import StateNotFoundError
 
 
@@ -166,6 +167,23 @@ class DbusQueryTests(AutopilotTestCase):
         app = self.start_fully_featured_app()
         failed_match = app.select_many('QMenu', title='qwerty')
         self.assertThat(failed_match, Equals([]))
+
+    def test_wait_select_single_succeeds_quickly(self):
+        app = self.start_fully_featured_app()
+        start_time = time()
+        main_window = app.wait_select_single('QMainWindow')
+        end_time = time()
+        self.assertThat(main_window, NotEquals(None))
+        self.assertThat(abs(end_time - start_time), LessThan(1))
+
+    def test_wait_select_single_fails_slowly(self):
+        app = self.start_fully_featured_app()
+        start_time = time()
+        fn = lambda: app.wait_select_single('QMadeupType')
+        self.assertThat(fn, raises(StateNotFoundError('QMadeupType')))
+        end_time = time()
+        self.assertThat(abs(end_time - start_time), GreaterThan(9))
+        self.assertThat(abs(end_time - start_time), LessThan(10))
 
 
 class DbusCustomBusTests(AutopilotTestCase):

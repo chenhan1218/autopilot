@@ -33,7 +33,7 @@ class StateNotFoundTests(TestCase):
         """
         self.assertThat(
             lambda: StateNotFoundError(),
-            raises(TypeError('__init__() takes exactly 3 arguments (1 given)'))
+            raises(TypeError('__init__() takes exactly 2 arguments (1 given)'))
         )
 
     def test_can_be_constructed_with_class_name_only(self):

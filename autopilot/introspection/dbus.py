@@ -41,14 +41,33 @@ _object_registry = {}
 logger = logging.getLogger(__name__)
 
 
-class StateNotFoundError(RuntimeError):
-    """Raised when a piece of state information from unity is not found."""
+class StateNotFoundError(Exception):
 
-    message = "State not found for class with name '{}' and id '{}'."
+    """Raised when a piece of state information is not found.
 
-    def __init__(self, class_name, class_id):
-        super(StateNotFoundError, self).__init__(
-            self.message.format(class_name, class_id))
+    This exception is commonly raised when the application has destroyed (or
+    not yet created) the object you are trying to access in autopilot. This
+    typically happens for a number of possible reasons:
+
+     * The UI widget you are trying to access with
+        :py:met:`DBusIntrospectionObject.select_single` or
+        :py:met:`DBusIntrospectionObject.select_single` does not exist yet.
+    * The UI widget you are trying to access has been destroyed by the
+        application.
+
+    """
+
+    def __init__(self, class_name, **filters):
+        if filters:
+            self.message = \
+                "State not found for class '{}' and id '{}'.".format(
+                    class_name,
+                    repr(filters)
+                )
+        else:
+            self.message = "State not found for class '{}'.".format(
+                class_name
+            )
 
 
 class IntrospectableObjectMetaclass(type):

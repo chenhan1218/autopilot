@@ -18,6 +18,7 @@
 #
 
 import logging
+import sys
 from time import sleep
 from contextlib import contextmanager
 
@@ -30,6 +31,10 @@ from autopilot.input import Keyboard as KeyboardBase
 
 
 logger = logging.getLogger(__name__)
+
+# py2 compatible alias for py3
+if sys.version >= '3':
+    basestring = str
 
 
 class Keyboard(KeyboardBase):

@@ -38,6 +38,10 @@ from autopilot.introspection import (
 )
 
 
+# backwards compatible alias for Python 3
+if sys.version > '3':
+    xrange = range
+
 logger = logging.getLogger(__name__)
 
 
@@ -215,7 +219,8 @@ class QtTests(ApplicationTests):
         # We cannot use 'which', as qtchooser installs wrappers - we need to
         # check in the actual library paths
         env = subprocess.check_output(
-            ['qtchooser', '-qt=' + version, '-print-env']).split('\n')
+            ['qtchooser', '-qt=' + version, '-print-env'],
+            universal_newlines=True).split('\n')
         for i in env:
             if i.find('QTTOOLDIR') >= 0:
                 path = i.lstrip("QTTOOLDIR=").strip('"') + "/" + name
@@ -227,7 +232,8 @@ class QtTests(ApplicationTests):
     def _find_qt_binary_old(self, version, name):
         # Check for the existence of the binary the old way
         try:
-            path = subprocess.check_output(['which', 'qmlviewer']).strip()
+            path = subprocess.check_output(['which', 'qmlviewer'],
+                                           universal_newlines=True).strip()
         except subprocess.CalledProcessError:
             path = None
         return path
@@ -237,7 +243,7 @@ class QtTests(ApplicationTests):
 
         try:
             qtversions = subprocess.check_output(
-                ['qtchooser', '-list-versions']).split('\n')
+                ['qtchooser', '-list-versions'], universal_newlines=True).split('\n')
             check_func = self._find_qt_binary_chooser
         except OSError:
             # This means no qtchooser is installed, so let's check for
@@ -310,7 +316,7 @@ class GtkTests(ApplicationTests):
 
         try:
             self.app_path = subprocess.check_output(
-                ['which', 'gnome-mahjongg']).strip()
+                ['which', 'gnome-mahjongg'], universal_newlines=True).strip()
         except subprocess.CalledProcessError:
             self.skip("gnome-mahjongg not found.")
 

@@ -66,7 +66,7 @@ def list_tests(args):
 
         suite_names = ["%s.%s" % (t.__module__, t.__class__.__name__)
                        for t in test_list_fn()]
-        unique_suite_names = OrderedDict.fromkeys(suite_names).keys()
+        unique_suite_names = list(OrderedDict.fromkeys(suite_names).keys())
         num_tests = len(unique_suite_names)
         total_title = "suites"
         print("    %s" % ("\n    ".join(unique_suite_names)))
@@ -216,7 +216,7 @@ class ConfigurableTestRunner(object):
 def load_test_suite_from_name(test_names):
     """Returns a test suite object given a dotted test names."""
     loader = TestLoader()
-    if isinstance(test_names, basestring):
+    if isinstance(test_names, str):
         test_names = list(test_names)
     elif not isinstance(test_names, list):
         raise TypeError("test_names must be either a string or list, not %r"
@@ -287,7 +287,8 @@ def launch_app(args):
     app_name = args.application[0]
     if not isabs(app_name) or not exists(app_name):
         try:
-            app_name = subprocess.check_output(["which", app_name]).strip()
+            app_name = subprocess.check_output(["which", app_name],
+                                               universal_newlines=True).strip()
         except subprocess.CalledProcessError:
             print("Error: cannot find application '%s'" % (app_name))
             exit(1)

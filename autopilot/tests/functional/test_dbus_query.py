@@ -184,7 +184,8 @@ class DbusCustomBusTests(AutopilotTestCase):
         super(DbusCustomBusTests, self).setUp()
 
     def _enable_custom_dbus_bus(self):
-        p = subprocess.Popen(['dbus-launch'], stdout=subprocess.PIPE)
+        p = subprocess.Popen(['dbus-launch'], stdout=subprocess.PIPE,
+                             universal_newlines=True)
         output = p.communicate()
         results = output[0].split("\n")
         dbus_pid = int(results[1].split("=")[1])

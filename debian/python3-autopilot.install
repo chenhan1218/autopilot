@@ -1,0 +1,9 @@
+usr/bin/autopilot /usr/bin/
+debian/61-autopilot-uinput.rules /lib/udev/rules.d
+usr/lib/python3*/*/autopilot/*.py
+usr/lib/python3*/*/autopilot/display/*.py
+usr/lib/python3*/*/autopilot/input/*.py
+usr/lib/python3*/*/autopilot/introspection/*.py
+usr/lib/python3*/*/autopilot/matchers/*.py
+usr/lib/python3*/*/autopilot/process/*.py
+

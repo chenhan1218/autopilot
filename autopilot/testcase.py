@@ -251,7 +251,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
          data is retrievable via this object.
 
         """
-        app_path = subprocess.check_output(['which', application]).strip()
+        app_path = subprocess.check_output(['which', application],
+                                           universal_newlines=True).strip()
         # Get a launcher, tests can override this if they need:
         launcher_hint = kwargs.pop('app_type', '')
         launcher = None
@@ -294,8 +295,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         new_apps = []
         for i in range(10):
             current_apps = self.process_manager.get_running_applications()
-            new_apps = filter(
-                lambda i: i not in self._app_snapshot, current_apps)
+            new_apps = list(filter(
+                lambda i: i not in self._app_snapshot, current_apps))
             if not new_apps:
                 self._app_snapshot = None
                 return
@@ -399,7 +400,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         if not kwargs:
             raise ValueError("At least one keyword argument must be present.")
 
-        for prop_name, desired_value in kwargs.iteritems():
+        for prop_name, desired_value in kwargs.items():
             none_val = object()
             attr = getattr(obj, prop_name, none_val)
             if attr == none_val:

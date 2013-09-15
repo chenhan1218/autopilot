@@ -34,13 +34,14 @@ from autopilot import BackendException
 
 def _pick_backend(backends, preferred_backend):
     """Pick a backend and return an instance of it."""
-    possible_backends = backends.keys()
+    possible_backends = list(backends.keys())
     get_debug_logger().debug(
         "Possible backends: %s", ','.join(possible_backends))
     if preferred_backend:
         if preferred_backend in possible_backends:
-            possible_backends.sort(
-                lambda a, b: -1 if a == preferred_backend else 0)
+            # make preferred_backend the first list item
+            possible_backends.remove(preferred_backend)
+            possible_backends.insert(0, preferred_backend)
         else:
             raise RuntimeError("Unknown backend '%s'" % (preferred_backend))
     failure_reasons = []
@@ -67,7 +68,7 @@ class Silence(object):
     ...
 
     """
-    def __init__(self, stdout=os.devnull, stderr=os.devnull, mode='w'):
+    def __init__(self, stdout=os.devnull, stderr=os.devnull, mode='wb'):
         self.outfiles = stdout, stderr
         self.combine = (stdout == stderr)
         self.mode = mode

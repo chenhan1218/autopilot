@@ -20,7 +20,10 @@
 
 """Code for introspection tree object properties."""
 
+import sys
+
 from PyQt4 import QtGui, QtCore
+
 
 from autopilot.vis.resources import get_qt_icon, dbus_string_rep
 from autopilot.introspection.qt import QtObjectProxyMixin
@@ -94,7 +97,10 @@ class PropertyView(AbstractView):
     def __init__(self, *args, **kwargs):
         super(PropertyView, self).__init__(*args, **kwargs)
 
-        header_titles = QtCore.QStringList(["Name", "Value"])
+        if sys.version >= '3':
+            header_titles = ["Name", "Value"]
+        else:
+            header_titles = QtCore.QStringList(["Name", "Value"])
         self.details_layout = QtGui.QVBoxLayout(self)
 
         self.table_view = QtGui.QTableWidget()
@@ -122,7 +128,7 @@ class PropertyView(AbstractView):
             details_string = dbus_string_rep(object_details[key])
             item_name = QtGui.QTableWidgetItem(key)
             item_details = QtGui.QTableWidgetItem(
-                details_string.decode('utf-8'))
+                details_string)
             self.table_view.setItem(i, 0, item_name)
             self.table_view.setItem(i, 1, item_details)
         self.table_view.setSortingEnabled(True)

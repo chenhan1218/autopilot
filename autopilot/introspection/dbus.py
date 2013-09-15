@@ -30,6 +30,7 @@ from __future__ import absolute_import
 from contextlib import contextmanager
 import logging
 import re
+import sys
 from uuid import uuid4
 
 from autopilot.introspection.types import create_value_instance
@@ -39,6 +40,14 @@ from autopilot.utilities import Timer, get_debug_logger
 
 _object_registry = {}
 logger = logging.getLogger(__name__)
+
+
+# py2 compatible alias for py3
+if sys.version >= '3':
+    _PY3 = True
+    basestring = str
+else:
+    _PY3 = False
 
 
 class StateNotFoundError(RuntimeError):
@@ -81,7 +90,7 @@ def _clear_backends_for_proxy_object(proxy_object):
 
     """
     global _object_registry
-    for cls in _object_registry[proxy_object._id].itervalues():
+    for cls in _object_registry[proxy_object._id].values():
         if type(proxy_object) is not cls:
             cls._Backend = None
 
@@ -94,7 +103,7 @@ def object_passes_filters(instance, **kwargs):
     """Return true if *instance* satisifies all the filters present in
     kwargs."""
     with instance.no_automatic_refreshing():
-        for attr, val in kwargs.iteritems():
+        for attr, val in kwargs.items():
             if not hasattr(instance, attr) or getattr(instance, attr) != val:
                 # Either attribute is not present, or is present but with
                 # the wrong value - don't add this instance to the results
@@ -135,7 +144,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         """
         self.__state = {}
-        for key, value in translate_state_keys(state_dict).iteritems():
+        for key, value in translate_state_keys(state_dict).items():
             # don't store id in state dictionary -make it a proper instance
             # attribute
             if key == 'id':
@@ -330,7 +339,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         server_side_filters = []
         client_side_filters = {}
-        for k, v in kwargs.iteritems():
+        for k, v in kwargs.items():
             # LP Bug 1209029: The XPathSelect protocol does not allow all valid
             # node names or values. We need to decide here whether the filter
             # parameters are going to work on the backend or not. If not, we
@@ -353,10 +362,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         state_dicts = self.get_state_by_path(query_path)
         instances = [self.make_introspection_object(i) for i in state_dicts]
-        return filter(
-            lambda i: object_passes_filters(i, **client_side_filters),
-            instances
-        )
+        return [i for i in instances
+                if object_passes_filters(i, **client_side_filters)]
 
     def refresh_state(self):
         """Refreshes the object's state.
@@ -525,9 +532,12 @@ def _get_filter_string_for_key_value_pair(key, value):
 
     """
     if isinstance(value, str):
-        escaped_value = value.encode("string_escape")
-        # note: string_escape codec escapes "'" but not '"'...
-        escaped_value = escaped_value.replace('"', r'\"')
+        if _PY3:
+            escaped_value = value.encode("unicode_escape").decode('ASCII').replace("'", "\\'")
+        else:
+            escaped_value = value.encode("string_escape")
+            # note: string_escape codec escapes "'" but not '"'...
+            escaped_value = escaped_value.replace('"', r'\"')
         return '{}="{}"'.format(key, escaped_value)
     elif isinstance(value, int) or isinstance(value, bool):
         return "{}={}".format(key, repr(value))

@@ -44,4 +44,4 @@ def _get_bus_connections_pid(bus, connection_name):
 def translate_state_keys(state_dict):
     """Translates the *state_dict* passed in so the keys are usable as python
     attributes."""
-    return {k.replace('-', '_'): v for k, v in state_dict.iteritems()}
+    return {k.replace('-', '_'): v for k, v in state_dict.items()}

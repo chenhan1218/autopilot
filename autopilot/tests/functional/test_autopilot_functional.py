@@ -99,7 +99,8 @@ class AutopilotFunctionalTestsBase(AutopilotTestCase):
             environment_patch['PYTHONPATH'] = ap_base_path
         bin_path = os.path.join(ap_base_path, 'bin', 'autopilot')
         if not os.path.exists(bin_path):
-            bin_path = subprocess.check_output(['which', 'autopilot']).strip()
+            bin_path = subprocess.check_output(['which', 'autopilot'],
+                                               universal_newlines=True).strip()
             logger.info(
                 "Not running from source, setting bin_path to %s", bin_path)
 
@@ -119,6 +120,7 @@ class AutopilotFunctionalTestsBase(AutopilotTestCase):
             env=environ,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            universal_newlines=True,
         )
 
         stdout, stderr = process.communicate()
@@ -173,7 +175,7 @@ class AutopilotFunctionalTests(AutopilotFunctionalTestsBase):
 
         if type(tests) is not list:
             raise TypeError("tests must be a list, not %r" % type(tests))
-        if not isinstance(output, basestring):
+        if not isinstance(output, str):
             raise TypeError("output must be a string, not %r" % type(output))
 
         test_names = ''.join(['    %s\n' % t for t in sorted(tests)])
@@ -738,7 +740,7 @@ SyntaxError: invalid syntax
 
         self.assertThat(code, Equals(1))
         self.assertTrue(os.path.exists(output_file_path))
-        log_contents = unicode(open(output_file_path, encoding='utf-8').read())
+        log_contents = open(output_file_path, encoding='utf-8').read()
         self.assertThat(
             log_contents,
             Contains(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH'))
@@ -773,7 +775,7 @@ SyntaxError: invalid syntax
 
         self.assertThat(code, Equals(1))
         self.assertTrue(os.path.exists(output_file_path))
-        log_contents = unicode(open(output_file_path, encoding='utf-8').read())
+        log_contents = open(output_file_path, encoding='utf-8').read()
         self.assertThat(
             log_contents,
             Contains(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH'))

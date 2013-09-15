@@ -543,7 +543,7 @@ class DBusIntrospectionObject(object):
         try:
             return self.get_state_by_path(self.get_class_query_string())[0]
         except IndexError:
-            raise StateNotFoundError(self.__class__.__name__, self.id)
+            raise StateNotFoundError(self.__class__.__name__, id=self.id)
 
     def get_class_query_string(self):
         """Get the XPath query string required to refresh this class's

@@ -41,7 +41,7 @@ _object_registry = {}
 logger = logging.getLogger(__name__)
 
 
-class StateNotFoundError(Exception):
+class StateNotFoundError(RuntimeError):
 
     """Raised when a piece of state information is not found.
 
@@ -60,14 +60,20 @@ class StateNotFoundError(Exception):
     def __init__(self, class_name, **filters):
         if filters:
             self.message = \
-                "State not found for class '{}' and id '{}'.".format(
+                u"State not found for class '{}' and id '{}'.".format(
                     class_name,
                     repr(filters)
                 )
         else:
-            self.message = "State not found for class '{}'.".format(
+            self.message = u"State not found for class '{}'.".format(
                 class_name
             )
+
+    def __str__(self):
+        return self.message
+
+    def __unicode__(self):
+        return self.message
 
 
 class IntrospectableObjectMetaclass(type):

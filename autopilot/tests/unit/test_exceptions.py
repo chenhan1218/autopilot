@@ -43,3 +43,12 @@ class StateNotFoundTests(TestCase):
             err.message,
             Equals("State not found for class 'MyClass'.")
         )
+        self.assertThat(
+            str(err),
+            Equals("State not found for class 'MyClass'.")
+        )
+        self.assertThat(
+            unicode(err),
+            Equals(u"State not found for class 'MyClass'.")
+        )
+

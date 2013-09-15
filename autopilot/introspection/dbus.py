@@ -371,6 +371,8 @@ class DBusIntrospectionObject(object):
         :raises TypeError: if neither *type_name* or keyword filters are
             provided.
 
+        :raises StateNotFoundError: if the requested object was not found.
+
         .. seealso::
             Tutorial Section :ref:`custom_emulators`
 
@@ -379,7 +381,7 @@ class DBusIntrospectionObject(object):
         if len(instances) > 1:
             raise ValueError("More than one item was returned for query")
         if not instances:
-            return None
+            raise StateNotFoundError(type_name, **kwargs)
         return instances[0]
 
     def select_many(self, type_name='*', **kwargs):

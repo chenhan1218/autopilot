@@ -129,7 +129,7 @@ class DbusQueryTests(AutopilotTestCase):
     def test_select_single_no_match_raises_exception(self):
         app = self.start_fully_featured_app()
         match_fn = lambda: app.select_single("QMadeupType")
-        self.assertThat(match_fn, raises(StateNotFoundError))
+        self.assertThat(match_fn, raises(StateNotFoundError('QMadeupType')))
 
     def test_select_single_parameters_only(self):
         app = self.start_fully_featured_app()

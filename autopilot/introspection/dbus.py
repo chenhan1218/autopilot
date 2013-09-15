@@ -57,17 +57,31 @@ class StateNotFoundError(RuntimeError):
 
     """
 
-    def __init__(self, class_name, **filters):
-        if filters:
+    def __init__(self, class_name=None, **filters):
+        """Construct a StateNotFoundError.
+
+        :raises ValueError: if neither the class name not keyword arguments
+            are specified.
+
+        """
+        if class_name is None and not filters:
+            raise ValueError("Must specify either class name or filters.")
+
+        if class_name is None:
             self.message = \
-                u"State not found for class '{}' and id '{}'.".format(
-                    class_name,
+                u"State not found with filters {}.".format(
                     repr(filters)
                 )
-        else:
+        elif not filters:
             self.message = u"State not found for class '{}'.".format(
                 class_name
             )
+        else:
+            self.message = \
+                u"State not found for class '{}' and filters {}.".format(
+                    class_name,
+                    repr(filters)
+                )
 
     def __str__(self):
         return self.message

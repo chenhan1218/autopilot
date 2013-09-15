@@ -33,7 +33,7 @@ class StateNotFoundTests(TestCase):
         """
         self.assertThat(
             lambda: StateNotFoundError(),
-            raises(TypeError('__init__() takes exactly 2 arguments (1 given)'))
+            raises(ValueError("Must specify either class name or filters."))
         )
 
     def test_can_be_constructed_with_class_name_only(self):
@@ -52,3 +52,37 @@ class StateNotFoundTests(TestCase):
             Equals(u"State not found for class 'MyClass'.")
         )
 
+    def test_can_be_constructed_with_filters_only(self):
+        """Must be able to construct exception with filters only."""
+        err = StateNotFoundError(foo="bar")
+        self.assertThat(
+            err.message,
+            Equals("State not found with filters {'foo': 'bar'}.")
+        )
+        self.assertThat(
+            str(err),
+            Equals("State not found with filters {'foo': 'bar'}.")
+        )
+        self.assertThat(
+            unicode(err),
+            Equals("State not found with filters {'foo': 'bar'}.")
+        )
+
+    def test_can_be_constructed_with_class_name_and_filters(self):
+        """Must be able to construct with both class name and filters."""
+        err = StateNotFoundError('MyClass', foo="bar")
+        self.assertThat(
+            err.message,
+            Equals("State not found for class 'MyClass'"
+                   " and filters {'foo': 'bar'}.")
+        )
+        self.assertThat(
+            str(err),
+            Equals("State not found for class 'MyClass'"
+                   " and filters {'foo': 'bar'}.")
+        )
+        self.assertThat(
+            unicode(err),
+            Equals("State not found for class 'MyClass'"
+                   " and filters {'foo': 'bar'}.")
+        )

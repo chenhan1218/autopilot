@@ -37,7 +37,10 @@ override_dh_install:
 	# note, egg-info isn't important unless we have entry_points or other
 	# things that runtime wants to inspect
 	dh_install -X.pyc -X.egg-info --fail-missing
-	# provide python3-ized runner
-	cd debian/python3-autopilot/usr/bin && mv autopilot autopilot-py3 && sed -i '1 s/python$$/python3/' autopilot-py3
-	# avoid file conflicts
-	cd debian/python3-autopilot/lib/udev/rules.d && mv 61-autopilot-uinput.rules 61-autopilot-py3-uinput.rules
+	# provide python3-ized runner and avoid file conflicts
+	set -e; if [ -d debian/python3-autopilot ]; then \
+	    cd debian/python3-autopilot; \
+	    mv usr/bin/autopilot usr/bin/autopilot-py3; \
+	    sed -i '1 s/python$$/python3/' usr/bin/autopilot-py3; \
+	    mv lib/udev/rules.d/61-autopilot-uinput.rules lib/udev/rules.d/61-autopilot-py3-uinput.rules; \
+	fi

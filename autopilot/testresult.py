@@ -20,7 +20,7 @@
 
 """Autopilot test result classes"""
 
-from __future__ import absolute_import 
+from __future__ import absolute_import
 
 import logging
 

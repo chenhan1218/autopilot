@@ -68,26 +68,26 @@ class StateNotFoundError(RuntimeError):
             raise ValueError("Must specify either class name or filters.")
 
         if class_name is None:
-            self.message = \
+            self._message = \
                 u"State not found with filters {}.".format(
                     repr(filters)
                 )
         elif not filters:
-            self.message = u"State not found for class '{}'.".format(
+            self._message = u"State not found for class '{}'.".format(
                 class_name
             )
         else:
-            self.message = \
+            self._message = \
                 u"State not found for class '{}' and filters {}.".format(
                     class_name,
                     repr(filters)
                 )
 
     def __str__(self):
-        return self.message
+        return self._message.encode('utf8')
 
     def __unicode__(self):
-        return self.message
+        return self._message
 
 
 class IntrospectableObjectMetaclass(type):

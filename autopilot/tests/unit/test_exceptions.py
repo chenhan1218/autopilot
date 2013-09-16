@@ -32,17 +32,13 @@ class StateNotFoundTests(TestCase):
 
         """
         self.assertThat(
-            lambda: StateNotFoundError(),
+            StateNotFoundError,
             raises(ValueError("Must specify either class name or filters."))
         )
 
     def test_can_be_constructed_with_class_name_only(self):
         """Must be able to construct error class with a class name only."""
         err = StateNotFoundError("MyClass")
-        self.assertThat(
-            err.message,
-            Equals("State not found for class 'MyClass'.")
-        )
         self.assertThat(
             str(err),
             Equals("State not found for class 'MyClass'.")
@@ -56,10 +52,6 @@ class StateNotFoundTests(TestCase):
         """Must be able to construct exception with filters only."""
         err = StateNotFoundError(foo="bar")
         self.assertThat(
-            err.message,
-            Equals("State not found with filters {'foo': 'bar'}.")
-        )
-        self.assertThat(
             str(err),
             Equals("State not found with filters {'foo': 'bar'}.")
         )
@@ -71,11 +63,6 @@ class StateNotFoundTests(TestCase):
     def test_can_be_constructed_with_class_name_and_filters(self):
         """Must be able to construct with both class name and filters."""
         err = StateNotFoundError('MyClass', foo="bar")
-        self.assertThat(
-            err.message,
-            Equals("State not found for class 'MyClass'"
-                   " and filters {'foo': 'bar'}.")
-        )
         self.assertThat(
             str(err),
             Equals("State not found for class 'MyClass'"

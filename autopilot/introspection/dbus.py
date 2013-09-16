@@ -359,7 +359,8 @@ class DBusIntrospectionObject(object):
             app.select_single('QPushButton', objectName='clickme')
             # returns a QPushButton whose 'objectName' property is 'clickme'.
 
-        If nothing is returned from the query, this method returns None.
+        If nothing is returned from the query, this method raises
+        StateNotFoundError.
 
         :param type_name: Either a string naming the type you want, or a class
             of the appropriate type (the latter case is for overridden emulator

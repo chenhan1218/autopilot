@@ -35,7 +35,7 @@ def log_action(log_func):
                 docstring = docstring.split('\n')[0].strip()
             else:
                 docstring = f.__name__
-            log_line = '%s: %s. Arguments %s. Keyword arguments: %s.'
+            log_line = '%s: %s. Arguments %r. Keyword arguments: %r.'
             log_func(log_line, class_name, docstring, args, kwargs)
             return f(instance, *args, **kwargs)
 

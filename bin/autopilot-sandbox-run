@@ -1,0 +1,178 @@
+#!/bin/sh
+
+#
+# Runner to execute autopilot locally
+#
+# This scripts run autopilot in a "fake" X server, either headless with xvfb
+# or nested with Xephyr
+#
+
+# Copyright (C) 2013 Canonical
+#
+# Authors: Jean-Baptiste Lallement <jean-baptiste.lallement@canonical.com>
+#
+# This program is free software; you can redistribute it and/or modify it # under
+# the terms of the GNU General Public License as published by the Free # Software
+# Foundation; version 3.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or # FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more # details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+set -eu
+
+# General Settings
+RC=0  # Main return code
+BINDIR=$(dirname $(readlink -f $0))
+XEPHYR=0
+XEPHYR_CMD="$(which Xephyr||true)"
+XEPHYR_OPT="-ac -br -noreset"
+
+XVFB_CMD="$(which Xvfb||true)"
+XVFB_OPT=""
+
+AP_CMD="$(which autopilot)"
+AP_OPT=""
+
+SERVERNUM=5
+SCREEN="1024x768x24"
+
+DBUS_SESSION_BUS_PID=""
+X_PID=""
+
+usage() {
+    # Display usage and exit with error
+    cat<<EOF
+Usage: $(basename $0) [OPTIONS...] TEST [TEST...]
+Runs autopilot tests in a 'fake' Xserver with Xvfb or Xephyr. autopilot runs
+in Xvfb by default.
+    
+    TEST: autopilot tests to run
+
+Options:
+    -h, --help           This help
+    -d, --debug          Enable debug mode
+    -a, --autopilot ARG  Pass arguments ARG to 'autopilot run'
+    -X, --xephyr         Run in nested mode with Xephyr
+    -s, --screen WxHxD   Sets screen width, height, and depth to W, H, and D
+                         respectively (default: $SCREEN)
+
+EOF
+    RC=1
+    exit
+}
+
+find_free_servernum() {
+    # Find a free server number by looking at .X*-lock files in /tmp.
+    # Inspired from xvfb-run
+    #
+    # Args:
+    #   None
+    # Returns:
+    #   First free server number
+    #
+    snum=$SERVERNUM
+    while [ -f /tmp/.X$snum-lock ]; do
+        snum=$(($snum + 1))
+    done
+    echo $snum
+}
+
+wait_for_x() {
+    # Waits for start of fake X server and exit on timeout
+    #
+    # Args:
+    #   $1: Server number
+    # Returns
+    #   None
+    if [ $# -ne 1 ]; then
+        echo "E: wait_for_x: Missing argument servernum"
+        RC=1
+        exit
+    fi
+    loops=100
+    delay=.1
+    snum=$1
+    while [ ! -e /tmp/.X$snum-lock ]; do
+        sleep $delay
+        loops=$((loops - 1))
+        if [ $loops -le 0 ]; then
+            echo "E: X Server :$snum failed to come up.  Aborting!"
+            RC=1
+            exit
+        fi
+    done
+}
+
+on_exit() {
+    # Exit handler
+    for pid in "$DBUS_SESSION_BUS_PID" "$X_PID"; do
+        [ -n "$pid" ] && kill $pid >/dev/null 2>&1 || true
+    done
+
+    exit $RC
+}
+
+trap on_exit EXIT INT QUIT ABRT PIPE TERM
+
+SHORTOPTS="hda:s:X"
+LONGOPTS="help,debug,autopilot:,screen:,xephyr"
+
+TEMP=$(getopt -o $SHORTOPTS --long $LONGOPTS -- "$@")
+eval set -- "$TEMP"
+
+exec 2>&1
+
+while true ; do
+    case "$1" in
+        -h|--help)
+            usage;;
+        -d|--debug)
+            set -x
+            shift;;
+        -a|--autopilot)
+            AP_OPT=$2
+            shift 2;;
+        -s|-screen)
+            SCREEN=$2
+            shift 2;;
+        -X|--xephyr)
+            XEPHYR=1
+            [ ! -x "$XEPHYR_CMD" ] && \
+                echo "E: Xephyr executable not found. Please install Xephyr" &&\
+                RC=1 && exit 1
+            shift;;
+        --) shift;
+            break;;
+        *) usage;;
+    esac
+done
+
+[ $# -eq 0 ] && usage
+if [ $XEPHYR -eq 0 -a ! -x "$XVFB_CMD" ]; then
+    echo "E: Xvfb executable not found. Please install xvfb"
+    RC=1
+    exit 
+fi
+
+TESTLIST="$@"
+echo "I: Running tests $TESTLIST"
+
+SERVERNUM=$(find_free_servernum)
+XCMD="$XVFB_CMD :$SERVERNUM $XVFB_OPT -screen 0 $SCREEN"
+[ $XEPHYR -eq 1 ] && XCMD="$XEPHYR_CMD :$SERVERNUM $XEPHYR_OPT -screen $SCREEN"
+
+echo "I: Starting X Server: $XCMD"
+$XCMD >/dev/null 2>&1 &
+X_PID=$!
+export DISPLAY=:${SERVERNUM}.0
+
+export XAUTHORITY=/dev/null
+wait_for_x $SERVERNUM
+echo "I: Starting autopilot"
+dbus-launch --exit-with-session autopilot run $AP_OPT $TESTLIST
+echo "I: autopilot tests done"
+RC=$?

@@ -26,6 +26,7 @@ from tempfile import mktemp
 
 from autopilot.testcase import AutopilotTestCase
 from testtools.matchers import Equals, NotEquals, raises
+from autopilot.introspection.dbus import StateNotFoundError
 
 
 class DbusQueryTests(AutopilotTestCase):
@@ -126,10 +127,10 @@ class DbusQueryTests(AutopilotTestCase):
         fn = lambda: app.select_single()
         self.assertThat(fn, raises(TypeError))
 
-    def test_select_single_no_match_returns_none(self):
+    def test_select_single_no_match_raises_exception(self):
         app = self.start_fully_featured_app()
-        failed_match = app.select_single("QMadeupType")
-        self.assertThat(failed_match, Equals(None))
+        match_fn = lambda: app.select_single("QMadeupType")
+        self.assertThat(match_fn, raises(StateNotFoundError('QMadeupType')))
 
     def test_select_single_parameters_only(self):
         app = self.start_fully_featured_app()
@@ -138,10 +139,13 @@ class DbusQueryTests(AutopilotTestCase):
         self.assertThat(titled_help, NotEquals(None))
         self.assertThat(titled_help.title, Equals('Help'))
 
-    def test_select_single_parameters_no_match_returns_none(self):
+    def test_select_single_parameters_no_match_raises_exception(self):
         app = self.start_fully_featured_app()
-        failed_match = app.select_single(title="Non-existant object")
-        self.assertThat(failed_match, Equals(None))
+        match_fn = lambda: app.select_single(title="Non-existant object")
+        self.assertThat(
+            match_fn,
+            raises(StateNotFoundError(title="Non-existant object"))
+        )
 
     def test_select_single_returning_multiple_raises(self):
         app = self.start_fully_featured_app()

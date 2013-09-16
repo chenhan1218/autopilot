@@ -359,7 +359,8 @@ class DBusIntrospectionObject(object):
             app.select_single('QPushButton', objectName='clickme')
             # returns a QPushButton whose 'objectName' property is 'clickme'.
 
-        If nothing is returned from the query, this method returns None.
+        If nothing is returned from the query, this method raises
+        StateNotFoundError.
 
         :param type_name: Either a string naming the type you want, or a class
             of the appropriate type (the latter case is for overridden emulator
@@ -371,6 +372,8 @@ class DBusIntrospectionObject(object):
         :raises TypeError: if neither *type_name* or keyword filters are
             provided.
 
+        :raises StateNotFoundError: if the requested object was not found.
+
         .. seealso::
             Tutorial Section :ref:`custom_emulators`
 
@@ -379,7 +382,7 @@ class DBusIntrospectionObject(object):
         if len(instances) > 1:
             raise ValueError("More than one item was returned for query")
         if not instances:
-            return None
+            raise StateNotFoundError(type_name, **kwargs)
         return instances[0]
 
     def select_many(self, type_name='*', **kwargs):

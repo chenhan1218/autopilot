@@ -116,7 +116,7 @@ class LoggingTestCase(LogHandlerTestCase):
             'arg1', 'arg2', arg3='arg3', arg4='arg4')
         self.assertLogLevelContains(
             'INFO',
-            "'ObjectWithLogDecorator': 'do_something_without_docstring'. "
+            "ObjectWithLogDecorator: do_something_without_docstring. "
             "Arguments ('arg1', 'arg2'). "
             "Keyword arguments: {'arg3': 'arg3', 'arg4': 'arg4'}.")
 
@@ -125,7 +125,7 @@ class LoggingTestCase(LogHandlerTestCase):
             'arg1', 'arg2', arg3='arg3', arg4='arg4')
         self.assertLogLevelContains(
             'INFO',
-            "'ObjectWithLogDecorator': 'Do something with docstring.'. "
+            "ObjectWithLogDecorator: Do something with docstring.. "
             "Arguments ('arg1', 'arg2'). "
             "Keyword arguments: {'arg3': 'arg3', 'arg4': 'arg4'}.")
 
@@ -134,7 +134,7 @@ class LoggingTestCase(LogHandlerTestCase):
             'arg1', 'arg2', arg3='arg3', arg4='arg4')
         self.assertLogLevelContains(
             'INFO',
-            "'ObjectWithLogDecorator': "
-            "'Do something with a multiline docstring.'. "
+            "ObjectWithLogDecorator: "
+            "Do something with a multiline docstring.. "
             "Arguments ('arg1', 'arg2'). "
             "Keyword arguments: {'arg3': 'arg3', 'arg4': 'arg4'}.")

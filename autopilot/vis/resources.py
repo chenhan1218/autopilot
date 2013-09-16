@@ -32,7 +32,7 @@ def dbus_string_rep(dbus_type):
     if isinstance(dbus_type, dbus.Boolean):
         return repr(bool(dbus_type))
     if isinstance(dbus_type, dbus.String):
-        return dbus_type.encode('utf-8', errors='ignore')
+        return dbus_type.encode('utf-8', errors='ignore').decode('utf-8')
     if (isinstance(dbus_type, dbus.Int16) or
             isinstance(dbus_type, dbus.UInt16) or
             isinstance(dbus_type, dbus.Int32) or

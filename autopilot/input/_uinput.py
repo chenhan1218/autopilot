@@ -29,6 +29,7 @@ import logging
 from time import sleep
 from evdev import UInput, ecodes as e
 import os.path
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,10 @@ PRESS = 1
 RELEASE = 0
 
 _PRESSED_KEYS = []
+
+# py2 compatible alias for py3
+if sys.version >= '3':
+    basestring = str
 
 
 def _get_devnode_path():

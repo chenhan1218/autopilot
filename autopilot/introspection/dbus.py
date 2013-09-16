@@ -30,10 +30,11 @@ from __future__ import absolute_import
 from contextlib import contextmanager
 import logging
 import re
-from testtools.matchers import Equals
-from time import sleep
+import sys
 from uuid import uuid4
 
+from autopilot.introspection.types import create_value_instance
+from autopilot.introspection.utilities import translate_state_keys
 from autopilot.utilities import Timer, get_debug_logger
 
 
@@ -41,8 +42,16 @@ _object_registry = {}
 logger = logging.getLogger(__name__)
 
 
+# py2 compatible alias for py3
+if sys.version >= '3':
+    _PY3 = True
+    basestring = str
+else:
+    _PY3 = False
+
+
 class StateNotFoundError(RuntimeError):
-    """Raised when a piece of state information from unity is not found."""
+    """Raised when a piece of state information is not found."""
 
     message = "State not found for class with name '{}' and id '{}'."
 
@@ -81,15 +90,9 @@ def _clear_backends_for_proxy_object(proxy_object):
 
     """
     global _object_registry
-    for cls in _object_registry[proxy_object._id].itervalues():
+    for cls in _object_registry[proxy_object._id].values():
         if type(proxy_object) is not cls:
             cls._Backend = None
-
-
-def translate_state_keys(state_dict):
-    """Translates the *state_dict* passed in so the keys are usable as python
-    attributes."""
-    return {k.replace('-', '_'): v for k, v in state_dict.iteritems()}
 
 
 def get_classname_from_path(object_path):
@@ -100,7 +103,7 @@ def object_passes_filters(instance, **kwargs):
     """Return true if *instance* satisifies all the filters present in
     kwargs."""
     with instance.no_automatic_refreshing():
-        for attr, val in kwargs.iteritems():
+        for attr, val in kwargs.items():
             if not hasattr(instance, attr) or getattr(instance, attr) != val:
                 # Either attribute is not present, or is present but with
                 # the wrong value - don't add this instance to the results
@@ -108,8 +111,14 @@ def object_passes_filters(instance, **kwargs):
                 return False
     return True
 
+DBusIntrospectionObjectBase = IntrospectableObjectMetaclass(
+    'DBusIntrospectionObjectBase',
+    (object,),
+    {}
+)
 
-class DBusIntrospectionObject(object):
+
+class DBusIntrospectionObject(DBusIntrospectionObjectBase):
     """A class that supports transparent data retrieval from the application
     under test.
 
@@ -119,8 +128,6 @@ class DBusIntrospectionObject(object):
     introspection tree.
 
     """
-
-    __metaclass__ = IntrospectableObjectMetaclass
 
     _Backend = None
 
@@ -139,91 +146,20 @@ class DBusIntrospectionObject(object):
 
         """
         self.__state = {}
-        for key, value in translate_state_keys(state_dict).iteritems():
+        for key, value in translate_state_keys(state_dict).items():
             # don't store id in state dictionary -make it a proper instance
             # attribute
             if key == 'id':
-                self.id = value
-            self.__state[key] = self._make_attribute(key, value)
-
-    def _make_attribute(self, name, value):
-        """Make an attribute for *value*, patched with the wait_for
-        function."""
-
-        def wait_for(self, expected_value, timeout=10):
-            """Wait up to 10 seconds for our value to change to
-            *expected_value*.
-
-            *expected_value* can be a testtools.matcher. Matcher subclass (like
-            LessThan, for example), or an ordinary value.
-
-            This works by refreshing the value using repeated dbus calls.
-
-            :raises: **RuntimeError** if the attribute was not equal to the
-             expected value after 10 seconds.
-
-            """
-            # It's guaranteed that our value is up to date, since __getattr__
-            # calls refresh_state. This if statement stops us waiting if the
-            # value is already what we expect:
-            if self == expected_value:
-                return
-
-            def make_unicode(value):
-                if isinstance(value, str):
-                    return unicode(value.decode('utf8'))
-                return value
-
-            if hasattr(expected_value, 'expected'):
-                expected_value.expected = make_unicode(expected_value.expected)
-
-            # unfortunately not all testtools matchers derive from the Matcher
-            # class, so we can't use issubclass, isinstance for this:
-            match_fun = getattr(expected_value, 'match', None)
-            is_matcher = match_fun and callable(match_fun)
-            if not is_matcher:
-                expected_value = Equals(expected_value)
-
-            time_left = timeout
-            while True:
-                _, new_state = self.parent.get_new_state()
-                new_state = translate_state_keys(new_state)
-                new_value = make_unicode(new_state[self.name])
-                # Support for testtools.matcher classes:
-                mismatch = expected_value.match(new_value)
-                if mismatch:
-                    failure_msg = mismatch.describe()
-                else:
-                    self.parent._set_properties(new_state)
-                    return
-
-                if time_left >= 1:
-                    sleep(1)
-                    time_left -= 1
-                else:
-                    sleep(time_left)
-                    break
-
-            raise AssertionError(
-                "After %.1f seconds test on %s.%s failed: %s" % (
-                    timeout, self.parent.__class__.__name__, self.name,
-                    failure_msg))
-
-        # This looks like magic, but it's really not. We're creating a new type
-        # on the fly that derives from the type of 'value' with a couple of
-        # extra attributes: wait_for is the wait_for method above. 'parent' and
-        # 'name' are needed by the wait_for method.
-        #
-        # We can't use traditional meta-classes here, since the type we're
-        # deriving from is only known at call time, not at parse time (we could
-        # override __call__ in the meta class, but that doesn't buy us anything
-        # extra).
-        #
-        # A better way to do this would be with functools.partial, which I
-        # tried initially, but doesn't work well with bound methods.
-        t = type(value)
-        attrs = {'wait_for': wait_for, 'parent': self, 'name': name}
-        return type(t.__name__, (t,), attrs)(value)
+                self.id = int(value[1])
+            try:
+                self.__state[key] = create_value_instance(value, self, key)
+            except ValueError as e:
+                logger.warning(
+                    "While constructing attribute '%s.%s': %s",
+                    self.__class__.__name__,
+                    key,
+                    str(e)
+                )
 
     def get_children_by_type(self, desired_type, **kwargs):
         """Get a list of children of the specified type.
@@ -301,6 +237,19 @@ class DBusIntrospectionObject(object):
         state_dicts = self.get_state_by_path(query)
         children = [self.make_introspection_object(i) for i in state_dicts]
         return children
+
+    def get_parent(self):
+        """Returns the parent of this object.
+
+        If this object has no parent (i.e.- it is the root of the introspection
+        tree). Then it returns itself.
+
+        """
+        query = self.get_class_query_string() + "/.."
+        parent_state_dicts = self.get_state_by_path(query)
+
+        parent = self.make_introspection_object(parent_state_dicts[0])
+        return parent
 
     def select_single(self, type_name='*', **kwargs):
         """Get a single node from the introspection tree, with type equal to
@@ -390,8 +339,9 @@ class DBusIntrospectionObject(object):
             "Selecting objects of %s with attributes: %r",
             'any type' if type_name == '*' else 'type ' + type_name, kwargs)
 
-        first_param = ''
-        for k, v in kwargs.iteritems():
+        server_side_filters = []
+        client_side_filters = {}
+        for k, v in kwargs.items():
             # LP Bug 1209029: The XPathSelect protocol does not allow all valid
             # node names or values. We need to decide here whether the filter
             # parameters are going to work on the backend or not. If not, we
@@ -399,25 +349,33 @@ class DBusIntrospectionObject(object):
             # _is_valid_server_side_filter_param function (below) for the
             # specific requirements.
             if _is_valid_server_side_filter_param(k, v):
-                first_param = '[{}={}]'.format(k, v)
-                kwargs.pop(k)
-                break
-        query_path = "%s//%s%s" % (self.get_class_query_string(),
-                                   type_name,
-                                   first_param)
+                server_side_filters.append(
+                    _get_filter_string_for_key_value_pair(k, v)
+                )
+            else:
+                client_side_filters[k] = v
+        filter_str = '[{}]'.format(','.join(server_side_filters)) \
+            if server_side_filters else ""
+        query_path = "%s//%s%s" % (
+            self.get_class_query_string(),
+            type_name,
+            filter_str
+        )
 
         state_dicts = self.get_state_by_path(query_path)
         instances = [self.make_introspection_object(i) for i in state_dicts]
-        return filter(lambda i: object_passes_filters(i, **kwargs), instances)
+        return [i for i in instances
+                if object_passes_filters(i, **client_side_filters)]
 
     def refresh_state(self):
-        """Refreshes the object's state from unity.
+        """Refreshes the object's state.
 
         You should probably never have to call this directly. Autopilot
         automatically retrieves new state every time this object's attributes
         are read.
 
-        :raises: **StateNotFound** if the object in unity has been destroyed.
+        :raises: **StateNotFound** if the object in the application under test
+            has been destroyed.
 
         """
         _, new_state = self.get_new_state()
@@ -563,9 +521,32 @@ def _is_valid_server_side_filter_param(key, value):
 
     """
     return (
-        isinstance(value, str) and
+        type(value) in (str, int, bool) and
         re.match(r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$', key) is not None and
-        re.match(r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$', value) is not None)
+        (type(value) != int or -2**31 <= value <= 2**31 - 1))
+
+
+def _get_filter_string_for_key_value_pair(key, value):
+    """Return a string representing the filter query for this key/value pair.
+
+    The value must be suitable for server-side filtering. Raises ValueError if
+    this is not the case.
+
+    """
+    if isinstance(value, str):
+        if _PY3:
+            escaped_value = value.encode("unicode_escape")\
+                .decode('ASCII')\
+                .replace("'", "\\'")
+        else:
+            escaped_value = value.encode("string_escape")
+            # note: string_escape codec escapes "'" but not '"'...
+            escaped_value = escaped_value.replace('"', r'\"')
+        return '{}="{}"'.format(key, escaped_value)
+    elif isinstance(value, int) or isinstance(value, bool):
+        return "{}={}".format(key, repr(value))
+    else:
+        raise ValueError("Unsupported value type: {}".format(type(value)))
 
 
 class _CustomEmulatorMeta(IntrospectableObjectMetaclass):
@@ -583,9 +564,10 @@ class _CustomEmulatorMeta(IntrospectableObjectMetaclass):
                 d['_id'] = uuid4()
         return super(_CustomEmulatorMeta, cls).__new__(cls, name, bases, d)
 
-
-class CustomEmulatorBase(DBusIntrospectionObject):
-
+CustomEmulatorBase = _CustomEmulatorMeta('CustomEmulatorBase',
+                                         (DBusIntrospectionObject, ),
+                                         {})
+CustomEmulatorBase.__doc__ = \
     """This class must be used as a base class for any custom emulators defined
     within a test case.
 
@@ -593,5 +575,3 @@ class CustomEmulatorBase(DBusIntrospectionObject):
         Tutorial Section :ref:`custom_emulators`
             Information on how to write custom emulators.
     """
-
-    __metaclass__ = _CustomEmulatorMeta

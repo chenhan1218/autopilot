@@ -23,7 +23,14 @@
 
 
 from mock import patch
-from StringIO import StringIO
+
+try:
+    # Python 2
+    from StringIO import StringIO
+except ImportError:
+    # Python 3
+    from io import StringIO
+
 from testtools import TestCase
 from testtools.matchers import Equals
 from unittest import expectedFailure
@@ -34,7 +41,7 @@ from autopilot import parse_arguments
 class CommandLineArgsTests(TestCase):
 
     def parse_args(self, args):
-        if isinstance(args, basestring):
+        if isinstance(args, str):
             args = args.split()
         try:
             return parse_arguments(args)

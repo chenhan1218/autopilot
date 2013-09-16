@@ -23,9 +23,10 @@ import os
 import stat
 import subprocess
 import logging
+import sys
 from mock import patch
 from tempfile import mktemp
-from testtools.matchers import raises, LessThan, Equals
+from testtools.matchers import raises, LessThan
 from textwrap import dedent
 from time import sleep
 
@@ -36,6 +37,10 @@ from autopilot.introspection import (
     _pid_is_running,
 )
 
+
+# backwards compatible alias for Python 3
+if sys.version > '3':
+    xrange = range
 
 logger = logging.getLogger(__name__)
 
@@ -90,14 +95,14 @@ AutopilotTestCase.pick_app_launcher method."
 
         """
         path = self.write_script(dedent("""\
-            #!/usr/bin/python
+            #!%s
 
             from time import sleep
 
             while True:
-                print "Still running"
+                print("Still running")
                 sleep(1)
-        """))
+        """ % sys.executable))
 
         expected_error = "Search criteria returned no results"
         self.assertThat(
@@ -123,14 +128,14 @@ AutopilotTestCase.pick_app_launcher method."
 
         """
         path = self.write_script(dedent("""\
-            #!/usr/bin/python
+            #!%s
 
             from time import sleep
             import sys
 
             sleep(5)
             sys.exit(1)
-        """))
+        """ % sys.executable))
 
         expected_error = "Process exited with exit code: 1"
         self.assertThat(
@@ -148,14 +153,14 @@ AutopilotTestCase.pick_app_launcher method."
 
         """
         path = self.write_script(dedent("""\
-            #!/usr/bin/python
+            #!%s
 
             from time import sleep
             import sys
 
             sleep(1)
             sys.exit(1)
-        """))
+        """ % sys.executable))
         start = datetime.datetime.now()
 
         try:
@@ -177,7 +182,7 @@ AutopilotTestCase.pick_app_launcher method."
 
         """
         path = self.write_script(dedent("""\
-            #!/usr/bin/python
+            #!%s
             from PyQt4.QtGui import QMainWindow, QApplication
             from PyQt4.QtCore import QTimer
 
@@ -188,7 +193,7 @@ AutopilotTestCase.pick_app_launcher method."
             win.show()
             QTimer.singleShot(8000, app.exit)
             app.exec_()
-            """))
+            """ % sys.executable))
         app_proxy = self.launch_test_application(path, app_type='qt')
         self.assertTrue(app_proxy is not None)
 
@@ -214,7 +219,8 @@ class QtTests(ApplicationTests):
         # We cannot use 'which', as qtchooser installs wrappers - we need to
         # check in the actual library paths
         env = subprocess.check_output(
-            ['qtchooser', '-qt=' + version, '-print-env']).split('\n')
+            ['qtchooser', '-qt=' + version, '-print-env'],
+            universal_newlines=True).split('\n')
         for i in env:
             if i.find('QTTOOLDIR') >= 0:
                 path = i.lstrip("QTTOOLDIR=").strip('"') + "/" + name
@@ -226,7 +232,8 @@ class QtTests(ApplicationTests):
     def _find_qt_binary_old(self, version, name):
         # Check for the existence of the binary the old way
         try:
-            path = subprocess.check_output(['which', 'qmlviewer']).strip()
+            path = subprocess.check_output(['which', 'qmlviewer'],
+                                           universal_newlines=True).strip()
         except subprocess.CalledProcessError:
             path = None
         return path
@@ -236,7 +243,9 @@ class QtTests(ApplicationTests):
 
         try:
             qtversions = subprocess.check_output(
-                ['qtchooser', '-list-versions']).split('\n')
+                ['qtchooser', '-list-versions'],
+                universal_newlines=True
+            ).split('\n')
             check_func = self._find_qt_binary_chooser
         except OSError:
             # This means no qtchooser is installed, so let's check for
@@ -268,7 +277,7 @@ class QtTests(ApplicationTests):
 
     def test_can_launch_qt_script(self):
         path = self.write_script(dedent("""\
-            #!/usr/bin/python
+            #!%s
             from PyQt4.QtGui import QMainWindow, QApplication
             from sys import argv
 
@@ -276,13 +285,13 @@ class QtTests(ApplicationTests):
             win = QMainWindow()
             win.show()
             app.exec_()
-            """))
+            """ % sys.executable))
         app_proxy = self.launch_test_application(path, app_type='qt')
         self.assertTrue(app_proxy is not None)
 
     def test_can_launch_wrapper_script(self):
         path = self.write_script(dedent("""\
-            #!/usr/bin/python
+            #!%s
             from PyQt4.QtGui import QMainWindow, QApplication
             from sys import argv
 
@@ -290,7 +299,7 @@ class QtTests(ApplicationTests):
             win = QMainWindow()
             win.show()
             app.exec_()
-            """))
+            """ % sys.executable))
         wrapper_path = self.write_script(dedent("""\
             #!/bin/sh
 
@@ -309,7 +318,7 @@ class GtkTests(ApplicationTests):
 
         try:
             self.app_path = subprocess.check_output(
-                ['which', 'gnome-mahjongg']).strip()
+                ['which', 'gnome-mahjongg'], universal_newlines=True).strip()
         except subprocess.CalledProcessError:
             self.skip("gnome-mahjongg not found.")
 
@@ -319,27 +328,27 @@ class GtkTests(ApplicationTests):
 
     def test_can_launch_gtk_script(self):
         path = self.write_script(dedent("""\
-            #!/usr/bin/python
+            #!%s
             from gi.repository import Gtk
 
             win = Gtk.Window()
             win.connect("delete-event", Gtk.main_quit)
             win.show_all()
             Gtk.main()
-            """))
+            """ % sys.executable))
         app_proxy = self.launch_test_application(path, app_type='gtk')
         self.assertTrue(app_proxy is not None)
 
     def test_can_launch_wrapper_script(self):
         path = self.write_script(dedent("""\
-            #!/usr/bin/python
+            #!%s
             from gi.repository import Gtk
 
             win = Gtk.Window()
             win.connect("delete-event", Gtk.main_quit)
             win.show_all()
             Gtk.main()
-            """))
+            """ % sys.executable))
         wrapper_path = self.write_script(dedent("""\
             #!/bin/sh
 

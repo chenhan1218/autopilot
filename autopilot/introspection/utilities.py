@@ -39,3 +39,9 @@ def _get_bus_connections_pid(bus, connection_name):
     bus_obj = bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
     bus_iface = Interface(bus_obj, 'org.freedesktop.DBus')
     return bus_iface.GetConnectionUnixProcessID(connection_name)
+
+
+def translate_state_keys(state_dict):
+    """Translates the *state_dict* passed in so the keys are usable as python
+    attributes."""
+    return {k.replace('-', '_'): v for k, v in state_dict.items()}

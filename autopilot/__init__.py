@@ -20,7 +20,7 @@
 from argparse import ArgumentParser, REMAINDER, Action
 import subprocess
 
-version = '1.3.1'
+version = '1.4.0'
 
 
 class BackendException(RuntimeError):
@@ -30,7 +30,7 @@ class BackendException(RuntimeError):
     def __init__(self, original_exception):
         super(BackendException, self).__init__(
             "Error while initialising backend. Original exception was: " +
-            original_exception.message)
+            str(original_exception))
         self.original_exception = original_exception
 
 
@@ -179,7 +179,8 @@ def _get_package_installed_version():
                 "${Version}",
                 "--show",
                 "python-autopilot",
-            ]
+            ],
+            universal_newlines=True
         ).strip()
     except subprocess.CalledProcessError:
         return None

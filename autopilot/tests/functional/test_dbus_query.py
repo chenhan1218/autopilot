@@ -73,6 +73,18 @@ class DbusQueryTests(AutopilotTestCase):
         main_window = app.select_single('QMainWindow')
         self.assertThat(main_window, NotEquals(None))
 
+    def test_can_select_parent_of_root(self):
+        """Must be able to select the parent of the root object."""
+        root = self.start_fully_featured_app()
+        root_parent = root.get_parent()
+        self.assertThat(root.id, Equals(root_parent.id))
+
+    def test_can_select_parent_of_normal_node(self):
+        root = self.start_fully_featured_app()
+        main_window = root.select_single('QMainWindow')
+        window_parent = main_window.get_parent()
+        self.assertThat(window_parent.id, Equals(root.id))
+
     def test_single_select_on_object(self):
         """Must be able to select a single unique child of an object."""
         app = self.start_fully_featured_app()
@@ -156,7 +168,7 @@ class DbusQueryTests(AutopilotTestCase):
     def test_select_many_only_using_parameters(self):
         app = self.start_fully_featured_app()
         many_help_menus = app.select_many(title='Help')
-        self.assertThat(len(many_help_menus), Equals(2))
+        self.assertThat(len(many_help_menus), Equals(1))
 
     def test_select_many_with_no_parameter_matches_returns_empty_list(self):
         app = self.start_fully_featured_app()
@@ -172,7 +184,8 @@ class DbusCustomBusTests(AutopilotTestCase):
         super(DbusCustomBusTests, self).setUp()
 
     def _enable_custom_dbus_bus(self):
-        p = subprocess.Popen(['dbus-launch'], stdout=subprocess.PIPE)
+        p = subprocess.Popen(['dbus-launch'], stdout=subprocess.PIPE,
+                             universal_newlines=True)
         output = p.communicate()
         results = output[0].split("\n")
         dbus_pid = int(results[1].split("=")[1])

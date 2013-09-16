@@ -104,7 +104,8 @@ class QMLCustomEmulatorTestCase(AutopilotTestCase):
 
             def launch_test_qml(self):
                 arch = subprocess.check_output(
-                    ["dpkg-architecture", "-qDEB_HOST_MULTIARCH"]).strip()
+                    ["dpkg-architecture", "-qDEB_HOST_MULTIARCH"],
+                    universal_newlines=True).strip()
                 qml_path = tempfile.mktemp(suffix='.qml')
                 open(qml_path, 'w').write(self.test_qml)
                 self.addCleanup(os.remove, qml_path)

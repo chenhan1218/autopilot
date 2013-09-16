@@ -20,9 +20,12 @@
 
 from __future__ import absolute_import
 
+import sys
+
 from autopilot.introspection.dbus import DBusIntrospectionObject
 from autopilot.matchers import Eventually
 
+from contextlib import contextmanager
 import dbus
 from testscenarios import TestWithScenarios
 from testtools import TestCase
@@ -30,12 +33,28 @@ from testtools.matchers import (
     Contains,
     Equals,
     IsInstance,
-    LessThan,
     MatchesException,
     Mismatch,
     Raises,
 )
 from time import time
+
+
+if sys.version >= '3':
+    unicode = str
+
+
+@contextmanager
+def expected_runtime(tmin, tmax):
+    start = time()
+    try:
+        yield
+    finally:
+        elapsed_time = abs(time() - start)
+        if not tmin < elapsed_time < tmax:
+            raise AssertionError(
+                "Runtime of %f is not between %f and %f"
+                % (elapsed_time, tmin, tmax))
 
 
 def make_fake_attribute_with_result(result, attribute_type='wait_for'):
@@ -58,13 +77,15 @@ def make_fake_attribute_with_result(result, attribute_type='wait_for'):
         return lambda: result
     elif attribute_type == 'wait_for':
         if isinstance(result, unicode):
-            obj = FakeObject(dict(id=123, attr=dbus.String(result)))
+            obj = FakeObject(dict(id=[0, 123], attr=[0, dbus.String(result)]))
             return obj.attr
-        elif isinstance(result, str):
-            obj = FakeObject(dict(id=123, attr=dbus.UTF8String(result)))
+        elif isinstance(result, bytes):
+            obj = FakeObject(
+                dict(id=[0, 123], attr=[0, dbus.UTF8String(result)])
+            )
             return obj.attr
         else:
-            obj = FakeObject(dict(id=123, attr=dbus.Boolean(result)))
+            obj = FakeObject(dict(id=[0, 123], attr=[0, dbus.Boolean(result)]))
             return obj.attr
 
 
@@ -84,37 +105,31 @@ class EventuallyMatcherTests(TestWithScenarios, TestCase):
         ('wait_for', dict(attribute_type='wait_for')),
     ]
 
-    def test_eventually_matcher_returns_Mismatch(self):
+    def test_eventually_matcher_returns_mismatch(self):
         """Eventually matcher must return a Mismatch."""
         attr = make_fake_attribute_with_result(False, self.attribute_type)
-        e = Eventually(Equals(True)).match(lambda: attr)
+        e = Eventually(Equals(True)).match(attr)
 
         self.assertThat(e, IsInstance(Mismatch))
 
     def test_eventually_default_timeout(self):
         """Eventually matcher must default to 10 second timeout."""
         attr = make_fake_attribute_with_result(False, self.attribute_type)
-        start = time()
-        Eventually(Equals(True)).match(attr)
-        # max error of 1 second seems reasonable:
-        self.assertThat(abs(time() - start - 10.0), LessThan(1))
+        with expected_runtime(9.5, 11.0):
+            Eventually(Equals(True)).match(attr)
 
     def test_eventually_passes_immeadiately(self):
         """Eventually matcher must not wait if the assertion passes
         initially."""
-        start = time()
         attr = make_fake_attribute_with_result(True, self.attribute_type)
-        Eventually(Equals(True)).match(attr)
-        # max error of 1 second seems reasonable:
-        self.assertThat(abs(time() - start), LessThan(1))
+        with expected_runtime(0.0, 1.0):
+            Eventually(Equals(True)).match(attr)
 
     def test_eventually_matcher_allows_non_default_timeout(self):
         """Eventually matcher must allow a non-default timeout value."""
-        start = time()
         attr = make_fake_attribute_with_result(False, self.attribute_type)
-        Eventually(Equals(True), timeout=5).match(attr)
-        # max error of 1 second seems reasonable:
-        self.assertThat(abs(time() - start - 5.0), LessThan(1))
+        with expected_runtime(4.5, 6.0):
+            Eventually(Equals(True), timeout=5).match(attr)
 
     def test_mismatch_message_has_correct_timeout_value(self):
         """The mismatch value must have the correct timeout value in it."""
@@ -134,20 +149,16 @@ class EventuallyNonScenariodTests(TestCase):
 
     def test_match_with_expected_value_unicode(self):
         """The expected unicode value matches new value string."""
-        start = time()
         attr = make_fake_attribute_with_result(
-            unicode(u'\u963f\u5e03\u4ece'), 'wait_for')
-        Eventually(Equals(str("阿布从"))).match(attr)
-        #this should not take more than 1 second
-        self.assertThat(abs(time() - start), LessThan(1))
+            u'\u963f\u5e03\u4ece', 'wait_for')
+        with expected_runtime(0.0, 1.0):
+            Eventually(Equals("阿布从")).match(attr)
 
     def test_match_with_new_value_unicode(self):
         """new value with unicode must match expected value string."""
-        start = time()
         attr = make_fake_attribute_with_result(str("阿布从"), 'wait_for')
-        Eventually(Equals(unicode(u'\u963f\u5e03\u4ece'))).match(attr)
-        # this should not take more than 1 second
-        self.assertThat(abs(time() - start), LessThan(1))
+        with expected_runtime(0.0, 1.0):
+            Eventually(Equals(u'\u963f\u5e03\u4ece')).match(attr)
 
     def test_mismatch_with_bool(self):
         """The mismatch value must fail boolean values."""
@@ -160,7 +171,7 @@ class EventuallyNonScenariodTests(TestCase):
         """The mismatch value must fail with str and unicode mix."""
         attr = make_fake_attribute_with_result(str("阿布从1"), 'wait_for')
         mismatch = Eventually(Equals(
-            unicode(u'\u963f\u5e03\u4ece')), timeout=.5).match(attr)
+            u'\u963f\u5e03\u4ece'), timeout=.5).match(attr)
         self.assertThat(
             mismatch.describe(), Contains('failed'))
 
@@ -169,6 +180,6 @@ class EventuallyNonScenariodTests(TestCase):
         self.skip("mismatch Contains returns ascii error")
         attr = make_fake_attribute_with_result(str("阿布从1"), 'wait_for')
         mismatch = Eventually(Equals(
-            unicode(u'\u963f\u5e03\u4ece')), timeout=.5).match(attr)
+            u'\u963f\u5e03\u4ece'), timeout=.5).match(attr)
         self.assertThat(
             mismatch.describe(), Contains("阿布从11"))

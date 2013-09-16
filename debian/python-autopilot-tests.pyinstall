@@ -1,3 +1,0 @@
-autopilot/tests/*.py
-autopilot/tests/unit/*.py
-autopilot/tests/functional/*.py

@@ -12,6 +12,24 @@ Autopilot releases are reasonably tightly coupled with Ubuntu releases. However,
 
 Autopilot versions earlier than 1.2 were not publicly announced, and were only used within Canonical. For that reason, this document assumes that version 1.2 is the lowest version of autopilot present `"in the wild"`.
 
+Porting to Autopilot v1.4.x
+===========================
+
+The 1.4 release contains several changes that required a break in the DBus wire protocol between autopilot and the applications under test. Most of these changes require no change to test code.
+
+Gtk Tests and Boolean Parameters
+++++++++++++++++++++++++++++++++
+
+Version 1.3 of the autopilot-gtk backend contained `a bug <https://bugs.launchpad.net/autopilot-gtk/+bug/1214249>`_ that caused all Boolean properties to be exported as integers instead of boolean values. This in turn meant that test code would fail to return the correct objects when using selection criteria such as::
+
+	visible_buttons = app.select_many("GtkPushButton", visible=True)
+
+and instead had to write something like this::
+
+	visible_buttons = app.select_many("GtkPushButton", visible=1)
+
+This bug has now been fixed, and using the integer selection will fail.
+
 Porting to Autopilot v1.3.x
 ===========================
 

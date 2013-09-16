@@ -50,6 +50,8 @@ sys.path.insert(0, os.path.abspath('.'))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.graphviz',
+    'sphinx.ext.pngmath',
     'sphinx.ext.viewcode',
     'otto',
 ]
@@ -84,7 +86,7 @@ try:
 except ImportError:
     # If we don't have python-debian installed, guess a coarse-grained version
     # string
-    version = '1.3'
+    version = '1.4'
 
 # The full version, including alpha/beta/rc tags.
 release = version

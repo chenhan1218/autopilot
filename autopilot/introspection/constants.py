@@ -25,4 +25,4 @@ QT_AUTOPILOT_IFACE = 'com.canonical.Autopilot.Qt'
 AP_INTROSPECTION_IFACE = 'com.canonical.Autopilot.Introspection'
 DBUS_INTROSPECTION_IFACE = 'org.freedesktop.DBus.Introspectable'
 
-CURRENT_WIRE_PROTOCOL_VERSION = "1.3"
+CURRENT_WIRE_PROTOCOL_VERSION = "1.4"

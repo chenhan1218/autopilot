@@ -20,6 +20,7 @@
 
 from __future__ import absolute_import
 
+import sys
 import dbus
 from PyQt4 import QtGui, QtCore
 
@@ -33,6 +34,8 @@ from autopilot.introspection.qt import QtObjectProxyMixin
 from autopilot.vis.objectproperties import TreeNodeDetailWidget
 from autopilot.vis.resources import get_qt_icon
 
+_PY3 = sys.version >= '3'
+
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, dbus_bus):
@@ -44,8 +47,12 @@ class MainWindow(QtGui.QMainWindow):
 
     def readSettings(self):
         settings = QtCore.QSettings()
-        self.restoreGeometry(settings.value("geometry").toByteArray())
-        self.restoreState(settings.value("windowState").toByteArray())
+        if _PY3:
+            self.restoreGeometry(settings.value("geometry").data())
+            self.restoreState(settings.value("windowState").data())
+        else:
+            self.restoreGeometry(settings.value("geometry").toByteArray())
+            self.restoreState(settings.value("windowState").toByteArray())
 
     def closeEvent(self, event):
         settings = QtCore.QSettings()
@@ -90,17 +97,16 @@ class MainWindow(QtGui.QMainWindow):
     def update_selectable_interfaces(self):
         selected_text = self.connection_list.currentText()
         self.connection_list.clear()
-        self.connection_list.addItem("Please select a connection",
-                                     QtCore.QVariant(None))
-        for name, proxy_obj in self.selectable_interfaces.iteritems():
+        self.connection_list.addItem("Please select a connection", None)
+        for name, proxy_obj in self.selectable_interfaces.items():
             if isinstance(proxy_obj, QtObjectProxyMixin):
                 self.connection_list.addItem(
                     get_qt_icon(),
                     name,
-                    QtCore.QVariant(proxy_obj)
+                    proxy_obj
                 )
             else:
-                self.connection_list.addItem(name, QtCore.QVariant(proxy_obj))
+                self.connection_list.addItem(name, proxy_obj)
 
         prev_selected = self.connection_list.findText(selected_text,
                                                       QtCore.Qt.MatchExactly)
@@ -109,7 +115,9 @@ class MainWindow(QtGui.QMainWindow):
         self.connection_list.setCurrentIndex(prev_selected)
 
     def conn_list_activated(self, index):
-        dbus_details = self.connection_list.itemData(index).toPyObject()
+        dbus_details = self.connection_list.itemData(index)
+        if not _PY3:
+            dbus_details = dbus_details.toPyObject()
         if dbus_details:
             self.tree_model = VisTreeModel(dbus_details)
             self.tree_view.setModel(self.tree_model)
@@ -211,16 +219,16 @@ class VisTreeModel(QtCore.QAbstractItemModel):
 
     def data(self, index, role):
         if not index.isValid():
-            return QtCore.QVariant()
+            return None
         if role == QtCore.Qt.DisplayRole:
-            return QtCore.QVariant(index.internalPointer().name)
+            return index.internalPointer().name
 
     def headerData(self, column, orientation, role):
         if (orientation == QtCore.Qt.Horizontal and
                 role == QtCore.Qt.DisplayRole):
             try:
-                return QtCore.QVariant("Tree Node")
+                return "Tree Node"
             except IndexError:
                 pass
 
-        return QtCore.QVariant()
+        return None

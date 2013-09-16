@@ -19,7 +19,14 @@
 
 
 from __future__ import absolute_import
-from StringIO import StringIO
+
+try:
+    # Python 2
+    from StringIO import StringIO
+except ImportError:
+    # Python 3
+    from io import StringIO
+
 from autopilot.utilities import LogFormatter, CleanupRegistered
 from testtools.content import text_content
 import subprocess
@@ -203,7 +210,7 @@ def configure_video_recording(enable_recording, record_dir, record_opts=None):
     """
     if type(enable_recording) is not bool:
         raise TypeError("enable_recording must be a boolean.")
-    if not isinstance(record_dir, basestring):
+    if not isinstance(record_dir, str):
         raise TypeError("record_dir must be a string.")
 
     _video_logger.enable_recording(enable_recording)

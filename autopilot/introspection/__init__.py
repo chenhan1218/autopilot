@@ -33,6 +33,7 @@ import subprocess
 from time import sleep
 from functools import partial
 import os
+import sys
 
 from autopilot.introspection.backends import DBusAddress
 from autopilot.introspection.constants import (
@@ -62,6 +63,10 @@ logger = logging.getLogger(__name__)
 # Keep track of known connections during search
 connection_list = []
 
+# py2 compatible alias for py3
+if sys.version >= '3':
+    basestring = str
+
 
 class ProcessSearchError(RuntimeError):
     pass
@@ -77,7 +82,10 @@ def get_application_launcher(app_path):
     # any non-dynamically linked executables, which we may need to fix further
     # down the line.
     try:
-        ldd_output = subprocess.check_output(["ldd", app_path]).strip().lower()
+        ldd_output = subprocess.check_output(
+            ["ldd", app_path],
+            universal_newlines=True
+        ).strip().lower()
     except subprocess.CalledProcessError as e:
         raise RuntimeError(e)
     if 'libqtcore' in ldd_output or 'libqt5core' in ldd_output:
@@ -115,9 +123,11 @@ def launch_application(launcher, application, *arguments, **kwargs):
     cwd = kwargs.pop('launch_dir', None)
     capture_output = kwargs.pop('capture_output', True)
     if kwargs:
+        arglist = [repr(k) for k in kwargs.keys()]
+        arglist.sort()
         raise ValueError(
             "Unknown keyword arguments: %s." %
-            (', '.join(repr(k) for k in kwargs.keys())))
+            (', '.join(arglist)))
 
     path, args = launcher.prepare_environment(application, list(arguments))
 
@@ -164,6 +174,7 @@ def launch_process(application, args, capture_output, **kwargs):
         stderr=cap_mode,
         close_fds=True,
         preexec_fn=os.setsid,
+        universal_newlines=True,
         **kwargs
     )
     return process
@@ -263,7 +274,7 @@ def get_proxy_object_for_existing_process(
     if application_name:
         app_name_check_fn = lambda i: get_classname_from_path(
             i.introspection_iface.GetState('/')[0][0]) == application_name
-        dbus_addresses = filter(app_name_check_fn, dbus_addresses)
+        dbus_addresses = list(filter(app_name_check_fn, dbus_addresses))
 
     if dbus_addresses is None or len(dbus_addresses) == 0:
         raise ProcessSearchError("Search criteria returned no results")

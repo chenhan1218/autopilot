@@ -36,14 +36,18 @@ Keybindings come from two different places:
 from __future__ import absolute_import
 
 import logging
-from types import NoneType
 import re
+import sys
 
 from autopilot.input import Keyboard
 from autopilot.utilities import Silence
 
 logger = logging.getLogger(__name__)
 
+
+# py2 compatible alias for py3
+if sys.version >= '3':
+    basestring = str
 
 #
 # Fill this dictionary with keybindings we want to store.
@@ -262,7 +266,7 @@ class KeybindingsHelper(object):
         keyboard emulator.
 
         """
-        if type(delay) not in (float, NoneType):
+        if delay is not None and type(delay) != float:
             raise TypeError(
                 "delay parameter must be a float if it is defined.")
         if delay:

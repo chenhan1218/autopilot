@@ -120,6 +120,8 @@ _keys = {
     "window/show_desktop": ("unityshell", "show_desktop_key"),
     "window/minimize": ("core", "minimize_window_key"),
     "window/maximize": ("core", "maximize_window_key"),
+    "window/left_maximize": ("unityshell", "window_left_maximize"),
+    "window/right_maximize": ("unityshell", "window_right_maximize"),
     "window/restore": ("core", "unmaximize_or_minimize_window_key"),
     "window/close": ("core", "close_window_key"),
     # expo plugin:

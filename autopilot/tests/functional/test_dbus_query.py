@@ -183,7 +183,7 @@ class DbusQueryTests(AutopilotTestCase):
         self.assertThat(fn, raises(StateNotFoundError('QMadeupType')))
         end_time = time()
         self.assertThat(abs(end_time - start_time), GreaterThan(9))
-        self.assertThat(abs(end_time - start_time), LessThan(10))
+        self.assertThat(abs(end_time - start_time), LessThan(11))
 
 
 class DbusCustomBusTests(AutopilotTestCase):

@@ -414,7 +414,7 @@ class DBusIntrospectionObject(object):
             try:
                 return self.select_single(type_name, **kwargs)
             except StateNotFoundError:
-                if i == 9:
+                if i == self._poll_time - 1:
                     raise
                 sleep(1)
 

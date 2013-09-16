@@ -33,6 +33,7 @@ import subprocess
 from time import sleep
 from functools import partial
 import os
+import psutil
 
 from autopilot.introspection.backends import DBusAddress
 from autopilot.introspection.constants import (
@@ -436,22 +437,7 @@ def _get_child_pids(pid):
     """Get a list of all child process Ids, for the given parent.
 
     """
-    def get_children(pid):
-        command = ['ps', '-o', 'pid', '--ppid', str(pid), '--noheaders']
-        try:
-            raw_output = subprocess.check_output(command)
-        except subprocess.CalledProcessError:
-            return []
-        return [int(p) for p in raw_output.split()]
-
-    result = []
-    data = get_children(pid)
-    while data:
-        pid = data.pop(0)
-        result.append(pid)
-        data.extend(get_children(pid))
-
-    return result
+    return [p.pid for p in psutil.Process(pid).get_children(recursive=True)]
 
 
 def _make_proxy_object(data_source, emulator_base):

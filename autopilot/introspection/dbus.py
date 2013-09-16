@@ -111,9 +111,11 @@ def object_passes_filters(instance, **kwargs):
                 return False
     return True
 
-DBusIntrospectionObjectBase = IntrospectableObjectMetaclass('DBusIntrospectionObjectBase',
-                                                            (object,),
-                                                            {})
+DBusIntrospectionObjectBase = IntrospectableObjectMetaclass(
+    'DBusIntrospectionObjectBase',
+    (object,),
+    {}
+)
 
 
 class DBusIntrospectionObject(DBusIntrospectionObjectBase):
@@ -533,7 +535,9 @@ def _get_filter_string_for_key_value_pair(key, value):
     """
     if isinstance(value, str):
         if _PY3:
-            escaped_value = value.encode("unicode_escape").decode('ASCII').replace("'", "\\'")
+            escaped_value = value.encode("unicode_escape")\
+                .decode('ASCII')\
+                .replace("'", "\\'")
         else:
             escaped_value = value.encode("string_escape")
             # note: string_escape codec escapes "'" but not '"'...

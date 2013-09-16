@@ -43,6 +43,7 @@ from time import time
 if sys.version >= '3':
     unicode = str
 
+
 @contextmanager
 def expected_runtime(tmin, tmax):
     start = time()

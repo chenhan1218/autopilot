@@ -82,8 +82,10 @@ def get_application_launcher(app_path):
     # any non-dynamically linked executables, which we may need to fix further
     # down the line.
     try:
-        ldd_output = subprocess.check_output(["ldd", app_path],
-                                             universal_newlines=True).strip().lower()
+        ldd_output = subprocess.check_output(
+            ["ldd", app_path],
+            universal_newlines=True
+        ).strip().lower()
     except subprocess.CalledProcessError as e:
         raise RuntimeError(e)
     if 'libqtcore' in ldd_output or 'libqt5core' in ldd_output:

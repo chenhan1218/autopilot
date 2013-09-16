@@ -243,7 +243,9 @@ class QtTests(ApplicationTests):
 
         try:
             qtversions = subprocess.check_output(
-                ['qtchooser', '-list-versions'], universal_newlines=True).split('\n')
+                ['qtchooser', '-list-versions'],
+                universal_newlines=True
+            ).split('\n')
             check_func = self._find_qt_binary_chooser
         except OSError:
             # This means no qtchooser is installed, so let's check for

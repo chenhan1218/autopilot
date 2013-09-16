@@ -239,8 +239,10 @@ def get_proxy_object_for_existing_process(
     :param emulator_base: The custom emulator to create the resulting proxy
         object with.
 
-    :raises: RuntimeError if no search criteria match.
-    :raises: RuntimeError if the search criteria results in many matches.
+    :raises ProcessSearchError: if no search criteria match.
+    :raises RuntimeError: if the search criteria results in many matches.
+    :raises RuntimeError: if both ``process`` and ``pid`` are supplied, but
+        ``process.pid != pid``.
 
     """
     if process is not None:

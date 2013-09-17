@@ -168,7 +168,6 @@ class DBusIntrospectionObject(object):
         self.__refresh_on_attribute = True
         self._set_properties(state_dict)
         self._path = path
-        self._poll_time = 10
 
     def _set_properties(self, state_dict):
         """Creates and set attributes of *self* based on contents of
@@ -360,8 +359,7 @@ class DBusIntrospectionObject(object):
             app.select_single('QPushButton', objectName='clickme')
             # returns a QPushButton whose 'objectName' property is 'clickme'.
 
-        If nothing is returned from the query, this method raises
-        StateNotFoundError.
+        If nothing is returned from the query, this method returns None.
 
         :param type_name: Either a string naming the type you want, or a class
             of the appropriate type (the latter case is for overridden emulator
@@ -372,8 +370,6 @@ class DBusIntrospectionObject(object):
 
         :raises TypeError: if neither *type_name* or keyword filters are
             provided.
-
-        :raises StateNotFoundError: if the requested object was not found.
 
         .. seealso::
             Tutorial Section :ref:`custom_emulators`
@@ -383,41 +379,8 @@ class DBusIntrospectionObject(object):
         if len(instances) > 1:
             raise ValueError("More than one item was returned for query")
         if not instances:
-            raise StateNotFoundError(type_name, **kwargs)
+            return None
         return instances[0]
-
-    def wait_select_single(self, type_name='*', **kwargs):
-        """Does the same thing as :meth:`select_single`, but will poll the
-        application continually until a valid object is found. This is useful
-        in situations where the object you are trying to select may not exist
-        yet.
-
-        After 10 seconds, a StateNotFoundError will be raised, as if the
-        :meth:`select_single` method had been called instead.
-
-        :param type_name: Either a string naming the type you want, or a class
-            of the appropriate type (the latter case is for overridden emulator
-            classes).
-
-        :raises ValueError: if the query returns more than one item. *If
-            you want more than one item, use select_many instead*.
-
-        :raises TypeError: if neither *type_name* or keyword filters are
-            provided.
-
-        :raises StateNotFoundError: if the requested object was not found.
-
-        .. seealso::
-            Tutorial Section :ref:`custom_emulators`
-
-        """
-        for i in range(self._poll_time):
-            try:
-                return self.select_single(type_name, **kwargs)
-            except StateNotFoundError:
-                if i == self._poll_time - 1:
-                    raise
-                sleep(1)
 
     def select_many(self, type_name='*', **kwargs):
         """Get a list of nodes from the introspection tree, with type equal to

@@ -65,7 +65,7 @@ An example from branching to running::
 
     $ bzr branch lp:autopilot ~/src/autopilot/trunk
     $ cd ~/src/autopilot/trunk
-    $ autopilot list autopilot.tests
+    $ ./bin/autopilot list autopilot.tests
 
     Loading tests from: /home/example/src/autopilot/trunk
 

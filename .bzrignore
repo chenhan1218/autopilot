@@ -1,1 +1,4 @@
 build
+dist
+autopilot.egg-info
+.tox

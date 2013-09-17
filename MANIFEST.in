@@ -1,2 +1,3 @@
 graft bin
-graft build/sphinx/html 
+graft build/sphinx/html
+recursive-include lttng_module *.c *.h

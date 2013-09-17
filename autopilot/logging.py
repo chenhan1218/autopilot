@@ -19,6 +19,7 @@
 
 """Logging helpers for Autopilot tests."""
 
+import pprint
 from functools import wraps
 
 
@@ -35,8 +36,10 @@ def log_action(log_func):
                 docstring = docstring.split('\n')[0].strip()
             else:
                 docstring = f.__name__
-            log_line = '%s: %s. Arguments %r. Keyword arguments: %r.'
-            log_func(log_line, class_name, docstring, args, kwargs)
+            log_line = '%s: %s. Arguments %s. Keyword arguments: %s.'
+            log_func(
+                log_line, class_name, docstring, pprint.pformat(args),
+                pprint.pformat(kwargs))
             return f(instance, *args, **kwargs)
 
         return inner

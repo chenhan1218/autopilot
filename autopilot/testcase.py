@@ -345,7 +345,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                     if app_id in line and "start/running" in line:
                         target_pid = int(line.split()[-1])
 
-                        self.addCleanup(self._kill_process, target_pid)
+                        self.addCleanup(self._kill_pid, target_pid)
                         logger.info(
                             "Click package %s has been launched with PID %d",
                             app_id,
@@ -525,16 +525,11 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         # default implementation is in autopilot.introspection:
         return get_application_launcher(app_path)
 
-    def _attach_process_logs(self, process):
-        stdout, stderr = process.communicate()
-        return_code = process.returncode
-        self.addDetail('process-return-code', text_content(str(return_code)))
-        self.addDetail('process-stdout', text_content(stdout))
-        self.addDetail('process-stderr', text_content(stderr))
-
-    def _kill_process(self, pid):
+    def _kill_pid(self, pid):
+        """Kill the process with the specified pid."""
         logger.info("waiting for process to exit.")
         try:
+            logger.info("Killing process %d", pid)
             os.killpg(pid, signal.SIGTERM)
         except OSError:
             logger.info("Appears process has already exited.")
@@ -548,10 +543,39 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                 )
                 os.killpg(pid, signal.SIGKILL)
             sleep(1)
+        return stdout, stderr, process.returncode
+
+    def _kill_process(self, process):
+        """Kill the process, and return the stdout, stderr and return code."""
+        stdout = ""
+        stderr = ""
+        return_code = -1
+        logger.info("waiting for process to exit.")
+        try:
+            logger.info("Killing process %d", process.pid)
+            os.killpg(process.pid, signal.SIGTERM)
+        except OSError:
+            logger.info("Appears process has already exited.")
+        for i in range(10):
+            tmp_out, tmp_err = process.communicate()
+            stdout += tmp_out
+            stderr += tmp_err
+            if not _is_process_running(process.pid):
+                break
+            if i == 9:
+                logger.info(
+                    "Killing process group, since it hasn't exited after "
+                    "10 seconds."
+                )
+                os.killpg(process.pid, signal.SIGKILL)
+            sleep(1)
+        return stdout, stderr, process.returncode
 
     def _kill_process_and_attach_logs(self, process):
-        self._kill_process(process.pid)
-        self._attach_process_logs(process)
+        stdout, stderr, return_code = self._kill_process(process)
+        self.addDetail('process-return-code', text_content(str(return_code)))
+        self.addDetail('process-stdout', text_content(stdout))
+        self.addDetail('process-stderr', text_content(stderr))
 
 
 def _is_process_running(pid):

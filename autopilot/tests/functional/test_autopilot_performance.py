@@ -38,7 +38,10 @@ def maximum_runtime(max_time):
     yield
     total_time = abs(time() - start_time)
     if total_time >= max_time:
-        raise AssertionError("Runtime of %f was not within defined limit of %f" % (total_time, max_time))
+        raise AssertionError(
+            "Runtime of %f was not within defined "
+            "limit of %f" % (total_time, max_time)
+        )
     else:
         logger.info(
             "Test completed in %f seconds, which is below the "

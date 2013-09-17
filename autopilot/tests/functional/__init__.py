@@ -26,7 +26,7 @@ import os.path
 import logging
 from shutil import rmtree
 import subprocess
-from tempfile import  mkdtemp
+from tempfile import mkdtemp
 from testtools.content import Content, text_content
 from testtools.content_type import ContentType
 

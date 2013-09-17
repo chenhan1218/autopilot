@@ -450,7 +450,9 @@ class _cached_get_child_pids(object):
 
     def __call__(self, pid):
         if self._cached_result is None:
-            self._cached_result = [p.pid for p in psutil.Process(pid).get_children(recursive=True)]
+            self._cached_result = [
+                p.pid for p in psutil.Process(pid).get_children(recursive=True)
+            ]
         return self._cached_result
 
     def reset_cache(self):

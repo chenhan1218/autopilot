@@ -25,7 +25,11 @@ from time import time
 from textwrap import dedent
 from testtools.matchers import Equals
 
+import logging
 from autopilot.tests.functional import AutopilotRunTestBase
+
+
+logger = logging.getLogger(__name__)
 
 
 @contextmanager
@@ -35,6 +39,13 @@ def maximum_runtime(max_time):
     total_time = abs(time() - start_time)
     if total_time >= max_time:
         raise AssertionError("Runtime of %f was not within defined limit of %f" % (total_time, max_time))
+    else:
+        logger.info(
+            "Test completed in %f seconds, which is below the "
+            " threshold of %f.",
+            total_time,
+            max_time
+        )
 
 
 class AutopilotPerformanceTests(AutopilotRunTestBase):

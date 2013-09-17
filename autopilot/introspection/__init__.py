@@ -285,6 +285,7 @@ def _get_dbus_addresses_from_search_parameters(
     _reset_known_connection_list()
 
     for i in range(10):
+        _get_child_pids.reset_cache()
         if process is not None and not _process_is_running(process):
             return_code = process.poll()
             raise ProcessSearchError(
@@ -433,11 +434,30 @@ def _check_connection_has_ap_interface(bus, connection_name, path):
     obj_iface.GetVersion()
 
 
-def _get_child_pids(pid):
+class _cached_get_child_pids(object):
     """Get a list of all child process Ids, for the given parent.
 
+    Since we call this often, and it's a very expensive call, we optimise this
+    such that the return value will be cached for each scan through the dbus
+    bus.
+
+    Calling reset_cache() at the end of each dbus scan will ensure that you get
+    fresh values on the next call.
     """
-    return [p.pid for p in psutil.Process(pid).get_children(recursive=True)]
+
+    def __init__(self):
+        self._cached_result = None
+
+    def __call__(self, pid):
+        if self._cached_result is None:
+            self._cached_result = [p.pid for p in psutil.Process(pid).get_children(recursive=True)]
+        return self._cached_result
+
+    def reset_cache(self):
+        self._cached_result = None
+
+
+_get_child_pids = _cached_get_child_pids()
 
 
 def _make_proxy_object(data_source, emulator_base):

@@ -1,4 +1,3 @@
 graft bin
 graft build/sphinx/html
 recursive-include lttng_module *.c *.h
-recursive-include debian changelog

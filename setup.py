@@ -21,14 +21,9 @@
 
 from setuptools import find_packages, setup, Extension
 
-try:
-    from debian import changelog
-    chl = changelog.Changelog(open('debian/changelog'))
-    version = str(chl.get_version())
-except ImportError:
-    # If we don't have python-debian installed, guess a coarse-grained version
-    # string
-    version = '1.4.0'
+
+VERSION = '1.4.0'
+
 
 autopilot_tracepoint = Extension(
     'autopilot.tracepoint',
@@ -39,7 +34,7 @@ autopilot_tracepoint = Extension(
 
 setup(
     name='autopilot',
-    version=version,
+    version=VERSION,
     description='Functional testing tool for Ubuntu.',
     author='Thomi Richards',
     author_email='thomi.richards@canonical.com',

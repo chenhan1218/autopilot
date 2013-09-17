@@ -1,3 +1,17 @@
+autopilot (1.4+14.04.20130917ubuntu.unity.next-0ubuntu1) saucy; urgency=low
+
+  [ Thomi Richards ]
+  * Fix powerpc dependency issue. (LP: #1223044)
+
+  [ Marco Trevisan (Treviño) ]
+  * keybindings: add unity window/{left,right}_maximize key binding.
+    (LP: #992697)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 325 (ubuntu-unity/next)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 17 Sep 2013 04:24:51 +0000
+
 autopilot (1.4-0ubuntu1) saucy; urgency=low
 
   [ Thomi Richards ]

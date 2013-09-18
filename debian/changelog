@@ -1,3 +1,39 @@
+autopilot (1.3.1+13.10.20130918-0ubuntu1) saucy; urgency=low
+
+  [ Jean-Baptiste Lallement ]
+  * Added autopilot-sandbox-run to run autopilot tests in a 'fake' X
+    server. Xephyr and Xvfb are supported. (LP: #1226070)
+
+  [ Thomi Richards ]
+  * kzgdiparg ugp srgp s r ua. (LP: #1205204)
+  * Add support for click packages. (LP: #1212833)
+  * Update StateNotFoundErrror exception to give more informative
+    messages. (LP: #1225701)
+  * Fix select_single inconsistency. (LP: #1225692)
+  * Create wait_select_single method. (LP: #1223428)
+  * Add test case for applications that exit with SIGABRT when launched
+    with autopilot.
+  * Back out changes that would break test case compatibility. (LP:
+    #1226505)
+  * Performance improvments for launching and closing applications under
+    test with autopilot. (LP: #1218636)
+
+  [ Andy Doan ]
+  * Add support for click packages. (LP: #1212833)
+
+  [ Christopher Lee ]
+  * commit message. (LP: #1205949)
+
+  [ Martin Pitt ]
+  * Add bamfdaemon to autopilot-desktop dependencies, to avoid long
+    delays when running autopilot in minimal environments. (LP:
+    #1224970)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 333
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 18 Sep 2013 06:03:34 +0000
+
 autopilot (1.3.1+13.10.20130906.1-0ubuntu1) saucy; urgency=low
 
   [ Christopher Lee ]

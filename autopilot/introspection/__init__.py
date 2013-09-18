@@ -473,7 +473,6 @@ class _cached_get_child_pids(object):
 _get_child_pids = _cached_get_child_pids()
 
 
-
 def _make_proxy_object(data_source, emulator_base):
     """Returns a root proxy object given a DBus service name."""
     proxy_bases = _get_proxy_object_base_classes(data_source)

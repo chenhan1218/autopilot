@@ -25,6 +25,7 @@ from autopilot.introspection.dbus import StateNotFoundError
 
 _Py2 = sys.version_info[0] == 2
 
+
 class StateNotFoundTests(TestCase):
 
     def test_requires_class_name_to_construct(self):

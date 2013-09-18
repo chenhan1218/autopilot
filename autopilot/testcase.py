@@ -544,13 +544,11 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                 )
                 os.killpg(pid, signal.SIGKILL)
             sleep(1)
-        return stdout, stderr, process.returncode
 
     def _kill_process(self, process):
         """Kill the process, and return the stdout, stderr and return code."""
         stdout = ""
         stderr = ""
-        return_code = -1
         logger.info("waiting for process to exit.")
         try:
             logger.info("Killing process %d", process.pid)
@@ -580,4 +578,4 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
 
 def _is_process_running(pid):
-    return pid in psutil.get_pid_list()
+    return psutil.pid_exists(pid)

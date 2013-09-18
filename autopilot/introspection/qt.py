@@ -26,6 +26,7 @@ __all__ = ['QtApplicationLauncher']
 import functools
 
 import logging
+import subprocess
 
 from autopilot.introspection import ApplicationLauncher
 

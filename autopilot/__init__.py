@@ -131,7 +131,7 @@ class _OneOrMoreArgumentStoreAction(Action):
 def have_vis():
     """Return true if the vis package is installed."""
     try:
-        from autopilot.vis import vis_main
+        from autopilot.vis import vis_main  # flake8: noqa
         return True
     except ImportError:
         return False

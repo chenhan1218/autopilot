@@ -245,7 +245,7 @@ class DateTimeTests(TestCase):
 
         self.assertThat(dt1, Equals(dt2))
 
-    def test_equality_with_datetime(self):
+    def test_equality_with_datetime_timestamp(self):
         dt1 = DateTime(1377209927)
         dt2 = datetime.utcfromtimestamp(1377209927)
         dt3 = datetime.utcfromtimestamp(1377209928)
@@ -289,15 +289,7 @@ class TimeTests(TestCase):
         self.assertThat(dt1, Equals(dt2))
         self.assertThat(dt1, NotEquals(dt3))
 
-    def test_equality_with_time(self):
-        dt1 = Time(0, 1, 2, 3)
-        dt2 = [0, 1, 2, 3]
-        dt3 = [4, 1, 2, 3]
-
-        self.assertThat(dt1, Equals(dt2))
-        self.assertThat(dt1, NotEquals(dt3))
-
-    def test_equality_with_time(self):
+    def test_equality_with_real_time(self):
         dt1 = Time(2, 3, 4, 5)
         dt2 = time(2, 3, 4, 5000)
         dt3 = time(5, 4, 3, 2000)
@@ -567,7 +559,7 @@ class DBusIntrospectionObjectTests(TestCase):
         bad data from the autopilot backend.
 
         """
-        my_obj = DBusIntrospectionObject(
+        DBusIntrospectionObject(
             dict(foo=[0]),
             '/some/dummy/path'
         )

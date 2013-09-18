@@ -29,7 +29,6 @@ from mock import patch
 
 from autopilot.display import Display
 from autopilot import platform
-from autopilot.testcase import AutopilotTestCase, multiply_scenarios
 from autopilot.input import Keyboard, Mouse, Pointer, Touch
 from autopilot.input._common import get_center_point
 from autopilot.matchers import Eventually

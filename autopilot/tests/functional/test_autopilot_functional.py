@@ -878,7 +878,7 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
             class SimpleTest(AutopilotTestCase):
 
                 def test_simple(self):
-                    self.assertTrue(True)
+                    self.assertTrue()
             """)
         )
 

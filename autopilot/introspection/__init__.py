@@ -33,6 +33,7 @@ import subprocess
 from time import sleep
 from functools import partial
 import os
+import psutil
 import sys
 
 from autopilot.introspection.backends import DBusAddress
@@ -250,8 +251,10 @@ def get_proxy_object_for_existing_process(
     :param emulator_base: The custom emulator to create the resulting proxy
         object with.
 
-    :raises: RuntimeError if no search criteria match.
-    :raises: RuntimeError if the search criteria results in many matches.
+    :raises ProcessSearchError: if no search criteria match.
+    :raises RuntimeError: if the search criteria results in many matches.
+    :raises RuntimeError: if both ``process`` and ``pid`` are supplied, but
+        ``process.pid != pid``.
 
     """
     if process is not None:
@@ -293,6 +296,7 @@ def _get_dbus_addresses_from_search_parameters(
     _reset_known_connection_list()
 
     for i in range(10):
+        _get_child_pids.reset_cache()
         if process is not None and not _process_is_running(process):
             return_code = process.poll()
             raise ProcessSearchError(
@@ -441,26 +445,32 @@ def _check_connection_has_ap_interface(bus, connection_name, path):
     obj_iface.GetVersion()
 
 
-def _get_child_pids(pid):
+class _cached_get_child_pids(object):
     """Get a list of all child process Ids, for the given parent.
 
+    Since we call this often, and it's a very expensive call, we optimise this
+    such that the return value will be cached for each scan through the dbus
+    bus.
+
+    Calling reset_cache() at the end of each dbus scan will ensure that you get
+    fresh values on the next call.
     """
-    def get_children(pid):
-        command = ['ps', '-o', 'pid', '--ppid', str(pid), '--noheaders']
-        try:
-            raw_output = subprocess.check_output(command)
-        except subprocess.CalledProcessError:
-            return []
-        return [int(p) for p in raw_output.split()]
 
-    result = []
-    data = get_children(pid)
-    while data:
-        pid = data.pop(0)
-        result.append(pid)
-        data.extend(get_children(pid))
+    def __init__(self):
+        self._cached_result = None
 
-    return result
+    def __call__(self, pid):
+        if self._cached_result is None:
+            self._cached_result = [
+                p.pid for p in psutil.Process(pid).get_children(recursive=True)
+            ]
+        return self._cached_result
+
+    def reset_cache(self):
+        self._cached_result = None
+
+
+_get_child_pids = _cached_get_child_pids()
 
 
 def _make_proxy_object(data_source, emulator_base):

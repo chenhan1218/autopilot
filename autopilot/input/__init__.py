@@ -337,7 +337,7 @@ class Mouse(CleanupRegistered):
         self.click(button, press_duration)
 
     def move(self, x, y, animate=True, rate=10, time_between_events=0.01):
-        """Moves mouse to location (x, y).
+        """Moves mouse to location (x,y).
 
         Callers should avoid specifying the *rate* or *time_between_events*
         parameters unless they need a specific rate of movement.
@@ -426,7 +426,7 @@ class Touch(object):
         raise NotImplementedError("You cannot use this class directly.")
 
     def tap(self, x, y):
-        """Click (or 'tap') at given x and y coordinates."""
+        """Click (or 'tap') at given x,y coordinates."""
         raise NotImplementedError("You cannot use this class directly.")
 
     def tap_object(self, object):
@@ -446,7 +446,20 @@ class Touch(object):
         raise NotImplementedError("You cannot use this class directly.")
 
     def press(self, x, y):
-        """Press and hold."""
+        """Press and hold at the given x,y coordinates."""
+        raise NotImplementedError("You cannot use this class directly.")
+
+    def move(self, x, y):
+        """Move the pointer coords to (x,y).
+
+        .. note:: The touch 'finger' must be pressed for a call to this
+         method to be successful. (see :py:meth:`press` for further details on
+         touch presses.)
+
+        :raises: **RuntimeError** if called and the touch 'finger' isn't
+         pressed.
+
+        """
         raise NotImplementedError("You cannot use this class directly.")
 
     def release(self):

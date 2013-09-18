@@ -50,6 +50,7 @@ from __future__ import absolute_import
 
 import logging
 import os
+import psutil
 import signal
 import subprocess
 
@@ -65,8 +66,10 @@ from autopilot.introspection import (
     get_application_launcher,
     get_application_launcher_from_string_hint,
     get_autopilot_proxy_object_for_process,
+    get_proxy_object_for_existing_process,
     launch_application,
 )
+from autopilot.introspection.utilities import _get_click_app_id
 from autopilot.display import Display
 from autopilot.utilities import on_test_started
 from autopilot.keybindings import KeybindingsHelper
@@ -282,6 +285,96 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             dbus_bus
         )
 
+    def launch_click_package(self, package_id, app_name=None, **kwargs):
+        """Launch a click package application with introspection enabled.
+
+        This method takes care of launching a click package with introspection
+        exabled. You probably want to use this method if your application is
+        packaged in a click application, or is started via upstart.
+
+        Usage is similar to the
+        :py:meth:`AutopilotTestCase.launch_test_application`::
+
+            app_proxy = self.launch_click_package(
+                "com.ubuntu.dropping-letters"
+            )
+
+        :param package_id: The Click package name you want to launch. For
+            example: ``com.ubuntu.dropping-letters``
+        :param app_name: Currently, only one application can be packaged in a
+            click package, and this parameter can be left at None. If
+            specified, it should be the application name you wish to launch.
+
+        :keyword emulator_base: If set, specifies the base class to be used for
+            all emulators for this loaded application.
+
+        :raises RuntimeError: If the specified package_id cannot be found in
+            the click package manifest.
+        :raises RuntimeError: If the specified app_name cannot be found within
+            the specified click package.
+
+        """
+        app_id = _get_click_app_id(package_id, app_name)
+        # sadly, we cannot re-use the existing launch_test_application
+        # since upstart is a little odd.
+        # set the qt testability env:
+        subprocess.call([
+            "/sbin/initctl",
+            "set-env",
+            "QT_LOAD_TESTABILITY=1",
+        ])
+        # launch the application:
+        subprocess.check_output([
+            "/sbin/start",
+            "application",
+            "APP_ID={}".format(app_id),
+        ])
+        # perhaps we should do this with a regular expression instead?
+        for i in range(10):
+            try:
+                list_output = subprocess.check_output([
+                    "/sbin/initctl",
+                    "status",
+                    "application-click",
+                    "APP_ID={}".format(app_id)
+                ])
+            except subprocess.CalledProcessError:
+                # application not started yet.
+                pass
+            else:
+                for line in list_output.split('\n'):
+                    if app_id in line and "start/running" in line:
+                        target_pid = int(line.split()[-1])
+
+                        self.addCleanup(self._kill_pid, target_pid)
+                        logger.info(
+                            "Click package %s has been launched with PID %d",
+                            app_id,
+                            target_pid
+                        )
+
+                        emulator_base = kwargs.pop('emulator_base', None)
+                        proxy = get_proxy_object_for_existing_process(
+                            pid=target_pid,
+                            emulator_base=emulator_base
+                        )
+                        # reset the upstart env, and hope no one else launched,
+                        # or they'll have introspection enabled as well,
+                        # although this isn't the worth thing in the world.
+                        subprocess.call([
+                            "/sbin/initctl",
+                            "unset-env",
+                            "QT_LOAD_TESTABILITY",
+                        ])
+                        return proxy
+            # give the app time to launch - maybe this is not needed?:
+            sleep(1)
+        else:
+            raise RuntimeError(
+                "Could not find autopilot interface for click package"
+                " '{}' after 10 seconds.".format(app_id)
+            )
+
     def _compare_system_with_app_snapshot(self):
         """Compare the currently running application with the last snapshot.
 
@@ -433,22 +526,40 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         # default implementation is in autopilot.introspection:
         return get_application_launcher(app_path)
 
-    def _attach_process_logs(self, process):
-        stdout, stderr = process.communicate()
-        return_code = process.returncode
-        self.addDetail('process-return-code', text_content(str(return_code)))
-        self.addDetail('process-stdout', text_content(stdout))
-        self.addDetail('process-stderr', text_content(stderr))
-
-    def _kill_process(self, process):
+    def _kill_pid(self, pid):
+        """Kill the process with the specified pid."""
         logger.info("waiting for process to exit.")
         try:
+            logger.info("Killing process %d", pid)
+            os.killpg(pid, signal.SIGTERM)
+        except OSError:
+            logger.info("Appears process has already exited.")
+        for i in range(10):
+            if not _is_process_running(pid):
+                break
+            if i == 9:
+                logger.info(
+                    "Killing process group, since it hasn't exited after "
+                    "10 seconds."
+                )
+                os.killpg(pid, signal.SIGKILL)
+            sleep(1)
+
+    def _kill_process(self, process):
+        """Kill the process, and return the stdout, stderr and return code."""
+        stdout = ""
+        stderr = ""
+        logger.info("waiting for process to exit.")
+        try:
+            logger.info("Killing process %d", process.pid)
             os.killpg(process.pid, signal.SIGTERM)
         except OSError:
             logger.info("Appears process has already exited.")
         for i in range(10):
-            process.poll()
-            if process.returncode is not None:
+            tmp_out, tmp_err = process.communicate()
+            stdout += tmp_out
+            stderr += tmp_err
+            if not _is_process_running(process.pid):
                 break
             if i == 9:
                 logger.info(
@@ -457,7 +568,14 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                 )
                 os.killpg(process.pid, signal.SIGKILL)
             sleep(1)
+        return stdout, stderr, process.returncode
 
     def _kill_process_and_attach_logs(self, process):
-        self._kill_process(process)
-        self._attach_process_logs(process)
+        stdout, stderr, return_code = self._kill_process(process)
+        self.addDetail('process-return-code', text_content(str(return_code)))
+        self.addDetail('process-stdout', text_content(stdout))
+        self.addDetail('process-stderr', text_content(stderr))
+
+
+def _is_process_running(pid):
+    return psutil.pid_exists(pid)

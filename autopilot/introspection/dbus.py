@@ -51,13 +51,55 @@ else:
 
 
 class StateNotFoundError(RuntimeError):
-    """Raised when a piece of state information is not found."""
 
-    message = "State not found for class with name '{}' and id '{}'."
+    """Raised when a piece of state information is not found.
 
-    def __init__(self, class_name, class_id):
-        super(StateNotFoundError, self).__init__(
-            self.message.format(class_name, class_id))
+    This exception is commonly raised when the application has destroyed (or
+    not yet created) the object you are trying to access in autopilot. This
+    typically happens for a number of possible reasons:
+
+     * The UI widget you are trying to access with
+        :py:met:`DBusIntrospectionObject.select_single` or
+        :py:met:`DBusIntrospectionObject.select_single` does not exist yet.
+    * The UI widget you are trying to access has been destroyed by the
+        application.
+
+    """
+
+    def __init__(self, class_name=None, **filters):
+        """Construct a StateNotFoundError.
+
+        :raises ValueError: if neither the class name not keyword arguments
+            are specified.
+
+        """
+        if class_name is None and not filters:
+            raise ValueError("Must specify either class name or filters.")
+
+        if class_name is None:
+            self._message = \
+                u"State not found with filters {}.".format(
+                    repr(filters)
+                )
+        elif not filters:
+            self._message = u"State not found for class '{}'.".format(
+                class_name
+            )
+        else:
+            self._message = \
+                u"State not found for class '{}' and filters {}.".format(
+                    class_name,
+                    repr(filters)
+                )
+
+    def __str__(self):
+        if sys.version_info[0] >= 3:
+            return self._message
+        else:
+            return self._message.encode('utf8')
+
+    def __unicode__(self):
+        return self._message
 
 
 class IntrospectableObjectMetaclass(type):
@@ -135,7 +177,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         self.__state = {}
         self.__refresh_on_attribute = True
         self._set_properties(state_dict)
-        self.path = path
+        self._path = path
 
     def _set_properties(self, state_dict):
         """Creates and set attributes of *self* based on contents of
@@ -275,10 +317,10 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             of the appropriate type (the latter case is for overridden emulator
             classes).
 
-        :raises: **ValueError** if the query returns more than one item. *If
+        :raises ValueError: if the query returns more than one item. *If
             you want more than one item, use select_many instead*.
 
-        :raises: **TypeError** if neither *type_name* or keyword filters are
+        :raises TypeError: if neither *type_name* or keyword filters are
             provided.
 
         .. seealso::
@@ -462,15 +504,15 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         try:
             return self.get_state_by_path(self.get_class_query_string())[0]
         except IndexError:
-            raise StateNotFoundError(self.__class__.__name__, self.id)
+            raise StateNotFoundError(self.__class__.__name__, id=self.id)
 
     def get_class_query_string(self):
         """Get the XPath query string required to refresh this class's
         state."""
-        if not self.path.startswith('/'):
-            return "//" + self.path + "[id=%d]" % self.id
+        if not self._path.startswith('/'):
+            return "//" + self._path + "[id=%d]" % self.id
         else:
-            return self.path + "[id=%d]" % self.id
+            return self._path + "[id=%d]" % self.id
 
     @classmethod
     def make_introspection_object(cls, dbus_tuple):

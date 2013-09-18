@@ -22,6 +22,7 @@ from __future__ import absolute_import
 
 from autopilot.testcase import AutopilotTestCase
 from testtools.matchers import raises
+from mock import patch
 
 
 class ApplicationSupportTests(AutopilotTestCase):
@@ -66,3 +67,41 @@ class ApplicationSupportTests(AutopilotTestCase):
         self.assertThat(
             fn,
             raises(ValueError("Unknown keyword arguments: 'arg1', 'arg2'.")))
+
+    @patch(
+        'autopilot.introspection.utilities._get_click_manifest',
+        new=lambda: []
+    )
+    def test_launch_click_package_raises_runtimeerror_on_missing_package(self):
+        """launch_click_package must raise a RuntimeError if the requested
+        package id is not found in the click manifest.
+
+        """
+        fn = lambda: self.launch_click_package("com.ubuntu.something")
+        self.assertThat(
+            fn,
+            raises(
+                RuntimeError(
+                    "Unable to find package 'com.ubuntu.something' in the "
+                    "click manifest."
+                )
+            )
+        )
+
+    @patch('autopilot.introspection.utilities._get_click_manifest')
+    def test_launch_click_package_raises_runtimeerror_on_wrong_app(self, cm):
+        """launch_click_package must raise a RuntimeError if the requested
+        package id is not found in the click manifest.
+
+        """
+        cm.return_value = [{'name': 'foo', 'hooks': {}}]
+        fn = lambda: self.launch_click_package("foo", "bar")
+        self.assertThat(
+            fn,
+            raises(
+                RuntimeError(
+                    "Application 'bar' is not present within the click package"
+                    " 'foo'."
+                )
+            )
+        )

@@ -289,6 +289,18 @@ class QtTests(ApplicationTests):
         app_proxy = self.launch_test_application(path, app_type='qt')
         self.assertTrue(app_proxy is not None)
 
+    def test_can_launch_qt_script_that_aborts(self):
+        path = self.write_script(dedent("""\
+            #!/usr/bin/python
+            import os
+            import time
+
+            time.sleep(1)
+            os.abort()
+            """))
+        launch_fn = lambda: self.launch_test_application(path, app_type='qt')
+        self.assertThat(launch_fn, raises(ProcessSearchError))
+
     def test_can_launch_wrapper_script(self):
         path = self.write_script(dedent("""\
             #!%s

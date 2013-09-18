@@ -27,6 +27,7 @@ from autopilot.introspection.dbus import (
     _get_filter_string_for_key_value_pair,
     _is_valid_server_side_filter_param,
     CustomEmulatorBase,
+    DBusIntrospectionObject,
 )
 
 
@@ -111,3 +112,14 @@ class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):
     def test_query_string(self):
         s = _get_filter_string_for_key_value_pair(self.k, self.v)
         self.assertThat(s, Equals(self.r))
+
+
+class DBusIntrospectionObjectTests(TestCase):
+
+    def test_can_access_path_attribute(self):
+        fake_object = DBusIntrospectionObject(
+            dict(id=[0, 123], path=[0, '/some/path']),
+            '/'
+        )
+        with fake_object.no_automatic_refreshing():
+            self.assertThat(fake_object.path, Equals('/some/path'))

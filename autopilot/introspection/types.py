@@ -616,4 +616,4 @@ class Time(_array_packed_type(4)):
     def __eq__(self, other):
         if isinstance(other, time):
             return other == self._cached_time
-        return super(DateTime, self).__eq__(other)
+        return super(Time, self).__eq__(other)

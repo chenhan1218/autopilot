@@ -37,8 +37,8 @@
 
 """
 
-import autopilot.display as display
-import autopilot.clipboard as clipboard
-import autopilot.dbus_handler as dbus_handler
-import autopilot.ibus as ibus
-import autopilot.input as input
+import autopilot.display as display  # flake8: noqa
+import autopilot.clipboard as clipboard  # flake8: noqa
+import autopilot.dbus_handler as dbus_handler  # flake8: noqa
+import autopilot.ibus as ibus  # flake8: noqa
+import autopilot.input as input  # flake8: noqa

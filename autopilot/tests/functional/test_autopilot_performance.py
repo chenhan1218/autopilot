@@ -75,7 +75,7 @@ class AutopilotPerformanceTests(AutopilotRunTestBase):
                             app_type='qt'
                         )
                 """)
-            )
+        )
         with maximum_runtime(5.0):
             rc, out, err = self.run_autopilot(['run', 'tests'])
             self.assertThat(rc, Equals(0))

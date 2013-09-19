@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dbus import DBusException
+from dbus import DBusException, SessionBus
 from testtools import TestCase
 from testtools.matchers import Equals
 from mock import patch, Mock
@@ -203,6 +203,15 @@ class ProxyObjectTests(TestCase):
         conn_matches_pid_fn.assert_called_once_with(
             self.fake_bus, self.fake_connection_name, test_pid)
         self.assertThat(result, Equals(False))
+
+    @patch('autopilot.introspection._connection_matches_pid')
+    @patch('autopilot.introspection._bus_pid_is_our_pid')
+    def test_connection_matches_pid_ignores_dbus_daemon(
+            self, bus_pid_is_our_pid, conn_matches_pid_fn):
+        _connection_matches_pid(SessionBus(), 'org.freedesktop.DBus', 123)
+
+        self.assertThat(bus_pid_is_our_pid.called, Equals(False))
+        self.assertThat(conn_matches_pid_fn.called, Equals(False))
 
     @patch('autopilot.introspection._bus_pid_is_our_pid')
     def test_match_connection_fails_bus_pid_is_our_pid(self, bus_pid_fn):

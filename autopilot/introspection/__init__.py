@@ -404,7 +404,11 @@ def _match_connection(bus, pid, path, connection_name):
 
 def _connection_matches_pid(bus, connection_name, pid):
     """Given a PID checks wherever it or its children are connected on this
-    bus."""
+    bus.
+
+    """
+    if connection_name == 'org.freedesktop.DBus':
+        return False
     try:
         if _bus_pid_is_our_pid(bus, connection_name, pid):
             return False

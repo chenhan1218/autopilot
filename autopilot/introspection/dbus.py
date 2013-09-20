@@ -207,17 +207,15 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         """Get a list of children of the specified type.
 
         Keyword arguments can be used to restrict returned instances. For
-        example:
+        example::
 
-        >>> from autopilot import get_children_by_type
-        >>> get_children_by_type('Launcher', monitor=1)
+            get_children_by_type('Launcher', monitor=1)
 
         will return only Launcher instances that have an attribute 'monitor'
         that is equal to 1. The type can also be specified as a string, which
-        is useful if there is no emulator class specified:
+        is useful if there is no emulator class specified::
 
-        >>> from autopilot import get_children_by_type
-        >>> get_children_by_type('Launcher', monitor=1)
+            get_children_by_type('Launcher', monitor=1)
 
         Note however that if you pass a string, and there is an emulator class
         defined, autopilot will not use it.

@@ -132,10 +132,9 @@ class Keyboard(KeyboardBase):
 
         :param string keys: Keys you want pressed.
 
-        Example:
+        Example::
 
-        >>> from autopilot.input import press
-        >>> press('Alt+F2')
+            press('Alt+F2')
 
         presses the 'Alt' and 'F2' keys.
 
@@ -152,10 +151,9 @@ class Keyboard(KeyboardBase):
 
         :param string keys: Keys you want released.
 
-        Example:
+        Example::
 
-        >>> from autopilot.input import release
-        >>> release('Alt+F2')
+            release('Alt+F2')
 
         releases the 'Alt' and 'F2' keys.
 
@@ -177,10 +175,9 @@ class Keyboard(KeyboardBase):
 
         :param string keys: Keys you want pressed and released.
 
-        Example:
+        Example::
 
-        >>> from autopilot.input import press_and_release
-        >>> press_and_release('Alt+F2')
+            press_and_release('Alt+F2')
 
         presses both the 'Alt' and 'F2' keys, and then releases both keys.
 

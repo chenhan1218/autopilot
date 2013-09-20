@@ -176,10 +176,9 @@ class Keyboard(CleanupRegistered):
         .. warning:: The **OSK** backend does not implement the press method
           and will raise a NotImplementedError if called.
 
-        Example:
+        Example::
 
-        >>> from autopilot import press
-        >>> press('Alt+F2')
+            press('Alt+F2')
 
         presses the 'Alt' and 'F2' keys, but does not release them.
 
@@ -197,10 +196,9 @@ class Keyboard(CleanupRegistered):
         .. warning:: The **OSK** backend does not implement the press method
          and will raise a NotImplementedError if called.
 
-        Example:
+        Example::
 
-        >>> from autopilot import release
-        >>> release('Alt+F2')
+            release('Alt+F2')
 
         releases the 'Alt' and 'F2' keys.
 
@@ -216,10 +214,9 @@ class Keyboard(CleanupRegistered):
         :param delay: The delay (in Seconds) after pressing and releasing each
             key.
 
-        Example:
+        Example::
 
-        >>> from autopilot import press_and_release
-        >>> press_and_release('Alt+F2')
+            press_and_release('Alt+F2')
 
         presses both the 'Alt' and 'F2' keys, and then releases both keys.
 
@@ -251,12 +248,11 @@ class Mouse(CleanupRegistered):
     test. This class should not be instantiated directly however. To get an
     instance of the mouse class, call :py:meth:`create` instead.
 
-    For example, to create a mouse object and click at (100,50):
+    For example, to create a mouse object and click at (100,50)::
 
-    >>> from autopilot.input import Mouse
-    >>> mouse = Mouse.create()
-    >>> mouse.move(100, 50)
-    >>> mouse.click()
+        mouse = Mouse.create()
+        mouse.move(100, 50)
+        mouse.click()
 
     """
 

@@ -63,9 +63,10 @@ class Silence(object):
     """Context manager which uses low-level file descriptors to suppress
     output to stdout/stderr, optionally redirecting to the named file(s).
 
-    >>> with Silence():
-    ...         pass  # do something that prints to stdout or stderr:
-    ...
+    Example::
+
+        with Silence():
+            # do something that prints to stdout or stderr
 
     """
     def __init__(self, stdout=os.devnull, stderr=os.devnull, mode='wb'):

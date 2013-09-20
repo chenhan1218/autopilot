@@ -82,7 +82,7 @@ def model():
     """Get the model name of the current platform.
 
     For desktop / laptop installations, this will return "Desktop".
-    Otherwise, the current hardware model will be returned. For example:
+    Otherwise, the current hardware model will be returned. For example::
 
     >>> from autopilot import platform
     >>> platform.model()

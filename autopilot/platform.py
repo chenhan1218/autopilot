@@ -84,9 +84,9 @@ def model():
     For desktop / laptop installations, this will return "Desktop".
     Otherwise, the current hardware model will be returned. For example::
 
-    >>> from autopilot import platform
-    >>> platform.model()
-    ... "Galaxy Nexus"
+        platform.model()
+
+        ... "Galaxy Nexus"
 
     """
     return _PlatformDetector.create().model
@@ -98,9 +98,9 @@ def image_codename():
     For desktop / laptop installations this will return "Desktop".
     Otherwise, the codename of the image that was installed will be
     returned. For example:
-
-    >>> from autopilot import platform
-    >>> platform.image_codename()
+    
+    platform.image_codename()
+    
     ... "maguro"
 
     """

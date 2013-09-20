@@ -17,7 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from dbus import SessionBus
 import json
+from mock import patch
 import os
 import subprocess
 import tempfile
@@ -28,6 +30,7 @@ from textwrap import dedent
 from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase
 from autopilot.introspection.dbus import CustomEmulatorBase
+from autopilot.introspection import _connection_matches_pid
 
 
 class EmulatorBase(CustomEmulatorBase):
@@ -123,3 +126,15 @@ class QMLCustomEmulatorTestCase(AutopilotTestCase):
         self.assertThat(result1.wasSuccessful(), Equals(True))
         result2 = InnerTestCase('test_custom_emulator').run()
         self.assertThat(result2.wasSuccessful(), Equals(True))
+
+
+class IntrospectionFunctionTests(AutopilotTestCase):
+
+    @patch('autopilot.introspection._connection_matches_pid')
+    @patch('autopilot.introspection._bus_pid_is_our_pid')
+    def test_connection_matches_pid_ignores_dbus_daemon(
+            self, bus_pid_is_our_pid, conn_matches_pid_fn):
+        _connection_matches_pid(SessionBus(), 'org.freedesktop.DBus', 123)
+
+        self.assertThat(bus_pid_is_our_pid.called, Equals(False))
+        self.assertThat(conn_matches_pid_fn.called, Equals(False))

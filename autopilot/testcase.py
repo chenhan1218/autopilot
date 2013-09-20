@@ -543,7 +543,6 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                 )
                 os.killpg(pid, signal.SIGKILL)
             sleep(1)
-        return stdout, stderr, process.returncode
 
     def _kill_process(self, process):
         """Kill the process, and return the stdout, stderr and return code."""

@@ -134,6 +134,7 @@ class Keyboard(KeyboardBase):
 
         Example:
 
+        >>> from autopilot.input import press
         >>> press('Alt+F2')
 
         presses the 'Alt' and 'F2' keys.
@@ -153,6 +154,7 @@ class Keyboard(KeyboardBase):
 
         Example:
 
+        >>> from autopilot.input import release
         >>> release('Alt+F2')
 
         releases the 'Alt' and 'F2' keys.
@@ -177,6 +179,7 @@ class Keyboard(KeyboardBase):
 
         Example:
 
+        >>> from autopilot.input import press_and_release
         >>> press_and_release('Alt+F2')
 
         presses both the 'Alt' and 'F2' keys, and then releases both keys.

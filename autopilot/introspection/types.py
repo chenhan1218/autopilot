@@ -259,6 +259,7 @@ class Rectangle(_array_packed_type(4)):
     These attributes can be accessed either using named attributes, or via
     sequence indexes::
 
+        >>> my_rect = Rectangle(12,13,100,150)
         >>> my_rect.x == my_rect[0] == 12
         True
         >>> my_rect.y == my_rect[1] == 13

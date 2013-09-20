@@ -64,7 +64,7 @@ class Silence(object):
     output to stdout/stderr, optionally redirecting to the named file(s).
 
     >>> with Silence():
-    ...     # do something that prints to stdout or stderr:
+    ...         pass  # do something that prints to stdout or stderr:
     ...
 
     """

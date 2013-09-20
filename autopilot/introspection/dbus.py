@@ -209,12 +209,14 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         Keyword arguments can be used to restrict returned instances. For
         example:
 
-        >>> get_children_by_type(Launcher, monitor=1)
+        >>> from autopilot import get_children_by_type
+        >>> get_children_by_type('Launcher', monitor=1)
 
         will return only Launcher instances that have an attribute 'monitor'
         that is equal to 1. The type can also be specified as a string, which
         is useful if there is no emulator class specified:
 
+        >>> from autopilot import get_children_by_type
         >>> get_children_by_type('Launcher', monitor=1)
 
         Note however that if you pass a string, and there is an emulator class
@@ -428,9 +430,9 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         """Get all instances of this class that exist within the Application
         state tree.
 
-        For example, to get all the LauncherIcon instances:
+        For example, to get all the LauncherIcon instances::
 
-        >>> icons = LauncherIcon.get_all_instances()
+            icons = LauncherIcon.get_all_instances()
 
         .. warning::
             Using this method is slow - it requires a complete scan of the
@@ -543,8 +545,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         Example usage:
 
-        >>> with instance.no_automatic_refreshing():
-            # access lots of attributes.
+            with instance.no_automatic_refreshing():
+                # access lots of attributes.
 
         This can be useful if you need to check lots of attributes in a tight
         loop, or if you want to atomicaly check several attributes at once.

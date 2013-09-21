@@ -98,9 +98,9 @@ def image_codename():
     For desktop / laptop installations this will return "Desktop".
     Otherwise, the codename of the image that was installed will be
     returned. For example:
-    
+
     platform.image_codename()
-    
+
     ... "maguro"
 
     """

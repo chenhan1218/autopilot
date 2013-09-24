@@ -26,7 +26,6 @@ import os.path
 from tempfile import mktemp
 from testtools.matchers import Contains, Equals, MatchesRegex, Not
 from textwrap import dedent
-import re
 
 from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional import AutopilotRunTestBase, remove_if_exists

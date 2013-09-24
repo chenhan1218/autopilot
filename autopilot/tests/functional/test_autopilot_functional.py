@@ -140,25 +140,10 @@ Loading tests from: %s
             """)
         )
         code, output, error = self.run_autopilot_list()
-        expected_regex = '''\
-Loading tests from: %s
-
-Failed to import test module: tests.test_simple
-Traceback \(most recent call last\):
-  File "/usr/lib/python2.7/unittest/loader.py", line 252, in _find_tests
-    module = self._get_module_from_name\(name\)
-  File "/usr/lib/python2.7/unittest/loader.py", line 230, in \
-_get_module_from_name
-    __import__\(name\)
-  File "/tmp/\w*/tests/test_simple.py", line 4
-    \.\.
-    \^
-SyntaxError: invalid syntax
-
-''' % self.base_path
+        expected_error = 'SyntaxError: invalid syntax'
         self.assertThat(code, Equals(0))
         self.assertThat(error, Equals(''))
-        self.assertTrue(re.search(expected_regex, output, re.MULTILINE))
+        self.assertThat(output, Contains(expected_error))
 
     def test_can_list_scenariod_tests(self):
         """Autopilot must show scenario counts next to tests that have

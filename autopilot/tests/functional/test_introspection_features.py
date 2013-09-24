@@ -122,9 +122,21 @@ class QMLCustomEmulatorTestCase(AutopilotTestCase):
                 self.assertThat(test_widget.visible, Eventually(Equals(True)))
 
         result1 = InnerTestCase('test_custom_emulator').run()
-        self.assertThat(result1.wasSuccessful(), Equals(True))
+        self.assertThat(
+            result1.wasSuccessful(),
+            Equals(True),
+            '\n\n'.join(
+                [e[1] for e in result1.decorated.errors]
+            )
+        )
         result2 = InnerTestCase('test_custom_emulator').run()
-        self.assertThat(result2.wasSuccessful(), Equals(True))
+        self.assertThat(
+            result2.wasSuccessful(),
+            Equals(True),
+            '\n\n'.join(
+                [e[1] for e in result2.decorated.errors]
+            )
+        )
 
 
 class IntrospectionFunctionTests(AutopilotTestCase):

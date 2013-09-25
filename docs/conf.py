@@ -80,9 +80,6 @@ version = '1.4'
 try:
     from debian import changelog
     chl = changelog.Changelog(open('../debian/changelog'))
-    #str(chl.get_version())
-    #print chl.version, '\n\n\n\n'
-    #print repr(chl.version)
     release = str(chl.version).split('ubuntu')[0]
 except ImportError:
     # If we don't have python-debian installed, guess a coarse-grained version

@@ -165,6 +165,7 @@ Package: python-autopilot-tests
 Architecture: all
 Depends: ${misc:Depends},
          ${python:Depends},
+         dpkg-dev,
          libautopilot-gtk (>= 1.4),
          libautopilot-qt (>= 1.4),
          python-autopilot,

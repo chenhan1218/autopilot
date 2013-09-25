@@ -26,7 +26,6 @@ import os.path
 from tempfile import mktemp
 from testtools.matchers import Contains, Equals, MatchesRegex, Not
 from textwrap import dedent
-import re
 
 from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional import AutopilotRunTestBase, remove_if_exists
@@ -120,24 +119,10 @@ Loading tests from: %s
             """)
         )
         code, output, error = self.run_autopilot_list()
-        expected_regex = '''\
-Loading tests from: %s
-
-Failed to import test module: tests.test_simple
-Traceback \(most recent call last\):
-  File "/usr/lib/python2.7/unittest/loader.py", line 252, in _find_tests
-    module = self._get_module_from_name\(name\)
-  File "/usr/lib/python2.7/unittest/loader.py", line 230, in \
-_get_module_from_name
-    __import__\(name\)
-  File "/tmp/\w*/tests/test_simple.py", line 4, in <module>
-    import asdjkhdfjgsdhfjhsd
-ImportError: No module named asdjkhdfjgsdhfjhsd
-
-''' % self.base_path
+        expected_output = '''ImportError: No module named asdjkhdfjgsdhfjhsd'''
         self.assertThat(code, Equals(0))
         self.assertThat(error, Equals(''))
-        self.assertTrue(re.search(expected_regex, output, re.MULTILINE))
+        self.assertThat(output, Contains(expected_output))
 
     def test_list_tests_with_syntax_error(self):
         self.create_test_file(
@@ -154,25 +139,10 @@ ImportError: No module named asdjkhdfjgsdhfjhsd
             """)
         )
         code, output, error = self.run_autopilot_list()
-        expected_regex = '''\
-Loading tests from: %s
-
-Failed to import test module: tests.test_simple
-Traceback \(most recent call last\):
-  File "/usr/lib/python2.7/unittest/loader.py", line 252, in _find_tests
-    module = self._get_module_from_name\(name\)
-  File "/usr/lib/python2.7/unittest/loader.py", line 230, in \
-_get_module_from_name
-    __import__\(name\)
-  File "/tmp/\w*/tests/test_simple.py", line 4
-    \.\.
-    \^
-SyntaxError: invalid syntax
-
-''' % self.base_path
+        expected_error = 'SyntaxError: invalid syntax'
         self.assertThat(code, Equals(0))
         self.assertThat(error, Equals(''))
-        self.assertTrue(re.search(expected_regex, output, re.MULTILINE))
+        self.assertThat(output, Contains(expected_error))
 
     def test_can_list_scenariod_tests(self):
         """Autopilot must show scenario counts next to tests that have
@@ -530,25 +500,11 @@ Loading tests from: %s
 
         code, output, error = self.run_autopilot(["run", "tests"])
 
-        expected_regex = '''\
-Loading tests from: %s
-
-Failed to import test module: tests.test_simple
-Traceback \(most recent call last\):
-  File "/usr/lib/python2.7/unittest/loader.py", line 252, in _find_tests
-    module = self._get_module_from_name\(name\)
-  File "/usr/lib/python2.7/unittest/loader.py", line 230, in \
-_get_module_from_name
-    __import__\(name\)
-  File "/tmp/\w*/tests/test_simple.py", line 4, in <module>
-    import asdjkhdfjgsdhfjhsd
-ImportError: No module named asdjkhdfjgsdhfjhsd
-
-''' % self.base_path
+        expected_error = 'ImportError: No module named asdjkhdfjgsdhfjhsd'
 
         self.assertThat(code, Equals(1))
         self.assertThat(error, Equals(''))
-        self.assertTrue(re.search(expected_regex, output, re.MULTILINE))
+        self.assertThat(output, Contains(expected_error))
         self.assertThat(output, Contains("FAILED (failures=1)"))
 
     def test_runs_with_syntax_errors_fail(self):
@@ -569,26 +525,17 @@ ImportError: No module named asdjkhdfjgsdhfjhsd
 
         code, output, error = self.run_autopilot(["run", "tests"])
 
-        expected_regex = '''\
-Loading tests from: %s
-
-Failed to import test module: tests.test_simple
-Traceback \(most recent call last\):
-  File "/usr/lib/python2.7/unittest/loader.py", line 252, in _find_tests
-    module = self._get_module_from_name\(name\)
-  File "/usr/lib/python2.7/unittest/loader.py", line 230, in \
-_get_module_from_name
-    __import__\(name\)
-  File "/tmp/\w*/tests/test_simple.py", line 4
-    \.\.
-    \^
+        expected_error = '''\
+tests/test_simple.py", line 4
+    ..
+    ^
 SyntaxError: invalid syntax
 
-''' % self.base_path
+'''
 
         self.assertThat(code, Equals(1))
         self.assertThat(error, Equals(''))
-        self.assertTrue(re.search(expected_regex, output, re.MULTILINE))
+        self.assertThat(output, Contains(expected_error))
         self.assertThat(output, Contains("FAILED (failures=1)"))
 
     def test_can_error_with_unicode_data(self):

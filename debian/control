@@ -102,6 +102,7 @@ Package: python-autopilot-tests
 Architecture: all
 Depends: ${misc:Depends},
          ${python:Depends},
+         dpkg-dev,
          libautopilot-gtk,
          libautopilot-qt,
          python-autopilot,

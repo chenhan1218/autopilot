@@ -570,9 +570,7 @@ class DBusIntrospectionObject(object):
             get_debug_logger().warning(
                 "Generating introspection instance for type '%s' based on "
                 "generic class.", name)
-            # override the _id attr from cls, since we don't want generated
-            # types to end up in the object registry.
-            class_type = type(str(name), (cls,), {'_id': None})
+            class_type = type(str(name), (cls,), {})
         return class_type(state, path)
 
     @contextmanager

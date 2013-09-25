@@ -1,0 +1,3 @@
+dbus (receive, send)
+     bus=session
+     path=/com/canonical/Autopilot/**,

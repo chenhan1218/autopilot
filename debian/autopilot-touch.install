@@ -1,0 +1,1 @@
+apparmor/click.rules usr/share/autopilot-touch/apparmor

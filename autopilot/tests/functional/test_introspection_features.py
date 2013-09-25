@@ -24,7 +24,7 @@ import os
 import subprocess
 import tempfile
 from tempfile import mktemp
-from testtools.matchers import Equals
+from testtools.matchers import Equals, IsInstance, Not
 from textwrap import dedent
 
 from autopilot.matchers import Eventually
@@ -85,6 +85,39 @@ class IntrospectionFeatureTests(AutopilotTestCase):
         test_widget = app.select_single(MouseTestWidget)
 
         self.assertThat(test_widget.visible, Eventually(Equals(True)))
+
+    def test_selecting_generic_from_custom_is_not_inherited_from_custom(self):
+        """Selecting a generic proxy object from a custom proxy object must not
+        return an obecjt derived of the custom object type.
+
+        """
+        class MouseTestWidget(EmulatorBase):
+            pass
+
+        app = self.start_mock_app(EmulatorBase)
+        mouse_widget = app.select_single(MouseTestWidget)
+
+        child_label = mouse_widget.select_many("QLabel")[0]
+
+        self.assertThat(child_label, Not(IsInstance(MouseTestWidget)))
+
+    def test_selecting_custom_from_generic_is_not_inherited_from_generic(self):
+        """Selecting a generic proxy object from a custom proxy object must not
+        return an obecjt derived of the custom object type.
+
+        """
+        class MouseTestWidget(EmulatorBase):
+            pass
+
+        app = self.start_mock_app(EmulatorBase)
+        generic_window = app.select_single("QMainWindow")
+
+        mouse_widget = generic_window.select_single(MouseTestWidget)
+
+        self.assertThat(
+            mouse_widget,
+            Not(IsInstance(type(generic_window)))
+        )
 
 
 class QMLCustomEmulatorTestCase(AutopilotTestCase):

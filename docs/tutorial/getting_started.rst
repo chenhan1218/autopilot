@@ -162,7 +162,7 @@ From the root of this directory structure, we can ask autopilot to list all the 
 
 	 1 total tests.
 
-Note that on the first line, autopilot will tell you where it has loaded the test definitions from. Autopilot will look in the current directory for a python package that matches the package name specified on the command line. If it does not find nay suitable packages, it will look in the standard python module search path instead.
+Note that on the first line, autopilot will tell you where it has loaded the test definitions from. Autopilot will look in the current directory for a python package that matches the package name specified on the command line. If it does not find any suitable packages, it will look in the standard python module search path instead.
 
 To run our test, we use the autopilot 'run' command::
 

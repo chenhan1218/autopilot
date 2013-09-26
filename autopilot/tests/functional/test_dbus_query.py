@@ -22,10 +22,12 @@ import json
 import os
 import subprocess
 import signal
+from time import time
 from tempfile import mktemp
 
 from autopilot.testcase import AutopilotTestCase
-from testtools.matchers import Equals, NotEquals, raises
+from testtools.matchers import Equals, NotEquals, raises, LessThan, GreaterThan
+from autopilot.introspection.dbus import StateNotFoundError
 
 
 class DbusQueryTests(AutopilotTestCase):
@@ -138,10 +140,10 @@ class DbusQueryTests(AutopilotTestCase):
         fn = lambda: app.select_single()
         self.assertThat(fn, raises(TypeError))
 
-    def test_select_single_no_match_returns_none(self):
+    def test_select_single_no_match_raises_exception(self):
         app = self.start_fully_featured_app()
-        failed_match = app.select_single("QMadeupType")
-        self.assertThat(failed_match, Equals(None))
+        match_fn = lambda: app.select_single("QMadeupType")
+        self.assertThat(match_fn, raises(StateNotFoundError('QMadeupType')))
 
     def test_select_single_parameters_only(self):
         app = self.start_fully_featured_app()
@@ -150,10 +152,13 @@ class DbusQueryTests(AutopilotTestCase):
         self.assertThat(titled_help, NotEquals(None))
         self.assertThat(titled_help.title, Equals('Help'))
 
-    def test_select_single_parameters_no_match_returns_none(self):
+    def test_select_single_parameters_no_match_raises_exception(self):
         app = self.start_fully_featured_app()
-        failed_match = app.select_single(title="Non-existant object")
-        self.assertThat(failed_match, Equals(None))
+        match_fn = lambda: app.select_single(title="Non-existant object")
+        self.assertThat(
+            match_fn,
+            raises(StateNotFoundError(title="Non-existant object"))
+        )
 
     def test_select_single_returning_multiple_raises(self):
         app = self.start_fully_featured_app()
@@ -174,6 +179,23 @@ class DbusQueryTests(AutopilotTestCase):
         app = self.start_fully_featured_app()
         failed_match = app.select_many('QMenu', title='qwerty')
         self.assertThat(failed_match, Equals([]))
+
+    def test_wait_select_single_succeeds_quickly(self):
+        app = self.start_fully_featured_app()
+        start_time = time()
+        main_window = app.wait_select_single('QMainWindow')
+        end_time = time()
+        self.assertThat(main_window, NotEquals(None))
+        self.assertThat(abs(end_time - start_time), LessThan(1))
+
+    def test_wait_select_single_fails_slowly(self):
+        app = self.start_fully_featured_app()
+        start_time = time()
+        fn = lambda: app.wait_select_single('QMadeupType')
+        self.assertThat(fn, raises(StateNotFoundError('QMadeupType')))
+        end_time = time()
+        self.assertThat(abs(end_time - start_time), GreaterThan(9))
+        self.assertThat(abs(end_time - start_time), LessThan(11))
 
 
 class DbusCustomBusTests(AutopilotTestCase):

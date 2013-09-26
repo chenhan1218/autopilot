@@ -88,7 +88,7 @@ class IntrospectionFeatureTests(AutopilotTestCase):
 
     def test_selecting_generic_from_custom_is_not_inherited_from_custom(self):
         """Selecting a generic proxy object from a custom proxy object must not
-        return an obecjt derived of the custom object type.
+        return an object derived of the custom object type.
 
         """
         class MouseTestWidget(EmulatorBase):
@@ -102,8 +102,8 @@ class IntrospectionFeatureTests(AutopilotTestCase):
         self.assertThat(child_label, Not(IsInstance(MouseTestWidget)))
 
     def test_selecting_custom_from_generic_is_not_inherited_from_generic(self):
-        """Selecting a generic proxy object from a custom proxy object must not
-        return an obecjt derived of the custom object type.
+        """Selecting a custom proxy object from a generic proxy object must
+        return an object that is of the custom type.
 
         """
         class MouseTestWidget(EmulatorBase):

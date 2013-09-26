@@ -340,13 +340,34 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         return instances[0]
 
     def wait_select_single(self, type_name='*', **kwargs):
-        """Does the same thing as :meth:`select_single`, but will poll the
-        application continually until a valid object is found. This is useful
-        in situations where the object you are trying to select may not exist
-        yet.
+        """Get a proxy object matching some search criteria, retrying if no
+        object is found until a timeout is reached.
 
-        After 10 seconds, a StateNotFoundError will be raised, as if the
-        :meth:`select_single` method had been called instead.
+        This method is identical to the :meth:`select_single` method, except
+        that this method will poll the application under test for 10 seconds
+        in the event that the search criteria does not match anything.
+
+        This method will return single proxy object from the introspection
+        tree, with type equal to *type_name* and (optionally) matching the
+        keyword filters present in *kwargs*.
+
+        You must specify either *type_name*, keyword filters or both.
+
+        This method searches recursively from the proxy object this method is
+        called on. Calling :meth:`select_single` on the application (root)
+        proxy object will search the entire tree. Calling
+        :meth:`select_single` on an object in the tree will only search it's
+        descendants.
+
+        Example usage::
+
+            app.wait_select_single('QPushButton', objectName='clickme')
+            # returns a QPushButton whose 'objectName' property is 'clickme'.
+            # will poll the application until such an object exists, or will
+            # raise StateNotFoundError after 10 seconds.
+
+        If nothing is returned from the query, this method raises
+        StateNotFoundError after 10 seconds.
 
         :param type_name: Either a string naming the type you want, or a class
             of the appropriate type (the latter case is for overridden emulator

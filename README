@@ -1,0 +1,13 @@
+Welcome to the Autopilot source code!
+
+Autopilot is a tool for writing functional tests for GUI applications.
+
+Autopilot is free software, licensed under GNU General Public License (GPLv3+).
+
+- Project Home (Source Code, Version Control, Bug Tracking, etc):
+  https://launchpad.net/autopilot
+
+- Documentation (Tutorial, FAQ, API Reference, etc):
+  http://unity.ubuntu.com/autopilot/
+
+happy hacking.

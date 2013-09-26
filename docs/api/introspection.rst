@@ -2,8 +2,11 @@
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. automodule:: autopilot.introspection
-    :members: CustomEmulatorBase, DBusIntrospectionObject, get_proxy_object_for_existing_process
+    :members: get_proxy_object_for_existing_process
 
+
+.. automodule:: autopilot.introspection.dbus
+	:members: CustomEmulatorBase, DBusIntrospectionObject, StateNotFoundError
 
 .. automodule:: autopilot.introspection.types
 	:members: PlainType, Rectangle, Point, Size, DateTime, Time

@@ -87,7 +87,7 @@ The return value from :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_a
 
 .. otto:: **What is a Proxy Object?**
 
-	Whenever you launch an application, autopilot gives you a "proxy object". These are instances of the :class:`~autopilot.introspection.DBusIntrospectionObject` class, with all the data from your application mirrored in the proxy object instances. For example, if you have a proxy object for a push button class (say, ``QPushButton``, for example), the proxy object will have attribute to match every attribute in the class within your application. Autopilot automatically keeps the data in these instances up to date, so you can use them in your test assertions.
+	Whenever you launch an application, autopilot gives you a "proxy object". These are instances of the :class:`~autopilot.introspection.dbus.DBusIntrospectionObject` class, with all the data from your application mirrored in the proxy object instances. For example, if you have a proxy object for a push button class (say, ``QPushButton``, for example), the proxy object will have attribute to match every attribute in the class within your application. Autopilot automatically keeps the data in these instances up to date, so you can use them in your test assertions.
 
 	User interfaces are made up of a tree of widgets, and autopilot represents these widgets as a tree of proxy objects. Proxy objects have a number of methods on them for selecting child objects in the introspection tree, so test authors can easily inspect the parts of the UI tree they care about.
 

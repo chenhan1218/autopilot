@@ -362,13 +362,13 @@ Writing Custom Emulators
 ========================
 
 By default, autopilot will generate an object for every introspectable item in your application under test. These are generated on the fly, and derive from
-:class:`~autopilot.introspection.DBusIntrospectionObject`. This gives you the usual methods of selecting other nodes in the object tree, as well the the means to inspect all the properties in that class.
+:class:`~autopilot.introspection.dbus.DBusIntrospectionObject`. This gives you the usual methods of selecting other nodes in the object tree, as well the the means to inspect all the properties in that class.
 
 However, sometimes you want to customize the class used to create these objects. The most common reason to want to do this is to provide methods that make it easier to inspect these objects. Autopilot allows test authors to provide their own custom classes, through a couple of simple steps:
 
-1. First, you must define your own base class, to be used by all emulators in your test suite. This base class can be empty, but must derive from :class:`~autopilot.introspection.CustomEmulatorBase`. An example class might look like this::
+1. First, you must define your own base class, to be used by all emulators in your test suite. This base class can be empty, but must derive from :class:`~autopilot.introspection.dbus.CustomEmulatorBase`. An example class might look like this::
 
-    from autopilot.introspection import CustomEmulatorBase
+    from autopilot.introspection.dbus import CustomEmulatorBase
 
 
     class EmulatorBase(CustomEmulatorBase):
@@ -392,7 +392,7 @@ However, sometimes you want to customize the class used to create these objects.
                 '/path/to/the/application',
                 emulator_base=EmulatorBase)
 
-4. You can pass the emulator class to methods like :meth:`~autopilot.introspection.DBusIntrospectionObject.select_single` instead of a string. So, for example, the following is a valid way of selecting the QLabel instances in an application::
+4. You can pass the emulator class to methods like :meth:`~autopilot.introspection.dbus.DBusIntrospectionObject.select_single` instead of a string. So, for example, the following is a valid way of selecting the QLabel instances in an application::
 
     # Get all QLabels in the applicaton:
     labels = self.app.select_many(QLabel)

@@ -33,7 +33,7 @@ This bug has now been fixed, and using the integer selection will fail.
 :py:meth:`~autopilot.testcase.AutopilotTestCase.select_single` Changes
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The :meth:`~autopilot.introspection.DBusIntrospectionObject.select_single` method used to return ``None`` in the case where no object was found that matched the search criteria. This led to rather awkward code in places where the object you are searching for is being created dynamically::
+The :meth:`~autopilot.introspection.dbus.DBusIntrospectionObject.select_single` method used to return ``None`` in the case where no object was found that matched the search criteria. This led to rather awkward code in places where the object you are searching for is being created dynamically::
 
 	for i in range(10):
 		my_obj = self.app.select_single("MyObject")
@@ -45,9 +45,9 @@ The :meth:`~autopilot.introspection.DBusIntrospectionObject.select_single` metho
 
 This makes the authors intent harder to discern. To improve this situation, two changes have been made:
 
-1. :meth:`~autopilot.introspection.DBusIntrospectionObject.select_single` raises a :class:`~autopilot.introspection.StateNotFoundError` exception if the search terms returned no values, rather than returning ``None``.
+1. :meth:`~autopilot.introspection.dbus.DBusIntrospectionObject.select_single` raises a :class:`~autopilot.introspection.dbus.StateNotFoundError` exception if the search terms returned no values, rather than returning ``None``.
 
-2. If the object being searched for is likely to not exist, there is a new method: :meth:`~autopilot.introspection.DBusIntrospectionObject.wait_select_single` will try to retrieve an object for 10 seconds. If the object does not exist after that timeout, a :class:`~autopilot.introspection.dbus.StateNotFoundError` exception is raised. This means that the above code example should now be written as::
+2. If the object being searched for is likely to not exist, there is a new method: :meth:`~autopilot.introspection.dbus.DBusIntrospectionObject.wait_select_single` will try to retrieve an object for 10 seconds. If the object does not exist after that timeout, a :class:`~autopilot.introspection.dbus.StateNotFoundError` exception is raised. This means that the above code example should now be written as::
 
 	my_obj = self.app.wait_select_single("MyObject")
 

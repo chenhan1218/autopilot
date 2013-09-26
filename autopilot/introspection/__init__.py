@@ -299,10 +299,6 @@ def _get_dbus_addresses_from_search_parameters(
         _get_child_pids.reset_cache()
         if process is not None and not _process_is_running(process):
             return_code = process.poll()
-            stdout, stderr = process.communicate()
-            logger.error("Process exited with exit code: %d", return_code)
-            logger.error("Process stdout was: %r", stdout)
-            logger.error("Process stderr was: %r", stderr)
             raise ProcessSearchError(
                 "Process exited with exit code: %d"
                 % return_code

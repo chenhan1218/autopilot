@@ -570,7 +570,13 @@ class DBusIntrospectionObject(object):
             get_debug_logger().warning(
                 "Generating introspection instance for type '%s' based on "
                 "generic class.", name)
-            class_type = type(str(name), (cls,), {})
+            # we want the object to inherit from the custom emulator base, not
+            # the object class that is doing the selecting
+            base_class = cls
+            for base in cls.__bases__:
+                if issubclass(base, CustomEmulatorBase):
+                    base_class = base
+            class_type = type(str(name), (base_class,), {})
         return class_type(state, path)
 
     @contextmanager

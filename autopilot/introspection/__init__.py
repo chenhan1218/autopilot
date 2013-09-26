@@ -476,10 +476,13 @@ def _make_proxy_object(data_source, emulator_base):
 
     _clear_backends_for_proxy_object(emulator_base)
     clsobj = type(
-        str(cls_name), proxy_bases, dict(_Backend=data_source)
+        # Merge the object hierarchy.
+        str("%sBase" % cls_name), proxy_bases, dict(_Backend=data_source)
     )
 
-    proxy = clsobj.get_root_instance()
+    proxy_class = type(str(cls_name), (clsobj,), {})
+
+    proxy = proxy_class.get_root_instance()
     return proxy
 
 

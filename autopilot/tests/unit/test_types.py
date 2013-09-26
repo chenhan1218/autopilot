@@ -32,6 +32,7 @@ from autopilot.introspection.types import (
     DateTime,
     PlainType,
     Point,
+    Point3D,
     Rectangle,
     Size,
     Time,
@@ -303,6 +304,51 @@ class TimeTests(TestCase):
         self.assertThat(dt1.time, IsInstance(time))
 
 
+class Point3DTypeTests(TestCase):
+
+    def test_can_construct_point3d(self):
+        r = Point3D(1, 2, 3)
+        self.assertThat(r, IsInstance(dbus.Array))
+
+    def test_point3d_has_xyz_properties(self):
+        r = Point3D(1, 2, 3)
+
+        self.assertThat(r.x, Equals(1))
+        self.assertThat(r.y, Equals(2))
+        self.assertThat(r.z, Equals(3))
+
+    def test_point3d_has_slice_access(self):
+        r = Point3D(1, 2, 3)
+
+        self.assertThat(r[0], Equals(1))
+        self.assertThat(r[1], Equals(2))
+        self.assertThat(r[2], Equals(3))
+
+    def test_equality_with_point3d(self):
+        p1 = Point3D(1, 2, 3)
+        p2 = Point3D(1, 2, 3)
+
+        self.assertThat(p1, Equals(p2))
+
+    def test_inequality_with_point3d(self):
+        p1 = Point3D(1, 2, 3)
+        p2 = Point3D(1, 2, 4)
+
+        self.assertThat(p1, NotEquals(p2))
+
+    def test_equality_with_list(self):
+        p1 = Point3D(1, 2, 3)
+        p2 = [1, 2, 3]
+
+        self.assertThat(p1, Equals(p2))
+
+    def test_inequality_with_list(self):
+        p1 = Point3D(1, 2, 3)
+        p2 = [1, 2, 4]
+
+        self.assertThat(p1, NotEquals(p2))
+
+
 class CreateValueInstanceTests(TestCase):
 
     """Tests to check that create_value_instance does the right thing."""
@@ -548,6 +594,35 @@ class CreateValueInstanceTests(TestCase):
 
         self.assertThat(fn, raises(
             ValueError("Cannot create attribute, no data supplied")
+        ))
+
+    def test_point3d(self):
+        data = dbus.Array(
+            [
+                dbus.Int32(ValueType.POINT3D),
+                dbus.Int32(0),
+                dbus.Int32(10),
+                dbus.Int32(20),
+            ]
+        )
+
+        attr = create_value_instance(data, None, None)
+
+        self.assertThat(attr, IsInstance(Point3D))
+
+    def test_invalid_point3d(self):
+        data = dbus.Array(
+            [
+                dbus.Int32(ValueType.POINT3D),
+                dbus.Int32(0),
+                dbus.Int32(0),
+            ]
+        )
+
+        fn = lambda: create_value_instance(data, None, None)
+
+        self.assertThat(fn, raises(
+            ValueError("Point3D must be constructed with 3 arguments, not 2")
         ))
 
 

@@ -66,6 +66,7 @@ class ValueType(object):
     COLOR = 4
     DATETIME = 5
     TIME = 6
+    POINT3D = 7
     UNKNOWN = -1
 
 
@@ -85,6 +86,7 @@ def create_value_instance(value, parent, name):
         ValueType.SIZE: Size,
         ValueType.DATETIME: DateTime,
         ValueType.TIME: Time,
+        ValueType.POINT3D: Point3D,
         ValueType.UNKNOWN: _make_plain_type,
     }
     type_id = value[0]
@@ -618,3 +620,46 @@ class Time(_array_packed_type(4)):
         if isinstance(other, time):
             return other == self._cached_time
         return super(Time, self).__eq__(other)
+
+
+class Point3D(_array_packed_type(3)):
+
+    """The Point3D class represents a 3D point in cartesian space.
+
+    To construct a Point3D, pass in the x, y and z parameters to the class
+    constructor::
+
+        >>> my_point = Point(50,100,20)
+
+    These attributes can be accessed either using named attributes, or via
+    sequence indexes::
+
+        >>> my_point.x == my_point[0] == 50
+        True
+        >>> my_point.y == my_point[1] == 100
+        True
+        >>> my_point.z == my_point[2] == 20
+        True
+
+    Point3D instances can be compared using ``==`` and ``!=``, either to
+    another Point3D instance, or to any mutable sequence type with the correct
+    number of items::
+
+        >>> my_point == [50, 100, 20]
+        True
+        >>> my_point != Point(5, 10, 2)
+        True
+
+    """
+
+    @property
+    def x(self):
+        return self[0]
+
+    @property
+    def y(self):
+        return self[1]
+
+    @property
+    def z(self):
+        return self[2]

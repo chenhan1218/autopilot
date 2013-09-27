@@ -38,7 +38,13 @@ def parse_arguments(argv=None):
     """Parse command-line arguments, and return an argparse arguments
     object.
     """
-    parser = ArgumentParser(description="Autopilot test tool.")
+    parser = ArgumentParser(
+        description="Autopilot test tool.",
+        epilog="Each command (run, list, launch etc.) has additional help that"
+        " can be viewed by passing the '-h' flag to the commamd. For "
+        "example: 'autopilot run -h' displays further help for the "
+        "'run' command."
+    )
     parser.add_argument('-v', '--version', action='version',
                         version=get_version_string(),
                         help="Display autopilot version and exit.")

@@ -110,7 +110,7 @@ Install `tox`::
 
 To run all tests against all supported Python versions:
 
-        $ tox -- <test path>
+        $ tox
 
 To run specific tests using `tox`::
 

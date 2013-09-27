@@ -97,7 +97,7 @@ Or running a single test in the 'test_version_utility_fns' suite::
 Q. Which version of Python can Autopilot use?
 =============================================
 
-Autopilot support both Python 2.7 and Python 3.3 from a single code base.
+Autopilot supports both Python 2.7 and Python 3.3 from a single code base.
 
 Q. How do I run tests with `tox`?
 =================================

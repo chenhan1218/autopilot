@@ -18,6 +18,7 @@
 #
 
 
+from mock import patch
 from testtools import TestCase
 from testtools.matchers import Equals, NotEquals
 from testscenarios import TestWithScenarios
@@ -92,3 +93,34 @@ class DBusIntrospectionObjectTests(TestCase):
         )
         with fake_object.no_automatic_refreshing():
             self.assertThat(fake_object.path, Equals('/some/path'))
+
+    @patch('autopilot.introspection.dbus.logger')
+    def test_large_query_returns_log_warnings(self, mock_logger):
+        """Queries that return large numbers of items must cause a log warning.
+
+        'large' is defined as more than 15.
+
+        """
+        with patch.object(
+            DBusIntrospectionObject,
+            '_Backend',
+            return_value=[('/path', {}) for i in range(16)]) as p:
+            DBusIntrospectionObject.get_state_by_path('some_query')
+
+        self.assertThat(mock_logger.warning.called, Equals(True))
+
+
+    @patch('autopilot.introspection.dbus.logger')
+    def test_small_query_returns_dont_log_warnings(self, mock_logger):
+        """Queries that return small numbers of items must not log a warning.
+
+        'small' is defined as 15 or fewer.
+
+        """
+        with patch.object(
+            DBusIntrospectionObject,
+            '_Backend',
+            return_value=[('/path', {}) for i in range(15)]) as p:
+            DBusIntrospectionObject.get_state_by_path('some_query')
+
+        self.assertThat(mock_logger.warning.called, Equals(False))

@@ -101,14 +101,17 @@ class DBusIntrospectionObjectTests(TestCase):
         'large' is defined as more than 15.
 
         """
-        with patch.object(
-            DBusIntrospectionObject,
-            '_Backend',
-            return_value=[('/path', {}) for i in range(16)]) as p:
+        with patch.object(DBusIntrospectionObject, '_Backend') as p:
+            p.introspection_iface.GetState.return_value = \
+                [('/path', {}) for i in range(16)]
             DBusIntrospectionObject.get_state_by_path('some_query')
 
-        self.assertThat(mock_logger.warning.called, Equals(True))
-
+        mock_logger.warning.assert_called_once_with(
+            "Your query '%s' returned a lot of data (%d items). This "
+            "is likely to be slow. You may want to consider optimising"
+            " your query to return fewer items.",
+            "some_query",
+            16)
 
     @patch('autopilot.introspection.dbus.logger')
     def test_small_query_returns_dont_log_warnings(self, mock_logger):
@@ -117,10 +120,9 @@ class DBusIntrospectionObjectTests(TestCase):
         'small' is defined as 15 or fewer.
 
         """
-        with patch.object(
-            DBusIntrospectionObject,
-            '_Backend',
-            return_value=[('/path', {}) for i in range(15)]) as p:
+        with patch.object(DBusIntrospectionObject, '_Backend') as p:
+            p.introspection_iface.GetState.return_value = \
+                [('/path', {}) for i in range(15)]
             DBusIntrospectionObject.get_state_by_path('some_query')
 
         self.assertThat(mock_logger.warning.called, Equals(False))

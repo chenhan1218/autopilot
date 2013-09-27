@@ -31,6 +31,7 @@ from contextlib import contextmanager
 import logging
 import re
 import sys
+from time import sleep
 from uuid import uuid4
 
 from autopilot.introspection.types import create_value_instance
@@ -59,8 +60,9 @@ class StateNotFoundError(RuntimeError):
     typically happens for a number of possible reasons:
 
      * The UI widget you are trying to access with
-        :py:met:`DBusIntrospectionObject.select_single` or
-        :py:met:`DBusIntrospectionObject.select_single` does not exist yet.
+        :py:meth:`DBusIntrospectionObject.select_single` or
+        :py:meth:`DBusIntrospectionObject.select_many` does not exist yet.
+
     * The UI widget you are trying to access has been destroyed by the
         application.
 
@@ -178,6 +180,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         self.__refresh_on_attribute = True
         self._set_properties(state_dict)
         self._path = path
+        self._poll_time = 10
 
     def _set_properties(self, state_dict):
         """Creates and set attributes of *self* based on contents of
@@ -311,7 +314,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             app.select_single('QPushButton', objectName='clickme')
             # returns a QPushButton whose 'objectName' property is 'clickme'.
 
-        If nothing is returned from the query, this method returns None.
+        If nothing is returned from the query, this method raises
+        StateNotFoundError.
 
         :param type_name: Either a string naming the type you want, or a class
             of the appropriate type (the latter case is for overridden emulator
@@ -323,6 +327,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         :raises TypeError: if neither *type_name* or keyword filters are
             provided.
 
+        :raises StateNotFoundError: if the requested object was not found.
+
         .. seealso::
             Tutorial Section :ref:`custom_emulators`
 
@@ -331,8 +337,62 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         if len(instances) > 1:
             raise ValueError("More than one item was returned for query")
         if not instances:
-            return None
+            raise StateNotFoundError(type_name, **kwargs)
         return instances[0]
+
+    def wait_select_single(self, type_name='*', **kwargs):
+        """Get a proxy object matching some search criteria, retrying if no
+        object is found until a timeout is reached.
+
+        This method is identical to the :meth:`select_single` method, except
+        that this method will poll the application under test for 10 seconds
+        in the event that the search criteria does not match anything.
+
+        This method will return single proxy object from the introspection
+        tree, with type equal to *type_name* and (optionally) matching the
+        keyword filters present in *kwargs*.
+
+        You must specify either *type_name*, keyword filters or both.
+
+        This method searches recursively from the proxy object this method is
+        called on. Calling :meth:`select_single` on the application (root)
+        proxy object will search the entire tree. Calling
+        :meth:`select_single` on an object in the tree will only search it's
+        descendants.
+
+        Example usage::
+
+            app.wait_select_single('QPushButton', objectName='clickme')
+            # returns a QPushButton whose 'objectName' property is 'clickme'.
+            # will poll the application until such an object exists, or will
+            # raise StateNotFoundError after 10 seconds.
+
+        If nothing is returned from the query, this method raises
+        StateNotFoundError after 10 seconds.
+
+        :param type_name: Either a string naming the type you want, or a class
+            of the appropriate type (the latter case is for overridden emulator
+            classes).
+
+        :raises ValueError: if the query returns more than one item. *If
+            you want more than one item, use select_many instead*.
+
+        :raises TypeError: if neither *type_name* or keyword filters are
+            provided.
+
+        :raises StateNotFoundError: if the requested object was not found.
+
+        .. seealso::
+            Tutorial Section :ref:`custom_emulators`
+
+        """
+        for i in range(self._poll_time):
+            try:
+                return self.select_single(type_name, **kwargs)
+            except StateNotFoundError:
+                if i == self._poll_time - 1:
+                    raise
+                sleep(1)
 
     def select_many(self, type_name='*', **kwargs):
         """Get a list of nodes from the introspection tree, with type equal to

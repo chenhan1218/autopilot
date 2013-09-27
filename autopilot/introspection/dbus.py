@@ -59,12 +59,13 @@ class StateNotFoundError(RuntimeError):
     not yet created) the object you are trying to access in autopilot. This
     typically happens for a number of possible reasons:
 
-     * The UI widget you are trying to access with
-        :py:meth:`DBusIntrospectionObject.select_single` or
-        :py:meth:`DBusIntrospectionObject.select_many` does not exist yet.
+    * The UI widget you are trying to access with
+      :py:meth:`~DBusIntrospectionObject.select_single` or
+      :py:meth:`~DBusIntrospectionObject.wait_select_single` or
+      :py:meth:`~DBusIntrospectionObject.select_many` does not exist yet.
 
     * The UI widget you are trying to access has been destroyed by the
-        application.
+      application.
 
     """
 

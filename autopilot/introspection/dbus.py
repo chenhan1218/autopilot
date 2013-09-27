@@ -552,7 +552,16 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
                 "XPath query must be a string, not %r", type(piece))
 
         with Timer("GetState %s" % piece):
-            return cls._Backend.introspection_iface.GetState(piece)
+            data = cls._Backend.introspection_iface.GetState(piece)
+            if len(data) > 15:
+                logger.warning(
+                    "Your query '%s' returned a lot of data (%d items). This "
+                    "is likely to be slow. You may want to consider optimising"
+                    " your query to return fewer items.",
+                    piece,
+                    len(data)
+                )
+            return data
 
     def get_new_state(self):
         """Retrieve a new state dictionary for this class instance.

@@ -119,7 +119,7 @@ Loading tests from: %s
             """)
         )
         code, output, error = self.run_autopilot_list()
-        expected_output = '''ImportError: No module named asdjkhdfjgsdhfjhsd'''
+        expected_output = '''ImportError: No module named '''
         self.assertThat(code, Equals(0))
         self.assertThat(error, Equals(''))
         self.assertThat(output, Contains(expected_output))
@@ -500,7 +500,7 @@ Loading tests from: %s
 
         code, output, error = self.run_autopilot(["run", "tests"])
 
-        expected_error = 'ImportError: No module named asdjkhdfjgsdhfjhsd'
+        expected_error = 'ImportError: No module named '
 
         self.assertThat(code, Equals(1))
         self.assertThat(error, Equals(''))

@@ -825,7 +825,7 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
             class SimpleTest(AutopilotTestCase):
 
                 def test_simple(self):
-                    self.assertTrue()
+                    raise RuntimeError("Intentionally fail test.")
             """)
         )
 
@@ -837,8 +837,9 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
             error, Contains("ERROR: tests.test_simple.SimpleTest.test_simple"))
         self.assertThat(error, Contains("traceback:"))
         self.assertThat(
-            error, Contains("TypeError: assertTrue() takes at least 2 "
-                            "arguments (1 given)"))
+            error,
+            Contains("RuntimeError: Intentionally fail test.")
+        )
 
     def test_verbose_flag_shows_failure(self):
         """Verbose log must indicate a test failure with a traceback (xml

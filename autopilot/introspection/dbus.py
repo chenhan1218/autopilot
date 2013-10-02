@@ -111,20 +111,6 @@ class IntrospectableObjectMetaclass(type):
         return class_object
 
 
-def _clear_backends_for_proxy_object(proxy_object):
-    """Iterate over the object registry and clear the dbus backend address set
-    on any class that has the same id as the specified proxy_object.
-
-    This is required so consecutive tests do not end up re-using the same dbus
-    backend address as a previous run, which will probably be incorrect.
-
-    """
-    global _object_registry
-    for cls in _object_registry[proxy_object._id].itervalues():
-        if type(proxy_object) is not cls:
-            cls._Backend = None
-
-
 def translate_state_keys(state_dict):
     """Translates the *state_dict* passed in so the keys are usable as python
     attributes."""
@@ -161,13 +147,12 @@ class DBusIntrospectionObject(object):
 
     __metaclass__ = IntrospectableObjectMetaclass
 
-    _Backend = None
-
-    def __init__(self, state_dict, path):
+    def __init__(self, state_dict, path, backend):
         self.__state = {}
         self.__refresh_on_attribute = True
         self._set_properties(state_dict)
         self._path = path
+        self._backend = backend
 
     def _set_properties(self, state_dict):
         """Creates and set attributes of *self* based on contents of
@@ -462,8 +447,7 @@ class DBusIntrospectionObject(object):
         _, new_state = self.get_new_state()
         self._set_properties(new_state)
 
-    @classmethod
-    def get_all_instances(cls):
+    def get_all_instances(self):
         """Get all instances of this class that exist within the Application
         state tree.
 
@@ -481,23 +465,22 @@ class DBusIntrospectionObject(object):
         :return: List (possibly empty) of class instances.
 
         """
-        cls_name = cls.__name__
-        instances = cls.get_state_by_path("//%s" % (cls_name))
-        return [cls.make_introspection_object(i) for i in instances]
+        cls_name = type(self).__name__
+        instances = self.get_state_by_path("//%s" % (cls_name))
+        return [self.make_introspection_object(i) for i in instances]
 
-    @classmethod
-    def get_root_instance(cls):
+    def get_root_instance(self):
         """Get the object at the root of this tree.
 
         This will return an object that represents the root of the
         introspection tree.
 
         """
-        instances = cls.get_state_by_path("/")
+        instances = self.get_state_by_path("/")
         if len(instances) != 1:
             logger.error("Could not retrieve root object.")
             return None
-        return cls.make_introspection_object(instances[0])
+        return self.make_introspection_object(instances[0])
 
     def __getattr__(self, name):
         # avoid recursion if for some reason we have no state set (should never
@@ -514,8 +497,7 @@ class DBusIntrospectionObject(object):
             "Class '%s' has no attribute '%s'." %
             (self.__class__.__name__, name))
 
-    @classmethod
-    def get_state_by_path(cls, piece):
+    def get_state_by_path(self, piece):
         """Get state for a particular piece of the state tree.
 
         You should probably never need to call this directly.
@@ -530,7 +512,7 @@ class DBusIntrospectionObject(object):
                 "XPath query must be a string, not %r", type(piece))
 
         with Timer("GetState %s" % piece):
-            data = cls._Backend.introspection_iface.GetState(piece)
+            data = self._backend.introspection_iface.GetState(piece)
             if len(data) > 15:
                 logger.warning(
                     "Your query '%s' returned a lot of data (%d items). This "
@@ -562,8 +544,7 @@ class DBusIntrospectionObject(object):
         else:
             return self._path + "[id=%d]" % self.id
 
-    @classmethod
-    def make_introspection_object(cls, dbus_tuple):
+    def make_introspection_object(self, dbus_tuple):
         """Make an introspection object given a DBus tuple of
         (path, state_dict).
 
@@ -572,23 +553,21 @@ class DBusIntrospectionObject(object):
         path, state = dbus_tuple
         name = get_classname_from_path(path)
         try:
-            class_type = _object_registry[cls._id][name]
-            if class_type._Backend is None:
-                class_type._Backend = cls._Backend
+            class_type = _object_registry[self._id][name]
         except KeyError:
             get_debug_logger().warning(
                 "Generating introspection instance for type '%s' based on "
                 "generic class.", name)
             # we want the object to inherit from the custom emulator base, not
             # the object class that is doing the selecting
-            for base in cls.__bases__:
+            for base in type(self).__bases__:
                 if issubclass(base, CustomEmulatorBase):
                     base_class = base
                     break
             else:
-                base_class = cls
+                base_class = type(self)
             class_type = type(str(name), (base_class,), {})
-        return class_type(state, path)
+        return class_type(state, path, self._backend)
 
     @contextmanager
     def no_automatic_refreshing(self):

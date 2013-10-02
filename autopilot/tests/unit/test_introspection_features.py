@@ -18,7 +18,7 @@
 #
 
 
-from mock import patch
+from mock import patch, Mock
 from testtools import TestCase
 from testtools.matchers import Equals, NotEquals
 from testscenarios import TestWithScenarios
@@ -89,7 +89,8 @@ class DBusIntrospectionObjectTests(TestCase):
     def test_can_access_path_attribute(self):
         fake_object = DBusIntrospectionObject(
             dict(id=123, path='/some/path'),
-            '/'
+            '/',
+            None
         )
         with fake_object.no_automatic_refreshing():
             self.assertThat(fake_object.path, Equals('/some/path'))
@@ -101,10 +102,14 @@ class DBusIntrospectionObjectTests(TestCase):
         'large' is defined as more than 15.
 
         """
-        with patch.object(DBusIntrospectionObject, '_Backend') as p:
-            p.introspection_iface.GetState.return_value = \
-                [('/path', {}) for i in range(16)]
-            DBusIntrospectionObject.get_state_by_path('some_query')
+        fake_object = DBusIntrospectionObject(
+            dict(id=123, path='/some/path'),
+            '/',
+            Mock()
+        )
+        fake_object._backend.introspection_iface.GetState.return_value = \
+            [('/path', {}) for i in range(16)]
+        fake_object.get_state_by_path('some_query')
 
         mock_logger.warning.assert_called_once_with(
             "Your query '%s' returned a lot of data (%d items). This "
@@ -120,9 +125,13 @@ class DBusIntrospectionObjectTests(TestCase):
         'small' is defined as 15 or fewer.
 
         """
-        with patch.object(DBusIntrospectionObject, '_Backend') as p:
-            p.introspection_iface.GetState.return_value = \
-                [('/path', {}) for i in range(15)]
-            DBusIntrospectionObject.get_state_by_path('some_query')
+        fake_object = DBusIntrospectionObject(
+            dict(id=123, path='/some/path'),
+            '/',
+            Mock()
+        )
+        fake_object._backend.introspection_iface.GetState.return_value = \
+            [('/path', {}) for i in range(15)]
+        fake_object.get_state_by_path('some_query')
 
         self.assertThat(mock_logger.warning.called, Equals(False))

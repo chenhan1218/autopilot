@@ -23,6 +23,7 @@ from __future__ import absolute_import
 from codecs import open
 import os
 import os.path
+import re
 from tempfile import mktemp
 from testtools.matchers import Contains, Equals, MatchesRegex, Not
 from textwrap import dedent
@@ -119,10 +120,15 @@ Loading tests from: %s
             """)
         )
         code, output, error = self.run_autopilot_list()
-        expected_output = '''ImportError: No module named '''
         self.assertThat(code, Equals(0))
         self.assertThat(error, Equals(''))
-        self.assertThat(output, Contains(expected_output))
+        self.assertThat(
+            output,
+            MatchesRegex(
+                ".*ImportError: No module named [']?asdjkhdfjgsdhfjhsd[']?.*",
+                re.DOTALL
+            )
+        )
 
     def test_list_tests_with_syntax_error(self):
         self.create_test_file(
@@ -500,11 +506,15 @@ Loading tests from: %s
 
         code, output, error = self.run_autopilot(["run", "tests"])
 
-        expected_error = 'ImportError: No module named '
-
         self.assertThat(code, Equals(1))
         self.assertThat(error, Equals(''))
-        self.assertThat(output, Contains(expected_error))
+        self.assertThat(
+            output,
+            MatchesRegex(
+                ".*ImportError: No module named [']?asdjkhdfjgsdhfjhsd[']?.*",
+                re.DOTALL
+            )
+        )
         self.assertThat(output, Contains("FAILED (failures=1)"))
 
     def test_runs_with_syntax_errors_fail(self):

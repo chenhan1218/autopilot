@@ -157,7 +157,7 @@ class DbusQueryTests(AutopilotTestCase):
         match_fn = lambda: app.select_single(title="Non-existant object")
         self.assertThat(
             match_fn,
-            raises(StateNotFoundError(title="Non-existant object"))
+            raises(StateNotFoundError('*', title="Non-existant object"))
         )
 
     def test_select_single_returning_multiple_raises(self):

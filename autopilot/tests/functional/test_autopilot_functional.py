@@ -23,6 +23,7 @@ from __future__ import absolute_import
 from codecs import open
 import os
 import os.path
+import re
 from tempfile import mktemp
 from testtools.matchers import Contains, Equals, MatchesRegex, Not
 from textwrap import dedent
@@ -119,10 +120,15 @@ Loading tests from: %s
             """)
         )
         code, output, error = self.run_autopilot_list()
-        expected_output = '''ImportError: No module named asdjkhdfjgsdhfjhsd'''
         self.assertThat(code, Equals(0))
         self.assertThat(error, Equals(''))
-        self.assertThat(output, Contains(expected_output))
+        self.assertThat(
+            output,
+            MatchesRegex(
+                ".*ImportError: No module named [']?asdjkhdfjgsdhfjhsd[']?.*",
+                re.DOTALL
+            )
+        )
 
     def test_list_tests_with_syntax_error(self):
         self.create_test_file(
@@ -500,11 +506,15 @@ Loading tests from: %s
 
         code, output, error = self.run_autopilot(["run", "tests"])
 
-        expected_error = 'ImportError: No module named asdjkhdfjgsdhfjhsd'
-
         self.assertThat(code, Equals(1))
         self.assertThat(error, Equals(''))
-        self.assertThat(output, Contains(expected_error))
+        self.assertThat(
+            output,
+            MatchesRegex(
+                ".*ImportError: No module named [']?asdjkhdfjgsdhfjhsd[']?.*",
+                re.DOTALL
+            )
+        )
         self.assertThat(output, Contains("FAILED (failures=1)"))
 
     def test_runs_with_syntax_errors_fail(self):
@@ -825,7 +835,7 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
             class SimpleTest(AutopilotTestCase):
 
                 def test_simple(self):
-                    self.assertTrue()
+                    raise RuntimeError("Intentionally fail test.")
             """)
         )
 
@@ -837,8 +847,9 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
             error, Contains("ERROR: tests.test_simple.SimpleTest.test_simple"))
         self.assertThat(error, Contains("traceback:"))
         self.assertThat(
-            error, Contains("TypeError: assertTrue() takes at least 2 "
-                            "arguments (1 given)"))
+            error,
+            Contains("RuntimeError: Intentionally fail test.")
+        )
 
     def test_verbose_flag_shows_failure(self):
         """Verbose log must indicate a test failure with a traceback (xml

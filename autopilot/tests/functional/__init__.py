@@ -116,6 +116,7 @@ class AutopilotRunTestBase(AutopilotTestCase):
             env=environ,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            universal_newlines=True,
         )
 
         stdout, stderr = process.communicate()
@@ -124,17 +125,11 @@ class AutopilotRunTestBase(AutopilotTestCase):
         self.addDetail('retcode', text_content(str(retcode)))
         self.addDetail(
             'stdout',
-            Content(
-                ContentType('text', 'plain', {'charset': 'iso-8859-1'}),
-                lambda: [stdout]
-            )
+            text_content(stdout)
         )
         self.addDetail(
             'stderr',
-            Content(
-                ContentType('text', 'plain', {'charset': 'iso-8859-1'}),
-                lambda: [stderr]
-            )
+            text_content(stderr)
         )
 
         return (retcode, stdout, stderr)

@@ -160,8 +160,6 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
     """
 
-    __metaclass__ = IntrospectableObjectMetaclass
-
     def __init__(self, state_dict, path, backend):
         self.__state = {}
         self.__refresh_on_attribute = True

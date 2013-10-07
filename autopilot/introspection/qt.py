@@ -100,7 +100,7 @@ class QtObjectProxyMixin(object):
 
         """
 
-        return self._Backend.qt_introspection_iface
+        return self._backend.qt_introspection_iface
 
     @property
     def slots(self):

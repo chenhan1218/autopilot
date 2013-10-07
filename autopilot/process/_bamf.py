@@ -488,7 +488,7 @@ class Window(WindowBase):
         # FIXME: We need to use the gdk window here to get the real coordinates
         geometry = self._x_win.get_geometry()
         origin = GdkX11.X11Window.foreign_new_for_display(
-            get_display(), self._xid).get_origin()
+            GdkX11.X11Display(), self._xid).get_origin()
         return (origin[0], origin[1], geometry.width, geometry.height)
 
     @property

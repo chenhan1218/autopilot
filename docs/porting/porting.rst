@@ -72,12 +72,7 @@ For example, if your old code is something along the lines of::
 
 You will instead need to have something like this instead::
 
-    app_proxy = get_proxy_object_for_existing_process(pid=123)
-    all_keys = app_proxy.get_root_instance().select_many(KeyCustomEmulator)
-
-.. note:: See
-          :py:meth:`~autopilot.introspection.get_proxy_object_for_existing_process`
-          for details on it's use.
+    all_keys = app_proxy.select_many(KeyCustomEmulator)
 
 
 Python 3
@@ -99,7 +94,7 @@ The 1.3 release included many API breaking changes. Earlier versions of autopilo
 * A large code cleanup and reorganisation. In particular, lots of code that came from the Unity 3D codebase has been removed if it was deemed to not be useful to the majority of test authors. This code cleanup includes a flattening of the autopilot namespace. Previously, many useful classes lived under the ``autopilot.emulators`` namespace. These have now been moved into the ``autopilot`` namespace.
 
 
-.. note:: There is an ABI breakage in autopilot 1.3. The changes outlined under
+.. note:: There is an API breakage in autopilot 1.3. The changes outlined under
           the heading ":ref:`dbus_backends`" apply to version
           1.3.1+13.10.20131003.1-0ubuntu1 and onwards .
 

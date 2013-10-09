@@ -436,6 +436,11 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         else:
             def _remove_patch(key):
                 try:
+                    logger.info(
+                        "Deleting previously-created environment "
+                        "variable '%s'",
+                        key
+                    )
                     del os.environ[key]
                 except KeyError:
                     logger.warning(
@@ -444,6 +449,11 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                         key
                     )
             self.addCleanup(_remove_patch, key)
+        logger.info(
+            "Setting environment variable '%s' to '%s'",
+            key,
+            value
+        )
         os.environ[key] = value
 
     def assertVisibleWindowStack(self, stack_start):

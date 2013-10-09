@@ -51,6 +51,35 @@ This makes the authors intent harder to discern. To improve this situation, two 
 
 	my_obj = self.app.wait_select_single("MyObject")
 
+.. _dbus_backends:
+
+DBus backends and :class:`~autopilot.introspection.dbus.DBusIntrospectionObject` changes
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Due to a change in how
+:class:`~autopilot.introspection.dbus.DBusIntrospectionObject` objects store
+their DBus backend a couple of classmethods have now become instance methods.
+
+These affected methods are:
+
+ * :meth:`~autopilot.introspection.dbus.DBusIntrospectionObject.get_all_instances`
+ * :meth:`~autopilot.introspection.dbus.DBusIntrospectionObject.get_root_instance`
+ * :meth:`~autopilot.introspection.dbus.DBusIntrospectionObject.get_state_by_path`
+
+For example, if your old code is something along the lines of::
+
+    all_keys = KeyCustomEmulator.get_all_instances()
+
+You will instead need to have something like this instead::
+
+    app_proxy = get_proxy_object_for_existing_process(pid=123)
+    all_keys = app_proxy.get_root_instance().select_many(KeyCustomEmulator)
+
+.. note:: See
+          :py:meth:`~autopilot.introspection.get_proxy_object_for_existing_process`
+          for details on it's use.
+
+
 Python 3
 ++++++++
 
@@ -69,6 +98,10 @@ The 1.3 release included many API breaking changes. Earlier versions of autopilo
 
 * A large code cleanup and reorganisation. In particular, lots of code that came from the Unity 3D codebase has been removed if it was deemed to not be useful to the majority of test authors. This code cleanup includes a flattening of the autopilot namespace. Previously, many useful classes lived under the ``autopilot.emulators`` namespace. These have now been moved into the ``autopilot`` namespace.
 
+
+.. note:: There is an ABI breakage in autopilot 1.3. The changes outlined under
+          the heading ":ref:`dbus_backends`" apply to version
+          1.3.1+13.10.20131003.1-0ubuntu1 and onwards .
 
 ``QtIntrospectionTestMixin`` and ``GtkIntrospectionTestMixin`` no longer exist
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

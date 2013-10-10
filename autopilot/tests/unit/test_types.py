@@ -20,7 +20,7 @@
 from __future__ import absolute_import
 
 from datetime import datetime, time
-from mock import patch
+from mock import patch, Mock
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import Equals, IsInstance, NotEquals, raises
@@ -636,7 +636,8 @@ class DBusIntrospectionObjectTests(TestCase):
         """
         DBusIntrospectionObject(
             dict(foo=[0]),
-            '/some/dummy/path'
+            '/some/dummy/path',
+            Mock()
         )
         error_logger.assert_called_once_with(
             "While constructing attribute '%s.%s': %s",

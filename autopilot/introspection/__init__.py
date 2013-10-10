@@ -43,7 +43,6 @@ from autopilot.introspection.constants import (
     AP_INTROSPECTION_IFACE,
 )
 from autopilot.introspection.dbus import (
-    _clear_backends_for_proxy_object,
     CustomEmulatorBase,
     DBusIntrospectionObject,
     get_classname_from_path,
@@ -485,16 +484,17 @@ def _make_proxy_object(data_source, emulator_base):
     proxy_bases = proxy_bases + (emulator_base, )
     cls_name, cls_state = _get_proxy_object_class_name_and_state(data_source)
 
-    _clear_backends_for_proxy_object(emulator_base)
-    clsobj = type(
-        # Merge the object hierarchy.
-        str("%sBase" % cls_name), proxy_bases, dict(_Backend=data_source)
-    )
+    # Merge the object hierarchy.
+    clsobj = type(str("%sBase" % cls_name), proxy_bases, {})
 
     proxy_class = type(str(cls_name), (clsobj,), {})
 
-    proxy = proxy_class.get_root_instance()
-    return proxy
+    try:
+        dbus_tuple = data_source.introspection_iface.GetState("/")[0]
+        path, state = dbus_tuple
+        return proxy_class(state, path, data_source)
+    except IndexError:
+        raise RuntimeError("Unable to find root object of %r" % proxy_class)
 
 
 def _get_proxy_object_base_classes(backend):
@@ -529,8 +529,8 @@ def _get_proxy_object_class_name_and_state(backend):
 class ApplicationProxyObject(DBusIntrospectionObject):
     """A class that better supports query data from an application."""
 
-    def __init__(self, state, path):
-        super(ApplicationProxyObject, self).__init__(state, path)
+    def __init__(self, state, path, backend):
+        super(ApplicationProxyObject, self).__init__(state, path, backend)
         self._process = None
 
     def set_process(self, process):

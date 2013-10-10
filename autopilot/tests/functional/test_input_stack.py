@@ -159,6 +159,53 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
                       )
 
 
+class InputStackKeyboardBackspaceTests(InputStackKeyboardBase):
+
+    def start_mock_app(self):
+        window_spec_file = mktemp(suffix='.json')
+        window_spec = {"Contents": "TextEdit"}
+        json.dump(
+            window_spec,
+            open(window_spec_file, 'w')
+        )
+        self.addCleanup(os.remove, window_spec_file)
+
+        return self.launch_test_application(
+            'window-mocker',
+            window_spec_file,
+            app_type='qt'
+        )
+
+    def test_backspace_works(self):
+        app_proxy = self.start_mock_app()
+        text_edit = app_proxy.select_single('QTextEdit')
+
+        self.mouse.click_object(text_edit)
+
+        keyboard = Keyboard.create(self.backend)
+        keyboard.type("Hello1")
+        keyboard.press_and_release("Backspace")
+
+        self.assertThat(text_edit.plainText,
+                        Eventually(Equals("Hello")),
+                        "app shows: " + text_edit.plainText
+                        )
+
+    def test_inline_backspace_works(self):
+        app_proxy = self.start_mock_app()
+        text_edit = app_proxy.select_single('QTextEdit')
+
+        self.mouse.click_object(text_edit)
+
+        keyboard = Keyboard.create(self.backend)
+        keyboard.type("Hello1\b")
+
+        self.assertThat(text_edit.plainText,
+                        Eventually(Equals("Hello")),
+                        "app shows: " + text_edit.plainText
+                        )
+
+
 @skipIf(platform.model() == 'Desktop', "Only on device")
 class OSKBackendTests(AutopilotTestCase):
     """Testing the Onscreen Keyboard (Ubuntu Keyboard) backend specifically.

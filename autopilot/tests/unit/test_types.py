@@ -75,6 +75,12 @@ class PlainTypeTests(TestWithScenarios, TestCase):
         self.assertThat(hasattr(p, 'wait_for'), Equals(True))
         self.assertThat(p, IsInstance(self.t))
 
+    def test_repr(self):
+        """repr for PlainType must be the same as the pythonic type."""
+        p = PlainType(self.t(self.v))
+
+        self.assertThat(repr(p), Equals(repr(self.v)))
+
 
 class RectangleTypeTests(TestCase):
 

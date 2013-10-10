@@ -78,6 +78,7 @@ class Keyboard(KeyboardBase):
         '\n': "Return",  # for some reason this needs to be cr, not lf
         '\r': "Return",
         '\e': "Escape",
+        '\b': "BackSpace",
         '!': "exclam",
         '#': "numbersign",
         '%': "percent",
@@ -121,6 +122,7 @@ class Keyboard(KeyboardBase):
         'Shift': 'Shift_L',
         'Enter': 'Return',
         'Space': ' ',
+        'Backspace': 'BackSpace',
     }
 
     def __init__(self):

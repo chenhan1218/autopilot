@@ -464,6 +464,7 @@ _UINPUT_CODE_TRANSLATIONS = {
     ' ': 'SPACE',
     '\t': 'TAB',
     '\n': 'ENTER',
+    '\b': 'BACKSPACE',
     'CTRL': 'LEFTCTRL',
     'ALT': 'LEFTALT',
     'SHIFT': 'LEFTSHIFT',

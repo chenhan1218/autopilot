@@ -21,6 +21,7 @@ from __future__ import absolute_import
 
 from datetime import datetime, time
 from mock import patch, Mock
+import six
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import Equals, IsInstance, NotEquals, raises
@@ -59,14 +60,28 @@ class PlainTypeTests(TestWithScenarios, TestCase):
     scenarios = [
         ('bool true', dict(t=dbus.Boolean, v=True)),
         ('bool false', dict(t=dbus.Boolean, v=False)),
+        ('byte', dict(t=dbus.Byte, v=12)),
         ('int16 +ve', dict(t=dbus.Int16, v=123)),
         ('int16 -ve', dict(t=dbus.Int16, v=-23000)),
         ('int32 +ve', dict(t=dbus.Int32, v=30000000)),
         ('int32 -ve', dict(t=dbus.Int32, v=-3002050)),
-        ('int64 +ve', dict(t=dbus.Int64, v=234234002050)),
-        ('int64 -ve', dict(t=dbus.Int64, v=-234234002050)),
-        ('string', dict(t=dbus.String, v="Hello World")),
+        ('int64 +ve', dict(t=dbus.Int64, v=9223372036854775807)),
+        ('int64 -ve', dict(t=dbus.Int64, v=-9223372036854775807)),
+        ('ascii string', dict(t=dbus.String, v=u"Hello World")),
+        ('unicode string', dict(t=dbus.String, v=u"\u2603")),
+        ('bytearray', dict(t=dbus.ByteArray, v=b"Hello World")),
+        ('object path', dict(t=dbus.ObjectPath, v=u"/path/to/object")),
+        ('dbus signature', dict(t=dbus.Signature, v=u"is")),
+        ('dictionary', dict(t=dbus.Dictionary, v={'hello': 'world'})),
+        ('double', dict(t=dbus.Double, v=3.1415)),
+        ('struct', dict(t=dbus.Struct, v=('some', 42, 'value'))),
+        ('array', dict(t=dbus.Array, v=['some', 42, 'value'])),
     ]
+
+    if not six.PY3:
+        scenarios.append(
+            ('utf8 string', dict(t=dbus.UTF8String, v=b"Hello World"))
+        )
 
     def test_can_construct(self):
         p = PlainType(self.t(self.v))

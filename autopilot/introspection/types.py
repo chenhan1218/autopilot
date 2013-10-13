@@ -43,6 +43,7 @@ from datetime import datetime, time
 import dbus
 import logging
 from testtools.matchers import Equals
+import six
 from time import sleep
 
 from autopilot.introspection.utilities import translate_state_keys
@@ -214,11 +215,69 @@ class PlainType(TypeBase):
 
 
 def _make_plain_type(value, parent=None, name=None):
-        new_type_name = type(value).__name__
-        new_type_bases = (type(value), PlainType)
-        new_type_dict = dict(parent=parent, name=name)
-        new_type = type(new_type_name, new_type_bases, new_type_dict)
-        return new_type(value)
+    def repr(self):
+        # Convert our value to the pythonic type,and call __repr__ on it.
+        # At the moment we switch based on our type, which is less than ideal.
+        if six.PY3:
+            long_type = int
+        else:
+            long_type = long
+        dbus_integer_types = (
+            dbus.Byte,
+            dbus.Int16,
+            dbus.Int32,
+            dbus.UInt16,
+            dbus.UInt32,
+        )
+
+        dbus_string_types = (
+            dbus.String,
+            dbus.ObjectPath,
+            dbus.Signature,
+        )
+
+        # no UTFString in python 3.
+        if six.PY3:
+            dbus_binary_types = (
+                dbus.ByteArray,
+            )
+        else:
+            dbus_binary_types = (
+                dbus.ByteArray,
+                dbus.UTF8String,
+            )
+
+        if isinstance(self, dbus_integer_types):
+            return int(self).__repr__()
+        elif isinstance(self, (dbus.Int64, dbus.UInt64)):
+            # Python 2 integer landling is... odd. The maximum integer size
+            # changes depending on platform, so maybe we can get away with
+            # using an int, in which case we should:
+            if not six.PY3 and self <= six.MAXSIZE:
+                return int(self).__repr__()
+            return long_type(self).__repr__()
+        elif isinstance(self, dbus_string_types):
+            return six.text_type(self).__repr__()
+        elif isinstance(self, dbus.Boolean):
+            return bool(self).__repr__()
+        elif isinstance(self, dbus_binary_types):
+            return six.binary_type(self).__repr__()
+        elif isinstance(self, dbus.Dictionary):
+            return dict(self).__repr__()
+        elif isinstance(self, dbus.Double):
+            return float(self).__repr__()
+        elif isinstance(self, dbus.Struct):
+            return tuple(self).__repr__()
+        elif isinstance(self, dbus.Array):
+            return list(self).__repr__()
+        else:
+            return super(type(self), self).__repr__()
+
+    new_type_name = type(value).__name__
+    new_type_bases = (type(value), PlainType)
+    new_type_dict = dict(parent=parent, name=name, __repr__=repr)
+    new_type = type(new_type_name, new_type_bases, new_type_dict)
+    return new_type(value)
 
 
 def _array_packed_type(num_args):

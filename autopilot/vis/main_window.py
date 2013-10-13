@@ -20,9 +20,9 @@
 
 from __future__ import absolute_import
 
-import sys
 import dbus
 from PyQt4 import QtGui, QtCore
+import six
 
 from autopilot.introspection import (
     _get_dbus_address_object,
@@ -33,8 +33,6 @@ from autopilot.introspection.dbus import StateNotFoundError
 from autopilot.introspection.qt import QtObjectProxyMixin
 from autopilot.vis.objectproperties import TreeNodeDetailWidget
 from autopilot.vis.resources import get_qt_icon
-
-_PY3 = sys.version >= '3'
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -47,7 +45,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def readSettings(self):
         settings = QtCore.QSettings()
-        if _PY3:
+        if six.PY3:
             self.restoreGeometry(settings.value("geometry").data())
             self.restoreState(settings.value("windowState").data())
         else:
@@ -116,7 +114,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def conn_list_activated(self, index):
         dbus_details = self.connection_list.itemData(index)
-        if not _PY3:
+        if not six.PY3:
             dbus_details = dbus_details.toPyObject()
         if dbus_details:
             self.tree_model = VisTreeModel(dbus_details)

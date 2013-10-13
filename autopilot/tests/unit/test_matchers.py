@@ -20,14 +20,10 @@
 
 from __future__ import absolute_import
 
-import sys
-
-from autopilot.introspection.dbus import DBusIntrospectionObject
-from autopilot.matchers import Eventually
-
 from contextlib import contextmanager
 import dbus
 from testscenarios import TestWithScenarios
+import six
 from testtools import TestCase
 from testtools.matchers import (
     Contains,
@@ -39,9 +35,8 @@ from testtools.matchers import (
 )
 from time import time
 
-
-if sys.version >= '3':
-    unicode = str
+from autopilot.introspection.dbus import DBusIntrospectionObject
+from autopilot.matchers import Eventually
 
 
 @contextmanager
@@ -76,10 +71,10 @@ def make_fake_attribute_with_result(result, attribute_type='wait_for'):
     if attribute_type == 'callable':
         return lambda: result
     elif attribute_type == 'wait_for':
-        if isinstance(result, unicode):
+        if isinstance(result, six.text_type):
             obj = FakeObject(dict(id=[0, 123], attr=[0, dbus.String(result)]))
             return obj.attr
-        elif isinstance(result, bytes):
+        elif isinstance(result, six.binary_type):
             obj = FakeObject(
                 dict(id=[0, 123], attr=[0, dbus.UTF8String(result)])
             )

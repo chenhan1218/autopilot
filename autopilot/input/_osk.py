@@ -18,7 +18,7 @@
 #
 
 import logging
-import sys
+import six
 from time import sleep
 from contextlib import contextmanager
 
@@ -31,10 +31,6 @@ from autopilot.input import Keyboard as KeyboardBase
 
 
 logger = logging.getLogger(__name__)
-
-# py2 compatible alias for py3
-if sys.version >= '3':
-    basestring = str
 
 
 class Keyboard(KeyboardBase):
@@ -106,7 +102,7 @@ class Keyboard(KeyboardBase):
         not supported by the OSK Backend (or the current OSK langauge layout.)
 
         """
-        if not isinstance(string, basestring):
+        if not isinstance(string, six.string_types):
             raise TypeError("'string' argument must be a string.")
         logger.debug("Typing text: %s", string)
         self._keyboard.type(string, delay)

@@ -29,7 +29,7 @@ import logging
 from time import sleep
 from evdev import UInput, ecodes as e
 import os.path
-import sys
+import six
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +37,6 @@ PRESS = 1
 RELEASE = 0
 
 _PRESSED_KEYS = []
-
-# py2 compatible alias for py3
-if sys.version >= '3':
-    basestring = str
 
 
 def _get_devnode_path():
@@ -76,7 +72,7 @@ class Keyboard(KeyboardBase):
         presses the 'Alt' and 'F2' keys.
 
         """
-        if not isinstance(keys, basestring):
+        if not isinstance(keys, six.string_types):
             raise TypeError("'keys' argument must be a string.")
 
         for key in self._sanitise_keys(keys):
@@ -99,7 +95,7 @@ class Keyboard(KeyboardBase):
         Keys are released in the reverse order in which they are specified.
 
         """
-        if not isinstance(keys, basestring):
+        if not isinstance(keys, six.string_types):
             raise TypeError("'keys' argument must be a string.")
 
         for key in reversed(self._sanitise_keys(keys)):
@@ -134,7 +130,7 @@ class Keyboard(KeyboardBase):
         (such as 'Alt' will be interpreted as an 'A', and 'l', and a 't').
 
         """
-        if not isinstance(string, basestring):
+        if not isinstance(string, six.string_types):
             raise TypeError("'keys' argument must be a string.")
         logger.debug("Typing text %r", string)
         for key in string:

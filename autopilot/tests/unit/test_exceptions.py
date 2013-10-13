@@ -17,13 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import sys
+import six
 from testtools import TestCase
 from testtools.matchers import raises, Equals
 
 from autopilot.introspection.dbus import StateNotFoundError
-
-_Py2 = sys.version_info[0] == 2
 
 
 class StateNotFoundTests(TestCase):
@@ -45,7 +43,7 @@ class StateNotFoundTests(TestCase):
             str(err),
             Equals("State not found for class 'MyClass'.")
         )
-        if _Py2:
+        if not six.PY3:
             self.assertThat(
                 unicode(err),
                 Equals(u"State not found for class 'MyClass'.")
@@ -58,7 +56,7 @@ class StateNotFoundTests(TestCase):
             str(err),
             Equals("State not found with filters {'foo': 'bar'}.")
         )
-        if _Py2:
+        if not six.PY3:
             self.assertThat(
                 unicode(err),
                 Equals(u"State not found with filters {'foo': 'bar'}.")
@@ -72,7 +70,7 @@ class StateNotFoundTests(TestCase):
             Equals("State not found for class 'MyClass'"
                    " and filters {'foo': 'bar'}.")
         )
-        if _Py2:
+        if not six.PY3:
             self.assertThat(
                 unicode(err),
                 Equals(u"State not found for class 'MyClass'"

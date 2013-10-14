@@ -34,7 +34,7 @@ from time import sleep
 from functools import partial
 import os
 import psutil
-import sys
+import six
 
 from autopilot.introspection.backends import DBusAddress
 from autopilot.introspection.constants import (
@@ -62,10 +62,6 @@ logger = logging.getLogger(__name__)
 
 # Keep track of known connections during search
 connection_list = []
-
-# py2 compatible alias for py3
-if sys.version >= '3':
-    basestring = str
 
 
 class ProcessSearchError(RuntimeError):
@@ -118,7 +114,7 @@ def launch_application(launcher, application, *arguments, **kwargs):
         prepare the environment before launching the application itself.
     """
 
-    if not isinstance(application, basestring):
+    if not isinstance(application, six.string_types):
         raise TypeError("'application' parameter must be a string.")
     cwd = kwargs.pop('launch_dir', None)
     capture_output = kwargs.pop('capture_output', True)

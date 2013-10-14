@@ -30,7 +30,7 @@ from __future__ import absolute_import
 from contextlib import contextmanager
 import logging
 import re
-import sys
+import six
 from time import sleep
 from uuid import uuid4
 
@@ -41,14 +41,6 @@ from autopilot.utilities import Timer, get_debug_logger
 
 _object_registry = {}
 logger = logging.getLogger(__name__)
-
-
-# py2 compatible alias for py3
-if sys.version >= '3':
-    _PY3 = True
-    basestring = str
-else:
-    _PY3 = False
 
 
 class StateNotFoundError(RuntimeError):
@@ -96,7 +88,7 @@ class StateNotFoundError(RuntimeError):
                 )
 
     def __str__(self):
-        if sys.version_info[0] >= 3:
+        if six.PY3:
             return self._message
         else:
             return self._message.encode('utf8')
@@ -225,7 +217,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         result = []
         for instance in instances:
             # Skip items that are not instances of the desired type:
-            if isinstance(desired_type, basestring):
+            if isinstance(desired_type, six.string_types):
                 if instance.__class__.__name__ != desired_type:
                     continue
             elif not isinstance(instance, desired_type):
@@ -529,7 +521,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         :raises: **TypeError** on invalid *piece* parameter.
 
         """
-        if not isinstance(piece, basestring):
+        if not isinstance(piece, six.string_types):
             raise TypeError(
                 "XPath query must be a string, not %r", type(piece))
 
@@ -631,7 +623,7 @@ def _get_filter_string_for_key_value_pair(key, value):
 
     """
     if isinstance(value, str):
-        if _PY3:
+        if six.PY3:
             escaped_value = value.encode("unicode_escape")\
                 .decode('ASCII')\
                 .replace("'", "\\'")

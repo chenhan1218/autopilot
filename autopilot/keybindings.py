@@ -37,17 +37,13 @@ from __future__ import absolute_import
 
 import logging
 import re
-import sys
+import six
 
 from autopilot.input import Keyboard
 from autopilot.utilities import Silence
 
 logger = logging.getLogger(__name__)
 
-
-# py2 compatible alias for py3
-if sys.version >= '3':
-    basestring = str
 
 #
 # Fill this dictionary with keybindings we want to store.
@@ -145,12 +141,12 @@ def get(binding_name):
      dictionaries.
 
     """
-    if not isinstance(binding_name, basestring):
+    if not isinstance(binding_name, six.string_types):
         raise TypeError("binding_name must be a string.")
     if binding_name not in _keys:
         raise ValueError("Unknown binding name '%s'." % (binding_name))
     v = _keys[binding_name]
-    if isinstance(v, basestring):
+    if isinstance(v, six.string_types):
         return v
     else:
         return _get_compiz_keybinding(v)
@@ -232,7 +228,7 @@ def _translate_compiz_keystroke_string(keystroke_string):
     :param string keystroke_string: A compizconfig-style keystroke string.
 
     """
-    if not isinstance(keystroke_string, basestring):
+    if not isinstance(keystroke_string, six.string_types):
         raise TypeError("keystroke string must be a string.")
 
     translations = {

@@ -24,6 +24,7 @@ import stat
 import subprocess
 import logging
 import sys
+import six
 from mock import patch
 from tempfile import mktemp
 from testtools.matchers import raises, LessThan
@@ -39,7 +40,7 @@ from autopilot.introspection import (
 
 
 # backwards compatible alias for Python 3
-if sys.version > '3':
+if six.PY3:
     xrange = range
 
 logger = logging.getLogger(__name__)

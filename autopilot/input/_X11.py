@@ -27,7 +27,7 @@ In the future we may also need other devices.
 from __future__ import absolute_import
 
 import logging
-import sys
+import six
 from time import sleep
 
 from autopilot.display import is_point_on_any_screen, move_mouse_to_screen
@@ -45,10 +45,6 @@ _PRESSED_KEYS = []
 _PRESSED_MOUSE_BUTTONS = []
 _DISPLAY = None
 logger = logging.getLogger(__name__)
-
-# py2 compatible alias for py3
-if sys.version >= '3':
-    basestring = str
 
 
 def get_display():
@@ -141,7 +137,7 @@ class Keyboard(KeyboardBase):
         presses the 'Alt' and 'F2' keys.
 
         """
-        if not isinstance(keys, basestring):
+        if not isinstance(keys, six.string_types):
             raise TypeError("'keys' argument must be a string.")
         logger.debug("Pressing keys %r with delay %f", keys, delay)
         for key in self.__translate_keys(keys):
@@ -160,7 +156,7 @@ class Keyboard(KeyboardBase):
         releases the 'Alt' and 'F2' keys.
 
         """
-        if not isinstance(keys, basestring):
+        if not isinstance(keys, six.string_types):
             raise TypeError("'keys' argument must be a string.")
         logger.debug("Releasing keys %r with delay %f", keys, delay)
         # release keys in the reverse order they were pressed in.
@@ -196,7 +192,7 @@ class Keyboard(KeyboardBase):
          and a 't').
 
         """
-        if not isinstance(string, basestring):
+        if not isinstance(string, six.string_types):
             raise TypeError("'keys' argument must be a string.")
         logger.debug("Typing text %r", string)
         for key in string:
@@ -223,7 +219,7 @@ class Keyboard(KeyboardBase):
         _PRESSED_KEYS = []
 
     def __perform_on_key(self, key, event):
-        if not isinstance(key, basestring):
+        if not isinstance(key, six.string_types):
             raise TypeError("Key parameter must be a string")
 
         keycode = 0

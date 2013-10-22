@@ -589,10 +589,11 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         When writing new tests, this can be called when it is too difficult to
         find the widget or property that you are interested in in "vis".
-        
+
         .. warning:: Do not use this in production tests, this is expensive and
             not at all appropriate for actual testing. Only call this
-            temporarily and replace with proper select_single/select_many calls.
+            temporarily and replace with proper select_single/select_many
+            calls.
 
         :param output: A file object or path name where the output will be
             written to. If not given, write to stdout.

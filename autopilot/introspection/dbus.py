@@ -591,14 +591,16 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         find the widget or property that you are interested in in "vis".
         
         .. warning:: Do not use this in production tests, this is expensive and
-        not at all appropriate for actual testing. Only call this temporarily
-        and replace with proper select_single/select_many calls.
+            not at all appropriate for actual testing. Only call this
+            temporarily and replace with proper select_single/select_many calls.
 
         :param output: A file object or path name where the output will be
             written to. If not given, write to stdout.
+
         :param maxdepth: If given, limit the maximum recursion level to that
             number, i. e. only print children which have at most maxdepth-1
             intermediate parents.
+
         """
         if maxdepth is not None and _curdepth > maxdepth:
             return

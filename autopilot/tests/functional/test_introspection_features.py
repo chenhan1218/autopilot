@@ -24,8 +24,9 @@ import os
 import subprocess
 import tempfile
 from tempfile import mktemp
-from testtools.matchers import Equals, IsInstance, Not
+from testtools.matchers import Equals, IsInstance, Not, Contains
 from textwrap import dedent
+from six import StringIO
 
 from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase
@@ -118,6 +119,49 @@ class IntrospectionFeatureTests(AutopilotTestCase):
             mouse_widget,
             Not(IsInstance(type(generic_window)))
         )
+
+    def test_print_tree_full(self):
+        """Print tree of full application"""
+
+        app = self.start_mock_app(EmulatorBase)
+        win = app.select_single("QMainWindow")
+
+        stream = StringIO()
+        win.print_tree(stream)
+        out = stream.getvalue()
+
+        # starts with root node
+        self.assertThat(out.startswith("== /Root/QMainWindow ==\nChildren:"),
+                        Equals(True))
+        # has root node properties
+        self.assertThat(out, Contains("windowTitle: 'Default Window Title'\n"))
+        # has level-1 widgets with expected indent
+        self.assertThat(out,
+                        Contains("    == /Root/QMainWindow/QRubberBand ==\n"))
+        self.assertThat(out, Contains("    objectName: 'qt_rubberband'\n"))
+        # has level-2 widgets with expected indent
+        self.assertThat(out, Contains("        == /Root/QMainWindow/QMenuBar/"
+                                      "QToolButton =="))
+        self.assertThat(out, Contains("        objectName: "
+                                      "'qt_menubar_ext_button'"))
+
+    def test_print_tree_depth_limit(self):
+        """Print depth-limited tree for a widget"""
+
+        app = self.start_mock_app(EmulatorBase)
+        win = app.select_single("QMainWindow")
+
+        stream = StringIO()
+        win.print_tree(stream, 1)
+        out = stream.getvalue()
+
+        # has level-0 (root) node
+        self.assertThat(out, Contains("== /Root/QMainWindow =="))
+        # has level-1 widgets
+        self.assertThat(out, Contains("/Root/QMainWindow/QMenuBar"))
+        # no level-2 widgets
+        self.assertThat(out, Not(Contains(
+            "/Root/QMainWindow/QMenuBar/QToolButton")))
 
 
 class QMLCustomEmulatorTestCase(AutopilotTestCase):

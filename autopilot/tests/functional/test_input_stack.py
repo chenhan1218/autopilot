@@ -20,7 +20,7 @@
 
 import json
 import os
-from tempfile import mktemp
+from tempfile import mktemp, NamedTemporaryFile
 from testtools import TestCase, skipIf
 from testtools.matchers import IsInstance, Equals, raises
 from textwrap import dedent
@@ -206,7 +206,7 @@ class InputStackKeyboardBackspaceTests(InputStackKeyboardBase):
                         )
 
 
-@skipIf(platform.model() == 'Desktop', "Only on device")
+@skipIf(platform.model() == 'Desktop', "Only suitable on a device")
 class OSKBackendTests(AutopilotTestCase):
     """Testing the Onscreen Keyboard (Ubuntu Keyboard) backend specifically.
 
@@ -220,7 +220,8 @@ class OSKBackendTests(AutopilotTestCase):
         ('lower_alpha', dict(input='abcdefghijklmnopqrstuvwxyz')),
         ('upper_alpha', dict(input='ABCDEFGHIJKLMNOPQRSTUVWXYZ')),
         ('numeric', dict(input='0123456789')),
-        ('punctuation', dict(input='`~!@#$%^&*()_-+={}[]|\\:;"\'<>,.?/')),
+        # Remove " due to bug: lp:1243501
+        ('punctuation', dict(input='`~!@#$%^&*()_-+={}[]|\\:;\'<>,.?/')),
     ]
 
     def launch_test_input_area(self):
@@ -235,10 +236,41 @@ class OSKBackendTests(AutopilotTestCase):
         open(qml_path, 'w').write(script_contents)
         self.addCleanup(os.remove, qml_path)
 
+        desktop_file = self._write_test_desktop_file()
+
         return self.launch_test_application(
             "qmlscene",
             qml_path,
+            '--desktop_file_hint=%s' % desktop_file,
             app_type='qt',
+        )
+
+    def _write_test_desktop_file(self):
+        desktop_file_dir = self._get_local_desktop_file_directory()
+        if not os.path.exists(desktop_file_dir):
+            os.makedirs(desktop_file_dir)
+        with NamedTemporaryFile(
+            suffix='.desktop',
+            dir=desktop_file_dir,
+            delete=False  # Will ensure it happens with addCleanup
+        ) as desktop_file:
+            desktop_file.write(
+                "[Desktop Entry]\n"
+                "Type=Application\n"
+                "Exec=Not important\n"
+                "Path=Not important\n"
+                "Name=Test app\n"
+                "Icon=Not important"
+            )
+        self.addCleanup(os.remove, desktop_file.name)
+        return desktop_file.name
+
+    def _get_local_desktop_file_directory(self):
+        return os.path.join(
+            os.getenv('HOME'),
+            '.local',
+            'share',
+            'applications'
         )
 
     def _launch_simple_input(self):

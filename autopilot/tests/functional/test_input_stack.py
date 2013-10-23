@@ -255,12 +255,13 @@ class OSKBackendTests(AutopilotTestCase):
             delete=False  # Will ensure it happens with addCleanup
         ) as desktop_file:
             desktop_file.write(
-                "[Desktop Entry]\n"
-                "Type=Application\n"
-                "Exec=Not important\n"
-                "Path=Not important\n"
-                "Name=Test app\n"
-                "Icon=Not important"
+                dedent("""\
+                [Desktop Entry]
+                Type=Application
+                Exec=Not important
+                Path=Not important
+                Name=Test app
+                Icon=Not important""")
             )
         self.addCleanup(os.remove, desktop_file.name)
         return desktop_file.name

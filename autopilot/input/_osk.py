@@ -22,10 +22,7 @@ import six
 from time import sleep
 from contextlib import contextmanager
 
-from ubuntu_keyboard.emulators.keyboard import (
-    Keyboard as KeyboardDriver,
-    UnsupportedKey,
-)
+from ubuntu_keyboard.emulators.keyboard import Keyboard as KeyboardDriver
 
 from autopilot.input import Keyboard as KeyboardBase
 
@@ -72,8 +69,9 @@ class Keyboard(KeyboardBase):
 
         presses then releases the 'A' key.
 
-        :raises: *UnsupportedKey* if the provided key is not supported by the
-         OSK Backend (or the current OSK langauge layout.)
+        :raises: *ValueError* if the provided key is not supported by the
+         OSK Backend (or the current OSK langauge layout).
+
         :raises: *ValueError* if there is more than a single key supplied in
          the *key* argument.
 
@@ -85,7 +83,7 @@ class Keyboard(KeyboardBase):
         try:
             self._keyboard.press_key(key)
             sleep(delay)
-        except UnsupportedKey as e:
+        except ValueError as e:
             e.args += ("OSK Backend is unable to type the key '%s" % key,)
             raise
 
@@ -98,7 +96,7 @@ class Keyboard(KeyboardBase):
         The OSK class back end will take care of ensuring that capitalized
         keys are in fact capitalized.
 
-        :raises: *UnsupportedKey* if there is a key within the string that is
+        :raises: *ValueError* if there is a key within the string that is
         not supported by the OSK Backend (or the current OSK langauge layout.)
 
         """

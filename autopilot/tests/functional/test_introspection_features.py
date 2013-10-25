@@ -137,12 +137,12 @@ class IntrospectionFeatureTests(AutopilotTestCase):
         self.assertThat(out, Contains("windowTitle: 'Default Window Title'\n"))
         # has level-1 widgets with expected indent
         self.assertThat(out,
-                        Contains("    == /Root/QMainWindow/QRubberBand ==\n"))
-        self.assertThat(out, Contains("    objectName: 'qt_rubberband'\n"))
+                        Contains("  == /Root/QMainWindow/QRubberBand ==\n"))
+        self.assertThat(out, Contains("  objectName: 'qt_rubberband'\n"))
         # has level-2 widgets with expected indent
-        self.assertThat(out, Contains("        == /Root/QMainWindow/QMenuBar/"
+        self.assertThat(out, Contains("    == /Root/QMainWindow/QMenuBar/"
                                       "QToolButton =="))
-        self.assertThat(out, Contains("        objectName: "
+        self.assertThat(out, Contains("    objectName: "
                                       "'qt_menubar_ext_button'"))
 
     def test_print_tree_depth_limit(self):

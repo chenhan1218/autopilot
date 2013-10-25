@@ -606,7 +606,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         if maxdepth is not None and _curdepth > maxdepth:
             return
 
-        indent = "    " * _curdepth
+        indent = "  " * _curdepth
         if output is None:
             output = sys.stdout
         elif isinstance(output, six.string_types):

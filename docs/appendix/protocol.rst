@@ -246,6 +246,8 @@ The following table lists the various type Ids, and their meaning.
 	  - Date or Date/Time. The next value is an integer representing the number of seconds since the unix epoch (1970-01-011 00:00:00), UTC time.
 	* - 6
 	  - Time. The next values are all integers, and represent hours, minutes, seconds, milliseconds.
+	* - 7
+	  - 3D Point. The next values are all integers, and represent the X, Y and Z coordinates of a point in 3D cartesian space.
 
 Special Attributes
 ++++++++++++++++++

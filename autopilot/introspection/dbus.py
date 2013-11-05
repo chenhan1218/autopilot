@@ -389,11 +389,14 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             app.select_many('QPushButton', enabled=True)
             # returns a list of QPushButtons that are enabled.
 
-        As mentioned above, this method searches the object tree recurseivly::
+        As mentioned above, this method searches the object tree recursively::
+
             file_menu = app.select_one('QMenu', title='File')
             file_menu.select_many('QAction')
             # returns a list of QAction objects who appear below file_menu in
-            the object tree.
+            # the object tree.
+
+        .. note:: The order in which objects are returned is not guaranteed.
 
         If you only want to get one item, use :meth:`select_single` instead.
 

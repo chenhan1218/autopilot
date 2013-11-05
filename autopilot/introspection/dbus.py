@@ -395,6 +395,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             # returns a list of QAction objects who appear below file_menu in
             the object tree.
 
+        .. note:: The order in which objects are returned is not guaranteed.
+
         If you only want to get one item, use :meth:`select_single` instead.
 
         :param type_name: Either a string naming the type you want, or a class

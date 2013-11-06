@@ -1,3 +1,85 @@
+autopilot (1.4+14.04.20131106.1-0ubuntu1) trusty; urgency=low
+
+  [ Jean-Baptiste Lallement ]
+  * Forward port changes from 1.3.
+
+  [ Marco Trevisan (Treviño) ]
+  * Bamf: pass Gdk.Display to GdkX11.X11Window.foreign_new_for_display.
+    (LP: #1234478)
+
+  [ Automatic PS uploader ]
+  * Remove a spurious log message. (LP: #1227852)
+
+  [ Andy Doan ]
+  * Forward port changes from 1.3.
+
+  [ Jamie Strandboge ]
+  * Forward port apparmor rules and functional test fixes.
+
+  [ Christopher Lee ]
+  * Forward port changes from 1.3.
+  * Backout additions for logging when a process dies.
+  * Update the autopilot funcational tests so they work under python 3.
+    (LP: #1232973)
+  * Changes how the proxy objects are created so the inheritance is
+    correct . (LP: #1230046)
+  * Keyboard backends: Add alias so Backspace and BackSpace work. . (LP:
+    #1237675)
+  * Fixes issue where a classes _Backend can be None causes uncaught
+    exceptions. (LP: #1233972)
+  * Add details to select_many docs re: order of objects returned not
+    guaranteed. (LP: #1248336)
+
+  [ Thomi Richards ]
+  * Forward port changes from 1.3.
+  * Remove a spurious log message. (LP: #1227852)
+  * Forward port apparmor rules and functional test fixes.
+  * Fix a missing test dependency, and add more logging when a process
+    exits before we find the introspection interface.
+  * Fix 1.4 documentation to include type ids in the examples. (LP:
+    #1230038)
+  * Forward port wait_select_single method (and associated changes &
+    tests) to 1.4. (LP: #1231694)
+  * Update autopilot documentation to fix porting guide, and add several
+    objects to the documentation index. (LP: #1231690, #1230038)
+  * Add support for 3D points. (LP: #1227131)
+  * Make the default help text more useful. (LP: #1224771)
+  * Add a warning when an autopilot query returns many items, and should
+    probably be optimised. (LP: #1227830)
+  * Update packaging details so upgrading from 1.3 -> 1.4 is seamless.
+    (LP: #1227797)
+  * Log an 'info' message when we set an environment variable, and when
+    we delete one. (LP: #1236097)
+  * Changes how the proxy objects are created so the inheritance is
+    correct . (LP: #1230046)
+  * Fixes issue where a classes _Backend can be None causes uncaught
+    exceptions. (LP: #1233972)
+  * Make client-side attribute reprs the same as their python types.
+    (LP: #1237039)
+  * Use the 'six' python module to help us get python 2/3 compatibility,
+    rather than rolling our own. (LP: #1238257)
+  * Fix documentation next/prev links. (LP: #1231690, #1239493,
+    #1230038)
+  * Add documentation for the autopilot type support for 3D points.
+
+  [ Martin Pitt ]
+  * Forward port changes from 1.3.
+
+  [ Corey Goldberg ]
+  * add tox config and packaging fixes.
+  * added flake8 static test from tox and fixed lint errors.
+  * unit tests only from tox.
+  * make sphinx docs pretty.
+  * updates and minor fixes to documentation. also added a short README.
+
+  [ Leo Arias ]
+  * Added the logging annotation to be used on emulators.
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 357
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 06 Nov 2013 10:04:12 +0000
+
 autopilot (1.4+14.04.20130917ubuntu.unity.next-0ubuntu1) saucy; urgency=low
 
   [ Thomi Richards ]

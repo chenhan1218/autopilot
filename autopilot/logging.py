@@ -36,6 +36,9 @@ def log_action(log_func):
                 docstring = docstring.split('\n')[0].strip()
             else:
                 docstring = f.__name__
+            # Strip the ending periods of the docstring, if present, so only
+            # one will remain after using the log line format.
+            docstring = docstring.rstrip('.')
             log_line = '%s: %s. Arguments %s. Keyword arguments: %s.'
             log_func(
                 log_line, class_name, docstring, pprint.pformat(args),

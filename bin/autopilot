@@ -200,7 +200,6 @@ class ConfigurableTestRunner(object):
     def __init__(self, stdout, output_format):
         self.stdout = stdout
         self.result_class = output_format
-        self.result_class.falfast = True
     
     def run(self, test, failfast=False):
         "Run the given test case or test suite."

@@ -504,3 +504,29 @@ There are two ways to get around this problem, and they both lead to terrible te
  As a general rule, tests shouldn't have assert statements inside an if statement unless there's a very good reason for doing so.
 
 Scenarios can be useful, but we must be careful not to abuse them. It is far better to spend more time typing and end up with clear, readable tests than it is to end up with fewer, less readable tests. Like all code, tests are read far more often than they're written.
+
+.. _object_ordering:
+
+Do Not Depend on Object Ordering
+++++++++++++++++++++++++++++++++
+
+Calls such as :meth:`~autopilot.introspection.dbus.DBusIntrospectionObject.select_many` return several objects at once. These objects are explicitly unordered, and test authors must take care not to make assumptions about their order.
+
+**Bad Example:**
+
+.. code-block:: python
+
+    buttons = self.select_many('Button')
+    save_button = buttons[0]
+    print_button = buttons[1]
+
+This code may work initially, but there's absolutely no guarantee that the order of objects won't change in the future. A better approach is to select the individual components you need:
+
+**Good Example:**
+
+.. code-block:: python
+
+    save_button = self.select_single('Button', objectName='btnSave')
+    print_button = self.select_single('Button', objectName='btnPrint')
+
+This code will continue to work in the future.

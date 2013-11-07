@@ -28,6 +28,7 @@ module is the DBusIntrospectableObject class.
 from __future__ import absolute_import
 
 from contextlib import contextmanager
+import sys
 import logging
 import re
 import six
@@ -399,7 +400,11 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             # returns a list of QAction objects who appear below file_menu in
             # the object tree.
 
-        .. note:: The order in which objects are returned is not guaranteed.
+        .. warning::
+            The order in which objects are returned is not guaranteed. It is
+            bad practise to write tests that depend on the order in which
+            this method returns objects. (see :ref:`object_ordering` for more
+            information).
 
         If you only want to get one item, use :meth:`select_single` instead.
 
@@ -588,6 +593,46 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
                 base_class = type(self)
             class_type = type(str(name), (base_class,), {})
         return class_type(state, path, self._backend)
+
+    def print_tree(self, output=None, maxdepth=None, _curdepth=0):
+        """Print properties of the object and its children to a stream.
+
+        When writing new tests, this can be called when it is too difficult to
+        find the widget or property that you are interested in in "vis".
+
+        .. warning:: Do not use this in production tests, this is expensive and
+            not at all appropriate for actual testing. Only call this
+            temporarily and replace with proper select_single/select_many
+            calls.
+
+        :param output: A file object or path name where the output will be
+            written to. If not given, write to stdout.
+
+        :param maxdepth: If given, limit the maximum recursion level to that
+            number, i. e. only print children which have at most maxdepth-1
+            intermediate parents.
+
+        """
+        if maxdepth is not None and _curdepth > maxdepth:
+            return
+
+        indent = "  " * _curdepth
+        if output is None:
+            output = sys.stdout
+        elif isinstance(output, six.string_types):
+            output = open(output, 'w')
+
+        # print path
+        if _curdepth > 0:
+            output.write("\n")
+        output.write("%s== %s ==\n" % (indent, self._path))
+        # print properties
+        for p in sorted(self.get_properties()):
+            output.write("%s%s: %s\n" % (indent, p, repr(getattr(self, p))))
+        # print children
+        if maxdepth is None or _curdepth < maxdepth:
+            for c in self.get_children():
+                c.print_tree(output, maxdepth, _curdepth + 1)
 
     @contextmanager
     def no_automatic_refreshing(self):

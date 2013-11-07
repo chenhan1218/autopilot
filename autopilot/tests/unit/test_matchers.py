@@ -80,15 +80,10 @@ class ObjectPatchingMatcherTests(TestCase):
         intro_obj.wait_for(False)
 
 
-class EventuallyMatcherTests(TestWithScenarios, TestCase):
-
-    scenarios = [
-        ('callable', dict(attribute_type='callable')),
-        ('wait_for', dict(attribute_type='wait_for')),
-    ]
+class MockedSleepTests(TestCase):
 
     def setUp(self):
-        super(EventuallyMatcherTests, self).setUp()
+        super(MockedSleepTests, self).setUp()
         sleep.enable_mock()
         self.addCleanup(sleep.disable_mock)
 
@@ -102,6 +97,14 @@ class EventuallyMatcherTests(TestWithScenarios, TestCase):
                 raise AssertionError(
                     "Runtime of %f is not between %f and %f"
                     % (elapsed_time, tmin, tmax))
+
+
+class EventuallyMatcherTests(TestWithScenarios, MockedSleepTests):
+
+    scenarios = [
+        ('callable', dict(attribute_type='callable')),
+        ('wait_for', dict(attribute_type='wait_for')),
+    ]
 
     def test_eventually_matcher_returns_mismatch(self):
         """Eventually matcher must return a Mismatch."""
@@ -137,7 +140,7 @@ class EventuallyMatcherTests(TestWithScenarios, TestCase):
             mismatch.describe(), Contains("After 1.0 seconds test"))
 
 
-class EventuallyNonScenariodTests(TestCase):
+class EventuallyNonScenariodTests(MockedSleepTests):
 
     def test_eventually_matcher_raises_ValueError_on_unknown_kwargs(self):
         self.assertThat(

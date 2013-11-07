@@ -17,11 +17,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import sys
+import tempfile
+import shutil
+import os.path
 
 from mock import patch, Mock
+from textwrap import dedent
 from testtools import TestCase
 from testtools.matchers import Equals, NotEquals
 from testscenarios import TestWithScenarios
+from six import StringIO
 
 
 from autopilot.introspection.dbus import (
@@ -166,3 +172,70 @@ class DBusIntrospectionObjectTests(TestCase):
         fake_object.get_state_by_path('some_query')
 
         self.assertThat(mock_logger.warning.called, Equals(False))
+
+    def _print_test_fake_object(self):
+        """common fake object for print_tree tests"""
+
+        fake_object = DBusIntrospectionObject(
+            dict(id=[0, 123], path=[0, '/some/path'], text=[0, 'Hello']),
+            '/some/path',
+            Mock()
+        )
+        # get_properties() always refreshes state, so can't use
+        # no_automatic_refreshing()
+        fake_object.refresh_state = lambda: None
+        fake_object.get_state_by_path = lambda query: []
+        return fake_object
+
+    def test_print_tree_stdout(self):
+        """print_tree with default output (stdout)"""
+
+        fake_object = self._print_test_fake_object()
+        orig_sys_stdout = sys.stdout
+        sys.stdout = StringIO()
+        try:
+            fake_object.print_tree()
+            result = sys.stdout.getvalue()
+        finally:
+            sys.stdout = orig_sys_stdout
+
+        self.assertEqual(result, dedent("""\
+            == /some/path ==
+            id: 123
+            path: '/some/path'
+            text: 'Hello'
+            """))
+
+    def test_print_tree_fileobj(self):
+        """print_tree with file object output"""
+
+        fake_object = self._print_test_fake_object()
+        out = StringIO()
+
+        fake_object.print_tree(out)
+
+        self.assertEqual(out.getvalue(), dedent("""\
+            == /some/path ==
+            id: 123
+            path: '/some/path'
+            text: 'Hello'
+            """))
+
+    def test_print_tree_path(self):
+        """print_tree with file path output"""
+
+        fake_object = self._print_test_fake_object()
+        workdir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, workdir)
+        outfile = os.path.join(workdir, 'widgets.txt')
+
+        fake_object.print_tree(outfile)
+
+        with open(outfile) as f:
+            result = f.read()
+        self.assertEqual(result, dedent("""\
+            == /some/path ==
+            id: 123
+            path: '/some/path'
+            text: 'Hello'
+            """))

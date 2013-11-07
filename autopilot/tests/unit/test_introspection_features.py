@@ -25,7 +25,13 @@ import os.path
 from mock import patch, Mock
 from textwrap import dedent
 from testtools import TestCase
-from testtools.matchers import Equals, NotEquals
+from testtools.matchers import (
+    Equals,
+    Not,
+    NotEquals,
+    Raises,
+    raises,
+)
 from testscenarios import TestWithScenarios
 from six import StringIO
 
@@ -172,6 +178,36 @@ class DBusIntrospectionObjectTests(TestCase):
         fake_object.get_state_by_path('some_query')
 
         self.assertThat(mock_logger.warning.called, Equals(False))
+
+    def test_wait_until_destroyed_works(self):
+        """wait_until_destroyed must return if no new state is found."""
+        fake_object = DBusIntrospectionObject(
+            dict(id=[0, 123]),
+            '/',
+            Mock()
+        )
+        fake_object._backend.introspection_iface.GetState.return_value = []
+
+        self.assertThat(fake_object.wait_until_destroyed, Not(Raises()))
+
+    def test_wait_until_destroyed_raises_RuntimeError(self):
+        """wait_until_destroyed must raise RuntimeError if the object
+        persists.
+
+        """
+        fake_state = dict(id=[0, 123])
+        fake_object = DBusIntrospectionObject(
+            fake_state,
+            '/',
+            Mock()
+        )
+        fake_object._backend.introspection_iface.GetState.return_value = \
+            [fake_state]
+
+        self.assertThat(
+            lambda: fake_object.wait_until_destroyed(timeout=1),
+            raises(RuntimeError("Object was not destroyed after 1 seconds"))
+        )
 
     def _print_test_fake_object(self):
         """common fake object for print_tree tests"""

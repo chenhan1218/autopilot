@@ -42,6 +42,7 @@ from autopilot.introspection.dbus import (
     CustomEmulatorBase,
     DBusIntrospectionObject,
 )
+from autopilot.utilities import sleep
 
 
 class IntrospectionFeatureTests(TestCase):
@@ -204,10 +205,11 @@ class DBusIntrospectionObjectTests(TestCase):
         fake_object._backend.introspection_iface.GetState.return_value = \
             [fake_state]
 
-        self.assertThat(
-            lambda: fake_object.wait_until_destroyed(timeout=1),
-            raises(RuntimeError("Object was not destroyed after 1 seconds"))
-        )
+        with sleep.mocked():
+            self.assertThat(
+                lambda: fake_object.wait_until_destroyed(timeout=1),
+                raises(RuntimeError("Object was not destroyed after 1 seconds"))
+            )
 
     def _print_test_fake_object(self):
         """common fake object for print_tree tests"""

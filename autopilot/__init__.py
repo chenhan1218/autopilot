@@ -62,6 +62,10 @@ def parse_arguments(argv=None):
                             required=False,
                             help='Specify desired output format. \
                             Default is "text".')
+    parser_run.add_argument("-ff", "--failfast", action='store_true',
+                            required=False, default=False,
+                            help="Stop the test run on the first error \
+                            or failure.")
     parser_run.add_argument('-r', '--record', action='store_true',
                             default=False, required=False,
                             help="Record failing tests. Required \

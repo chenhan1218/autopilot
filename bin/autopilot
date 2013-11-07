@@ -35,13 +35,14 @@ import os.path
 from os import putenv
 from os.path import isabs, exists
 from platform import node
-import sys
+from random import shuffle
 import subprocess
-from testtools import iterate_tests
-from testtools import TextTestResult
+import sys
 from unittest.loader import TestLoader
 from unittest import TestSuite
-from random import shuffle
+
+from testtools import iterate_tests
+from testtools import TextTestResult
 
 
 _output_stream = None
@@ -113,8 +114,8 @@ def run_tests(args):
 
     setup_logging(args.verbose)
     runner = construct_test_runner(args)
-    success = runner.run(test_suite).wasSuccessful()
-    if not success:
+    test_result = runner.run(test_suite, args.failfast)
+    if not test_result.wasSuccessful():
         exit(1)
 
 
@@ -199,15 +200,18 @@ class ConfigurableTestRunner(object):
     def __init__(self, stdout, output_format):
         self.stdout = stdout
         self.result_class = output_format
-
-    def run(self, test):
+        self.result_class.falfast = True
+    
+    def run(self, test, failfast=False):
         "Run the given test case or test suite."
         result = self.result_class(self.stdout)
         result.startTestRun()
+        result.failfast = failfast
         try:
-            return test.run(result)
+            test_result = test.run(result)
         finally:
             result.stopTestRun()
+        return test_result
 
 
 def load_test_suite_from_name(test_names):

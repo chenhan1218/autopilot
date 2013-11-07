@@ -457,7 +457,7 @@ class CreateValueInstanceTests(TestCase):
 
         self.assertThat(attr, IsInstance(Rectangle))
 
-    def test_invalid_rectanlge(self):
+    def test_invalid_rectangle(self):
         data = dbus.Array(
             [
                 dbus.Int32(ValueType.RECTANGLE),
@@ -469,6 +469,35 @@ class CreateValueInstanceTests(TestCase):
 
         self.assertThat(fn, raises(
             ValueError("Rectangle must be constructed with 4 arguments, not 1")
+        ))
+
+    def test_color(self):
+        data = dbus.Array(
+            [
+                dbus.Int32(ValueType.COLOR),
+                dbus.Int32(10),
+                dbus.Int32(20),
+                dbus.Int32(230),
+                dbus.Int32(255),
+            ]
+        )
+
+        attr = create_value_instance(data, None, None)
+
+        self.assertThat(attr, IsInstance(Color))
+
+    def test_invalid_color(self):
+        data = dbus.Array(
+            [
+                dbus.Int32(ValueType.COLOR),
+                dbus.Int32(0),
+            ]
+        )
+
+        fn = lambda: create_value_instance(data, None, None)
+
+        self.assertThat(fn, raises(
+            ValueError("Color must be constructed with 4 arguments, not 1")
         ))
 
     def test_point(self):

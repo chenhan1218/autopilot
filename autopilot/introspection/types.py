@@ -83,6 +83,7 @@ def create_value_instance(value, parent, name):
     type_dict = {
         ValueType.PLAIN: _make_plain_type,
         ValueType.RECTANGLE: Rectangle,
+        ValueType.COLOR: Color,
         ValueType.POINT: Point,
         ValueType.SIZE: Size,
         ValueType.DATETIME: DateTime,

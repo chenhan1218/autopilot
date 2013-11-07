@@ -344,7 +344,7 @@ def on_test_started(test_case_instance):
 
 
 class MockableSleep(object):
-    """Delay executiion for a certain number of seconds.
+    """Delay execution for a certain number of seconds.
 
     Functionally identical to `time.sleep`, except we can replace it during
     unit tests.

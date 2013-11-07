@@ -208,7 +208,9 @@ class DBusIntrospectionObjectTests(TestCase):
         with sleep.mocked():
             self.assertThat(
                 lambda: fake_object.wait_until_destroyed(timeout=1),
-                raises(RuntimeError("Object was not destroyed after 1 seconds"))
+                raises(
+                    RuntimeError("Object was not destroyed after 1 seconds")
+                )
             )
 
     def _print_test_fake_object(self):

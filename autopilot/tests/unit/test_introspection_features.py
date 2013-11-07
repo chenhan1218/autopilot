@@ -185,7 +185,10 @@ class DBusIntrospectionObjectTests(TestCase):
         self.assertThat(fake_object.wait_until_destroyed, Not(Raises()))
 
     def test_wait_until_destroyed_raises_RuntimeError(self):
-        """wait_until_destroyed must raise RuntimeError if the object persists."""
+        """wait_until_destroyed must raise RuntimeError if the object
+        persists.
+
+        """
         fake_state = dict(id=[0, 123])
         fake_object = DBusIntrospectionObject(
             fake_state,

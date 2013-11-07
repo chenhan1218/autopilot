@@ -58,7 +58,6 @@ from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.content import text_content
 from testtools.matchers import Equals
-from time import sleep
 
 from autopilot.process import ProcessManager
 from autopilot.input import Keyboard, Mouse
@@ -71,7 +70,7 @@ from autopilot.introspection import (
 )
 from autopilot.introspection.utilities import _get_click_app_id
 from autopilot.display import Display
-from autopilot.utilities import on_test_started
+from autopilot.utilities import on_test_started, sleep
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
 try:

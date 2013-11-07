@@ -24,7 +24,8 @@ from __future__ import absolute_import
 
 from functools import partial
 from testtools.matchers import Matcher, Mismatch
-from time import sleep
+
+from autopilot.utilities import sleep
 
 
 class Eventually(Matcher):

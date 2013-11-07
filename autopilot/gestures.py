@@ -27,7 +27,7 @@ prevent you from generating your own gestures!
 """
 
 from autopilot.input import Touch
-from time import sleep
+from autopilot.utilities import sleep
 
 
 def pinch(center, vector_start, vector_end):

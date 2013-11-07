@@ -44,9 +44,9 @@ import dbus
 import logging
 from testtools.matchers import Equals
 import six
-from time import sleep
 
 from autopilot.introspection.utilities import translate_state_keys
+from autopilot.utilities import sleep
 
 
 logger = logging.getLogger(__name__)

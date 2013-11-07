@@ -396,7 +396,11 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             # returns a list of QAction objects who appear below file_menu in
             # the object tree.
 
-        .. note:: The order in which objects are returned is not guaranteed.
+        .. warning::
+            The order in which objects are returned is not guaranteed. It is
+            bad practise to write tests that depend on the order in which
+            this method returns objects. (see :ref:`object_ordering` for more
+            information).
 
         If you only want to get one item, use :meth:`select_single` instead.
 

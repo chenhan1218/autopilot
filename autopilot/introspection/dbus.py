@@ -31,12 +31,15 @@ from contextlib import contextmanager
 import logging
 import re
 import six
-from time import sleep
 from uuid import uuid4
 
 from autopilot.introspection.types import create_value_instance
 from autopilot.introspection.utilities import translate_state_keys
-from autopilot.utilities import Timer, get_debug_logger
+from autopilot.utilities import (
+    get_debug_logger,
+    sleep,
+    Timer,
+)
 
 
 _object_registry = {}

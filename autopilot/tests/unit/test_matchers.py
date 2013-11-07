@@ -33,23 +33,10 @@ from testtools.matchers import (
     Mismatch,
     Raises,
 )
-from time import time
 
 from autopilot.introspection.dbus import DBusIntrospectionObject
 from autopilot.matchers import Eventually
-
-
-@contextmanager
-def expected_runtime(tmin, tmax):
-    start = time()
-    try:
-        yield
-    finally:
-        elapsed_time = abs(time() - start)
-        if not tmin < elapsed_time < tmax:
-            raise AssertionError(
-                "Runtime of %f is not between %f and %f"
-                % (elapsed_time, tmin, tmax))
+from autopilot.utilities import sleep
 
 
 def make_fake_attribute_with_result(result, attribute_type='wait_for'):
@@ -100,6 +87,22 @@ class EventuallyMatcherTests(TestWithScenarios, TestCase):
         ('wait_for', dict(attribute_type='wait_for')),
     ]
 
+    def setUp(self):
+        super(EventuallyMatcherTests, self).setUp()
+        sleep.enable_mock()
+        self.addCleanup(sleep.disable_mock)
+
+    @contextmanager
+    def expected_runtime(self, tmin, tmax):
+        try:
+            yield
+        finally:
+            elapsed_time = sleep.total_time_slept()
+            if not tmin <= elapsed_time <= tmax:
+                raise AssertionError(
+                    "Runtime of %f is not between %f and %f"
+                    % (elapsed_time, tmin, tmax))
+
     def test_eventually_matcher_returns_mismatch(self):
         """Eventually matcher must return a Mismatch."""
         attr = make_fake_attribute_with_result(False, self.attribute_type)
@@ -110,20 +113,20 @@ class EventuallyMatcherTests(TestWithScenarios, TestCase):
     def test_eventually_default_timeout(self):
         """Eventually matcher must default to 10 second timeout."""
         attr = make_fake_attribute_with_result(False, self.attribute_type)
-        with expected_runtime(9.5, 11.0):
+        with self.expected_runtime(9.5, 11.0):
             Eventually(Equals(True)).match(attr)
 
     def test_eventually_passes_immeadiately(self):
         """Eventually matcher must not wait if the assertion passes
         initially."""
         attr = make_fake_attribute_with_result(True, self.attribute_type)
-        with expected_runtime(0.0, 1.0):
+        with self.expected_runtime(0.0, 1.0):
             Eventually(Equals(True)).match(attr)
 
     def test_eventually_matcher_allows_non_default_timeout(self):
         """Eventually matcher must allow a non-default timeout value."""
         attr = make_fake_attribute_with_result(False, self.attribute_type)
-        with expected_runtime(4.5, 6.0):
+        with self.expected_runtime(4.5, 6.0):
             Eventually(Equals(True), timeout=5).match(attr)
 
     def test_mismatch_message_has_correct_timeout_value(self):
@@ -146,13 +149,13 @@ class EventuallyNonScenariodTests(TestCase):
         """The expected unicode value matches new value string."""
         attr = make_fake_attribute_with_result(
             u'\u963f\u5e03\u4ece', 'wait_for')
-        with expected_runtime(0.0, 1.0):
+        with self.expected_runtime(0.0, 1.0):
             Eventually(Equals("阿布从")).match(attr)
 
     def test_match_with_new_value_unicode(self):
         """new value with unicode must match expected value string."""
         attr = make_fake_attribute_with_result(str("阿布从"), 'wait_for')
-        with expected_runtime(0.0, 1.0):
+        with self.expected_runtime(0.0, 1.0):
             Eventually(Equals(u'\u963f\u5e03\u4ece')).match(attr)
 
     def test_mismatch_with_bool(self):

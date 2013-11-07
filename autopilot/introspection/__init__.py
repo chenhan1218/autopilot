@@ -30,7 +30,6 @@ from __future__ import absolute_import
 from dbus import DBusException, Interface
 import logging
 import subprocess
-from time import sleep
 from functools import partial
 import os
 import psutil
@@ -56,6 +55,7 @@ from autopilot.dbus_handler import (
     get_system_bus,
     get_custom_bus,
 )
+from autopilot.utilities import sleep
 
 
 logger = logging.getLogger(__name__)

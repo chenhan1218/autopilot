@@ -23,6 +23,7 @@
 
 from __future__ import absolute_import
 
+from contextlib import contextmanager
 import inspect
 import logging
 import os
@@ -340,3 +341,54 @@ def on_test_started(test_case_instance):
     test_case_instance.addCleanup(action_on_test_end, test_case_instance)
     action_on_test_start(test_case_instance)
     addCleanup.set_test_instance(test_case_instance)
+
+
+class MockableSleep(object):
+    """Delay executiion for a certain number of seconds.
+
+    Functionally identical to `time.sleep`, except we can replace it during
+    unit tests.
+
+    To delay execution for 10 seconds, use it like this::
+
+        from autopilot.utilities import sleep
+        sleep(10)
+
+    To mock out all calls to sleep, one might do this instead::
+
+        from autopilot.utilities import sleep
+
+        with sleep.mocked() as mock_sleep:
+            sleep(10) # actually does nothing!
+            self.assertEqual(mock_sleep.total_time_slept(), 10.0)
+
+    """
+    def __init__(self):
+        self._mock_count = 0.0
+        self._mocked = False
+
+    def __call__(self, t):
+        if not self._mocked:
+            time.sleep(t)
+        else:
+            self._mock_count += t
+
+    @contextmanager
+    def mocked(self):
+        self.enable_mock()
+        try:
+            yield self
+        finally:
+            self.disable_mock()
+
+    def enable_mock(self):
+        self._mocked = True
+        self._mock_count = 0.0
+
+    def disable_mock(self):
+        self._mocked = False
+
+    def total_time_slept(self):
+        return self._mock_count
+
+sleep = MockableSleep()

@@ -28,15 +28,19 @@ module is the DBusIntrospectableObject class.
 from __future__ import absolute_import
 
 from contextlib import contextmanager
+import sys
 import logging
 import re
 import six
-from time import sleep
 from uuid import uuid4
 
 from autopilot.introspection.types import create_value_instance
 from autopilot.introspection.utilities import translate_state_keys
-from autopilot.utilities import Timer, get_debug_logger
+from autopilot.utilities import (
+    get_debug_logger,
+    sleep,
+    Timer,
+)
 
 
 _object_registry = {}
@@ -389,11 +393,18 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             app.select_many('QPushButton', enabled=True)
             # returns a list of QPushButtons that are enabled.
 
-        As mentioned above, this method searches the object tree recurseivly::
+        As mentioned above, this method searches the object tree recursively::
+
             file_menu = app.select_one('QMenu', title='File')
             file_menu.select_many('QAction')
             # returns a list of QAction objects who appear below file_menu in
-            the object tree.
+            # the object tree.
+
+        .. warning::
+            The order in which objects are returned is not guaranteed. It is
+            bad practise to write tests that depend on the order in which
+            this method returns objects. (see :ref:`object_ordering` for more
+            information).
 
         If you only want to get one item, use :meth:`select_single` instead.
 
@@ -550,6 +561,29 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         except IndexError:
             raise StateNotFoundError(self.__class__.__name__, id=self.id)
 
+    def wait_until_destroyed(self, timeout=10):
+        """Block until this object is destroyed in the application.
+
+        Block until the object this instance is a proxy for has been destroyed
+        in the applicaiton under test. This is commonly used to wait until a
+        UI component has been destroyed.
+
+        :param timeout: The number of seconds to wait for the object to be
+            destroyed. If not specified, defaults to 10 seconds.
+        :raises RuntimeError: if the method timed out.
+
+        """
+        for i in range(timeout):
+            try:
+                self.get_new_state()
+                sleep(1)
+            except StateNotFoundError:
+                return
+        else:
+            raise RuntimeError(
+                "Object was not destroyed after %d seconds" % timeout
+            )
+
     def get_class_query_string(self):
         """Get the XPath query string required to refresh this class's
         state."""
@@ -582,6 +616,46 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
                 base_class = type(self)
             class_type = type(str(name), (base_class,), {})
         return class_type(state, path, self._backend)
+
+    def print_tree(self, output=None, maxdepth=None, _curdepth=0):
+        """Print properties of the object and its children to a stream.
+
+        When writing new tests, this can be called when it is too difficult to
+        find the widget or property that you are interested in in "vis".
+
+        .. warning:: Do not use this in production tests, this is expensive and
+            not at all appropriate for actual testing. Only call this
+            temporarily and replace with proper select_single/select_many
+            calls.
+
+        :param output: A file object or path name where the output will be
+            written to. If not given, write to stdout.
+
+        :param maxdepth: If given, limit the maximum recursion level to that
+            number, i. e. only print children which have at most maxdepth-1
+            intermediate parents.
+
+        """
+        if maxdepth is not None and _curdepth > maxdepth:
+            return
+
+        indent = "  " * _curdepth
+        if output is None:
+            output = sys.stdout
+        elif isinstance(output, six.string_types):
+            output = open(output, 'w')
+
+        # print path
+        if _curdepth > 0:
+            output.write("\n")
+        output.write("%s== %s ==\n" % (indent, self._path))
+        # print properties
+        for p in sorted(self.get_properties()):
+            output.write("%s%s: %s\n" % (indent, p, repr(getattr(self, p))))
+        # print children
+        if maxdepth is None or _curdepth < maxdepth:
+            for c in self.get_children():
+                c.print_tree(output, maxdepth, _curdepth + 1)
 
     @contextmanager
     def no_automatic_refreshing(self):

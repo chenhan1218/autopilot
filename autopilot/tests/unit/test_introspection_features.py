@@ -17,11 +17,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import sys
+import tempfile
+import shutil
+import os.path
 
 from mock import patch, Mock
+from textwrap import dedent
 from testtools import TestCase
-from testtools.matchers import Equals, NotEquals
+from testtools.matchers import (
+    Equals,
+    Not,
+    NotEquals,
+    Raises,
+    raises,
+)
 from testscenarios import TestWithScenarios
+from six import StringIO
 
 
 from autopilot.introspection.dbus import (
@@ -30,6 +42,7 @@ from autopilot.introspection.dbus import (
     CustomEmulatorBase,
     DBusIntrospectionObject,
 )
+from autopilot.utilities import sleep
 
 
 class IntrospectionFeatureTests(TestCase):
@@ -166,3 +179,103 @@ class DBusIntrospectionObjectTests(TestCase):
         fake_object.get_state_by_path('some_query')
 
         self.assertThat(mock_logger.warning.called, Equals(False))
+
+    def test_wait_until_destroyed_works(self):
+        """wait_until_destroyed must return if no new state is found."""
+        fake_object = DBusIntrospectionObject(
+            dict(id=[0, 123]),
+            '/',
+            Mock()
+        )
+        fake_object._backend.introspection_iface.GetState.return_value = []
+
+        self.assertThat(fake_object.wait_until_destroyed, Not(Raises()))
+
+    def test_wait_until_destroyed_raises_RuntimeError(self):
+        """wait_until_destroyed must raise RuntimeError if the object
+        persists.
+
+        """
+        fake_state = dict(id=[0, 123])
+        fake_object = DBusIntrospectionObject(
+            fake_state,
+            '/',
+            Mock()
+        )
+        fake_object._backend.introspection_iface.GetState.return_value = \
+            [fake_state]
+
+        with sleep.mocked():
+            self.assertThat(
+                lambda: fake_object.wait_until_destroyed(timeout=1),
+                raises(
+                    RuntimeError("Object was not destroyed after 1 seconds")
+                )
+            )
+
+    def _print_test_fake_object(self):
+        """common fake object for print_tree tests"""
+
+        fake_object = DBusIntrospectionObject(
+            dict(id=[0, 123], path=[0, '/some/path'], text=[0, 'Hello']),
+            '/some/path',
+            Mock()
+        )
+        # get_properties() always refreshes state, so can't use
+        # no_automatic_refreshing()
+        fake_object.refresh_state = lambda: None
+        fake_object.get_state_by_path = lambda query: []
+        return fake_object
+
+    def test_print_tree_stdout(self):
+        """print_tree with default output (stdout)"""
+
+        fake_object = self._print_test_fake_object()
+        orig_sys_stdout = sys.stdout
+        sys.stdout = StringIO()
+        try:
+            fake_object.print_tree()
+            result = sys.stdout.getvalue()
+        finally:
+            sys.stdout = orig_sys_stdout
+
+        self.assertEqual(result, dedent("""\
+            == /some/path ==
+            id: 123
+            path: '/some/path'
+            text: 'Hello'
+            """))
+
+    def test_print_tree_fileobj(self):
+        """print_tree with file object output"""
+
+        fake_object = self._print_test_fake_object()
+        out = StringIO()
+
+        fake_object.print_tree(out)
+
+        self.assertEqual(out.getvalue(), dedent("""\
+            == /some/path ==
+            id: 123
+            path: '/some/path'
+            text: 'Hello'
+            """))
+
+    def test_print_tree_path(self):
+        """print_tree with file path output"""
+
+        fake_object = self._print_test_fake_object()
+        workdir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, workdir)
+        outfile = os.path.join(workdir, 'widgets.txt')
+
+        fake_object.print_tree(outfile)
+
+        with open(outfile) as f:
+            result = f.read()
+        self.assertEqual(result, dedent("""\
+            == /some/path ==
+            id: 123
+            path: '/some/path'
+            text: 'Hello'
+            """))

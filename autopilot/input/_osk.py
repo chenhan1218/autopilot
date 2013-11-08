@@ -19,12 +19,12 @@
 
 import logging
 import six
-from time import sleep
 from contextlib import contextmanager
 
 from ubuntu_keyboard.emulators.keyboard import Keyboard as KeyboardDriver
 
 from autopilot.input import Keyboard as KeyboardBase
+from autopilot.utilities import sleep
 
 
 logger = logging.getLogger(__name__)

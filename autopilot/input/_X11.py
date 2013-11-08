@@ -28,10 +28,13 @@ from __future__ import absolute_import
 
 import logging
 import six
-from time import sleep
 
 from autopilot.display import is_point_on_any_screen, move_mouse_to_screen
-from autopilot.utilities import Silence, StagnantStateDetector
+from autopilot.utilities import (
+    Silence,
+    sleep,
+    StagnantStateDetector,
+)
 from autopilot.input import (
     Keyboard as KeyboardBase,
     Mouse as MouseBase,

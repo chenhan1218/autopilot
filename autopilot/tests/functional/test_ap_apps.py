@@ -29,7 +29,6 @@ from mock import patch
 from tempfile import mktemp
 from testtools.matchers import raises, LessThan
 from textwrap import dedent
-from time import sleep
 
 from autopilot.testcase import AutopilotTestCase
 from autopilot.introspection import (
@@ -37,6 +36,7 @@ from autopilot.introspection import (
     ProcessSearchError,
     _pid_is_running,
 )
+from autopilot.utilities import sleep
 
 
 # backwards compatible alias for Python 3

@@ -44,9 +44,9 @@ import dbus
 import logging
 from testtools.matchers import Equals
 import six
-from time import sleep
 
 from autopilot.introspection.utilities import translate_state_keys
+from autopilot.utilities import sleep
 
 
 logger = logging.getLogger(__name__)
@@ -83,6 +83,7 @@ def create_value_instance(value, parent, name):
     type_dict = {
         ValueType.PLAIN: _make_plain_type,
         ValueType.RECTANGLE: Rectangle,
+        ValueType.COLOR: Color,
         ValueType.POINT: Point,
         ValueType.SIZE: Size,
         ValueType.DATETIME: DateTime,

@@ -209,7 +209,7 @@ class CommandLineArgsTests(TestCase):
     def test_run_command_default_failfast_off(self):
         args = self.parse_args('run foo')
         self.assertThat(args.failfast, Equals(False))
-        
+
     def test_run_command_accepts_failfast_short(self):
         args = self.parse_args('run -ff foo')
         self.assertThat(args.failfast, Equals(True))
@@ -217,7 +217,7 @@ class CommandLineArgsTests(TestCase):
     def test_run_command_accepts_failfast_long(self):
         args = self.parse_args('run --failfast foo')
         self.assertThat(args.output, Equals(True))
-        
+
     @patch('sys.stderr', new=StringIO())
     @expectedFailure
     def test_run_command_unknown_format_short_version(self):

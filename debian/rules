@@ -40,7 +40,8 @@ override_dh_install:
 	# provide python3-ized runner and avoid file conflicts
 	set -e; if [ -d debian/python3-autopilot ]; then \
 	    cd debian/python3-autopilot; \
-	    mv usr/bin/autopilot usr/bin/autopilot-py3; \
-	    sed -i '1 s/python$$/python3/' usr/bin/autopilot-py3; \
+	    mv usr/bin/autopilot usr/bin/autopilot3; \
+	    ln -s autopilot3 usr/bin/autopilot-py3; \
+	    sed -i '1 s/python$$/python3/' usr/bin/autopilot3; \
 	    mv lib/udev/rules.d/61-autopilot-uinput.rules lib/udev/rules.d/61-autopilot-py3-uinput.rules; \
 	fi

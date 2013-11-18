@@ -32,12 +32,15 @@ import sys
 import logging
 import re
 import six
-from time import sleep
 from uuid import uuid4
 
 from autopilot.introspection.types import create_value_instance
 from autopilot.introspection.utilities import translate_state_keys
-from autopilot.utilities import Timer, get_debug_logger
+from autopilot.utilities import (
+    get_debug_logger,
+    sleep,
+    Timer,
+)
 
 
 _object_registry = {}
@@ -557,6 +560,29 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             return self.get_state_by_path(self.get_class_query_string())[0]
         except IndexError:
             raise StateNotFoundError(self.__class__.__name__, id=self.id)
+
+    def wait_until_destroyed(self, timeout=10):
+        """Block until this object is destroyed in the application.
+
+        Block until the object this instance is a proxy for has been destroyed
+        in the applicaiton under test. This is commonly used to wait until a
+        UI component has been destroyed.
+
+        :param timeout: The number of seconds to wait for the object to be
+            destroyed. If not specified, defaults to 10 seconds.
+        :raises RuntimeError: if the method timed out.
+
+        """
+        for i in range(timeout):
+            try:
+                self.get_new_state()
+                sleep(1)
+            except StateNotFoundError:
+                return
+        else:
+            raise RuntimeError(
+                "Object was not destroyed after %d seconds" % timeout
+            )
 
     def get_class_query_string(self):
         """Get the XPath query string required to refresh this class's

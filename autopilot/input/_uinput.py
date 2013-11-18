@@ -23,10 +23,10 @@
 from autopilot.input import Keyboard as KeyboardBase
 from autopilot.input import Touch as TouchBase
 from autopilot.input._common import get_center_point
+from autopilot.utilities import sleep
 import autopilot.platform
 
 import logging
-from time import sleep
 from evdev import UInput, ecodes as e
 import os.path
 import six

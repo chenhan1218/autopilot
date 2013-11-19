@@ -976,3 +976,27 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
                                                   "-v", "tests"])
         self.assertThat(
             error, Contains(get_version_string()))
+
+    def test_failfast(self):
+        """Run stops after first error encountered."""
+        self.create_test_file(
+            'test_failfast.py', dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_one(self):
+                    raise Exception
+
+                def test_two(self):
+                    raise Exception
+            """)
+        )
+        code, output, error = self.run_autopilot(["run",
+                                                  "--failfast",
+                                                  "tests"])
+        self.assertThat(code, Equals(1))
+        self.assertIn("Ran 1 test", output)
+        self.assertIn("FAILED (failures=1)", output)

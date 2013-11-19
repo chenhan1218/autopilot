@@ -216,7 +216,7 @@ class CommandLineArgsTests(TestCase):
 
     def test_run_command_accepts_failfast_long(self):
         args = self.parse_args('run --failfast foo')
-        self.assertThat(args.output, Equals(True))
+        self.assertThat(args.failfast, Equals(True))
 
     @patch('sys.stderr', new=StringIO())
     @expectedFailure

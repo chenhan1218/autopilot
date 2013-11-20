@@ -21,7 +21,16 @@
 import logging
 
 from autopilot.display import Display as DisplayBase
-from upa import get_resolution
+from subprocess import check_output
+
+DEVICE=check_output(["/usr/bin/getprop", "ro.product.device"]).decode().strip()
+RESOLUTIONS = {
+    "mako": (768, 1280),
+    "maguro": (720, 1280),
+    "manta": (2560, 1600),
+    "grouper": (800, 1280),
+}
+X, Y = RESOLUTIONS.get(DEVICE, (0, 0))
 
 logger = logging.getLogger(__name__)
 
@@ -38,10 +47,10 @@ class Display(DisplayBase):
         return 0
 
     def get_screen_width(self):
-        return get_resolution()[0]
+        return X
 
     def get_screen_height(self):
-        return get_resolution()[1]
+        return Y
 
     def get_screen_geometry(self, screen_number):
         """Get the geometry for a particular screen.
@@ -49,5 +58,4 @@ class Display(DisplayBase):
         :return: Tuple containing (x, y, width, height).
 
         """
-        res = get_resolution()
-        return (0, 0, res[0], res[1])
+        return (0, 0, X, Y)

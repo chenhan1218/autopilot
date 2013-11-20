@@ -121,7 +121,6 @@ Depends: ${misc:Depends},
          libautopilot-qt (>= 1.4) [!powerpc],
          python-autopilot,
          python-evdev,
-         python-ubuntu-platform-api [armhf],
 Description: Autopilot support for the ubuntu Touch platform
  This metapackage exists to depend on the packages needed to install and use
  autopilot on the Ubuntu Touch platform.

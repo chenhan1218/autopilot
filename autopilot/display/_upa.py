@@ -24,9 +24,10 @@ from autopilot.display import Display as DisplayBase
 from subprocess import check_output
 
 try:
-    DEVICE=check_output(["/usr/bin/getprop", "ro.product.device"]).decode().strip()
+    DEVICE = check_output(
+        ["/usr/bin/getprop", "ro.product.device"]).decode().strip()
 except OSError:
-    DEVICE=''
+    DEVICE = ''
 
 RESOLUTIONS = {
     "mako": (768, 1280),

@@ -35,7 +35,12 @@ RESOLUTIONS = {
     "manta": (2560, 1600),
     "grouper": (800, 1280),
 }
-X, Y = RESOLUTIONS.get(DEVICE, (0, 0))
+
+if DEVICE not in RESOLUTIONS:
+    raise NotImplementedError(
+        'Device "{}" is not supported by Autopilot.'.format(DEVICE))
+
+X, Y = RESOLUTIONS[DEVICE]
 
 logger = logging.getLogger(__name__)
 

@@ -335,6 +335,8 @@ def run_vis(args):
 
 
 def main():
+    maybe_patch_python_path()
+
     from autopilot import parse_arguments
     args = parse_arguments()
     if args.mode == 'list':
@@ -348,5 +350,4 @@ def main():
 
 
 if __name__ == "__main__":
-    maybe_patch_python_path()
     main()

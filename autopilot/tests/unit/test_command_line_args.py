@@ -278,3 +278,8 @@ class CommandLineArgsTests(TestCase):
         self.assertThat(args.verbose, Equals(2))
         args = self.parse_args('run -v -v foo')
         self.assertThat(args.verbose, Equals(2))
+
+    @patch('sys.stderr', new=StringIO())
+    @expectedFailure
+    def test_fails_with_no_arguments_supplied(self):
+        self.parse_args('')

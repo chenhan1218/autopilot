@@ -32,7 +32,7 @@ except ImportError:
     from io import StringIO
 
 from testtools import TestCase
-from testtools.matchers import Equals, raises
+from testtools.matchers import Equals
 from unittest import expectedFailure
 
 from autopilot import parse_arguments

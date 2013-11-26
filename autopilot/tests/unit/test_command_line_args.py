@@ -32,7 +32,7 @@ except ImportError:
     from io import StringIO
 
 from testtools import TestCase
-from testtools.matchers import Equals
+from testtools.matchers import Equals, raises
 from unittest import expectedFailure
 
 from autopilot import parse_arguments
@@ -279,7 +279,14 @@ class CommandLineArgsTests(TestCase):
         args = self.parse_args('run -v -v foo')
         self.assertThat(args.verbose, Equals(2))
 
-    @patch('sys.stderr', new=StringIO())
-    @expectedFailure
     def test_fails_with_no_arguments_supplied(self):
-        self.parse_args('')
+        with patch('sys.stderr', new=StringIO()) as patched_err:
+            try:
+                parse_arguments([])
+            except SystemExit as e:
+                self.assertThat(e.code, Equals(2))
+                stderr_lines = patched_err.getvalue().split('\n')
+                self.assertTrue(stderr_lines[-2].endswith("error: too few arguments"))
+                self.assertThat(stderr_lines[-1], Equals(""))
+            else:
+                self.fail("Argument parser unexpectedly passed")

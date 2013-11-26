@@ -1,3 +1,39 @@
+autopilot (1.4+14.04.20131125-0ubuntu1) trusty; urgency=low
+
+  [ Leo Arias ]
+  * On the log_action decorator, do not duplicate the ending period.
+    (LP: #1248751)
+
+  [ Robert Bruce Park ]
+  * Rename autopilot-py3 to more conventional autopilot3.
+  * Drop dependency on python-ubuntu-platform-api, since it does not
+    support python3.
+
+  [ Christopher Lee ]
+  * Update the osk keyboard backend. . (LP: #1243477)
+
+  [ Thomi Richards ]
+  * Add more documentation around object ordering. (LP: #1248336)
+  * Add method to wait for a proxy object to be destroyed. (LP:
+    #1248782)
+  * Fix a bug in the autopilot type system, and add missing unit tests
+    for that issue. (LP: #1249096)
+  * Add a mockable sleep, so we can run autopilot unit tests quickly.
+
+  [ Martin Pitt ]
+  * Add print_tree() introspection method for writing a textual
+    representation of the object and all of its children to stdout, a
+    file object, or a file name. (LP: #1241323)
+
+  [ Corey Goldberg ]
+  * added failfast (-ff|--failfast) command line option to autopilot
+    run. (LP: #1248634)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 368
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 25 Nov 2013 06:30:17 +0000
+
 autopilot (1.4+14.04.20131106.1-0ubuntu1) trusty; urgency=low
 
   [ Jean-Baptiste Lallement ]

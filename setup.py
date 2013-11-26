@@ -44,7 +44,7 @@ setup(
     test_suite='autopilot.tests',
     scripts=['bin/autopilot-sandbox-run'],
     ext_modules=[autopilot_tracepoint],
-    entry_points = {
+    entry_points={
         'console_scripts': ['autopilot = autopilot.run:main']
     }
 )

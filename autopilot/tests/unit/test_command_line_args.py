@@ -286,7 +286,9 @@ class CommandLineArgsTests(TestCase):
             except SystemExit as e:
                 self.assertThat(e.code, Equals(2))
                 stderr_lines = patched_err.getvalue().split('\n')
-                self.assertTrue(stderr_lines[-2].endswith("error: too few arguments"))
+                self.assertTrue(
+                    stderr_lines[-2].endswith("error: too few arguments")
+                )
                 self.assertThat(stderr_lines[-1], Equals(""))
             else:
                 self.fail("Argument parser unexpectedly passed")

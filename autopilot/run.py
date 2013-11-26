@@ -305,7 +305,7 @@ def launch_app(args):
     else:
         launcher = get_application_launcher_from_string_hint(args.interface)
     if launcher is None:
-        print("Error: Could not determine introspection type to use for " \
+        print("Error: Could not determine introspection type to use for "
               "application '%s'." % app_name)
         print("(Perhaps use the '-i' argument to specify an interface.)")
         exit(1)

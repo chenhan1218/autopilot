@@ -200,7 +200,7 @@ class ConfigurableTestRunner(object):
     def __init__(self, stdout, output_format):
         self.stdout = stdout
         self.result_class = output_format
-    
+
     def run(self, test, failfast=False):
         "Run the given test case or test suite."
         result = self.result_class(self.stdout)
@@ -305,7 +305,7 @@ def launch_app(args):
     else:
         launcher = get_application_launcher_from_string_hint(args.interface)
     if launcher is None:
-        print("Error: Could not determine introspection type to use for " \
+        print("Error: Could not determine introspection type to use for "
               "application '%s'." % app_name)
         print("(Perhaps use the '-i' argument to specify an interface.)")
         exit(1)
@@ -335,6 +335,8 @@ def run_vis(args):
 
 
 def main():
+    maybe_patch_python_path()
+
     from autopilot import parse_arguments
     args = parse_arguments()
     if args.mode == 'list':
@@ -348,5 +350,4 @@ def main():
 
 
 if __name__ == "__main__":
-    maybe_patch_python_path()
     main()

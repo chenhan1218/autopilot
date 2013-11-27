@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2013 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,9 +19,11 @@
 
 
 from functools import partial
+import logging
 from os.path import join
 from xml.etree import ElementTree
 
+logger = logging.getLogger(__name__)
 
 
 def _start_trawl(bus, connection_name, on_success_cb):
@@ -36,7 +38,7 @@ def _start_trawl(bus, connection_name, on_success_cb):
     introspect_fn(connection_name)
 
 
-def _introspect_dbus_object(bus, conn_name, obj_name='/', reply_handler):
+def _introspect_dbus_object(bus, conn_name, obj_name='/', reply_handler=None):
     """Return a list of objects and their interfaces."""
     obj = bus.get_object(conn_name, obj_name)
     obj.Introspect(

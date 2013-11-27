@@ -60,7 +60,8 @@ def _introspect_dbus_object(bus, conn_name, obj_name='/', reply_handler=None):
     obj.Introspect(
         dbus_interface='org.freedesktop.DBus.Introspectable',
         reply_handler=lambda xml: reply_handler(
-            conn_name, obj_name, xml)
+            conn_name, obj_name, xml),
+        error_handler=lambda *args: logger.error("Error occured: %r" % args)
     )
 
 

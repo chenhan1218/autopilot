@@ -30,7 +30,7 @@ class BusEnumeratorTrawlTests(TestCase):
     _example_connection_name = "com.autopilot.test"
 
     def _make_mock_dbus(self, xml_str=""):
-        def _mock_introspect(dbus_interface, reply_handler):
+        def _mock_introspect(dbus_interface, reply_handler, error_handler):
             reply_handler(xml_str)
         mock_obj = Mock()
         mock_obj.Introspect = _mock_introspect
@@ -54,10 +54,32 @@ class BusEnumeratorTrawlTests(TestCase):
             'Unable to parse XML response for com.autopilot.test (/)'
         )
 
-    def test_on_success_event(self):
+    def test_on_success_event_called(self):
         mock_bus = self._make_mock_dbus(dedent(
             '<node>'
             '<interface name="org.autopilot.DBus.example"></interface>'
+            '</node>'
+        ))
+
+        on_interface_found = Mock()
+        _start_trawl(
+            mock_bus,
+            self._example_connection_name,
+            on_interface_found
+        )
+
+        on_interface_found.assert_called_with(
+            self._example_connection_name,
+            '/',
+            'org.autopilot.DBus.example'
+        )
+
+    def test_nodes_are_recursively_searched(self):
+        mock_bus = self._make_mock_dbus(dedent(
+            '<node>'
+            '<node name="org"/>'
+            '<interface name="org.autopilot.DBus.example"></interface>'
+            '</node>'
             '</node>'
         ))
 

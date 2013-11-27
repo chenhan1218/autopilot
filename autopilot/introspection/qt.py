@@ -47,7 +47,12 @@ class QtApplicationLauncher(ApplicationLauncher):
 
         """
         if '-testability' not in arguments:
-            arguments.insert(0, '-testability')
+            insert_pos = 0
+            for pos, argument in enumerate(arguments):
+                if argument.startswith("-qt="):
+                    insert_pos = pos + 1
+                    break
+            arguments.insert(insert_pos, '-testability')
 
         return app_path, arguments
 

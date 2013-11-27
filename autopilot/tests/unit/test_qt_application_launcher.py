@@ -28,7 +28,7 @@ class QtApplicationLauncherTests(TestCase):
         super(QtApplicationLauncherTests, self).setUp()
         self.app_launcher = QtApplicationLauncher()
 
-    def test_does_no_alter_app(self):
+    def test_does_not_alter_app(self):
         fake_app = self.getUniqueString()
         app, args = self.app_launcher.prepare_environment(fake_app, [])
         self.assertEqual(fake_app, app)
@@ -46,5 +46,7 @@ class QtApplicationLauncherTests(TestCase):
         self.assertEqual(['-qt=qt5', '-testability'], args)
 
     def test_does_not_insert_testability_if_already_present(self):
-        app, args = self.app_launcher.prepare_environment('app', ['-testability'])
+        app, args = self.app_launcher.prepare_environment(
+            'app', ['-testability']
+        )
         self.assertEqual(['-testability'], args)

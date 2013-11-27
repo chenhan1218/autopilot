@@ -27,6 +27,19 @@ logger = logging.getLogger(__name__)
 
 
 def _start_trawl(bus, connection_name, on_success_cb):
+    """Start searching *connection_name* on *bus* for interfaces under
+    org.freedesktop.DBus.Introspectable.
+
+    on_success_cb gets called when an interface is found.
+
+    """
+
+    if connection_name is None:
+        raise ValueError("Connection name is required.")
+
+    if not callable(on_success_cb):
+        raise ValueError("on_success_cb needs to be callable.")
+
     # introspect_fn is now a function that takes two params:
     # conn_name, obj_name (optional)
     introspect_fn = partial(_introspect_dbus_object, bus)
@@ -39,7 +52,10 @@ def _start_trawl(bus, connection_name, on_success_cb):
 
 
 def _introspect_dbus_object(bus, conn_name, obj_name='/', reply_handler=None):
-    """Return a list of objects and their interfaces."""
+    """Introspects and applies the reply_handler to the dbus object constructed
+    from the provided bus, connection and object name.
+
+    """
     obj = bus.get_object(conn_name, obj_name)
     obj.Introspect(
         dbus_interface='org.freedesktop.DBus.Introspectable',
@@ -49,16 +65,22 @@ def _introspect_dbus_object(bus, conn_name, obj_name='/', reply_handler=None):
 
 
 def _process_object(on_success_cb, get_xml_cb, conn_name, obj_name, xml):
-    root = ElementTree.fromstring(xml)
+    try:
+        root = ElementTree.fromstring(xml)
 
-    for child in root.getchildren():
-        child_name = join(obj_name, child.attrib['name'])
-        # If we found another node, make sure we get called again with a new
-        # XML block.
-        if child.tag == 'node':
-            get_xml_cb(conn_name, child_name)
-        # If we found an interface, call our success function with the
-        # interface name
-        elif child.tag == 'interface':
-            iface_name = child_name.split('/')[-1]
-            on_success_cb(conn_name, obj_name, iface_name)
+        for child in root.getchildren():
+            child_name = join(obj_name, child.attrib['name'])
+            # If we found another node, make sure we get called again with a new
+            # XML block.
+            if child.tag == 'node':
+                get_xml_cb(conn_name, child_name)
+            # If we found an interface, call our success function with the
+            # interface name
+            elif child.tag == 'interface':
+                iface_name = child_name.split('/')[-1]
+                on_success_cb(conn_name, obj_name, iface_name)
+    except ElementTree.ParseError:
+        logger.warning(
+            "Unable to parse XML response for %s (%s)"
+            % (conn_name, obj_name)
+        )

@@ -62,7 +62,11 @@ class BusEnumeratorTrawlTests(TestCase):
         ))
 
         on_interface_found = Mock()
-        _start_trawl(mock_bus, "", on_interface_found)
+        _start_trawl(
+            mock_bus,
+            self._example_connection_name,
+            on_interface_found
+        )
 
         on_interface_found.assert_called_with(
             self._example_connection_name,

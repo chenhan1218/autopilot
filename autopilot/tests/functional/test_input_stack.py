@@ -240,6 +240,7 @@ class OSKBackendTests(AutopilotTestCase):
 
         return self.launch_test_application(
             "qmlscene",
+            "-qt=qt5",
             qml_path,
             '--desktop_file_hint=%s' % desktop_file,
             app_type='qt',
@@ -427,6 +428,7 @@ class TouchGesturesTests(AutopilotTestCase):
 
         return self.launch_test_application(
             "qmlscene",
+            "-qt=qt5",
             qml_path,
             app_type='qt',
         )

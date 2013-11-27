@@ -70,8 +70,8 @@ def _process_object(on_success_cb, get_xml_cb, conn_name, obj_name, xml):
 
         for child in root.getchildren():
             child_name = join(obj_name, child.attrib['name'])
-            # If we found another node, make sure we get called again with a new
-            # XML block.
+            # If we found another node, make sure we get called again with a
+            # new XML block.
             if child.tag == 'node':
                 get_xml_cb(conn_name, child_name)
             # If we found an interface, call our success function with the

@@ -21,6 +21,7 @@
 from __future__ import absolute_import
 
 import dbus
+import logging
 from PyQt4 import QtGui, QtCore
 import six
 
@@ -33,6 +34,8 @@ from autopilot.introspection.dbus import StateNotFoundError
 from autopilot.introspection.qt import QtObjectProxyMixin
 from autopilot.vis.objectproperties import TreeNodeDetailWidget
 from autopilot.vis.resources import get_qt_icon
+
+logger = logging.getLogger(__name__)
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -88,9 +91,12 @@ class MainWindow(QtGui.QMainWindow):
                 if not cls_name in self.selectable_interfaces:
                     self.selectable_interfaces[cls_name] = proxy_object
                     self.update_selectable_interfaces()
-            except (dbus.DBusException, RuntimeError):
-                pass
-            self.statusBar().clearMessage()
+                self.statusBar().clearMessage()
+            except (dbus.DBusException, RuntimeError) as e:
+                logger.warning("Invalid introspection interface: %s" % str(e))
+
+            if self.connection_list.count() == 0:
+                self.statusBar().showMessage('No valid connections exist.')
 
     def update_selectable_interfaces(self):
         selected_text = self.connection_list.currentText()

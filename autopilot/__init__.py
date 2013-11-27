@@ -126,6 +126,11 @@ def parse_arguments(argv=None):
         "$PATH).")
     args = parser.parse_args(args=argv)
 
+    # TR - 2013-11-27 - a bug in python3.3 means argparse doesn't fail
+    # correctly when no commands are specified.
+    # http://bugs.python.org/issue16308
+    if args.mode is None:
+        parser.error("too few arguments")
     return args
 
 

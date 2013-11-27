@@ -77,7 +77,7 @@ class BusEnumeratorTrawlTests(TestCase):
     def test_nodes_are_recursively_searched(self):
         mock_bus = self._make_mock_dbus(dedent(
             '<node>'
-            '<node name="org"/>'
+            '<node name="org">'
             '<interface name="org.autopilot.DBus.example"></interface>'
             '</node>'
             '</node>'

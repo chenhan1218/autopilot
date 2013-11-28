@@ -19,7 +19,7 @@
 
 import os
 import os.path
-from testtools import TestCase, iterate_tests
+from testtools import TestCase
 from testtools.matchers import Not, Raises
 from contextlib import contextmanager
 import shutil

@@ -170,34 +170,24 @@ def load_test_suite_from_name(test_names):
     for test_name in test_names:
         top_level_dir = get_package_location(test_name)
         test_package_locations.append(top_level_dir)
-        tests.append(
-            loader.discover(start_dir=test_name, top_level_dir=top_level_dir)
-        )
+        # no easy way to figure out if test_name is a module or a test, so we
+        # try to do the discovery first=...
+        try:
+            tests.append(
+                loader.discover(start_dir=test_name, top_level_dir=top_level_dir)
+            )
+        except ImportError:
+            # and if that fails, we try it as a test id.
+            tests.append(
+                loader.loadTestsFromName(test_name)
+            )
     all_tests = TestSuite(tests)
 
     test_dirs = ", ".join(sorted(test_package_locations))
     print("Loading tests from: %s\n" % test_dirs)
     sys.stdout.flush()
 
-    requested_tests = {}
-    for test in iterate_tests(all_tests):
-        # The test loader returns tests that start with 'unittest.loader' if
-        # for whatever reason the test failed to load. We run the tests without
-        # the built-in exception catching turned on, so we can get at the
-        # raised exception, which we print, so the user knows that something in
-        # their tests is broken.
-        if test.id().startswith('unittest.loader'):
-            test_id = test._testMethodName
-            try:
-                test.debug()
-            except Exception as e:
-                print(e)
-        else:
-            test_id = test.id()
-        if any([test_id.startswith(name) for name in test_names]):
-            requested_tests[test_id] = test
-
-    return TestSuite(requested_tests.values())
+    return TestSuite(all_tests)
 
 
 class TestProgram(object):

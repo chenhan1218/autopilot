@@ -174,7 +174,10 @@ def load_test_suite_from_name(test_names):
         # try to do the discovery first=...
         try:
             tests.append(
-                loader.discover(start_dir=test_name, top_level_dir=top_level_dir)
+                loader.discover(
+                    start_dir=test_name,
+                    top_level_dir=top_level_dir
+                )
             )
         except ImportError:
             # and if that fails, we try it as a test id.

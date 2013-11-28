@@ -22,45 +22,7 @@ from mock import patch, Mock
 from testtools import TestCase
 from textwrap import dedent
 
-from autopilot.vis.dbus_search import (
-    DBusInspector,
-    XmlProcessor,
-)
-
-
-class BusEnumeratorDBusInspectorTest(TestCase):
-
-    _example_connection_name = "com.autopilot.test"
-
-    def _make_mock_dbus(self, xml_str=""):
-        def _mock_introspect(dbus_interface, reply_handler, error_handler):
-            reply_handler(xml_str)
-        mock_obj = Mock()
-        mock_obj.Introspect = _mock_introspect
-
-        mock_bus = Mock()
-        mock_bus.list_names.return_value = [self._example_connection_name]
-        mock_bus.get_object.return_value = mock_obj
-
-        return mock_bus
-
-    def test_dbus_inspector_calls_handler(self):
-        xml_str = dedent(
-            '<node>'
-            '<interface name="org.autopilot.DBus.example"></interface>'
-            '</node>'
-        )
-        mock_bus = self._make_mock_dbus(xml_str)
-        xml_processor = Mock()
-        dbus_inspector = DBusInspector(mock_bus)
-        dbus_inspector.set_xml_processor(xml_processor)
-        dbus_inspector(self._example_connection_name)
-
-        xml_processor.assert_called_with(
-            self._example_connection_name,
-            "/",
-            xml_str
-        )
+from autopilot.vis.dbus_search import XmlProcessor
 
 
 class BusEnumeratorXmlProcessorTest(TestCase):

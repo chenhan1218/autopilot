@@ -23,7 +23,6 @@ from testtools import TestCase
 from testtools.matchers import Not, Raises
 from contextlib import contextmanager
 import shutil
-import six
 import tempfile
 
 from autopilot.run import get_package_location, load_test_suite_from_name
@@ -108,7 +107,7 @@ class TestLoaderTests(TestCase):
                 verbose=True
             )
 
-    def test_get_package_location_returns_correct_directory_for_nested_module(self): #noqa
+    def test_get_package_location_returns_correct_directory_for_nested_module(self):  # noqa
         with self.open_sandbox_file('tests/__init__.py') as f:
             f.write('')
         with self.open_sandbox_file('tests/foo.py') as f:

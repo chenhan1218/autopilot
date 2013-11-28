@@ -215,14 +215,14 @@ class TestProgram(object):
 
     def run_vis(self):
         setup_logging(self.args.verbose)
-        # importing this requires that DISPLAY is set. Since we don't always want
-        # that requirement, do the import here:
+        # importing this requires that DISPLAY is set. Since we don't always
+        # want that requirement, do the import here:
         from autopilot.vis import vis_main
 
-        # XXX - in quantal, overlay scrollbars make this process consume 100% of
-        # the CPU. It's a known bug:
+        # XXX - in quantal, overlay scrollbars make this process consume 100%
+        # of the CPU. It's a known bug:
         #
-        # https://bugs.launchpad.net/ubuntu/quantal/+source/qt4-x11/+bug/1005677
+        #https://bugs.launchpad.net/ubuntu/quantal/+source/qt4-x11/+bug/1005677
         #
         # Once that's been fixed we can remove the following line:
         #
@@ -241,8 +241,10 @@ class TestProgram(object):
         app_name = self.args.application[0]
         if not os.path.isabs(app_name) or not os.path.exists(app_name):
             try:
-                app_name = subprocess.check_output(["which", app_name],
-                                                   universal_newlines=True).strip()
+                app_name = subprocess.check_output(
+                    ["which", app_name],
+                    universal_newlines=True
+                ).strip()
             except subprocess.CalledProcessError:
                 print("Error: cannot find application '%s'" % (app_name))
                 exit(1)
@@ -254,10 +256,14 @@ class TestProgram(object):
                 launcher = get_application_launcher(app_name)
             except RuntimeError as e:
                 print("Error detecting launcher: %s" % str(e))
-                print("(Perhaps use the '-i' argument to specify an interface.)")
+                print(
+                    "(Perhaps use the '-i' argument to specify an interface.)"
+                )
                 exit(1)
         else:
-            launcher = get_application_launcher_from_string_hint(self.args.interface)
+            launcher = get_application_launcher_from_string_hint(
+                self.args.interface
+            )
         if launcher is None:
             print("Error: Could not determine introspection type to use for "
                   "application '%s'." % app_name)
@@ -265,7 +271,11 @@ class TestProgram(object):
             exit(1)
 
         try:
-            launch_application(launcher, *self.args.application, capture_output=False)
+            launch_application(
+                launcher,
+                *self.args.application,
+                capture_output=False
+            )
         except RuntimeError as e:
             print("Error: " + str(e))
             exit(1)
@@ -294,9 +304,11 @@ class TestProgram(object):
                 print("ERROR: The application 'recordmydesktop' needs to be "
                       "installed to record failing jobs.")
                 exit(1)
-            autopilot.globals.configure_video_recording(True,
-                                                        self.args.record_directory,
-                                                        self.args.record_options)
+            autopilot.globals.configure_video_recording(
+                True,
+                self.args.record_directory,
+                self.args.record_options
+            )
 
         if self.args.verbose:
             autopilot.globals.set_log_verbose(True)
@@ -306,7 +318,6 @@ class TestProgram(object):
         test_result = runner.run(test_suite, self.args.failfast)
         if not test_result.wasSuccessful():
             exit(1)
-
 
     def list_tests(self):
         """Print a list of tests we find inside autopilot.tests."""
@@ -343,7 +354,7 @@ class TestProgram(object):
 
 
 def main():
-    prog = TestProgram() # TODO: don't do anything on instance creation,
+    TestProgram()  # TODO: don't do anything on instance creation,
     # and return correct exit code.
 
 

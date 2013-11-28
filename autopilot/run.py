@@ -187,6 +187,24 @@ def load_test_suite_from_name(test_names):
     print("Loading tests from: %s\n" % test_dirs)
     sys.stdout.flush()
 
+    requested_tests = {}
+    for test in iterate_tests(all_tests):
+        # The test loader returns tests that start with 'unittest.loader' if
+        # for whatever reason the test failed to load. We run the tests without
+        # the built-in exception catching turned on, so we can get at the
+        # raised exception, which we print, so the user knows that something in
+        # their tests is broken.
+        if test.id().startswith('unittest.loader'):
+            test_id = test._testMethodName
+            try:
+                test.debug()
+            except Exception as e:
+                print(e)
+        else:
+            test_id = test.id()
+        if any([test_id.startswith(name) for name in test_names]):
+            requested_tests[test_id] = test
+
     return TestSuite(all_tests)
 
 

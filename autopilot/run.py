@@ -147,7 +147,7 @@ def get_package_location(import_name):
     :raises ImportError: if the name could not be found.
     """
     top_level_pkg = import_name.split('.')[0]
-    _, path, _ = find_module(top_level_pkg)
+    _, path, _ = find_module(top_level_pkg, sys.path + [os.getcwd()])
     return os.path.abspath(
         os.path.join(
             path,

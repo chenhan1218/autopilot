@@ -204,6 +204,8 @@ class TestProgram(object):
 
     def __init__(self):
         self.args = parse_arguments()
+
+    def run(self):
         if self.args.mode == 'list':
             self.list_tests()
         elif self.args.mode == 'run':
@@ -330,7 +332,7 @@ class TestProgram(object):
         else:
             test_list_fn = lambda: sorted(iterate_tests(test_suite), key=id)
 
-        # only show test suites, not test cases. TODO: CHeck if this is still
+        # only show test suites, not test cases. TODO: Check if this is still
         # a requirement.
         if self.args.suites:
 
@@ -354,8 +356,8 @@ class TestProgram(object):
 
 
 def main():
-    TestProgram()  # TODO: don't do anything on instance creation,
-    # and return correct exit code.
+    test_app = TestProgram()
+    test_app.run()
 
 
 if __name__ == "__main__":

@@ -22,10 +22,13 @@ from mock import patch, Mock
 from testtools import TestCase
 from textwrap import dedent
 
-from autopilot.vis.bus_enumerator._functional import _start_trawl
+from autopilot.vis.bus_enumerator._functional import (
+    DBusInspector,
+    XmlProcessor,
+)
 
 
-class BusEnumeratorTrawlTests(TestCase):
+class BusEnumeratorDBusInspectorTest(TestCase):
 
     _example_connection_name = "com.autopilot.test"
 
@@ -41,57 +44,80 @@ class BusEnumeratorTrawlTests(TestCase):
 
         return mock_bus
 
+    def test_dbus_inspector_calls_handler(self):
+        xml_str = dedent(
+            '<node>'
+            '<interface name="org.autopilot.DBus.example"></interface>'
+            '</node>'
+        )
+        mock_bus = self._make_mock_dbus(xml_str)
+        xml_processor = Mock()
+        dbus_inspector = DBusInspector(mock_bus)
+        dbus_inspector.set_xml_processor(xml_processor)
+        dbus_inspector(self._example_connection_name)
+
+        xml_processor.assert_called_with(
+            self._example_connection_name,
+            "/",
+            xml_str
+        )
+
+
+class BusEnumeratorXmlProcessorTest(TestCase):
+
+    _example_connection_name = "com.autopilot.test"
+
     def test_invalid_xml_doesnt_raise_exception(self):
-        mock_bus = self._make_mock_dbus("<invalid xml>")
-        _start_trawl(mock_bus, self._example_connection_name, Mock())
+        xml = "<invalid xml>"
+        xml_processor = XmlProcessor()
+
+        xml_processor(self._example_connection_name, "/", xml)
 
     @patch('autopilot.vis.bus_enumerator._functional.logger')
     def test_invalid_xml_logs_details(self, logger_meth):
-        mock_bus = self._make_mock_dbus("<invalid xml>")
-        _start_trawl(mock_bus, self._example_connection_name, Mock())
+        xml = "<invalid xml>"
+        xml_processor = XmlProcessor()
+
+        xml_processor(self._example_connection_name, "/", xml)
 
         logger_meth.warning.assert_called_once_with(
             'Unable to parse XML response for com.autopilot.test (/)'
         )
 
     def test_on_success_event_called(self):
-        mock_bus = self._make_mock_dbus(dedent(
+        xml = dedent(
             '<node>'
             '<interface name="org.autopilot.DBus.example"></interface>'
             '</node>'
-        ))
-
-        on_interface_found = Mock()
-        _start_trawl(
-            mock_bus,
-            self._example_connection_name,
-            on_interface_found
         )
 
-        on_interface_found.assert_called_with(
+        success_callback = Mock()
+        xml_processor = XmlProcessor()
+        xml_processor.set_success_callback(success_callback)
+
+        xml_processor(self._example_connection_name, "/", xml)
+
+        success_callback.assert_called_with(
             self._example_connection_name,
-            '/',
-            'org.autopilot.DBus.example'
+            "/",
+            "org.autopilot.DBus.example",
         )
 
     def test_nodes_are_recursively_searched(self):
-        mock_bus = self._make_mock_dbus(dedent(
+        xml = dedent(
             '<node>'
-            '<node name="org">'
+            '<node name="example">'
             '<interface name="org.autopilot.DBus.example"></interface>'
             '</node>'
             '</node>'
-        ))
-
-        on_interface_found = Mock()
-        _start_trawl(
-            mock_bus,
-            self._example_connection_name,
-            on_interface_found
         )
+        dbus_inspector = Mock()
+        xml_processor = XmlProcessor()
+        xml_processor.set_dbus_inspector(dbus_inspector)
 
-        on_interface_found.assert_called_with(
+        xml_processor(self._example_connection_name, "/", xml)
+
+        dbus_inspector.assert_called_with(
             self._example_connection_name,
-            '/',
-            'org.autopilot.DBus.example'
+            "/example"
         )

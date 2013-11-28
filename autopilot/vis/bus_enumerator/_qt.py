@@ -19,7 +19,7 @@
 
 from collections import defaultdict
 
-from autopilot.vis.bus_enumerator._functional import _start_trawl
+from autopilot.vis.dbus_search import _start_trawl
 
 from PyQt4.QtCore import (
     pyqtSignal,

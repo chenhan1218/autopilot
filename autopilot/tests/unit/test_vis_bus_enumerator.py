@@ -22,7 +22,7 @@ from mock import patch, Mock
 from testtools import TestCase
 from textwrap import dedent
 
-from autopilot.vis.bus_enumerator._functional import (
+from autopilot.vis.dbus_search import (
     DBusInspector,
     XmlProcessor,
 )
@@ -73,7 +73,7 @@ class BusEnumeratorXmlProcessorTest(TestCase):
 
         xml_processor(self._example_connection_name, "/", xml)
 
-    @patch('autopilot.vis.bus_enumerator._functional.logger')
+    @patch('autopilot.vis.dbus_search.logger')
     def test_invalid_xml_logs_details(self, logger_meth):
         xml = "<invalid xml>"
         xml_processor = XmlProcessor()

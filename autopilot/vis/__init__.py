@@ -21,6 +21,7 @@
 import dbus
 import sys
 
+
 def vis_main():
     # To aid in testing only import when we are launching the GUI component
     from dbus.mainloop.qt import DBusQtMainLoop

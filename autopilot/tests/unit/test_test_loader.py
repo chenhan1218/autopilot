@@ -19,7 +19,7 @@
 
 import os
 import os.path
-from testtools import TestCase
+from testtools import TestCase, iterate_tests
 from testtools.matchers import Not, Raises
 from contextlib import contextmanager
 import shutil
@@ -117,3 +117,33 @@ class TestLoaderTests(TestCase):
             actual = get_package_location('tests.foo')
 
         self.assertEqual(self.sandbox_dir, actual)
+
+    def test_load_test_suite_from_name_can_load_file(self):
+        with self.open_sandbox_file('test_foo.py') as f:
+            f.write(SIMPLE_TESTCASE)
+        with working_dir(self.sandbox_dir):
+            suite = load_test_suite_from_name('test_foo')
+
+        self.assertEqual(1, len(suite._tests))
+
+    def test_load_test_suite_from_name_can_load_nested_module(self):
+        with self.open_sandbox_file('tests/__init__.py') as f:
+            f.write('')
+        with self.open_sandbox_file('tests/test_foo.py') as f:
+            f.write(SIMPLE_TESTCASE)
+        with working_dir(self.sandbox_dir):
+            suite = load_test_suite_from_name('tests.test_foo')
+
+        self.assertEqual(1, len(suite._tests))
+
+
+SIMPLE_TESTCASE = """\
+
+from unittest import TestCase
+
+
+class SimpleTests(TestCase):
+
+    def test_passes(self):
+        self.assertEqual(1, 1)
+"""

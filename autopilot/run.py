@@ -160,7 +160,7 @@ def load_test_suite_from_name(test_names):
     """Returns a test suite object given a dotted test names."""
     loader = TestLoader()
     if isinstance(test_names, str):
-        test_names = list(test_names)
+        test_names = [test_names]
     elif not isinstance(test_names, list):
         raise TypeError("test_names must be either a string or list, not %r"
                         % (type(test_names)))

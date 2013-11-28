@@ -44,6 +44,7 @@ from testtools import iterate_tests
 from testtools import TextTestResult
 
 from autopilot import get_version_string, parse_arguments
+import autopilot.globals
 from autopilot.testresult import AutopilotVerboseResult
 from autopilot.utilities import DebugLogFilter, LogFormatter
 
@@ -301,8 +302,6 @@ class TestProgram(object):
             shuffle(test_suite._tests)
             print("Running tests in random order")
 
-        import autopilot.globals
-
         if self.args.record_directory:
             self.args.record = True
 
@@ -346,7 +345,6 @@ class TestProgram(object):
         # only show test suites, not test cases. TODO: Check if this is still
         # a requirement.
         if self.args.suites:
-
             suite_names = ["%s.%s" % (t.__module__, t.__class__.__name__)
                            for t in test_list_fn()]
             unique_suite_names = list(OrderedDict.fromkeys(suite_names).keys())

@@ -134,7 +134,19 @@ class TestLoaderTests(TestCase):
         with working_dir(self.sandbox_dir):
             suite = load_test_suite_from_name('tests.test_foo')
 
-        self.assertEqual(1, len(suite._tests))
+        self.assertEqual(1, suite.countTestCases())
+
+    def test_load_test_suite_from_name_only_loads_requested_suite(self):
+        with self.open_sandbox_file('tests/__init__.py') as f:
+            f.write('')
+        with self.open_sandbox_file('tests/test_foo.py') as f:
+            f.write(SIMPLE_TESTCASE)
+        with self.open_sandbox_file('tests/test_bar.py') as f:
+            f.write(SIMPLE_TESTCASE)
+        with working_dir(self.sandbox_dir):
+            suite = load_test_suite_from_name('tests.test_bar')
+
+        self.assertEqual(1, suite.countTestCases())
 
 
 SIMPLE_TESTCASE = """\

@@ -25,11 +25,15 @@ from __future__ import absolute_import
 import logging
 
 from autopilot.globals import get_log_verbose
+from testtools import (
+    ExtendedToOriginalDecorator,
+    TestResultDecorator,
+    TextTestResult,
+)
 
 
-class AutopilotVerboseResult(object):
-    """A result class that logs failures, errors and success via the python
-    logging framework."""
+class LoggedTestResultDecorator(TestResultDecorator):
+    """A decorator that logs messages to python's logging system."""
 
     def _log(self, level, message):
         """Performs the actual message logging"""
@@ -46,40 +50,63 @@ class AutopilotVerboseResult(object):
             self._log(level, text)
 
     def addSuccess(self, test, details=None):
-        """Called for a successful test"""
-        # Allow for different calling syntax used by the base class.
-        if details is None:
-            super(type(self), self).addSuccess(test)
-        else:
-            super(type(self), self).addSuccess(test, details)
         self._log(logging.INFO, "OK: %s" % (test.id()))
+        return super(LoggedTestResultDecorator, self).addSuccess(test, details)
 
     def addError(self, test, err=None, details=None):
-        """Called for a test which failed with an error"""
-        # Allow for different calling syntax used by the base class.
-        # The xml path only uses 'err'. Use of 'err' can be
-        # forced by raising TypeError when it is not specified.
-        if err is None:
-            raise TypeError
-        if details is None:
-            super(type(self), self).addError(test, err)
-        else:
-            super(type(self), self).addError(test, err, details)
         self._log(logging.ERROR, "ERROR: %s" % (test.id()))
         if hasattr(test, "getDetails"):
             self._log_details(logging.ERROR, test.getDetails())
+        return super(type(self), self).addError(test, err, details)
 
     def addFailure(self, test, err=None, details=None):
         """Called for a test which failed an assert"""
-        # Allow for different calling syntax used by the base class.
-        # The xml path only uses 'err' or 'details'. Use of 'err' can be
-        # forced by raising TypeError when it is not specified.
-        if err is None:
-            raise TypeError
-        if details is None:
-            super(type(self), self).addFailure(test, err)
-        else:
-            super(type(self), self).addFailure(test, err, details)
         self._log(logging.ERROR, "FAIL: %s" % (test.id()))
         if hasattr(test, "getDetails"):
             self._log_details(logging.ERROR, test.getDetails())
+        return super(type(self), self).addFailure(test, err, details)
+
+
+def get_output_formats():
+    """Get information regarding the different output formats supported."""
+    supported_formats = {}
+
+    supported_formats['text'] = (
+        "Text output",
+        lambda *args, **kwargs: LoggedTestResultDecorator(
+            TextTestResult(*args, **kwargs)
+        ),
+    )
+
+    try:
+        from junitxml import JUnitXmlResult
+        supported_formats['xml'] = (
+            "JUnitXml output",
+            lambda *args, **kwargs: LoggedTestResultDecorator(
+                ExtendedToOriginalDecorator(
+                    JUnitXmlResult(*args, **kwargs)
+                )
+            ),
+        )
+    except ImportError:
+        pass
+    return supported_formats
+
+
+def get_default_format():
+    return 'text'
+
+
+def get_output_format(format):
+    """Return a Result object for each format we support."""
+
+    if format == "text":
+        return type('VerboseTextTestResult', (TextTestResult,),
+                    dict(AutopilotVerboseResult.__dict__))
+
+    elif format == "xml":
+        from junitxml import JUnitXmlResult
+        return type('VerboseXmlResult', (JUnitXmlResult,),
+                    dict(AutopilotVerboseResult.__dict__))
+
+    raise KeyError("Unknown format name '%s'" % format)

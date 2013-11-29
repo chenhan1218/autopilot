@@ -41,11 +41,10 @@ import sys
 from unittest import TestLoader, TestSuite
 
 from testtools import iterate_tests
-from testtools import TextTestResult
 
 from autopilot import get_version_string, parse_arguments
 import autopilot.globals
-from autopilot.testresult import AutopilotVerboseResult
+from autopilot.testresult import get_output_format
 from autopilot.utilities import DebugLogFilter, LogFormatter
 
 
@@ -78,19 +77,7 @@ def construct_test_runner(args):
     return ConfigurableTestRunner(**kwargs)
 
 
-def get_output_format(format):
-    """Return a Result object for each format we support."""
 
-    if format == "text":
-        return type('VerboseTextTestResult', (TextTestResult,),
-                    dict(AutopilotVerboseResult.__dict__))
-
-    elif format == "xml":
-        from junitxml import JUnitXmlResult
-        return type('VerboseXmlResult', (JUnitXmlResult,),
-                    dict(AutopilotVerboseResult.__dict__))
-
-    raise KeyError("Unknown format name '%s'" % format)
 
 
 def get_output_stream(args):

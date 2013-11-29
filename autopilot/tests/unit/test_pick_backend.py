@@ -23,7 +23,7 @@ from testtools import TestCase
 from testtools.matchers import raises, Equals, IsInstance
 from textwrap import dedent
 
-from autopilot import BackendException
+from autopilot.exceptions import BackendException
 from autopilot.utilities import _pick_backend
 
 

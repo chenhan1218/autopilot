@@ -21,7 +21,7 @@
 from testtools import TestCase
 from testtools.matchers import Equals, IsInstance
 
-from autopilot import BackendException
+from autopilot.exceptions import BackendException
 
 
 class BackendExceptionTests(TestCase):

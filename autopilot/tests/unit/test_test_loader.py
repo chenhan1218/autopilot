@@ -42,12 +42,13 @@ def working_dir(directory):
 
 class TestLoaderTests(TestCase):
 
+    _previous_module_names = []
+
     def setUp(self):
         super(TestLoaderTests, self).setUp()
         self.sandbox_dir = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, self.sandbox_dir)
 
-        self._previous_module_names = []
         self.test_module_name = self._unique_module_name()
 
     def _unique_module_name(self):
@@ -60,6 +61,16 @@ class TestLoaderTests(TestCase):
         self._previous_module_names.append(name)
 
         return name
+
+    def create_empty_package_file(self, filename):
+        full_filename = os.path.join(self.test_module_name, filename)
+        with self.open_sandbox_file(full_filename) as f:
+            f.write('')
+
+    def create_package_file_with_contents(self, filename, contents):
+        full_filename = os.path.join(self.test_module_name, filename)
+        with self.open_sandbox_file(full_filename) as f:
+            f.write(contents)
 
     @contextmanager
     def open_sandbox_file(self, relative_path):
@@ -91,9 +102,7 @@ class TestLoaderTests(TestCase):
         self.assertEqual(self.sandbox_dir, actual)
 
     def test_get_package_location_can_import_package(self):
-        module_init_file = '%s/__init__.py' % self.test_module_name
-        with self.open_sandbox_file(module_init_file) as f:
-            f.write('')
+        self.create_empty_package_file('__init__.py')
 
         with working_dir(self.sandbox_dir):
             self.assertThat(
@@ -103,9 +112,7 @@ class TestLoaderTests(TestCase):
             )
 
     def test_get_package_location_returns_correct_directory_for_package(self):
-        module_init_file = '%s/__init__.py' % self.test_module_name
-        with self.open_sandbox_file(module_init_file) as f:
-            f.write('')
+        self.create_empty_package_file('__init__.py')
 
         with working_dir(self.sandbox_dir):
             actual = get_package_location(self.test_module_name)
@@ -113,12 +120,8 @@ class TestLoaderTests(TestCase):
         self.assertEqual(self.sandbox_dir, actual)
 
     def test_get_package_location_can_import_nested_module(self):
-        module_init_file = '%s/__init__.py' % self.test_module_name
-        test_file = '%s/foo.py' % self.test_module_name
-        with self.open_sandbox_file(module_init_file) as f:
-            f.write('')
-        with self.open_sandbox_file(test_file) as f:
-            f.write('')
+        self.create_empty_package_file('__init__.py')
+        self.create_empty_package_file('foo.py')
 
         with working_dir(self.sandbox_dir):
             self.assertThat(
@@ -128,12 +131,8 @@ class TestLoaderTests(TestCase):
             )
 
     def test_get_package_location_returns_correct_directory_for_nested_module(self):  # noqa
-        module_init_file = '%s/__init__.py' % self.test_module_name
-        test_file = '%s/foo.py' % self.test_module_name
-        with self.open_sandbox_file(module_init_file) as f:
-            f.write('')
-        with self.open_sandbox_file(test_file) as f:
-            f.write('')
+        self.create_empty_package_file('__init__.py')
+        self.create_empty_package_file('foo.py')
 
         with working_dir(self.sandbox_dir):
             actual = get_package_location('%s.foo' % self.test_module_name)
@@ -149,12 +148,8 @@ class TestLoaderTests(TestCase):
         self.assertEqual(1, len(suite._tests))
 
     def test_load_test_suite_from_name_can_load_nested_module(self):
-        module_init_file = '%s/__init__.py' % self.test_module_name
-        test_file = '%s/test_foo.py' % self.test_module_name
-        with self.open_sandbox_file(module_init_file) as f:
-            f.write('')
-        with self.open_sandbox_file(test_file) as f:
-            f.write(SIMPLE_TESTCASE)
+        self.create_empty_package_file('__init__.py')
+        self.create_package_file_with_contents('test_foo.py', SIMPLE_TESTCASE)
         with working_dir(self.sandbox_dir):
             suite = load_test_suite_from_name(
                 '%s.test_foo' % self.test_module_name
@@ -163,15 +158,9 @@ class TestLoaderTests(TestCase):
         self.assertEqual(1, suite.countTestCases())
 
     def test_load_test_suite_from_name_only_loads_requested_suite(self):
-        module_init_file = '%s/__init__.py' % self.test_module_name
-        test_file_foo = '%s/test_foo.py' % self.test_module_name
-        test_file_bar = '%s/test_bar.py' % self.test_module_name
-        with self.open_sandbox_file(module_init_file) as f:
-            f.write('')
-        with self.open_sandbox_file(test_file_foo) as f:
-            f.write(SIMPLE_TESTCASE)
-        with self.open_sandbox_file(test_file_bar) as f:
-            f.write(SIMPLE_TESTCASE)
+        self.create_empty_package_file('__init__.py')
+        self.create_package_file_with_contents('test_foo.py', SIMPLE_TESTCASE)
+        self.create_package_file_with_contents('test_bar.py', SIMPLE_TESTCASE)
         with working_dir(self.sandbox_dir):
             suite = load_test_suite_from_name(
                 '%s.test_bar' % self.test_module_name
@@ -180,15 +169,9 @@ class TestLoaderTests(TestCase):
         self.assertEqual(1, suite.countTestCases())
 
     def test_load_test_suite_from_name_loads_requested_test_from_suite(self):
-        module_init_file = '%s/__init__.py' % self.test_module_name
-        test_file_foo = '%s/test_foo.py' % self.test_module_name
-        test_file_bar = '%s/test_bar.py' % self.test_module_name
-        with self.open_sandbox_file(module_init_file) as f:
-            f.write('')
-        with self.open_sandbox_file(test_file_foo) as f:
-            f.write(SAMPLE_TESTCASES)
-        with self.open_sandbox_file(test_file_bar) as f:
-            f.write(SAMPLE_TESTCASES)
+        self.create_empty_package_file('__init__.py')
+        self.create_package_file_with_contents('test_foo.py', SAMPLE_TESTCASES)
+        self.create_package_file_with_contents('test_bar.py', SAMPLE_TESTCASES)
         with working_dir(self.sandbox_dir):
             suite = load_test_suite_from_name(
                 '%s.test_bar.SampleTests.test_passes_again'

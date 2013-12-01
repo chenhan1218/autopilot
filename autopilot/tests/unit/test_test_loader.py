@@ -179,6 +179,24 @@ class TestLoaderTests(TestCase):
 
         self.assertEqual(1, suite.countTestCases())
 
+    def test_load_test_suite_from_name_loads_requested_test_from_suite(self):
+        module_init_file = '%s/__init__.py' % self.test_module_name
+        test_file_foo = '%s/test_foo.py' % self.test_module_name
+        test_file_bar = '%s/test_bar.py' % self.test_module_name
+        with self.open_sandbox_file(module_init_file) as f:
+            f.write('')
+        with self.open_sandbox_file(test_file_foo) as f:
+            f.write(SAMPLE_TESTCASES)
+        with self.open_sandbox_file(test_file_bar) as f:
+            f.write(SAMPLE_TESTCASES)
+        with working_dir(self.sandbox_dir):
+            suite = load_test_suite_from_name(
+                '%s.test_bar.SampleTests.test_passes_again'
+                % self.test_module_name
+            )
+
+        self.assertEqual(1, suite.countTestCases())
+
 
 SIMPLE_TESTCASE = """\
 
@@ -188,5 +206,19 @@ from unittest import TestCase
 class SimpleTests(TestCase):
 
     def test_passes(self):
+        self.assertEqual(1, 1)
+"""
+
+SAMPLE_TESTCASES = """\
+
+from unittest import TestCase
+
+
+class SampleTests(TestCase):
+
+    def test_passes(self):
+        self.assertEqual(1, 1)
+
+    def test_passes_again(self):
         self.assertEqual(1, 1)
 """

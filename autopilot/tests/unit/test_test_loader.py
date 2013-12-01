@@ -19,6 +19,7 @@
 
 import os
 import os.path
+import sys
 from testtools import TestCase
 from testtools.matchers import Not, Raises
 from contextlib import contextmanager
@@ -42,8 +43,14 @@ class TestLoaderTests(TestCase):
 
     def setUp(self):
         super(TestLoaderTests, self).setUp()
+        self._orig_modules = sys.modules.copy()
+        self.addCleanup(self._restore_sys_modules)
+
         self.sandbox_dir = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, self.sandbox_dir)
+
+    def _restore_sys_modules(self):
+        sys.modules = self._orig_modules.copy()
 
     @contextmanager
     def open_sandbox_file(self, relative_path):

@@ -19,7 +19,8 @@
 
 import os
 import os.path
-import sys
+import random
+import string
 from testtools import TestCase
 from testtools.matchers import Not, Raises
 from contextlib import contextmanager
@@ -43,14 +44,22 @@ class TestLoaderTests(TestCase):
 
     def setUp(self):
         super(TestLoaderTests, self).setUp()
-        self._orig_modules = sys.modules.copy()
-        self.addCleanup(self._restore_sys_modules)
-
         self.sandbox_dir = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, self.sandbox_dir)
 
-    def _restore_sys_modules(self):
-        sys.modules = self._orig_modules.copy()
+        self._previous_module_names = []
+        self.test_module_name = self._unique_module_name()
+
+    def _unique_module_name(self):
+        generator = lambda: ''.join(
+            random.choice(string.ascii_letters) for letter in xrange(8)
+        )
+        name = generator()
+        while name in self._previous_module_names:
+            name = generator()
+        self._previous_module_names.append(name)
+
+        return name
 
     @contextmanager
     def open_sandbox_file(self, relative_path):
@@ -82,46 +91,52 @@ class TestLoaderTests(TestCase):
         self.assertEqual(self.sandbox_dir, actual)
 
     def test_get_package_location_can_import_package(self):
-        with self.open_sandbox_file('tests/__init__.py') as f:
+        module_init_file = '%s/__init__.py' % self.test_module_name
+        with self.open_sandbox_file(module_init_file) as f:
             f.write('')
 
         with working_dir(self.sandbox_dir):
             self.assertThat(
-                lambda: get_package_location('tests'),
+                lambda: get_package_location(self.test_module_name),
                 Not(Raises()),
                 verbose=True
             )
 
     def test_get_package_location_returns_correct_directory_for_package(self):
-        with self.open_sandbox_file('tests/__init__.py') as f:
+        module_init_file = '%s/__init__.py' % self.test_module_name
+        with self.open_sandbox_file(module_init_file) as f:
             f.write('')
 
         with working_dir(self.sandbox_dir):
-            actual = get_package_location('tests')
+            actual = get_package_location(self.test_module_name)
 
         self.assertEqual(self.sandbox_dir, actual)
 
     def test_get_package_location_can_import_nested_module(self):
-        with self.open_sandbox_file('tests/__init__.py') as f:
+        module_init_file = '%s/__init__.py' % self.test_module_name
+        test_file = '%s/foo.py' % self.test_module_name
+        with self.open_sandbox_file(module_init_file) as f:
             f.write('')
-        with self.open_sandbox_file('tests/foo.py') as f:
+        with self.open_sandbox_file(test_file) as f:
             f.write('')
 
         with working_dir(self.sandbox_dir):
             self.assertThat(
-                lambda: get_package_location('tests.foo'),
+                lambda: get_package_location('%s.foo' % self.test_module_name),
                 Not(Raises()),
                 verbose=True
             )
 
     def test_get_package_location_returns_correct_directory_for_nested_module(self):  # noqa
-        with self.open_sandbox_file('tests/__init__.py') as f:
+        module_init_file = '%s/__init__.py' % self.test_module_name
+        test_file = '%s/foo.py' % self.test_module_name
+        with self.open_sandbox_file(module_init_file) as f:
             f.write('')
-        with self.open_sandbox_file('tests/foo.py') as f:
+        with self.open_sandbox_file(test_file) as f:
             f.write('')
 
         with working_dir(self.sandbox_dir):
-            actual = get_package_location('tests.foo')
+            actual = get_package_location('%s.foo' % self.test_module_name)
 
         self.assertEqual(self.sandbox_dir, actual)
 
@@ -134,24 +149,33 @@ class TestLoaderTests(TestCase):
         self.assertEqual(1, len(suite._tests))
 
     def test_load_test_suite_from_name_can_load_nested_module(self):
-        with self.open_sandbox_file('tests/__init__.py') as f:
+        module_init_file = '%s/__init__.py' % self.test_module_name
+        test_file = '%s/test_foo.py' % self.test_module_name
+        with self.open_sandbox_file(module_init_file) as f:
             f.write('')
-        with self.open_sandbox_file('tests/test_foo.py') as f:
+        with self.open_sandbox_file(test_file) as f:
             f.write(SIMPLE_TESTCASE)
         with working_dir(self.sandbox_dir):
-            suite = load_test_suite_from_name('tests.test_foo')
+            suite = load_test_suite_from_name(
+                '%s.test_foo' % self.test_module_name
+            )
 
         self.assertEqual(1, suite.countTestCases())
 
     def test_load_test_suite_from_name_only_loads_requested_suite(self):
-        with self.open_sandbox_file('tests/__init__.py') as f:
+        module_init_file = '%s/__init__.py' % self.test_module_name
+        test_file_foo = '%s/test_foo.py' % self.test_module_name
+        test_file_bar = '%s/test_bar.py' % self.test_module_name
+        with self.open_sandbox_file(module_init_file) as f:
             f.write('')
-        with self.open_sandbox_file('tests/test_foo.py') as f:
+        with self.open_sandbox_file(test_file_foo) as f:
             f.write(SIMPLE_TESTCASE)
-        with self.open_sandbox_file('tests/test_bar.py') as f:
+        with self.open_sandbox_file(test_file_bar) as f:
             f.write(SIMPLE_TESTCASE)
         with working_dir(self.sandbox_dir):
-            suite = load_test_suite_from_name('tests.test_bar')
+            suite = load_test_suite_from_name(
+                '%s.test_bar' % self.test_module_name
+            )
 
         self.assertEqual(1, suite.countTestCases())
 

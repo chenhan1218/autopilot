@@ -18,7 +18,7 @@
 #
 
 
-from autopilot import BackendException
+from autopilot.exceptions import BackendException
 from autopilot.testcase import AutopilotTestCase
 from autopilot.process import ProcessManager
 

@@ -30,7 +30,7 @@ import os
 import time
 from functools import wraps
 
-from autopilot import BackendException
+from autopilot.exceptions import BackendException
 
 
 def _pick_backend(backends, preferred_backend):

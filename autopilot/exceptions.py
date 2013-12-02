@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
 class BackendException(RuntimeError):
 
     """An error occured while trying to initialise an autopilot backend."""

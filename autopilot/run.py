@@ -157,8 +157,33 @@ def get_package_location(import_name):
     )
 
 
+def _is_testing_autopilot_module(test_names):
+    return (
+        os.path.basename(sys.argv[0]) == 'autopilot'
+        and any(t.startswith('autopilot') for t in test_names)
+    )
+
+
+def _execute_autopilot_using_module():
+    autopilot_command = [sys.executable, '-m', 'autopilot.run']
+    returncode = 0
+    try:
+        subprocess.check_call(autopilot_command + sys.argv[1:])
+    except subprocess.CalledProcessError as e:
+        returncode = e.returncode
+    return returncode
+
+
 def load_test_suite_from_name(test_names):
     """Returns a test suite object given a dotted test names."""
+
+    # Horrible hack that re-directs any attempt to run the autopilot tests
+    # using the autopilot command instead of the autopilot.run module (run with
+    # python))
+    if _is_testing_autopilot_module(test_names):
+        returncode = _execute_autopilot_using_module()
+        exit(returncode)
+
     loader = TestLoader()
     if isinstance(test_names, str):
         test_names = [test_names]

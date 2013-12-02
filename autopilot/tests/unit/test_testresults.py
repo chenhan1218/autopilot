@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from mock import Mock
+from mock import Mock, patch
 from testtools import TestCase, PlaceHolder
 from testtools.content import text_content
 # from testscenarios import WithScenarios
@@ -91,3 +91,5 @@ class OutputFormatFactoryTests(TestCase):
 
     def test_default_format_is_available(self):
         self.assertTrue(get_default_format() in get_output_formats())
+
+

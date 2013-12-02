@@ -27,8 +27,10 @@ import logging
 from autopilot.globals import get_log_verbose
 from testtools import (
     ExtendedToOriginalDecorator,
+    ExtendedToStreamDecorator,
     TestResultDecorator,
     TextTestResult,
+    try_import,
 )
 
 
@@ -71,25 +73,12 @@ def get_output_formats():
     """Get information regarding the different output formats supported."""
     supported_formats = {}
 
-    supported_formats['text'] = (
-        "Text output",
-        lambda *args, **kwargs: LoggedTestResultDecorator(
-            TextTestResult(*args, **kwargs)
-        ),
-    )
+    supported_formats['text'] = _construct_text
 
-    try:
-        from junitxml import JUnitXmlResult
-        supported_formats['xml'] = (
-            "JUnitXml output",
-            lambda *args, **kwargs: LoggedTestResultDecorator(
-                ExtendedToOriginalDecorator(
-                    JUnitXmlResult(*args, **kwargs)
-                )
-            ),
-        )
-    except ImportError:
-        pass
+    if try_import('junitxml'):
+        supported_formats['xml'] = _construct_xml
+    if try_import('subunit'):
+        supported_formats['subunit'] = _construct_subunit
     return supported_formats
 
 
@@ -97,16 +86,27 @@ def get_default_format():
     return 'text'
 
 
-def get_output_format(format):
-    """Return a Result object for each format we support."""
+def _construct_xml(**kwargs):
+    from junitxml import JUnitXmlResult
+    stream = kwargs.pop('stream')
+    return LoggedTestResultDecorator(
+        ExtendedToOriginalDecorator(
+            JUnitXmlResult(stream)
+        )
+    )
 
-    if format == "text":
-        return type('VerboseTextTestResult', (TextTestResult,),
-                    dict(AutopilotVerboseResult.__dict__))
 
-    elif format == "xml":
-        from junitxml import JUnitXmlResult
-        return type('VerboseXmlResult', (JUnitXmlResult,),
-                    dict(AutopilotVerboseResult.__dict__))
+def _construct_text(**kwargs):
+    stream = kwargs.pop('stream')
+    failfast = kwargs.pop('failfast')
+    return LoggedTestResultDecorator(TextTestResult(stream, failfast))
 
-    raise KeyError("Unknown format name '%s'" % format)
+
+def _construct_subunit(**kwargs):
+    from subunit import StreamResultToBytes
+    stream = kwargs.pop('stream')
+    return LoggedTestResultDecorator(
+        ExtendedToStreamDecorator(
+            StreamResultToBytes(stream)
+        )
+    )

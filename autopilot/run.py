@@ -209,7 +209,7 @@ def load_test_suite_from_name(test_names):
         if any([test_id.startswith(name) for name in test_names]):
             requested_tests[test_id] = test
 
-    return TestSuite(all_tests)
+    return TestSuite(requested_tests.values())
 
 
 class TestProgram(object):

@@ -140,6 +140,7 @@ class TestLoaderTests(TestCase):
     @patch('autopilot.run._reexecute_autopilot_using_module')
     @patch('autopilot.run._is_testing_autopilot_module', new=lambda *a: True)
     def test_testing_autopilot_is_redirected(self, patched_executor):
+        patched_executor.return_value = 0
         load_test_suite_from_name('autopilot')
         self.assertTrue(patched_executor.called)
 

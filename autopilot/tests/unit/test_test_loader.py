@@ -24,6 +24,7 @@ import string
 from testtools import TestCase
 from testtools.matchers import Not, Raises
 from contextlib import contextmanager
+from mock import patch
 import shutil
 import tempfile
 
@@ -179,6 +180,13 @@ class TestLoaderTests(TestCase):
             )
 
         self.assertEqual(1, suite.countTestCases())
+
+    @patch('autopilot.run._reexecute_autopilot_using_module')
+    @patch('autopilot.run._is_testing_autopilot_module', new=lambda *a: True)
+    def test_testing_autopilot_is_redirected(self, patched_executor):
+        patched_executor.return_value = 0
+        load_test_suite_from_name('autopilot')
+        self.assertTrue(patched_executor.called)
 
 
 SIMPLE_TESTCASE = """\

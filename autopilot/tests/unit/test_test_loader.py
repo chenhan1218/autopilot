@@ -137,8 +137,8 @@ class TestLoaderTests(TestCase):
 
         self.assertEqual(1, len(suite._tests))
 
-    @patch('autopilot.run._execute_autopilot_using_module')
-    @patch('autopilot.run._is_testing_autopilot_module', new=lambda *args: True)
+    @patch('autopilot.run._reexecute_autopilot_using_module')
+    @patch('autopilot.run._is_testing_autopilot_module', new=lambda *a: True)
     def test_testing_autopilot_is_redirected(self, patched_executor):
         load_test_suite_from_name('autopilot')
         self.assertTrue(patched_executor.called)

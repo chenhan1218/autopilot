@@ -25,7 +25,6 @@ import os
 import os.path
 import logging
 from shutil import rmtree
-import sys
 import subprocess
 from tempfile import mkdtemp
 from testtools.content import text_content
@@ -94,17 +93,22 @@ class AutopilotRunTestBase(AutopilotTestCase):
         environment_patch = dict(DISPLAY=':0')
         if not os.getcwd().startswith('/usr/'):
             environment_patch['PYTHONPATH'] = ap_base_path
-        autopilot_command = [sys.executable, '-m', 'autopilot.run']
+        bin_path = os.path.join(ap_base_path, 'bin', 'autopilot')
+        if not os.path.exists(bin_path):
+            bin_path = subprocess.check_output(['which', 'autopilot']).strip()
+            logger.info(
+                "Not running from source, setting bin_path to %s", bin_path)
 
         environ = os.environ
         environ.update(environment_patch)
 
         logger.info("Starting autopilot command with:")
-        logger.info("Autopilot command = %s", ' '.join(autopilot_command))
+        logger.info("Autopilot command = %s", bin_path)
         logger.info("Arguments = %s", arguments)
         logger.info("CWD = %r", self.base_path)
 
-        arg = autopilot_command + arguments
+        arg = [bin_path]
+        arg.extend(arguments)
         process = subprocess.Popen(
             arg,
             cwd=self.base_path,

@@ -90,5 +90,3 @@ class OutputFormatFactoryTests(TestCase):
 
     def test_default_format_is_available(self):
         self.assertTrue(get_default_format() in get_output_formats())
-
-

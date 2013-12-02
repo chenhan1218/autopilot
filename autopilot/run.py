@@ -164,25 +164,29 @@ def _is_testing_autopilot_module(test_names):
     )
 
 
-def _execute_autopilot_using_module():
-    autopilot_command = [sys.executable, '-m', 'autopilot.run']
-    returncode = 0
+def _reexecute_autopilot_using_module():
+    autopilot_command = [sys.executable, '-m', 'autopilot.run'] + sys.argv[1:]
     try:
-        subprocess.check_call(autopilot_command + sys.argv[1:])
+        subprocess.check_call(autopilot_command)
     except subprocess.CalledProcessError as e:
-        returncode = e.returncode
-    return returncode
+        return e.returncode
+    return 0
 
 
 def load_test_suite_from_name(test_names):
     """Returns a test suite object given a dotted test names."""
-
-    # Horrible hack that re-directs any attempt to run the autopilot tests
-    # using the autopilot command instead of the autopilot.run module (run with
-    # python))
+    # The 'autopilot' program cannot be used to run the autopilot test suite,
+    # since setuptools needs to import 'autopilot.run', and that grabs the
+    # system autopilot package. After that point, the module is loaded and
+    # cached in sys.modules, and there's no way to unload a module in python
+    # once it's been loaded.
+    #
+    # The solution is to detect whether we've been started with the 'autopilot'
+    # application, *and* whether we're running the autopilot test suite itself,
+    # and ≡ that's the case, we re-call autopilot using the standard
+    # autopilot.run entry method, and exit with the sub-process' return code.
     if _is_testing_autopilot_module(test_names):
-        returncode = _execute_autopilot_using_module()
-        exit(returncode)
+        exit(_reexecute_autopilot_using_module())
 
     loader = TestLoader()
     if isinstance(test_names, str):

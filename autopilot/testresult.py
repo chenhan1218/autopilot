@@ -25,11 +25,17 @@ from __future__ import absolute_import
 import logging
 
 from autopilot.globals import get_log_verbose
+from testtools import (
+    ExtendedToOriginalDecorator,
+    ExtendedToStreamDecorator,
+    TestResultDecorator,
+    TextTestResult,
+    try_import,
+)
 
 
-class AutopilotVerboseResult(object):
-    """A result class that logs failures, errors and success via the python
-    logging framework."""
+class LoggedTestResultDecorator(TestResultDecorator):
+    """A decorator that logs messages to python's logging system."""
 
     def _log(self, level, message):
         """Performs the actual message logging"""
@@ -46,40 +52,61 @@ class AutopilotVerboseResult(object):
             self._log(level, text)
 
     def addSuccess(self, test, details=None):
-        """Called for a successful test"""
-        # Allow for different calling syntax used by the base class.
-        if details is None:
-            super(type(self), self).addSuccess(test)
-        else:
-            super(type(self), self).addSuccess(test, details)
         self._log(logging.INFO, "OK: %s" % (test.id()))
+        return super(LoggedTestResultDecorator, self).addSuccess(test, details)
 
     def addError(self, test, err=None, details=None):
-        """Called for a test which failed with an error"""
-        # Allow for different calling syntax used by the base class.
-        # The xml path only uses 'err'. Use of 'err' can be
-        # forced by raising TypeError when it is not specified.
-        if err is None:
-            raise TypeError
-        if details is None:
-            super(type(self), self).addError(test, err)
-        else:
-            super(type(self), self).addError(test, err, details)
         self._log(logging.ERROR, "ERROR: %s" % (test.id()))
         if hasattr(test, "getDetails"):
             self._log_details(logging.ERROR, test.getDetails())
+        return super(type(self), self).addError(test, err, details)
 
     def addFailure(self, test, err=None, details=None):
         """Called for a test which failed an assert"""
-        # Allow for different calling syntax used by the base class.
-        # The xml path only uses 'err' or 'details'. Use of 'err' can be
-        # forced by raising TypeError when it is not specified.
-        if err is None:
-            raise TypeError
-        if details is None:
-            super(type(self), self).addFailure(test, err)
-        else:
-            super(type(self), self).addFailure(test, err, details)
         self._log(logging.ERROR, "FAIL: %s" % (test.id()))
         if hasattr(test, "getDetails"):
             self._log_details(logging.ERROR, test.getDetails())
+        return super(type(self), self).addFailure(test, err, details)
+
+
+def get_output_formats():
+    """Get information regarding the different output formats supported."""
+    supported_formats = {}
+
+    supported_formats['text'] = _construct_text
+
+    if try_import('junitxml'):
+        supported_formats['xml'] = _construct_xml
+    if try_import('subunit'):
+        supported_formats['subunit'] = _construct_subunit
+    return supported_formats
+
+
+def get_default_format():
+    return 'text'
+
+
+def _construct_xml(**kwargs):
+    from junitxml import JUnitXmlResult
+    stream = kwargs.pop('stream')
+    return LoggedTestResultDecorator(
+        ExtendedToOriginalDecorator(
+            JUnitXmlResult(stream)
+        )
+    )
+
+
+def _construct_text(**kwargs):
+    stream = kwargs.pop('stream')
+    failfast = kwargs.pop('failfast')
+    return LoggedTestResultDecorator(TextTestResult(stream, failfast))
+
+
+def _construct_subunit(**kwargs):
+    from subunit import StreamResultToBytes
+    stream = kwargs.pop('stream')
+    return LoggedTestResultDecorator(
+        ExtendedToStreamDecorator(
+            StreamResultToBytes(stream)
+        )
+    )

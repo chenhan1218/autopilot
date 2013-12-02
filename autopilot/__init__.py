@@ -20,18 +20,10 @@
 from argparse import ArgumentParser, REMAINDER, Action
 import subprocess
 
+from autopilot.testresult import get_output_formats, get_default_format
+from autopilot.exceptions import BackendException
+
 version = '1.4.0'
-
-
-class BackendException(RuntimeError):
-
-    """An error occured while trying to initialise an autopilot backend."""
-
-    def __init__(self, original_exception):
-        super(BackendException, self).__init__(
-            "Error while initialising backend. Original exception was: " +
-            str(original_exception))
-        self.original_exception = original_exception
 
 
 def parse_arguments(argv=None):
@@ -57,8 +49,9 @@ def parse_arguments(argv=None):
                             If given a directory instead of a file will \
                             write to a file in that directory named: \
                             <hostname>_<dd.mm.yyy_HHMMSS>.log')
-    parser_run.add_argument('-f', "--format", choices=['text', 'xml'],
-                            default='text',
+    available_formats = get_output_formats().keys()
+    parser_run.add_argument('-f', "--format", choices=available_formats,
+                            default=get_default_format(),
                             required=False,
                             help='Specify desired output format. \
                             Default is "text".')

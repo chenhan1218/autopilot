@@ -41,11 +41,10 @@ import sys
 from unittest import TestLoader, TestSuite
 
 from testtools import iterate_tests
-from testtools import TextTestResult
 
 from autopilot import get_version_string, parse_arguments
 import autopilot.globals
-from autopilot.testresult import AutopilotVerboseResult
+from autopilot.testresult import get_output_formats
 from autopilot.utilities import DebugLogFilter, LogFormatter
 
 
@@ -69,28 +68,12 @@ def setup_logging(verbose):
     root_logger.info(get_version_string())
 
 
-def construct_test_runner(args):
-    kwargs = dict(
-        stdout=get_output_stream(args),
-        output_format=get_output_format(args.format),
+def construct_test_result(args):
+    formats = get_output_formats()
+    return formats[args.format](
+        stream=get_output_stream(args),
+        failfast=args.failfast,
     )
-
-    return ConfigurableTestRunner(**kwargs)
-
-
-def get_output_format(format):
-    """Return a Result object for each format we support."""
-
-    if format == "text":
-        return type('VerboseTextTestResult', (TextTestResult,),
-                    dict(AutopilotVerboseResult.__dict__))
-
-    elif format == "xml":
-        from junitxml import JUnitXmlResult
-        return type('VerboseXmlResult', (JUnitXmlResult,),
-                    dict(AutopilotVerboseResult.__dict__))
-
-    raise KeyError("Unknown format name '%s'" % format)
 
 
 def get_output_stream(args):
@@ -116,30 +99,6 @@ def get_output_stream(args):
         else:
             _output_stream = sys.stdout
     return _output_stream
-
-
-class ConfigurableTestRunner(object):
-    """A configurable test runner class.
-
-    This class alows us to configure the output format and whether of not we
-    collect coverage information for the test run.
-
-    """
-
-    def __init__(self, stdout, output_format):
-        self.stdout = stdout
-        self.result_class = output_format
-
-    def run(self, test, failfast=False):
-        "Run the given test case or test suite."
-        result = self.result_class(self.stdout)
-        result.startTestRun()
-        result.failfast = failfast
-        try:
-            test_result = test.run(result)
-        finally:
-            result.stopTestRun()
-        return test_result
 
 
 def get_package_location(import_name):
@@ -218,6 +177,7 @@ class TestProgram(object):
         self.args = parse_arguments()
 
     def run(self):
+        setup_logging(self.args.verbose)
         if self.args.mode == 'list':
             self.list_tests()
         elif self.args.mode == 'run':
@@ -228,7 +188,6 @@ class TestProgram(object):
             self.launch_app()
 
     def run_vis(self):
-        setup_logging(self.args.verbose)
         # importing this requires that DISPLAY is set. Since we don't always
         # want that requirement, do the import here:
         from autopilot.vis import vis_main
@@ -251,7 +210,6 @@ class TestProgram(object):
             get_application_launcher_from_string_hint,
         )
 
-        setup_logging(self.args.verbose)
         app_name = self.args.application[0]
         if not os.path.isabs(app_name) or not os.path.exists(app_name):
             try:
@@ -325,9 +283,13 @@ class TestProgram(object):
         if self.args.verbose:
             autopilot.globals.set_log_verbose(True)
 
-        setup_logging(self.args.verbose)
-        runner = construct_test_runner(self.args)
-        test_result = runner.run(test_suite, self.args.failfast)
+        result = construct_test_result(self.args)
+        result.startTestRun()
+        try:
+            test_result = test_suite.run(result)
+        finally:
+            result.stopTestRun()
+
         if not test_result.wasSuccessful():
             exit(1)
 

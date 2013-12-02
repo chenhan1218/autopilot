@@ -53,7 +53,7 @@ class TestLoaderTests(TestCase):
 
     def _unique_module_name(self):
         generator = lambda: ''.join(
-            random.choice(string.ascii_letters) for letter in xrange(8)
+            random.choice(string.ascii_letters) for letter in range(8)
         )
         name = generator()
         while name in self._previous_module_names:

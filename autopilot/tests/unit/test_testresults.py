@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2013 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@
 from mock import Mock, patch
 from testtools import TestCase, PlaceHolder
 from testtools.content import text_content
-# from testscenarios import WithScenarios
 
 from autopilot.testresult import (
     get_default_format,

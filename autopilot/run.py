@@ -21,12 +21,6 @@
 
 from __future__ import absolute_import
 
-#
-# NOTE: You MUST NOT import any autopilot modules at global scope, because it
-# cases autopilot to be inserted into sys.modules before we've had a chance to
-# patch sys.path, which in turn means we cannot use autopilot to run our own
-# tests.
-
 from codecs import open
 from collections import OrderedDict
 from datetime import datetime

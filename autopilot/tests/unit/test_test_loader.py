@@ -140,6 +140,7 @@ class TestLoaderTests(TestCase):
 
         self.assertEqual(self.sandbox_dir, actual)
 
+    @patch('autopilot.run._show_test_locations', new=lambda a: True)
     def test_load_test_suite_from_name_can_load_file(self):
         with self.open_sandbox_file('test_foo.py') as f:
             f.write(SIMPLE_TESTCASE)
@@ -148,6 +149,7 @@ class TestLoaderTests(TestCase):
 
         self.assertEqual(1, len(suite._tests))
 
+    @patch('autopilot.run._show_test_locations', new=lambda a: True)
     def test_load_test_suite_from_name_can_load_nested_module(self):
         self.create_empty_package_file('__init__.py')
         self.create_package_file_with_contents('test_foo.py', SIMPLE_TESTCASE)
@@ -158,6 +160,7 @@ class TestLoaderTests(TestCase):
 
         self.assertEqual(1, suite.countTestCases())
 
+    @patch('autopilot.run._show_test_locations', new=lambda a: True)
     def test_load_test_suite_from_name_only_loads_requested_suite(self):
         self.create_empty_package_file('__init__.py')
         self.create_package_file_with_contents('test_foo.py', SIMPLE_TESTCASE)
@@ -169,6 +172,7 @@ class TestLoaderTests(TestCase):
 
         self.assertEqual(1, suite.countTestCases())
 
+    @patch('autopilot.run._show_test_locations', new=lambda a: True)
     def test_load_test_suite_from_name_loads_requested_test_from_suite(self):
         self.create_empty_package_file('__init__.py')
         self.create_package_file_with_contents('test_foo.py', SAMPLE_TESTCASES)
@@ -183,6 +187,7 @@ class TestLoaderTests(TestCase):
 
     @patch('autopilot.run._reexecute_autopilot_using_module')
     @patch('autopilot.run._is_testing_autopilot_module', new=lambda *a: True)
+    @patch('autopilot.run._show_test_locations', new=lambda a: True)
     def test_testing_autopilot_is_redirected(self, patched_executor):
         patched_executor.return_value = 0
         load_test_suite_from_name('autopilot')

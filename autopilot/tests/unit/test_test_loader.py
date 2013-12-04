@@ -191,7 +191,6 @@ class TestLoaderTests(TestCase):
             Not(Raises())
         )
 
-
     @patch('autopilot.run._reexecute_autopilot_using_module')
     @patch('autopilot.run._is_testing_autopilot_module', new=lambda *a: True)
     @patch('autopilot.run._show_test_locations', new=lambda a: True)

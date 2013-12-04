@@ -43,6 +43,7 @@ from autopilot.utilities import DebugLogFilter, LogFormatter
 
 
 _output_stream = None
+logger = logging.getLogger(__name__)
 
 
 def setup_logging(verbose):
@@ -151,7 +152,11 @@ def load_test_suite_from_name(test_names):
     tests = []
     test_package_locations = []
     for test_name in test_names:
-        top_level_dir = get_package_location(test_name)
+        try:
+            top_level_dir = get_package_location(test_name)
+        except ImportError:
+            logger.warning("%s appears to be an invalid test id" % test_name)
+            continue
         test_package_locations.append(top_level_dir)
         # no easy way to figure out if test_name is a module or a test, so we
         # try to do the discovery first=...

@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from mock import Mock, patch
+from mock import Mock
 from testtools import TestCase, PlaceHolder
 from testtools.content import text_content
 

@@ -185,6 +185,13 @@ class TestLoaderTests(TestCase):
 
         self.assertEqual(1, suite.countTestCases())
 
+    def test_loading_nonexistent_test_suite_doesnt_error(self):
+        self.assertThat(
+            lambda: load_test_suite_from_name('nonexistent'),
+            Not(Raises())
+        )
+
+
     @patch('autopilot.run._reexecute_autopilot_using_module')
     @patch('autopilot.run._is_testing_autopilot_module', new=lambda *a: True)
     @patch('autopilot.run._show_test_locations', new=lambda a: True)

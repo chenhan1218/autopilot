@@ -202,7 +202,11 @@ class TestProgram(object):
         self.args = parse_arguments()
 
     def run(self):
-        setup_logging(self.args.verbose)
+        try:
+            setup_logging(self.args.verbose)
+        except AttributeError:
+            pass
+
         if self.args.mode == 'list':
             self.list_tests()
         elif self.args.mode == 'run':

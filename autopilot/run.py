@@ -202,7 +202,8 @@ class TestProgram(object):
         self.args = parse_arguments()
 
     def run(self):
-        setup_logging(self.args.verbose)
+        setup_logging(getattr(self.args, 'verbose', False))
+
         if self.args.mode == 'list':
             self.list_tests()
         elif self.args.mode == 'run':

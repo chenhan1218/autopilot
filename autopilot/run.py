@@ -168,10 +168,7 @@ def load_test_suite_from_name(test_names):
                 loader.loadTestsFromName(test_name)
             )
     all_tests = TestSuite(tests)
-
-    test_dirs = ", ".join(sorted(test_package_locations))
-    print("Loading tests from: %s\n" % test_dirs)
-    sys.stdout.flush()
+    _show_test_locations(test_package_locations)
 
     requested_tests = {}
     for test in iterate_tests(all_tests):
@@ -192,6 +189,11 @@ def load_test_suite_from_name(test_names):
             requested_tests[test_id] = test
 
     return TestSuite(requested_tests.values())
+
+
+def _show_test_locations(test_directories):
+    """Print the test directories tests have been loaded from."""
+    print("Loading tests from: %s\n" % ",".join(sorted(test_directories)))
 
 
 class TestProgram(object):

@@ -21,6 +21,7 @@ from tempfile import NamedTemporaryFile
 
 from mock import Mock
 from testtools import TestCase
+from testtools.matchers import Contains
 
 from autopilot.content import follow_file
 
@@ -44,7 +45,7 @@ class FileFollowerTests(TestCase):
             f.write(u"Hello")
             f.flush()
 
-        actual = fake_test.addCleanup.call_args[0][1].as_text()
+        actual = fake_test.addCleanup.call_args[0][2].as_text()
         self.assertEqual(u"Hello", actual)
 
     def test_follow_file_does_not_contain_old_file_data(self):
@@ -56,5 +57,25 @@ class FileFollowerTests(TestCase):
             f.write(u"World")
             f.flush()
 
-        actual = fake_test.addCleanup.call_args[0][1].as_text()
+        actual = fake_test.addCleanup.call_args[0][2].as_text()
         self.assertEqual(u"World", actual)
+
+    def test_follow_file_uses_filename_by_default(self):
+        fake_test = Mock()
+        with NamedTemporaryFile() as f:
+            follow_file(f.name, fake_test)
+
+            actual = fake_test.addCleanup.call_args[0][1]
+            self.assertEqual(f.name, actual)
+
+    def test_real_test_has_detail_added(self):
+        with NamedTemporaryFile() as f:
+            class FakeTest(TestCase):
+                def test_foo(self):
+                        follow_file(f.name, self)
+                        f.write(u"Hello")
+                        f.flush()
+            test = FakeTest('test_foo')
+            result = test.run()
+        self.assertTrue(result.wasSuccessful)
+        self.assertThat(test.getDetails(), Contains(f.name))

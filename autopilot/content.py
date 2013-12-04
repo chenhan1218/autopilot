@@ -35,11 +35,13 @@ def follow_file(path, test_case, content_name=None):
     :param content_name: A name to give this content. If not specified, the
         file path will be used instead.
     """
+    file_obj = io.open(path)
+    file_obj.seek(0, io.SEEK_END)
+
     test_case.addCleanup(
         test_case.addDetail,
+        file_obj.name,
         content_from_stream(
-            stream=io.open(path),
-            seek_offset=0,
-            seek_whence=io.SEEK_END,
-        )
+            stream=file_obj,
+        ),
     )

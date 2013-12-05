@@ -195,9 +195,9 @@ class TestLoaderTests(TestCase):
             "could not import package nonexistent: No module named nonexistent"
         )
 
-    @patch('__builtin__.print')
-    def test_loading_nonexistent_test_suite_indicates_error(self, patched_print):
-        _, error_occured = load_test_suite_from_name('nonexistent')
+    def test_loading_nonexistent_test_suite_indicates_error(self):
+        with patch('__builtin__.print'):
+            _, error_occured = load_test_suite_from_name('nonexistent')
         self.assertTrue(error_occured)
 
     @patch('autopilot.run._reexecute_autopilot_using_module')

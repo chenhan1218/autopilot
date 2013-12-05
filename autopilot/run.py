@@ -168,6 +168,10 @@ def _discover_tests(test_names):
 
 
 def _filter_tests(all_tests, test_names):
+    """Filters a given TestSuite for tests starting with any name contained
+    within test_names.
+
+    """
     requested_tests = {}
     for test in iterate_tests(all_tests):
         # The test loader returns tests that start with 'unittest.loader' if
@@ -190,7 +194,12 @@ def _filter_tests(all_tests, test_names):
 
 
 def load_test_suite_from_name(test_names):
-    """Returns a test suite object given a dotted test names."""
+    """Returns a test suite object given a dotted test names.
+
+    Returns a tuple containing the TestSuite and a boolean indicating wherever
+    any issues where encountered during the loading process.
+
+    """
     # The 'autopilot' program cannot be used to run the autopilot test suite,
     # since setuptools needs to import 'autopilot.run', and that grabs the
     # system autopilot package. After that point, the module is loaded and
@@ -343,10 +352,7 @@ class TestProgram(object):
         finally:
             result.stopTestRun()
 
-        if not test_result.wasSuccessful():
-            exit(1)
-
-        if error_encountered:
+        if not test_result.wasSuccessful() or error_encountered:
             exit(1)
 
     def list_tests(self):

@@ -145,7 +145,7 @@ class TestLoaderTests(TestCase):
         with self.open_sandbox_file('test_foo.py') as f:
             f.write(SIMPLE_TESTCASE)
         with working_dir(self.sandbox_dir):
-            suite = load_test_suite_from_name('test_foo')
+            suite, _ = load_test_suite_from_name('test_foo')
 
         self.assertEqual(1, len(suite._tests))
 
@@ -154,7 +154,7 @@ class TestLoaderTests(TestCase):
         self.create_empty_package_file('__init__.py')
         self.create_package_file_with_contents('test_foo.py', SIMPLE_TESTCASE)
         with working_dir(self.sandbox_dir):
-            suite = load_test_suite_from_name(
+            suite, _ = load_test_suite_from_name(
                 '%s.test_foo' % self.test_module_name
             )
 
@@ -166,7 +166,7 @@ class TestLoaderTests(TestCase):
         self.create_package_file_with_contents('test_foo.py', SIMPLE_TESTCASE)
         self.create_package_file_with_contents('test_bar.py', SIMPLE_TESTCASE)
         with working_dir(self.sandbox_dir):
-            suite = load_test_suite_from_name(
+            suite, _ = load_test_suite_from_name(
                 '%s.test_bar' % self.test_module_name
             )
 
@@ -178,25 +178,37 @@ class TestLoaderTests(TestCase):
         self.create_package_file_with_contents('test_foo.py', SAMPLE_TESTCASES)
         self.create_package_file_with_contents('test_bar.py', SAMPLE_TESTCASES)
         with working_dir(self.sandbox_dir):
-            suite = load_test_suite_from_name(
+            suite, _ = load_test_suite_from_name(
                 '%s.test_bar.SampleTests.test_passes_again'
                 % self.test_module_name
             )
 
         self.assertEqual(1, suite.countTestCases())
 
-    def test_loading_nonexistent_test_suite_doesnt_error(self):
+    @patch('__builtin__.print')
+    def test_loading_nonexistent_test_suite_doesnt_error(self, patched_print):
         self.assertThat(
             lambda: load_test_suite_from_name('nonexistent'),
             Not(Raises())
         )
+        patched_print.called_with(
+            "could not import package nonexistent: No module named nonexistent"
+        )
+
+    @patch('__builtin__.print')
+    def test_loading_nonexistent_test_suite_indicates_error(self, patched_print):
+        _, error_occured = load_test_suite_from_name('nonexistent')
+        self.assertTrue(error_occured)
 
     @patch('autopilot.run._reexecute_autopilot_using_module')
     @patch('autopilot.run._is_testing_autopilot_module', new=lambda *a: True)
     @patch('autopilot.run._show_test_locations', new=lambda a: True)
     def test_testing_autopilot_is_redirected(self, patched_executor):
         patched_executor.return_value = 0
-        load_test_suite_from_name('autopilot')
+        self.assertRaises(
+            SystemExit,
+            lambda: load_test_suite_from_name('autopilot')
+        )
         self.assertTrue(patched_executor.called)
 
 

@@ -43,6 +43,7 @@ from autopilot.utilities import DebugLogFilter, LogFormatter
 
 
 _output_stream = None
+logger = logging.getLogger(__name__)
 
 
 def setup_logging(verbose):
@@ -126,50 +127,62 @@ def _reexecute_autopilot_using_module():
     return 0
 
 
-def load_test_suite_from_name(test_names):
-    """Returns a test suite object given a dotted test names."""
-    # The 'autopilot' program cannot be used to run the autopilot test suite,
-    # since setuptools needs to import 'autopilot.run', and that grabs the
-    # system autopilot package. After that point, the module is loaded and
-    # cached in sys.modules, and there's no way to unload a module in python
-    # once it's been loaded.
-    #
-    # The solution is to detect whether we've been started with the 'autopilot'
-    # application, *and* whether we're running the autopilot test suite itself,
-    # and ≡ that's the case, we re-call autopilot using the standard
-    # autopilot.run entry method, and exit with the sub-process' return code.
-    if _is_testing_autopilot_module(test_names):
-        exit(_reexecute_autopilot_using_module())
+def _discover_test(test_name):
+    """Returns tuple of TestSuite of found test , top_level_dir of test
 
+    raises ImportError if test_name isn't a valid module or test name
+
+    """
     loader = TestLoader()
-    if isinstance(test_names, str):
-        test_names = [test_names]
-    elif not isinstance(test_names, list):
-        raise TypeError("test_names must be either a string or list, not %r"
-                        % (type(test_names)))
+    top_level_dir = get_package_location(test_name)
+    # no easy way to figure out if test_name is a module or a test, so we
+    # try to do the discovery first=...
+    try:
+        test = loader.discover(
+            start_dir=test_name,
+            top_level_dir=top_level_dir
+        )
+    except ImportError:
+        # and if that fails, we try it as a test id.
+        test = loader.loadTestsFromName(test_name)
 
-    tests = []
+    return (test, top_level_dir)
+
+
+def _discover_requested_tests(test_names):
+    """Returns a collection of tests that are under test_names.
+
+    returns a tuple containig a TestSuite of tests found and a boolean
+    depicting wherether any difficulties were encountered while searching
+    (namely un-importable module names).
+
+    """
+    all_tests = []
     test_package_locations = []
-    for test_name in test_names:
-        top_level_dir = get_package_location(test_name)
-        test_package_locations.append(top_level_dir)
-        # no easy way to figure out if test_name is a module or a test, so we
-        # try to do the discovery first=...
+    error_occured = False
+    for name in test_names:
         try:
-            tests.append(
-                loader.discover(
-                    start_dir=test_name,
-                    top_level_dir=top_level_dir
-                )
-            )
-        except ImportError:
-            # and if that fails, we try it as a test id.
-            tests.append(
-                loader.loadTestsFromName(test_name)
-            )
-    all_tests = TestSuite(tests)
+            test, top_level_dir = _discover_test(name)
+            all_tests.append(test)
+            test_package_locations.append(top_level_dir)
+        except ImportError as e:
+            _handle_discovery_error(name, e)
+            error_occured = True
+
     _show_test_locations(test_package_locations)
 
+    return (TestSuite(all_tests), error_occured)
+
+
+def _handle_discovery_error(test_name, exception):
+    print("could not import package %s: %s" % (test_name, str(exception)))
+
+
+def _filter_tests(all_tests, test_names):
+    """Filters a given TestSuite for tests starting with any name contained
+    within test_names.
+
+    """
     requested_tests = {}
     for test in iterate_tests(all_tests):
         # The test loader returns tests that start with 'unittest.loader' if
@@ -188,7 +201,39 @@ def load_test_suite_from_name(test_names):
         if any([test_id.startswith(name) for name in test_names]):
             requested_tests[test_id] = test
 
-    return TestSuite(requested_tests.values())
+    return requested_tests
+
+
+def load_test_suite_from_name(test_names):
+    """Returns a test suite object given a dotted test names.
+
+    Returns a tuple containing the TestSuite and a boolean indicating wherever
+    any issues where encountered during the loading process.
+
+    """
+    # The 'autopilot' program cannot be used to run the autopilot test suite,
+    # since setuptools needs to import 'autopilot.run', and that grabs the
+    # system autopilot package. After that point, the module is loaded and
+    # cached in sys.modules, and there's no way to unload a module in python
+    # once it's been loaded.
+    #
+    # The solution is to detect whether we've been started with the 'autopilot'
+    # application, *and* whether we're running the autopilot test suite itself,
+    # and ≡ that's the case, we re-call autopilot using the standard
+    # autopilot.run entry method, and exit with the sub-process' return code.
+    if _is_testing_autopilot_module(test_names):
+        exit(_reexecute_autopilot_using_module())
+
+    if isinstance(test_names, str):
+        test_names = [test_names]
+    elif not isinstance(test_names, list):
+        raise TypeError("test_names must be either a string or list, not %r"
+                        % (type(test_names)))
+
+    all_tests, error_occured = _discover_requested_tests(test_names)
+    filtered_tests = _filter_tests(all_tests, test_names)
+
+    return (TestSuite(filtered_tests.values()), error_occured)
 
 
 def _show_test_locations(test_directories):
@@ -280,7 +325,9 @@ class TestProgram(object):
 
     def run_tests(self):
         """Run tests, using input from `args`."""
-        test_suite = load_test_suite_from_name(self.args.suite)
+        test_suite, error_encountered = load_test_suite_from_name(
+            self.args.suite
+        )
 
         if self.args.random_order:
             shuffle(test_suite._tests)
@@ -316,14 +363,16 @@ class TestProgram(object):
         finally:
             result.stopTestRun()
 
-        if not test_result.wasSuccessful():
+        if not test_result.wasSuccessful() or error_encountered:
             exit(1)
 
     def list_tests(self):
         """Print a list of tests we find inside autopilot.tests."""
         num_tests = 0
         total_title = "tests"
-        test_suite = load_test_suite_from_name(self.args.suite)
+        test_suite, error_encountered = load_test_suite_from_name(
+            self.args.suite
+        )
 
         if self.args.run_order:
             test_list_fn = lambda: iterate_tests(test_suite)
@@ -350,6 +399,9 @@ class TestProgram(object):
                     num_tests += 1
                     print("    " + test.id())
         print("\n\n %d total %s." % (num_tests, total_title))
+
+        if error_encountered:
+            exit(1)
 
 
 def main():

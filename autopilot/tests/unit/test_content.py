@@ -42,7 +42,7 @@ class FileFollowerTests(TestCase):
         fake_test = Mock()
         with NamedTemporaryFile() as f:
             follow_file(f.name, fake_test)
-            f.write(u"Hello")
+            f.write(b"Hello")
             f.flush()
 
         actual = fake_test.addCleanup.call_args[0][2].as_text()
@@ -51,10 +51,10 @@ class FileFollowerTests(TestCase):
     def test_follow_file_does_not_contain_old_file_data(self):
         fake_test = Mock()
         with NamedTemporaryFile() as f:
-            f.write(u"Hello")
+            f.write(b"Hello")
             f.flush()
             follow_file(f.name, fake_test)
-            f.write(u"World")
+            f.write(b"World")
             f.flush()
 
         actual = fake_test.addCleanup.call_args[0][2].as_text()
@@ -73,7 +73,7 @@ class FileFollowerTests(TestCase):
             class FakeTest(TestCase):
                 def test_foo(self):
                         follow_file(f.name, self)
-                        f.write(u"Hello")
+                        f.write(b"Hello")
                         f.flush()
             test = FakeTest('test_foo')
             result = test.run()

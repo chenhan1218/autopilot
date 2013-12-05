@@ -19,7 +19,7 @@
 #
 
 
-from __future__ import absolute_import, print_function
+from __future__ import absolute_import
 
 from codecs import open
 from collections import OrderedDict
@@ -127,7 +127,29 @@ def _reexecute_autopilot_using_module():
     return 0
 
 
-def _discover_tests(test_names):
+def _discover_tests(test_name):
+    loader = TestLoader()
+    tests = []
+    top_level_dir = get_package_location(test_name)
+    # no easy way to figure out if test_name is a module or a test, so we
+    # try to do the discovery first=...
+    try:
+        tests.append(
+            loader.discover(
+                start_dir=test_name,
+                top_level_dir=top_level_dir
+            )
+        )
+    except ImportError:
+        # and if that fails, we try it as a test id.
+        tests.append(
+            loader.loadTestsFromName(test_name)
+        )
+
+    return (tests, top_level_dir)
+
+
+def _discover_requested_tests(test_names):
     """Returns a collection of tests that are under test_names.
 
     returns a tuple containig a TestSuite of tests found and a boolean
@@ -135,36 +157,25 @@ def _discover_tests(test_names):
     (namely un-importable module names).
 
     """
-
-    loader = TestLoader()
-    tests = []
+    all_tests = []
     test_package_locations = []
-    error_encountered = False
-    for test_name in test_names:
+    error_occured = False
+    for name in test_names:
         try:
-            top_level_dir = get_package_location(test_name)
+            test, top_level_dir = _discover_tests(name)
+            all_tests.extend(test)
+            test_package_locations.append(top_level_dir)
         except ImportError as e:
-            print("could not import package %s: %s" % (test_name, str(e)))
-            error_encountered = True
-            continue
-        test_package_locations.append(top_level_dir)
-        # no easy way to figure out if test_name is a module or a test, so we
-        # try to do the discovery first=...
-        try:
-            tests.append(
-                loader.discover(
-                    start_dir=test_name,
-                    top_level_dir=top_level_dir
-                )
-            )
-        except ImportError:
-            # and if that fails, we try it as a test id.
-            tests.append(
-                loader.loadTestsFromName(test_name)
-            )
+            _handle_discovery_error(name, e)
+            error_occured = True
+
     _show_test_locations(test_package_locations)
 
-    return((TestSuite(tests), error_encountered))
+    return (TestSuite(all_tests), error_occured)
+
+
+def _handle_discovery_error(test_name, exception):
+    print("could not import package %s: %s" % (test_name, str(exception)))
 
 
 def _filter_tests(all_tests, test_names):
@@ -219,10 +230,10 @@ def load_test_suite_from_name(test_names):
         raise TypeError("test_names must be either a string or list, not %r"
                         % (type(test_names)))
 
-    all_tests, error_encountered = _discover_tests(test_names)
+    all_tests, error_occured = _discover_requested_tests(test_names)
     filtered_tests = _filter_tests(all_tests, test_names)
 
-    return (TestSuite(filtered_tests.values()), error_encountered)
+    return (TestSuite(filtered_tests.values()), error_occured)
 
 
 def _show_test_locations(test_directories):

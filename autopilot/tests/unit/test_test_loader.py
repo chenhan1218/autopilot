@@ -185,20 +185,20 @@ class TestLoaderTests(TestCase):
 
         self.assertEqual(1, suite.countTestCases())
 
-    @patch('__builtin__.print')
-    def test_loading_nonexistent_test_suite_doesnt_error(self, patched_print):
+    @patch('autopilot.run._handle_discovery_error')
+    @patch('autopilot.run._show_test_locations', new=lambda a: True)
+    def test_loading_nonexistent_test_suite_doesnt_error(self, err_handler):
         self.assertThat(
             lambda: load_test_suite_from_name('nonexistent'),
             Not(Raises())
         )
-        patched_print.called_with(
-            "could not import package nonexistent: No module named nonexistent"
-        )
 
-    def test_loading_nonexistent_test_suite_indicates_error(self):
-        with patch('__builtin__.print'):
-            _, error_occured = load_test_suite_from_name('nonexistent')
+    @patch('autopilot.run._handle_discovery_error')
+    @patch('autopilot.run._show_test_locations', new=lambda a: True)
+    def test_loading_nonexistent_test_suite_indicates_error(self, err_handler):
+        _, error_occured = load_test_suite_from_name('nonexistent')
         self.assertTrue(error_occured)
+        err_handler.called_with('nonexistent')
 
     @patch('autopilot.run._reexecute_autopilot_using_module')
     @patch('autopilot.run._is_testing_autopilot_module', new=lambda *a: True)

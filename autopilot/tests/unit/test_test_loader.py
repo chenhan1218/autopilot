@@ -28,7 +28,11 @@ from mock import patch
 import shutil
 import tempfile
 
-from autopilot.run import get_package_location, load_test_suite_from_name
+from autopilot.run import (
+    _discover_test,
+    get_package_location,
+    load_test_suite_from_name
+)
 
 
 @contextmanager
@@ -193,16 +197,14 @@ class TestLoaderTests(TestCase):
             Not(Raises())
         )
 
-    @patch('autopilot.run._handle_discovery_error')
-    @patch('autopilot.run._show_test_locations', new=lambda a: True)
-    def test_loading_nonexistent_test_suite_indicates_error(self, err_handler):
-        _, error_occured = load_test_suite_from_name('nonexistent')
-        self.assertTrue(error_occured)
-        err_handler.called_with('nonexistent')
+    def test_loading_nonexistent_test_suite_indicates_error(self):
+        self.assertRaises(
+            ImportError,
+            lambda: _discover_test('nonexistent')
+        )
 
     @patch('autopilot.run._reexecute_autopilot_using_module')
     @patch('autopilot.run._is_testing_autopilot_module', new=lambda *a: True)
-    @patch('autopilot.run._show_test_locations', new=lambda a: True)
     def test_testing_autopilot_is_redirected(self, patched_executor):
         patched_executor.return_value = 0
         self.assertRaises(

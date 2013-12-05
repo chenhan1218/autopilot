@@ -127,26 +127,26 @@ def _reexecute_autopilot_using_module():
     return 0
 
 
-def _discover_tests(test_name):
+def _discover_test(test_name):
+    """Returns tuple of TestSuite of found test , top_level_dir of test
+
+    raises ImportError if test_name isn't a valid module or test name
+
+    """
     loader = TestLoader()
-    tests = []
     top_level_dir = get_package_location(test_name)
     # no easy way to figure out if test_name is a module or a test, so we
     # try to do the discovery first=...
     try:
-        tests.append(
-            loader.discover(
-                start_dir=test_name,
-                top_level_dir=top_level_dir
-            )
+        test = loader.discover(
+            start_dir=test_name,
+            top_level_dir=top_level_dir
         )
     except ImportError:
         # and if that fails, we try it as a test id.
-        tests.append(
-            loader.loadTestsFromName(test_name)
-        )
+        test = loader.loadTestsFromName(test_name)
 
-    return (tests, top_level_dir)
+    return (test, top_level_dir)
 
 
 def _discover_requested_tests(test_names):
@@ -162,8 +162,8 @@ def _discover_requested_tests(test_names):
     error_occured = False
     for name in test_names:
         try:
-            test, top_level_dir = _discover_tests(name)
-            all_tests.extend(test)
+            test, top_level_dir = _discover_test(name)
+            all_tests.append(test)
             test_package_locations.append(top_level_dir)
         except ImportError as e:
             _handle_discovery_error(name, e)

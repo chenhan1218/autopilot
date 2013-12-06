@@ -21,10 +21,11 @@ from dbus import SessionBus
 import json
 from mock import patch
 import os
+import re
 import subprocess
 import tempfile
 from tempfile import mktemp
-from testtools.matchers import Equals, IsInstance, Not, Contains
+from testtools.matchers import Equals, IsInstance, MatchesRegex, Not, Contains
 from textwrap import dedent
 from six import StringIO
 
@@ -134,16 +135,31 @@ class IntrospectionFeatureTests(AutopilotTestCase):
         self.assertThat(out.startswith("== /Root/QMainWindow ==\nChildren:"),
                         Equals(True))
         # has root node properties
-        self.assertThat(out, Contains("windowTitle: 'Default Window Title'\n"))
+        self.assertThat(
+            out,
+            MatchesRegex(
+                ".*windowTitle: [u]?'Default Window Title'.*",
+                re.DOTALL
+            )
+        )
+
         # has level-1 widgets with expected indent
         self.assertThat(out,
                         Contains("  == /Root/QMainWindow/QRubberBand ==\n"))
-        self.assertThat(out, Contains("  objectName: 'qt_rubberband'\n"))
+        self.assertThat(
+            out,
+            MatchesRegex(".*  objectName: [u]?'qt_rubberband'\n", re.DOTALL)
+        )
         # has level-2 widgets with expected indent
         self.assertThat(out, Contains("    == /Root/QMainWindow/QMenuBar/"
                                       "QToolButton =="))
-        self.assertThat(out, Contains("    objectName: "
-                                      "'qt_menubar_ext_button'"))
+        self.assertThat(
+            out,
+            MatchesRegex(
+                ".*    objectName: [u]?'qt_menubar_ext_button'.*",
+                re.DOTALL
+            )
+        )
 
     def test_print_tree_depth_limit(self):
         """Print depth-limited tree for a widget"""

@@ -389,6 +389,9 @@ class Mouse(MouseBase):
                 e.args = ("Mouse cursor is stuck.", )
                 raise
 
+        logger.debug(
+            "The mouse is now at position %d,%d.", self.position())
+
     def move_to_object(self, object_proxy):
         """Attempts to move the mouse to 'object_proxy's centre point.
 

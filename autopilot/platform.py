@@ -50,7 +50,10 @@ this::
 
     ...
 
-    @skipUnless(platform.model() == 'Galaxy Nexus')
+    @skipUnless(
+        platform.model() == 'Galaxy Nexus',
+        "Test is only for Galaxy Nexus"
+    )
     def test_something(self):
         # test things!
 
@@ -61,14 +64,20 @@ except the Galaxy Nexus, write this::
 
     ...
 
-    @skipIf(platform.model() == 'Galaxy Nexus')
+    @skipIf(
+        platform.model() == 'Galaxy Nexus',
+        "Test not available for Galaxy Nexus"
+    )
     def test_something(self):
         # test things!
 
 Tuples of values can be used as well, to select more than one platform. For
 example::
 
-    @skipIf(platform.model() in ('Model One', 'Model Two'))
+    @skipIf(
+        platform.model() in ('Model One', 'Model Two'),
+        "Test not available for Models One and Two"
+    )
         def test_something(self):
             # test things!
 

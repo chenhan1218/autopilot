@@ -52,6 +52,28 @@ Autopilot is designed to work across all the form factors Ubuntu runs on, includ
 Autopilot Tests
 +++++++++++++++
 
+Q. How do I launch an application from within a test so I can introspect it?
+============================================================================
+
+Use :meth:`autopilot.testcase.AutopilotTestCase.launch_test_application`::
+
+  app_proxy = self.launch_test_application('gedit')
+
+Please see the documentation for
+:meth:`autopilot.testcase.AutopilotTestCase.launch_test_application` for a
+complete overview of its use.
+
+Q. How do I launch a Click application from within a test so I can introspect it?
+=================================================================================
+
+Launching a Click application is similar to launching a traditional application
+and is as easy as using
+:meth:`~autopilot.testcase.AutopilotTestCase.launch_click_package`::
+
+  app_proxy = self.launch_click_package(
+      "com.ubuntu.dropping-letters"
+  )
+
 Q. How do I access an already running application so that I can test/introspect it?
 ===================================================================================
 

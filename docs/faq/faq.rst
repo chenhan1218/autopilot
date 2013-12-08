@@ -52,47 +52,6 @@ Autopilot is designed to work across all the form factors Ubuntu runs on, includ
 Autopilot Tests
 +++++++++++++++
 
-Q. How do I launch an application from within a test so I can introspect it?
-============================================================================
-
-Use :meth:`autopilot.testcase.AutopilotTestCase.launch_test_application`::
-
-  app_proxy = self.launch_test_application('gedit')
-
-Please see the documentation for
-:meth:`autopilot.testcase.AutopilotTestCase.launch_test_application` for a
-complete overview of its use.
-
-Q. How do I launch a Click application from within a test so I can introspect it?
-=================================================================================
-
-Launching a Click application is similar to launching a traditional application
-and is as easy as using
-:meth:`~autopilot.testcase.AutopilotTestCase.launch_click_package`::
-
-  app_proxy = self.launch_click_package(
-      "com.ubuntu.dropping-letters"
-  )
-
-Q. How do I access an already running application so that I can test/introspect it?
-===================================================================================
-
-To introspect or interact with an application that is already running you can
-use
-:meth:`~autopilot.introspection.get_proxy_object_for_existing_process`.
-
-For instance, to access a long running process that is available before your test starts::
-
-  application_pid = get_long_running_processes_pid()
-  app_proxy = get_proxy_object_for_existing_process(pid=application_pid)
-
-  text_edit = app_proxy.select_single('QTextEdit')
-  # Do somethng with text_edit etc.
-
-.. note:: Remember that this is only if you can't launch the application from
-          within your test, otherwise you would call
-          :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application`.
-
 .. _faq-many-asserts:
 
 Q. Autopilot tests often include multiple assertions. Isn't this bad practise?
@@ -184,6 +143,50 @@ of the context manager the OSK will be dismissed with a swipe::
   # At this point now the OSK has been swiped away.
   self.assertThat()
 
+
+Autopilot Tests and Launching Applications
+++++++++++++++++++++++++++++++++++++++++++
+
+Q. How do I launch an application from within a test so I can introspect it?
+============================================================================
+
+Use :meth:`autopilot.testcase.AutopilotTestCase.launch_test_application`::
+
+  app_proxy = self.launch_test_application('gedit')
+
+Please see the documentation for
+:meth:`autopilot.testcase.AutopilotTestCase.launch_test_application` for a
+complete overview of its use.
+
+Q. How do I launch a Click application from within a test so I can introspect it?
+=================================================================================
+
+Launching a Click application is similar to launching a traditional application
+and is as easy as using
+:meth:`~autopilot.testcase.AutopilotTestCase.launch_click_package`::
+
+  app_proxy = self.launch_click_package(
+      "com.ubuntu.dropping-letters"
+  )
+
+Q. How do I access an already running application so that I can test/introspect it?
+===================================================================================
+
+To introspect or interact with an application that is already running you can
+use
+:meth:`~autopilot.introspection.get_proxy_object_for_existing_process`.
+
+For instance, to access a long running process that is available before your test starts::
+
+  application_pid = get_long_running_processes_pid()
+  app_proxy = get_proxy_object_for_existing_process(pid=application_pid)
+
+  text_edit = app_proxy.select_single('QTextEdit')
+  # Do somethng with text_edit etc.
+
+.. note:: Remember that this is only if you can't launch the application from
+          within your test, otherwise you would call
+          :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application`.
 
 Autopilot Qt & Gtk Support
 ++++++++++++++++++++++++++

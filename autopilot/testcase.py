@@ -56,9 +56,10 @@ import subprocess
 
 from testscenarios import TestWithScenarios
 from testtools import TestCase
-from testtools.content import text_content
+from testtools.content import text_content, content_from_file
 from testtools.matchers import Equals
 
+from autopilot.content import follow_file
 from autopilot.process import ProcessManager
 from autopilot.input import Keyboard, Mouse
 from autopilot.introspection import (
@@ -322,6 +323,16 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             "set-env",
             "QT_LOAD_TESTABILITY=1",
         ])
+        log_dir = os.path.expanduser('~/.cache/upstart/')
+        log_name = 'application-click-{}.log'.format(app_id)
+        log_path = os.path.join(log_dir, log_name)
+        self.addCleanup(
+            lambda: self.addDetail(
+                "Application Log",
+                content_from_file(log_path)
+            )
+        )
+
         # launch the application:
         subprocess.check_output([
             "/sbin/start",
@@ -365,6 +376,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                             "unset-env",
                             "QT_LOAD_TESTABILITY",
                         ])
+
                         return proxy
             # give the app time to launch - maybe this is not needed?:
             sleep(1)

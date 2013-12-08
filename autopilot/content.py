@@ -38,10 +38,25 @@ def follow_file(path, test_case, content_name=None):
     file_obj = io.open(path, mode='rb')
     file_obj.seek(0, io.SEEK_END)
 
+    return follow_stream(file_obj, test_case, content_name or file_obj.name)
+
+
+def follow_stream(stream, test_case, content_name):
+    """Start monitoring the content from a stream.
+
+    This function can be used to attach a portion of a stream to a test.
+
+    :param stream: an open file-like object (that supports a read method that
+        returns bytes).
+    :param test_case: An object that supports attaching details and cleanup
+        actions (i.e.- has the ``addDetail`` and ``addCleanup`` methods).
+    :param content_name: A name to give this content. If not specified, the
+        file path will be used instead.
+    """
     test_case.addCleanup(
         test_case.addDetail,
-        file_obj.name,
+        content_name,
         content_from_stream(
-            stream=file_obj,
+            stream=stream,
         ),
     )

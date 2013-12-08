@@ -68,6 +68,15 @@ class FileFollowerTests(TestCase):
             actual = fake_test.addCleanup.call_args[0][1]
             self.assertEqual(f.name, actual)
 
+    def test_follow_file_uses_cotent_name(self):
+        fake_test = Mock()
+        content_name = self.getUniqueString()
+        with NamedTemporaryFile() as f:
+            follow_file(f.name, fake_test, content_name)
+
+            actual = fake_test.addCleanup.call_args[0][1]
+            self.assertEqual(content_name, actual)
+
     def test_real_test_has_detail_added(self):
         with NamedTemporaryFile() as f:
             class FakeTest(TestCase):

@@ -59,7 +59,6 @@ from testtools import TestCase
 from testtools.content import text_content, content_from_file
 from testtools.matchers import Equals
 
-from autopilot.content import follow_file
 from autopilot.process import ProcessManager
 from autopilot.input import Keyboard, Mouse
 from autopilot.introspection import (
@@ -376,7 +375,6 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                             "unset-env",
                             "QT_LOAD_TESTABILITY",
                         ])
-
                         return proxy
             # give the app time to launch - maybe this is not needed?:
             sleep(1)

@@ -161,19 +161,16 @@ and is as easy as using
 Q. How do I access an already running application so that I can test/introspect it?
 ===================================================================================
 
-.. note::
-          :meth:`~autopilot.introspection.get_proxy_object_for_existing_process`
-          should only be used to introspect applications that have already been
-          launched outside of the test process (and cannot be launched from
-          within a test suite). In all other cases the recommended way to
-          launch an application is by calling either
-          :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application`
-          or :meth:`~autopilot.testcase.AutopilotTestCase.launch_click_package`
+In instances where it's impossible to launch the application-under-test from
+within the testsuite use
+:meth:`~autopilot.introspection.get_proxy_object_for_existing_process` to get a
+proxy object for the running application.
+In all other cases the recommended way to launch and retrieve a proxy object
+for an application is by calling either
+:meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application` or
+:meth:`~autopilot.testcase.AutopilotTestCase.launch_click_package`
 
-To introspect or interact with an application that is already running use
-:meth:`~autopilot.introspection.get_proxy_object_for_existing_process`.
-
-For instance, to access a long running process that is available before your test starts::
+For example, to access a long running process that is running before your test starts::
 
   application_pid = get_long_running_processes_pid()
   app_proxy = get_proxy_object_for_existing_process(pid=application_pid)

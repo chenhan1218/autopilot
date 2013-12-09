@@ -147,13 +147,6 @@ of the context manager the OSK will be dismissed with a swipe::
 Autopilot Tests and Launching Applications
 ++++++++++++++++++++++++++++++++++++++++++
 
-Q. How do I launch an application from within a test so I can introspect it?
-============================================================================
-
-Use :meth:`autopilot.testcase.AutopilotTestCase.launch_test_application`::
-
-  app_proxy = self.launch_test_application('gedit')
-
 Q. How do I launch a Click application from within a test so I can introspect it?
 =================================================================================
 

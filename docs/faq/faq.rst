@@ -154,10 +154,6 @@ Use :meth:`autopilot.testcase.AutopilotTestCase.launch_test_application`::
 
   app_proxy = self.launch_test_application('gedit')
 
-Please see the documentation for
-:meth:`autopilot.testcase.AutopilotTestCase.launch_test_application` for a
-complete overview of its use.
-
 Q. How do I launch a Click application from within a test so I can introspect it?
 =================================================================================
 
@@ -172,8 +168,7 @@ and is as easy as using
 Q. How do I access an already running application so that I can test/introspect it?
 ===================================================================================
 
-To introspect or interact with an application that is already running you can
-use
+To introspect or interact with an application that is already running use
 :meth:`~autopilot.introspection.get_proxy_object_for_existing_process`.
 
 For instance, to access a long running process that is available before your test starts::
@@ -184,9 +179,14 @@ For instance, to access a long running process that is available before your tes
   text_edit = app_proxy.select_single('QTextEdit')
   # Do somethng with text_edit etc.
 
-.. note:: Remember that this is only if you can't launch the application from
-          within your test, otherwise you would call
-          :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application`.
+.. note::
+          :meth:`~autopilot.introspection.get_proxy_object_for_existing_process`
+          should only be used to introspect applications that have already been
+          launched outside of the test process (and cannot be launched from
+          within a test suite). In all other cases the recommended way to
+          launch an application is by calling either
+          :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application`
+          or :meth:`~autopilot.testcase.AutopilotTestCase.launch_click_package`
 
 Autopilot Qt & Gtk Support
 ++++++++++++++++++++++++++

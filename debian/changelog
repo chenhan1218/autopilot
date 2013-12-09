@@ -1,3 +1,9 @@
+autopilot (1.4+14.04.20131125-0ubuntu2) trusty; urgency=low
+
+  * No-change rebuild for ust.
+
+ -- Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>  Fri, 06 Dec 2013 15:08:24 -0500
+
 autopilot (1.4+14.04.20131125-0ubuntu1) trusty; urgency=low
 
   [ Leo Arias ]

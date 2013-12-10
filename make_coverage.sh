@@ -22,5 +22,6 @@ if [ -d htmlcov ]; then
 fi
 python -m coverage erase
 python -m coverage run --branch --include "autopilot/*" -m autopilot.run run autopilot.tests.unit
-python -m coverage html
+python3 -m coverage run --append --branch --include "autopilot/*" -m autopilot.run run autopilot.tests.unit
+python -m coverage html --omit "autopilot/tests/*"
 xdg-open htmlcov/index.html

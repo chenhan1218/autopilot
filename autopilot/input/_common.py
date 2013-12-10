@@ -47,10 +47,6 @@ def get_center_point(object_proxy):
         return x, y
     except AttributeError:
         pass
-    except (TypeError, ValueError):
-        raise ValueError(
-            "Object '%r' has center_x, center_y attributes, but they are not "
-            "of the correct type" % object_proxy)
 
     try:
         x, y, w, h = (

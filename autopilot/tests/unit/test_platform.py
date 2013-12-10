@@ -34,6 +34,28 @@ from testtools.matchers import Equals
 from tempfile import NamedTemporaryFile
 
 
+class PublicAPITests(TestCase):
+
+    @patch('autopilot.platform._PlatformDetector')
+    def test_model_creates_platform_detector(self, mock_detector):
+        platform.model()
+        mock_detector.create.assert_called_once()
+
+    @patch('autopilot.platform._PlatformDetector._cached_detector')
+    def test_model_returns_platform_detector_model(self, mock_detector):
+        mock_detector.model = "test123"
+        self.assertThat(platform.model(), Equals('test123'))
+
+    @patch('autopilot.platform._PlatformDetector')
+    def test_image_codename_creates_platform_detector(self, mock_detector):
+        platform.image_codename()
+        mock_detector.create.assert_called_once()
+
+    @patch('autopilot.platform._PlatformDetector._cached_detector')
+    def test_model_returns_platform_detector_model(self, mock_detector):
+        mock_detector.image_codename = "test123"
+        self.assertThat(platform.image_codename(), Equals('test123'))
+
 
 class PlatformDetectorTests(TestCase):
 

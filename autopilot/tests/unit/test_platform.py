@@ -42,7 +42,7 @@ class PublicAPITests(TestCase):
         mock_detector.create.assert_called_once()
 
     @patch('autopilot.platform._PlatformDetector._cached_detector')
-    def test_model_returns_platform_detector_model(self, mock_detector):
+    def test_model_returns_correct_value(self, mock_detector):
         mock_detector.model = "test123"
         self.assertThat(platform.model(), Equals('test123'))
 
@@ -52,7 +52,7 @@ class PublicAPITests(TestCase):
         mock_detector.create.assert_called_once()
 
     @patch('autopilot.platform._PlatformDetector._cached_detector')
-    def test_model_returns_platform_detector_model(self, mock_detector):
+    def test_image_codename_returns_correct_value(self, mock_detector):
         mock_detector.image_codename = "test123"
         self.assertThat(platform.image_codename(), Equals('test123'))
 

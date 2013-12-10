@@ -84,8 +84,6 @@ example::
 
 """
 
-from os.path import exists
-
 
 def model():
     """Get the model name of the current platform.
@@ -157,6 +155,7 @@ def _get_property_file():
         return open(path)
     except IOError:
         return None
+
 
 def _parse_build_properties_file(property_file):
     """Parse 'property_file', which must be a file-like object containing the

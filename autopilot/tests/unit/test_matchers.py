@@ -29,9 +29,7 @@ from testtools.matchers import (
     Contains,
     Equals,
     IsInstance,
-    MatchesException,
     Mismatch,
-    Raises,
     raises,
 )
 
@@ -153,8 +151,10 @@ class EventuallyNonScenariodTests(MockedSleepTests):
         self.assertThat(
             lambda: Eventually(None),
             raises(
-                TypeError("Eventually must be called with a testtools "
-                    "matcher argument.")
+                TypeError(
+                    "Eventually must be called with a testtools "
+                    "matcher argument."
+                )
             )
         )
 
@@ -163,8 +163,10 @@ class EventuallyNonScenariodTests(MockedSleepTests):
         self.assertThat(
             lambda: eventually.match(False),
             raises(
-                TypeError("Eventually is only usable with attributes that "
-                "have a wait_for function or callable objects.")
+                TypeError(
+                    "Eventually is only usable with attributes that "
+                    "have a wait_for function or callable objects."
+                )
             )
         )
 

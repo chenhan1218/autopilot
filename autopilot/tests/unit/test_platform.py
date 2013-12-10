@@ -28,10 +28,11 @@ except ImportError:
     # Python 3
     from io import StringIO
 
+from mock import patch
 from testtools import TestCase
 from testtools.matchers import Equals
+from tempfile import NamedTemporaryFile
 
-from mock import patch
 
 
 class PlatformDetectorTests(TestCase):
@@ -106,6 +107,21 @@ class PlatformDetectorTests(TestCase):
         """
         detector = platform._PlatformDetector.create()
         self.assertThat(detector.image_codename, Equals('Desktop'))
+
+    def test_has_correct_file_name(self):
+        observed = platform._get_property_file_path()
+        self.assertEqual("/system/build.prop", observed)
+
+    def test_get_property_file_opens_path(self):
+        token = self.getUniqueString()
+        with NamedTemporaryFile(mode='w+') as f:
+            f.write(token)
+            f.flush()
+            with patch('autopilot.platform._get_property_file_path') as p:
+                p.return_value = f.name
+                observed = platform._get_property_file().read()
+        self.assertEqual(token, observed)
+
 
 
 class BuildPropertyParserTests(TestCase):

@@ -143,15 +143,20 @@ class _PlatformDetector(object):
         self.image_codename = properties.get('ro.product.name', "Desktop")
 
 
+def _get_property_file_path():
+    return '/system/build.prop'
+
+
 def _get_property_file():
     """Return a file-like object that contains the contents of the build
     properties file, if it exists, or None.
 
     """
-    if exists('/system/build.prop'):
-        return open('/system/build.prop')
-    return None
-
+    path = _get_property_file_path()
+    try:
+        return open(path)
+    except IOError:
+        return None
 
 def _parse_build_properties_file(property_file):
     """Parse 'property_file', which must be a file-like object containing the

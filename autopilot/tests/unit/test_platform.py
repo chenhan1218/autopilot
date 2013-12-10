@@ -123,7 +123,6 @@ class PlatformDetectorTests(TestCase):
         self.assertEqual(token, observed)
 
 
-
 class BuildPropertyParserTests(TestCase):
     """Tests for the android build properties file parser."""
 

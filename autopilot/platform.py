@@ -168,7 +168,7 @@ def _parse_build_properties_file(property_file):
     properties = {}
     for line in property_file:
         line = line.strip()
-        if not line or line.startswith('#') or line.isspace():
+        if not line or line.startswith('#'):
             continue
         split_location = line.find('=')
         if split_location == -1:

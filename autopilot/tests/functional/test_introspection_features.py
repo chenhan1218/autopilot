@@ -188,7 +188,7 @@ class IntrospectionFeatureTests(AutopilotTestCase):
         range.
         """
         # ensure we have at least one open app window
-        app = self.start_mock_app(EmulatorBase)
+        self.start_mock_app(EmulatorBase)
 
         display = Display.create()
         for monitor in range(display.get_num_screens()):

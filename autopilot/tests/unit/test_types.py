@@ -83,6 +83,17 @@ class PlainTypeTests(TestWithScenarios, TestCase):
 
         self.assertThat(repr(p), Equals(repr(self.v)))
 
+    def test_wait_for_raises_RuntimeError(self):
+        """The wait_for method must raise a RuntimeError if it's called."""
+        p = PlainType(self.t(self.v))
+        self.assertThat(
+            lambda: p.wait_for(object()),
+            raises(RuntimeError(
+                "This variable was not constructed as part of "
+                "an object. The wait_for method cannot be used."
+            ))
+        )
+
 
 class RectangleTypeTests(TestCase):
 

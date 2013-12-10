@@ -75,11 +75,14 @@ class ProcessEmulatorTests(AutopilotTestCase):
         app = self.process_manager.start_app('Calculator')
 
         self.assertThat(app, NotEquals(None))
-        self.assertThat(app.name, Equals('Calculator'))
+        # locale='C' does not work here as this goes through bamf, so we can't
+        # assert the precise name
+        self.assertThat(app.name, NotEquals(''))
+        self.assertThat(app.desktop_file, Equals('gcalctool.desktop'))
 
     def test_start_app_window(self):
         """Ensure we can start an Application Window."""
-        app = self.process_manager.start_app_window('Calculator')
+        app = self.process_manager.start_app_window('Calculator', locale='C')
 
         self.assertThat(app, NotEquals(None))
         self.assertThat(app.name, Equals('Calculator'))

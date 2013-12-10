@@ -32,6 +32,7 @@ from testtools.matchers import (
     MatchesException,
     Mismatch,
     Raises,
+    raises,
 )
 
 from autopilot.introspection.dbus import DBusIntrospectionObject
@@ -145,8 +146,31 @@ class EventuallyNonScenariodTests(MockedSleepTests):
     def test_eventually_matcher_raises_ValueError_on_unknown_kwargs(self):
         self.assertThat(
             lambda: Eventually(Equals(True), foo=123),
-            Raises(MatchesException(
-                ValueError, "Unknown keyword arguments: foo")))
+            raises(ValueError("Unknown keyword arguments: foo"))
+        )
+
+    def test_eventually_matcher_raises_TypeError_on_non_matcher_argument(self):
+        self.assertThat(
+            lambda: Eventually(None),
+            raises(
+                TypeError("Eventually must be called with a testtools "
+                    "matcher argument.")
+            )
+        )
+
+    def test_match_raises_TypeError_when_called_with_plain_attribute(self):
+        eventually = Eventually(Equals(True))
+        self.assertThat(
+            lambda: eventually.match(False),
+            raises(
+                TypeError("Eventually is only usable with attributes that "
+                "have a wait_for function or callable objects.")
+            )
+        )
+
+    def test_repr(self):
+        eventually = Eventually(Equals(True))
+        self.assertEqual("Eventually Equals(True)", str(eventually))
 
     def test_match_with_expected_value_unicode(self):
         """The expected unicode value matches new value string."""

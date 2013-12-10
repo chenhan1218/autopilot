@@ -42,19 +42,6 @@ from autopilot.introspection.types import (
 from autopilot.introspection.dbus import DBusIntrospectionObject
 
 
-class FakeObject(object):
-
-    def __init__(self):
-        self.get_new_state_called = False
-        self.set_properties_called = False
-
-    def get_new_state(self):
-        self.get_new_state_called = True
-
-    def _set_properties(self, state):
-        self.set_properties_called = True
-
-
 class PlainTypeTests(TestWithScenarios, TestCase):
 
     scenarios = [

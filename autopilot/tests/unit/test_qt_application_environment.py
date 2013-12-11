@@ -19,34 +19,37 @@
 
 from testtools import TestCase
 
-from autopilot.introspection.qt import QtApplicationLauncher
+from autopilot.application.environment._qt import QtApplicationEnvironment
 
 
-class QtApplicationLauncherTests(TestCase):
+class QtApplicationEnvironmentTests(TestCase):
 
     def setUp(self):
-        super(QtApplicationLauncherTests, self).setUp()
-        self.app_launcher = QtApplicationLauncher()
+        super(QtApplicationEnvironmentTests, self).setUp()
+        self.app_environment = QtApplicationEnvironment()
 
     def test_does_not_alter_app(self):
         fake_app = self.getUniqueString()
-        app, args = self.app_launcher.prepare_environment(fake_app, [])
+        app, args = self.app_environment.prepare_environment(fake_app, [])
         self.assertEqual(fake_app, app)
 
     def test_inserts_testability_with_no_args(self):
-        app, args = self.app_launcher.prepare_environment('some_app', [])
+        app, args = self.app_environment.prepare_environment('some_app', [])
         self.assertEqual(['-testability'], args)
 
     def test_inserts_testability_before_normal_argument(self):
-        app, args = self.app_launcher.prepare_environment('app', ['-l'])
+        app, args = self.app_environment.prepare_environment('app', ['-l'])
         self.assertEqual(['-testability', '-l'], args)
 
     def test_inserts_testability_after_qt_version_arg(self):
-        app, args = self.app_launcher.prepare_environment('app', ['-qt=qt5'])
+        app, args = self.app_environment.prepare_environment(
+            'app',
+            ['-qt=qt5']
+        )
         self.assertEqual(['-qt=qt5', '-testability'], args)
 
     def test_does_not_insert_testability_if_already_present(self):
-        app, args = self.app_launcher.prepare_environment(
+        app, args = self.app_environment.prepare_environment(
             'app', ['-testability']
         )
         self.assertEqual(['-testability'], args)

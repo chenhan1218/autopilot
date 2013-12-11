@@ -36,6 +36,10 @@ class OpenWindowTests(AutopilotTestCase):
     def test_open_window(self):
         """self.start_app_window must open a new window of the given app."""
         existing_apps = self.process_manager.get_app_instances(self.app_name)
+        # if we opened the app, ensure that we close it again to avoid leaking
+        # processes like remmina
+        if not existing_apps:
+            self.addCleanup(self.process_manager.close_all_app, self.app_name)
         old_wins = []
         for app in existing_apps:
             old_wins.extend(app.get_windows())

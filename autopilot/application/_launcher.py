@@ -292,8 +292,11 @@ def _get_application_path(application):
             ['which', application],
             universal_newlines=True
         ).strip()
-    except subprocess.CalledProcessError:
-        return ""
+    except subprocess.CalledProcessError as e:
+        raise ValueError(
+            "Unable to find path for application {app}: {reason}"
+            .format(app=application, reason=str(e))
+        )
 
 
 def _get_app_env_from_string_hint(hint):

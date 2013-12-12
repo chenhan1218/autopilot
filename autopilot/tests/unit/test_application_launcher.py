@@ -18,30 +18,31 @@
 #
 
 from testtools import TestCase
+from testtools.matchers import Not, raises
 from mock import Mock, patch
+import subprocess
 
 from autopilot.application import ApplicationLauncher
+from autopilot.application._launcher import _raise_if_not_empty, _get_application_path
 
 
 class ApplicationLauncherTests(TestCase):
+    pass
 
-    @patch(
-        'autopilot.application._launcher.NormalApplicationLauncher'
-    )
-    def test_create_returns_traditional_launcher(self, patched_launcher):
-        app_launcher = ApplicationLauncher.create(
-            Mock(),
-            application="fakeapp"
-        )
-        self.assertEqual(patched_launcher(), app_launcher)
 
-    @patch(
-        'autopilot.application._launcher.ClickApplicationLauncher'
-    )
-    def test_create_returns_click_launcher(self, patched_launcher):
-        app_launcher = ApplicationLauncher.create(
-            Mock(),
-            package_id="com.autopilot.fake"
+class ApplicationLauncherInternalTests(TestCase):
+
+    def test_raise_if_not_empty_raises_on_nonempty_dict(self):
+        populated_dict = dict(testing=True)
+        self.assertThat(
+            lambda: _raise_if_not_empty(populated_dict),
+            raises(ValueError)
         )
-        self.assertEqual(patched_launcher(), app_launcher)
+
+    def test_raise_if_not_empty_does_not_raise_on_empty(self):
+        empty_dict = dict()
+        self.assertThat(
+            lambda: _raise_if_not_empty(empty_dict),
+            Not(raises(ValueError))
+        )
 

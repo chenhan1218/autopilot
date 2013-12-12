@@ -51,10 +51,8 @@ class ApplicationLauncher(fixtures.Fixture):
 class ClickApplicationLauncher(ApplicationLauncher):
     def __init__(self, case_addDetail, package_id, app_name, **kwargs):
         super(ClickApplicationLauncher, self).__init__(case_addDetail)
-        self.package_id = package_id
-        self.app_name = app_name
 
-        self.app_id = _get_click_app_id(package_id, self.app_name)
+        self.app_id = _get_click_app_id(package_id, app_name)
 
         self.emulator_base = kwargs.pop('emulator_base', None)
         self.dbus_bus = kwargs.pop('dbus_bus', 'session')
@@ -64,7 +62,7 @@ class ClickApplicationLauncher(ApplicationLauncher):
     def launch(self, *arguments):
         _app_env = self.useFixture(UpstartApplicationEnvironment())
         _app_env._app_env.prepare_environment(
-            self.app_path,
+            self.app_id,
             arguments,
         )
 

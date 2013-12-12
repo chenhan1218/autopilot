@@ -20,14 +20,64 @@
 from testtools import TestCase
 from testtools.matchers import Not, raises
 from mock import Mock, patch
-import subprocess
 
-from autopilot.application import ApplicationLauncher
-from autopilot.application._launcher import _raise_if_not_empty, _get_application_path
+from autopilot.application import ClickApplicationLauncher
+from autopilot.application._launcher import (
+    _get_click_app_id,
+    _raise_if_not_empty,
+)
 
 
 class ApplicationLauncherTests(TestCase):
     pass
+
+
+class ClickApplicationLauncherTests(TestCase):
+
+    @patch(
+        'autopilot.application._launcher._get_click_app_id',
+        new=lambda *args: ""
+    )
+    def test_raises_exception_on_unknown_kwargs(self):
+        self.assertThat(
+            lambda: ClickApplicationLauncher(Mock(), "", "", unknown=True),
+            raises(ValueError("Unknown keyword arguments: 'unknown'."))
+        )
+
+    @patch(
+        'autopilot.application._launcher._get_click_manifest', new=lambda: [])
+    def test_get_click_app_id_raises_runtimeerror_on_missing_package(self):
+        """_get_click_app_id must raise a RuntimeError if the requested
+        package id is not found in the click manifest.
+
+        """
+        self.assertThat(
+            lambda: _get_click_app_id("com.autopilot.testing"),
+            raises(
+                RuntimeError(
+                    "Unable to find package 'com.autopilot.testing' in the "
+                    "click manifest."
+                )
+            )
+        )
+
+    @patch('autopilot.application._launcher._get_click_manifest')
+    def test_get_click_app_id_raises_runtimeerror_on_wrong_app(self, cm):
+        """get_click_app_id must raise a RuntimeError if the requested
+        package id is not found in the click manifest.
+
+        """
+        cm.return_value = [{'name': 'com.autopilot.testing', 'hooks': {}}]
+
+        self.assertThat(
+            lambda: _get_click_app_id("com.autopilot.testing", "bar"),
+            raises(
+                RuntimeError(
+                    "Application 'bar' is not present within the click package"
+                    " 'com.autopilot.testing'."
+                )
+            )
+        )
 
 
 class ApplicationLauncherInternalTests(TestCase):
@@ -45,4 +95,3 @@ class ApplicationLauncherInternalTests(TestCase):
             lambda: _raise_if_not_empty(empty_dict),
             Not(raises(ValueError))
         )
-

@@ -20,7 +20,7 @@
 from testtools import TestCase
 from mock import patch
 
-from autopilot.application.environment._gtk import GtkApplicationEnvironment
+from autopilot.application import GtkApplicationEnvironment
 
 
 class GtkApplicationEnvironmentTests(TestCase):
@@ -34,7 +34,7 @@ class GtkApplicationEnvironmentTests(TestCase):
         app, args = self.app_environment.prepare_environment(fake_app, [])
         self.assertEqual(fake_app, app)
 
-    @patch("autopilot.application.environment._gtk.os")
+    @patch("autopilot.application._environment.os")
     def test_modules_patched(self, patched_os):
         patched_os.getenv.return_value = ""
         fake_app = self.getUniqueString()
@@ -42,7 +42,7 @@ class GtkApplicationEnvironmentTests(TestCase):
 
         patched_os.putenv.assert_called_once_with('GTK_MODULES', ':autopilot')
 
-    @patch("autopilot.application.environment._gtk.os")
+    @patch("autopilot.application._environment.os")
     def test_modules_not_patched_twice(self, patched_os):
         patched_os.getenv.return_value = "autopilot"
         fake_app = self.getUniqueString()

@@ -18,3 +18,27 @@
 #
 
 """Base package for application launching and environment management."""
+
+from _launcher import (
+    ApplicationLauncher,
+    ClickApplicationLauncher,
+    NormalApplicationLauncher
+)
+
+from _environment import (
+    ApplicationEnvironment,
+    GtkApplicationEnvironment,
+    QtApplicationEnvironment,
+    UpstartApplicationEnvironment,
+)
+
+__all__ = [
+    'ApplicationLauncher',
+    'ClickApplicationLauncher',
+    'NormalApplicationLauncher',
+
+    'ApplicationEnvironment',
+    'GtkApplicationEnvironment',
+    'QtApplicationEnvironment',
+    'UpstartApplicationEnvironment',
+]

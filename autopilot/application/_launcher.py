@@ -17,25 +17,104 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""Base package for application launchers."""
+
+import signal
+from time import sleep
+from testtools.content import content_from_file, text_content
+import json
+import fixtures
 import logging
 import os
-import signal
 import subprocess
-from time import sleep
-from testtools.content import content_from_file
-import json
+import psutil
 
-from autopilot.application.launcher import (
-    _is_process_running,
-    ApplicationLauncher,
-)
+from autopilot.application.environment import ApplicationEnvironment
 from autopilot.application.environment._upstart import (
     UpstartApplicationEnvironment
 )
+
 from autopilot.introspection import get_proxy_object_for_existing_process
 
 
 logger = logging.getLogger(__name__)
+
+
+class ApplicationLauncher(fixtures.Fixture):
+    """A class that knows how to launch an application with a certain type of
+    introspection enabled.
+
+    """
+
+    @staticmethod
+    def create(case_addDetail, **kwargs):
+        """
+        kwargs must contain one of either:
+          *application* - The application that you want to launch
+          *package_id* - The Upstart/Click package you want to launch
+
+        All other kwargs will be passed on to the ApplicationLauncher.
+        """
+        application = kwargs.pop('application', None)
+        package_id = kwargs.pop('package_id', None)
+        if application is not None:
+            return NormalApplicationLauncher(
+                case_addDetail,
+                application,
+                **kwargs
+            )
+        elif package_id is not None:
+            return ClickApplicationLauncher(
+                case_addDetail,
+                package_id,
+                **kwargs
+            )
+        else:
+            raise ValueError("Unsure what application type to launch")
+
+    def launch(self, *arguments):
+        raise NotImplementedError("Sub-classes must implement this method.")
+
+
+def _is_process_running(pid):
+    return psutil.pid_exists(pid)
+
+
+def launch_process(application, args, capture_output, **kwargs):
+    """Launch an autopilot-enabled process and return the process object."""
+    commandline = [application]
+    commandline.extend(args)
+    logger.info("Launching process: %r", commandline)
+    cap_mode = None
+    if capture_output:
+        cap_mode = subprocess.PIPE
+    process = subprocess.Popen(
+        commandline,
+        stdin=subprocess.PIPE,
+        stdout=cap_mode,
+        stderr=cap_mode,
+        close_fds=True,
+        preexec_fn=os.setsid,
+        universal_newlines=True,
+        **kwargs
+    )
+    return process
+
+
+def _set_upstart_env(key, value):
+    subprocess.call([
+        "/sbin/initctl",
+        "set-env",
+        "{key}={value}".format(key=key, value=value),
+    ])
+
+
+def _unset_upstart_env(key):
+    subprocess.call([
+        "/sbin/initctl",
+        "unset-env",
+        "QT_LOAD_TESTABILITY",
+    ])
 
 
 class ClickApplicationLauncher(ApplicationLauncher):
@@ -172,3 +251,75 @@ def _kill_pid(pid):
             )
             os.killpg(pid, signal.SIGKILL)
         sleep(1)
+
+
+class NormalApplicationLauncher(ApplicationLauncher):
+    def __init__(self, case_addDetail, application, **kwargs):
+        super(NormalApplicationLauncher, self).__init__()
+        self.case_addDetail = case_addDetail
+
+        # self.app_path = app_path
+        # kwargs['app_path'] = app_path
+        kwargs['application'] = application
+        self.app_path = application       # Need to sort this out, application or application path. . .
+
+        self.kwargs = kwargs
+
+        self.cwd = kwargs.pop('launch_dir', None)
+        self.capture_output = kwargs.pop('capture_output', True)
+
+    def setUp(self):
+        super(NormalApplicationLauncher, self).setUp()
+        self._app_env = self.useFixture(
+            ApplicationEnvironment.create(**self.kwargs)
+        )
+
+    def launch(self, arguments):
+        app_path, arguments = self._app_env.prepare_environment(
+            self.app_path,
+            arguments,
+        )
+        self._process = launch_process(
+            self.app_path,
+            arguments,
+            self.capture_output,
+            cwd=self.cwd,
+        )
+
+        self.addCleanup(self._kill_process_and_attach_logs, self._process)
+        # return get_autopilot_proxy_object_for_process({})
+
+    def _kill_process_and_attach_logs(self, process):
+        stdout, stderr, return_code = _kill_process(process)
+        self.case_addDetail(
+            'process-return-code',
+            text_content(str(return_code))
+        )
+        self.case_addDetail('process-stdout', text_content(stdout))
+        self.case_addDetail('process-stderr', text_content(stderr))
+
+
+def _kill_process(process):
+    """Kill the process, and return the stdout, stderr and return code."""
+    stdout = ""
+    stderr = ""
+    logger.info("waiting for process to exit.")
+    try:
+        logger.info("Killing process %d", process.pid)
+        os.killpg(process.pid, signal.SIGTERM)
+    except OSError:
+        logger.info("Appears process has already exited.")
+    for i in range(10):
+        tmp_out, tmp_err = process.communicate()
+        stdout += tmp_out
+        stderr += tmp_err
+        if not _is_process_running(process.pid):
+            break
+        if i == 9:
+            logger.info(
+                "Killing process group, since it hasn't exited after "
+                "10 seconds."
+            )
+            os.killpg(process.pid, signal.SIGKILL)
+        sleep(1)
+    return stdout, stderr, process.returncode

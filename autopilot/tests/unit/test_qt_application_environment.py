@@ -19,7 +19,7 @@
 
 from testtools import TestCase
 
-from autopilot.application.environment._qt import QtApplicationEnvironment
+from autopilot.application import QtApplicationEnvironment
 
 
 class QtApplicationEnvironmentTests(TestCase):

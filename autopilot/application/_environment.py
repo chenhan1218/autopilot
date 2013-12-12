@@ -20,8 +20,10 @@
 """Base package or application environment setup."""
 
 import fixtures
+import os
 import subprocess
 
+from autopilot.application._launcher import _set_upstart_env, _unset_upstart_env
 
 class ApplicationEnvironment(fixtures.Fixture):
 
@@ -99,3 +101,49 @@ def _get_app_env_from_string_hint(hint):
     elif hint == 'gtk':
         return GtkApplicationEnvironment()
     return None
+
+
+class GtkApplicationEnvironment(ApplicationEnvironment):
+
+    def prepare_environment(self, app_path, arguments):
+        """Prepare the application, or environment to launch with
+        autopilot-support.
+
+        """
+        modules = os.getenv('GTK_MODULES', '').split(':')
+        if 'autopilot' not in modules:
+            modules.append('autopilot')
+            os.putenv('GTK_MODULES', ':'.join(modules))
+
+        return app_path, arguments
+
+
+class QtApplicationEnvironment(ApplicationEnvironment):
+
+    def prepare_environment(self, app_path, arguments):
+        """Prepare the application, or environment to launch with
+        autopilot-support.
+
+        """
+        if '-testability' not in arguments:
+            insert_pos = 0
+            for pos, argument in enumerate(arguments):
+                if argument.startswith("-qt="):
+                    insert_pos = pos + 1
+                    break
+            arguments.insert(insert_pos, '-testability')
+
+        return app_path, arguments
+
+
+class UpstartApplicationEnvironment(ApplicationEnvironment):
+
+    def prepare_environment(self, app_path, arguments):
+        """Prepare the application, or environment to launch with
+        autopilot-support.
+
+        """
+        _set_upstart_env("QT_LOAD_TESTABILITY", 1)
+        self.addCleanup(_unset_upstart_env, "QT_LOAD_TESTABILITY")
+
+        return app_path, arguments

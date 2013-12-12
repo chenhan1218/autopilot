@@ -44,12 +44,11 @@ class ClickApplicationLauncher(ApplicationLauncher):
         self.package_id = package_id
         self.app_id = _get_click_app_id(package_id, self.app_name)
 
-        self._app_env = UpstartApplicationEnvironment()
+        self._app_env = self.useFixture(UpstartApplicationEnvironment())
 
         self.emulator_base = kwargs.pop('emulator_base', None)
 
     def launch(self, *arguments):
-        # _set_upstart_env("QT_LOAD_TESTABILITY", 1)
         self._app_env._app_env.prepare_environment(
             self.app_path,
             arguments,

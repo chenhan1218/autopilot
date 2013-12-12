@@ -28,7 +28,7 @@ class ApplicationLauncherTests(TestCase):
     @patch(
         'autopilot.application.launcher._traditional.NormalApplicationLauncher'
     )
-    def test_create_returns_gtk_launcher(self, patched_launcher):
+    def test_create_returns_traditional_launcher(self, patched_launcher):
         app_launcher = ApplicationLauncher.create(application="fakeapp")
         self.assertEqual(patched_launcher(), app_launcher)
 
@@ -40,3 +40,4 @@ class ApplicationLauncherTests(TestCase):
             package_id="com.autopilot.fake"
         )
         self.assertEqual(patched_launcher(), app_launcher)
+

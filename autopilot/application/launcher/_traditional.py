@@ -41,7 +41,9 @@ class NormalApplicationLauncher(ApplicationLauncher):
         super(NormalApplicationLauncher, self).__init__()
         kwargs['application'] = application
         self.app_path = application       # Need to sort this out, application or application path. . .
-        self._app_env = ApplicationEnvironment.create(**kwargs)
+        self._app_env = self.useFixture(
+            ApplicationEnvironment.create(**kwargs)
+        )
 
         self.cwd = kwargs.pop('launch_dir', None)
         self.capture_output = kwargs.pop('capture_output', True)

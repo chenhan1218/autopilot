@@ -82,6 +82,7 @@ class UpstartApplicationEnvironment(ApplicationEnvironment):
 
         return app_path, arguments
 
+
 def _set_upstart_env(key, value):
     subprocess.call([
         "/sbin/initctl",

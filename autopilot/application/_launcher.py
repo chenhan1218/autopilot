@@ -29,12 +29,7 @@ import os
 import subprocess
 import psutil
 
-from autopilot.application._environment import (
-    ApplicationEnvironment,
-    UpstartApplicationEnvironment,
-)
-
-from autopilot.introspection import get_proxy_object_for_existing_process
+from autopilot.application._environment import UpstartApplicationEnvironment
 
 
 logger = logging.getLogger(__name__)
@@ -53,34 +48,9 @@ class ApplicationLauncher(fixtures.Fixture):
         raise NotImplementedError("Sub-classes must implement this method.")
 
 
-def _is_process_running(pid):
-    return psutil.pid_exists(pid)
-
-
-def launch_process(application, args, capture_output, **kwargs):
-    """Launch an autopilot-enabled process and return the process object."""
-    commandline = [application]
-    commandline.extend(args)
-    logger.info("Launching process: %r", commandline)
-    cap_mode = None
-    if capture_output:
-        cap_mode = subprocess.PIPE
-    process = subprocess.Popen(
-        commandline,
-        stdin=subprocess.PIPE,
-        stdout=cap_mode,
-        stderr=cap_mode,
-        close_fds=True,
-        preexec_fn=os.setsid,
-        universal_newlines=True,
-        **kwargs
-    )
-    return process
-
-
 class ClickApplicationLauncher(ApplicationLauncher):
     def __init__(self, case_addDetail, package_id, app_name, **kwargs):
-        super(ClickApplication, self).__init__(case_addDetail)
+        super(ClickApplicationLauncher, self).__init__(case_addDetail)
         self.package_id = package_id
         self.app_name = app_name
 
@@ -120,6 +90,74 @@ class ClickApplicationLauncher(ApplicationLauncher):
                 content_from_file(log_path)
             )
         )
+
+
+class NormalApplicationLauncher(ApplicationLauncher):
+    def __init__(self, case_addDetail, application, **kwargs):
+        super(NormalApplicationLauncher, self).__init__(case_addDetail)
+        self.application = application
+        self.app_path = _get_application_path(application)
+        self.app_hint = kwargs.pop('app_type', None)
+        self.cwd = kwargs.pop('launch_dir', None)
+        self.capture_output = kwargs.pop('capture_output', True)
+
+        self.dbus_bus = kwargs.pop('dbus_bus', 'session')
+        self.emulator_base = kwargs.pop('emulator_base', None)
+
+        _raise_if_not_empty(kwargs)
+
+    def launch(self, arguments):
+        app_env = self.useFixture(
+            _get_application_environment(self.app_hint, self.app_path)
+        )
+        self.app_path, arguments = app_env.prepare_environment(
+            self.app_path,
+            arguments,
+        )
+        self._process = launch_process(
+            self.app_path,
+            arguments,
+            self.capture_output,
+            cwd=self.cwd,
+        )
+
+        self.addCleanup(self._kill_process_and_attach_logs, self._process)
+
+        return self._process.pid
+
+    def _kill_process_and_attach_logs(self, process):
+        stdout, stderr, return_code = _kill_process(process)
+        self.case_addDetail(
+            'process-return-code',
+            text_content(str(return_code))
+        )
+        self.case_addDetail('process-stdout', text_content(stdout))
+        self.case_addDetail('process-stderr', text_content(stderr))
+
+
+def launch_process(application, args, capture_output, **kwargs):
+    """Launch an autopilot-enabled process and return the process object."""
+    commandline = [application]
+    commandline.extend(args)
+    logger.info("Launching process: %r", commandline)
+    cap_mode = None
+    if capture_output:
+        cap_mode = subprocess.PIPE
+    process = subprocess.Popen(
+        commandline,
+        stdin=subprocess.PIPE,
+        stdout=cap_mode,
+        stderr=cap_mode,
+        close_fds=True,
+        preexec_fn=os.setsid,
+        universal_newlines=True,
+        **kwargs
+    )
+    return process
+
+
+def _is_process_running(pid):
+    return psutil.pid_exists(pid)
 
 
 def _launch_click_app(app_id):
@@ -208,53 +246,10 @@ def _kill_pid(pid):
         sleep(1)
 
 
-class NormalApplicationLauncher(ApplicationLauncher):
-    def __init__(self, case_addDetail, application, **kwargs):
-        super(NormalApplicationLauncher, self).__init__(case_addDetail)
-        self.application = application
-        self.app_path =  _get_application_path(application)
-        self.app_hint = kwargs.pop('app_type', None)
-        self.cwd = kwargs.pop('launch_dir', None)
-        self.capture_output = kwargs.pop('capture_output', True)
-
-        self.dbus_bus = kwargs.pop('dbus_bus', 'session')
-        self.emulator_base = kwargs.pop('emulator_base', None)
-
-        _raise_if_not_empty(kwargs)
-
-    def launch(self, arguments):
-        app_env = self.useFixture(
-            _get_application_environment(self.app_hint, self.app_path)
-        )
-        self.app_path, arguments = app_env.prepare_environment(
-            self.app_path,
-            arguments,
-        )
-        self._process = launch_process(
-            self.app_path,
-            arguments,
-            self.capture_output,
-            cwd=self.cwd,
-        )
-
-        self.addCleanup(self._kill_process_and_attach_logs, self._process)
-
-        return self._process.pid
-
-    def _kill_process_and_attach_logs(self, process):
-        stdout, stderr, return_code = _kill_process(process)
-        self.case_addDetail(
-            'process-return-code',
-            text_content(str(return_code))
-        )
-        self.case_addDetail('process-stdout', text_content(stdout))
-        self.case_addDetail('process-stderr', text_content(stderr))
-
-
 def _get_application_environment(app_hint, app_path):
         if app_hint is not None:
             return _get_app_env_from_string_hint(app_hint)
-        elif application is not None:
+        elif app_path is not None:
             return _get_app_env(app_path)
 
 

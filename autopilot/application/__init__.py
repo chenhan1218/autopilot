@@ -19,13 +19,13 @@
 
 """Base package for application launching and environment management."""
 
-from _launcher import (
+from autopilot.application._launcher import (
     ApplicationLauncher,
     ClickApplicationLauncher,
     NormalApplicationLauncher
 )
 
-from _environment import (
+from autopilot.application_environment import (
     ApplicationEnvironment,
     GtkApplicationEnvironment,
     QtApplicationEnvironment,
@@ -33,12 +33,11 @@ from _environment import (
 )
 
 __all__ = [
+    'ApplicationEnvironment',
     'ApplicationLauncher',
     'ClickApplicationLauncher',
-    'NormalApplicationLauncher',
-
-    'ApplicationEnvironment',
     'GtkApplicationEnvironment',
+    'NormalApplicationLauncher',
     'QtApplicationEnvironment',
     'UpstartApplicationEnvironment',
 ]

@@ -25,19 +25,8 @@ from autopilot.application._launcher import (
     NormalApplicationLauncher
 )
 
-from autopilot.application._environment import (
-    ApplicationEnvironment,
-    GtkApplicationEnvironment,
-    QtApplicationEnvironment,
-    UpstartApplicationEnvironment,
-)
-
 __all__ = [
-    'ApplicationEnvironment',
     'ApplicationLauncher',
     'ClickApplicationLauncher',
-    'GtkApplicationEnvironment',
     'NormalApplicationLauncher',
-    'QtApplicationEnvironment',
-    'UpstartApplicationEnvironment',
 ]

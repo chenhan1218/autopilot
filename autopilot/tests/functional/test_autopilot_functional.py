@@ -152,7 +152,7 @@ Loading tests from: %s
 
     def test_list_nonexistent_test_returns_nonzero(self):
         code, output, error = self.run_autopilot_list(list_spec='1234')
-        expected_msg = "could not import package 1234: No module named 1234"
+        expected_msg = "could not import package 1234: No module"
         expected_result = "0 total tests"
         self.assertThat(code, Equals(1))
         self.assertThat(output, Contains(expected_msg))

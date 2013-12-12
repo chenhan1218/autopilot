@@ -23,6 +23,7 @@ from __future__ import absolute_import
 from codecs import open
 import os
 import os.path
+import sys
 import logging
 from shutil import rmtree
 import subprocess
@@ -93,21 +94,16 @@ class AutopilotRunTestBase(AutopilotTestCase):
         environment_patch = dict(DISPLAY=':0')
         if not os.getcwd().startswith('/usr/'):
             environment_patch['PYTHONPATH'] = ap_base_path
-        bin_path = os.path.join(ap_base_path, 'bin', 'autopilot')
-        if not os.path.exists(bin_path):
-            bin_path = subprocess.check_output(['which', 'autopilot']).strip()
-            logger.info(
-                "Not running from source, setting bin_path to %s", bin_path)
+        arg = [sys.executable, '-m', 'autopilot.run']
 
         environ = os.environ
         environ.update(environment_patch)
 
         logger.info("Starting autopilot command with:")
-        logger.info("Autopilot command = %s", bin_path)
+        logger.info("Autopilot command = %s", ' '.join(arg))
         logger.info("Arguments = %s", arguments)
         logger.info("CWD = %r", self.base_path)
 
-        arg = [bin_path]
         arg.extend(arguments)
         process = subprocess.Popen(
             arg,

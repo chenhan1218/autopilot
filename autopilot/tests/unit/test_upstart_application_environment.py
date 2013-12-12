@@ -20,7 +20,7 @@
 from mock import patch
 from testtools import TestCase
 
-from autopilot.application.environment._upstart import (
+from autopilot.application._environment import (
     UpstartApplicationEnvironment,
 )
 

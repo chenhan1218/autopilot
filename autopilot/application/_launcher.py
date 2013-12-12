@@ -29,9 +29,9 @@ import os
 import subprocess
 import psutil
 
-from autopilot.application.environment import ApplicationEnvironment
-from autopilot.application.environment._upstart import (
-    UpstartApplicationEnvironment
+from autopilot.application._environment import (
+    ApplicationEnvironment,
+    UpstartApplicationEnvironment,
 )
 
 from autopilot.introspection import get_proxy_object_for_existing_process
@@ -45,32 +45,9 @@ class ApplicationLauncher(fixtures.Fixture):
     introspection enabled.
 
     """
-
-    @staticmethod
-    def create(case_addDetail, **kwargs):
-        """
-        kwargs must contain one of either:
-          *application* - The application that you want to launch
-          *package_id* - The Upstart/Click package you want to launch
-
-        All other kwargs will be passed on to the ApplicationLauncher.
-        """
-        application = kwargs.pop('application', None)
-        package_id = kwargs.pop('package_id', None)
-        if application is not None:
-            return NormalApplicationLauncher(
-                case_addDetail,
-                application,
-                **kwargs
-            )
-        elif package_id is not None:
-            return ClickApplicationLauncher(
-                case_addDetail,
-                package_id,
-                **kwargs
-            )
-        else:
-            raise ValueError("Unsure what application type to launch")
+    def __init__(self, case_addDetail):
+        self.case_addDetail = case_addDetail
+        super(ApplicationLauncher, self).__init__()
 
     def launch(self, *arguments):
         raise NotImplementedError("Sub-classes must implement this method.")
@@ -101,40 +78,27 @@ def launch_process(application, args, capture_output, **kwargs):
     return process
 
 
-def _set_upstart_env(key, value):
-    subprocess.call([
-        "/sbin/initctl",
-        "set-env",
-        "{key}={value}".format(key=key, value=value),
-    ])
-
-
-def _unset_upstart_env(key):
-    subprocess.call([
-        "/sbin/initctl",
-        "unset-env",
-        "QT_LOAD_TESTABILITY",
-    ])
-
-
 class ClickApplicationLauncher(ApplicationLauncher):
-    def __init__(self, case_addDetail, package_id, **kwargs):
-        self.case_addDetail = case_addDetail
-        self.app_name = kwargs.pop('app_name', None)
+    def __init__(self, case_addDetail, package_id, app_name, **kwargs):
+        super(ClickApplication, self).__init__(case_addDetail)
         self.package_id = package_id
+        self.app_name = app_name
+
         self.app_id = _get_click_app_id(package_id, self.app_name)
 
-        self._app_env = self.useFixture(UpstartApplicationEnvironment())
-
         self.emulator_base = kwargs.pop('emulator_base', None)
+        self.dbus_bus = kwargs.pop('dbus_bus', 'session')
+
+        _raise_if_not_empty(kwargs)
 
     def launch(self, *arguments):
-        self._app_env._app_env.prepare_environment(
+        _app_env = self.useFixture(UpstartApplicationEnvironment())
+        _app_env._app_env.prepare_environment(
             self.app_path,
             arguments,
         )
 
-        self._attach_logs()
+        self._attach_application_logs_at_cleanup()
         pid = _launch_click_app(self.app_id)
         self.addCleanup(self._kill_pid, pid)
 
@@ -144,18 +108,9 @@ class ClickApplicationLauncher(ApplicationLauncher):
             pid
         )
 
-        # reset the upstart env, and hope no one else launched,
-        # or they'll have introspection enabled as well,
-        # although this isn't the worth thing in the world.
-        # _unset_upstart_env("QT_LOAD_TESTABILITY")
+        return pid
 
-        proxy = get_proxy_object_for_existing_process(
-            pid=pid,
-            emulator_base=self.emulator_base
-        )
-        return proxy
-
-    def _attach_logs(self):
+    def _attach_application_logs_at_cleanup(self):
         log_dir = os.path.expanduser('~/.cache/upstart/')
         log_name = 'application-click-{}.log'.format(self.app_id)
         log_path = os.path.join(log_dir, log_name)
@@ -255,27 +210,23 @@ def _kill_pid(pid):
 
 class NormalApplicationLauncher(ApplicationLauncher):
     def __init__(self, case_addDetail, application, **kwargs):
-        super(NormalApplicationLauncher, self).__init__()
-        self.case_addDetail = case_addDetail
-
-        # self.app_path = app_path
-        # kwargs['app_path'] = app_path
-        kwargs['application'] = application
-        self.app_path = application       # Need to sort this out, application or application path. . .
-
-        self.kwargs = kwargs
-
+        super(NormalApplicationLauncher, self).__init__(case_addDetail)
+        self.application = application
+        self.app_path =  _get_application_path(application)
+        self.app_hint = kwargs.pop('app_type', None)
         self.cwd = kwargs.pop('launch_dir', None)
         self.capture_output = kwargs.pop('capture_output', True)
 
-    def setUp(self):
-        super(NormalApplicationLauncher, self).setUp()
-        self._app_env = self.useFixture(
-            ApplicationEnvironment.create(**self.kwargs)
-        )
+        self.dbus_bus = kwargs.pop('dbus_bus', 'session')
+        self.emulator_base = kwargs.pop('emulator_base', None)
+
+        _raise_if_not_empty(kwargs)
 
     def launch(self, arguments):
-        app_path, arguments = self._app_env.prepare_environment(
+        app_env = self.useFixture(
+            _get_application_environment(self.app_hint, self.app_path)
+        )
+        self.app_path, arguments = app_env.prepare_environment(
             self.app_path,
             arguments,
         )
@@ -287,7 +238,8 @@ class NormalApplicationLauncher(ApplicationLauncher):
         )
 
         self.addCleanup(self._kill_process_and_attach_logs, self._process)
-        # return get_autopilot_proxy_object_for_process({})
+
+        return self._process.pid
 
     def _kill_process_and_attach_logs(self, process):
         stdout, stderr, return_code = _kill_process(process)
@@ -297,6 +249,63 @@ class NormalApplicationLauncher(ApplicationLauncher):
         )
         self.case_addDetail('process-stdout', text_content(stdout))
         self.case_addDetail('process-stderr', text_content(stderr))
+
+
+def _get_application_environment(app_hint, app_path):
+        if app_hint is not None:
+            return _get_app_env_from_string_hint(app_hint)
+        elif application is not None:
+            return _get_app_env(app_path)
+
+
+def _get_app_env(app_path):
+    """Return an instance of :class:`ApplicationLauncher` that knows how to
+    launch the application at 'app_path'.
+    """
+    # TODO: this is a teeny bit hacky - we call ldd to check whether this
+    # application links to certain library. We're assuming that linking to
+    # libQt* or libGtk* means the application is introspectable. This excludes
+    # any non-dynamically linked executables, which we may need to fix further
+    # down the line.
+    from autopilot.application._environment import (
+        GtkApplicationEnvironment,
+        QtApplicationEnvironment,
+    )
+
+    try:
+        ldd_output = subprocess.check_output(
+            ["ldd", app_path],
+            universal_newlines=True
+        ).strip().lower()
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(e)
+    if 'libqtcore' in ldd_output or 'libqt5core' in ldd_output:
+        return QtApplicationEnvironment()
+    elif 'libgtk' in ldd_output:
+        return GtkApplicationEnvironment()
+    return None
+
+
+def _get_application_path(application):
+    try:
+        return subprocess.check_output(
+            ['which', application],
+            universal_newlines=True
+        ).strip()
+    except subprocess.CalledProcessError:
+        return ""
+
+
+def _get_app_env_from_string_hint(hint):
+    from autopilot.application.environment import QtApplicationEnvironment
+    from autopilot.application.environment import GtkApplicationEnvironment
+
+    hint = hint.lower()
+    if hint == 'qt':
+        return QtApplicationEnvironment()
+    elif hint == 'gtk':
+        return GtkApplicationEnvironment()
+    return None
 
 
 def _kill_process(process):
@@ -323,3 +332,12 @@ def _kill_process(process):
             os.killpg(process.pid, signal.SIGKILL)
         sleep(1)
     return stdout, stderr, process.returncode
+
+
+def _raise_if_not_empty(kwargs):
+    if kwargs:
+        arglist = [repr(k) for k in kwargs.keys()]
+        arglist.sort()
+        raise ValueError(
+            "Unknown keyword arguments: %s." % (', '.join(arglist))
+        )

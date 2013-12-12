@@ -25,7 +25,7 @@ from autopilot.application._launcher import (
     NormalApplicationLauncher
 )
 
-from autopilot.application_environment import (
+from autopilot.application._environment import (
     ApplicationEnvironment,
     GtkApplicationEnvironment,
     QtApplicationEnvironment,

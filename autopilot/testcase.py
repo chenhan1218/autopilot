@@ -55,7 +55,7 @@ from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import Equals
 
-from autopilot.application.launcher import ApplicationLauncher
+from autopilot.application import ApplicationLauncher
 from autopilot.process import ProcessManager
 from autopilot.input import Keyboard, Mouse
 from autopilot.introspection import (
@@ -172,15 +172,27 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         return self._display
 
     def launch_test_application(self, application, *arguments, **kwargs):
-        kwargs['application'] = application
-        launcher = self.useFixture(ApplicationLauncher.create(**kwargs))
-        return launcher.launch(arguments)
+        launcher = self.useFixture(
+            NormalApplicationLauncher(application, **kwargs)
+        )
+
+        return _launch_test_application(launcher, *arguments, **kwargs)
 
     def launch_click_package(self, package_id, app_name=None, **kwargs):
-        kwargs['package_id'] = package_id
-        kwargs['app_name'] = app_name
-        launcher = self.useFixture(ApplicationLauncher.create(**kwargs))
-        return launcher.launch()
+        launcher = self.useFixture(
+            ClickApplicationLauncher(package_id, app_name, **kwargs)
+        )
+        return _launch_test_application(launcher, [], **kwargs)
+
+    def _launch_test_application(launcher_instance, arguments, **kwargs):
+        pid = launcher.launch(arguments)
+        process = getattr(launcher_instance, 'process', None)
+
+        return  get_proxy_object_for_existing_process(
+            pid=pid,
+            dbus_bus=launcher.dbus_bus,
+            emulator_base=launcher.emulator_base,
+        )
 
     def _compare_system_with_app_snapshot(self):
         """Compare the currently running application with the last snapshot.

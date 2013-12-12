@@ -146,8 +146,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         self._display = None
 
         try:
-            self._app_snapshot = \
-                self.process_manager.get_running_applications()
+            self._app_snapshot = _get_process_snapshot()
             self.addCleanup(self._compare_system_with_app_snapshot)
         except RuntimeError:
             logger.warning(
@@ -391,22 +390,13 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         applications currently running that were not running when the snapshot
         was taken.
         """
-        if self._app_snapshot is None:
-            raise RuntimeError("No snapshot to match against.")
-
-        new_apps = []
-        for i in range(10):
-            current_apps = self.process_manager.get_running_applications()
-            new_apps = list(filter(
-                lambda i: i not in self._app_snapshot, current_apps))
-            if not new_apps:
-                self._app_snapshot = None
-                return
-            sleep(1)
-        self._app_snapshot = None
-        raise AssertionError(
-            "The following apps were started during the test and not closed: "
-            "%r", new_apps)
+        try:
+            _compare_system_with_process_snapshot(
+                _get_process_snapshot,
+                self._app_snapshot
+            )
+        finally:
+            self._app_snapshot = None
 
     def patch_environment(self, key, value):
         """Patch the process environment, setting *key* with value *value*.
@@ -598,3 +588,37 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
 def _is_process_running(pid):
     return psutil.pid_exists(pid)
+
+
+def _get_process_snapshot():
+    """Return a snapshot of running processes on the system.
+
+    :returns: a list of running processes.
+    :raises RuntimeError: if the process manager is unsavailble on this
+        platform.
+
+    """
+    return ProcessManager.create().get_running_applications()
+
+
+def _compare_system_with_process_snapshot(snapshot_fn, old_snapshot):
+    """Compares an existing process snapshot with current running processes.
+
+    :param snapshot_fn: A callable that returns the current running process
+        list.
+    :param old_snapshot: A list of processes to compare against.
+    :raises AssertionError: If, after 10 seconds, there are still running
+        processes that were not present in ``old_snapshot``.
+
+    """
+    new_apps = []
+    for i in range(10):
+        current_apps = snapshot_fn()
+        new_apps = list(filter(
+            lambda i: i not in old_snapshot, current_apps))
+        if not new_apps:
+            return
+        sleep(1)
+    raise AssertionError(
+        "The following apps were started during the test and not closed: "
+        "%r" % new_apps)

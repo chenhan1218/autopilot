@@ -39,7 +39,8 @@ logger = logging.getLogger(__name__)
 
 
 class ClickApplicationLauncher(ApplicationLauncher):
-    def __init__(self, package_id, **kwargs):
+    def __init__(self, case_addDetail, package_id, **kwargs):
+        self.case_addDetail = case_addDetail
         self.app_name = kwargs.pop('app_name', None)
         self.package_id = package_id
         self.app_id = _get_click_app_id(package_id, self.app_name)
@@ -80,7 +81,7 @@ class ClickApplicationLauncher(ApplicationLauncher):
         log_name = 'application-click-{}.log'.format(self.app_id)
         log_path = os.path.join(log_dir, log_name)
         self.addCleanup(
-            lambda: self.addDetail(
+            lambda: self.case_addDetail(
                 "Application Log",
                 content_from_file(log_path)
             )

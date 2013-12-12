@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from testtools.content import Content, ContentType
+from testtools.content import text_content
 import logging
 import os
 import signal
@@ -35,30 +35,25 @@ logger = logging.getLogger(__name__)
 
 
 class NormalApplicationLauncher(ApplicationLauncher):
-    def __init__(self, application, **kwargs):
+    def __init__(self, case_addDetail, application, **kwargs):
+        super(NormalApplicationLauncher, self).__init__()
+        self.case_addDetail = case_addDetail
+
         # self.app_path = app_path
         # kwargs['app_path'] = app_path
-        super(NormalApplicationLauncher, self).__init__()
         kwargs['application'] = application
         self.app_path = application       # Need to sort this out, application or application path. . .
-        self._app_env = self.useFixture(
-            ApplicationEnvironment.create(**kwargs)
-        )
+
+        self.kwargs = kwargs
 
         self.cwd = kwargs.pop('launch_dir', None)
         self.capture_output = kwargs.pop('capture_output', True)
 
-        self._return_code = None
-        self._stdout = ""
-        self._stderr = ""
-
     def setUp(self):
         super(NormalApplicationLauncher, self).setUp()
-
-        content_type = ContentType('text', 'plain')
-        self.addDetail('process-return-code', Content(content_type, lambda: str(self._return_code)))
-        self.addDetail('process-stdout', Content(content_type, lambda: self._stdout))
-        self.addDetail('process-stderr', Content(content_type, lambda: self._stderr))
+        self._app_env = self.useFixture(
+            ApplicationEnvironment.create(**self.kwargs)
+        )
 
     def launch(self, arguments):
         app_path, arguments = self._app_env.prepare_environment(
@@ -72,20 +67,14 @@ class NormalApplicationLauncher(ApplicationLauncher):
             cwd = self.cwd,
         )
 
-        # self.addCleanup(self._kill_process_and_attach_logs, self._process)
+        self.addCleanup(self._kill_process_and_attach_logs, self._process)
         # return get_autopilot_proxy_object_for_process({})
 
-    def cleanUp(self):
-        print ">> Cleanup happening"
-        import ipdb; ipdb.set_trace()
-        super(NormalApplicationLauncher, self).cleanUp()
-        self._stdout, self._stderr, self._return_code = _kill_process(self._process)
-
     def _kill_process_and_attach_logs(self, process):
-        self._stdout, self._stderr, self._return_code = _kill_process(process)
-        # self.addDetail('process-return-code', text_content(str(return_code)))
-        # self.addDetail('process-stdout', text_content(stdout))
-        # self.addDetail('process-stderr', text_content(stderr))
+        stdout, stderr, return_code = _kill_process(process)
+        self.case_addDetail('process-return-code', text_content(str(return_code)))
+        self.case_addDetail('process-stdout', text_content(stdout))
+        self.case_addDetail('process-stderr', text_content(stderr))
 
 
 def _kill_process(process):

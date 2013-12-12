@@ -23,7 +23,9 @@ from testtools.content import text_content
 
 class InitialTests(AutopilotTestCase):
     def test_some_things(self):
-        launcher = self.useFixture(ApplicationLauncher.create(application='gedit'))
+        launcher = self.useFixture(
+            ApplicationLauncher.create(self.addDetail, application='gedit')
+        )
         launcher.launch([])
         self.assertTrue(False)
 

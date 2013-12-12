@@ -35,7 +35,7 @@ class ApplicationLauncher(fixtures.Fixture):
     """
 
     @staticmethod
-    def create(**kwargs):
+    def create(case_addDetail, **kwargs):
         """
         kwargs must contain one of either:
           *application* - The application that you want to launch
@@ -44,14 +44,27 @@ class ApplicationLauncher(fixtures.Fixture):
         All other kwargs will be passed on to the ApplicationLauncher.
         """
 
-        from autopilot.application.launcher._traditional import NormalApplicationLauncher
-        from autopilot.application.launcher._click import ClickApplicationLauncher
+        from autopilot.application.launcher._traditional import (
+            NormalApplicationLauncher
+        )
+        from autopilot.application.launcher._click import (
+            ClickApplicationLauncher
+        )
+
         application = kwargs.pop('application', None)
         package_id = kwargs.pop('package_id', None)
         if application is not None:
-            return NormalApplicationLauncher(application, **kwargs)
+            return NormalApplicationLauncher(
+                case_addDetail,
+                application,
+                **kwargs
+            )
         elif package_id is not None:
-            return ClickApplicationLauncher(package_id, **kwargs)
+            return ClickApplicationLauncher(
+                case_addDetail,
+                package_id,
+                **kwargs
+            )
         else:
             raise ValueError("Unsure what application type to launch")
 

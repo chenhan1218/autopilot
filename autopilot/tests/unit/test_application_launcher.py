@@ -18,7 +18,7 @@
 #
 
 from testtools import TestCase
-from mock import patch
+from mock import Mock, patch
 
 from autopilot.application.launcher import ApplicationLauncher
 
@@ -29,7 +29,10 @@ class ApplicationLauncherTests(TestCase):
         'autopilot.application.launcher._traditional.NormalApplicationLauncher'
     )
     def test_create_returns_traditional_launcher(self, patched_launcher):
-        app_launcher = ApplicationLauncher.create(application="fakeapp")
+        app_launcher = ApplicationLauncher.create(
+            Mock(),
+            application="fakeapp"
+        )
         self.assertEqual(patched_launcher(), app_launcher)
 
     @patch(
@@ -37,6 +40,7 @@ class ApplicationLauncherTests(TestCase):
     )
     def test_create_returns_click_launcher(self, patched_launcher):
         app_launcher = ApplicationLauncher.create(
+            Mock(),
             package_id="com.autopilot.fake"
         )
         self.assertEqual(patched_launcher(), app_launcher)

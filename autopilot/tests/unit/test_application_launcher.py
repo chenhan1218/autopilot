@@ -21,17 +21,53 @@ from testtools import TestCase
 from testtools.matchers import Equals, Not, Raises, raises
 from mock import Mock, patch
 
-from autopilot.application import ClickApplicationLauncher
+from autopilot.application import (
+    ClickApplicationLauncher,
+    NormalApplicationLauncher,
+)
+
 from autopilot.application._launcher import (
+    ApplicationLauncher,
+    _get_app_env_from_string_hint,
+    _get_application_environment,
     _get_click_app_id,
     _get_click_app_pid,
+    _get_click_app_status,
+    _launch_click_app,
     _raise_if_not_empty,
-    _get_click_app_status
 )
 
 
 class ApplicationLauncherTests(TestCase):
-    pass
+    def test_raises_on_attempt_to_use_launch(self):
+        self.assertThat(
+            lambda: ApplicationLauncher(Mock).launch(),
+            raises(
+                NotImplementedError("Sub-classes must implement this method.")
+            )
+        )
+
+
+class NormalApplicationLauncherTests(TestCase):
+
+    def test_consumes_all_known_kwargs(self):
+        test_kwargs = dict(
+            app_type=True,
+            launch_dir=True,
+            capture_output=True,
+            dbus_bus=True,
+            emulator_base=True
+        )
+        self.assertThat(
+            lambda: NormalApplicationLauncher(Mock(), **test_kwargs),
+            Not(Raises())
+        )
+
+    def test_raises_value_error_on_unknown_kwargs(self):
+        self.assertThat(
+            lambda: NormalApplicationLauncher(Mock(), unknown=True),
+            raises(ValueError("Unknown keyword arguments: 'unknown'."))
+        )
 
 
 class ClickApplicationLauncherTests(TestCase):
@@ -112,3 +148,40 @@ class ApplicationLauncherInternalTests(TestCase):
             Equals(1234)
         )
 
+    @patch('autopilot.application._launcher.subprocess')
+    def test_launch_click_app(self, patched_subproc):
+        with patch(
+            'autopilot.application._launcher._get_click_app_pid'
+        ) as patched_get_click_app_pid:
+            patched_subproc.check_output.return_value = True
+            _launch_click_app("app_id")
+            patched_subproc.check_output.assert_called_with_args(
+                "/sbin/start",
+                "application",
+                "APP_ID=app_id",
+            )
+            patched_get_click_app_pid.called_with_args("app_id")
+
+    @patch('autopilot.application._launcher.QtApplicationEnvironment')
+    def test_get_app_env_from_string_hint_returns_qt_env(self, qt_appenv):
+        self.assertThat(
+            _get_app_env_from_string_hint('QT'),
+            Equals(qt_appenv())
+        )
+
+    @patch('autopilot.application._launcher.GtkApplicationEnvironment')
+    def test_get_app_env_from_string_hint_returns_gtk_env(self, gtk_appenv):
+        self.assertThat(
+            _get_app_env_from_string_hint('GTK'),
+            Equals(gtk_appenv())
+        )
+
+    @patch('autopilot.application._launcher._get_app_env_from_string_hint')
+    def test_get_application_environment_uses_app_hint(self, from_hint):
+        _get_application_environment("app_hint", None),
+        from_hint.called_with_args("app_hint")
+
+    @patch('autopilot.application._launcher.get_application_launcher_wrapper')
+    def test_get_application_environment_uses_app_path(self, patched_wrapper):
+        _get_application_environment(None, "app_path"),
+        patched_wrapper.called_with_args("app_path")

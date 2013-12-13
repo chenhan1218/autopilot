@@ -246,7 +246,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         """
         launcher = self.useFixture(
-            NormalApplicationLauncher(application, **kwargs)
+            NormalApplicationLauncher(self.addDetail, **kwargs)
         )
 
         return _launch_test_application(launcher, *arguments, **kwargs)
@@ -281,19 +281,10 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         """
         launcher = self.useFixture(
-            ClickApplicationLauncher(package_id, app_name, **kwargs)
+            ClickApplicationLauncher(self.addDetail, **kwargs)
         )
         return _launch_test_application(launcher, [], **kwargs)
 
-    def _launch_test_application(self, launcher_instance, arguments, **kwargs):
-        pid = launcher.launch(arguments)
-        process = getattr(launcher_instance, 'process', None)
-
-        return  get_proxy_object_for_existing_process(
-            pid=pid,
-            dbus_bus=launcher.dbus_bus,
-            emulator_base=launcher.emulator_base,
-        )
 
     def _compare_system_with_app_snapshot(self):
         """Compare the currently running application with the last snapshot.
@@ -455,3 +446,16 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         """
         # default implementation is in autopilot.application:
         return get_application_launcher_wrapper(app_path)
+
+
+# Wrapper function tying the newer ApplicationLauncher behaviour with the
+# previous (to be depreciated) behaviour
+def _launch_test_application(launcher_instance, arguments, **kwargs):
+    pid = launcher.launch(arguments)
+    process = getattr(launcher_instance, 'process', None)
+
+    return get_proxy_object_for_existing_process(
+        pid=pid,
+        dbus_bus=launcher.dbus_bus,
+        emulator_base=launcher.emulator_base,
+    )

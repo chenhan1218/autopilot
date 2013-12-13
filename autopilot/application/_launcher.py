@@ -161,11 +161,11 @@ def _is_process_running(pid):
 
 
 def _launch_click_app(app_id):
-    _call_upstart_with_args(
+    subprocess.check_output([
         "/sbin/start",
         "application",
         "APP_ID={}".format(app_id),
-    )
+    ])
 
     return _get_click_app_pid(app_id)
 
@@ -253,18 +253,14 @@ def _kill_pid(pid):
         sleep(1)
 
 
-def get_application_launcher_wrapper(app_path):
-    return _get_app_env(app_path)
-
-
 def _get_application_environment(app_hint, app_path):
-        if app_hint is not None:
-            return _get_app_env_from_string_hint(app_hint)
-        elif app_path is not None:
-            return _get_app_env(app_path)
+    if app_hint is not None:
+        return _get_app_env_from_string_hint(app_hint)
+    elif app_path is not None:
+        return get_application_launcher_wrapper(app_path)
 
 
-def _get_app_env(app_path):
+def get_application_launcher_wrapper(app_path):
     """Return an instance of :class:`ApplicationLauncher` that knows how to
     launch the application at 'app_path'.
     """

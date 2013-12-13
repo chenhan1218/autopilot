@@ -18,13 +18,15 @@
 #
 
 from testtools import TestCase
-from testtools.matchers import Not, Raises, raises
+from testtools.matchers import Equals, Not, Raises, raises
 from mock import Mock, patch
 
 from autopilot.application import ClickApplicationLauncher
 from autopilot.application._launcher import (
     _get_click_app_id,
+    _get_click_app_pid,
     _raise_if_not_empty,
+    _get_click_app_status
 )
 
 
@@ -91,3 +93,22 @@ class ApplicationLauncherInternalTests(TestCase):
             lambda: _raise_if_not_empty(empty_dict),
             Not(Raises())
         )
+
+    @patch('autopilot.application._launcher._call_upstart_with_args')
+    def test_get_click_app_status(self, patched_call_upstart):
+        _get_click_app_status("app_id")
+        patched_call_upstart.called_with_args(
+            "status",
+            "application-click",
+            "APP_ID=app_id"
+        )
+
+    @patch('autopilot.application._launcher._get_click_app_status')
+    def test_get_click_app_pid(self, patched_app_status):
+        patched_app_status.return_value = "application-click"\
+            " (com.autopilot.testing.test_app_id) start/running, process 1234"
+        self.assertThat(
+            _get_click_app_pid("test_app_id"),
+            Equals(1234)
+        )
+

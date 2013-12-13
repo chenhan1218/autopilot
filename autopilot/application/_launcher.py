@@ -30,6 +30,7 @@ from time import sleep
 from testtools.content import content_from_file, text_content
 
 from autopilot.application._environment import (
+    _call_upstart_with_args,
     GtkApplicationEnvironment,
     QtApplicationEnvironment,
     UpstartApplicationEnvironment,
@@ -160,22 +161,21 @@ def _is_process_running(pid):
 
 
 def _launch_click_app(app_id):
-    subprocess.check_output([
+    _call_upstart_with_args(
         "/sbin/start",
         "application",
         "APP_ID={}".format(app_id),
-    ])
+    )
 
     return _get_click_app_pid(app_id)
 
 
 def _get_click_app_status(app_id):
-    subprocess.check_output([
-        "/sbin/initctl",
+    _call_upstart_with_args(
         "status",
         "application-click",
         "APP_ID={}".format(app_id)
-    ])
+    )
 
 
 def _get_click_application_log_content_object(app_id):

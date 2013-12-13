@@ -614,8 +614,12 @@ def _compare_system_with_process_snapshot(snapshot_fn, old_snapshot):
     new_apps = []
     for i in range(10):
         current_apps = snapshot_fn()
-        new_apps = list(filter(
-            lambda i: i not in old_snapshot, current_apps))
+        new_apps = list(
+            filter(
+                lambda i: i not in old_snapshot,
+                current_apps
+            )
+        )
         if not new_apps:
             return
         sleep(1)

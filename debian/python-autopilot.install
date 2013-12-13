@@ -3,6 +3,7 @@ usr/bin/autopilot /usr/bin/
 usr/bin/autopilot-sandbox-run /usr/bin/
 usr/lib/python2*/*/autopilot*.egg-info
 usr/lib/python2*/*/autopilot/*.py
+usr/lib/python2*/*/autopilot/application/*.py
 usr/lib/python2*/*/autopilot/display/*.py
 usr/lib/python2*/*/autopilot/input/*.py
 usr/lib/python2*/*/autopilot/introspection/*.py

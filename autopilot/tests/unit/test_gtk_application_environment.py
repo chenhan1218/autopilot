@@ -20,7 +20,7 @@
 from testtools import TestCase
 from mock import patch
 
-from autopilot.application import GtkApplicationEnvironment
+from autopilot.application._environment import GtkApplicationEnvironment
 
 
 class GtkApplicationEnvironmentTests(TestCase):

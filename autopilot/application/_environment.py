@@ -84,16 +84,15 @@ class UpstartApplicationEnvironment(ApplicationEnvironment):
 
 
 def _set_upstart_env(key, value):
-    subprocess.call([
-        "/sbin/initctl",
+    _call_upstart_with_args(
         "set-env",
-        "{key}={value}".format(key=key, value=value),
-    ])
+        "{key}={value}".format(key=key, value=value)
+    )
 
 
 def _unset_upstart_env(key):
-    subprocess.call([
-        "/sbin/initctl",
-        "unset-env",
-        "QT_LOAD_TESTABILITY",
-    ])
+    _call_upstart_with_args("unset-env", key)
+
+
+def _call_upstart_with_args(*arguments):
+    subprocess.call(["/sbin/initctl"] + list(arguments))

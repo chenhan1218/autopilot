@@ -34,13 +34,9 @@ class ApplicationLauncherTests(TestCase):
 
 class ClickApplicationLauncherTests(TestCase):
 
-    @patch(
-        'autopilot.application._launcher._get_click_app_id',
-        new=lambda *args: ""
-    )
     def test_raises_exception_on_unknown_kwargs(self):
         self.assertThat(
-            lambda: ClickApplicationLauncher(Mock(), "", "", unknown=True),
+            lambda: ClickApplicationLauncher(Mock(), unknown=True),
             raises(ValueError("Unknown keyword arguments: 'unknown'."))
         )
 

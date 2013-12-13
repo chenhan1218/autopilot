@@ -29,12 +29,11 @@ import signal
 from time import sleep
 from testtools.content import content_from_file, text_content
 
-from autopilot.application._environment import
 from autopilot.application._environment import (
-        GtkApplicationEnvironment,
-        QtApplicationEnvironment,
-        UpstartApplicationEnvironment,
-    )
+    GtkApplicationEnvironment,
+    QtApplicationEnvironment,
+    UpstartApplicationEnvironment,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -54,25 +53,25 @@ class ApplicationLauncher(fixtures.Fixture):
 
 
 class ClickApplicationLauncher(ApplicationLauncher):
-    def __init__(self, case_addDetail, package_id, app_name, **kwargs):
+    def __init__(self, case_addDetail, **kwargs):
         super(ClickApplicationLauncher, self).__init__(case_addDetail)
-
-        self.app_id = _get_click_app_id(package_id, app_name)
 
         self.emulator_base = kwargs.pop('emulator_base', None)
         self.dbus_bus = kwargs.pop('dbus_bus', 'session')
 
         _raise_if_not_empty(kwargs)
 
-    def launch(self, *arguments):
+    def launch(self, package_id, app_name):
+        app_id = _get_click_app_id(package_id, app_name)
+
         _app_env = self.useFixture(UpstartApplicationEnvironment())
         _app_env._app_env.prepare_environment(
-            self.app_id,
-            arguments,
+            app_id,
+            app_name,
         )
 
-        self._attach_application_logs_at_cleanup()
-        pid = _launch_click_app(self.app_id)
+        self._attach_application_logs_at_cleanup(app_id)
+        pid = _launch_click_app(app_id)
         self.addCleanup(self._kill_pid, pid)
 
         logger.info(
@@ -83,27 +82,18 @@ class ClickApplicationLauncher(ApplicationLauncher):
 
         return pid
 
-    def _attach_application_logs_at_cleanup(self):
+    def _attach_application_logs_at_cleanup(self, app_id):
         self.addCleanup(
             lambda: self.case_addDetail(
                 "Application Log",
-                _get_click_application_log_content_object(self.app_id)
+                _get_click_application_log_content_object(app_id)
             )
         )
 
-def _get_click_application_log_content_object(app_id):
-    log_dir = os.path.expanduser('~/.cache/upstart/')
-    log_name = 'application-click-{}.log'.format(app_id)
-    log_path = os.path.join(log_dir, log_name)
-
-    return content_from_file(log_path)
-
 
 class NormalApplicationLauncher(ApplicationLauncher):
-    def __init__(self, case_addDetail, application, **kwargs):
+    def __init__(self, case_addDetail, **kwargs):
         super(NormalApplicationLauncher, self).__init__(case_addDetail)
-        self.application = application
-        self.app_path = _get_application_path(application)
         self.app_hint = kwargs.pop('app_type', None)
         self.cwd = kwargs.pop('launch_dir', None)
         self.capture_output = kwargs.pop('capture_output', True)
@@ -113,24 +103,26 @@ class NormalApplicationLauncher(ApplicationLauncher):
 
         _raise_if_not_empty(kwargs)
 
-    def launch(self, arguments):
+    def launch(self, application, arguments):
+        app_path = _get_application_path(application)
+
         app_env = self.useFixture(
-            _get_application_environment(self.app_hint, self.app_path)
+            _get_application_environment(self.app_hint, app_path)
         )
-        self.app_path, arguments = app_env.prepare_environment(
-            self.app_path,
+        app_path, arguments = app_env.prepare_environment(
+            app_path,
             arguments,
         )
-        self._process = launch_process(
-            self.app_path,
+        process = launch_process(
+            app_path,
             arguments,
             self.capture_output,
             cwd=self.cwd,
         )
 
-        self.addCleanup(self._kill_process_and_attach_logs, self._process)
+        self.addCleanup(self._kill_process_and_attach_logs, process)
 
-        return self._process.pid
+        return process.pid
 
     def _kill_process_and_attach_logs(self, process):
         stdout, stderr, return_code = _kill_process(process)
@@ -184,6 +176,14 @@ def _get_click_app_status(app_id):
         "application-click",
         "APP_ID={}".format(app_id)
     ])
+
+
+def _get_click_application_log_content_object(app_id):
+    log_dir = os.path.expanduser('~/.cache/upstart/')
+    log_name = 'application-click-{}.log'.format(app_id)
+    log_path = os.path.join(log_dir, log_name)
+
+    return content_from_file(log_path)
 
 
 def _get_click_app_id(package_id, app_name=None):
@@ -255,6 +255,7 @@ def _kill_pid(pid):
 
 def get_application_launcher_wrapper(app_path):
     return _get_app_env(app_path)
+
 
 def _get_application_environment(app_hint, app_path):
         if app_hint is not None:

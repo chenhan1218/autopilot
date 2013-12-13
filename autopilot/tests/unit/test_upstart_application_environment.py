@@ -30,33 +30,32 @@ class UpstartApplicationEnvironmentTests(TestCase):
         super(UpstartApplicationEnvironmentTests, self).setUp()
         self.app_environment = self.useFixture(UpstartApplicationEnvironment())
 
-    @patch('autopilot.application._environment._set_upstart_env')
-    @patch('autopilot.application._environment._unset_upstart_env')
-    def test_does_not_alter_app(self, patched_unset, patched_set):
+    @patch('autopilot.application._environment._call_upstart_with_args')
+    def test_does_not_alter_app(self, patched_call_upstart):
         fake_app = self.getUniqueString()
         app, args = self.app_environment.prepare_environment(fake_app, [])
         self.assertEqual(fake_app, app)
 
-    @patch('autopilot.application._environment._set_upstart_env')
-    @patch('autopilot.application._environment._unset_upstart_env')
-    def test_does_not_alter_arguments(self, patched_unset, patched_set):
+    @patch('autopilot.application._environment._call_upstart_with_args')
+    def test_does_not_alter_arguments(self, patched_call_upstart):
         fake_app = self.getUniqueString()
         app, args = self.app_environment.prepare_environment(fake_app, [])
         self.assertEqual([], args)
 
-    @patch('autopilot.application._environment._set_upstart_env')
-    @patch('autopilot.application._environment._unset_upstart_env')
-    def test_patches_env(self, patched_unset, patched_set):
+    @patch('autopilot.application._environment._call_upstart_with_args')
+    def test_patches_env(self, patched_call_upstart):
         fake_app = self.getUniqueString()
+        import ipdb; ipdb.set_trace()
+
         app, args = self.app_environment.prepare_environment(fake_app, [])
 
-        patched_set.called_with_args('QT_LOAD_TESTABILITY', 1)
+        patched_call_upstart.called_with_args('QT_LOAD_TESTABILITY', 1)
 
-    @patch('autopilot.application._environment._set_upstart_env')
-    @patch('autopilot.application._environment._unset_upstart_env')
-    def test_unpatches_env(self, patched_unset, patched_set):
+    @patch('autopilot.application._environment._call_upstart_with_args')
+    def test_unpatches_env(self, patched_call_upstart):
         fake_app = self.getUniqueString()
+
         app, args = self.app_environment.prepare_environment(fake_app, [])
 
         self.app_environment.cleanUp()
-        patched_unset.called_with_args('QT_LOAD_TESTABILITY')
+        patched_call_upstart.called_with_args('QT_LOAD_TESTABILITY')

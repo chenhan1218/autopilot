@@ -55,7 +55,6 @@ from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import Equals
 
-from autopilot.application import ApplicationLauncher
 from autopilot.process import ProcessManager
 from autopilot.input import Keyboard, Mouse
 from autopilot.introspection import (

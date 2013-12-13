@@ -28,10 +28,33 @@ except ImportError:
     # Python 3
     from io import StringIO
 
+from mock import patch
 from testtools import TestCase
 from testtools.matchers import Equals
+from tempfile import NamedTemporaryFile
 
-from mock import patch
+
+class PublicAPITests(TestCase):
+
+    @patch('autopilot.platform._PlatformDetector')
+    def test_model_creates_platform_detector(self, mock_detector):
+        platform.model()
+        mock_detector.create.assert_called_once()
+
+    @patch('autopilot.platform._PlatformDetector._cached_detector')
+    def test_model_returns_correct_value(self, mock_detector):
+        mock_detector.model = "test123"
+        self.assertThat(platform.model(), Equals('test123'))
+
+    @patch('autopilot.platform._PlatformDetector')
+    def test_image_codename_creates_platform_detector(self, mock_detector):
+        platform.image_codename()
+        mock_detector.create.assert_called_once()
+
+    @patch('autopilot.platform._PlatformDetector._cached_detector')
+    def test_image_codename_returns_correct_value(self, mock_detector):
+        mock_detector.image_codename = "test123"
+        self.assertThat(platform.image_codename(), Equals('test123'))
 
 
 class PlatformDetectorTests(TestCase):
@@ -106,6 +129,20 @@ class PlatformDetectorTests(TestCase):
         """
         detector = platform._PlatformDetector.create()
         self.assertThat(detector.image_codename, Equals('Desktop'))
+
+    def test_has_correct_file_name(self):
+        observed = platform._get_property_file_path()
+        self.assertEqual("/system/build.prop", observed)
+
+    def test_get_property_file_opens_path(self):
+        token = self.getUniqueString()
+        with NamedTemporaryFile(mode='w+') as f:
+            f.write(token)
+            f.flush()
+            with patch('autopilot.platform._get_property_file_path') as p:
+                p.return_value = f.name
+                observed = platform._get_property_file().read()
+        self.assertEqual(token, observed)
 
 
 class BuildPropertyParserTests(TestCase):

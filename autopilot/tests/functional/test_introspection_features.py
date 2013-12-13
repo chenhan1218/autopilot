@@ -26,6 +26,7 @@ import subprocess
 import tempfile
 from tempfile import mktemp
 from testtools.matchers import Equals, IsInstance, MatchesRegex, Not, Contains
+from testtools.matchers import LessThan, GreaterThan
 from textwrap import dedent
 from six import StringIO
 
@@ -33,6 +34,7 @@ from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase
 from autopilot.introspection.dbus import CustomEmulatorBase
 from autopilot.introspection import _connection_matches_pid
+from autopilot.display import Display
 
 
 class EmulatorBase(CustomEmulatorBase):
@@ -178,6 +180,26 @@ class IntrospectionFeatureTests(AutopilotTestCase):
         # no level-2 widgets
         self.assertThat(out, Not(Contains(
             "/Root/QMainWindow/QMenuBar/QToolButton")))
+
+    def test_window_geometry(self):
+        """Window.geometry property
+
+        Check that all Window geometry properties work and have a plausible
+        range.
+        """
+        # ensure we have at least one open app window
+        self.start_mock_app(EmulatorBase)
+
+        display = Display.create()
+        for monitor in range(display.get_num_screens()):
+            (_, _, swidth, sheight) = Display.create().get_screen_geometry(0)
+            for win in self.process_manager.get_open_windows():
+                geom = win.geometry
+                self.assertThat(len(geom), Equals(4))
+                self.assertThat(geom[0], GreaterThan(-1))  # no GreaterEquals
+                self.assertThat(geom[1], GreaterThan(-1))
+                self.assertThat(geom[2], LessThan(swidth + 1))
+                self.assertThat(geom[3], LessThan(sheight + 1))
 
 
 class QMLCustomEmulatorTestCase(AutopilotTestCase):

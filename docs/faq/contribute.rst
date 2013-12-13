@@ -63,7 +63,7 @@ An example from branching to running::
 
     $ bzr branch lp:autopilot ~/src/autopilot/trunk
     $ cd ~/src/autopilot/trunk
-    $ ./bin/autopilot list autopilot.tests
+    $ python3 -m autopilot.run list autopilot.tests
 
     Loading tests from: /home/example/src/autopilot/trunk
 
@@ -84,15 +84,15 @@ tests path.
 
 For example, running all unit tests::
 
-    $ ./bin/autopilot run autopilot.tests.unit
+    $ python3 -m autopilot.run run autopilot.tests.unit
 
 For example, running just the 'InputStackKeyboardTypingTests' suite::
 
-    $ ./bin/autopilot run autopilot.tests.functional.test_input_stack.InputStackKeyboardTypingTests
+    $ python3 -m autopilot.run run autopilot.tests.functional.test_input_stack.InputStackKeyboardTypingTests
 
 Or running a single test in the 'test_version_utility_fns' suite::
 
-    $ ./bin/autopilot run autopilot.tests.unit.test_version_utility_fns.VersionFnTests.test_package_version_returns_none_when_running_from_source
+    $ python3 -m autopilot.run run autopilot.tests.unit.test_version_utility_fns.VersionFnTests.test_package_version_returns_none_when_running_from_source
 
 Q. Which version of Python can Autopilot use?
 =============================================

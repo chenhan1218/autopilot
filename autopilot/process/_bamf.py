@@ -327,8 +327,13 @@ class ProcessManager(ProcessManagerBase):
         if type(files) is not list:
             raise TypeError("files must be a list.")
         proc = Gio.DesktopAppInfo.new(desktop_file)
-        # FIXME: second item is a GEerror
-        proc.launch_uris(files, None)
+        # simple launch_uris() uses GLib.SpawnFlags.SEARCH_PATH by default
+        # only, but this inherits stdout; we don't want that as it hangs when
+        # tee'ing autopilot output into a file
+        proc.launch_uris_as_manager(
+            files, None,
+            GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.STDOUT_TO_DEV_NULL,
+            None, None, None, None)
         if wait:
             self.wait_until_application_is_running(desktop_file, 10)
         return proc
@@ -487,11 +492,11 @@ class Window(WindowBase):
         # builder.
         from gi import require_version
         require_version('GdkX11', '3.0')
-        from gi.repository import GdkX11
+        from gi.repository import Gdk, GdkX11
         # FIXME: We need to use the gdk window here to get the real coordinates
         geometry = self._x_win.get_geometry()
         origin = GdkX11.X11Window.foreign_new_for_display(
-            GdkX11.X11Display(), self._xid).get_origin()
+            Gdk.Display().get_default(), self._xid).get_origin()
         return (origin[0], origin[1], geometry.width, geometry.height)
 
     @property

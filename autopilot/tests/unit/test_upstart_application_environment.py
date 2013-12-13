@@ -45,8 +45,6 @@ class UpstartApplicationEnvironmentTests(TestCase):
     @patch('autopilot.application._environment._call_upstart_with_args')
     def test_patches_env(self, patched_call_upstart):
         fake_app = self.getUniqueString()
-        import ipdb; ipdb.set_trace()
-
         app, args = self.app_environment.prepare_environment(fake_app, [])
 
         patched_call_upstart.called_with_args('QT_LOAD_TESTABILITY', 1)

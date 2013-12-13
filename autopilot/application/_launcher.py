@@ -17,19 +17,24 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Base package for application launchers."""
+"""Base module for application launchers."""
 
+import fixtures
+import json
+import logging
+import os
+import psutil
+import subprocess
 import signal
 from time import sleep
 from testtools.content import content_from_file, text_content
-import json
-import fixtures
-import logging
-import os
-import subprocess
-import psutil
 
-from autopilot.application._environment import UpstartApplicationEnvironment
+from autopilot.application._environment import
+from autopilot.application._environment import (
+        GtkApplicationEnvironment,
+        QtApplicationEnvironment,
+        UpstartApplicationEnvironment,
+    )
 
 
 logger = logging.getLogger(__name__)
@@ -79,15 +84,19 @@ class ClickApplicationLauncher(ApplicationLauncher):
         return pid
 
     def _attach_application_logs_at_cleanup(self):
-        log_dir = os.path.expanduser('~/.cache/upstart/')
-        log_name = 'application-click-{}.log'.format(self.app_id)
-        log_path = os.path.join(log_dir, log_name)
         self.addCleanup(
             lambda: self.case_addDetail(
                 "Application Log",
-                content_from_file(log_path)
+                _get_click_application_log_content_object(self.app_id)
             )
         )
+
+def _get_click_application_log_content_object(app_id):
+    log_dir = os.path.expanduser('~/.cache/upstart/')
+    log_name = 'application-click-{}.log'.format(app_id)
+    log_path = os.path.join(log_dir, log_name)
+
+    return content_from_file(log_path)
 
 
 class NormalApplicationLauncher(ApplicationLauncher):
@@ -244,6 +253,9 @@ def _kill_pid(pid):
         sleep(1)
 
 
+def get_application_launcher_wrapper(app_path):
+    return _get_app_env(app_path)
+
 def _get_application_environment(app_hint, app_path):
         if app_hint is not None:
             return _get_app_env_from_string_hint(app_hint)
@@ -260,10 +272,6 @@ def _get_app_env(app_path):
     # libQt* or libGtk* means the application is introspectable. This excludes
     # any non-dynamically linked executables, which we may need to fix further
     # down the line.
-    from autopilot.application._environment import (
-        GtkApplicationEnvironment,
-        QtApplicationEnvironment,
-    )
 
     try:
         ldd_output = subprocess.check_output(
@@ -293,9 +301,6 @@ def _get_application_path(application):
 
 
 def _get_app_env_from_string_hint(hint):
-    from autopilot.application.environment import QtApplicationEnvironment
-    from autopilot.application.environment import GtkApplicationEnvironment
-
     hint = hint.lower()
     if hint == 'qt':
         return QtApplicationEnvironment()

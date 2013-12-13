@@ -64,7 +64,7 @@ class ClickApplicationLauncherTests(TestCase):
     @patch('autopilot.application._launcher._get_click_manifest')
     def test_get_click_app_id_raises_runtimeerror_on_wrong_app(self, cm):
         """get_click_app_id must raise a RuntimeError if the requested
-        package id is not found in the click manifest.
+        application is not found within the click package.
 
         """
         cm.return_value = [{'name': 'com.autopilot.testing', 'hooks': {}}]
@@ -86,12 +86,12 @@ class ApplicationLauncherInternalTests(TestCase):
         populated_dict = dict(testing=True)
         self.assertThat(
             lambda: _raise_if_not_empty(populated_dict),
-            raises(ValueError)
+            raises(ValueError("Unknown keyword arguments: testing."))
         )
 
     def test_raise_if_not_empty_does_not_raise_on_empty(self):
         empty_dict = dict()
         self.assertThat(
             lambda: _raise_if_not_empty(empty_dict),
-            Not(raises(ValueError))
+            Not(raises())
         )

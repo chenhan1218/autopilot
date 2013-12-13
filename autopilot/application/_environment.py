@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Base package or application environment setup."""
+"""Base module or application environment setup."""
 
 import fixtures
 import os

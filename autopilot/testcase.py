@@ -172,6 +172,80 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         return self._display
 
     def launch_test_application(self, application, *arguments, **kwargs):
+        """Launch ``application`` and return a proxy object for the
+        application.
+
+        Use this method to launch an application and start testing it. The
+        positional arguments are used as arguments to the application to lanch.
+        Keyword arguments are used to control the manner in which the
+        application is launched.
+
+        This method is designed to be flexible enough to launch all supported
+        types of applications. Autopilot can automatically determine how to
+        enable introspection support for dynamically linked binary
+        applications. For example, to launch a binary Gtk application, a test
+        might start with::
+
+            app_proxy = self.launch_test_application('gedit')
+
+        Applications can be given command line arguments by supplying
+        positional arguments to this method. For example, if we want to launch
+        ``gedit`` with a certain document loaded, we might do this::
+
+            app_proxy = self.launch_test_application(
+                'gedit', '/tmp/test-document.txt')
+
+        ... a Qt5 Qml application is launched in a similar fashion::
+
+            app_proxy = self.launch_test_application(
+                'qmlscene', 'my_scene.qml')
+
+        If you wish to launch an application that is not a dynamically linked
+        binary, you must specify the application type. For example, a Qt4
+        python application might be launched like this::
+
+            app_proxy = self.launch_test_application(
+                'my_qt_app.py', app_type='qt')
+
+        Similarly, a python/Gtk application is launched like so::
+
+            app_proxy = self.launch_test_application(
+                'my_gtk_app.py', app_type='gtk')
+
+        .. seealso::
+
+            Method :py:meth:`AutopilotTestCase.pick_app_launcher`
+                Specify application introspection type globally.
+
+        :param application: The application to launch. The application can be
+            specified as:
+
+             * A full, absolute path to an executable file.
+               (``/usr/bin/gedit``)
+             * A relative path to an executable file.
+               (``./build/my_app``)
+             * An app name, which will be searched for in $PATH (``my_app``)
+
+        :keyword app_type: If set, provides a hint to autopilot as to which
+            kind of introspection to enable. This is needed when the
+            application you wish to launch is *not* a dynamically linked
+            binary. Valid values are 'gtk' or 'qt'. These strings are case
+            insensitive.
+
+        :keyword launch_dir: If set to a directory that exists the process
+            will be launched from that directory.
+
+        :keyword capture_output: If set to True (the default), the process
+            output will be captured and attached to the test as test detail.
+
+        :keyword emulator_base: If set, specifies the base class to be used for
+            all emulators for this loaded application.
+
+        :raises: **ValueError** if unknown keyword arguments are passed.
+        :return: A proxy object that represents the application. Introspection
+         data is retrievable via this object.
+
+        """
         launcher = self.useFixture(
             NormalApplicationLauncher(application, **kwargs)
         )
@@ -179,12 +253,40 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         return _launch_test_application(launcher, *arguments, **kwargs)
 
     def launch_click_package(self, package_id, app_name=None, **kwargs):
+        """Launch a click package application with introspection enabled.
+
+        This method takes care of launching a click package with introspection
+        exabled. You probably want to use this method if your application is
+        packaged in a click application, or is started via upstart.
+
+        Usage is similar to the
+        :py:meth:`AutopilotTestCase.launch_test_application`::
+
+            app_proxy = self.launch_click_package(
+                "com.ubuntu.dropping-letters"
+            )
+
+        :param package_id: The Click package name you want to launch. For
+            example: ``com.ubuntu.dropping-letters``
+        :param app_name: Currently, only one application can be packaged in a
+            click package, and this parameter can be left at None. If
+            specified, it should be the application name you wish to launch.
+
+        :keyword emulator_base: If set, specifies the base class to be used for
+            all emulators for this loaded application.
+
+        :raises RuntimeError: If the specified package_id cannot be found in
+            the click package manifest.
+        :raises RuntimeError: If the specified app_name cannot be found within
+            the specified click package.
+
+        """
         launcher = self.useFixture(
             ClickApplicationLauncher(package_id, app_name, **kwargs)
         )
         return _launch_test_application(launcher, [], **kwargs)
 
-    def _launch_test_application(launcher_instance, arguments, **kwargs):
+    def _launch_test_application(self, launcher_instance, arguments, **kwargs):
         pid = launcher.launch(arguments)
         process = getattr(launcher_instance, 'process', None)
 
@@ -340,4 +442,17 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
     assertProperties = assertProperty
 
     def pick_app_launcher(self, app_path):
-        pass
+        """Given an application path, return an object suitable for launching
+        the application.
+
+        This function attempts to guess what kind of application you are
+        launching. If, for some reason the default implementation returns the
+        wrong launcher, test authors may override this method to provide their
+        own implemetnation.
+
+        The default implementation calls
+        :py:func:`autopilot.application.get_application_launcher_wrapper`
+
+        """
+        # default implementation is in autopilot.application:
+        return get_application_launcher_wrapper(app_path)

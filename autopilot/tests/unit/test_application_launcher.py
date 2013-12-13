@@ -18,7 +18,7 @@
 #
 
 from testtools import TestCase
-from testtools.matchers import Not, raises
+from testtools.matchers import Not, Raises, raises
 from mock import Mock, patch
 
 from autopilot.application import ClickApplicationLauncher
@@ -82,12 +82,12 @@ class ApplicationLauncherInternalTests(TestCase):
         populated_dict = dict(testing=True)
         self.assertThat(
             lambda: _raise_if_not_empty(populated_dict),
-            raises(ValueError("Unknown keyword arguments: testing."))
+            raises(ValueError("Unknown keyword arguments: 'testing'."))
         )
 
     def test_raise_if_not_empty_does_not_raise_on_empty(self):
         empty_dict = dict()
         self.assertThat(
             lambda: _raise_if_not_empty(empty_dict),
-            Not(raises())
+            Not(Raises())
         )

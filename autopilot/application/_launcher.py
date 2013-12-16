@@ -273,6 +273,7 @@ def _get_application_environment(app_hint, app_path):
             "AutopilotTestCase.pick_app_launcher method."
         )
 
+
 def get_application_launcher_wrapper(app_path):
     """Return an instance of :class:`ApplicationLauncher` that knows how to
     launch the application at 'app_path'.

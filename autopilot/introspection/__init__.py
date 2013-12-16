@@ -33,7 +33,6 @@ import subprocess
 from functools import partial
 import os
 import psutil
-import six
 
 from autopilot.introspection.backends import DBusAddress
 from autopilot.introspection.constants import (

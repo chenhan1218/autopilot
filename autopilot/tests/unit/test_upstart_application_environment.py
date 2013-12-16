@@ -49,7 +49,10 @@ class UpstartApplicationEnvironmentTests(TestCase):
         fake_app = self.getUniqueString()
         app, args = app_environment.prepare_environment(fake_app, [])
 
-        patched_call_upstart.called_with_args('set-env', 'QT_LOAD_TESTABILITY=1')
+        patched_call_upstart.called_with_args(
+            'set-env',
+            'QT_LOAD_TESTABILITY=1'
+        )
 
     @patch('autopilot.application._environment._call_upstart_with_args')
     def test_unpatches_env(self, patched_call_upstart):
@@ -59,4 +62,7 @@ class UpstartApplicationEnvironmentTests(TestCase):
 
         app_environment.cleanUp()
 
-        patched_call_upstart.called_with_args('unset-env', 'QT_LOAD_TESTABILITY')
+        patched_call_upstart.called_with_args(
+            'unset-env',
+            'QT_LOAD_TESTABILITY'
+        )

@@ -20,8 +20,6 @@
 from __future__ import absolute_import
 from dbus import Interface
 import os.path
-import subprocess
-import json
 
 
 def _pid_is_running(pid):

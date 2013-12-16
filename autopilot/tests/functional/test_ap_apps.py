@@ -138,6 +138,7 @@ AutopilotTestCase.pick_app_launcher method."
             sys.exit(1)
         """ % sys.executable))
 
+
         expected_error = "Process exited with exit code: 1"
         self.assertThat(
             lambda: self.launch_test_application(path, app_type='qt'),

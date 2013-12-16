@@ -116,16 +116,16 @@ class NormalApplicationLauncher(ApplicationLauncher):
             list(arguments),
         )
 
-        process = launch_process(
+        self.process = launch_process(
             app_path,
             arguments,
             self.capture_output,
             cwd=self.cwd,
         )
 
-        self.addCleanup(self._kill_process_and_attach_logs, process)
+        self.addCleanup(self._kill_process_and_attach_logs, self.process)
 
-        return process.pid
+        return self.process.pid
 
     def _kill_process_and_attach_logs(self, process):
         stdout, stderr, return_code = _kill_process(process)
@@ -260,11 +260,18 @@ def _attempt_kill_pid(pid, sig=signal.SIGTERM):
 
 
 def _get_application_environment(app_hint, app_path):
-    if app_hint is not None:
-        return _get_app_env_from_string_hint(app_hint)
-    elif app_path is not None:
-        return get_application_launcher_wrapper(app_path)
-
+    try:
+        if app_hint is not None:
+            return _get_app_env_from_string_hint(app_hint)
+        elif app_path is not None:
+            return get_application_launcher_wrapper(app_path)
+    except (RuntimeError, ValueError) as e:
+        logger.error(str(e))
+        raise RuntimeError(
+            "Autopilot could not determine the correct introspection type "
+            "to use. You can specify one by overriding the "
+            "AutopilotTestCase.pick_app_launcher method."
+        )
 
 def get_application_launcher_wrapper(app_path):
     """Return an instance of :class:`ApplicationLauncher` that knows how to
@@ -309,7 +316,8 @@ def _get_app_env_from_string_hint(hint):
         return QtApplicationEnvironment()
     elif hint == 'gtk':
         return GtkApplicationEnvironment()
-    return None
+
+    raise ValueError("Unknown hint string: {hint}".format(hint=hint))
 
 
 def _kill_process(process):

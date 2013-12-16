@@ -302,6 +302,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         proxy_obj = get_proxy_object_for_existing_process(
             pid=pid,
+            process=process,
             dbus_bus=dbus_bus,
             emulator_base=launcher_instance.emulator_base,
         )

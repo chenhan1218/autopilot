@@ -461,6 +461,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         # default implementation is in autopilot.application:
         return get_application_launcher_wrapper(app_path)
 
+
 def _get_process_snapshot():
     """Return a snapshot of running processes on the system.
 

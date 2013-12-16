@@ -104,7 +104,7 @@ class NormalApplicationLauncher(ApplicationLauncher):
 
         _raise_if_not_empty(kwargs)
 
-    def launch(self, application, arguments):
+    def launch(self, application, *arguments):
         app_path = _get_application_path(application)
 
         app_env = self.useFixture(
@@ -112,7 +112,7 @@ class NormalApplicationLauncher(ApplicationLauncher):
         )
         app_path, arguments = app_env.prepare_environment(
             app_path,
-            arguments,
+            list(arguments),
         )
         process = launch_process(
             app_path,

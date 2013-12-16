@@ -55,10 +55,14 @@ from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import Equals
 
+from autopilot.application import (
+    ClickApplicationLauncher,
+    get_application_launcher_wrapper,
+    NormalApplicationLauncher,
+)
 from autopilot.process import ProcessManager
 from autopilot.input import Keyboard, Mouse
 from autopilot.introspection import (
-    get_autopilot_proxy_object_for_process,
     get_proxy_object_for_existing_process,
 )
 from autopilot.display import Display
@@ -249,7 +253,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             NormalApplicationLauncher(self.addDetail, **kwargs)
         )
 
-        return _launch_test_application(launcher, *arguments, **kwargs)
+        return _launch_test_application(launcher, application, *arguments)
 
     def launch_click_package(self, package_id, app_name=None, **kwargs):
         """Launch a click package application with introspection enabled.
@@ -283,8 +287,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         launcher = self.useFixture(
             ClickApplicationLauncher(self.addDetail, **kwargs)
         )
-        return _launch_test_application(launcher, [], **kwargs)
-
+        return _launch_test_application(launcher, package_id, app_name)
 
     def _compare_system_with_app_snapshot(self):
         """Compare the currently running application with the last snapshot.
@@ -450,12 +453,15 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
 # Wrapper function tying the newer ApplicationLauncher behaviour with the
 # previous (to be depreciated) behaviour
-def _launch_test_application(launcher_instance, arguments, **kwargs):
-    pid = launcher.launch(arguments)
+def _launch_test_application(launcher_instance, application, *arguments):
+    pid = launcher_instance.launch(application, *arguments)
     process = getattr(launcher_instance, 'process', None)
 
-    return get_proxy_object_for_existing_process(
+    proxy_obj = get_proxy_object_for_existing_process(
         pid=pid,
-        dbus_bus=launcher.dbus_bus,
-        emulator_base=launcher.emulator_base,
+        dbus_bus=launcher_instance.dbus_bus,
+        emulator_base=launcher_instance.emulator_base,
     )
+    proxy_obj.set_process(process)
+
+    return proxy_obj

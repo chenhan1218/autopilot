@@ -33,7 +33,6 @@ import subprocess
 from functools import partial
 import os
 import psutil
-import six
 
 from autopilot.introspection.backends import DBusAddress
 from autopilot.introspection.constants import (
@@ -66,114 +65,6 @@ connection_list = []
 
 class ProcessSearchError(RuntimeError):
     pass
-
-
-def get_application_launcher(app_path):
-    """Return an instance of :class:`ApplicationLauncher` that knows how to
-    launch the application at 'app_path'.
-    """
-    # TODO: this is a teeny bit hacky - we call ldd to check whether this
-    # application links to certain library. We're assuming that linking to
-    # libQt* or libGtk* means the application is introspectable. This excludes
-    # any non-dynamically linked executables, which we may need to fix further
-    # down the line.
-    try:
-        ldd_output = subprocess.check_output(
-            ["ldd", app_path],
-            universal_newlines=True
-        ).strip().lower()
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(e)
-    if 'libqtcore' in ldd_output or 'libqt5core' in ldd_output:
-        from autopilot.introspection.qt import QtApplicationLauncher
-        return QtApplicationLauncher()
-    elif 'libgtk' in ldd_output:
-        from autopilot.introspection.gtk import GtkApplicationLauncher
-        return GtkApplicationLauncher()
-    return None
-
-
-def get_application_launcher_from_string_hint(hint):
-    """Return in instance of :class:`ApplicationLauncher` given a string
-    hint."""
-    from autopilot.introspection.qt import QtApplicationLauncher
-    from autopilot.introspection.gtk import GtkApplicationLauncher
-
-    hint = hint.lower()
-    if hint == 'qt':
-        return QtApplicationLauncher()
-    elif hint == 'gtk':
-        return GtkApplicationLauncher()
-    return None
-
-
-def launch_application(launcher, application, *arguments, **kwargs):
-    """Launch an application, and return a process object.
-
-    :param launcher: An instance of the :class:`ApplicationLauncher` class to
-        prepare the environment before launching the application itself.
-    """
-
-    if not isinstance(application, six.string_types):
-        raise TypeError("'application' parameter must be a string.")
-    cwd = kwargs.pop('launch_dir', None)
-    capture_output = kwargs.pop('capture_output', True)
-    if kwargs:
-        arglist = [repr(k) for k in kwargs.keys()]
-        arglist.sort()
-        raise ValueError(
-            "Unknown keyword arguments: %s." %
-            (', '.join(arglist)))
-
-    path, args = launcher.prepare_environment(application, list(arguments))
-
-    process = launch_process(
-        path,
-        args,
-        capture_output,
-        cwd=cwd
-    )
-    return process
-
-
-class ApplicationLauncher(object):
-    """A class that knows how to launch an application with a certain type of
-    introspection enabled.
-
-    """
-
-    def prepare_environment(self, app_path, arguments):
-        """Prepare the application, or environment to launch with
-        autopilot-support.
-
-        This method does nothing - it exists so child classes can override it.
-
-        The method *must* return a tuple of (*app_path*, *arguments*). Either
-        of these can be altered by this method.
-
-        """
-        raise NotImplementedError("Sub-classes must implement this method.")
-
-
-def launch_process(application, args, capture_output, **kwargs):
-    """Launch an autopilot-enabled process and return the process object."""
-    commandline = [application]
-    commandline.extend(args)
-    logger.info("Launching process: %r", commandline)
-    cap_mode = None
-    if capture_output:
-        cap_mode = subprocess.PIPE
-    process = subprocess.Popen(
-        commandline,
-        stdin=subprocess.PIPE,
-        stdout=cap_mode,
-        stderr=cap_mode,
-        close_fds=True,
-        preexec_fn=os.setsid,
-        universal_newlines=True,
-        **kwargs
-    )
-    return process
 
 
 def get_autopilot_proxy_object_for_process(

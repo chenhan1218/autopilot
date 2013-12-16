@@ -83,12 +83,11 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
         )
         self.addCleanup(os.remove, window_spec_file)
 
-        return self.launch_test_application('window-mocker', window_spec_file)
-
-    def pick_app_launcher(self, app_path):
-        # force Qt app introspection:
-        from autopilot.introspection.qt import QtApplicationLauncher
-        return QtApplicationLauncher()
+        return self.launch_test_application(
+            'window-mocker',
+            window_spec_file,
+            app_type='qt'
+        )
 
     def test_text_typing(self):
         """Typing text must produce the correct characters in the target

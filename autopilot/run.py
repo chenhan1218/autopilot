@@ -274,13 +274,15 @@ class TestProgram(object):
 
     def launch_app(self):
         """Launch an application, with introspection support."""
-        from autopilot.introspection import (
-            launch_application,
-            get_application_launcher,
-            get_application_launcher_from_string_hint,
+
+        from autopilot.application._launcher import (
+            _get_app_env_from_string_hint,
+            get_application_launcher_wrapper,
+            launch_process,
         )
 
-        app_name = self.args.application[0]
+        app_name = self.args.application.pop()
+        app_arguments = self.args.application
         if not os.path.isabs(app_name) or not os.path.exists(app_name):
             try:
                 app_name = subprocess.check_output(
@@ -292,10 +294,10 @@ class TestProgram(object):
                 exit(1)
 
         # We now have a full path to the application.
-        launcher = None
+        launcher_env = None
         if self.args.interface == 'Auto':
             try:
-                launcher = get_application_launcher(app_name)
+                launcher_env = get_application_launcher_wrapper(app_name)
             except RuntimeError as e:
                 print("Error detecting launcher: %s" % str(e))
                 print(
@@ -303,19 +305,23 @@ class TestProgram(object):
                 )
                 exit(1)
         else:
-            launcher = get_application_launcher_from_string_hint(
-                self.args.interface
-            )
-        if launcher is None:
+            launcher_env = _get_app_env_from_string_hint(self.args.interface)
+
+        if launcher_env is None:
             print("Error: Could not determine introspection type to use for "
                   "application '%s'." % app_name)
             print("(Perhaps use the '-i' argument to specify an interface.)")
             exit(1)
 
+        app_name, app_arguments = launcher_env.prepare_environment(
+            app_name,
+            app_arguments
+        )
+
         try:
-            launch_application(
-                launcher,
-                *self.args.application,
+            launch_process(
+                app_name,
+                app_arguments,
                 capture_output=False
             )
         except RuntimeError as e:

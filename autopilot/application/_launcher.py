@@ -115,6 +115,7 @@ class NormalApplicationLauncher(ApplicationLauncher):
             app_path,
             list(arguments),
         )
+
         process = launch_process(
             app_path,
             arguments,

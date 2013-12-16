@@ -253,7 +253,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             NormalApplicationLauncher(self.addDetail, **kwargs)
         )
 
-        return _launch_test_application(launcher, application, *arguments)
+        return self._launch_test_application(launcher, application, *arguments)
 
     def launch_click_package(self, package_id, app_name=None, **kwargs):
         """Launch a click package application with introspection enabled.
@@ -287,7 +287,27 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         launcher = self.useFixture(
             ClickApplicationLauncher(self.addDetail, **kwargs)
         )
-        return _launch_test_application(launcher, package_id, app_name)
+        return self._launch_test_application(launcher, package_id, app_name)
+
+    # Wrapper function tying the newer ApplicationLauncher behaviour with the
+    # previous (to be depreciated) behaviour
+    def _launch_test_application(self, launcher_instance, application, *args):
+
+        dbus_bus = launcher_instance.dbus_bus
+        if dbus_bus != 'session':
+            self.patch_environment("DBUS_SESSION_BUS_ADDRESS", dbus_bus)
+
+        pid = launcher_instance.launch(application, *args)
+        process = getattr(launcher_instance, 'process', None)
+
+        proxy_obj = get_proxy_object_for_existing_process(
+            pid=pid,
+            dbus_bus=dbus_bus,
+            emulator_base=launcher_instance.emulator_base,
+        )
+        proxy_obj.set_process(process)
+
+        return proxy_obj
 
     def _compare_system_with_app_snapshot(self):
         """Compare the currently running application with the last snapshot.
@@ -449,19 +469,3 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         """
         # default implementation is in autopilot.application:
         return get_application_launcher_wrapper(app_path)
-
-
-# Wrapper function tying the newer ApplicationLauncher behaviour with the
-# previous (to be depreciated) behaviour
-def _launch_test_application(launcher_instance, application, *arguments):
-    pid = launcher_instance.launch(application, *arguments)
-    process = getattr(launcher_instance, 'process', None)
-
-    proxy_obj = get_proxy_object_for_existing_process(
-        pid=pid,
-        dbus_bus=launcher_instance.dbus_bus,
-        emulator_base=launcher_instance.emulator_base,
-    )
-    proxy_obj.set_process(process)
-
-    return proxy_obj

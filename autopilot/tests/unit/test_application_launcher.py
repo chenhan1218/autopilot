@@ -18,23 +18,41 @@
 #
 
 from testtools import TestCase
-from testtools.matchers import Equals, Not, Raises, raises
+from testtools.matchers import (
+    Contains,
+    Equals,
+    IsInstance,
+    Not,
+    Raises,
+    raises,
+)
 from mock import Mock, patch
 
 from autopilot.application import (
     ClickApplicationLauncher,
     NormalApplicationLauncher,
 )
+from autopilot.utilities import sleep
 
 from autopilot.application._launcher import (
     ApplicationLauncher,
+    get_application_launcher_wrapper,
+    launch_process,
+    _attempt_kill_pid,
     _get_app_env_from_string_hint,
     _get_application_environment,
     _get_click_app_id,
     _get_click_app_pid,
     _get_click_app_status,
+    _get_click_application_log_content_object,
+    _kill_pid,
     _launch_click_app,
     _raise_if_not_empty,
+)
+
+from autopilot.application._environment import (
+    GtkApplicationEnvironment,
+    QtApplicationEnvironment,
 )
 
 
@@ -68,6 +86,20 @@ class NormalApplicationLauncherTests(TestCase):
             lambda: NormalApplicationLauncher(Mock(), unknown=True),
             raises(ValueError("Unknown keyword arguments: 'unknown'."))
         )
+
+    @patch('autopilot.application._launcher._kill_process')
+    def test_kill_process_and_attach_logs(self, patched_kill_proc):
+        mock_addDetail = Mock()
+        app_launcher = NormalApplicationLauncher(mock_addDetail)
+
+        patched_kill_proc.return_value = ("stdout", "stderr", 0)
+
+        with patch(
+            'autopilot.application._launcher.text_content'
+        ) as text_content:
+            app_launcher._kill_process_and_attach_logs(0)
+            self.assertThat(mock_addDetail.call_count, Equals(3))
+            mock_addDetail.assert_called_with('process-stderr', text_content())
 
 
 class ClickApplicationLauncherTests(TestCase):
@@ -112,6 +144,19 @@ class ClickApplicationLauncherTests(TestCase):
                 )
             )
         )
+
+    @patch(
+        'autopilot.application._launcher.os.path.expanduser',
+        new=lambda *args: "/home/autopilot/.cache/upstart/"
+    )
+    def test_get_click_application_log_content_object(self):
+        with patch(
+                'autopilot.application._launcher.content_from_file'
+        ) as from_file:
+            _get_click_application_log_content_object("foo"),
+            from_file.assert_called_with_args(
+                "/home/autopilot/.cache/upstart/application-click-foo.log"
+            )
 
 
 class ApplicationLauncherInternalTests(TestCase):
@@ -185,3 +230,92 @@ class ApplicationLauncherInternalTests(TestCase):
     def test_get_application_environment_uses_app_path(self, patched_wrapper):
         _get_application_environment(None, "app_path"),
         patched_wrapper.called_with_args("app_path")
+
+    @patch('autopilot.application._launcher._attempt_kill_pid')
+    def test_kill_pid_succeeds(self, patched_killpg):
+        with patch(
+            'autopilot.application._launcher._is_process_running'
+        ) as proc_running:
+            proc_running.return_value = False
+
+            _kill_pid(0)
+            proc_running.assert_called_once_with(0)
+
+    @patch('autopilot.application._launcher._attempt_kill_pid')
+    def test_kill_pid_kills_again_after_10_tries(self, patched_killpid):
+        sleep.enable_mock()
+        self.addCleanup(sleep.disable_mock)
+
+        with patch(
+            'autopilot.application._launcher._is_process_running'
+        ) as proc_running:
+            import signal
+
+            proc_running.return_value = True
+
+            _kill_pid(0)
+            proc_running.assert_called_with(0)
+            self.assertThat(proc_running.call_count, Equals(10))
+            self.assertThat(patched_killpid.call_count, Equals(2))
+            patched_killpid.assert_called_with(0, signal.SIGKILL)
+
+    @patch('autopilot.application._launcher.os.killpg')
+    def test_attempt_kill_pid_logs_if_process_already_exited(self, killpg):
+        killpg.side_effect = OSError()
+
+        with patch('autopilot.application._launcher.logger') as patched_log:
+            _attempt_kill_pid(0)
+            patched_log.info.assert_called_with(
+                "Appears process has already exited."
+            )
+
+    @patch('autopilot.application._launcher.subprocess')
+    def test_launch_process_uses_arguments(self, subprocess):
+        launch_process("testapp", ["arg1", "arg2"])
+
+        self.assertThat(
+            subprocess.Popen.call_args_list[0][0],
+            Contains(['testapp', 'arg1', 'arg2'])
+        )
+
+    @patch('autopilot.application._launcher.subprocess')
+    def test_launch_process_default_capture_is_false(self, subprocess):
+        launch_process("testapp", [])
+
+        self.assertThat(
+            subprocess.Popen.call_args[1]['stderr'],
+            Equals(None)
+        )
+        self.assertThat(
+            subprocess.Popen.call_args[1]['stdout'],
+            Equals(None)
+        )
+
+    @patch('autopilot.application._launcher.subprocess')
+    def test_launch_process_can_set_capture_output(self, subprocess):
+        launch_process("testapp", [], capture_output=True)
+
+        self.assertThat(
+            subprocess.Popen.call_args[1]['stderr'],
+            Not(Equals(None))
+        )
+        self.assertThat(
+            subprocess.Popen.call_args[1]['stdout'],
+            Not(Equals(None))
+        )
+
+    @patch('autopilot.application._launcher.subprocess')
+    def test_get_application_launcher_wrapper_finds_qt(self, subprocess):
+        subprocess.check_output.return_value = "LIBQTCORE"
+        self.assertThat(
+            get_application_launcher_wrapper("/fake/app/path"),
+            IsInstance(QtApplicationEnvironment)
+        )
+
+    @patch('autopilot.application._launcher.subprocess')
+    def test_get_application_launcher_wrapper_finds_gtk(self, subprocess):
+        subprocess.check_output.return_value = "LIBGTK"
+        self.assertThat(
+            get_application_launcher_wrapper("/fake/app/path"),
+            IsInstance(GtkApplicationEnvironment)
+        )

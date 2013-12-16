@@ -26,7 +26,8 @@ import os
 import psutil
 import subprocess
 import signal
-from time import sleep
+from autopilot.utilities import sleep
+
 from testtools.content import content_from_file, text_content
 
 from autopilot.application._environment import (
@@ -135,7 +136,7 @@ class NormalApplicationLauncher(ApplicationLauncher):
         self.case_addDetail('process-stderr', text_content(stderr))
 
 
-def launch_process(application, args, capture_output, **kwargs):
+def launch_process(application, args, capture_output=False, **kwargs):
     """Launch an autopilot-enabled process and return the process object."""
     commandline = [application]
     commandline.extend(args)
@@ -236,11 +237,7 @@ def _get_click_app_pid(app_id):
 def _kill_pid(pid):
     """Kill the process with the specified pid."""
     logger.info("waiting for process to exit.")
-    try:
-        logger.info("Killing process %d", pid)
-        os.killpg(pid, signal.SIGTERM)
-    except OSError:
-        logger.info("Appears process has already exited.")
+    _attempt_kill_pid(pid)
     for i in range(10):
         if not _is_process_running(pid):
             break
@@ -249,8 +246,16 @@ def _kill_pid(pid):
                 "Killing process group, since it hasn't exited after "
                 "10 seconds."
             )
-            os.killpg(pid, signal.SIGKILL)
+            _attempt_kill_pid(pid, signal.SIGKILL)
         sleep(1)
+
+
+def _attempt_kill_pid(pid, sig=signal.SIGTERM):
+    try:
+        logger.info("Killing process %d", pid)
+        os.killpg(pid, sig)
+    except OSError:
+        logger.info("Appears process has already exited.")
 
 
 def _get_application_environment(app_hint, app_path):
@@ -311,11 +316,7 @@ def _kill_process(process):
     stdout = ""
     stderr = ""
     logger.info("waiting for process to exit.")
-    try:
-        logger.info("Killing process %d", process.pid)
-        os.killpg(process.pid, signal.SIGTERM)
-    except OSError:
-        logger.info("Appears process has already exited.")
+    _attempt_kill_pid(process.pid)
     for i in range(10):
         tmp_out, tmp_err = process.communicate()
         stdout += tmp_out
@@ -327,7 +328,7 @@ def _kill_process(process):
                 "Killing process group, since it hasn't exited after "
                 "10 seconds."
             )
-            os.killpg(process.pid, signal.SIGKILL)
+            _attempt_kill_pid(process.pid, signal.SIGKILL)
         sleep(1)
     return stdout, stderr, process.returncode
 

@@ -30,7 +30,7 @@ except OSError:
     DEVICE = ''
 
 RESOLUTIONS = {
-    "generic": (800, 1280),
+    "generic": (480, 800),
     "mako": (768, 1280),
     "maguro": (720, 1280),
     "manta": (2560, 1600),

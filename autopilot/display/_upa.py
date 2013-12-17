@@ -27,7 +27,7 @@ try:
     FBSET = check_output(["fbset", "-s"]).decode().strip()
 except OSError:
     FBSET = ''
-    
+
 if FBSET:
     X, Y = [int(i) for i in
             FBSET.splitlines()[0].split('"')[1].split('x')]

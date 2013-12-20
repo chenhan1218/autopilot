@@ -1,3 +1,9 @@
+autopilot (1.4+14.04.20131125-0ubuntu3) trusty; urgency=low
+
+  * Cherry-pick resolution constants for the default emulator skin.
+
+ -- Dimitri John Ledkov <xnox@ubuntu.com>   Wed, 18 Dec 2013 13:12:58 +0000
+
 autopilot (1.4+14.04.20131125-0ubuntu2) trusty; urgency=low
 
   * No-change rebuild for ust.

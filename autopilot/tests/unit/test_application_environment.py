@@ -109,24 +109,33 @@ class QtApplicationEnvironmentTests(TestCase):
 
 class UpstartApplicationEnvironmentTests(TestCase):
 
+    # patch _unset_upstart_env as cleanUps calls _unset_upstart_env calls the
+    # real _call_upstart_with_args
     @patch('autopilot.application._environment._call_upstart_with_args')
-    def test_does_not_alter_app(self, patched_call_upstart):
+    @patch('autopilot.application._environment._unset_upstart_env')
+    def test_does_not_alter_app(self, patched_unset, patched_call_upstart):
         app_environment = self.useFixture(UpstartApplicationEnvironment())
         fake_app = self.getUniqueString()
         app, args = app_environment.prepare_environment(fake_app, [])
 
         self.assertEqual(fake_app, app)
 
+    # patch _unset_upstart_env as cleanUps calls _unset_upstart_env calls the
+    # real _call_upstart_with_args
     @patch('autopilot.application._environment._call_upstart_with_args')
-    def test_does_not_alter_arguments(self, patched_call_upstart):
+    @patch('autopilot.application._environment._unset_upstart_env')
+    def test_does_not_alter_args(self, patched_unset, patched_call_upstart):
         app_environment = self.useFixture(UpstartApplicationEnvironment())
         fake_app = self.getUniqueString()
         app, args = app_environment.prepare_environment(fake_app, [])
 
         self.assertEqual([], args)
 
+    # patch _unset_upstart_env as cleanUps calls _unset_upstart_env calls the
+    # real _call_upstart_with_args
     @patch('autopilot.application._environment._call_upstart_with_args')
-    def test_patches_env(self, patched_call_upstart):
+    @patch('autopilot.application._environment._unset_upstart_env')
+    def test_patches_env(self, patched_unset, patched_call_upstart):
         app_environment = self.useFixture(UpstartApplicationEnvironment())
         fake_app = self.getUniqueString()
         app, args = app_environment.prepare_environment(fake_app, [])

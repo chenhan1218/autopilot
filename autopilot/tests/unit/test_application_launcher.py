@@ -197,9 +197,9 @@ class ApplicationLauncherInternalTests(TestCase):
             "APP_ID=app_id"
         )
 
-    @patch('autopilot.application._launcher._get_click_app_status')
-    def test_get_click_app_pid(self, patched_app_status):
-        patched_app_status.return_value = "application-click"\
+    @patch('autopilot.application._environment.subprocess')
+    def test_get_click_app_pid(self, patched_subproc):
+        patched_subproc.check_output.return_value = "application-click"\
             " (com.autopilot.testing.test_app_id) start/running, process 1234"
         self.assertThat(
             _get_click_app_pid("test_app_id"),

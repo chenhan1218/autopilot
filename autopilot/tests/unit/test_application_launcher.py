@@ -32,6 +32,7 @@ from autopilot.application import (
     ClickApplicationLauncher,
     NormalApplicationLauncher,
 )
+from autopilot.application._environment import UpstartApplicationEnvironment
 from autopilot.utilities import sleep
 
 from autopilot.application._launcher import (
@@ -109,6 +110,18 @@ class ClickApplicationLauncherTests(TestCase):
             lambda: ClickApplicationLauncher(Mock(), unknown=True),
             raises(ValueError("Unknown keyword arguments: 'unknown'."))
         )
+
+    @patch.object(UpstartApplicationEnvironment, 'prepare_environment')
+    def test_prepare_environment_called(self, prep_env):
+        with patch(
+            'autopilot.application._launcher._get_click_app_id'
+        ) as get_click_app_id:
+            get_click_app_id.return_value = "app_id"
+            launcher = self.useFixture(ClickApplicationLauncher(Mock()))
+            launcher._launch_click_app = Mock()
+
+            launcher.launch("package_id", "app_name")
+            prep_env.assert_called_with("app_id", "app_name")
 
     @patch(
         'autopilot.application._launcher._get_click_manifest', new=lambda: [])

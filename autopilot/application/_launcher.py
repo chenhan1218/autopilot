@@ -67,11 +67,13 @@ class ClickApplicationLauncher(ApplicationLauncher):
         app_id = _get_click_app_id(package_id, app_name)
 
         _app_env = self.useFixture(UpstartApplicationEnvironment())
-        _app_env._app_env.prepare_environment(
-            app_id,
-            app_name,
-        )
+        _app_env.prepare_environment(app_id, app_name)
 
+        pid = self._launch_click_app(app_id)
+
+        return pid
+
+    def _launch_click_app(self, app_id):
         self._attach_application_logs_at_cleanup(app_id)
         pid = _launch_click_app(app_id)
         self.addCleanup(self._kill_pid, pid)
@@ -81,8 +83,6 @@ class ClickApplicationLauncher(ApplicationLauncher):
             self.app_id,
             pid
         )
-
-        return pid
 
     def _attach_application_logs_at_cleanup(self, app_id):
         self.addCleanup(

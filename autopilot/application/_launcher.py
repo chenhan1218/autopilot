@@ -76,11 +76,11 @@ class ClickApplicationLauncher(ApplicationLauncher):
     def _launch_click_app(self, app_id):
         self._attach_application_logs_at_cleanup(app_id)
         pid = _launch_click_app(app_id)
-        self.addCleanup(self._kill_pid, pid)
+        self.addCleanup(_kill_pid, pid)
 
         logger.info(
             "Click package %s has been launched with PID %d",
-            self.app_id,
+            app_id,
             pid
         )
 

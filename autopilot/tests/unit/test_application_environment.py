@@ -19,9 +19,10 @@
 
 from mock import patch
 from testtools import TestCase
-from testtools.matchers import raises
+from testtools.matchers import raises, Equals
 
 from autopilot.application._environment import (
+    _call_upstart_with_args,
     ApplicationEnvironment,
     GtkApplicationEnvironment,
     QtApplicationEnvironment,
@@ -38,6 +39,11 @@ class ApplicationEnvironmentTests(TestCase):
                 NotImplementedError("Sub-classes must implement this method.")
             )
         )
+
+    @patch('autopilot.application._environment.subprocess')
+    def test_call_upstart_with_args_returns_output(self, patched_subprocess):
+        patched_subprocess.check_output.return_value = "Returned Value"
+        self.assertThat(_call_upstart_with_args(), Equals("Returned Value"))
 
 
 class GtkApplicationEnvironmentTests(TestCase):

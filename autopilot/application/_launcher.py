@@ -173,7 +173,7 @@ def _launch_click_app(app_id):
 
 
 def _get_click_app_status(app_id):
-    _call_upstart_with_args(
+    return _call_upstart_with_args(
         "status",
         "application-click",
         "APP_ID={}".format(app_id)

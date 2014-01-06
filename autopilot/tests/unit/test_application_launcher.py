@@ -171,6 +171,18 @@ class ClickApplicationLauncherTests(TestCase):
                 "/home/autopilot/.cache/upstart/application-click-foo.log"
             )
 
+    @patch('autopilot.application._launcher._launch_click_app')
+    def test_launch_click_app_returns_pid(self, patched_launch_click_app):
+        launcher = ClickApplicationLauncher(Mock)
+        launcher._add_click_launch_cleanup = Mock()
+        patched_launch_click_app.return_value = 123
+
+        with patch('autopilot.application._launcher.logger'):
+            self.assertThat(
+                launcher._launch_click_app("appid"),
+                Equals(123)
+            )
+
 
 class ApplicationLauncherInternalTests(TestCase):
 

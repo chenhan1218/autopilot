@@ -84,6 +84,8 @@ class ClickApplicationLauncher(ApplicationLauncher):
             pid
         )
 
+        return pid
+
     def _attach_application_logs_at_cleanup(self, app_id):
         self.addCleanup(
             lambda: self.case_addDetail(

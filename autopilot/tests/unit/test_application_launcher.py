@@ -108,6 +108,17 @@ class NormalApplicationLauncherTests(TestCase):
             self.assertThat(mock_addDetail.call_count, Equals(3))
             mock_addDetail.assert_called_with('process-stderr', text_content())
 
+    @patch('autopilot.application._launcher._get_application_path')
+    def test_launch_calls_returns_process_id(self, get_app_path):
+        get_app_path.return_value = ""
+        app_launcher = NormalApplicationLauncher(Mock())
+        app_launcher._setup_environment = Mock()
+        app_launcher._launch_application_process = Mock(
+            return_value=Mock(pid=123)
+        )
+
+        self.assertThat(app_launcher.launch(""), Equals(123))
+
 
 class ClickApplicationLauncherTests(TestCase):
 

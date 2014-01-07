@@ -113,6 +113,12 @@ class NormalApplicationLauncher(ApplicationLauncher):
     def launch(self, application, *arguments):
         app_path = _get_application_path(application)
 
+        self._setup_environment(app_path, arguments)
+        self.process = self._launch_application_process(app_path, arguments)
+
+        return self.process.pid
+
+    def _setup_environment(self, app_path, *arguments):
         app_env = self.useFixture(
             _get_application_environment(
                 app_hint=self.app_hint,
@@ -124,16 +130,17 @@ class NormalApplicationLauncher(ApplicationLauncher):
             list(arguments),
         )
 
-        self.process = launch_process(
+    def _launch_application_process(self, app_path, *arguments):
+        process = launch_process(
             app_path,
             arguments,
             self.capture_output,
             cwd=self.cwd,
         )
 
-        self.addCleanup(self._kill_process_and_attach_logs, self.process)
+        self.addCleanup(self._kill_process_and_attach_logs, process)
 
-        return self.process.pid
+        return process
 
     def _kill_process_and_attach_logs(self, process):
         stdout, stderr, return_code = _kill_process(process)
@@ -200,7 +207,8 @@ def _get_click_app_id(package_id, app_name=None):
     for pkg in _get_click_manifest():
         if pkg['name'] == package_id:
             if app_name is None:
-                app_name = pkg['hooks'].keys()[0]
+                # py3 dict.keys isn't indexable.
+                app_name = list(pkg['hooks'].keys())[0]
             elif app_name not in pkg['hooks']:
                 raise RuntimeError(
                     "Application '{}' is not present within the click "

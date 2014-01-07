@@ -85,7 +85,7 @@ class ClickApplicationLauncher(ApplicationLauncher):
 
         return pid
 
-    def _add_click_launch_cleanup(app_id, pid):
+    def _add_click_launch_cleanup(self, app_id, pid):
         self._attach_application_logs_at_cleanup(app_id)
         self.addCleanup(_kill_pid, pid)
 
@@ -317,10 +317,10 @@ def _get_application_path(application):
 
 
 def _get_app_env_from_string_hint(hint):
-    hint = hint.lower()
-    if hint == 'qt':
+    lower_hint = hint.lower()
+    if lower_hint == 'qt':
         return QtApplicationEnvironment()
-    elif hint == 'gtk':
+    elif lower_hint == 'gtk':
         return GtkApplicationEnvironment()
 
     raise ValueError("Unknown hint string: {hint}".format(hint=hint))

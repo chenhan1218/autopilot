@@ -47,6 +47,7 @@ from autopilot.application._launcher import (
     _get_click_app_status,
     _get_click_application_log_content_object,
     _kill_pid,
+    _kill_process,
     _launch_click_app,
     _raise_if_not_empty,
 )
@@ -183,6 +184,22 @@ class ClickApplicationLauncherTests(TestCase):
                 Equals(123)
             )
 
+    def test_add_click_launch_cleanup_sets_up_cleanup(self):
+        launcher = ClickApplicationLauncher(Mock)
+        launcher._attach_application_logs_at_cleanup = Mock()
+        launcher.addCleanup = Mock()
+
+        with patch(
+            'autopilot.application._launcher._launch_click_app'
+        ) as launch_click:
+            launch_click.return_value = 123
+            launcher._launch_click_app("appid")
+
+            launcher._attach_application_logs_at_cleanup.assert_called_with(
+                "appid"
+            )
+            launcher.addCleanup.assert_called_with(_kill_pid, 123)
+
 
 class ApplicationLauncherInternalTests(TestCase):
 
@@ -246,6 +263,12 @@ class ApplicationLauncherInternalTests(TestCase):
             Equals(gtk_appenv())
         )
 
+    def test_get_app_env_from_string_hint_raises_on_unknown(self):
+        self.assertThat(
+            lambda: _get_app_env_from_string_hint('FOO'),
+            raises(ValueError("Unknown hint string: FOO"))
+        )
+
     @patch('autopilot.application._launcher._get_app_env_from_string_hint')
     def test_get_application_environment_uses_app_hint(self, from_hint):
         _get_application_environment("app_hint", None),
@@ -293,6 +316,39 @@ class ApplicationLauncherInternalTests(TestCase):
             patched_log.info.assert_called_with(
                 "Appears process has already exited."
             )
+
+    @patch('autopilot.application._launcher._attempt_kill_pid')
+    def test_kill_process_succeeds(self, patched_kill_pid):
+        mock_process = Mock()
+        mock_process.returncode = 0
+        mock_process.communicate.return_value = ("", "",)
+
+        with patch(
+            'autopilot.application._launcher._is_process_running'
+        ) as proc_running:
+            proc_running.return_value = False
+            self.assertThat(_kill_process(mock_process), Equals(("", "", 0)))
+
+    @patch('autopilot.application._launcher._attempt_kill_pid')
+    def test_kill_process_tries_again(self, patched_kill_pid):
+        sleep.enable_mock()
+        self.addCleanup(sleep.disable_mock)
+
+        mock_process = Mock()
+        mock_process.pid = 123
+        mock_process.communicate.return_value = ("", "",)
+
+        with patch(
+            'autopilot.application._launcher._is_process_running'
+        ) as proc_running:
+            import signal
+            proc_running.return_value = True
+
+            _kill_process(mock_process)
+
+            self.assertThat(proc_running.call_count, Equals(10))
+            self.assertThat(patched_kill_pid.call_count, Equals(2))
+            patched_kill_pid.assert_called_with(123, signal.SIGKILL)
 
     @patch('autopilot.application._launcher.subprocess')
     def test_launch_process_uses_arguments(self, subprocess):

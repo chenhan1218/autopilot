@@ -27,6 +27,7 @@ from testtools.matchers import (
     Raises,
     raises,
 )
+from textwrap import dedent
 from mock import Mock, patch
 
 from autopilot.application import (
@@ -48,6 +49,8 @@ from autopilot.application._launcher import (
     _get_click_app_pid,
     _get_click_app_status,
     _get_click_application_log_content_object,
+    _get_click_manifest,
+    _is_process_running,
     _kill_pid,
     _kill_process,
     _launch_click_app,
@@ -161,6 +164,34 @@ class ClickApplicationLauncherTests(TestCase):
             )
         )
 
+    @patch('autopilot.application._launcher._get_click_manifest')
+    def test_get_click_app_id_returns_id(self, cm):
+        cm.return_value = [
+            {
+                'name': 'com.autopilot.testing',
+                'hooks': {'bar': {}}, 'version': '1.0'
+            }
+        ]
+
+        self.assertThat(
+            _get_click_app_id("com.autopilot.testing", "bar"),
+            Equals("com.autopilot.testing_bar_1.0")
+        )
+
+    @patch('autopilot.application._launcher._get_click_manifest')
+    def test_get_click_app_id_returns_id_without_appid_passed(self, cm):
+        cm.return_value = [
+            {
+                'name': 'com.autopilot.testing',
+                'hooks': {'bar': {}}, 'version': '1.0'
+            }
+        ]
+
+        self.assertThat(
+            _get_click_app_id("com.autopilot.testing"),
+            Equals("com.autopilot.testing_bar_1.0")
+        )
+
     @patch(
         'autopilot.application._launcher.os.path.expanduser',
         new=lambda *args: "/home/autopilot/.cache/upstart/"
@@ -237,6 +268,25 @@ class ApplicationLauncherInternalTests(TestCase):
             Equals(1234)
         )
 
+    def test_get_click_app_pid_tries_10_times_and_raises(self):
+        sleep.enable_mock()
+        self.addCleanup(sleep.disable_mock)
+
+        with patch(
+            'autopilot.application._launcher._get_click_app_status'
+        ) as get_status:
+            get_status.side_effect = subprocess.CalledProcessError(1, "")
+
+            self.assertThat(
+                lambda: _get_click_app_pid("appid"),
+                raises(
+                    RuntimeError(
+                        "Could not find autopilot interface for click package "
+                        "'appid' after 10 seconds."
+                    )
+                )
+            )
+
     @patch('autopilot.application._launcher.subprocess')
     def test_launch_click_app(self, patched_subproc):
         with patch(
@@ -284,7 +334,12 @@ class ApplicationLauncherInternalTests(TestCase):
     def test_get_application_environment_raises_runtime_with_no_args(self):
         self.assertThat(
             lambda: _get_application_environment(),
-            raises(ValueError("Neither required argument of app_hint or app_path was provided"))
+            raises(
+                ValueError(
+                    "Neither required argument of app_hint or app_path was "
+                    "provided"
+                )
+            )
         )
 
     def test_get_application_environment_raises_on_app_hint_error(self):
@@ -295,8 +350,8 @@ class ApplicationLauncherInternalTests(TestCase):
             self.assertThat(
                 lambda: _get_application_environment(app_hint="foo"),
                 raises(RuntimeError(
-                    "Autopilot could not determine the correct introspection type "
-                    "to use. You can specify one by overriding the "
+                    "Autopilot could not determine the correct introspection "
+                    "type to use. You can specify one by overriding the "
                     "AutopilotTestCase.pick_app_launcher method."
                 ))
             )
@@ -309,12 +364,11 @@ class ApplicationLauncherInternalTests(TestCase):
             self.assertThat(
                 lambda: _get_application_environment(app_path="/foo/bar"),
                 raises(RuntimeError(
-                    "Autopilot could not determine the correct introspection type "
-                    "to use. You can specify one by overriding the "
+                    "Autopilot could not determine the correct introspection "
+                    "type to use. You can specify one by overriding the "
                     "AutopilotTestCase.pick_app_launcher method."
                 ))
             )
-
 
     @patch('autopilot.application._launcher._attempt_kill_pid')
     def test_kill_pid_succeeds(self, patched_killpg):
@@ -491,3 +545,28 @@ class ApplicationLauncherInternalTests(TestCase):
             self.assertThat(
                 get_application_launcher_wrapper("/foo/bar"), Equals(None)
             )
+
+    def test_get_click_manifest_returns_python_object(self):
+
+        example_manifest = dedent("""[{
+            "description": "Calculator application",
+            "framework": "ubuntu-sdk-13.10",
+            "hooks": {
+            "calculator": {
+                "apparmor": "apparmor/calculator.json",
+                "desktop": "ubuntu-calculator-app.desktop"
+            }
+            },
+            "icon": "calculator64.png"
+            }]""")
+        with patch(
+            'autopilot.application._launcher.subprocess.check_output'
+        ) as check_output:
+            check_output.return_value = example_manifest
+            self.assertThat(_get_click_manifest(), IsInstance(list))
+
+    @patch('autopilot.application._launcher.psutil.pid_exists')
+    def test_is_process_running_checks_with_pid(self, pid_exists):
+        pid_exists.return_value = True
+        self.assertThat(_is_process_running(123), Equals(True))
+        pid_exists.assert_called_with(123)

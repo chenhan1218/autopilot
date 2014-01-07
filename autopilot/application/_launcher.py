@@ -114,7 +114,10 @@ class NormalApplicationLauncher(ApplicationLauncher):
         app_path = _get_application_path(application)
 
         app_env = self.useFixture(
-            _get_application_environment(self.app_hint, app_path)
+            _get_application_environment(
+                app_hint=self.app_hint,
+                app_path=app_path
+            )
         )
         app_path, arguments = app_env.prepare_environment(
             app_path,
@@ -264,8 +267,11 @@ def _attempt_kill_pid(pid, sig=signal.SIGTERM):
         logger.info("Appears process has already exited.")
 
 
-def _get_application_environment(app_hint, app_path):
+def _get_application_environment(**kwargs):
+    """kwargs must contain either an app_hint or app_path value."""
     try:
+        app_hint = kwargs.get("app_hint", None)
+        app_path = kwargs.get("app_path", None)
         if app_hint is not None:
             return _get_app_env_from_string_hint(app_hint)
         elif app_path is not None:
@@ -277,6 +283,10 @@ def _get_application_environment(app_hint, app_path):
             "to use. You can specify one by overriding the "
             "AutopilotTestCase.pick_app_launcher method."
         )
+
+    raise ValueError(
+        "Neither required argument of app_hint or app_path was provided"
+    )
 
 
 def get_application_launcher_wrapper(app_path):

@@ -273,13 +273,48 @@ class ApplicationLauncherInternalTests(TestCase):
 
     @patch('autopilot.application._launcher._get_app_env_from_string_hint')
     def test_get_application_environment_uses_app_hint(self, from_hint):
-        _get_application_environment("app_hint", None),
+        _get_application_environment(app_hint="app_hint"),
         from_hint.called_with_args("app_hint")
 
     @patch('autopilot.application._launcher.get_application_launcher_wrapper')
     def test_get_application_environment_uses_app_path(self, patched_wrapper):
-        _get_application_environment(None, "app_path"),
+        _get_application_environment(app_path="app_path"),
         patched_wrapper.called_with_args("app_path")
+
+    def test_get_application_environment_raises_runtime_with_no_args(self):
+        self.assertThat(
+            lambda: _get_application_environment(),
+            raises(ValueError("Neither required argument of app_hint or app_path was provided"))
+        )
+
+    def test_get_application_environment_raises_on_app_hint_error(self):
+        with patch(
+            'autopilot.application._launcher._get_app_env_from_string_hint'
+        ) as get_app_env:
+            get_app_env.side_effect = ValueError()
+            self.assertThat(
+                lambda: _get_application_environment(app_hint="foo"),
+                raises(RuntimeError(
+                    "Autopilot could not determine the correct introspection type "
+                    "to use. You can specify one by overriding the "
+                    "AutopilotTestCase.pick_app_launcher method."
+                ))
+            )
+
+    def test_get_application_environment_raises_on_app_path_error(self):
+        with patch(
+            'autopilot.application._launcher.get_application_launcher_wrapper'
+        ) as launcher:
+            launcher.side_effect = RuntimeError()
+            self.assertThat(
+                lambda: _get_application_environment(app_path="/foo/bar"),
+                raises(RuntimeError(
+                    "Autopilot could not determine the correct introspection type "
+                    "to use. You can specify one by overriding the "
+                    "AutopilotTestCase.pick_app_launcher method."
+                ))
+            )
+
 
     @patch('autopilot.application._launcher._attempt_kill_pid')
     def test_kill_pid_succeeds(self, patched_killpg):
@@ -446,4 +481,13 @@ class ApplicationLauncherInternalTests(TestCase):
                         " status 1"
                     )
                 )
+            )
+
+    def test_get_application_launcher_wrapper_returns_none_for_unknown(self):
+        with patch(
+            'autopilot.application._launcher.subprocess.check_output'
+        ) as check_output:
+            check_output.return_value = "foo"
+            self.assertThat(
+                get_application_launcher_wrapper("/foo/bar"), Equals(None)
             )

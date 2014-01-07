@@ -295,7 +295,7 @@ def get_application_launcher_wrapper(app_path):
             universal_newlines=True
         ).strip().lower()
     except subprocess.CalledProcessError as e:
-        raise RuntimeError(e)
+        raise RuntimeError(str(e))
     if 'libqtcore' in ldd_output or 'libqt5core' in ldd_output:
         return QtApplicationEnvironment()
     elif 'libgtk' in ldd_output:

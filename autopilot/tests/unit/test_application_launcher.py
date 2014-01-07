@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import subprocess
 from testtools import TestCase
 from testtools.matchers import (
     Contains,
@@ -42,6 +43,7 @@ from autopilot.application._launcher import (
     _attempt_kill_pid,
     _get_app_env_from_string_hint,
     _get_application_environment,
+    _get_application_path,
     _get_click_app_id,
     _get_click_app_pid,
     _get_click_app_status,
@@ -400,3 +402,48 @@ class ApplicationLauncherInternalTests(TestCase):
             get_application_launcher_wrapper("/fake/app/path"),
             IsInstance(GtkApplicationEnvironment)
         )
+
+    def test_get_application_path_returns_stripped_path(self):
+        with patch('autopilot.application._launcher.subprocess') as sub_proc:
+            sub_proc.check_output.return_value = "/foo/bar   "
+
+            self.assertThat(_get_application_path("bar"), Equals('/foo/bar'))
+            sub_proc.called_with_args(['which', 'bar'], True)
+
+    def test_get_application_path_raises_when_cant_find_app(self):
+        with patch(
+            'autopilot.application._launcher.subprocess.check_output'
+        ) as check_output:
+            check_output.side_effect = subprocess.CalledProcessError(
+                1,
+                ['which', 'bar']
+            )
+
+            self.assertThat(
+                lambda: _get_application_path("bar"),
+                raises(
+                    ValueError(
+                        "Unable to find path for application bar: Command"
+                        " '['which', 'bar']' returned non-zero exit status 1"
+                    )
+                )
+            )
+
+    def test_get_application_launcher_wrapper_raises_runtimeerror(self):
+        with patch(
+            'autopilot.application._launcher.subprocess.check_output'
+        ) as check_output:
+            check_output.side_effect = subprocess.CalledProcessError(
+                1,
+                ['ldd', '/foo/bar']
+            )
+
+            self.assertThat(
+                lambda: get_application_launcher_wrapper("/foo/bar"),
+                raises(
+                    RuntimeError(
+                        "Command '['ldd', '/foo/bar']' returned non-zero exit"
+                        " status 1"
+                    )
+                )
+            )

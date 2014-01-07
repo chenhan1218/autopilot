@@ -233,6 +233,13 @@ class ClickApplicationLauncherTests(TestCase):
             )
             launcher.addCleanup.assert_called_with(_kill_pid, 123)
 
+    def test_attach_application_logs_at_cleanup_calls_addCleanup(self):
+        launcher = ClickApplicationLauncher(Mock)
+        launcher.addCleanup = Mock()
+
+        launcher._attach_application_logs_at_cleanup("appid")
+        self.assertThat(launcher.addCleanup.call_count, Equals(1))
+
 
 class ApplicationLauncherInternalTests(TestCase):
 

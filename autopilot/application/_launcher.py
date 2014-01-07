@@ -113,8 +113,8 @@ class NormalApplicationLauncher(ApplicationLauncher):
     def launch(self, application, *arguments):
         app_path = _get_application_path(application)
 
-        self._setup_environment(app_path, arguments)
-        self.process = self._launch_application_process(app_path, arguments)
+        app_path, arguments = self._setup_environment(app_path, *arguments)
+        self.process = self._launch_application_process(app_path, *arguments)
 
         return self.process.pid
 
@@ -125,7 +125,7 @@ class NormalApplicationLauncher(ApplicationLauncher):
                 app_path=app_path
             )
         )
-        app_path, arguments = app_env.prepare_environment(
+        return app_env.prepare_environment(
             app_path,
             list(arguments),
         )

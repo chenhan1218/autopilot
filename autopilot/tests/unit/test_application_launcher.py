@@ -108,6 +108,17 @@ class NormalApplicationLauncherTests(TestCase):
             self.assertThat(mock_addDetail.call_count, Equals(3))
             mock_addDetail.assert_called_with('process-stderr', text_content())
 
+    @patch('autopilot.application._launcher._get_application_environment')
+    def test_setup_environment_returns_modified_args(self, app_env):
+        app_launcher = NormalApplicationLauncher(Mock())
+        app_launcher.useFixture = Mock(return_value=QtApplicationEnvironment())
+
+        app_launcher._setup_environment("/"),
+        self.assertThat(
+            app_launcher._setup_environment("/"),
+            Equals(("/", ["-testability"]))
+        )
+
     @patch('autopilot.application._launcher._get_application_path')
     def test_launch_calls_returns_process_id(self, get_app_path):
         get_app_path.return_value = ""

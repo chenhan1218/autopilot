@@ -66,7 +66,7 @@ from autopilot.application._environment import (
 class ApplicationLauncherTests(TestCase):
     def test_raises_on_attempt_to_use_launch(self):
         self.assertThat(
-            lambda: ApplicationLauncher(Mock).launch(),
+            lambda: ApplicationLauncher(self.addDetail).launch(),
             raises(
                 NotImplementedError("Sub-classes must implement this method.")
             )
@@ -84,13 +84,13 @@ class NormalApplicationLauncherTests(TestCase):
             emulator_base=True
         )
         self.assertThat(
-            lambda: NormalApplicationLauncher(Mock(), **test_kwargs),
+            lambda: NormalApplicationLauncher(self.addDetail, **test_kwargs),
             Not(Raises())
         )
 
     def test_raises_value_error_on_unknown_kwargs(self):
         self.assertThat(
-            lambda: NormalApplicationLauncher(Mock(), unknown=True),
+            lambda: NormalApplicationLauncher(self.addDetail, unknown=True),
             raises(ValueError("Unknown keyword arguments: 'unknown'."))
         )
 
@@ -110,7 +110,7 @@ class NormalApplicationLauncherTests(TestCase):
 
     @patch('autopilot.application._launcher._get_application_environment')
     def test_setup_environment_returns_modified_args(self, app_env):
-        app_launcher = NormalApplicationLauncher(Mock())
+        app_launcher = NormalApplicationLauncher(self.addDetail)
         app_launcher.useFixture = Mock(return_value=QtApplicationEnvironment())
 
         app_launcher._setup_environment("/"),
@@ -122,7 +122,7 @@ class NormalApplicationLauncherTests(TestCase):
     @patch('autopilot.application._launcher._get_application_path')
     def test_launch_calls_returns_process_id(self, get_app_path):
         get_app_path.return_value = ""
-        app_launcher = NormalApplicationLauncher(Mock())
+        app_launcher = NormalApplicationLauncher(self.addDetail)
         app_launcher._setup_environment = Mock(return_value=("", "",))
         app_launcher._launch_application_process = Mock(
             return_value=Mock(pid=123)
@@ -155,7 +155,7 @@ class ClickApplicationLauncherTests(TestCase):
 
     def test_raises_exception_on_unknown_kwargs(self):
         self.assertThat(
-            lambda: ClickApplicationLauncher(Mock(), unknown=True),
+            lambda: ClickApplicationLauncher(self.addDetail, unknown=True),
             raises(ValueError("Unknown keyword arguments: 'unknown'."))
         )
 
@@ -165,7 +165,9 @@ class ClickApplicationLauncherTests(TestCase):
             'autopilot.application._launcher._get_click_app_id'
         ) as get_click_app_id:
             get_click_app_id.return_value = "app_id"
-            launcher = self.useFixture(ClickApplicationLauncher(Mock()))
+            launcher = self.useFixture(
+                ClickApplicationLauncher(self.addDetail)
+            )
             launcher._launch_click_app = Mock()
 
             launcher.launch("package_id", "app_name")
@@ -269,7 +271,7 @@ class ClickApplicationLauncherTests(TestCase):
 
     @patch('autopilot.application._launcher._launch_click_app')
     def test_launch_click_app_returns_pid(self, patched_launch_click_app):
-        launcher = ClickApplicationLauncher(Mock)
+        launcher = ClickApplicationLauncher(self.addDetail)
         launcher._add_click_launch_cleanup = Mock()
         patched_launch_click_app.return_value = 123
 

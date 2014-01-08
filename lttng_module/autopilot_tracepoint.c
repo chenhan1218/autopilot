@@ -15,6 +15,7 @@ emit_test_started(PyObject *self, PyObject *args)
 {
     const char *mesg_text;
 
+    /* In Python 3, the argument must be a UTF-8 encoded Unicode. */
     if(!PyArg_ParseTuple(args, "s", &mesg_text))
     {
         return NULL;
@@ -29,6 +30,7 @@ emit_test_ended(PyObject *self, PyObject *args)
 {
     const char *mesg_text;
 
+    /* In Python 3, the argument must be a UTF-8 encoded Unicode. */
     if(!PyArg_ParseTuple(args, "s", &mesg_text))
     {
         return NULL;
@@ -44,9 +46,29 @@ static PyMethodDef TracepointMethods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
+#if PY_MAJOR_VERSION >= 3
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "tracepoint",               /* m_name */
+    NULL,                       /* m_doc */
+    -1,                         /* m_size */
+    TracepointMethods,          /* m_methods */
+    NULL,                       /* m_reload */
+    NULL,                       /* m_traverse */
+    NULL,                       /* m_clear */
+    NULL                        /* m_free */
+};
+
+PyMODINIT_FUNC
+PyInit_tracepoint(void)
+{
+    return PyModule_Create(&moduledef);
+}
+#else  /* Python 2 */
 
 PyMODINIT_FUNC
 inittracepoint(void)
 {
     (void) Py_InitModule("tracepoint", TracepointMethods);
 }
+#endif  /* PY_MAJOR_VERSION >= 3 */

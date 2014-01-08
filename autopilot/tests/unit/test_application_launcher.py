@@ -130,6 +130,26 @@ class NormalApplicationLauncherTests(TestCase):
 
         self.assertThat(app_launcher.launch(""), Equals(123))
 
+    @patch('autopilot.application._launcher.launch_process')
+    def test_launch_application_process(self, launch_process):
+        launch_process.return_value = "process"
+        launcher = NormalApplicationLauncher(self.addDetail)
+        launcher.setUp()
+
+        process = launcher._launch_application_process("/foo/bar")
+
+        self.assertThat(process, Equals("process"))
+        self.assertThat(
+            [f[0].func_name for f in launcher._cleanups._cleanups],
+            Contains("_kill_process_and_attach_logs")
+        )
+        launch_process.assert_called_with(
+            "/foo/bar",
+            (),
+            launcher.capture_output,
+            cwd=launcher.cwd
+        )
+
 
 class ClickApplicationLauncherTests(TestCase):
 
@@ -256,7 +276,6 @@ class ClickApplicationLauncherTests(TestCase):
         launcher.addCleanup.assert_any_call(_kill_pid, 123)
         launcher.addCleanup.assert_any_call(launcher._add_log_cleanup, "appid")
 
-
     def test_add_log_cleanup_adds_details(self):
         launcher = ClickApplicationLauncher(self.addDetail)
         with patch(
@@ -264,7 +283,9 @@ class ClickApplicationLauncherTests(TestCase):
             '_get_click_application_log_content_object'
         ):
             launcher._add_log_cleanup("appid")
-            self.assertThat(self._TestCase__details, Contains("Application Log"))
+            self.assertThat(
+                self._TestCase__details, Contains("Application Log")
+            )
 
 
 class ApplicationLauncherInternalTests(TestCase):

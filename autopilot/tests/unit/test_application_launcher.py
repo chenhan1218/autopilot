@@ -34,9 +34,11 @@ from autopilot.application import (
     ClickApplicationLauncher,
     NormalApplicationLauncher,
 )
-from autopilot.application._environment import UpstartApplicationEnvironment
-from autopilot.utilities import sleep
-
+from autopilot.application._environment import (
+    GtkApplicationEnvironment,
+    QtApplicationEnvironment,
+    UpstartApplicationEnvironment,
+)
 from autopilot.application._launcher import (
     ApplicationLauncher,
     get_application_launcher_wrapper,
@@ -56,11 +58,7 @@ from autopilot.application._launcher import (
     _launch_click_app,
     _raise_if_not_empty,
 )
-
-from autopilot.application._environment import (
-    GtkApplicationEnvironment,
-    QtApplicationEnvironment,
-)
+from autopilot.utilities import sleep
 
 
 class ApplicationLauncherTests(TestCase):

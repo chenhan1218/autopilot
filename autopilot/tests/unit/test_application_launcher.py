@@ -239,28 +239,32 @@ class ClickApplicationLauncherTests(TestCase):
                 Equals(123)
             )
 
-    def test_add_click_launch_cleanup_sets_up_cleanup(self):
-        launcher = ClickApplicationLauncher(Mock)
-        launcher._attach_application_logs_at_cleanup = Mock()
-        launcher.addCleanup = Mock()
+    def test_add_click_launch_cleanup(self):
+        launcher = ClickApplicationLauncher(self.addDetail)
+        launcher.setUp()
+        launcher._add_click_launch_cleanup("appid", 123)
 
+        queued_methods = [f[0].func_name for f in launcher._cleanups._cleanups]
+        self.assertThat(queued_methods, Contains("_kill_pid"))
+        self.assertThat(queued_methods, Contains("_add_log_cleanup"))
+
+    def test_add_click_launch_cleanup_provides_correct_details(self):
+        launcher = ClickApplicationLauncher(self.addDetail)
+        launcher.addCleanup = Mock()
+        launcher._add_click_launch_cleanup("appid", 123)
+
+        launcher.addCleanup.assert_any_call(_kill_pid, 123)
+        launcher.addCleanup.assert_any_call(launcher._add_log_cleanup, "appid")
+
+
+    def test_add_log_cleanup_adds_details(self):
+        launcher = ClickApplicationLauncher(self.addDetail)
         with patch(
-            'autopilot.application._launcher._launch_click_app'
-        ) as launch_click:
-            launch_click.return_value = 123
-            launcher._launch_click_app("appid")
-
-            launcher._attach_application_logs_at_cleanup.assert_called_with(
-                "appid"
-            )
-            launcher.addCleanup.assert_called_with(_kill_pid, 123)
-
-    def test_attach_application_logs_at_cleanup_calls_addCleanup(self):
-        launcher = ClickApplicationLauncher(Mock)
-        launcher.addCleanup = Mock()
-
-        launcher._attach_application_logs_at_cleanup("appid")
-        self.assertThat(launcher.addCleanup.call_count, Equals(1))
+            'autopilot.application._launcher.'
+            '_get_click_application_log_content_object'
+        ):
+            launcher._add_log_cleanup("appid")
+            self.assertThat(self._TestCase__details, Contains("Application Log"))
 
 
 class ApplicationLauncherInternalTests(TestCase):
@@ -599,5 +603,3 @@ class ApplicationLauncherInternalTests(TestCase):
         pid_exists.return_value = True
         self.assertThat(_is_process_running(123), Equals(True))
         pid_exists.assert_called_with(123)
-    def test_testing(self):
-        pass

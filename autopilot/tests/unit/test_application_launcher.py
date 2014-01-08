@@ -140,8 +140,8 @@ class NormalApplicationLauncherTests(TestCase):
 
         self.assertThat(process, Equals("process"))
         self.assertThat(
-            [f[0].func_name for f in launcher._cleanups._cleanups],
-            Contains("_kill_process_and_attach_logs")
+            [f[0] for f in launcher._cleanups._cleanups],
+            Contains(launcher._kill_process_and_attach_logs)
         )
         launch_process.assert_called_with(
             "/foo/bar",
@@ -264,9 +264,9 @@ class ClickApplicationLauncherTests(TestCase):
         launcher.setUp()
         launcher._add_click_launch_cleanup("appid", 123)
 
-        queued_methods = [f[0].func_name for f in launcher._cleanups._cleanups]
-        self.assertThat(queued_methods, Contains("_kill_pid"))
-        self.assertThat(queued_methods, Contains("_add_log_cleanup"))
+        queued_methods = [f[0] for f in launcher._cleanups._cleanups]
+        self.assertThat(queued_methods, Contains(_kill_pid))
+        self.assertThat(queued_methods, Contains(launcher._add_log_cleanup))
 
     def test_add_click_launch_cleanup_provides_correct_details(self):
         launcher = ClickApplicationLauncher(self.addDetail)

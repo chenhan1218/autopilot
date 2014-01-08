@@ -172,12 +172,32 @@ class ClickApplicationLauncherTests(TestCase):
             prep_env.assert_called_with("app_id", "app_name")
 
     @patch(
-        'autopilot.application._launcher._get_click_manifest', new=lambda: [])
-    def test_get_click_app_id_raises_runtimeerror_on_missing_package(self):
+        'autopilot.application._launcher._get_click_manifest', new=lambda: []
+    )
+    def test_get_click_app_id_raises_runtimeerror_on_empty_manifest(self):
         """_get_click_app_id must raise a RuntimeError if the requested
         package id is not found in the click manifest.
 
         """
+        self.assertThat(
+            lambda: _get_click_app_id("com.autopilot.testing"),
+            raises(
+                RuntimeError(
+                    "Unable to find package 'com.autopilot.testing' in the "
+                    "click manifest."
+                )
+            )
+        )
+
+    @patch('autopilot.application._launcher._get_click_manifest')
+    def test_get_click_app_id_raises_runtimeerror_on_missing_package(self, cm):
+        cm.return_value = [
+            {
+                'name': 'com.not.expected.name',
+                'hooks': {'bar': {}}, 'version': '1.0'
+            }
+        ]
+
         self.assertThat(
             lambda: _get_click_app_id("com.autopilot.testing"),
             raises(
@@ -315,12 +335,34 @@ class ApplicationLauncherInternalTests(TestCase):
 
     @patch('autopilot.application._environment.subprocess')
     def test_get_click_app_pid(self, patched_subproc):
-        patched_subproc.check_output.return_value = "application-click"\
-            " (com.autopilot.testing.test_app_id) start/running, process 1234"
+        patched_subproc.check_output.return_value = dedent(
+            """application-click (com.autopilot.testing.test_app_id)
+            dummy/data\napplication-click (blah) dummy/data\napplication-click
+            (com.autopilot.testing.test_app_id) start/running, process 1234"""
+        )
         self.assertThat(
             _get_click_app_pid("test_app_id"),
             Equals(1234)
         )
+
+    def test_get_click_app_pid_raises_runtimeerror_with_no_status(self):
+        sleep.enable_mock()
+        self.addCleanup(sleep.disable_mock)
+
+        with patch(
+            'autopilot.application._launcher._get_click_app_status'
+        ) as get_status:
+            get_status.return_value = ""
+
+            self.assertThat(
+                lambda: _get_click_app_pid("appid"),
+                raises(
+                    RuntimeError(
+                        "Could not find autopilot interface for click package "
+                        "'appid' after 10 seconds."
+                    )
+                )
+            )
 
     def test_get_click_app_pid_tries_10_times_and_raises(self):
         sleep.enable_mock()

@@ -123,7 +123,7 @@ class NormalApplicationLauncherTests(TestCase):
     def test_launch_calls_returns_process_id(self, get_app_path):
         get_app_path.return_value = ""
         app_launcher = NormalApplicationLauncher(Mock())
-        app_launcher._setup_environment = Mock()
+        app_launcher._setup_environment = Mock(return_value=("", "",))
         app_launcher._launch_application_process = Mock(
             return_value=Mock(pid=123)
         )
@@ -599,3 +599,5 @@ class ApplicationLauncherInternalTests(TestCase):
         pid_exists.return_value = True
         self.assertThat(_is_process_running(123), Equals(True))
         pid_exists.assert_called_with(123)
+    def test_testing(self):
+        pass

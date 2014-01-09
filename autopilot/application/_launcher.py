@@ -69,9 +69,7 @@ class ClickApplicationLauncher(ApplicationLauncher):
         _app_env = self.useFixture(UpstartApplicationEnvironment())
         _app_env.prepare_environment(app_id, app_name)
 
-        pid = self._launch_click_app(app_id)
-
-        return pid
+        return self._launch_click_app(app_id)
 
     def _launch_click_app(self, app_id):
         pid = _launch_click_app(app_id)
@@ -118,10 +116,7 @@ class NormalApplicationLauncher(ApplicationLauncher):
 
     def _setup_environment(self, app_path, *arguments):
         app_env = self.useFixture(
-            _get_application_environment(
-                app_hint=self.app_hint,
-                app_path=app_path
-            )
+            _get_application_environment(self.app_hint, app_path)
         )
         return app_env.prepare_environment(
             app_path,
@@ -273,15 +268,14 @@ def _attempt_kill_pid(pid, sig=signal.SIGTERM):
         logger.info("Appears process has already exited.")
 
 
-def _get_application_environment(**kwargs):
-    """kwargs must contain either an app_hint or app_path value."""
+def _get_application_environment(app_hint=None, app_path=None):
     try:
-        app_hint = kwargs.get("app_hint", None)
-        app_path = kwargs.get("app_path", None)
         if app_hint is not None:
             return _get_app_env_from_string_hint(app_hint)
         elif app_path is not None:
             return get_application_launcher_wrapper(app_path)
+        else:
+            ValueError("Must specify either app_hint or app_path.")
     except (RuntimeError, ValueError) as e:
         logger.error(str(e))
         raise RuntimeError(

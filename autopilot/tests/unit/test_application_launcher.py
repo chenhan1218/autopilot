@@ -52,6 +52,7 @@ from autopilot.application._launcher import (
     _get_click_app_pid,
     _get_click_app_status,
     _get_click_application_log_content_object,
+    _get_click_application_log_path,
     _get_click_manifest,
     _is_process_running,
     _kill_pid,
@@ -111,47 +112,48 @@ class NormalApplicationLauncherTests(TestCase):
             self.assertThat(call_args, Contains(('process-stdout', 'stdout')))
             self.assertThat(call_args, Contains(('process-stderr', 'stderr')))
 
-    @patch('autopilot.application._launcher._get_application_environment')
-    def test_setup_environment_returns_modified_args(self, app_env):
+    def test_setup_environment_returns_modified_args(self):
         app_launcher = NormalApplicationLauncher(self.addDetail)
         app_launcher.useFixture = Mock(return_value=QtApplicationEnvironment())
 
-        app_launcher._setup_environment("/"),
-        self.assertThat(
+        with patch.object(_l, '_get_application_environment'):
             app_launcher._setup_environment("/"),
-            Equals(("/", ["-testability"]))
-        )
+            self.assertThat(
+                app_launcher._setup_environment("/"),
+                Equals(("/", ["-testability"]))
+            )
 
-    @patch('autopilot.application._launcher._get_application_path')
-    def test_launch_calls_returns_process_id(self, get_app_path):
-        get_app_path.return_value = ""
-        app_launcher = NormalApplicationLauncher(self.addDetail)
-        app_launcher._setup_environment = Mock(return_value=("", "",))
-        app_launcher._launch_application_process = Mock(
-            return_value=Mock(pid=123)
-        )
+    def test_launch_calls_returns_process_id(self):
+        with patch.object(_l, '_get_application_path', return_value=""):
+            app_launcher = NormalApplicationLauncher(self.addDetail)
+            app_launcher._setup_environment = Mock(return_value=("", "",))
+            app_launcher._launch_application_process = Mock(
+                return_value=Mock(pid=123)
+            )
 
-        self.assertThat(app_launcher.launch(""), Equals(123))
+            self.assertThat(app_launcher.launch(""), Equals(123))
 
-    @patch('autopilot.application._launcher.launch_process')
-    def test_launch_application_process(self, launch_process):
-        launch_process.return_value = "process"
+    def test_launch_application_process(self):
         launcher = NormalApplicationLauncher(self.addDetail)
         launcher.setUp()
 
-        process = launcher._launch_application_process("/foo/bar")
+        expected_process_return = self.getUniqueString()
+        with patch.object(
+            _l, 'launch_process', return_value=expected_process_return
+        ) as patched_launch_process:
+            process = launcher._launch_application_process("/foo/bar")
 
-        self.assertThat(process, Equals("process"))
-        self.assertThat(
-            [f[0] for f in launcher._cleanups._cleanups],
-            Contains(launcher._kill_process_and_attach_logs)
-        )
-        launch_process.assert_called_with(
-            "/foo/bar",
-            (),
-            launcher.capture_output,
-            cwd=launcher.cwd
-        )
+            self.assertThat(process, Equals(expected_process_return))
+            self.assertThat(
+                [f[0] for f in launcher._cleanups._cleanups],
+                Contains(launcher._kill_process_and_attach_logs)
+            )
+            patched_launch_process.assert_called_with(
+                "/foo/bar",
+                (),
+                launcher.capture_output,
+                cwd=launcher.cwd
+            )
 
 
 class ClickApplicationLauncherTests(TestCase):
@@ -176,93 +178,97 @@ class ClickApplicationLauncherTests(TestCase):
             launcher.launch("package_id", "app_name")
             prep_env.assert_called_with("app_id", "app_name")
 
-    @patch(
-        'autopilot.application._launcher._get_click_manifest', new=lambda: []
-    )
     def test_get_click_app_id_raises_runtimeerror_on_empty_manifest(self):
         """_get_click_app_id must raise a RuntimeError if the requested
         package id is not found in the click manifest.
 
         """
-        self.assertThat(
-            lambda: _get_click_app_id("com.autopilot.testing"),
-            raises(
-                RuntimeError(
-                    "Unable to find package 'com.autopilot.testing' in the "
-                    "click manifest."
+        with patch.object(_l, '_get_click_manifest', return_value=[]):
+            self.assertThat(
+                lambda: _get_click_app_id("com.autopilot.testing"),
+                raises(
+                    RuntimeError(
+                        "Unable to find package 'com.autopilot.testing' in "
+                        "the click manifest."
+                    )
                 )
             )
-        )
 
-    @patch('autopilot.application._launcher._get_click_manifest')
-    def test_get_click_app_id_raises_runtimeerror_on_missing_package(self, cm):
-        cm.return_value = [
-            {
-                'name': 'com.not.expected.name',
-                'hooks': {'bar': {}}, 'version': '1.0'
-            }
-        ]
+    def test_get_click_app_id_raises_runtimeerror_on_missing_package(self):
+        with patch.object(_l, '_get_click_manifest') as cm:
+            cm.return_value = [
+                {
+                    'name': 'com.not.expected.name',
+                    'hooks': {'bar': {}}, 'version': '1.0'
+                }
+            ]
 
-        self.assertThat(
-            lambda: _get_click_app_id("com.autopilot.testing"),
-            raises(
-                RuntimeError(
-                    "Unable to find package 'com.autopilot.testing' in the "
-                    "click manifest."
+            self.assertThat(
+                lambda: _get_click_app_id("com.autopilot.testing"),
+                raises(
+                    RuntimeError(
+                        "Unable to find package 'com.autopilot.testing' in "
+                        "the click manifest."
+                    )
                 )
             )
-        )
 
-    @patch('autopilot.application._launcher._get_click_manifest')
-    def test_get_click_app_id_raises_runtimeerror_on_wrong_app(self, cm):
+    def test_get_click_app_id_raises_runtimeerror_on_wrong_app(self):
         """get_click_app_id must raise a RuntimeError if the requested
         application is not found within the click package.
 
         """
-        cm.return_value = [{'name': 'com.autopilot.testing', 'hooks': {}}]
+        with patch.object(_l, '_get_click_manifest') as cm:
+            cm.return_value = [{'name': 'com.autopilot.testing', 'hooks': {}}]
 
-        self.assertThat(
-            lambda: _get_click_app_id("com.autopilot.testing", "bar"),
-            raises(
-                RuntimeError(
-                    "Application 'bar' is not present within the click package"
-                    " 'com.autopilot.testing'."
+            self.assertThat(
+                lambda: _get_click_app_id("com.autopilot.testing", "bar"),
+                raises(
+                    RuntimeError(
+                        "Application 'bar' is not present within the click "
+                        "package 'com.autopilot.testing'."
+                    )
                 )
             )
-        )
 
-    @patch('autopilot.application._launcher._get_click_manifest')
-    def test_get_click_app_id_returns_id(self, cm):
-        cm.return_value = [
-            {
+    def test_get_click_app_id_returns_id(self):
+        with patch.object(_l, '_get_click_manifest') as cm:
+            cm.return_value = [
+                {
                 'name': 'com.autopilot.testing',
-                'hooks': {'bar': {}}, 'version': '1.0'
-            }
-        ]
+                    'hooks': {'bar': {}}, 'version': '1.0'
+                }
+            ]
 
-        self.assertThat(
-            _get_click_app_id("com.autopilot.testing", "bar"),
-            Equals("com.autopilot.testing_bar_1.0")
-        )
+            self.assertThat(
+                _get_click_app_id("com.autopilot.testing", "bar"),
+                Equals("com.autopilot.testing_bar_1.0")
+            )
 
-    @patch('autopilot.application._launcher._get_click_manifest')
-    def test_get_click_app_id_returns_id_without_appid_passed(self, cm):
-        cm.return_value = [
-            {
-                'name': 'com.autopilot.testing',
-                'hooks': {'bar': {}}, 'version': '1.0'
-            }
-        ]
+    def test_get_click_app_id_returns_id_without_appid_passed(self):
+        with patch.object(_l, '_get_click_manifest') as cm:
+            cm.return_value = [
+                {
+                    'name': 'com.autopilot.testing',
+                    'hooks': {'bar': {}}, 'version': '1.0'
+                }
+            ]
 
-        self.assertThat(
-            _get_click_app_id("com.autopilot.testing"),
-            Equals("com.autopilot.testing_bar_1.0")
-        )
+            self.assertThat(
+                _get_click_app_id("com.autopilot.testing"),
+                Equals("com.autopilot.testing_bar_1.0")
+            )
 
     @patch(
         'autopilot.application._launcher.os.path.expanduser',
         new=lambda *args: "/home/autopilot/.cache/upstart/"
     )
+    def test_get_click_application_log_path(self):
+        self.assertThat(
+            _get_click_application_log_path("foo"),
+            Equals("/home/autopilot/.cache/upstart/application-click-foo.log")
+        )
+
     def test_get_click_application_log_content_object(self):
         with patch(
                 'autopilot.application._launcher.content_from_file'

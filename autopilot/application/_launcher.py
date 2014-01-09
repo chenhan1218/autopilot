@@ -189,11 +189,13 @@ def _get_click_app_status(app_id):
 
 
 def _get_click_application_log_content_object(app_id):
+    return content_from_file(_get_click_application_log_path(app_id))
+
+
+def _get_click_application_log_path(app_id):
     log_dir = os.path.expanduser('~/.cache/upstart/')
     log_name = 'application-click-{}.log'.format(app_id)
-    log_path = os.path.join(log_dir, log_name)
-
-    return content_from_file(log_path)
+    return os.path.join(log_dir, log_name)
 
 
 def _get_click_app_id(package_id, app_name=None):

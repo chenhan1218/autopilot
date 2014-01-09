@@ -39,6 +39,7 @@ from autopilot.application._environment import (
     QtApplicationEnvironment,
     UpstartApplicationEnvironment,
 )
+import autopilot.application._launcher as _l
 from autopilot.application._launcher import (
     ApplicationLauncher,
     get_application_launcher_wrapper,
@@ -92,19 +93,23 @@ class NormalApplicationLauncherTests(TestCase):
             raises(ValueError("Unknown keyword arguments: 'unknown'."))
         )
 
-    @patch('autopilot.application._launcher._kill_process')
-    def test_kill_process_and_attach_logs(self, patched_kill_proc):
+    def test_kill_process_and_attach_logs(self):
         mock_addDetail = Mock()
         app_launcher = NormalApplicationLauncher(mock_addDetail)
 
-        patched_kill_proc.return_value = ("stdout", "stderr", 0)
-
-        with patch(
-            'autopilot.application._launcher.text_content'
-        ) as text_content:
+        with patch.object(
+            _l, '_kill_process', return_value=("stdout", "stderr", 0)
+        ):
             app_launcher._kill_process_and_attach_logs(0)
-            self.assertThat(mock_addDetail.call_count, Equals(3))
-            mock_addDetail.assert_called_with('process-stderr', text_content())
+
+            call_args = [
+                (b[0][0], b[0][1].as_text())
+                for b in mock_addDetail.call_args_list
+            ]
+
+            self.assertThat(call_args, Contains(('process-return-code', '0')))
+            self.assertThat(call_args, Contains(('process-stdout', 'stdout')))
+            self.assertThat(call_args, Contains(('process-stderr', 'stderr')))
 
     @patch('autopilot.application._launcher._get_application_environment')
     def test_setup_environment_returns_modified_args(self, app_env):

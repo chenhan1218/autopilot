@@ -37,6 +37,7 @@ from testtools import iterate_tests
 
 from autopilot import get_version_string, parse_arguments
 import autopilot.globals
+from autopilot._debug import get_all_debug_profiles
 from autopilot.testresult import get_output_formats
 from autopilot.utilities import DebugLogFilter, LogFormatter
 
@@ -240,6 +241,13 @@ def _show_test_locations(test_directories):
     print("Loading tests from: %s\n" % ",".join(sorted(test_directories)))
 
 
+def _configure_debug_profile(args):
+    for fixture_class in get_all_debug_profiles():
+        if args.debug_profile == fixture_class.name:
+            autopilot.globals.set_debug_profile_fixture(fixture_class)
+            break
+
+
 class TestProgram(object):
 
     def __init__(self):
@@ -337,6 +345,8 @@ class TestProgram(object):
         if self.args.random_order:
             shuffle(test_suite._tests)
             print("Running tests in random order")
+
+        _configure_debug_profile(self.args)
 
         if self.args.record_directory:
             self.args.record = True

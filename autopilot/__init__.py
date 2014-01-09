@@ -20,6 +20,10 @@
 from argparse import ArgumentParser, REMAINDER, Action
 import subprocess
 
+from autopilot._debug import (
+    get_all_debug_profiles,
+    get_default_debug_profile,
+)
 from autopilot.testresult import get_output_formats, get_default_format
 from autopilot.exceptions import BackendException
 
@@ -77,6 +81,13 @@ def parse_arguments(argv=None):
         help="If set, autopilot will output test log data to stderr during a "
         "test run. Set twice to also log data useful for debugging autopilot "
         "itself.")
+    parser_run.add_argument(
+        "--debug-profile",
+        choices=[p.name for p in get_all_debug_profiles()],
+        default=get_default_debug_profile().name,
+        help="Select a profile for what additional debugging information "
+            "should be attached to failed test results."
+    )
     parser_run.add_argument("suite", nargs="+",
                             help="Specify test suite(s) to run.")
 

@@ -292,3 +292,22 @@ class CommandLineArgsTests(TestCase):
                 self.assertThat(stderr_lines[-1], Equals(""))
             else:
                 self.fail("Argument parser unexpectedly passed")
+
+    def test_default_debug_profile_is_normal(self):
+        args = self.parse_args('run foo')
+        self.assertThat(args.debug_profile, Equals('normal'))
+
+    def test_can_select_normal_profile(self):
+        args = self.parse_args('run --debug-profile normal foo')
+        self.assertThat(args.debug_profile, Equals('normal'))
+
+    def test_can_select_verbose_profile(self):
+        args = self.parse_args('run --debug-profile verbose foo')
+        self.assertThat(args.debug_profile, Equals('verbose'))
+
+    @patch('sys.stderr', new=StringIO())
+    @expectedFailure
+    def test_cannot_select_other_debug_profile(self):
+        args = self.parse_args('run --debug-profile nonexistant foo')
+
+

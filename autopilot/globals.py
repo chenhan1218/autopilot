@@ -28,6 +28,7 @@ except ImportError:
     from io import StringIO
 
 from autopilot.utilities import LogFormatter, CleanupRegistered
+from fixtures import Fixture
 from testtools.content import text_content
 import subprocess
 import os.path
@@ -216,3 +217,16 @@ def configure_video_recording(enable_recording, record_dir, record_opts=None):
     _video_logger.enable_recording(enable_recording)
     _video_logger.set_recording_dir(record_dir)
     _video_logger.set_recording_opts(record_opts)
+
+
+_debug_profile_fixture = Fixture
+
+
+def set_debug_profile_fixture(fixture_class):
+    global _debug_profile_fixture
+    _debug_profile_fixture = fixture_class
+
+
+def get_debug_profile_fixture():
+    global _debug_profile_fixture
+    return _debug_profile_fixture

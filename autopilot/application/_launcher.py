@@ -269,13 +269,13 @@ def _attempt_kill_pid(pid, sig=signal.SIGTERM):
 
 
 def _get_application_environment(app_hint=None, app_path=None):
+    if app_hint is None and app_path is None:
+        raise ValueError("Must specify either app_hint or app_path.")
     try:
         if app_hint is not None:
             return _get_app_env_from_string_hint(app_hint)
         elif app_path is not None:
             return get_application_launcher_wrapper(app_path)
-        else:
-            ValueError("Must specify either app_hint or app_path.")
     except (RuntimeError, ValueError) as e:
         logger.error(str(e))
         raise RuntimeError(
@@ -283,10 +283,6 @@ def _get_application_environment(app_hint=None, app_path=None):
             "to use. You can specify one by overriding the "
             "AutopilotTestCase.pick_app_launcher method."
         )
-
-    raise ValueError(
-        "Neither required argument of app_hint or app_path was provided"
-    )
 
 
 def get_application_launcher_wrapper(app_path):

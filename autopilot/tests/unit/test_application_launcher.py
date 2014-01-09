@@ -432,8 +432,7 @@ class ApplicationLauncherInternalTests(TestCase):
             lambda: _get_application_environment(),
             raises(
                 ValueError(
-                    "Neither required argument of app_hint or app_path was "
-                    "provided"
+                    "Must specify either app_hint or app_path."
                 )
             )
         )

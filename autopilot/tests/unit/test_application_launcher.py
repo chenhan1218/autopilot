@@ -235,7 +235,7 @@ class ClickApplicationLauncherTests(TestCase):
         with patch.object(_l, '_get_click_manifest') as cm:
             cm.return_value = [
                 {
-                'name': 'com.autopilot.testing',
+                    'name': 'com.autopilot.testing',
                     'hooks': {'bar': {}}, 'version': '1.0'
                 }
             ]

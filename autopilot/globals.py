@@ -27,8 +27,8 @@ except ImportError:
     # Python 3
     from io import StringIO
 
+from autopilot._debug import DebugProfile
 from autopilot.utilities import LogFormatter, CleanupRegistered
-from fixtures import Fixture
 from testtools.content import text_content
 import subprocess
 import os.path
@@ -219,7 +219,7 @@ def configure_video_recording(enable_recording, record_dir, record_opts=None):
     _video_logger.set_recording_opts(record_opts)
 
 
-_debug_profile_fixture = Fixture
+_debug_profile_fixture = DebugProfile
 
 
 def set_debug_profile_fixture(fixture_class):

@@ -109,8 +109,9 @@ class QtApplicationEnvironmentTests(TestCase):
 
 class UpstartApplicationEnvironmentTests(TestCase):
 
-    # patch _unset_upstart_env as cleanUps calls _unset_upstart_env calls the
-    # real _call_upstart_with_args
+    # These tests patch _unset_upstart_env as cleanUps() calls the unpatched
+    # _unset_upstart_env which in turn calls the real _call_upstart_with_args
+    # (making a system call)
     @patch('autopilot.application._environment._call_upstart_with_args')
     @patch('autopilot.application._environment._unset_upstart_env')
     def test_does_not_alter_app(self, patched_unset, patched_call_upstart):
@@ -120,8 +121,6 @@ class UpstartApplicationEnvironmentTests(TestCase):
 
         self.assertEqual(fake_app, app)
 
-    # patch _unset_upstart_env as cleanUps calls _unset_upstart_env calls the
-    # real _call_upstart_with_args
     @patch('autopilot.application._environment._call_upstart_with_args')
     @patch('autopilot.application._environment._unset_upstart_env')
     def test_does_not_alter_args(self, patched_unset, patched_call_upstart):
@@ -131,8 +130,6 @@ class UpstartApplicationEnvironmentTests(TestCase):
 
         self.assertEqual([], args)
 
-    # patch _unset_upstart_env as cleanUps calls _unset_upstart_env calls the
-    # real _call_upstart_with_args
     @patch('autopilot.application._environment._call_upstart_with_args')
     @patch('autopilot.application._environment._unset_upstart_env')
     def test_patches_env(self, patched_unset, patched_call_upstart):

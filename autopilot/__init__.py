@@ -86,7 +86,7 @@ def parse_arguments(argv=None):
         choices=[p.name for p in get_all_debug_profiles()],
         default=get_default_debug_profile().name,
         help="Select a profile for what additional debugging information "
-            "should be attached to failed test results."
+        "should be attached to failed test results."
     )
     parser_run.add_argument("suite", nargs="+",
                             help="Specify test suite(s) to run.")

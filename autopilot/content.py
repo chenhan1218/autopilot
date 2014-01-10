@@ -56,6 +56,4 @@ def follow_stream(stream, test_case, content_name):
     def make_content():
         content_obj = content_from_stream(stream, buffer_now=True)
         test_case.addDetail(content_name, content_obj)
-
     test_case.addCleanup(make_content)
-

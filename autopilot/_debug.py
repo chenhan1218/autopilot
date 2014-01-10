@@ -72,7 +72,6 @@ class CaseAddDetailToNormalAddDetailDecorator(object):
         return getattr(self.decorated, name)
 
 
-
 class DebugProfile(FixtureWithDirectAddDetail):
 
     """A debug profile that contains manny debug objects."""
@@ -102,11 +101,11 @@ class NormalDebugProfile(DebugProfile):
 
     def __init__(self, caseAddDetail):
         super(NormalDebugProfile, self).__init__(
-                caseAddDetail,
-                [
-                    SyslogDebugObject,
-                ],
-            )
+            caseAddDetail,
+            [
+                SyslogDebugObject,
+            ],
+        )
 
 
 class VerboseDebugProfile(DebugProfile):
@@ -115,11 +114,11 @@ class VerboseDebugProfile(DebugProfile):
 
     def __init__(self, caseAddDetail):
         super(VerboseDebugProfile, self).__init__(
-                caseAddDetail,
-                [
-                    SyslogDebugObject,
-                ],
-            )
+            caseAddDetail,
+            [
+                SyslogDebugObject,
+            ],
+        )
 
 
 def get_default_debug_profile():

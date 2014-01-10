@@ -194,8 +194,3 @@ class LogFollowerTests(TestCase):
     def test_can_create_syslog_follower(self):
         debug_obj = d.SyslogDebugObject(Mock())
         self.assertThat(debug_obj.log_path, Equals("/var/log/syslog"))
-
-
-
-
-

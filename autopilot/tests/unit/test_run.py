@@ -23,6 +23,7 @@ from testtools import TestCase
 
 from autopilot import run
 
+
 class RunUtilityFunctionTests(TestCase):
 
     @patch('autopilot.run.autopilot.globals.set_debug_profile_fixture')
@@ -31,10 +32,10 @@ class RunUtilityFunctionTests(TestCase):
         mock_profile.name = "verbose"
         parsed_args = Namespace(debug_profile="verbose")
 
-        with patch.object(run, 'get_all_debug_profiles',
-            lambda: { mock_profile } ):
-            run._configure_debug_profile(parsed_args)
+        with patch.object(
+                run, 'get_all_debug_profiles', lambda: {mock_profile}):
 
+            run._configure_debug_profile(parsed_args)
             patched_set_fixture.assert_called_once_with(mock_profile)
 
     @patch('autopilot.run.autopilot.globals.set_debug_profile_fixture')
@@ -43,8 +44,8 @@ class RunUtilityFunctionTests(TestCase):
         mock_profile.name = "verbose"
         parsed_args = Namespace(debug_profile="normal")
 
-        with patch.object(run, 'get_all_debug_profiles',
-            lambda: { mock_profile } ):
-            run._configure_debug_profile(parsed_args)
+        with patch.object(
+                run, 'get_all_debug_profiles', lambda: {mock_profile}):
 
+            run._configure_debug_profile(parsed_args)
         self.assertFalse(patched_set_fixture.called)

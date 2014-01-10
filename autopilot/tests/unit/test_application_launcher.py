@@ -31,7 +31,6 @@ from testtools.matchers import (
     raises,
 )
 from testtools.content import text_content
-from textwrap import dedent
 from mock import Mock, patch
 
 from autopilot.application import (
@@ -270,24 +269,15 @@ class ClickApplicationLauncherTests(TestCase):
                 Equals("com.autopilot.testing_bar_1.0")
             )
 
-    @patch('autopilot.application._launcher.os.path.expanduser')
-    def test_get_click_application_log_path_formats_correct_path(self, expand):
+    def test_get_click_application_log_path_formats_correct_path(self):
         path_token = self.getUniqueString()
-        expand.return_value = path_token
         expected = os.path.join(path_token, "application-click-foo.log")
 
-        self.assertThat(
-            _get_click_application_log_path("foo"),
-            Equals(expected)
-        )
-
-    def test_get_click_application_log_content_object(self):
-        test_app_name = self.getUniqueString()
-        expected = "/home/autopilot/.cache/upstart/application-click-%s.log"\
-                   % test_app_name
-        with patch.object(_l, 'content_from_file') as from_file:
-            _get_click_application_log_content_object("foo")
-            from_file.assert_called_with_args(expected)
+        with patch.object(_l.os.path, 'expanduser', return_value=path_token):
+            self.assertThat(
+                _get_click_application_log_path("foo"),
+                Equals(expected)
+            )
 
     def test_get_click_application_log_content_object_returns_content_object(self):  # NOQA
         with patch.object(_l, 'content_from_file') as from_file:
@@ -301,7 +291,7 @@ class ClickApplicationLauncherTests(TestCase):
         launcher = ClickApplicationLauncher(self.addDetail)
         launcher._add_click_launch_cleanup = Mock()
 
-        with patch('autopilot.application._launcher.logger'):
+        with patch.object(_l, 'logger'):
             self.assertThat(
                 launcher._launch_click_app("appid"),
                 Equals(123)
@@ -363,25 +353,25 @@ class ApplicationLauncherInternalTests(TestCase):
         )
 
     def test_get_click_app_status(self):
-        with patch.object(_l, '_call_upstart_with_args') as patched_call_upstart:
+        with patch.object(_l, '_call_upstart_with_args') as call_upstart:
             _get_click_app_status("app_id")
-            patched_call_upstart.called_with_args(
+            call_upstart.assert_called_with(
                 "status",
                 "application-click",
                 "APP_ID=app_id"
             )
 
-    @patch('autopilot.application._environment.subprocess.check_output')
-    def test_get_click_app_pid(self, check_output):
-        check_output.return_value = dedent(
-            """application-click (com.autopilot.testing.test_app_id)
+    def test_get_click_app_pid(self):
+        with patch.object(_l.subprocess, 'check_output') as check_output:
+            check_output.return_value = """
+            application-click (com.autopilot.testing.test_app_id)
             dummy/data\napplication-click (blah) dummy/data\napplication-click
-            (com.autopilot.testing.test_app_id) start/running, process 1234"""
-        )
-        self.assertThat(
-            _get_click_app_pid("test_app_id"),
-            Equals(1234)
-        )
+            (com.autopilot.testing.test_app_id) start/running, process 1234
+            """
+            self.assertThat(
+                _get_click_app_pid("test_app_id"),
+                Equals(1234)
+            )
 
     def test_get_click_app_pid_raises_runtimeerror_with_no_status(self):
         test_app_id = self.getUniqueString()
@@ -418,15 +408,14 @@ class ApplicationLauncherInternalTests(TestCase):
         with patch.object(
             _l, '_get_click_app_pid'
         ) as patched_get_click_app_pid:
-            check_output.check_output.return_value = True
             _launch_click_app(test_app_name)
 
-            check_output.check_output.assert_called_with_args(
+            check_output.assert_called_with([
                 "/sbin/start",
                 "application",
-                "APP_ID=app_id",
-            )
-            patched_get_click_app_pid.called_with_args(test_app_name)
+                "APP_ID=%s" % test_app_name,
+            ])
+            patched_get_click_app_pid.assert_called_with(test_app_name)
 
     def test_get_app_env_from_string_hint_returns_qt_env(self):
         self.assertThat(
@@ -449,14 +438,14 @@ class ApplicationLauncherInternalTests(TestCase):
     def test_get_application_environment_uses_app_hint_argument(self):
         with patch.object(_l, '_get_app_env_from_string_hint') as from_hint:
             _get_application_environment(app_hint="app_hint")
-            from_hint.called_with_args("app_hint")
+            from_hint.assert_called_with("app_hint")
 
     def test_get_application_environment_uses_app_path_argument(self):
         with patch.object(
             _l, 'get_application_launcher_wrapper'
         ) as patched_wrapper:
             _get_application_environment(app_path="app_path")
-            patched_wrapper.called_with_args("app_path")
+            patched_wrapper.assert_called_with("app_path")
 
     def test_get_application_environment_raises_runtime_with_no_args(self):
         self.assertThat(
@@ -522,7 +511,7 @@ class ApplicationLauncherInternalTests(TestCase):
                 self.assertThat(patched_killpid.call_count, Equals(2))
                 patched_killpid.assert_called_with(0, signal.SIGKILL)
 
-    @patch('autopilot.application._launcher.os.killpg')
+    @patch.object(_l.os, 'killpg')
     def test_attempt_kill_pid_logs_if_process_already_exited(self, killpg):
         killpg.side_effect = OSError()
 
@@ -532,7 +521,7 @@ class ApplicationLauncherInternalTests(TestCase):
                 "Appears process has already exited."
             )
 
-    @patch('autopilot.application._launcher._attempt_kill_pid')
+    @patch.object(_l, '_attempt_kill_pid')
     def test_kill_process_succeeds(self, patched_kill_pid):
         mock_process = Mock()
         mock_process.returncode = 0
@@ -543,7 +532,7 @@ class ApplicationLauncherInternalTests(TestCase):
         ):
             self.assertThat(_kill_process(mock_process), Equals(("", "", 0)))
 
-    @patch('autopilot.application._launcher._attempt_kill_pid')
+    @patch.object(_l, '_attempt_kill_pid')
     def test_kill_process_tries_again(self, patched_kill_pid):
         with sleep.mocked():
             mock_process = Mock()
@@ -559,7 +548,7 @@ class ApplicationLauncherInternalTests(TestCase):
                 self.assertThat(patched_kill_pid.call_count, Equals(2))
                 patched_kill_pid.assert_called_with(123, signal.SIGKILL)
 
-    @patch('autopilot.application._launcher.subprocess.Popen')
+    @patch.object(_l.subprocess, 'Popen')
     def test_launch_process_uses_arguments(self, popen):
         launch_process("testapp", ["arg1", "arg2"])
 
@@ -568,7 +557,7 @@ class ApplicationLauncherInternalTests(TestCase):
             Contains(['testapp', 'arg1', 'arg2'])
         )
 
-    @patch('autopilot.application._launcher.subprocess.Popen')
+    @patch.object(_l.subprocess, 'Popen')
     def test_launch_process_default_capture_is_false(self, popen):
         launch_process("testapp", [])
 
@@ -581,7 +570,7 @@ class ApplicationLauncherInternalTests(TestCase):
             Equals(None)
         )
 
-    @patch('autopilot.application._launcher.subprocess.Popen')
+    @patch.object(_l.subprocess, 'Popen')
     def test_launch_process_can_set_capture_output(self, popen):
         launch_process("testapp", [], capture_output=True)
 
@@ -594,7 +583,7 @@ class ApplicationLauncherInternalTests(TestCase):
             Not(Equals(None))
         )
 
-    @patch('autopilot.application._launcher.subprocess.check_output')
+    @patch.object(_l.subprocess, 'check_output')
     def test_get_application_launcher_wrapper_finds_qt(self, check_output):
         check_output.return_value = "LIBQTCORE"
         self.assertThat(
@@ -602,7 +591,7 @@ class ApplicationLauncherInternalTests(TestCase):
             IsInstance(QtApplicationEnvironment)
         )
 
-    @patch('autopilot.application._launcher.subprocess.check_output')
+    @patch.object(_l.subprocess, 'check_output')
     def test_get_application_launcher_wrapper_finds_gtk(self, check_output):
         check_output.return_value = "LIBGTK"
         self.assertThat(
@@ -610,21 +599,21 @@ class ApplicationLauncherInternalTests(TestCase):
             IsInstance(GtkApplicationEnvironment)
         )
 
-    @patch('autopilot.application._launcher.subprocess.check_output')
+    @patch.object(_l.subprocess, 'check_output')
     def test_get_application_path_returns_stripped_path(self, check_output):
         check_output.return_value = "/foo/bar   "
 
         self.assertThat(_get_application_path("bar"), Equals('/foo/bar'))
-        check_output.called_with_args(['which', 'bar'], True)
+        check_output.assert_called_with(
+            ['which', 'bar'], universal_newlines=True
+        )
 
     def test_get_application_path_raises_when_cant_find_app(self):
         test_path = self.getUniqueString()
         expected_error = "Unable to find path for application {app}: Command"\
                          " '['which', '{app}']' returned non-zero exit "\
                          "status 1".format(app=test_path)
-        with patch(
-            'autopilot.application._launcher.subprocess.check_output'
-        ) as check_output:
+        with patch.object(_l.subprocess, 'check_output') as check_output:
             check_output.side_effect = subprocess.CalledProcessError(
                 1,
                 ['which', test_path]
@@ -639,9 +628,7 @@ class ApplicationLauncherInternalTests(TestCase):
         test_path = self.getUniqueString()
         expected_error = "Command '['ldd', '%s']' returned non-zero exit"\
                          " status 1" % test_path
-        with patch(
-            'autopilot.application._launcher.subprocess.check_output'
-        ) as check_output:
+        with patch.object(_l.subprocess, 'check_output') as check_output:
             check_output.side_effect = subprocess.CalledProcessError(
                 1,
                 ['ldd', test_path]
@@ -653,9 +640,7 @@ class ApplicationLauncherInternalTests(TestCase):
             )
 
     def test_get_application_launcher_wrapper_returns_none_for_unknown(self):
-        with patch(
-            'autopilot.application._launcher.subprocess.check_output'
-        ) as check_output:
+        with patch.object(_l.subprocess, 'check_output') as check_output:
             check_output.return_value = self.getUniqueString()
             self.assertThat(
                 get_application_launcher_wrapper(""), Equals(None)
@@ -675,13 +660,11 @@ class ApplicationLauncherInternalTests(TestCase):
                 "icon": "calculator64.png"
             }]
         """
-        with patch(
-            'autopilot.application._launcher.subprocess.check_output'
-        ) as check_output:
+        with patch.object(_l.subprocess, 'check_output') as check_output:
             check_output.return_value = example_manifest
             self.assertThat(_get_click_manifest(), IsInstance(list))
 
-    @patch('autopilot.application._launcher.psutil.pid_exists')
+    @patch.object(_l.psutil, 'pid_exists')
     def test_is_process_running_checks_with_pid(self, pid_exists):
         pid_exists.return_value = True
         self.assertThat(_is_process_running(123), Equals(True))

@@ -275,7 +275,7 @@ def _get_application_environment(app_hint=None, app_path=None):
     try:
         if app_hint is not None:
             return _get_app_env_from_string_hint(app_hint)
-        elif app_path is not None:
+        else:
             return get_application_launcher_wrapper(app_path)
     except (RuntimeError, ValueError) as e:
         logger.error(str(e))

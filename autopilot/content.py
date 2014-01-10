@@ -53,10 +53,9 @@ def follow_stream(stream, test_case, content_name):
     :param content_name: A name to give this content. If not specified, the
         file path will be used instead.
     """
-    test_case.addCleanup(
-        test_case.addDetail,
-        content_name,
-        content_from_stream(
-            stream=stream,
-        ),
-    )
+    def make_content():
+        content_obj = content_from_stream(stream, buffer_now=True)
+        test_case.addDetail(content_name, content_obj)
+
+    test_case.addCleanup(make_content)
+

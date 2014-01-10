@@ -108,7 +108,6 @@ class NormalApplicationLauncher(ApplicationLauncher):
 
     def launch(self, application, *arguments):
         app_path = _get_application_path(application)
-
         app_path, arguments = self._setup_environment(app_path, *arguments)
         self.process = self._launch_application_process(app_path, *arguments)
 

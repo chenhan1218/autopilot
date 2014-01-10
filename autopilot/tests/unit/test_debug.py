@@ -75,7 +75,7 @@ class DebugProfileTests(TestCase):
         self.fake_caseAddDetail = Mock()
 
     def test_can_construct_debug_profile(self):
-        profile = d.DebugProfile(self.fake_caseAddDetail)
+        d.DebugProfile(self.fake_caseAddDetail)
 
     def test_debug_profile_sets_caseAddDetail(self):
         profile = d.DebugProfile(self.fake_caseAddDetail)

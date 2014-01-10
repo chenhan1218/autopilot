@@ -308,4 +308,4 @@ class CommandLineArgsTests(TestCase):
     @patch('sys.stderr', new=StringIO())
     @expectedFailure
     def test_cannot_select_other_debug_profile(self):
-        args = self.parse_args('run --debug-profile nonexistant foo')
+        self.parse_args('run --debug-profile nonexistant foo')

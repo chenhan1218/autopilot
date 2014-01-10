@@ -31,7 +31,6 @@ fixtures of fixtures!
 from autopilot.content import follow_file
 
 from fixtures import Fixture
-from six import u
 
 
 class FixtureWithDirectAddDetail(Fixture):

@@ -17,9 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from fixtures import Fixture
 from testtools import TestCase
-from testtools.matchers import Equals, Is
+from testtools.matchers import Equals
 
 import autopilot.globals as _g
 

@@ -19,9 +19,10 @@
 
 from tempfile import NamedTemporaryFile
 
-from mock import Mock
+from mock import Mock, patch
+import os
 from testtools import TestCase
-from testtools.matchers import Contains
+from testtools.matchers import Contains, Not, Raises
 
 from autopilot.content import follow_file
 
@@ -79,6 +80,28 @@ class FileFollowerTests(TestCase):
             fake_test.addCleanup.call_args[0][0]()
             actual = fake_test.addDetail.call_args[0][0]
             self.assertEqual(content_name, actual)
+
+    def test_follow_file_does_not_raise_on_IOError(self):
+        fake_test = Mock()
+        content_name = self.getUniqueString()
+        with NamedTemporaryFile() as f:
+            os.chmod(f.name, 0)
+
+            self.assertThat(
+                lambda: follow_file(f.name, fake_test, content_name),
+                Not(Raises())
+            )
+
+    def test_follow_file_logs_error_on_IOError(self):
+        fake_test = Mock()
+        content_name = self.getUniqueString()
+        with NamedTemporaryFile() as f:
+            os.chmod(f.name, 0)
+
+            with patch('autopilot.content.logger') as fake_logger:
+                follow_file(f.name, fake_test, content_name)
+                fake_logger.error.assert_called_once_with()
+
 
     def test_real_test_has_detail_added(self):
         with NamedTemporaryFile() as f:

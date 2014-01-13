@@ -19,9 +19,14 @@
 
 """Content objects and helpers for autopilot tests."""
 
+from __future__ import absolute_import
+
 import io
 
+import logging
 from testtools.content import content_from_stream
+
+logger = logging.getLogger(__name__)
 
 
 def follow_file(path, test_case, content_name=None):

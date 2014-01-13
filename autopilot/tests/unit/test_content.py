@@ -106,7 +106,6 @@ class FileFollowerTests(TestCase):
                     "[Errno 13] Permission denied: '%s'" % f.name
                     )
 
-
     def test_real_test_has_detail_added(self):
         with NamedTemporaryFile() as f:
             class FakeTest(TestCase):

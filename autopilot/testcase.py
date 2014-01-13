@@ -66,6 +66,7 @@ from autopilot.introspection import (
     get_proxy_object_for_existing_process,
 )
 from autopilot.display import Display
+from autopilot.globals import get_debug_profile_fixture
 from autopilot.utilities import on_test_started, sleep
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
@@ -132,6 +133,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
     def setUp(self):
         super(AutopilotTestCase, self).setUp()
         on_test_started(self)
+        self.useFixture(get_debug_profile_fixture()(self.addDetail))
 
         _lttng_trace_test_started(self.id())
         self.addCleanup(_lttng_trace_test_ended, self.id())

@@ -19,9 +19,14 @@
 
 """Content objects and helpers for autopilot tests."""
 
+from __future__ import absolute_import
+
 import io
 
+import logging
 from testtools.content import content_from_stream
+
+logger = logging.getLogger(__name__)
 
 
 def follow_file(path, test_case, content_name=None):
@@ -35,10 +40,21 @@ def follow_file(path, test_case, content_name=None):
     :param content_name: A name to give this content. If not specified, the
         file path will be used instead.
     """
-    file_obj = io.open(path, mode='rb')
-    file_obj.seek(0, io.SEEK_END)
-
-    return follow_stream(file_obj, test_case, content_name or file_obj.name)
+    try:
+        file_obj = io.open(path, mode='rb')
+    except IOError as e:
+        logger.error(
+            "Could not add content object '%s' due to IO Error: %s",
+            content_name,
+            str(e)
+        )
+    else:
+        file_obj.seek(0, io.SEEK_END)
+        return follow_stream(
+            file_obj,
+            test_case,
+            content_name or file_obj.name
+        )
 
 
 def follow_stream(stream, test_case, content_name):
@@ -53,10 +69,7 @@ def follow_stream(stream, test_case, content_name):
     :param content_name: A name to give this content. If not specified, the
         file path will be used instead.
     """
-    test_case.addCleanup(
-        test_case.addDetail,
-        content_name,
-        content_from_stream(
-            stream=stream,
-        ),
-    )
+    def make_content():
+        content_obj = content_from_stream(stream, buffer_now=True)
+        test_case.addDetail(content_name, content_obj)
+    test_case.addCleanup(make_content)

@@ -40,10 +40,14 @@ def follow_file(path, test_case, content_name=None):
     :param content_name: A name to give this content. If not specified, the
         file path will be used instead.
     """
-    file_obj = io.open(path, mode='rb')
-    file_obj.seek(0, io.SEEK_END)
-
-    return follow_stream(file_obj, test_case, content_name or file_obj.name)
+    try:
+        file_obj = io.open(path, mode='rb')
+    except IOError as e:
+        logger.error("Could not add content object '%s' due to IO "
+            "Error: %s", content_name, str(e))
+    else:
+        file_obj.seek(0, io.SEEK_END)
+        return follow_stream(file_obj, test_case, content_name or file_obj.name)
 
 
 def follow_stream(stream, test_case, content_name):

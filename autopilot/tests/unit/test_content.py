@@ -100,7 +100,11 @@ class FileFollowerTests(TestCase):
 
             with patch('autopilot.content.logger') as fake_logger:
                 follow_file(f.name, fake_test, content_name)
-                fake_logger.error.assert_called_once_with()
+                fake_logger.error.assert_called_once_with(
+                    "Could not add content object '%s' due to IO Error: %s",
+                    content_name,
+                    "[Errno 13] Permission denied: '%s'" % f.name
+                    )
 
 
     def test_real_test_has_detail_added(self):

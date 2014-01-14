@@ -38,3 +38,34 @@ class DebugProfileFunctionTests(TestCase):
         fake_fixture = object()
         _g.set_debug_profile_fixture(fake_fixture)
         self.assertThat(_g.get_debug_profile_fixture(), Equals(fake_fixture))
+
+
+class TimeoutFunctionTests(TestCase):
+
+    def setUp(self):
+        super(TimeoutFunctionTests, self).setUp()
+        # since we're modifying a global in our tests, make sure we restore
+        # the original value after each test has run:
+        default_original_value = _g._default_timeout_value
+        self.addCleanup(
+            lambda: setattr(_g, '_default_timeout_value', default_original_value)
+        )
+
+        long_original_value = _g._long_timeout_value
+        self.addCleanup(
+            lambda: setattr(_g, '_long_timeout_value', long_original_value)
+        )
+
+    def test_default_timeout_values(self):
+        self.assertEqual(10.0, _g.get_default_timeout_period())
+        self.assertEqual(30.0, _g.get_long_timeout_period())
+
+    def test_can_set_default_timeout_value(self):
+        new_value = self.getUniqueInteger()
+        _g.set_default_timeout_period(new_value)
+        self.assertEqual(new_value, _g.get_default_timeout_period())
+
+    def test_can_set_long_timeout_value(self):
+        new_value = self.getUniqueInteger()
+        _g.set_long_timeout_period(new_value)
+        self.assertEqual(new_value, _g.get_long_timeout_period())

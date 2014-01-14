@@ -256,7 +256,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         return self._launch_test_application(launcher, application, *arguments)
 
-    def launch_click_package(self, package_id, app_name=None, app_uris=None,
+    def launch_click_package(self, package_id, app_name=None, app_uris="",
                              **kwargs):
         """Launch a click package application with introspection enabled.
 
@@ -277,7 +277,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             click package, and this parameter can be left at None. If
             specified, it should be the application name you wish to launch.
         :param app_uris: Parameters used to launch the click package. This
-            parameter can be left as None.
+            parameter will be left empty if not used.
 
         :keyword emulator_base: If set, specifies the base class to be used for
             all emulators for this loaded application.

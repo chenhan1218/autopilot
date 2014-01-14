@@ -254,10 +254,52 @@ def _configure_timeout_profile(args):
         autopilot.globals.set_long_timeout_period(30.0)
 
 
+def _configure_video_recording(args):
+    """Configure video recording based on contents of ``args``.
+
+    :raises RuntimeError: If the user asked for video recording, but the
+        system does not support video recording.
+
+    """
+    if args.record_directory:
+        args.record = True
+
+    if args.record:
+        if not args.record_directory:
+            args.record_directory = '/tmp/autopilot'
+
+        if not _have_video_recording_facilities():
+            raise RuntimeError(
+                "The application 'recordmydesktop' needs to be installed to "
+                "record failing jobs."
+            )
+        autopilot.globals.configure_video_recording(
+            True,
+            args.record_directory,
+            args.record_options
+        )
+
+
+def _have_video_recording_facilities():
+    call_ret_code = subprocess.call(
+            ['which', 'recordmydesktop'],
+            stdout=subprocess.PIPE
+        )
+    return call_ret_code == 0
+
+
 class TestProgram(object):
 
-    def __init__(self):
-        self.args = parse_arguments()
+    def __init__(self, defined_args=None):
+        """Create a new TestProgram instance.
+
+        :param defined_args: If specified, must be an object representing
+            command line arguments, as returned by the ``parse_arguments``
+            function. Passing in arguments prevents argparse from parsing
+            sys.argv. Used in testing.
+
+        """
+        self.args = defined_args or parse_arguments()
 
     def run(self):
         setup_logging(getattr(self.args, 'verbose', False))
@@ -354,26 +396,11 @@ class TestProgram(object):
 
         _configure_debug_profile(self.args)
         _configure_timeout_profile(self.args)
-
-        if self.args.record_directory:
-            self.args.record = True
-
-        if self.args.record:
-            if not self.args.record_directory:
-                self.args.record_directory = '/tmp/autopilot'
-            call_ret_code = subprocess.call(
-                ['which', 'recordmydesktop'],
-                stdout=subprocess.PIPE
-            )
-            if call_ret_code != 0:
-                print("ERROR: The application 'recordmydesktop' needs to be "
-                      "installed to record failing jobs.")
-                exit(1)
-            autopilot.globals.configure_video_recording(
-                True,
-                self.args.record_directory,
-                self.args.record_options
-            )
+        try:
+            _configure_video_recording(self.args)
+        except RuntimeError as e:
+            print("Error: %s" % str(e))
+            exit(1)
 
         if self.args.verbose:
             autopilot.globals.set_log_verbose(True)

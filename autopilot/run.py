@@ -248,6 +248,12 @@ def _configure_debug_profile(args):
             break
 
 
+def _configure_timeout_profile(args):
+    if args.timeout_profile == 'long':
+        autopilot.globals.set_default_timeout_period(20.0)
+        autopilot.globals.set_long_timeout_period(30.0)
+
+
 class TestProgram(object):
 
     def __init__(self):
@@ -347,6 +353,7 @@ class TestProgram(object):
             print("Running tests in random order")
 
         _configure_debug_profile(self.args)
+        _configure_timeout_profile(self.args)
 
         if self.args.record_directory:
             self.args.record = True

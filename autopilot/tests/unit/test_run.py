@@ -49,3 +49,22 @@ class RunUtilityFunctionTests(TestCase):
 
             run._configure_debug_profile(parsed_args)
         self.assertFalse(patched_set_fixture.called)
+
+    @patch('autopilot.run.autopilot.globals')
+    def test_timeout_values_set_with_long_profile(self, patched_globals):
+        mock_args = Mock()
+        mock_args.timeout_profile = 'long'
+        run._configure_timeout_profile(mock_args)
+
+        patched_globals.set_default_timeout_period.assert_called_once_with(20.0)
+        patched_globals.set_long_timeout_period.assert_called_once_with(30.0)
+
+    @patch('autopilot.run.autopilot.globals')
+    def test_timeout_value_not_set_with_normal_profile(self, patched_globals):
+        mock_args = Mock()
+        mock_args.timeout_profile = 'normal'
+        run._configure_timeout_profile(mock_args)
+
+        self.assertFalse(patched_globals.set_default_timeout_period.called)
+        self.assertFalse(patched_globals.set_long_timeout_period.called)
+

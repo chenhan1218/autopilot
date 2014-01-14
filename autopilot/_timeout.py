@@ -54,7 +54,7 @@ class Timeout(object):
     provides a timeout for a different period of time. For example, to
     generate a short polling timeout, the code would look like this::
 
-        for elapsed_time in Timeout.medium():
+        for elapsed_time in Timeout.default():
             # polling code goes here
 
     the ``elapsed_time`` variable will contain the amount of time elapsed, in
@@ -63,7 +63,14 @@ class Timeout(object):
     """
 
     @staticmethod
-    def medium():
+    def default():
+        """Start a polling loop with the default timeout.
+
+        This is the polling loop that should be used by default (hence the
+        name) unless the operation is known to take a very long time,
+        especially on slow or virtualised hardware.
+
+        """
         timeout = float(get_default_timeout_period())
         time_elapsed = 0.0
         while timeout - time_elapsed > 0.0:
@@ -75,11 +82,26 @@ class Timeout(object):
 
     @staticmethod
     def long():
+        """Start a polling loop with a long timeout.
+
+        This is the polling loop that should be used for operations that are
+        known to take extra long on slow, or virtualised hardware.
+
+        """
         timeout = float(get_long_timeout_period())
-        time_elapsed = 0.0
-        while timeout - time_elapsed > 0.0:
-            yield time_elapsed
-            time_to_sleep = min(timeout - time_elapsed, 1.0)
-            sleep(time_to_sleep)
-            time_elapsed += time_to_sleep
+        # Once we only support py3.3, replace this with
+        # yield from _do_timeout(timeout)
+        for i in _do_timeout(timeout):
+            yield i
+
+
+def _do_timeout(timeout):
+    time_elapsed = 0.0
+    while timeout - time_elapsed > 0.0:
         yield time_elapsed
+        time_to_sleep = min(timeout - time_elapsed, 1.0)
+        sleep(time_to_sleep)
+        time_elapsed += time_to_sleep
+    yield time_elapsed
+# TODO: Move common code into a function
+# TODO: think about simply scaling timeout values? maybe for the future.

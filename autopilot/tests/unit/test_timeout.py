@@ -48,7 +48,7 @@ class TimeoutClassTests(TestCase):
 
     def test_medium_sleeps_for_correct_time(self):
         with sleep.mocked() as mocked_sleep:
-            for _ in Timeout.medium():
+            for _ in Timeout.default():
                 pass
             self.assertEqual(10.0, mocked_sleep.total_time_slept())
 
@@ -61,7 +61,7 @@ class TimeoutClassTests(TestCase):
     def test_medium_elapsed_time_increases(self):
         with sleep.mocked():
             last_elapsed = None
-            for elapsed in Timeout.medium():
+            for elapsed in Timeout.default():
                 if last_elapsed is not None:
                     self.assertThat(elapsed, GreaterThan(last_elapsed))
                 else:
@@ -81,7 +81,7 @@ class TimeoutClassTests(TestCase):
     def test_medium_timeout_final_call(self):
         set_default_timeout_period(0.0)
         at_least_one_call = False
-        for elapsed in Timeout.medium():
+        for elapsed in Timeout.default():
             at_least_one_call = True
         self.assertTrue(at_least_one_call)
 

@@ -23,16 +23,24 @@ from testtools.matchers import Equals
 import autopilot.globals as _g
 
 
+def restore_value(cleanup_enabled, object, attr_name):
+    """Ensure that, at the end of the current test, object.attr_name is
+    restored to it's current state.
+
+    """
+    original_value = getattr(object, attr_name)
+    cleanup_enabled.addCleanup(
+        lambda: setattr(object, attr_name, original_value)
+    )
+
+
 class DebugProfileFunctionTests(TestCase):
 
     def setUp(self):
         super(DebugProfileFunctionTests, self).setUp()
         # since we're modifying a global in our tests, make sure we restore
         # the original value after each test has run:
-        original_value = _g._debug_profile_fixture
-        self.addCleanup(
-            lambda: setattr(_g, '_debug_profile_fixture', original_value)
-        )
+        restore_value(self, _g, '_debug_profile_fixture')
 
     def test_can_set_and_get_fixture(self):
         fake_fixture = object()
@@ -46,15 +54,8 @@ class TimeoutFunctionTests(TestCase):
         super(TimeoutFunctionTests, self).setUp()
         # since we're modifying a global in our tests, make sure we restore
         # the original value after each test has run:
-        default_original_value = _g._default_timeout_value
-        self.addCleanup(
-            lambda: setattr(_g, '_default_timeout_value', default_original_value)
-        )
-
-        long_original_value = _g._long_timeout_value
-        self.addCleanup(
-            lambda: setattr(_g, '_long_timeout_value', long_original_value)
-        )
+        restore_value(self, _g, '_default_timeout_value')
+        restore_value(self, _g, '_long_timeout_value')
 
     def test_default_timeout_values(self):
         self.assertEqual(10.0, _g.get_default_timeout_period())

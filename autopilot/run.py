@@ -282,9 +282,9 @@ def _configure_video_recording(args):
 
 def _have_video_recording_facilities():
     call_ret_code = subprocess.call(
-            ['which', 'recordmydesktop'],
-            stdout=subprocess.PIPE
-        )
+        ['which', 'recordmydesktop'],
+        stdout=subprocess.PIPE
+    )
     return call_ret_code == 0
 
 

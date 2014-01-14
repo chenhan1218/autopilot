@@ -29,6 +29,7 @@ from autopilot.globals import (
 from autopilot._timeout import Timeout
 from autopilot.utilities import sleep
 
+
 class TimeoutClassTests(TestCase):
 
     def setUp(self):

@@ -19,8 +19,13 @@
 
 from argparse import Namespace
 from mock import Mock, patch
+import six
 from testtools import TestCase
 from testtools.matchers import Equals, raises
+if six.PY3:
+    from contextlib import ExitStack
+else:
+    from contextlib2 import ExitStack
 
 from autopilot import run
 
@@ -56,7 +61,9 @@ class RunUtilityFunctionTests(TestCase):
         args = Namespace(timeout_profile='long')
         run._configure_timeout_profile(args)
 
-        patched_globals.set_default_timeout_period.assert_called_once_with(20.0)
+        patched_globals.set_default_timeout_period.assert_called_once_with(
+            20.0
+        )
         patched_globals.set_long_timeout_period.assert_called_once_with(30.0)
 
     @patch('autopilot.run.autopilot.globals')
@@ -74,7 +81,7 @@ class RunUtilityFunctionTests(TestCase):
 
         self.assertFalse(patched_globals._configure_video_recording.called)
 
-    @patch.object(run, '_have_video_recording_facilities', new=lambda:True)
+    @patch.object(run, '_have_video_recording_facilities', new=lambda: True)
     def test_configure_video_recording_called_with_record_set(self):
         args = Namespace(record_directory='', record=True, record_options='')
         with patch('autopilot.run.autopilot.globals') as patched_globals:
@@ -85,7 +92,7 @@ class RunUtilityFunctionTests(TestCase):
                 ''
             )
 
-    @patch.object(run, '_have_video_recording_facilities', new=lambda:True)
+    @patch.object(run, '_have_video_recording_facilities', new=lambda: True)
     def test_configure_video_record_directory_imples_record(self):
         token = self.getUniqueString()
         args = Namespace(
@@ -101,7 +108,7 @@ class RunUtilityFunctionTests(TestCase):
                 ''
             )
 
-    @patch.object(run, '_have_video_recording_facilities', new=lambda:False)
+    @patch.object(run, '_have_video_recording_facilities', new=lambda: False)
     def test_configure_video_recording_raises_RuntimeError(self):
         args = Namespace(record_directory='', record=True, record_options='')
         self.assertThat(
@@ -211,18 +218,29 @@ class TestProgramTests(TestCase):
         mock_test_suite = Mock()
         mock_test_suite.run.return_value = mock_test_result
         mock_construct_test_result = Mock()
-        with patch.object(run, 'load_test_suite_from_name') as load_tests, \
-            patch.object(run, 'construct_test_result') as fake_construct, \
-            patch.object(run, '_configure_debug_profile') as configure_debug, \
-            patch.object(run, '_configure_timeout_profile') as configure_timeout, \
-            patch.object(run, '_configure_video_recording') as configure_video: # noqa
+        with ExitStack() as stack:
+            load_tests = stack.enter_context(
+                patch.object(run, 'load_test_suite_from_name')
+            )
+            fake_construct = stack.enter_context(
+                patch.object(run, 'construct_test_result')
+            )
+            configure_debug = stack.enter_context(
+                patch.object(run, '_configure_debug_profile')
+            )
+            config_timeout = stack.enter_context(
+                patch.object(run, '_configure_timeout_profile')
+            )
+            configure_video = stack.enter_context(
+                patch.object(run, '_configure_video_recording')
+            )
 
             load_tests.return_value = (mock_test_suite, False)
             fake_construct.return_value = mock_construct_test_result
             program.run()
 
             configure_video.assert_called_once_with(fake_args)
-            configure_timeout.assert_called_once_with(fake_args)
+            config_timeout.assert_called_once_with(fake_args)
             configure_debug.assert_called_once_with(fake_args)
             fake_construct.assert_called_once_with(fake_args)
             load_tests.assert_called_once_with(fake_args.suite)
@@ -236,15 +254,15 @@ def create_default_run_args(**kwargs):
     specified with keyword arguments to this function.
     """
     defaults = dict(
-            random_order=False,
-            debug_profile='normal',
-            timeout_profile='normal',
-            record_directory='',
-            record=False,
-            record_options='',
-            verbose=False,
-            mode='run',
-            suite='foo',
-            )
+        random_order=False,
+        debug_profile='normal',
+        timeout_profile='normal',
+        record_directory='',
+        record=False,
+        record_options='',
+        verbose=False,
+        mode='run',
+        suite='foo',
+    )
     defaults.update(kwargs)
     return Namespace(**defaults)

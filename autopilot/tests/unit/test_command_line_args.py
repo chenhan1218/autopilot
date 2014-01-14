@@ -309,3 +309,16 @@ class CommandLineArgsTests(TestCase):
     @expectedFailure
     def test_cannot_select_other_debug_profile(self):
         self.parse_args('run --debug-profile nonexistant foo')
+
+    def test_default_timeout_profile_is_normal(self):
+        args = self.parse_args('run foo')
+        self.assertThat(args.timeout_profile, Equals('normal'))
+
+    def test_can_select_long_timeout_profile(self):
+        args = self.parse_args('run --timeout-profile long foo')
+        self.assertThat(args.timeout_profile, Equals('long'))
+
+    @patch('sys.stderr', new=StringIO())
+    @expectedFailure
+    def test_cannot_select_other_timeout_profile(self):
+        self.parse_args('run --timeout-profile nonexistant foo')

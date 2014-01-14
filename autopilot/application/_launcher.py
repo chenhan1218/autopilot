@@ -63,16 +63,16 @@ class ClickApplicationLauncher(ApplicationLauncher):
 
         _raise_if_not_empty(kwargs)
 
-    def launch(self, package_id, app_name):
+    def launch(self, package_id, app_name, app_uris):
         app_id = _get_click_app_id(package_id, app_name)
 
         _app_env = self.useFixture(UpstartApplicationEnvironment())
         _app_env.prepare_environment(app_id, app_name)
 
-        return self._launch_click_app(app_id)
+        return self._launch_click_app(app_id, app_uris)
 
-    def _launch_click_app(self, app_id):
-        pid = _launch_click_app(app_id)
+    def _launch_click_app(self, app_id, app_uris):
+        pid = _launch_click_app(app_id, app_uris)
         self._add_click_launch_cleanup(app_id, pid)
 
         logger.info(
@@ -169,11 +169,12 @@ def _is_process_running(pid):
     return psutil.pid_exists(pid)
 
 
-def _launch_click_app(app_id):
+def _launch_click_app(app_id, app_uris):
     subprocess.check_output([
         "/sbin/start",
         "application",
         "APP_ID={}".format(app_id),
+        "APP_URIS='{}'".format(app_uris),
     ])
 
     return _get_click_app_pid(app_id)

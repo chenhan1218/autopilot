@@ -256,7 +256,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         return self._launch_test_application(launcher, application, *arguments)
 
-    def launch_click_package(self, package_id, app_name=None, **kwargs):
+    def launch_click_package(self, package_id, app_name=None, app_uris=None,
+                             **kwargs):
         """Launch a click package application with introspection enabled.
 
         This method takes care of launching a click package with introspection
@@ -275,6 +276,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :param app_name: Currently, only one application can be packaged in a
             click package, and this parameter can be left at None. If
             specified, it should be the application name you wish to launch.
+        :param app_uris: Parameters used to launch the click package. This
+            parameter can be left as None.
 
         :keyword emulator_base: If set, specifies the base class to be used for
             all emulators for this loaded application.
@@ -288,7 +291,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         launcher = self.useFixture(
             ClickApplicationLauncher(self.addDetail, **kwargs)
         )
-        return self._launch_test_application(launcher, package_id, app_name)
+        return self._launch_test_application(launcher, package_id, app_name,
+                                             app_uris)
 
     # Wrapper function tying the newer ApplicationLauncher behaviour with the
     # previous (to be depreciated) behaviour

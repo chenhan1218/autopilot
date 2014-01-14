@@ -185,7 +185,7 @@ class ClickApplicationLauncherTests(TestCase):
             launcher.setUp()
             launcher._launch_click_app = Mock()
 
-            launcher.launch("package_id", "app_name")
+            launcher.launch("package_id", "app_name", "")
             prep_env.assert_called_with("app_id", "app_name")
 
     def test_get_click_app_id_raises_runtimeerror_on_empty_manifest(self):
@@ -293,7 +293,7 @@ class ClickApplicationLauncherTests(TestCase):
 
         with patch.object(_l, 'logger'):
             self.assertThat(
-                launcher._launch_click_app("appid"),
+                launcher._launch_click_app("appid", ""),
                 Equals(123)
             )
 
@@ -408,12 +408,31 @@ class ApplicationLauncherInternalTests(TestCase):
         with patch.object(
             _l, '_get_click_app_pid'
         ) as patched_get_click_app_pid:
-            _launch_click_app(test_app_name)
+            _launch_click_app(test_app_name, "")
 
             check_output.assert_called_with([
                 "/sbin/start",
                 "application",
                 "APP_ID=%s" % test_app_name,
+                "APP_URIS=''",
+            ])
+            patched_get_click_app_pid.assert_called_with(test_app_name)
+
+    @patch('autopilot.application._launcher.subprocess.check_output')
+    def test_launch_click_app_starts_application_with_uri(self, check_output):
+        test_app_name = self.getUniqueString()
+        test_app_uris = "%s %s" % (self.getUniqueString(),
+                                   self.getUniqueString())
+        with patch.object(
+            _l, '_get_click_app_pid'
+        ) as patched_get_click_app_pid:
+            _launch_click_app(test_app_name, test_app_uris)
+
+            check_output.assert_called_with([
+                "/sbin/start",
+                "application",
+                "APP_ID=%s" % test_app_name,
+                "APP_URIS='%s'" % test_app_uris,
             ])
             patched_get_click_app_pid.assert_called_with(test_app_name)
 

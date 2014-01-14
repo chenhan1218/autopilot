@@ -18,7 +18,7 @@
 #
 
 from testtools import TestCase
-from testtools.matchers import GreaterThan
+from testtools.matchers import Equals, GreaterThan
 
 from autopilot.globals import (
     get_default_timeout_period,
@@ -80,14 +80,8 @@ class TimeoutClassTests(TestCase):
 
     def test_medium_timeout_final_call(self):
         set_default_timeout_period(0.0)
-        at_least_one_call = False
-        for elapsed in Timeout.default():
-            at_least_one_call = True
-        self.assertTrue(at_least_one_call)
+        self.assertThat(len(list(Timeout.default())), Equals(1))
 
     def test_long_timeout_final_call(self):
-        set_default_timeout_period(0.0)
-        at_least_one_call = False
-        for elapsed in Timeout.long():
-            at_least_one_call = True
-        self.assertTrue(at_least_one_call)
+        set_long_timeout_period(0.0)
+        self.assertThat(len(list(Timeout.long())), Equals(1))

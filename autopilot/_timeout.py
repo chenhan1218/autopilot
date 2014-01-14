@@ -72,13 +72,10 @@ class Timeout(object):
 
         """
         timeout = float(get_default_timeout_period())
-        time_elapsed = 0.0
-        while timeout - time_elapsed > 0.0:
-            yield time_elapsed
-            time_to_sleep = min(timeout - time_elapsed, 1.0)
-            sleep(time_to_sleep)
-            time_elapsed += time_to_sleep
-        yield time_elapsed
+        # Once we only support py3.3, replace this with
+        # yield from _do_timeout(timeout)
+        for i in _do_timeout(timeout):
+            yield i
 
     @staticmethod
     def long():
@@ -103,5 +100,3 @@ def _do_timeout(timeout):
         sleep(time_to_sleep)
         time_elapsed += time_to_sleep
     yield time_elapsed
-# TODO: Move common code into a function
-# TODO: think about simply scaling timeout values? maybe for the future.

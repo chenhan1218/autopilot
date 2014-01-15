@@ -37,7 +37,7 @@ from autopilot.utilities import (
     Silence,
     sleep,
 )
-
+from autopilot._timeout import Timeout
 from autopilot.process import (
     ProcessManager as ProcessManagerBase,
     Application as ApplicationBase,
@@ -165,7 +165,7 @@ class ProcessManager(ProcessManagerBase):
         apps = self.get_running_applications_by_desktop_file(
             app['desktop-file'])
 
-        for i in range(10):
+        for _ in Timeout.default():
             try:
                 new_windows = []
                 [new_windows.extend(a.get_windows()) for a in apps]
@@ -177,7 +177,6 @@ class ProcessManager(ProcessManagerBase):
                     return new_wins[0]
             except dbus.DBusException:
                 pass
-            sleep(1)
         return None
 
     def get_open_windows_by_application(self, app_name):

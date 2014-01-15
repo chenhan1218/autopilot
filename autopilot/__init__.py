@@ -88,6 +88,14 @@ def parse_arguments(argv=None):
         help="Select a profile for what additional debugging information "
         "should be attached to failed test results."
     )
+    parser_run.add_argument(
+        "--timeout-profile",
+        choices=['normal', 'long'],
+        default='normal',
+        help="Alter the timeout values Autopilot uses. Selecting 'long' will "
+        "make autopilot use longer timeouts for various polling loops. This "
+        "useful if autopilot is running on very slow hardware"
+    )
     parser_run.add_argument("suite", nargs="+",
                             help="Specify test suite(s) to run.")
 

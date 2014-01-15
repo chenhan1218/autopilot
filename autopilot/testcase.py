@@ -60,16 +60,17 @@ from autopilot.application import (
     get_application_launcher_wrapper,
     NormalApplicationLauncher,
 )
-from autopilot.process import ProcessManager
+from autopilot.display import Display
+from autopilot.globals import get_debug_profile_fixture
 from autopilot.input import Keyboard, Mouse
 from autopilot.introspection import (
     get_proxy_object_for_existing_process,
 )
-from autopilot.display import Display
-from autopilot.globals import get_debug_profile_fixture
-from autopilot.utilities import on_test_started, sleep
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
+from autopilot.process import ProcessManager
+from autopilot.utilities import on_test_started, sleep
+from autopilot._timeout import Timeout
 try:
     from autopilot import tracepoint as tp
     HAVE_TRACEPOINT = True
@@ -490,17 +491,11 @@ def _compare_system_with_process_snapshot(snapshot_fn, old_snapshot):
 
     """
     new_apps = []
-    for i in range(10):
+    for _ in Timeout.default():
         current_apps = snapshot_fn()
-        new_apps = list(
-            filter(
-                lambda i: i not in old_snapshot,
-                current_apps
-            )
-        )
+        new_apps = [app for app in current_apps if app not in old_snapshot]
         if not new_apps:
             return
-        sleep(1)
     raise AssertionError(
         "The following apps were started during the test and not closed: "
         "%r" % new_apps)

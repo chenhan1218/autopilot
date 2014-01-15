@@ -24,6 +24,7 @@ from testtools import TestCase
 from testtools.matchers import (
     Contains,
     Equals,
+    GreaterThan,
     IsInstance,
     MatchesListwise,
     Not,
@@ -519,14 +520,14 @@ class ApplicationLauncherInternalTests(TestCase):
             patched_killpg.assert_called_once_with(0)
 
     @patch.object(_l, '_attempt_kill_pid')
-    def test_kill_pid_kills_again_after_10_tries(self, patched_killpid):
+    def test_kill_pid_retried(self, patched_killpid):
         with sleep.mocked():
             with patch.object(
                 _l, '_is_process_running', return_value=True
             ) as proc_running:
                 _kill_pid(0)
                 proc_running.assert_called_with(0)
-                self.assertThat(proc_running.call_count, Equals(10))
+                self.assertThat(proc_running.call_count, GreaterThan(1))
                 self.assertThat(patched_killpid.call_count, Equals(2))
                 patched_killpid.assert_called_with(0, signal.SIGKILL)
 
@@ -563,7 +564,7 @@ class ApplicationLauncherInternalTests(TestCase):
             ) as proc_running:
                 _kill_process(mock_process)
 
-                self.assertThat(proc_running.call_count, Equals(10))
+                self.assertThat(proc_running.call_count, GreaterThan(1))
                 self.assertThat(patched_kill_pid.call_count, Equals(2))
                 patched_kill_pid.assert_called_with(123, signal.SIGKILL)
 

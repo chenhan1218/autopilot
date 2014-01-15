@@ -230,3 +230,29 @@ def set_debug_profile_fixture(fixture_class):
 def get_debug_profile_fixture():
     global _debug_profile_fixture
     return _debug_profile_fixture
+
+
+_default_timeout_value = 10
+
+
+def set_default_timeout_period(new_timeout):
+    global _default_timeout_value
+    _default_timeout_value = new_timeout
+
+
+def get_default_timeout_period():
+    global _default_timeout_value
+    return _default_timeout_value
+
+
+_long_timeout_value = 30
+
+
+def set_long_timeout_period(new_timeout):
+    global _long_timeout_value
+    _long_timeout_value = new_timeout
+
+
+def get_long_timeout_period():
+    global _long_timeout_value
+    return _long_timeout_value

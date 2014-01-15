@@ -50,7 +50,7 @@ class Timeout(object):
 
     """Class for starting different timeout loops.
 
-    This class contains three static methods. Each method is a generator, and
+    This class contains two static methods. Each method is a generator, and
     provides a timeout for a different period of time. For example, to
     generate a short polling timeout, the code would look like this::
 

@@ -26,9 +26,10 @@ import os
 import psutil
 import subprocess
 import signal
-from autopilot.utilities import sleep
-
 from testtools.content import content_from_file, text_content
+
+from autopilot.utilities import sleep
+from autopilot._timeout import Timeout
 
 from autopilot.application._environment import (
     _call_upstart_with_args,
@@ -226,7 +227,7 @@ def _get_click_manifest():
 
 
 def _get_click_app_pid(app_id):
-    for i in range(10):
+    for _ in Timeout.default():
         try:
             list_output = _get_click_app_status(app_id)
         except subprocess.CalledProcessError:
@@ -236,8 +237,6 @@ def _get_click_app_pid(app_id):
             for line in list_output.split('\n'):
                 if app_id in line and "start/running" in line:
                     return int(line.split()[-1])
-        # give the app time to launch - maybe this is not needed?:
-        sleep(1)
     else:
         raise RuntimeError(
             "Could not find autopilot interface for click package"
@@ -249,16 +248,15 @@ def _kill_pid(pid):
     """Kill the process with the specified pid."""
     logger.info("waiting for process to exit.")
     _attempt_kill_pid(pid)
-    for i in range(10):
+    for _ in Timeout.default():
         if not _is_process_running(pid):
             break
-        if i == 9:
-            logger.info(
-                "Killing process group, since it hasn't exited after "
-                "10 seconds."
-            )
-            _attempt_kill_pid(pid, signal.SIGKILL)
-        sleep(1)
+    else:
+        logger.info(
+            "Killing process group, since it hasn't exited after the default"
+            "timeout."
+        )
+        _attempt_kill_pid(pid, signal.SIGKILL)
 
 
 def _attempt_kill_pid(pid, sig=signal.SIGTERM):
@@ -339,19 +337,18 @@ def _kill_process(process):
     stderr = ""
     logger.info("waiting for process to exit.")
     _attempt_kill_pid(process.pid)
-    for i in range(10):
+    for _ in Timeout.default():
         tmp_out, tmp_err = process.communicate()
         stdout += tmp_out
         stderr += tmp_err
         if not _is_process_running(process.pid):
             break
-        if i == 9:
-            logger.info(
-                "Killing process group, since it hasn't exited after "
-                "10 seconds."
-            )
-            _attempt_kill_pid(process.pid, signal.SIGKILL)
-        sleep(1)
+    else:
+        logger.info(
+            "Killing process group, since it hasn't exited after "
+            "10 seconds."
+        )
+        _attempt_kill_pid(process.pid, signal.SIGKILL)
     return stdout, stderr, process.returncode
 
 

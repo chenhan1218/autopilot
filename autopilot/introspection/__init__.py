@@ -34,6 +34,11 @@ from functools import partial
 import os
 import psutil
 
+from autopilot.dbus_handler import (
+    get_session_bus,
+    get_system_bus,
+    get_custom_bus,
+)
 from autopilot.introspection.backends import DBusAddress
 from autopilot.introspection.constants import (
     AUTOPILOT_PATH,
@@ -49,11 +54,7 @@ from autopilot.introspection.utilities import (
     _get_bus_connections_pid,
     _pid_is_running,
 )
-from autopilot.dbus_handler import (
-    get_session_bus,
-    get_system_bus,
-    get_custom_bus,
-)
+from autopilot._timeout import Timeout
 from autopilot.utilities import sleep
 
 
@@ -181,7 +182,7 @@ def _get_dbus_addresses_from_search_parameters(
     """
     _reset_known_connection_list()
 
-    for i in range(10):
+    for _ in Timeout.default():
         _get_child_pids.reset_cache()
         if process is not None and not _process_is_running(process):
             return_code = process.poll()
@@ -202,8 +203,6 @@ def _get_dbus_addresses_from_search_parameters(
         if len(valid_connections) >= 1:
             return [_get_dbus_address_object(name, object_path, bus) for name
                     in valid_connections]
-
-        sleep(1)
     return []
 
 

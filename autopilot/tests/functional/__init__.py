@@ -81,20 +81,13 @@ class AutopilotRunTestBase(AutopilotTestCase):
             'w').write('# Auto-generated file.')
         return base_path
 
-    def run_autopilot(self, arguments):
-        ap_base_path = os.path.abspath(
-            os.path.join(
-                os.path.dirname(__file__),
-                '..',
-                '..',
-                '..'
-            )
-        )
+    def run_autopilot(self, arguments, pythonpath="", use_script=False):
+        environment_patch = _get_environment_patch(pythonpath)
 
-        environment_patch = dict(DISPLAY=':0')
-        if not os.getcwd().startswith('/usr/'):
-            environment_patch['PYTHONPATH'] = ap_base_path
-        arg = [sys.executable, '-m', 'autopilot.run']
+        if use_script:
+            arg = [sys.executable, self._write_setup_tools_script()]
+        else:
+            arg = [sys.executable, '-m', 'autopilot.run']
 
         environ = os.environ
         environ.update(environment_patch)
@@ -143,3 +136,48 @@ class AutopilotRunTestBase(AutopilotTestCase):
                 name),
             'w',
             encoding='utf8').write(contents)
+
+    def _write_setup_tools_script(self):
+        """Creates a python script that contains the setup entry point."""
+        base_path = mkdtemp()
+        self.addCleanup(rmtree, base_path)
+
+        script_file = os.path.join(base_path, 'autopilot')
+        open(script_file, 'w').write(load_entry_point_script)
+
+        return script_file
+
+
+def _get_environment_patch(pythonpath):
+    environment_patch = dict(DISPLAY=':0')
+
+    ap_base_path = os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__),
+            '..',
+            '..',
+            '..'
+        )
+    )
+
+    pythonpath_additions = []
+    if pythonpath is not None:
+        pythonpath_additions.append(pythonpath)
+    if not os.getcwd().startswith('/usr/'):
+        pythonpath_additions.append(ap_base_path)
+    environment_patch['PYTHONPATH'] = ":".join(pythonpath_additions)
+
+    return environment_patch
+
+
+load_entry_point_script = """\
+#!/usr/bin/python
+__requires__ = 'autopilot==1.4.0'
+import sys
+from pkg_resources import load_entry_point
+
+if __name__ == '__main__':
+    sys.exit(
+        load_entry_point('autopilot==1.4.0', 'console_scripts', 'autopilot')()
+    )
+"""

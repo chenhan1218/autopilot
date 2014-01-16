@@ -159,7 +159,7 @@ class TypeBase(object):
             new_state = translate_state_keys(new_state)
             new_value = new_state[self.name][1:]
             if len(new_value) == 1:
-                new_value = make_unicode(new_value[0])  # [1] is the val
+                new_value = make_unicode(new_value[0])
             # Support for testtools.matcher classes:
             mismatch = expected_value.match(new_value)
             if mismatch:

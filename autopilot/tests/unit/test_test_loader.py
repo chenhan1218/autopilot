@@ -116,13 +116,24 @@ class TestLoaderTests(TestCase):
                 verbose=True
             )
 
-    def test_get_package_location_returns_correct_directory_for_package(self):
+    def test_get_package_location_locates_local_package_before_system(self):
         self.create_empty_package_file('__init__.py')
+        self.create_empty_package_file('unittest.py')
 
         with working_dir(self.sandbox_dir):
             actual = get_package_location(self.test_module_name)
 
-        self.assertEqual(self.sandbox_dir, actual)
+    def test_get_package_location_returns_correct_directory_for_package(self):
+        self.create_empty_package_file('unittest/__init__.py')
+
+        temp_working_dir = os.path.join(
+            self.sandbox_dir,
+            self.test_module_name
+        )
+        with working_dir(temp_working_dir):
+            actual = get_package_location('unittest')
+
+        self.assertFalse(actual.startswith('/usr'))
 
     def test_get_package_location_can_import_nested_module(self):
         self.create_empty_package_file('__init__.py')

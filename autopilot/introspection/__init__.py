@@ -55,7 +55,6 @@ from autopilot.introspection.utilities import (
     _pid_is_running,
 )
 from autopilot._timeout import Timeout
-from autopilot.utilities import sleep
 
 
 logger = logging.getLogger(__name__)

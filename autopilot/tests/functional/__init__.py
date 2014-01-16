@@ -150,7 +150,6 @@ class AutopilotRunTestBase(AutopilotTestCase):
 
 def _get_environment_patch(pythonpath):
     environment_patch = dict(DISPLAY=':0')
-    pythonpath_additions = []
 
     ap_base_path = os.path.abspath(
         os.path.join(
@@ -161,6 +160,7 @@ def _get_environment_patch(pythonpath):
         )
     )
 
+    pythonpath_additions = []
     if pythonpath is not None:
         pythonpath_additions.append(pythonpath)
     if not os.getcwd().startswith('/usr/'):

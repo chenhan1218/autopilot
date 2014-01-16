@@ -130,20 +130,6 @@ Loading tests from: %s
             )
         )
 
-    def test_local_module_loaded_and_not_system_module(self):
-        module_path1 = self.create_empty_test_module()
-        module_path2 = self.create_empty_test_module()
-
-        self.base_path = module_path2
-
-        retcode, stdout, stderr = self.run_autopilot(
-            ["run", "tests"],
-            pythonpath=module_path1,
-            use_script=True
-        )
-
-        self.assertThat(stdout, Contains(module_path2))
-
     def test_list_tests_with_syntax_error(self):
         self.create_test_file(
             'test_simple.py', dedent("""\
@@ -272,6 +258,20 @@ Loading tests from: %s
         self.assertThat(error, Equals(''))
         self.assertTestsInOutput(
             ['tests.test_simple.SimpleTest.test_simple'], output)
+
+    def test_local_module_loaded_and_not_system_module(self):
+        module_path1 = self.create_empty_test_module()
+        module_path2 = self.create_empty_test_module()
+
+        self.base_path = module_path2
+
+        retcode, stdout, stderr = self.run_autopilot(
+            ["run", "tests"],
+            pythonpath=module_path1,
+            use_script=True
+        )
+
+        self.assertThat(stdout, Contains(module_path2))
 
     def test_can_list_just_suites(self):
         """Must only list available suites, not the contained tests."""

@@ -36,18 +36,8 @@ class ProcessBamfTests(TestCase):
 
         """
         test_desktop_file = self.getUniqueString()
-        process = Mock()
 
-        with patch.object(
-            _b.Gio.DesktopAppInfo,
-            'new',
-            new=process
-        ):
-            self.assertThat(
-                lambda: _launch_application(test_desktop_file, []),
-                Not(Raises())
-            )
-            self.assertFalse(process.launch_uris.called)
+        with patch.object(_b.Gio.DesktopAppInfo, 'new') as process:
             process.launch_uris_as_manager.called_once_with(
                 [],
                 None,
@@ -58,6 +48,7 @@ class ProcessBamfTests(TestCase):
                 None,
                 None
             )
+            self.assertFalse(process.launch_uris.called)
 
     def test_launch_application_falls_back_to_earlier_ver_uri_call(self):
         """_launch_application must fallback to using launch_uris if the call
@@ -70,14 +61,19 @@ class ProcessBamfTests(TestCase):
             "Argument 2 does not allow None as a value"
         )
 
-        with patch.object(
-            _b.Gio.DesktopAppInfo,
-            'new',
-            return_value=process
-        ):
+        with patch.object(_b.Gio.DesktopAppInfo, 'new', return_value=process):
             _launch_application(test_desktop_file, [])
+            process.launch_uris.called_once_with([], None)
+
+
+    def test_launch_application_doesnt_raise(self):
+        test_desktop_file = self.getUniqueString()
+        process = Mock()
+        process.launch_uris_as_manager.side_effect = TypeError(
+            "Argument 2 does not allow None as a value"
+        )
+        with patch.object(_b.Gio.DesktopAppInfo, 'new', return_value=process):
             self.assertThat(
                 lambda: _launch_application(test_desktop_file, []),
                 Not(Raises())
             )
-            process.launch_uris.called_once_with([], None)

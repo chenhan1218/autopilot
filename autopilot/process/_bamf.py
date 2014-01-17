@@ -325,17 +325,21 @@ class ProcessManager(ProcessManagerBase):
         """
         if type(files) is not list:
             raise TypeError("files must be a list.")
-        proc = Gio.DesktopAppInfo.new(desktop_file)
-        # simple launch_uris() uses GLib.SpawnFlags.SEARCH_PATH by default
-        # only, but this inherits stdout; we don't want that as it hangs when
-        # tee'ing autopilot output into a file
-        proc.launch_uris_as_manager(
-            files, None,
-            GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.STDOUT_TO_DEV_NULL,
-            None, None, None, None)
+        proc = _launch_application(desktop_file, files)
         if wait:
             self.wait_until_application_is_running(desktop_file, 10)
         return proc
+
+
+def _launch_application(desktop_file, files):
+    proc = Gio.DesktopAppInfo.new(desktop_file)
+    # simple launch_uris() uses GLib.SpawnFlags.SEARCH_PATH by default
+    # only, but this inherits stdout; we don't want that as it hangs when
+    # tee'ing autopilot output into a file
+    proc.launch_uris_as_manager(
+        files, None,
+        GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.STDOUT_TO_DEV_NULL,
+        None, None, None, None)
 
 
 class Application(ApplicationBase):

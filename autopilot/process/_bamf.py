@@ -333,14 +333,19 @@ class ProcessManager(ProcessManagerBase):
 
 def _launch_application(desktop_file, files):
     proc = Gio.DesktopAppInfo.new(desktop_file)
-    # simple launch_uris() uses GLib.SpawnFlags.SEARCH_PATH by default
-    # only, but this inherits stdout; we don't want that as it hangs when
-    # tee'ing autopilot output into a file
-    proc.launch_uris_as_manager(
-        files, None,
-        GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.STDOUT_TO_DEV_NULL,
-        None, None, None, None)
-
+    # simple launch_uris() uses GLib.SpawnFlags.SEARCH_PATH by default only,
+    # but this inherits stdout; we don't want that as it hangs when tee'ing
+    # autopilot output into a file.
+    # Instead of depending on a newer version of gir/glib attempt to use the
+    # newer verison (i.e. launch_uris_as_manager works) and fall back on using
+    # the simple launch_uris
+    try:
+        proc.launch_uris_as_manager(
+            files, None,
+            GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.STDOUT_TO_DEV_NULL,
+            None, None, None, None)
+    except TypeError:
+        proc.launch_uris(files, None)
 
 class Application(ApplicationBase):
     """Represents an application, with information as returned by Bamf.

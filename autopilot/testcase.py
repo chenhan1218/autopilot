@@ -69,7 +69,7 @@ from autopilot.introspection import (
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
 from autopilot.process import ProcessManager
-from autopilot.utilities import on_test_started, sleep
+from autopilot.utilities import on_test_started
 from autopilot._timeout import Timeout
 try:
     from autopilot import tracepoint as tp

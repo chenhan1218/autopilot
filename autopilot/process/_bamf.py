@@ -35,7 +35,6 @@ from autopilot.dbus_handler import get_session_bus
 from autopilot.utilities import (
     addCleanup,
     Silence,
-    sleep,
 )
 from autopilot._timeout import Timeout
 from autopilot.process import (

@@ -455,7 +455,7 @@ class Mouse(MouseBase):
         x, y = coord["root_x"], coord["root_y"]
         return x, y
 
-    def drag(self, x1, y1, x2, y2):
+    def drag(self, x1, y1, x2, y2, rate=10):
         """Performs a press, move and release.
 
         This is to keep a common API between Mouse and Finger as long as
@@ -464,7 +464,7 @@ class Mouse(MouseBase):
         """
         self.move(x1, y1)
         self.press()
-        self.move(x2, y2)
+        self.move(x2, y2, rate=rate)
         self.release()
 
     @classmethod

@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2013 Canonical
+# Copyright (C) 2013, 2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,10 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from mock import patch
+from mock import call, patch
 from testtools import TestCase
 from testtools.matchers import raises
 
+from autopilot.input import _X11
 from autopilot.input._common import get_center_point
 
 
@@ -151,3 +152,30 @@ class InputCenterPointTests(TestCase):
 
         self.assertEqual(123, x)
         self.assertEqual(345, y)
+
+
+class X11MouseTestCase(TestCase):
+
+    def setUp(self):
+        super(X11MouseTestCase, self).setUp()
+        self.mouse = _X11.Mouse()
+
+    def test_drag_should_call_move_with_rate(self):
+        expected_first_move_call = call(0, 0)
+        expected_second_move_call = call(100, 100, rate=1)
+        with patch.object(self.mouse, 'move') as mock_move:
+            self.mouse.drag(0, 0, 100, 100, rate=1)
+
+        self.assertEqual(
+            mock_move.call_args_list,
+            [expected_first_move_call, expected_second_move_call])
+
+    def test_drag_with_default_rate(self):
+        expected_first_move_call = call(0, 0)
+        expected_second_move_call = call(100, 100, rate=10)
+        with patch.object(self.mouse, 'move') as mock_move:
+            self.mouse.drag(0, 0, 100, 100)
+
+        self.assertEqual(
+            mock_move.call_args_list,
+            [expected_first_move_call, expected_second_move_call])

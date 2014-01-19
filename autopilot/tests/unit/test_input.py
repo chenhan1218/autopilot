@@ -183,7 +183,7 @@ class PartialMock(object):
         for attribute in self.patched_attributes:
             patcher = patch.object(self._real_object, attribute)
             self._patchers.append(patcher)
-            
+
             self._mock_manager.attach_mock(patcher.start(), attribute)
 
     def __exit__(self, exc_type, exc_val, exc_tb):

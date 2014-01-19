@@ -28,7 +28,6 @@ import subprocess
 import signal
 from testtools.content import content_from_file, text_content
 
-from autopilot.utilities import sleep
 from autopilot._timeout import Timeout
 
 from autopilot.application._environment import (

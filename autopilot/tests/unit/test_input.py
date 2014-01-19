@@ -23,6 +23,7 @@ from mock import call, Mock, patch
 from testtools import TestCase
 from testtools.matchers import raises
 
+import autopilot.input
 from autopilot.input import _uinput, _X11
 from autopilot.input._common import get_center_point
 
@@ -331,3 +332,22 @@ class DragUinputTouchTestCase(testscenarios.TestWithScenarios, TestCase):
 
         self.assertEqual(
             self.expected_moves, mock_touch.get_finger_move_call_args_list())
+
+
+class PointerTestCase(TestCase):
+
+    def setUp(self):
+        super(PointerTestCase, self).setUp()
+        self.pointer = autopilot.input.Pointer(autopilot.input.Mouse.create())
+
+    def test_drag_with_rate(self):
+        with patch.object(self.pointer._device, 'drag') as mock_drag:
+            self.pointer.drag(0, 0, 20, 20, rate=5)
+
+        mock_drag.assert_called_once_with(0, 0, 20, 20, rate=5)
+
+    def test_drag_with_default_rate(self):
+        with patch.object(self.pointer._device, 'drag') as mock_drag:
+            self.pointer.drag(0, 0, 20, 20)
+
+        mock_drag.assert_called_once_with(0, 0, 20, 20, rate=10)

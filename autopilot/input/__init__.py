@@ -369,7 +369,7 @@ class Mouse(CleanupRegistered):
         """
         raise NotImplementedError("You cannot use this class directly.")
 
-    def drag(self, x1, y1, x2, y2):
+    def drag(self, x1, y1, x2, y2, rate=10):
         """Performs a press, move and release.
 
         This is to keep a common API between Mouse and Finger as long as
@@ -466,7 +466,7 @@ class Touch(object):
         """Release a previously pressed finger"""
         raise NotImplementedError("You cannot use this class directly.")
 
-    def drag(self, x1, y1, x2, y2):
+    def drag(self, x1, y1, x2, y2, rate=10):
         """Perform a drag gesture from (x1,y1) to (x2,y2)"""
         raise NotImplementedError("You cannot use this class directly.")
 
@@ -641,9 +641,9 @@ class Pointer(object):
         else:
             return (self._x, self._y)
 
-    def drag(self, x1, y1, x2, y2):
+    def drag(self, x1, y1, x2, y2, rate=10):
         """Performs a press, move and release."""
-        self._device.drag(x1, y1, x2, y2)
+        self._device.drag(x1, y1, x2, y2, rate=rate)
         if isinstance(self._device, Touch):
             self._x = x2
             self._y = y2

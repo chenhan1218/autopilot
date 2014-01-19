@@ -192,11 +192,11 @@ class MockTouch(object):
 
     def __getattr__(self, name):
         return self._real_touch.__getattribute__(name)
-        
+
     @property
     def mock_calls(self):
         return self._mock_manager.mock_calls
-        
+
     def __enter__(self):
         self._start_finger_patchers()
         return self
@@ -265,13 +265,13 @@ class UinputTouchTestCase(TestCase):
             mock_touch.drag(0, 0, 0, 0)
         self.assertEqual(mock_touch.mock_calls, expected_finger_calls)
 
-    
+
 class DragUinputTouchTestCase(testscenarios.TestWithScenarios, TestCase):
 
     scenarios = [
         ('drag to top', dict(
             start_x=50, start_y=50, stop_x=50, stop_y=30,
-            expected_moves=[call(50, 40), call(50,30)])),
+            expected_moves=[call(50, 40), call(50, 30)])),
         ('drag to bottom', dict(
             start_x=50, start_y=50, stop_x=50, stop_y=70,
             expected_moves=[call(50, 60), call(50, 70)])),

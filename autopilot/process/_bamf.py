@@ -346,6 +346,7 @@ def _launch_application(desktop_file, files):
     except TypeError:
         proc.launch_uris(files, None)
 
+
 class Application(ApplicationBase):
     """Represents an application, with information as returned by Bamf.
 

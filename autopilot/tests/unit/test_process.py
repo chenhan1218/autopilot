@@ -35,8 +35,6 @@ class ProcessBamfTests(TestCase):
         before trying to use launch_uris.
 
         """
-        test_desktop_file = self.getUniqueString()
-
         with patch.object(_b.Gio.DesktopAppInfo, 'new') as process:
             process.launch_uris_as_manager.called_once_with(
                 [],
@@ -64,7 +62,6 @@ class ProcessBamfTests(TestCase):
         with patch.object(_b.Gio.DesktopAppInfo, 'new', return_value=process):
             _launch_application(test_desktop_file, [])
             process.launch_uris.called_once_with([], None)
-
 
     def test_launch_application_doesnt_raise(self):
         test_desktop_file = self.getUniqueString()

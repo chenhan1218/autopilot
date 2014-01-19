@@ -156,73 +156,93 @@ class InputCenterPointTests(TestCase):
         self.assertEqual(345, y)
 
 
-class X11MouseTestCase(TestCase):
+class PartialMock(object):
+    """Mock some of the methods of an object, and record their calls."""
 
-    def setUp(self):
-        super(X11MouseTestCase, self).setUp()
-        self.mouse = _X11.Mouse()
+    def __init__(self, real_object, *args):
+        super(PartialMock, self).__init__()
+        self._mock_manager = Mock()
+        self._real_object = real_object
+        self.patched_attributes = args
+
+    def __getattr__(self, name):
+        """Forward all the calls to the real object."""
+        return self._real_object.__getattribute__(name)
+
+    @property
+    def mock_calls(self):
+        """Return the calls recorded for the mocked attributes."""
+        return self._mock_manager.mock_calls
+
+    def __enter__(self):
+        self._start_patchers()
+        return self
+
+    def _start_patchers(self):
+        self._patchers = []
+        for attribute in self.patched_attributes:
+            patcher = patch.object(self._real_object, attribute)
+            self._patchers.append(patcher)
+            
+            self._mock_manager.attach_mock(patcher.start(), attribute)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._stop_patchers()
+
+    def _stop_patchers(self):
+        for patcher in self._patchers:
+            patcher.stop()
+
+
+class MockX11Mouse(PartialMock):
+    """Mock for the X11 Mouse Touch.
+
+    It records the calls to press, release and move, but doesn't perform them.
+
+    """
+
+    def __init__(self):
+        super(MockX11Mouse, self).__init__(
+            _X11.Mouse(), 'press', 'release', 'move')
+
+    def get_move_call_args_list(self):
+        return self._mock_manager.move.call_args_list
+
+
+class X11MouseTestCase(TestCase):
 
     def test_drag_should_call_move_with_rate(self):
         expected_first_move_call = call(0, 0)
         expected_second_move_call = call(100, 100, rate=1)
-        with patch.object(self.mouse, 'move') as mock_move:
-            self.mouse.drag(0, 0, 100, 100, rate=1)
+        with MockX11Mouse() as mock_mouse:
+            mock_mouse.drag(0, 0, 100, 100, rate=1)
 
         self.assertEqual(
             [expected_first_move_call, expected_second_move_call],
-            mock_move.call_args_list)
+            mock_mouse.get_move_call_args_list())
 
     def test_drag_with_default_rate(self):
         expected_first_move_call = call(0, 0)
         expected_second_move_call = call(100, 100, rate=10)
-        with patch.object(self.mouse, 'move') as mock_move:
-            self.mouse.drag(0, 0, 100, 100)
+        with MockX11Mouse() as mock_mouse:
+            mock_mouse.drag(0, 0, 100, 100)
 
         self.assertEqual(
             [expected_first_move_call, expected_second_move_call],
-            mock_move.call_args_list)
+            mock_mouse.get_move_call_args_list())
 
 
-class MockTouch(object):
+class MockTouch(PartialMock):
+    """Mock for the uinput Touch.
+
+    It records the calls to _finger_down, _finger_up and _finger_move, but
+    doesn't perform them.
+
+    """
 
     def __init__(self):
-        super(MockTouch, self).__init__()
-        self._mock_manager = Mock()
-        self._real_touch = _uinput.Touch()
-
-    def __getattr__(self, name):
-        return self._real_touch.__getattribute__(name)
-
-    @property
-    def mock_calls(self):
-        return self._mock_manager.mock_calls
-
-    def __enter__(self):
-        self._start_finger_patchers()
-        return self
-
-    def _start_finger_patchers(self):
-        self._finger_down_patcher = patch.object(
-            self._real_touch, '_finger_down')
-        self._mock_manager.attach_mock(
-            self._finger_down_patcher.start(), '_finger_down')
-
-        self._finger_up_patcher = patch.object(self._real_touch, '_finger_up')
-        self._mock_manager.attach_mock(
-            self._finger_up_patcher.start(), '_finger_up')
-
-        self._finger_move_patcher = patch.object(
-            self._real_touch, '_finger_move')
-        self._mock_manager.attach_mock(
-            self._finger_move_patcher.start(), '_finger_move')
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._stop_finger_patchers()
-
-    def _stop_finger_patchers(self):
-        self._finger_down_patcher.stop()
-        self._finger_up_patcher.stop()
-        self._finger_move_patcher.stop()
+        super(MockTouch, self).__init__(
+            _uinput.Touch(), '_finger_down', '_finger_up', '_finger_move')
 
     def get_finger_move_call_args_list(self):
         return self._mock_manager._finger_move.call_args_list

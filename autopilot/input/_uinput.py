@@ -361,23 +361,33 @@ class Touch(TouchBase):
             raise RuntimeError("Attempting to move without finger being down.")
         self._finger_move(x, y)
 
-    def drag(self, x1, y1, x2, y2):
+    def drag(self, x1, y1, x2, y2, rate=10):
         """Perform a drag gesture from (x1,y1) to (x2,y2)"""
         logger.debug("Dragging from %d,%d to %d,%d", x1, y1, x2, y2)
         self._finger_down(x1, y1)
 
-        # Let's drag in 100 steps for now...
-        dx = 1.0 * (x2 - x1) / 100
-        dy = 1.0 * (y2 - y1) / 100
-        cur_x = x1 + dx
-        cur_y = y1 + dy
-        for i in range(0, 100):
-            self._finger_move(int(cur_x), int(cur_y))
+        current_x, current_y = x1, y1
+        while current_x != x2 or current_y != y2:
+            dx = abs(x2 - current_x)
+            dy = abs(y2 - current_y)
+
+            intx = float(dx) / max(dx, dy)
+            inty = float(dy) / max(dx, dy)
+
+            step_x = min(rate * intx, dx)
+            step_y = min(rate * inty, dy)
+
+            if x2 < current_x:
+                step_x *= -1
+            if y2 < current_y:
+                step_y *= -1
+
+            current_x += step_x
+            current_y += step_y
+            self._finger_move(current_x, current_y)
+
             sleep(0.002)
-            cur_x += dx
-            cur_y += dy
-        # Make sure we actually end up at target
-        self._finger_move(x2, y2)
+
         self._finger_up()
 
     def _finger_down(self, x, y):

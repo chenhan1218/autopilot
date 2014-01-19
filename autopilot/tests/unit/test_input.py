@@ -233,7 +233,7 @@ class X11MouseTestCase(TestCase):
             mock_mouse.get_move_call_args_list())
 
 
-class MockTouch(PartialMock):
+class MockUinputTouch(PartialMock):
     """Mock for the uinput Touch.
 
     It records the calls to _finger_down, _finger_up and _finger_move, but
@@ -242,7 +242,7 @@ class MockTouch(PartialMock):
     """
 
     def __init__(self):
-        super(MockTouch, self).__init__(
+        super(MockUinputTouch, self).__init__(
             _uinput.Touch(), '_finger_down', '_finger_up', '_finger_move')
 
     def get_finger_move_call_args_list(self):
@@ -257,13 +257,13 @@ class UinputTouchTestCase(TestCase):
             call._finger_move(10, 10),
             call._finger_up()
         ]
-        with MockTouch() as mock_touch:
+        with MockUinputTouch() as mock_touch:
             mock_touch.drag(0, 0, 10, 10)
         self.assertEqual(mock_touch.mock_calls, expected_finger_calls)
 
     def test_drag_should_call_move_with_rate(self):
         expected_move_calls = [call(5, 5), call(10, 10), call(15, 15)]
-        with MockTouch() as mock_touch:
+        with MockUinputTouch() as mock_touch:
             mock_touch.drag(0, 0, 15, 15, rate=5)
 
         self.assertEqual(
@@ -271,7 +271,7 @@ class UinputTouchTestCase(TestCase):
 
     def test_drag_with_default_rate(self):
         expected_move_calls = [call(10, 10), call(20, 20)]
-        with MockTouch() as mock_touch:
+        with MockUinputTouch() as mock_touch:
             mock_touch.drag(0, 0, 20, 20)
 
         self.assertEqual(
@@ -282,7 +282,7 @@ class UinputTouchTestCase(TestCase):
             call._finger_down(0, 0),
             call._finger_up()
         ]
-        with MockTouch() as mock_touch:
+        with MockUinputTouch() as mock_touch:
             mock_touch.drag(0, 0, 0, 0)
         self.assertEqual(mock_touch.mock_calls, expected_finger_calls)
 
@@ -326,7 +326,7 @@ class DragUinputTouchTestCase(testscenarios.TestWithScenarios, TestCase):
     ]
 
     def test_drag_moves(self):
-        with MockTouch() as mock_touch:
+        with MockUinputTouch() as mock_touch:
             mock_touch.drag(
                 self.start_x, self.start_y, self.stop_x, self.stop_y)
 

@@ -516,7 +516,7 @@ class ProxyObjectGenerationTests(TestCase):
 
         """
         with self.mock_all_child_calls() as mocks:
-            fake_address_list = [ Mock() ]
+            fake_address_list = [Mock()]
             mocks['get_addresses'].return_value = fake_address_list
             mocks['filter_addresses'].return_value = fake_address_list
 
@@ -544,7 +544,7 @@ class ProxyObjectGenerationTests(TestCase):
 
         """
         with self.mock_all_child_calls() as mocks:
-            fake_address_list = [ Mock() ]
+            fake_address_list = [Mock()]
             mocks['check_process'].return_value = 123
             mocks['get_addresses'].return_value = fake_address_list
             mocks['filter_addresses'].return_value = []
@@ -570,7 +570,7 @@ class ProxyObjectGenerationTests(TestCase):
 
         """
         with self.mock_all_child_calls() as mocks:
-            fake_address_list = [ Mock(), Mock() ]
+            fake_address_list = [Mock(), Mock()]
             mocks['get_addresses'].return_value = fake_address_list
             mocks['filter_addresses'].return_value = fake_address_list
 

@@ -105,10 +105,9 @@ AutopilotTestCase.pick_app_launcher method."
                 sleep(1)
         """ % sys.executable))
 
-        expected_error = "Search criteria returned no results"
         self.assertThat(
             lambda: self.launch_test_application(path, app_type='qt'),
-            raises(ProcessSearchError(expected_error))
+            raises(ProcessSearchError)
         )
 
     def test_creating_app_for_non_running_app_fails(self):

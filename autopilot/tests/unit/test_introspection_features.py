@@ -309,7 +309,7 @@ class ProcessSearchErrorStringRepTests(TestCase):
         self.assertEqual(
             u('pid = 123'),
             _get_search_criteria_string_representation(pid=123)
-            )
+        )
 
     def test_dbus_bus(self):
         self.assertEqual(
@@ -389,14 +389,20 @@ class ProcessAndPidErrorCheckingTests(TestCase):
 
     def test_returns_pid_when_specified(self):
         expected = self.getUniqueInteger()
-        observed = _check_process_and_pid_details(pid=expected)
+        with patch('autopilot.introspection._pid_is_running') as pir:
+            pir.return_value = True
+
+            observed = _check_process_and_pid_details(pid=expected)
 
         self.assertEqual(expected, observed)
 
     def test_returns_process_pid_attr_when_specified(self):
         fake_process = Mock()
         fake_process.pid = self.getUniqueInteger()
-        observed = _check_process_and_pid_details(fake_process)
+
+        with patch('autopilot.introspection._pid_is_running') as pir:
+            pir.return_value = True
+            observed = _check_process_and_pid_details(fake_process)
 
         self.assertEqual(fake_process.pid, observed)
 
@@ -409,10 +415,12 @@ class ProcessAndPidErrorCheckingTests(TestCase):
     def test_returns_pid_when_both_specified(self):
         fake_process = Mock()
         fake_process.pid = self.getUniqueInteger()
-        observed = _check_process_and_pid_details(
-            fake_process,
-            fake_process.pid
-        )
+        with patch('autopilot.introspection._pid_is_running') as pir:
+            pir.return_value = True
+            observed = _check_process_and_pid_details(
+                fake_process,
+                fake_process.pid
+            )
         self.assertEqual(fake_process.pid, observed)
 
 

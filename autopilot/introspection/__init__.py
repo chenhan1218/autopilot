@@ -209,7 +209,7 @@ def _check_process_and_pid_details(process=None, pid=None):
 
 def _maybe_filter_connections_by_app_name(application_name, dbus_addresses):
     """Filter `dbus_addresses` by the application name exported, if
-    `applciation_name` has been specified.
+    `application_name` has been specified.
 
     :returns: a filtered list of connections.
     """

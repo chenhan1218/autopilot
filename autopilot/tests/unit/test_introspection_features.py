@@ -577,6 +577,11 @@ class ProxyObjectGenerationTests(TestCase):
             self.assertThat(
                 lambda: get_proxy_object_for_existing_process(),
                 raises(
-                    RuntimeError("Search criteria returned multiple results")
+                    RuntimeError(
+                        "Search criteria (pid = 1, dbus bus = 'session', "
+                        "object path = "
+                        "'/com/canonical/Autopilot/Introspection') "
+                        "returned multiple results"
+                    )
                 )
             )

@@ -172,7 +172,16 @@ def get_proxy_object_for_existing_process(
         message_string = "Search criteria (%s) returned no results" % (criteria_string)
         raise ProcessSearchError(message_string)
     if len(dbus_addresses) > 1:
-        raise RuntimeError("Search criteria returned multiple results")
+        criteria_string = _get_search_criteria_string_representation(
+            pid,
+            dbus_bus,
+            connection_name,
+            process,
+            object_path,
+            application_name
+        )
+        message_string = "Search criteria (%s) returned multiple results" % (criteria_string)
+        raise RuntimeError(message_string)
 
     return _make_proxy_object(dbus_addresses[0], emulator_base)
 

@@ -156,7 +156,7 @@ class Keyboard(KeyboardBase):
             raise TypeError("'keys' argument must be a string.")
 
         for key in reversed(self._sanitise_keys(keys)):
-            for key_button in Keyboard._get_key_buttons(key):
+            for key_button in reversed(self._get_key_buttons(key)):
                 self._device.release(key_button)
                 sleep(delay)
 

@@ -25,6 +25,7 @@ from testtools.matchers import raises
 
 from autopilot.input import _uinput
 from autopilot.input._common import get_center_point
+from autopilot import utilities
 
 
 class Empty(object):
@@ -258,23 +259,54 @@ class UInputKeyboardDeviceTestCase(TestCase):
         self.assertEqual(expected_calls, self.keyboard._device.mock_calls)
 
 
-class UInputKeyboardPressTestCase(testscenarios.TestWithScenarios, TestCase):
+class UInputKeyboardTestCase(testscenarios.TestWithScenarios, TestCase):
     """Test UInput Keyboard helper for autopilot tests."""
 
     scenarios = [
-        ('single key', dict(keys='a', expected_calls=[mock.call.press('a')])),
+        ('single key', dict(keys='a', expected_calls_args=['a'])),
         ('upper-case letter', dict(
-            keys='A', expected_calls=[
-                mock.call.press('KEY_LEFTSHIFT'), mock.call.press('A')]))
+            keys='A', expected_calls_args=['KEY_LEFTSHIFT', 'A'])),
+        ('key combination', dict(
+            keys='a+b', expected_calls_args=['a', 'b']))
     ]
 
     def setUp(self):
-        super(UInputKeyboardPressTestCase, self).setUp()
+        super(UInputKeyboardTestCase, self).setUp()
         self.keyboard = _uinput.Keyboard(device_class=mock.Mock)
         self.keyboard._device.mock_add_spec(
             _uinput._UInputKeyboardDevice, spec_set=True)
+        # Mock the sleeps so we don't have to spend time actually sleeping.
+        self.addCleanup(utilities.sleep.disable_mock)
+        utilities.sleep.enable_mock()
 
     def test_press(self):
+        expected_calls = [
+            mock.call.press(arg) for arg in self.expected_calls_args]
         self.keyboard.press(self.keys)
 
-        self.assertEqual(self.expected_calls, self.keyboard._device.mock_calls)
+        self.assertEqual(expected_calls, self.keyboard._device.mock_calls)
+
+    def test_release(self):
+        self.keyboard.press(self.keys)
+        self.keyboard._device.reset_mock()
+
+        expected_calls = [
+            mock.call.release(arg) for arg in
+            reversed(self.expected_calls_args)]
+        self.keyboard.release(self.keys)
+
+        self.assertEqual(
+            expected_calls, self.keyboard._device.mock_calls)
+
+    def test_press_and_release(self):
+        expected_press_calls = [
+            mock.call.press(arg) for arg in self.expected_calls_args]
+        expected_release_calls = [
+            mock.call.release(arg) for arg in
+            reversed(self.expected_calls_args)]
+
+        self.keyboard.press_and_release(self.keys)
+
+        self.assertEqual(
+            expected_press_calls + expected_release_calls,
+            self.keyboard._device.mock_calls)

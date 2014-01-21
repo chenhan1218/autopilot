@@ -528,3 +528,53 @@ class UInputTouchDeviceTestCase(TestCase):
 
         touch = self._get_touch_device()
         self.assertFalse(touch.pressed)
+
+
+class UInputTouchTestCase(TestCase):
+    """Test UInput Touch helper for autopilot tests."""
+
+    def setUp(self):
+        super(UInputTouchTestCase, self).setUp()
+        self.touch = _uinput.Touch(device_class=mock.Mock)
+        self.touch._device.mock_add_spec(
+            _uinput._UInputTouchDevice, spec_set=True)
+        # Mock the sleeps so we don't have to spend time actually sleeping.
+        self.addCleanup(utilities.sleep.disable_mock)
+        utilities.sleep.enable_mock()
+
+    def test_tap(self):
+        expected_calls = [
+            mock.call.finger_down(0, 0),
+            mock.call.finger_up()
+        ]
+
+        self.touch.tap(0, 0)
+        self.assertEqual(expected_calls, self.touch._device.mock_calls)
+
+    def test_tap_object(self):
+        object_ = type('Dummy', (object,), {'globalRect': (0, 0, 10, 10)})
+        expected_calls = [
+            mock.call.finger_down(5, 5),
+            mock.call.finger_up()
+        ]
+
+        self.touch.tap_object(object_)
+        self.assertEqual(expected_calls, self.touch._device.mock_calls)
+
+    def test_press(self):
+        expected_calls = [mock.call.finger_down(0, 0)]
+
+        self.touch.press(0, 0)
+        self.assertEqual(expected_calls, self.touch._device.mock_calls)
+
+    def test_release(self):
+        expected_calls = [mock.call.finger_up()]
+
+        self.touch.release()
+        self.assertEqual(expected_calls, self.touch._device.mock_calls)
+
+    def test_move(self):
+        expected_calls = [mock.call.finger_move(10, 10)]
+
+        self.touch.move(10, 10)
+        self.assertEqual(expected_calls, self.touch._device.mock_calls)

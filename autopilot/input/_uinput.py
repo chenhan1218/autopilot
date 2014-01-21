@@ -342,6 +342,10 @@ class _UInputTouchDevice(object):
             version=0x2, devnode=_get_devnode_path())
         self._touch_finger_slot = None
 
+    @property
+    def pressed(self):
+        return self._touch_finger_slot is not None
+
     def finger_down(self, x, y):
         """Internal: moves finger "finger" down on the touchscreen.
 
@@ -349,7 +353,7 @@ class _UInputTouchDevice(object):
         :param y: The finger will be moved to this y coordinate.
 
         """
-        if self._touch_finger_slot is not None:
+        if self.pressed:
             raise RuntimeError("Cannot press finger: it's already pressed.")
         self._touch_finger_slot = self._get_free_touch_finger_slot()
 
@@ -385,7 +389,7 @@ class _UInputTouchDevice(object):
         NOTE: The finger has to be down for this to have any effect.
 
         """
-        if self._touch_finger_slot is None:
+        if not self.pressed:
             raise RuntimeError('Attempting to move without finger being down.')
         else:
             self._device.write(
@@ -396,7 +400,7 @@ class _UInputTouchDevice(object):
 
     def finger_up(self):
         """Internal: moves finger "finger" up from the touchscreen"""
-        if self._touch_finger_slot is None:
+        if not self.pressed:
             raise RuntimeError("Cannot release finger: it's not pressed.")
         self._device.write(e.EV_ABS, e.ABS_MT_SLOT, self._touch_finger_slot)
         lift_tracking_id = -1
@@ -416,10 +420,6 @@ class _UInputTouchDevice(object):
         _UInputTouchDevice._touch_fingers_in_use.remove(
             self._touch_finger_slot)
         self._touch_finger_slot = None
-
-    @property
-    def pressed(self):
-        return self._touch_finger_slot is not None
 
 
 class Touch(TouchBase):

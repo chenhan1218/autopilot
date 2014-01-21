@@ -507,7 +507,7 @@ class UInputTouchDeviceTestCase(TestCase):
         # Try to use one more.
         touch.finger_down(15, 15)
         self._assert_finger_down_emitted_write_and_syn(
-                touch, slot=slot_to_reuse, tracking_id=mock.ANY, x=15, y=15)
+            touch, slot=slot_to_reuse, tracking_id=mock.ANY, x=15, y=15)
 
     def test_pressed_with_finger_down(self):
         touch = self._get_touch_device()

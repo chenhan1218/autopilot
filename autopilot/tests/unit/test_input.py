@@ -350,7 +350,11 @@ class UInputTouchDeviceTestCase(TestCase):
                 touch, slot=slot, tracking_id=mock.ANY, x=0, y=0)
 
     def _get_touch_device(self):
-        touch = _uinput._UInputTouchDevice(device_class=mock.Mock)
+        dummy_x_resolution = 100
+        dummy_y_resolution = 100
+        touch = _uinput._UInputTouchDevice(
+            res_x=dummy_x_resolution, res_y=dummy_y_resolution,
+            device_class=mock.Mock)
         touch._device.mock_add_spec(uinput.UInput, spec_set=True)
         return touch
 

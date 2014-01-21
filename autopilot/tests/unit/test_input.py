@@ -258,6 +258,15 @@ class UInputKeyboardDeviceTestCase(TestCase):
 
         self.assertEqual(expected_calls, self.keyboard._device.mock_calls)
 
+    def test_release_pressed_keys_already_released(self):
+        expected_calls = []
+        self.keyboard.press('KEY_A')
+        self.keyboard.release_pressed_keys()
+        self.keyboard._device.reset_mock()
+
+        self.keyboard.release_pressed_keys()
+        self.assertEqual(expected_calls, self.keyboard._device.mock_calls)
+
 
 class UInputKeyboardTestCase(testscenarios.TestWithScenarios, TestCase):
     """Test UInput Keyboard helper for autopilot tests."""

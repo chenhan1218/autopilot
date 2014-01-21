@@ -101,7 +101,7 @@ class _UInputKeyboardDevice(object):
         """Release all the keys that are currently pressed."""
         for ecode in self._pressed_keys_ecodes:
             self._emit_release_event(ecode)
-            self._pressed_keys_ecodes.remove(ecode)
+        self._pressed_keys_ecodes = []
 
 
 class Keyboard(KeyboardBase):

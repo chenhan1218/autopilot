@@ -33,9 +33,6 @@ import six
 
 logger = logging.getLogger(__name__)
 
-PRESS = 1
-RELEASE = 0
-
 
 def _get_devnode_path():
     """Provide a fallback uinput node for devices which don't support udev"""
@@ -112,7 +109,8 @@ class Keyboard(KeyboardBase):
 
     def __init__(self, device_class=_UInputKeyboardDevice):
         super(Keyboard, self).__init__()
-        self._device = device_class()
+        if Keyboard._device is None:
+            Keyboard._device = device_class()
 
     def _sanitise_keys(self, keys):
         if keys == '+':

@@ -279,6 +279,8 @@ class UInputKeyboardTestCase(testscenarios.TestWithScenarios, TestCase):
         self.addCleanup(utilities.sleep.disable_mock)
         utilities.sleep.enable_mock()
 
+        self.keyboard._device.reset_mock()
+
     def test_press(self):
         expected_calls = [
             mock.call.press(arg) for arg in self.expected_calls_args]

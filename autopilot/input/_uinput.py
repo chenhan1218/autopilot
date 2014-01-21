@@ -428,7 +428,7 @@ class Touch(TouchBase):
 
     def __init__(self, device_class=_UInputTouchDevice):
         super(Touch, self).__init__()
-        Touch._device = device_class()
+        self._device = device_class()
 
     @property
     def pressed(self):

@@ -551,8 +551,9 @@ class InputStackCleanup(AutopilotTestCase):
         test_result = FakeTestCase("test_press_key").run()
 
         self.assertThat(test_result.wasSuccessful(), Equals(True))
-        from autopilot.input._uinput import _PRESSED_KEYS
-        self.assertThat(_PRESSED_KEYS, Equals([]))
+        from autopilot.input import _uinput
+        self.assertThat(
+            _uinput.Keyboard._device._pressed_keys_ecodes, Equals([]))
 
     @patch('autopilot.input._X11.fake_input', new=lambda *args: None, )
     def test_mouse_button_released(self):

@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2013 Canonical
+# Copyright (C) 2013, 2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,10 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from mock import patch
+import mock
+from evdev import ecodes
 from testtools import TestCase
 from testtools.matchers import raises
 
+from autopilot.input import _uinput
 from autopilot.input._common import get_center_point
 
 
@@ -84,7 +86,7 @@ class InputCenterPointTests(TestCase):
             raises(expected_exception)
         )
 
-    @patch('autopilot.input._common.logger')
+    @mock.patch('autopilot.input._common.logger')
     def test_get_center_point_logs_with_globalRect(self, mock_logger):
         obj = make_fake_object(globalRect=True)
         x, y = get_center_point(obj)
@@ -100,7 +102,7 @@ class InputCenterPointTests(TestCase):
         self.assertEqual(123, x)
         self.assertEqual(345, y)
 
-    @patch('autopilot.input._common.logger')
+    @mock.patch('autopilot.input._common.logger')
     def test_get_center_point_logs_with_center_points(self, mock_logger):
         obj = make_fake_object(center=True)
         x, y = get_center_point(obj)
@@ -116,7 +118,7 @@ class InputCenterPointTests(TestCase):
         self.assertEqual(110, x)
         self.assertEqual(120, y)
 
-    @patch('autopilot.input._common.logger')
+    @mock.patch('autopilot.input._common.logger')
     def test_get_center_point_logs_with_xywh(self, mock_logger):
         obj = make_fake_object(xywh=True)
         x, y = get_center_point(obj)
@@ -151,3 +153,64 @@ class InputCenterPointTests(TestCase):
 
         self.assertEqual(123, x)
         self.assertEqual(345, y)
+
+
+class UInputKeyboardDeviceTestCase(TestCase):
+    """Test the integration with evdev.UInput for the keyboard."""
+
+    def setUp(self):
+        super(UInputKeyboardDeviceTestCase, self).setUp()
+        self.keyboard = _uinput._UInputKeyboardDevice(device_class=mock.Mock)
+
+    def test_press_key_should_emit_write_and_syn(self):
+        self.keyboard.press('A')
+        self._assert_key_press_emitted_write_and_syn('KEY_A')
+
+    def _assert_key_press_emitted_write_and_syn(self, key):
+        press_value = 1
+        self._assert_emitted_write_and_syn(key, press_value)
+
+    def _assert_emitted_write_and_syn(self, key, value):
+        key_ecode = ecodes.ecodes.get(key)
+        expected_calls = [
+            mock.call.write(ecodes.EV_KEY, key_ecode, value),
+            mock.call.syn()
+        ]
+
+        self.assertEqual(
+            expected_calls,
+            self.keyboard._device.mock_calls)
+
+    def test_press_key_should_ignore_case(self):
+        self.keyboard.press('a')
+        self._assert_key_press_emitted_write_and_syn('KEY_A')
+
+    def test_press_unexisting_key_should_raise_error(self):
+        error = self.assertRaises(
+            ValueError, self.keyboard.press, 'unexisting')
+
+        self.assertEqual('Unknown key name: unexisting.', str(error))
+
+    def test_release_not_pressed_key_should_raise_error(self):
+        error = self.assertRaises(
+            ValueError, self.keyboard.release, 'A')
+
+        self.assertEqual("Key 'A' not pressed.", str(error))
+
+    def test_release_key_should_emit_write_and_syn(self):
+        # We first need to press the key.
+        self.keyboard.press('A')
+        self.keyboard._device.reset_mock()
+
+        self.keyboard.release('A')
+        self._assert_key_release_emitted_write_and_syn('KEY_A')
+
+    def _assert_key_release_emitted_write_and_syn(self, key):
+        release_value = 0
+        self._assert_emitted_write_and_syn(key, release_value)
+
+    def test_release_unexisting_key_should_raise_error(self):
+        error = self.assertRaises(
+            ValueError, self.keyboard.release, 'unexisting')
+
+        self.assertEqual('Unknown key name: unexisting.', str(error))

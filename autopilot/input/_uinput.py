@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2012, 2013, 2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,6 +45,60 @@ def _get_devnode_path():
     if not os.path.exists(devnode):
         devnode = '/dev/uinput'
     return devnode
+
+
+class _UInputKeyboardDevice(object):
+    """Wrapper for the UInput Keyboard to execute its primitives."""
+
+    def __init__(self, device_class=UInput):
+        super(_UInputKeyboardDevice, self).__init__()
+        self._device = device_class(devnode=_get_devnode_path())
+        self._pressed_keys_ecodes = []
+
+    def press(self, key):
+        """Press one key.
+
+        It ignores case, so, for example, 'a' and 'A' are mapped to the same
+        key.
+
+        """
+        ecode = self._get_ecode_for_key(key)
+        logger.debug('Pressing %s (%r)', key, ecode)
+        self._emit_press_event(ecode)
+        self._pressed_keys_ecodes.append(ecode)
+
+    def _get_ecode_for_key(self, key):
+        ecode = e.ecodes.get('KEY_' + key.upper(), None)
+        if ecode is None:
+            raise ValueError('Unknown key name: %s.' % key)
+        return ecode
+
+    def _emit_press_event(self, ecode):
+        press_value = 1
+        self._emit(ecode, press_value)
+
+    def _emit(self, ecode, value):
+        self._device.write(e.EV_KEY, ecode, value)
+        self._device.syn()
+
+    def release(self, key):
+        """Release one key.
+
+        It ignores case, so, for example, 'a' and 'A' are mapped to the same
+        key.
+
+        """
+        ecode = self._get_ecode_for_key(key)
+        logger.debug('Releasing %s (%r)', key, ecode)
+        if ecode in self._pressed_keys_ecodes:
+            self._emit_release_event(ecode)
+            self._pressed_keys_ecodes.remove(ecode)
+        else:
+            raise ValueError('Key %r not pressed.' % key)
+
+    def _emit_release_event(self, ecode):
+        release_value = 0
+        self._emit(ecode, release_value)
 
 
 class Keyboard(KeyboardBase):

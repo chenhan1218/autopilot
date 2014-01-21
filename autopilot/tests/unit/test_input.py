@@ -18,7 +18,8 @@
 #
 
 import mock
-from evdev import ecodes
+import testscenarios
+from evdev import ecodes, uinput
 from testtools import TestCase
 from testtools.matchers import raises
 
@@ -158,17 +159,20 @@ class InputCenterPointTests(TestCase):
 class UInputKeyboardDeviceTestCase(TestCase):
     """Test the integration with evdev.UInput for the keyboard."""
 
+    _PRESS_VALUE = 1
+    _RELEASE_VALUE = 0
+
     def setUp(self):
         super(UInputKeyboardDeviceTestCase, self).setUp()
         self.keyboard = _uinput._UInputKeyboardDevice(device_class=mock.Mock)
+        self.keyboard._device.mock_add_spec(uinput.UInput, spec_set=True)
 
     def test_press_key_should_emit_write_and_syn(self):
-        self.keyboard.press('A')
+        self.keyboard.press('KEY_A')
         self._assert_key_press_emitted_write_and_syn('KEY_A')
 
     def _assert_key_press_emitted_write_and_syn(self, key):
-        press_value = 1
-        self._assert_emitted_write_and_syn(key, press_value)
+        self._assert_emitted_write_and_syn(key, self._PRESS_VALUE)
 
     def _assert_emitted_write_and_syn(self, key, value):
         key_ecode = ecodes.ecodes.get(key)
@@ -177,9 +181,11 @@ class UInputKeyboardDeviceTestCase(TestCase):
             mock.call.syn()
         ]
 
-        self.assertEqual(
-            expected_calls,
-            self.keyboard._device.mock_calls)
+        self.assertEqual(expected_calls, self.keyboard._device.mock_calls)
+
+    def test_press_key_should_append_leading_string(self):
+        self.keyboard.press('A')
+        self._assert_key_press_emitted_write_and_syn('KEY_A')
 
     def test_press_key_should_ignore_case(self):
         self.keyboard.press('a')
@@ -198,19 +204,77 @@ class UInputKeyboardDeviceTestCase(TestCase):
         self.assertEqual("Key 'A' not pressed.", str(error))
 
     def test_release_key_should_emit_write_and_syn(self):
-        # We first need to press the key.
-        self.keyboard.press('A')
+        self._press_key_and_reset_mock('KEY_A')
+
+        self.keyboard.release('KEY_A')
+        self._assert_key_release_emitted_write_and_syn('KEY_A')
+
+    def _press_key_and_reset_mock(self, key):
+        self.keyboard.press(key)
         self.keyboard._device.reset_mock()
+
+    def _assert_key_release_emitted_write_and_syn(self, key):
+        self._assert_emitted_write_and_syn(key, self._RELEASE_VALUE)
+
+    def test_release_key_should_append_leading_string(self):
+        self._press_key_and_reset_mock('KEY_A')
 
         self.keyboard.release('A')
         self._assert_key_release_emitted_write_and_syn('KEY_A')
 
-    def _assert_key_release_emitted_write_and_syn(self, key):
-        release_value = 0
-        self._assert_emitted_write_and_syn(key, release_value)
+    def test_release_key_should_ignore_case(self):
+        self._press_key_and_reset_mock('KEY_A')
+
+        self.keyboard.release('a')
+        self._assert_key_release_emitted_write_and_syn('KEY_A')
 
     def test_release_unexisting_key_should_raise_error(self):
         error = self.assertRaises(
             ValueError, self.keyboard.release, 'unexisting')
 
         self.assertEqual('Unknown key name: unexisting.', str(error))
+
+    def test_release_pressed_keys_without_pressed_keys_should_do_nothing(self):
+        self.keyboard.release_pressed_keys()
+        self.assertEqual([], self.keyboard._device.mock_calls)
+
+    def test_release_pressed_keys_with_pressed_keys(self):
+        expected_calls = [
+            mock.call.write(
+                ecodes.EV_KEY, ecodes.ecodes.get('KEY_A'),
+                self._RELEASE_VALUE),
+            mock.call.syn(),
+            mock.call.write(
+                ecodes.EV_KEY, ecodes.ecodes.get('KEY_B'),
+                self._RELEASE_VALUE),
+            mock.call.syn()
+        ]
+
+        self._press_key_and_reset_mock('KEY_A')
+        self._press_key_and_reset_mock('KEY_B')
+
+        self.keyboard.release_pressed_keys()
+
+        self.assertEqual(expected_calls, self.keyboard._device.mock_calls)
+
+
+class UInputKeyboardPressTestCase(testscenarios.TestWithScenarios, TestCase):
+    """Test UInput Keyboard helper for autopilot tests."""
+
+    scenarios = [
+        ('single key', dict(keys='a', expected_calls=[mock.call.press('a')])),
+        ('upper-case letter', dict(
+            keys='A', expected_calls=[
+                mock.call.press('KEY_LEFTSHIFT'), mock.call.press('A')]))
+    ]
+
+    def setUp(self):
+        super(UInputKeyboardPressTestCase, self).setUp()
+        self.keyboard = _uinput.Keyboard(device_class=mock.Mock)
+        self.keyboard._device.mock_add_spec(
+            _uinput._UInputKeyboardDevice, spec_set=True)
+
+    def test_press(self):
+        self.keyboard.press(self.keys)
+
+        self.assertEqual(self.expected_calls, self.keyboard._device.mock_calls)

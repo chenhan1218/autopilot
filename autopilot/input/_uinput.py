@@ -36,8 +36,6 @@ logger = logging.getLogger(__name__)
 PRESS = 1
 RELEASE = 0
 
-_PRESSED_KEYS = []
-
 
 def _get_devnode_path():
     """Provide a fallback uinput node for devices which don't support udev"""
@@ -56,19 +54,21 @@ class _UInputKeyboardDevice(object):
         self._pressed_keys_ecodes = []
 
     def press(self, key):
-        """Press one key.
+        """Press one key button.
 
         It ignores case, so, for example, 'a' and 'A' are mapped to the same
         key.
 
         """
         ecode = self._get_ecode_for_key(key)
-        logger.debug('Pressing %s (%r)', key, ecode)
+        logger.debug('Pressing %s (%r).', key, ecode)
         self._emit_press_event(ecode)
         self._pressed_keys_ecodes.append(ecode)
 
     def _get_ecode_for_key(self, key):
-        ecode = e.ecodes.get('KEY_' + key.upper(), None)
+        key_name = key if key.startswith('KEY_') else 'KEY_' + key
+        key_name = key_name.upper()
+        ecode = e.ecodes.get(key_name, None)
         if ecode is None:
             raise ValueError('Unknown key name: %s.' % key)
         return ecode
@@ -82,15 +82,15 @@ class _UInputKeyboardDevice(object):
         self._device.syn()
 
     def release(self, key):
-        """Release one key.
+        """Release one key button.
 
         It ignores case, so, for example, 'a' and 'A' are mapped to the same
         key.
 
         """
         ecode = self._get_ecode_for_key(key)
-        logger.debug('Releasing %s (%r)', key, ecode)
         if ecode in self._pressed_keys_ecodes:
+            logger.debug('Releasing %s (%r).', key, ecode)
             self._emit_release_event(ecode)
             self._pressed_keys_ecodes.remove(ecode)
         else:
@@ -100,14 +100,19 @@ class _UInputKeyboardDevice(object):
         release_value = 0
         self._emit(ecode, release_value)
 
+    def release_pressed_keys(self):
+        """Release all the keys that are currently pressed."""
+        for ecode in self._pressed_keys_ecodes:
+            self._emit_release_event(ecode)
+
 
 class Keyboard(KeyboardBase):
 
-    _device = UInput(devnode=_get_devnode_path())
+    _device = None
 
-    def _emit(self, event, value):
-        Keyboard._device.write(e.EV_KEY, event, value)
-        Keyboard._device.syn()
+    def __init__(self, device_class=_UInputKeyboardDevice):
+        super(Keyboard, self).__init__()
+        self._device = device_class()
 
     def _sanitise_keys(self, keys):
         if keys == '+':
@@ -130,10 +135,8 @@ class Keyboard(KeyboardBase):
             raise TypeError("'keys' argument must be a string.")
 
         for key in self._sanitise_keys(keys):
-            for event in Keyboard._get_events_for_key(key):
-                logger.debug("Pressing %s (%r)", key, event)
-                _PRESSED_KEYS.append(event)
-                self._emit(event, PRESS)
+            for key_button in self._get_key_buttons(key):
+                self._device.press(key_button)
                 sleep(delay)
 
     def release(self, keys, delay=0.1):
@@ -153,11 +156,8 @@ class Keyboard(KeyboardBase):
             raise TypeError("'keys' argument must be a string.")
 
         for key in reversed(self._sanitise_keys(keys)):
-            for event in Keyboard._get_events_for_key(key):
-                logger.debug("Releasing %s (%r)", key, event)
-                if event in _PRESSED_KEYS:
-                    _PRESSED_KEYS.remove(event)
-                self._emit(event, RELEASE)
+            for key_button in Keyboard._get_key_buttons(key):
+                self._device.release(key_button)
                 sleep(delay)
 
     def press_and_release(self, keys, delay=0.1):
@@ -199,35 +199,21 @@ class Keyboard(KeyboardBase):
         any keys that were pressed and not released.
 
         """
-        global _PRESSED_KEYS
-        if len(_PRESSED_KEYS) == 0:
-            return
+        Keyboard._device.release_pressed_keys()
 
-        def _release(event):
-            Keyboard._device.write(e.EV_KEY, event, RELEASE)
-            Keyboard._device.syn()
-        for event in _PRESSED_KEYS:
-            logger.warning("Releasing key %r as part of cleanup call.", event)
-            _release(event)
-        _PRESSED_KEYS = []
+    def _get_key_buttons(self, key):
+        """Return a list of the key buttons required to press.
 
-    @staticmethod
-    def _get_events_for_key(key):
-        """Return a list of events required to generate 'key' as an input.
-
-        Multiple keys will be returned when the key specified requires more
+        Multiple buttons will be returned when the key specified requires more
         than one keypress to generate (for example, upper-case letters).
 
         """
-        events = []
+        key_buttons = []
         if key.isupper() or key in _SHIFTED_KEYS:
-            events.append(e.KEY_LEFTSHIFT)
-        keyname = _UINPUT_CODE_TRANSLATIONS.get(key.upper(), key)
-        evt = getattr(e, 'KEY_' + keyname.upper(), None)
-        if evt is None:
-            raise ValueError("Unknown key name: '%s'" % key)
-        events.append(evt)
-        return events
+            key_buttons.append('KEY_LEFTSHIFT')
+        key_name = _UINPUT_CODE_TRANSLATIONS.get(key.upper(), key)
+        key_buttons.append(key_name)
+        return key_buttons
 
 
 last_tracking_id = 0

@@ -272,6 +272,8 @@ class UInputKeyboardTestCase(testscenarios.TestWithScenarios, TestCase):
 
     def setUp(self):
         super(UInputKeyboardTestCase, self).setUp()
+        # Return to the original device after the test.
+        self.addCleanup(self._set_keyboard_device, _uinput.Keyboard._device)
         self.keyboard = _uinput.Keyboard(device_class=mock.Mock)
         self.keyboard._device.mock_add_spec(
             _uinput._UInputKeyboardDevice, spec_set=True)
@@ -280,6 +282,9 @@ class UInputKeyboardTestCase(testscenarios.TestWithScenarios, TestCase):
         utilities.sleep.enable_mock()
 
         self.keyboard._device.reset_mock()
+
+    def _set_keyboard_device(self, device):
+        _uinput.Keyboard._device = device
 
     def test_press(self):
         expected_calls = [

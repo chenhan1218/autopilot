@@ -150,8 +150,8 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
             from autopilot.input._X11 import _PRESSED_KEYS
             return _PRESSED_KEYS
         elif self.backend == 'UInput':
-            from autopilot.input._uinput import _PRESSED_KEYS
-            return _PRESSED_KEYS
+            from autopilot.input import _uinput
+            return _uinput.Keyboard._device._pressed_keys_ecodes
         else:
             self.fail("Don't know how to get pressed keys list for backend "
                       + self.backend

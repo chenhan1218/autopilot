@@ -274,6 +274,7 @@ class UInputKeyboardTestCase(testscenarios.TestWithScenarios, TestCase):
         super(UInputKeyboardTestCase, self).setUp()
         # Return to the original device after the test.
         self.addCleanup(self._set_keyboard_device, _uinput.Keyboard._device)
+        self.keyboard._device = None
         self.keyboard = _uinput.Keyboard(device_class=mock.Mock)
         self.keyboard._device.mock_add_spec(
             _uinput._UInputKeyboardDevice, spec_set=True)

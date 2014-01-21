@@ -592,3 +592,22 @@ class UInputTouchTestCase(TestCase):
 
         self.touch.move(10, 10)
         self.assertEqual(expected_calls, self.touch._device.mock_calls)
+
+
+class MultipleUInputTouchBackend(_uinput._UInputTouchDevice):
+
+    def __init__(self, res_x=100, res_y=100, device_class=mock.Mock):
+        super(MultipleUInputTouchBackend, self).__init__(
+            res_x, res_y, device_class)
+
+
+class MultipleUInputTouchTestCase(TestCase):
+
+    def test_with_multiple_touch(self):
+        finger1 = _uinput.Touch(device_class=MultipleUInputTouchBackend)
+        finger2 = _uinput.Touch(device_class=MultipleUInputTouchBackend)
+
+        finger1.press(0, 0)
+        self.addCleanup(finger1.release)
+
+        self.assertFalse(finger2.pressed)

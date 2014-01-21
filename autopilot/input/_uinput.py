@@ -101,6 +101,7 @@ class _UInputKeyboardDevice(object):
         """Release all the keys that are currently pressed."""
         for ecode in self._pressed_keys_ecodes:
             self._emit_release_event(ecode)
+            self._pressed_keys_ecodes.remove(ecode)
 
 
 class Keyboard(KeyboardBase):
@@ -197,7 +198,7 @@ class Keyboard(KeyboardBase):
         any keys that were pressed and not released.
 
         """
-        Keyboard._device.release_pressed_keys()
+        cls._device.release_pressed_keys()
 
     def _get_key_buttons(self, key):
         """Return a list of the key buttons required to press.

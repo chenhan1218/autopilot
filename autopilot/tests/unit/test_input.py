@@ -17,9 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import mock
 import testscenarios
 from evdev import ecodes, uinput
+from mock import ANY, call, patch, Mock
 from testtools import TestCase
 from testtools.matchers import raises
 
@@ -88,7 +88,7 @@ class InputCenterPointTests(TestCase):
             raises(expected_exception)
         )
 
-    @mock.patch('autopilot.input._common.logger')
+    @patch('autopilot.input._common.logger')
     def test_get_center_point_logs_with_globalRect(self, mock_logger):
         obj = make_fake_object(globalRect=True)
         x, y = get_center_point(obj)
@@ -104,7 +104,7 @@ class InputCenterPointTests(TestCase):
         self.assertEqual(123, x)
         self.assertEqual(345, y)
 
-    @mock.patch('autopilot.input._common.logger')
+    @patch('autopilot.input._common.logger')
     def test_get_center_point_logs_with_center_points(self, mock_logger):
         obj = make_fake_object(center=True)
         x, y = get_center_point(obj)
@@ -120,7 +120,7 @@ class InputCenterPointTests(TestCase):
         self.assertEqual(110, x)
         self.assertEqual(120, y)
 
-    @mock.patch('autopilot.input._common.logger')
+    @patch('autopilot.input._common.logger')
     def test_get_center_point_logs_with_xywh(self, mock_logger):
         obj = make_fake_object(xywh=True)
         x, y = get_center_point(obj)
@@ -169,7 +169,7 @@ class UInputKeyboardDeviceTestCase(TestCase):
         self._assert_key_press_emitted_write_and_syn(keyboard, 'KEY_A')
 
     def _get_keyboard_with_mocked_backend(self):
-        keyboard = _uinput._UInputKeyboardDevice(device_class=mock.Mock)
+        keyboard = _uinput._UInputKeyboardDevice(device_class=Mock)
         keyboard._device.mock_add_spec(uinput.UInput, spec_set=True)
         return keyboard
 
@@ -179,8 +179,8 @@ class UInputKeyboardDeviceTestCase(TestCase):
     def _assert_emitted_write_and_syn(self, keyboard, key, value):
         key_ecode = ecodes.ecodes.get(key)
         expected_calls = [
-            mock.call.write(ecodes.EV_KEY, key_ecode, value),
-            mock.call.syn()
+            call.write(ecodes.EV_KEY, key_ecode, value),
+            call.syn()
         ]
 
         self.assertEqual(expected_calls, keyboard._device.mock_calls)
@@ -251,14 +251,14 @@ class UInputKeyboardDeviceTestCase(TestCase):
 
     def test_release_pressed_keys_with_pressed_keys(self):
         expected_calls = [
-            mock.call.write(
+            call.write(
                 ecodes.EV_KEY, ecodes.ecodes.get('KEY_A'),
                 self._RELEASE_VALUE),
-            mock.call.syn(),
-            mock.call.write(
+            call.syn(),
+            call.write(
                 ecodes.EV_KEY, ecodes.ecodes.get('KEY_B'),
                 self._RELEASE_VALUE),
-            mock.call.syn()
+            call.syn()
         ]
 
         keyboard = self._get_keyboard_with_mocked_backend()
@@ -304,7 +304,7 @@ class UInputKeyboardTestCase(testscenarios.TestWithScenarios, TestCase):
 
     def test_press(self):
         expected_calls = [
-            mock.call.press(arg) for arg in self.expected_calls_args]
+            call.press(arg) for arg in self.expected_calls_args]
         keyboard = self._get_keyboard_with_mocked_backend()
         keyboard.press(self.keys)
 
@@ -312,7 +312,7 @@ class UInputKeyboardTestCase(testscenarios.TestWithScenarios, TestCase):
 
     def _get_keyboard_with_mocked_backend(self):
         _uinput.Keyboard._device = None
-        keyboard = _uinput.Keyboard(device_class=mock.Mock)
+        keyboard = _uinput.Keyboard(device_class=Mock)
         keyboard._device.mock_add_spec(
             _uinput._UInputKeyboardDevice, spec_set=True)
         return keyboard
@@ -323,7 +323,7 @@ class UInputKeyboardTestCase(testscenarios.TestWithScenarios, TestCase):
         keyboard._device.reset_mock()
 
         expected_calls = [
-            mock.call.release(arg) for arg in
+            call.release(arg) for arg in
             reversed(self.expected_calls_args)]
         keyboard.release(self.keys)
 
@@ -332,9 +332,9 @@ class UInputKeyboardTestCase(testscenarios.TestWithScenarios, TestCase):
 
     def test_press_and_release(self):
         expected_press_calls = [
-            mock.call.press(arg) for arg in self.expected_calls_args]
+            call.press(arg) for arg in self.expected_calls_args]
         expected_release_calls = [
-            mock.call.release(arg) for arg in
+            call.release(arg) for arg in
             reversed(self.expected_calls_args)]
 
         keyboard = self._get_keyboard_with_mocked_backend()
@@ -376,7 +376,7 @@ class UInputTouchDeviceTestCase(TestCase):
             touch.finger_down(0, 0)
 
             self._assert_finger_down_emitted_write_and_syn(
-                touch, slot=slot, tracking_id=mock.ANY, x=0, y=0)
+                touch, slot=slot, tracking_id=ANY, x=0, y=0)
 
     def _get_touch_with_mocked_backend(self):
         dummy_x_resolution = 100
@@ -385,7 +385,7 @@ class UInputTouchDeviceTestCase(TestCase):
         _uinput._UInputTouchDevice._device = None
         touch = _uinput._UInputTouchDevice(
             res_x=dummy_x_resolution, res_y=dummy_y_resolution,
-            device_class=mock.Mock)
+            device_class=Mock)
         touch._device.mock_add_spec(uinput.UInput, spec_set=True)
         return touch
 
@@ -393,15 +393,15 @@ class UInputTouchDeviceTestCase(TestCase):
             self, touch, slot, tracking_id, x, y):
         press_value = 1
         expected_calls = [
-            mock.call.write(ecodes.EV_ABS, ecodes.ABS_MT_SLOT, slot),
-            mock.call.write(
+            call.write(ecodes.EV_ABS, ecodes.ABS_MT_SLOT, slot),
+            call.write(
                 ecodes.EV_ABS, ecodes.ABS_MT_TRACKING_ID, tracking_id),
-            mock.call.write(
+            call.write(
                 ecodes.EV_KEY, ecodes.BTN_TOOL_FINGER, press_value),
-            mock.call.write(ecodes.EV_ABS, ecodes.ABS_MT_POSITION_X, x),
-            mock.call.write(ecodes.EV_ABS, ecodes.ABS_MT_POSITION_Y, y),
-            mock.call.write(ecodes.EV_ABS, ecodes.ABS_MT_PRESSURE, 400),
-            mock.call.syn()
+            call.write(ecodes.EV_ABS, ecodes.ABS_MT_POSITION_X, x),
+            call.write(ecodes.EV_ABS, ecodes.ABS_MT_POSITION_Y, y),
+            call.write(ecodes.EV_ABS, ecodes.ABS_MT_PRESSURE, 400),
+            call.syn()
         ]
         self.assertEqual(expected_calls, touch._device.mock_calls)
 
@@ -424,7 +424,7 @@ class UInputTouchDeviceTestCase(TestCase):
             touch.finger_down(0, 0)
 
             self._assert_finger_down_emitted_write_and_syn(
-                touch, slot=mock.ANY, tracking_id=number + 1, x=0, y=0)
+                touch, slot=ANY, tracking_id=number + 1, x=0, y=0)
 
     def test_finger_down_should_not_reuse_tracking_ids(self):
         # Claim and release all the available slots once.
@@ -437,7 +437,7 @@ class UInputTouchDeviceTestCase(TestCase):
 
         touch.finger_down(12, 12)
         self._assert_finger_down_emitted_write_and_syn(
-            touch, slot=mock.ANY, tracking_id=number + 2, x=12, y=12)
+            touch, slot=ANY, tracking_id=number + 2, x=12, y=12)
 
     def test_finger_down_with_finger_pressed_should_raise_error(self):
         touch = self._get_touch_with_mocked_backend()
@@ -467,10 +467,10 @@ class UInputTouchDeviceTestCase(TestCase):
 
     def _assert_finger_move_emitted_write_and_syn(self, touch, slot, x, y):
         expected_calls = [
-            mock.call.write(ecodes.EV_ABS, ecodes.ABS_MT_SLOT, slot),
-            mock.call.write(ecodes.EV_ABS, ecodes.ABS_MT_POSITION_X, x),
-            mock.call.write(ecodes.EV_ABS, ecodes.ABS_MT_POSITION_Y, y),
-            mock.call.syn()
+            call.write(ecodes.EV_ABS, ecodes.ABS_MT_SLOT, slot),
+            call.write(ecodes.EV_ABS, ecodes.ABS_MT_POSITION_X, x),
+            call.write(ecodes.EV_ABS, ecodes.ABS_MT_POSITION_Y, y),
+            call.syn()
         ]
         self.assertEqual(expected_calls, touch._device.mock_calls)
 
@@ -514,12 +514,12 @@ class UInputTouchDeviceTestCase(TestCase):
         lift_tracking_id = -1
         release_value = 0
         expected_calls = [
-            mock.call.write(ecodes.EV_ABS, ecodes.ABS_MT_SLOT, slot),
-            mock.call.write(
+            call.write(ecodes.EV_ABS, ecodes.ABS_MT_SLOT, slot),
+            call.write(
                 ecodes.EV_ABS, ecodes.ABS_MT_TRACKING_ID, lift_tracking_id),
-            mock.call.write(
+            call.write(
                 ecodes.EV_KEY, ecodes.BTN_TOOL_FINGER, release_value),
-            mock.call.syn()
+            call.syn()
         ]
         self.assertEqual(expected_calls, touch._device.mock_calls)
 
@@ -539,7 +539,7 @@ class UInputTouchDeviceTestCase(TestCase):
         # Try to use one more.
         touch.finger_down(15, 15)
         self._assert_finger_down_emitted_write_and_syn(
-            touch, slot=slot_to_reuse, tracking_id=mock.ANY, x=15, y=15)
+            touch, slot=slot_to_reuse, tracking_id=ANY, x=15, y=15)
 
     def test_pressed_with_finger_down(self):
         touch = self._get_touch_with_mocked_backend()
@@ -577,8 +577,8 @@ class UInputTouchTestCase(TestCase):
 
     def test_tap(self):
         expected_calls = [
-            mock.call.finger_down(0, 0),
-            mock.call.finger_up()
+            call.finger_down(0, 0),
+            call.finger_up()
         ]
 
         touch = self._get_touch_with_mocked_backend()
@@ -586,7 +586,7 @@ class UInputTouchTestCase(TestCase):
         self.assertEqual(expected_calls, touch._device.mock_calls)
 
     def _get_touch_with_mocked_backend(self):
-        touch = _uinput.Touch(device_class=mock.Mock)
+        touch = _uinput.Touch(device_class=Mock)
         touch._device.mock_add_spec(
             _uinput._UInputTouchDevice, spec_set=True)
         return touch
@@ -594,8 +594,8 @@ class UInputTouchTestCase(TestCase):
     def test_tap_object(self):
         object_ = type('Dummy', (object,), {'globalRect': (0, 0, 10, 10)})
         expected_calls = [
-            mock.call.finger_down(5, 5),
-            mock.call.finger_up()
+            call.finger_down(5, 5),
+            call.finger_up()
         ]
 
         touch = self._get_touch_with_mocked_backend()
@@ -603,21 +603,21 @@ class UInputTouchTestCase(TestCase):
         self.assertEqual(expected_calls, touch._device.mock_calls)
 
     def test_press(self):
-        expected_calls = [mock.call.finger_down(0, 0)]
+        expected_calls = [call.finger_down(0, 0)]
 
         touch = self._get_touch_with_mocked_backend()
         touch.press(0, 0)
         self.assertEqual(expected_calls, touch._device.mock_calls)
 
     def test_release(self):
-        expected_calls = [mock.call.finger_up()]
+        expected_calls = [call.finger_up()]
 
         touch = self._get_touch_with_mocked_backend()
         touch.release()
         self.assertEqual(expected_calls, touch._device.mock_calls)
 
     def test_move(self):
-        expected_calls = [mock.call.finger_move(10, 10)]
+        expected_calls = [call.finger_move(10, 10)]
 
         touch = self._get_touch_with_mocked_backend()
         touch.move(10, 10)
@@ -626,7 +626,7 @@ class UInputTouchTestCase(TestCase):
 
 class MultipleUInputTouchBackend(_uinput._UInputTouchDevice):
 
-    def __init__(self, res_x=100, res_y=100, device_class=mock.Mock):
+    def __init__(self, res_x=100, res_y=100, device_class=Mock):
         super(MultipleUInputTouchBackend, self).__init__(
             res_x, res_y, device_class)
 

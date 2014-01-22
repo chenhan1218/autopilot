@@ -20,11 +20,11 @@
 
 """UInput device drivers."""
 
-from autopilot import utilities
+import autopilot.platform
 from autopilot.input import Keyboard as KeyboardBase
 from autopilot.input import Touch as TouchBase
 from autopilot.input._common import get_center_point
-import autopilot.platform
+from autopilot.utilities import deprecated, sleep
 
 import logging
 from evdev import UInput, ecodes as e
@@ -136,7 +136,7 @@ class Keyboard(KeyboardBase):
         for key in self._sanitise_keys(keys):
             for key_button in self._get_key_buttons(key):
                 self._device.press(key_button)
-                utilities.sleep(delay)
+                sleep(delay)
 
     def release(self, keys, delay=0.1):
         """Send key release events only.
@@ -157,7 +157,7 @@ class Keyboard(KeyboardBase):
         for key in reversed(self._sanitise_keys(keys)):
             for key_button in reversed(self._get_key_buttons(key)):
                 self._device.release(key_button)
-                utilities.sleep(delay)
+                sleep(delay)
 
     def press_and_release(self, keys, delay=0.1):
         """Press and release all items in 'keys'.
@@ -215,7 +215,7 @@ class Keyboard(KeyboardBase):
         return key_buttons
 
 
-@utilities.deprecated('Touch')
+@deprecated('Touch')
 def create_touch_device(res_x=None, res_y=None):
     """Create and return a UInput touch device.
 
@@ -441,7 +441,7 @@ class Touch(TouchBase):
         """Click (or 'tap') at given x and y coordinates."""
         logger.debug("Tapping at: %d,%d", x, y)
         self._device.finger_down(x, y)
-        utilities.sleep(0.1)
+        sleep(0.1)
         self._device.finger_up()
 
     def tap_object(self, object):
@@ -481,7 +481,7 @@ class Touch(TouchBase):
         cur_y = y1 + dy
         for i in range(0, 100):
             self._device.finger_move(int(cur_x), int(cur_y))
-            utilities.sleep(0.002)
+            sleep(0.002)
             cur_x += dx
             cur_y += dy
         # Make sure we actually end up at target

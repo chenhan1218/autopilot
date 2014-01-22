@@ -114,6 +114,23 @@ def image_codename():
     return _PlatformDetector.create().image_codename
 
 
+def tablet():
+    """Indicate whether system is a tablet.
+
+    The 'ro.build.characteristics' property is checked for 'tablet'.
+    For example:
+
+    platform.tablet()
+
+    ... True
+
+    """
+    try:
+        properties = _PlatformDetector.create().properties
+        return 'tablet' in properties['ro.build.characteristics']
+    except AttributeError:
+        return False
+
 class _PlatformDetector(object):
 
     _cached_detector = None

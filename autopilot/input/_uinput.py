@@ -17,8 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
 """UInput device drivers."""
+
+import logging
+import os.path
+
+import six
+from evdev import UInput, ecodes as e
 
 import autopilot.platform
 from autopilot.input import Keyboard as KeyboardBase
@@ -26,10 +31,6 @@ from autopilot.input import Touch as TouchBase
 from autopilot.input._common import get_center_point
 from autopilot.utilities import deprecated, sleep
 
-import logging
-from evdev import UInput, ecodes as e
-import os.path
-import six
 
 logger = logging.getLogger(__name__)
 

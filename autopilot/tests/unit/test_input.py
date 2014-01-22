@@ -163,81 +163,91 @@ class UInputKeyboardDeviceTestCase(TestCase):
     _PRESS_VALUE = 1
     _RELEASE_VALUE = 0
 
-    def setUp(self):
-        super(UInputKeyboardDeviceTestCase, self).setUp()
-        self.keyboard = _uinput._UInputKeyboardDevice(device_class=mock.Mock)
-        self.keyboard._device.mock_add_spec(uinput.UInput, spec_set=True)
-
     def test_press_key_should_emit_write_and_syn(self):
-        self.keyboard.press('KEY_A')
-        self._assert_key_press_emitted_write_and_syn('KEY_A')
+        keyboard = self._get_keyboard_with_mocked_backend()
+        keyboard.press('KEY_A')
+        self._assert_key_press_emitted_write_and_syn(keyboard, 'KEY_A')
 
-    def _assert_key_press_emitted_write_and_syn(self, key):
-        self._assert_emitted_write_and_syn(key, self._PRESS_VALUE)
+    def _get_keyboard_with_mocked_backend(self):
+        keyboard = _uinput._UInputKeyboardDevice(device_class=mock.Mock)
+        keyboard._device.mock_add_spec(uinput.UInput, spec_set=True)
+        return keyboard
 
-    def _assert_emitted_write_and_syn(self, key, value):
+    def _assert_key_press_emitted_write_and_syn(self, keyboard, key):
+        self._assert_emitted_write_and_syn(keyboard, key, self._PRESS_VALUE)
+
+    def _assert_emitted_write_and_syn(self, keyboard, key, value):
         key_ecode = ecodes.ecodes.get(key)
         expected_calls = [
             mock.call.write(ecodes.EV_KEY, key_ecode, value),
             mock.call.syn()
         ]
 
-        self.assertEqual(expected_calls, self.keyboard._device.mock_calls)
+        self.assertEqual(expected_calls, keyboard._device.mock_calls)
 
     def test_press_key_should_append_leading_string(self):
-        self.keyboard.press('A')
-        self._assert_key_press_emitted_write_and_syn('KEY_A')
+        keyboard = self._get_keyboard_with_mocked_backend()
+        keyboard.press('A')
+        self._assert_key_press_emitted_write_and_syn(keyboard, 'KEY_A')
 
     def test_press_key_should_ignore_case(self):
-        self.keyboard.press('a')
-        self._assert_key_press_emitted_write_and_syn('KEY_A')
+        keyboard = self._get_keyboard_with_mocked_backend()
+        keyboard.press('a')
+        self._assert_key_press_emitted_write_and_syn(keyboard, 'KEY_A')
 
     def test_press_unexisting_key_should_raise_error(self):
+        keyboard = self._get_keyboard_with_mocked_backend()
         error = self.assertRaises(
-            ValueError, self.keyboard.press, 'unexisting')
+            ValueError, keyboard.press, 'unexisting')
 
         self.assertEqual('Unknown key name: unexisting.', str(error))
 
     def test_release_not_pressed_key_should_raise_error(self):
+        keyboard = self._get_keyboard_with_mocked_backend()
         error = self.assertRaises(
-            ValueError, self.keyboard.release, 'A')
+            ValueError, keyboard.release, 'A')
 
         self.assertEqual("Key 'A' not pressed.", str(error))
 
     def test_release_key_should_emit_write_and_syn(self):
-        self._press_key_and_reset_mock('KEY_A')
+        keyboard = self._get_keyboard_with_mocked_backend()
+        self._press_key_and_reset_mock(keyboard, 'KEY_A')
 
-        self.keyboard.release('KEY_A')
-        self._assert_key_release_emitted_write_and_syn('KEY_A')
+        keyboard.release('KEY_A')
+        self._assert_key_release_emitted_write_and_syn(keyboard, 'KEY_A')
 
-    def _press_key_and_reset_mock(self, key):
-        self.keyboard.press(key)
-        self.keyboard._device.reset_mock()
+    def _press_key_and_reset_mock(self, keyboard, key):
+        keyboard.press(key)
+        keyboard._device.reset_mock()
 
-    def _assert_key_release_emitted_write_and_syn(self, key):
-        self._assert_emitted_write_and_syn(key, self._RELEASE_VALUE)
+    def _assert_key_release_emitted_write_and_syn(self, keyboard, key):
+        self._assert_emitted_write_and_syn(keyboard, key, self._RELEASE_VALUE)
 
     def test_release_key_should_append_leading_string(self):
-        self._press_key_and_reset_mock('KEY_A')
+        keyboard = self._get_keyboard_with_mocked_backend()
+        self._press_key_and_reset_mock(keyboard, 'KEY_A')
 
-        self.keyboard.release('A')
-        self._assert_key_release_emitted_write_and_syn('KEY_A')
+        keyboard.release('A')
+        self._assert_key_release_emitted_write_and_syn(keyboard, 'KEY_A')
 
     def test_release_key_should_ignore_case(self):
-        self._press_key_and_reset_mock('KEY_A')
+        keyboard = self._get_keyboard_with_mocked_backend()
+        self._press_key_and_reset_mock(keyboard, 'KEY_A')
 
-        self.keyboard.release('a')
-        self._assert_key_release_emitted_write_and_syn('KEY_A')
+        keyboard.release('a')
+        self._assert_key_release_emitted_write_and_syn(keyboard, 'KEY_A')
 
     def test_release_unexisting_key_should_raise_error(self):
+        keyboard = self._get_keyboard_with_mocked_backend()
         error = self.assertRaises(
-            ValueError, self.keyboard.release, 'unexisting')
+            ValueError, keyboard.release, 'unexisting')
 
         self.assertEqual('Unknown key name: unexisting.', str(error))
 
     def test_release_pressed_keys_without_pressed_keys_should_do_nothing(self):
-        self.keyboard.release_pressed_keys()
-        self.assertEqual([], self.keyboard._device.mock_calls)
+        keyboard = self._get_keyboard_with_mocked_backend()
+        keyboard.release_pressed_keys()
+        self.assertEqual([], keyboard._device.mock_calls)
 
     def test_release_pressed_keys_with_pressed_keys(self):
         expected_calls = [
@@ -251,21 +261,23 @@ class UInputKeyboardDeviceTestCase(TestCase):
             mock.call.syn()
         ]
 
-        self._press_key_and_reset_mock('KEY_A')
-        self._press_key_and_reset_mock('KEY_B')
+        keyboard = self._get_keyboard_with_mocked_backend()
+        self._press_key_and_reset_mock(keyboard, 'KEY_A')
+        self._press_key_and_reset_mock(keyboard, 'KEY_B')
 
-        self.keyboard.release_pressed_keys()
+        keyboard.release_pressed_keys()
 
-        self.assertEqual(expected_calls, self.keyboard._device.mock_calls)
+        self.assertEqual(expected_calls, keyboard._device.mock_calls)
 
     def test_release_pressed_keys_already_released(self):
         expected_calls = []
-        self.keyboard.press('KEY_A')
-        self.keyboard.release_pressed_keys()
-        self.keyboard._device.reset_mock()
+        keyboard = self._get_keyboard_with_mocked_backend()
+        keyboard.press('KEY_A')
+        keyboard.release_pressed_keys()
+        keyboard._device.reset_mock()
 
-        self.keyboard.release_pressed_keys()
-        self.assertEqual(expected_calls, self.keyboard._device.mock_calls)
+        keyboard.release_pressed_keys()
+        self.assertEqual(expected_calls, keyboard._device.mock_calls)
 
 
 class UInputKeyboardTestCase(testscenarios.TestWithScenarios, TestCase):

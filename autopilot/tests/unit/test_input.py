@@ -352,9 +352,10 @@ class UInputTouchDeviceTestCase(TestCase):
         super(UInputTouchDeviceTestCase, self).setUp()
         self._number_of_slots = 9
 
-        # Return to the original fingers after the test.
+        # Return to the original device after the test.
         self.addCleanup(
-            self._set_fingers_in_use,
+            self._set_mouse_device,
+            _uinput._UInputTouchDevice._device,
             _uinput._UInputTouchDevice._touch_fingers_in_use,
             _uinput._UInputTouchDevice._last_tracking_id)
 
@@ -362,7 +363,9 @@ class UInputTouchDeviceTestCase(TestCase):
         _uinput._UInputTouchDevice._touch_fingers_in_use = []
         _uinput._UInputTouchDevice._last_tracking_id = 0
 
-    def _set_fingers_in_use(self, touch_fingers_in_use, last_tracking_id):
+    def _set_mouse_device(
+            self, device, touch_fingers_in_use, last_tracking_id):
+        _uinput._UInputTouchDevice._device = device
         _uinput._UInputTouchDevice._touch_fingers_in_use = touch_fingers_in_use
         _uinput._UInputTouchDevice._last_tracking_id = last_tracking_id
 
@@ -378,6 +381,8 @@ class UInputTouchDeviceTestCase(TestCase):
     def _get_touch_with_mocked_backend(self):
         dummy_x_resolution = 100
         dummy_y_resolution = 100
+
+        _uinput._UInputTouchDevice._device = None
         touch = _uinput._UInputTouchDevice(
             res_x=dummy_x_resolution, res_y=dummy_y_resolution,
             device_class=mock.Mock)
@@ -503,6 +508,7 @@ class UInputTouchDeviceTestCase(TestCase):
             touch.finger_up()
 
             self._assert_finger_up_emitted_write_and_syn(touch, slot=slot)
+            touch._device.reset_mock()
 
     def _assert_finger_up_emitted_write_and_syn(self, touch, slot):
         lift_tracking_id = -1

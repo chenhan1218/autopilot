@@ -332,15 +332,18 @@ class _UInputTouchDevice(object):
 
     """
 
+    _device = None
     _touch_fingers_in_use = []
     _max_number_of_fingers = 9
     _last_tracking_id = 0
 
     def __init__(self, res_x=None, res_y=None, device_class=UInput):
         super(_UInputTouchDevice, self).__init__()
-        self._device = device_class(
-            events=_get_touch_events(res_x, res_y), name='autopilot-finger',
-            version=0x2, devnode=_get_devnode_path())
+        if _UInputTouchDevice._device is None:
+            _UInputTouchDevice._device = device_class(
+                events=_get_touch_events(res_x, res_y),
+                name='autopilot-finger',
+                version=0x2, devnode=_get_devnode_path())
         self._touch_finger_slot = None
 
     @property

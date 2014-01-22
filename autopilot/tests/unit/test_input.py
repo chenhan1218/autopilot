@@ -295,15 +295,9 @@ class UInputKeyboardTestCase(testscenarios.TestWithScenarios, TestCase):
         super(UInputKeyboardTestCase, self).setUp()
         # Return to the original device after the test.
         self.addCleanup(self._set_keyboard_device, _uinput.Keyboard._device)
-        _uinput.Keyboard._device = None
-        self.keyboard = _uinput.Keyboard(device_class=mock.Mock)
-        self.keyboard._device.mock_add_spec(
-            _uinput._UInputKeyboardDevice, spec_set=True)
         # Mock the sleeps so we don't have to spend time actually sleeping.
         self.addCleanup(utilities.sleep.disable_mock)
         utilities.sleep.enable_mock()
-
-        self.keyboard._device.reset_mock()
 
     def _set_keyboard_device(self, device):
         _uinput.Keyboard._device = device
@@ -311,21 +305,30 @@ class UInputKeyboardTestCase(testscenarios.TestWithScenarios, TestCase):
     def test_press(self):
         expected_calls = [
             mock.call.press(arg) for arg in self.expected_calls_args]
-        self.keyboard.press(self.keys)
+        keyboard = self._get_keyboard_with_mocked_backend()
+        keyboard.press(self.keys)
 
-        self.assertEqual(expected_calls, self.keyboard._device.mock_calls)
+        self.assertEqual(expected_calls, keyboard._device.mock_calls)
+
+    def _get_keyboard_with_mocked_backend(self):
+        _uinput.Keyboard._device = None
+        keyboard = _uinput.Keyboard(device_class=mock.Mock)
+        keyboard._device.mock_add_spec(
+            _uinput._UInputKeyboardDevice, spec_set=True)
+        return keyboard
 
     def test_release(self):
-        self.keyboard.press(self.keys)
-        self.keyboard._device.reset_mock()
+        keyboard = self._get_keyboard_with_mocked_backend()
+        keyboard.press(self.keys)
+        keyboard._device.reset_mock()
 
         expected_calls = [
             mock.call.release(arg) for arg in
             reversed(self.expected_calls_args)]
-        self.keyboard.release(self.keys)
+        keyboard.release(self.keys)
 
         self.assertEqual(
-            expected_calls, self.keyboard._device.mock_calls)
+            expected_calls, keyboard._device.mock_calls)
 
     def test_press_and_release(self):
         expected_press_calls = [
@@ -334,11 +337,12 @@ class UInputKeyboardTestCase(testscenarios.TestWithScenarios, TestCase):
             mock.call.release(arg) for arg in
             reversed(self.expected_calls_args)]
 
-        self.keyboard.press_and_release(self.keys)
+        keyboard = self._get_keyboard_with_mocked_backend()
+        keyboard.press_and_release(self.keys)
 
         self.assertEqual(
             expected_press_calls + expected_release_calls,
-            self.keyboard._device.mock_calls)
+            keyboard._device.mock_calls)
 
 
 class UInputTouchDeviceTestCase(TestCase):

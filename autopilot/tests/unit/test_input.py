@@ -368,14 +368,14 @@ class UInputTouchDeviceTestCase(TestCase):
 
     def test_finger_down_should_use_free_slot(self):
         for slot in range(self._number_of_slots):
-            touch = self._get_touch_device()
+            touch = self._get_touch_with_mocked_backend()
 
             touch.finger_down(0, 0)
 
             self._assert_finger_down_emitted_write_and_syn(
                 touch, slot=slot, tracking_id=mock.ANY, x=0, y=0)
 
-    def _get_touch_device(self):
+    def _get_touch_with_mocked_backend(self):
         dummy_x_resolution = 100
         dummy_y_resolution = 100
         touch = _uinput._UInputTouchDevice(
@@ -403,10 +403,10 @@ class UInputTouchDeviceTestCase(TestCase):
     def test_finger_down_without_free_slots_should_raise_error(self):
         # Claim all the available slots.
         for slot in range(self._number_of_slots):
-            touch = self._get_touch_device()
+            touch = self._get_touch_with_mocked_backend()
             touch.finger_down(0, 0)
 
-        touch = self._get_touch_device()
+        touch = self._get_touch_with_mocked_backend()
 
         # Try to use one more.
         error = self.assertRaises(RuntimeError, touch.finger_down, 11, 11)
@@ -415,7 +415,7 @@ class UInputTouchDeviceTestCase(TestCase):
 
     def test_finger_down_should_use_unique_tracking_id(self):
         for number in range(self._number_of_slots):
-            touch = self._get_touch_device()
+            touch = self._get_touch_with_mocked_backend()
             touch.finger_down(0, 0)
 
             self._assert_finger_down_emitted_write_and_syn(
@@ -424,18 +424,18 @@ class UInputTouchDeviceTestCase(TestCase):
     def test_finger_down_should_not_reuse_tracking_ids(self):
         # Claim and release all the available slots once.
         for number in range(self._number_of_slots):
-            touch = self._get_touch_device()
+            touch = self._get_touch_with_mocked_backend()
             touch.finger_down(0, 0)
             touch.finger_up()
 
-        touch = self._get_touch_device()
+        touch = self._get_touch_with_mocked_backend()
 
         touch.finger_down(12, 12)
         self._assert_finger_down_emitted_write_and_syn(
             touch, slot=mock.ANY, tracking_id=number + 2, x=12, y=12)
 
     def test_finger_down_with_finger_pressed_should_raise_error(self):
-        touch = self._get_touch_device()
+        touch = self._get_touch_with_mocked_backend()
         touch.finger_down(0, 0)
 
         error = self.assertRaises(RuntimeError, touch.finger_down, 0, 0)
@@ -443,7 +443,7 @@ class UInputTouchDeviceTestCase(TestCase):
             "Cannot press finger: it's already pressed.", str(error))
 
     def test_finger_move_without_finger_pressed_should_raise_error(self):
-        touch = self._get_touch_device()
+        touch = self._get_touch_with_mocked_backend()
 
         error = self.assertRaises(RuntimeError, touch.finger_move, 10, 10)
         self.assertEqual(
@@ -451,7 +451,7 @@ class UInputTouchDeviceTestCase(TestCase):
 
     def test_finger_move_should_use_assigned_slot(self):
         for slot in range(self._number_of_slots):
-            touch = self._get_touch_device()
+            touch = self._get_touch_with_mocked_backend()
             touch.finger_down(0, 0)
             touch._device.reset_mock()
 
@@ -471,7 +471,7 @@ class UInputTouchDeviceTestCase(TestCase):
 
     def test_finger_move_should_reuse_assigned_slot(self):
         first_slot = 0
-        touch = self._get_touch_device()
+        touch = self._get_touch_with_mocked_backend()
         touch.finger_down(1, 1)
         touch._device.reset_mock()
 
@@ -485,7 +485,7 @@ class UInputTouchDeviceTestCase(TestCase):
             touch, slot=first_slot, x=14, y=14)
 
     def test_finger_up_without_finger_pressed_should_raise_error(self):
-        touch = self._get_touch_device()
+        touch = self._get_touch_with_mocked_backend()
 
         error = self.assertRaises(RuntimeError, touch.finger_up)
         self.assertEqual(
@@ -494,7 +494,7 @@ class UInputTouchDeviceTestCase(TestCase):
     def test_finger_up_should_use_assigned_slot(self):
         fingers = []
         for slot in range(self._number_of_slots):
-            touch = self._get_touch_device()
+            touch = self._get_touch_with_mocked_backend()
             touch.finger_down(0, 0)
             touch._device.reset_mock()
             fingers.append(touch)
@@ -521,14 +521,14 @@ class UInputTouchDeviceTestCase(TestCase):
         fingers = []
         # Claim all the available slots.
         for slot in range(self._number_of_slots):
-            touch = self._get_touch_device()
+            touch = self._get_touch_with_mocked_backend()
             touch.finger_down(0, 0)
             fingers.append(touch)
 
         slot_to_reuse = 3
         fingers[slot_to_reuse].finger_up()
 
-        touch = self._get_touch_device()
+        touch = self._get_touch_with_mocked_backend()
 
         # Try to use one more.
         touch.finger_down(15, 15)
@@ -536,27 +536,27 @@ class UInputTouchDeviceTestCase(TestCase):
             touch, slot=slot_to_reuse, tracking_id=mock.ANY, x=15, y=15)
 
     def test_pressed_with_finger_down(self):
-        touch = self._get_touch_device()
+        touch = self._get_touch_with_mocked_backend()
         touch.finger_down(0, 0)
 
         self.assertTrue(touch.pressed)
 
     def test_pressed_without_finger_down(self):
-        touch = self._get_touch_device()
+        touch = self._get_touch_with_mocked_backend()
         self.assertFalse(touch.pressed)
 
     def test_pressed_after_finger_up(self):
-        touch = self._get_touch_device()
+        touch = self._get_touch_with_mocked_backend()
         touch.finger_down(0, 0)
         touch.finger_up()
 
         self.assertFalse(touch.pressed)
 
     def test_pressed_with_other_finger_down(self):
-        other_touch = self._get_touch_device()
+        other_touch = self._get_touch_with_mocked_backend()
         other_touch.finger_down(0, 0)
 
-        touch = self._get_touch_device()
+        touch = self._get_touch_with_mocked_backend()
         self.assertFalse(touch.pressed)
 
 

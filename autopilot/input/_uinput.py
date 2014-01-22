@@ -20,10 +20,10 @@
 
 """UInput device drivers."""
 
+from autopilot import utilities
 from autopilot.input import Keyboard as KeyboardBase
 from autopilot.input import Touch as TouchBase
 from autopilot.input._common import get_center_point
-from autopilot.utilities import sleep
 import autopilot.platform
 
 import logging
@@ -101,6 +101,7 @@ class _UInputKeyboardDevice(object):
         """Release all the keys that are currently pressed."""
         for ecode in self._pressed_keys_ecodes:
             self._emit_release_event(ecode)
+        self._pressed_keys_ecodes = []
 
 
 class Keyboard(KeyboardBase):
@@ -135,7 +136,7 @@ class Keyboard(KeyboardBase):
         for key in self._sanitise_keys(keys):
             for key_button in self._get_key_buttons(key):
                 self._device.press(key_button)
-                sleep(delay)
+                utilities.sleep(delay)
 
     def release(self, keys, delay=0.1):
         """Send key release events only.
@@ -156,7 +157,7 @@ class Keyboard(KeyboardBase):
         for key in reversed(self._sanitise_keys(keys)):
             for key_button in reversed(self._get_key_buttons(key)):
                 self._device.release(key_button)
-                sleep(delay)
+                utilities.sleep(delay)
 
     def press_and_release(self, keys, delay=0.1):
         """Press and release all items in 'keys'.
@@ -197,7 +198,7 @@ class Keyboard(KeyboardBase):
         any keys that were pressed and not released.
 
         """
-        Keyboard._device.release_pressed_keys()
+        cls._device.release_pressed_keys()
 
     def _get_key_buttons(self, key):
         """Return a list of the key buttons required to press.
@@ -214,67 +215,16 @@ class Keyboard(KeyboardBase):
         return key_buttons
 
 
-last_tracking_id = 0
-
-
-def get_next_tracking_id():
-    global last_tracking_id
-    last_tracking_id += 1
-    return last_tracking_id
-
-
+@utilities.deprecated('Touch')
 def create_touch_device(res_x=None, res_y=None):
     """Create and return a UInput touch device.
 
     If res_x and res_y are not specified, they will be queried from the system.
 
     """
+    return UInput(events=_get_touch_events(), name='autopilot-finger',
+                  version=0x2, devnode=_get_devnode_path())
 
-    if res_x is None or res_y is None:
-        from autopilot.display import Display
-        display = Display.create()
-        # TODO: This calculation needs to become part of the display module:
-        l = r = t = b = 0
-        for screen in range(display.get_num_screens()):
-            geometry = display.get_screen_geometry(screen)
-            if geometry[0] < l:
-                l = geometry[0]
-            if geometry[1] < t:
-                t = geometry[1]
-            if geometry[0] + geometry[2] > r:
-                r = geometry[0] + geometry[2]
-            if geometry[1] + geometry[3] > b:
-                b = geometry[1] + geometry[3]
-        res_x = r - l
-        res_y = b - t
-
-    # android uses BTN_TOOL_FINGER, whereas desktop uses BTN_TOUCH. I have no
-    # idea why...
-    touch_tool = e.BTN_TOOL_FINGER
-    if autopilot.platform.model() == 'Desktop':
-        touch_tool = e.BTN_TOUCH
-
-    cap_mt = {
-        e.EV_ABS: [
-            (e.ABS_X, (0, res_x, 0, 0)),
-            (e.ABS_Y, (0, res_y, 0, 0)),
-            (e.ABS_PRESSURE, (0, 65535, 0, 0)),
-            (e.ABS_MT_POSITION_X, (0, res_x, 0, 0)),
-            (e.ABS_MT_POSITION_Y, (0, res_y, 0, 0)),
-            (e.ABS_MT_TOUCH_MAJOR, (0, 30, 0, 0)),
-            (e.ABS_MT_TRACKING_ID, (0, 65535, 0, 0)),
-            (e.ABS_MT_PRESSURE, (0, 255, 0, 0)),
-            (e.ABS_MT_SLOT, (0, 9, 0, 0)),
-        ],
-        e.EV_KEY: [
-            touch_tool,
-        ]
-    }
-
-    return UInput(cap_mt, name='autopilot-finger', version=0x2,
-                  devnode=_get_devnode_path())
-
-_touch_device = create_touch_device()
 
 # Multiouch notes:
 # ----------------
@@ -319,58 +269,177 @@ _touch_device = create_touch_device()
 # about this is that the SLOT refers to a finger number, and the TRACKING_ID
 # identifies a unique touch for the duration of it's existance.
 
-_touch_fingers_in_use = []
+
+def _get_touch_events(res_x, res_y):
+    if res_x is None or res_y is None:
+        res_x, res_y = _get_system_resolution()
+
+    touch_tool = _get_touch_tool()
+
+    events = {
+        e.EV_ABS: [
+            (e.ABS_X, (0, res_x, 0, 0)),
+            (e.ABS_Y, (0, res_y, 0, 0)),
+            (e.ABS_PRESSURE, (0, 65535, 0, 0)),
+            (e.ABS_MT_POSITION_X, (0, res_x, 0, 0)),
+            (e.ABS_MT_POSITION_Y, (0, res_y, 0, 0)),
+            (e.ABS_MT_TOUCH_MAJOR, (0, 30, 0, 0)),
+            (e.ABS_MT_TRACKING_ID, (0, 65535, 0, 0)),
+            (e.ABS_MT_PRESSURE, (0, 255, 0, 0)),
+            (e.ABS_MT_SLOT, (0, 9, 0, 0)),
+        ],
+        e.EV_KEY: [
+            touch_tool,
+        ]
+    }
+    return events
 
 
-def _get_touch_finger():
-    """Claim a touch finger id for use.
+def _get_system_resolution():
+    from autopilot.display import Display
+    display = Display.create()
+    # TODO: This calculation needs to become part of the display module:
+    l = r = t = b = 0
+    for screen in range(display.get_num_screens()):
+        geometry = display.get_screen_geometry(screen)
+        if geometry[0] < l:
+            l = geometry[0]
+        if geometry[1] < t:
+            t = geometry[1]
+        if geometry[0] + geometry[2] > r:
+            r = geometry[0] + geometry[2]
+        if geometry[1] + geometry[3] > b:
+            b = geometry[1] + geometry[3]
+    res_x = r - l
+    res_y = b - t
+    return res_x, res_y
 
-    :raises: RuntimeError if no more fingers are available.
+
+def _get_touch_tool():
+    # android uses BTN_TOOL_FINGER, whereas desktop uses BTN_TOUCH. I have
+    # no idea why...
+    if autopilot.platform.model() == 'Desktop':
+        touch_tool = e.BTN_TOUCH
+    else:
+        touch_tool = e.BTN_TOOL_FINGER
+    return touch_tool
+
+
+class _UInputTouchDevice(object):
+    """Wrapper for the UInput Touch to execute its primitives.
+
+    If res_x and res_y are not specified, they will be queried from the system.
 
     """
-    global _touch_fingers_in_use
 
-    for i in range(9):
-        if i not in _touch_fingers_in_use:
-            _touch_fingers_in_use.append(i)
-            return i
-    raise RuntimeError("All available fingers have been used already.")
+    _touch_fingers_in_use = []
+    _max_number_of_fingers = 9
+    _last_tracking_id = 0
 
+    def __init__(self, res_x=None, res_y=None, device_class=UInput):
+        super(_UInputTouchDevice, self).__init__()
+        self._device = device_class(
+            events=_get_touch_events(res_x, res_y), name='autopilot-finger',
+            version=0x2, devnode=_get_devnode_path())
+        self._touch_finger_slot = None
 
-def _release_touch_finger(finger_num):
-    """Relase a previously-claimed finger id.
+    @property
+    def pressed(self):
+        return self._touch_finger_slot is not None
 
-    :raises: RuntimeError if the finger given was never claimed, or was already
-    released.
+    def finger_down(self, x, y):
+        """Internal: moves finger "finger" down on the touchscreen.
 
-    """
-    global _touch_fingers_in_use
+        :param x: The finger will be moved to this x coordinate.
+        :param y: The finger will be moved to this y coordinate.
 
-    if finger_num not in _touch_fingers_in_use:
-        raise RuntimeError(
-            "Finger %d was never claimed, or has already been released." %
-            (finger_num))
-    _touch_fingers_in_use.remove(finger_num)
-    assert(finger_num not in _touch_fingers_in_use)
+        """
+        if self.pressed:
+            raise RuntimeError("Cannot press finger: it's already pressed.")
+        self._touch_finger_slot = self._get_free_touch_finger_slot()
+
+        self._device.write(e.EV_ABS, e.ABS_MT_SLOT, self._touch_finger_slot)
+        self._device.write(
+            e.EV_ABS, e.ABS_MT_TRACKING_ID, self._get_next_tracking_id())
+        press_value = 1
+        self._device.write(e.EV_KEY, e.BTN_TOOL_FINGER, press_value)
+        self._device.write(e.EV_ABS, e.ABS_MT_POSITION_X, int(x))
+        self._device.write(e.EV_ABS, e.ABS_MT_POSITION_Y, int(y))
+        self._device.write(e.EV_ABS, e.ABS_MT_PRESSURE, 400)
+        self._device.syn()
+
+    def _get_free_touch_finger_slot(self):
+        """Return the id of a free touch finger.
+
+        :raises: RuntimeError if no more fingers are available.
+
+        """
+        for i in range(_UInputTouchDevice._max_number_of_fingers):
+            if i not in _UInputTouchDevice._touch_fingers_in_use:
+                _UInputTouchDevice._touch_fingers_in_use.append(i)
+                return i
+        raise RuntimeError('All available fingers have been used already.')
+
+    def _get_next_tracking_id(self):
+        _UInputTouchDevice._last_tracking_id += 1
+        return _UInputTouchDevice._last_tracking_id
+
+    def finger_move(self, x, y):
+        """Internal: moves finger "finger" on the touchscreen to pos (x,y)
+
+        NOTE: The finger has to be down for this to have any effect.
+
+        """
+        if not self.pressed:
+            raise RuntimeError('Attempting to move without finger being down.')
+        else:
+            self._device.write(
+                e.EV_ABS, e.ABS_MT_SLOT, self._touch_finger_slot)
+            self._device.write(e.EV_ABS, e.ABS_MT_POSITION_X, int(x))
+            self._device.write(e.EV_ABS, e.ABS_MT_POSITION_Y, int(y))
+            self._device.syn()
+
+    def finger_up(self):
+        """Internal: moves finger "finger" up from the touchscreen"""
+        if not self.pressed:
+            raise RuntimeError("Cannot release finger: it's not pressed.")
+        self._device.write(e.EV_ABS, e.ABS_MT_SLOT, self._touch_finger_slot)
+        lift_tracking_id = -1
+        self._device.write(e.EV_ABS, e.ABS_MT_TRACKING_ID, lift_tracking_id)
+        release_value = 0
+        self._device.write(e.EV_KEY, e.BTN_TOOL_FINGER, release_value)
+        self._device.syn()
+        self._release_touch_finger()
+
+    def _release_touch_finger(self):
+        """Release the touch finger."""
+        if (self._touch_finger_slot not in
+                _UInputTouchDevice._touch_fingers_in_use):
+            raise RuntimeError(
+                "Finger %d was never claimed, or has already been released." %
+                self._touch_finger_slot)
+        _UInputTouchDevice._touch_fingers_in_use.remove(
+            self._touch_finger_slot)
+        self._touch_finger_slot = None
 
 
 class Touch(TouchBase):
     """Low level interface to generate single finger touch events."""
 
-    def __init__(self):
+    def __init__(self, device_class=_UInputTouchDevice):
         super(Touch, self).__init__()
-        self._touch_finger = None
+        self._device = device_class()
 
     @property
     def pressed(self):
-        return self._touch_finger is not None
+        return self._device.pressed
 
     def tap(self, x, y):
         """Click (or 'tap') at given x and y coordinates."""
         logger.debug("Tapping at: %d,%d", x, y)
-        self._finger_down(x, y)
-        sleep(0.1)
-        self._finger_up()
+        self._device.finger_down(x, y)
+        utilities.sleep(0.1)
+        self._device.finger_up()
 
     def tap_object(self, object):
         """Click (or 'tap') a given object"""
@@ -382,12 +451,12 @@ class Touch(TouchBase):
         """Press and hold a given object or at the given coordinates
         Call release() when the object has been pressed long enough"""
         logger.debug("Pressing at: %d,%d", x, y)
-        self._finger_down(x, y)
+        self._device.finger_down(x, y)
 
     def release(self):
         """Release a previously pressed finger"""
         logger.debug("Releasing")
-        self._finger_up()
+        self._device.finger_up()
 
     def move(self, x, y):
         """Moves the pointing "finger" to pos(x,y).
@@ -395,14 +464,12 @@ class Touch(TouchBase):
         NOTE: The finger has to be down for this to have any effect.
 
         """
-        if self._touch_finger is None:
-            raise RuntimeError("Attempting to move without finger being down.")
-        self._finger_move(x, y)
+        self._device.finger_move(x, y)
 
     def drag(self, x1, y1, x2, y2):
         """Perform a drag gesture from (x1,y1) to (x2,y2)"""
         logger.debug("Dragging from %d,%d to %d,%d", x1, y1, x2, y2)
-        self._finger_down(x1, y1)
+        self._device.finger_down(x1, y1)
 
         # Let's drag in 100 steps for now...
         dx = 1.0 * (x2 - x1) / 100
@@ -410,52 +477,13 @@ class Touch(TouchBase):
         cur_x = x1 + dx
         cur_y = y1 + dy
         for i in range(0, 100):
-            self._finger_move(int(cur_x), int(cur_y))
-            sleep(0.002)
+            self._device.finger_move(int(cur_x), int(cur_y))
+            utilities.sleep(0.002)
             cur_x += dx
             cur_y += dy
         # Make sure we actually end up at target
-        self._finger_move(x2, y2)
-        self._finger_up()
-
-    def _finger_down(self, x, y):
-        """Internal: moves finger "finger" down on the touchscreen.
-
-        :param x: The finger will be moved to this x coordinate.
-        :param y: The finger will be moved to this y coordinate.
-
-        """
-        if self._touch_finger is not None:
-            raise RuntimeError("Cannot press finger: it's already pressed.")
-        self._touch_finger = _get_touch_finger()
-
-        _touch_device.write(e.EV_ABS, e.ABS_MT_SLOT, self._touch_finger)
-        _touch_device.write(
-            e.EV_ABS, e.ABS_MT_TRACKING_ID, get_next_tracking_id())
-        _touch_device.write(e.EV_KEY, e.BTN_TOOL_FINGER, 1)
-        _touch_device.write(e.EV_ABS, e.ABS_MT_POSITION_X, int(x))
-        _touch_device.write(e.EV_ABS, e.ABS_MT_POSITION_Y, int(y))
-        _touch_device.write(e.EV_ABS, e.ABS_MT_PRESSURE, 400)
-        _touch_device.syn()
-
-    def _finger_move(self, x, y):
-        """Internal: moves finger "finger" on the touchscreen to pos (x,y)
-           NOTE: The finger has to be down for this to have any effect."""
-        if self._touch_finger is not None:
-            _touch_device.write(e.EV_ABS, e.ABS_MT_SLOT, self._touch_finger)
-            _touch_device.write(e.EV_ABS, e.ABS_MT_POSITION_X, int(x))
-            _touch_device.write(e.EV_ABS, e.ABS_MT_POSITION_Y, int(y))
-            _touch_device.syn()
-
-    def _finger_up(self):
-        """Internal: moves finger "finger" up from the touchscreen"""
-        if self._touch_finger is None:
-            raise RuntimeError("Cannot release finger: it's not pressed.")
-        _touch_device.write(e.EV_ABS, e.ABS_MT_SLOT, self._touch_finger)
-        _touch_device.write(e.EV_ABS, e.ABS_MT_TRACKING_ID, -1)
-        _touch_device.write(e.EV_KEY, e.BTN_TOOL_FINGER, 0)
-        _touch_device.syn()
-        self._touch_finger = _release_touch_finger(self._touch_finger)
+        self._device.finger_move(x2, y2)
+        self._device.finger_up()
 
 
 # veebers: there should be a better way to handle this.

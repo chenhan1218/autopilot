@@ -127,10 +127,10 @@ Description: Support for tracing in autopilot (Python 3)
  an instrumented application.
 
 Package: autopilot-touch
-Architecture: any
+Architecture: all
 Section: metapackages
 Depends: ${misc:Depends},
-         libautopilot-qt (>= 1.4) [!powerpc],
+         libautopilot-qt (>= 1.4),
          python3-autopilot,
          python3-evdev,
          python-autopilot,

@@ -412,12 +412,10 @@ class _UInputTouchDevice(object):
         """
         if not self.pressed:
             raise RuntimeError('Attempting to move without finger being down.')
-        else:
-            self._device.write(
-                e.EV_ABS, e.ABS_MT_SLOT, self._touch_finger_slot)
-            self._device.write(e.EV_ABS, e.ABS_MT_POSITION_X, int(x))
-            self._device.write(e.EV_ABS, e.ABS_MT_POSITION_Y, int(y))
-            self._device.syn()
+        self._device.write(e.EV_ABS, e.ABS_MT_SLOT, self._touch_finger_slot)
+        self._device.write(e.EV_ABS, e.ABS_MT_POSITION_X, int(x))
+        self._device.write(e.EV_ABS, e.ABS_MT_POSITION_Y, int(y))
+        self._device.syn()
 
     def finger_up(self):
         """Internal: moves finger "finger" up from the touchscreen

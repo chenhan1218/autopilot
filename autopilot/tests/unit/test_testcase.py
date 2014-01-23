@@ -19,13 +19,7 @@
 from mock import Mock, patch
 from testtools import TestCase
 from testtools.matchers import Contains, raises
-
-try:
-    # Python 2
-    from StringIO import StringIO
-except ImportError:
-    # Python 3
-    from io import StringIO
+from io import BytesIO
 
 from autopilot.testcase import (
     _compare_system_with_process_snapshot,
@@ -85,13 +79,14 @@ class ProcessSnapshotTests(TestCase):
                 self.pick_app_launcher()
 
         with patch('autopilot.testcase.get_application_launcher_wrapper'):
-            with patch('sys.stderr', new=StringIO()) as stderr:
+            with patch('sys.stderr', new=BytesIO()) as stderr:
                 InnerTest('test_foo').run()
 
                 self.assertThat(
                     stderr.getvalue(),
                     Contains(
                         "This function is deprecated. Please use "
-                        "'the app_type argument' instead."
+                        "'the 'app_type' argument to the "
+                        "launch_test_application method' instead."
                     )
                 )

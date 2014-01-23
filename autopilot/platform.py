@@ -37,6 +37,12 @@ on. For example::
         elif platform.model() == "Desktop":
             # do something else
 
+    def test_something_else(self):
+        if platform.tablet():
+            # run a tablet test
+        else:
+            # run a non-tablet test
+
 Skipping tests based on Platform
 ++++++++++++++++++++++++++++++++
 

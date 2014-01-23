@@ -647,6 +647,21 @@ class MultipleUInputTouchBackend(_uinput._UInputTouchDevice):
 
 class MultipleUInputTouchTestCase(TestCase):
 
+    def setUp(self):
+        super(MultipleUInputTouchTestCase, self).setUp()
+        # Return to the original device after the test.
+        self.addCleanup(
+            self._set_mouse_device,
+            _uinput._UInputTouchDevice._device,
+            _uinput._UInputTouchDevice._touch_fingers_in_use,
+            _uinput._UInputTouchDevice._last_tracking_id)
+
+    def _set_mouse_device(
+            self, device, touch_fingers_in_use, last_tracking_id):
+        _uinput._UInputTouchDevice._device = device
+        _uinput._UInputTouchDevice._touch_fingers_in_use = touch_fingers_in_use
+        _uinput._UInputTouchDevice._last_tracking_id = last_tracking_id
+
     def test_press_other_device_must_not_press_all_of_them(self):
         finger1 = _uinput.Touch(device_class=MultipleUInputTouchBackend)
         finger2 = _uinput.Touch(device_class=MultipleUInputTouchBackend)

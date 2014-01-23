@@ -220,7 +220,8 @@ def _get_click_manifest():
     # get the whole click package manifest every time - it seems fast enough
     # but this is a potential optimisation point for the future:
     click_manifest_str = subprocess.check_output(
-        ["click", "list", "--manifest"]
+        ["click", "list", "--manifest"],
+        universal_newlines=True
     )
     return json.loads(click_manifest_str)
 

@@ -356,9 +356,6 @@ class _UInputTouchDevice(CleanupRegistered):
                 events=_get_touch_events(res_x, res_y),
                 name='autopilot-finger',
                 version=0x2, devnode=_get_devnode_path())
-            logger.debug(
-                'Device file descriptor: %r' %
-                _UInputTouchDevice._device.device.fd)
         self._touch_finger_slot = None
 
     @property

@@ -85,6 +85,8 @@ class _UInputKeyboardDevice(object):
         It ignores case, so, for example, 'a' and 'A' are mapped to the same
         key.
 
+        :raises ValueError: if ``key`` is not pressed.
+
         """
         ecode = self._get_ecode_for_key(key)
         if ecode in self._pressed_keys_ecodes:
@@ -130,6 +132,8 @@ class Keyboard(KeyboardBase):
 
         presses the 'Alt' and 'F2' keys.
 
+        :raises TypeError: if ``keys`` is not a string.
+
         """
         if not isinstance(keys, six.string_types):
             raise TypeError("'keys' argument must be a string.")
@@ -150,6 +154,9 @@ class Keyboard(KeyboardBase):
         releases the 'Alt' and 'F2' keys.
 
         Keys are released in the reverse order in which they are specified.
+
+        :raises TypeError: if ``keys`` is not a string.
+        :raises ValueError: if one of the keys to be released is not pressed.
 
         """
         if not isinstance(keys, six.string_types):
@@ -172,6 +179,8 @@ class Keyboard(KeyboardBase):
 
         presses both the 'Alt' and 'F2' keys, and then releases both keys.
 
+        :raises TypeError: if ``keys`` is not a string.
+
         """
         logger.debug("Pressing and Releasing: %s", keys)
         self.press(keys, delay)
@@ -182,6 +191,8 @@ class Keyboard(KeyboardBase):
 
         Only 'normal' keys can be typed with this method. Control characters
         (such as 'Alt' will be interpreted as an 'A', and 'l', and a 't').
+
+        :raises TypeError: if ``keys`` is not a string.
 
         """
         if not isinstance(string, six.string_types):
@@ -357,6 +368,9 @@ class _UInputTouchDevice(object):
         :param x: The finger will be moved to this x coordinate.
         :param y: The finger will be moved to this y coordinate.
 
+        :raises RuntimeError: if the finger is already pressed.
+        :raises RuntimeError: if no more touch slots are available.
+
         """
         if self.pressed:
             raise RuntimeError("Cannot press finger: it's already pressed.")
@@ -375,7 +389,7 @@ class _UInputTouchDevice(object):
     def _get_free_touch_finger_slot(self):
         """Return the id of a free touch finger.
 
-        :raises: RuntimeError if no more fingers are available.
+        :raises RuntimeError: if no more touch slots are available.
 
         """
         for i in range(_UInputTouchDevice._max_number_of_fingers):
@@ -393,6 +407,8 @@ class _UInputTouchDevice(object):
 
         NOTE: The finger has to be down for this to have any effect.
 
+        :raises RuntimeError: if the finger is not pressed.
+
         """
         if not self.pressed:
             raise RuntimeError('Attempting to move without finger being down.')
@@ -404,7 +420,11 @@ class _UInputTouchDevice(object):
             self._device.syn()
 
     def finger_up(self):
-        """Internal: moves finger "finger" up from the touchscreen"""
+        """Internal: moves finger "finger" up from the touchscreen
+
+        :raises RuntimeError: if the finger is not pressed.
+
+        """
         if not self.pressed:
             raise RuntimeError("Cannot release finger: it's not pressed.")
         self._device.write(e.EV_ABS, e.ABS_MT_SLOT, self._touch_finger_slot)
@@ -416,7 +436,12 @@ class _UInputTouchDevice(object):
         self._release_touch_finger()
 
     def _release_touch_finger(self):
-        """Release the touch finger."""
+        """Release the touch finger.
+
+        :raises RuntimeError: if the finger was not claimed before or was
+            already released.
+
+        """
         if (self._touch_finger_slot not in
                 _UInputTouchDevice._touch_fingers_in_use):
             raise RuntimeError(
@@ -439,26 +464,46 @@ class Touch(TouchBase):
         return self._device.pressed
 
     def tap(self, x, y):
-        """Click (or 'tap') at given x and y coordinates."""
+        """Click (or 'tap') at given x and y coordinates.
+
+        :raises RuntimeError: if the touch is already pressed.
+        :raises RuntimeError: if no more touch slots are available.
+
+        """
         logger.debug("Tapping at: %d,%d", x, y)
         self._device.finger_down(x, y)
         sleep(0.1)
         self._device.finger_up()
 
     def tap_object(self, object):
-        """Click (or 'tap') a given object"""
+        """Click (or 'tap') a given object.
+
+        :raises RuntimeError: if the touch is already pressed.
+        :raises RuntimeError: if no more touch slots are available.
+
+        """
         logger.debug("Tapping object: %r", object)
         x, y = get_center_point(object)
         self.tap(x, y)
 
     def press(self, x, y):
-        """Press and hold a given object or at the given coordinates
-        Call release() when the object has been pressed long enough"""
+        """Press and hold a given object or at the given coordinates.
+
+        Call release() when the object has been pressed long enough.
+
+        :raises RuntimeError: if the touch is already pressed.
+        :raises RuntimeError: if no more touch slots are available.
+
+        """
         logger.debug("Pressing at: %d,%d", x, y)
         self._device.finger_down(x, y)
 
     def release(self):
-        """Release a previously pressed finger"""
+        """Release a previously pressed finger.
+
+        :raises RuntimeError: if the touch is not pressed.
+
+        """
         logger.debug("Releasing")
         self._device.finger_up()
 
@@ -467,11 +512,18 @@ class Touch(TouchBase):
 
         NOTE: The finger has to be down for this to have any effect.
 
+        :raises RuntimeError: if the touch is not pressed.
+
         """
         self._device.finger_move(x, y)
 
     def drag(self, x1, y1, x2, y2):
-        """Perform a drag gesture from (x1,y1) to (x2,y2)"""
+        """Perform a drag gesture from (x1,y1) to (x2,y2).
+
+        :raises RuntimeError: if the touch is already pressed.
+        :raises RuntimeError: if no more touch slots are available.
+
+        """
         logger.debug("Dragging from %d,%d to %d,%d", x1, y1, x2, y2)
         self._device.finger_down(x1, y1)
 

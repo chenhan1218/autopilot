@@ -455,10 +455,10 @@ class ApplicationLauncherInternalTests(TestCase):
             raises(ValueError("Unknown hint string: FOO"))
         )
 
-    def test_get_application_environment_uses_app_hint_argument(self):
+    def test_get_application_environment_uses_app_type_argument(self):
         with patch.object(_l, '_get_app_env_from_string_hint') as from_hint:
-            _get_application_environment(app_hint="app_hint")
-            from_hint.assert_called_with("app_hint")
+            _get_application_environment(app_type="app_type")
+            from_hint.assert_called_with("app_type")
 
     def test_get_application_environment_uses_app_path_argument(self):
         with patch.object(
@@ -472,25 +472,24 @@ class ApplicationLauncherInternalTests(TestCase):
             lambda: _get_application_environment(),
             raises(
                 ValueError(
-                    "Must specify either app_hint or app_path."
+                    "Must specify either app_type or app_path."
                 )
             )
         )
 
-    def test_get_application_environment_raises_on_app_hint_error(self):
-        unknown_app_hint = self.getUniqueString()
+    def test_get_application_environment_raises_on_app_type_error(self):
+        unknown_app_type = self.getUniqueString()
         with patch.object(
             _l, '_get_app_env_from_string_hint',
             side_effect=ValueError()
         ):
             self.assertThat(
                 lambda: _get_application_environment(
-                    app_hint=unknown_app_hint
+                    app_type=unknown_app_type
                 ),
                 raises(RuntimeError(
                     "Autopilot could not determine the correct introspection "
-                    "type to use. You can specify one by overriding the "
-                    "AutopilotTestCase.pick_app_launcher method."
+                    "type to use. You can specify this by providing app_type."
                 ))
             )
 
@@ -505,8 +504,7 @@ class ApplicationLauncherInternalTests(TestCase):
                 ),
                 raises(RuntimeError(
                     "Autopilot could not determine the correct introspection "
-                    "type to use. You can specify one by overriding the "
-                    "AutopilotTestCase.pick_app_launcher method."
+                    "type to use. You can specify this by providing app_type."
                 ))
             )
 

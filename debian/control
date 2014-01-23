@@ -129,6 +129,8 @@ Architecture: any
 Section: metapackages
 Depends: ${misc:Depends},
          libautopilot-qt (>= 1.4) [!powerpc],
+         python3-autopilot,
+         python3-evdev,
          python-autopilot,
          python-evdev,
 Description: Autopilot support for the ubuntu Touch platform

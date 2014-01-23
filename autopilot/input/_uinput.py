@@ -29,7 +29,7 @@ import autopilot.platform
 from autopilot.input import Keyboard as KeyboardBase
 from autopilot.input import Touch as TouchBase
 from autopilot.input._common import get_center_point
-from autopilot.utilities import deprecated, sleep
+from autopilot.utilities import deprecated, CleanupRegistered, sleep
 
 
 logger = logging.getLogger(__name__)
@@ -203,7 +203,7 @@ class Keyboard(KeyboardBase):
             self.release(key, delay)
 
     @classmethod
-    def on_test_end(cls, test_instance):
+    def on_test_end(cls, CleanupRegistered):
         """Generate KeyRelease events for any un-released keys.
 
         Make sure you call this at the end of any test to release
@@ -448,6 +448,10 @@ class _UInputTouchDevice(object):
         _UInputTouchDevice._touch_fingers_in_use.remove(
             self._touch_finger_slot)
         self._touch_finger_slot = None
+
+    @classmethod
+    def on_test_end(cls, test_instance):
+        cls._device.close()
 
 
 class Touch(TouchBase):

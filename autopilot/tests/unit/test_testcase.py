@@ -16,11 +16,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from mock import Mock
+from mock import Mock, patch
 from testtools import TestCase
-from testtools.matchers import raises
+from testtools.matchers import Contains, raises
 
-from autopilot.testcase import _compare_system_with_process_snapshot
+try:
+    # Python 2
+    from StringIO import StringIO
+except ImportError:
+    # Python 3
+    from io import StringIO
+
+from autopilot.testcase import (
+    _compare_system_with_process_snapshot,
+    AutopilotTestCase
+)
 from autopilot.utilities import sleep
 
 
@@ -68,3 +78,20 @@ class ProcessSnapshotTests(TestCase):
                 []
             )
             self.assertEqual(1.0, mock_sleep.total_time_slept())
+
+    def test_using_pick_app_launcher_produces_deprecation_message(self):
+        class InnerTest(AutopilotTestCase):
+            def test_foo(self):
+                self.pick_app_launcher()
+
+        with patch('autopilot.testcase.get_application_launcher_wrapper'):
+            with patch('sys.stderr', new=StringIO()) as stderr:
+                InnerTest('test_foo').run()
+
+                self.assertThat(
+                    stderr.getvalue(),
+                    Contains(
+                        "This function is deprecated. Please use "
+                        "'the app_type argument' instead."
+                    )
+                )

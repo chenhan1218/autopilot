@@ -29,7 +29,7 @@ import autopilot.platform
 from autopilot.input import Keyboard as KeyboardBase
 from autopilot.input import Touch as TouchBase
 from autopilot.input._common import get_center_point
-from autopilot.utilities import deprecated, CleanupRegistered, sleep
+from autopilot.utilities import deprecated, sleep
 
 
 logger = logging.getLogger(__name__)
@@ -337,7 +337,7 @@ def _get_touch_tool():
     return touch_tool
 
 
-class _UInputTouchDevice(CleanupRegistered):
+class _UInputTouchDevice(object):
     """Wrapper for the UInput Touch to execute its primitives.
 
     If res_x and res_y are not specified, they will be queried from the system.
@@ -448,10 +448,6 @@ class _UInputTouchDevice(CleanupRegistered):
         _UInputTouchDevice._touch_fingers_in_use.remove(
             self._touch_finger_slot)
         self._touch_finger_slot = None
-
-    @classmethod
-    def on_test_end(cls, test_instance):
-        cls._device.close()
 
 
 class Touch(TouchBase):

@@ -131,11 +131,8 @@ def tablet():
     ... True
 
     """
-    try:
-        properties = _PlatformDetector.create().properties
-        return 'tablet' in properties['ro.build.characteristics']
-    except AttributeError:
-        return False
+    return _PlatformDetector.create().tablet
+
 
 class _PlatformDetector(object):
 
@@ -152,6 +149,7 @@ class _PlatformDetector(object):
     def __init__(self):
         self.model = "Desktop"
         self.image_codename = "Desktop"
+        self.tablet = False
 
         property_file = _get_property_file()
         if property_file is not None:
@@ -159,9 +157,11 @@ class _PlatformDetector(object):
 
     def update_values_from_build_file(self, property_file):
         """Read build.prop file and parse it."""
-        self.properties = _parse_build_properties_file(property_file)
-        self.model = self.properties.get('ro.product.model', "Desktop")
-        self.image_codename = self.properties.get('ro.product.name', "Desktop")
+        properties = _parse_build_properties_file(property_file)
+        self.model = properties.get('ro.product.model', "Desktop")
+        self.image_codename = properties.get('ro.product.name', "Desktop")
+        self.tablet = ('ro.build.characteristics' in properties and
+                       'tablet' in properties['ro.build.characteristics'])
 
 
 def _get_property_file_path():

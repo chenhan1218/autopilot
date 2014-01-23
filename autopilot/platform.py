@@ -159,9 +159,9 @@ class _PlatformDetector(object):
 
     def update_values_from_build_file(self, property_file):
         """Read build.prop file and parse it."""
-        properties = _parse_build_properties_file(property_file)
-        self.model = properties.get('ro.product.model', "Desktop")
-        self.image_codename = properties.get('ro.product.name', "Desktop")
+        self.properties = _parse_build_properties_file(property_file)
+        self.model = self.properties.get('ro.product.model', "Desktop")
+        self.image_codename = self.properties.get('ro.product.name', "Desktop")
 
 
 def _get_property_file_path():

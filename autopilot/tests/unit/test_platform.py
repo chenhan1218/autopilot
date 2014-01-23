@@ -151,8 +151,7 @@ class PlatformDetectorTests(TestCase):
         mock_get_property_file.return_value = StringIO(
             "ro.build.characteristics=tablet")
 
-        detector = platform._PlatformDetector.create()
-        self.assertThat(detector.tablet(), Equals(True))
+        self.assertThat(platform.tablet(), Equals(True))
 
     @patch('autopilot.platform._get_property_file')
     def test_get_not_tablet_from_property_file(
@@ -161,8 +160,7 @@ class PlatformDetectorTests(TestCase):
         mock_get_property_file.return_value = StringIO(
             "ro.build.characteristics=nosdcard")
 
-        detector = platform._PlatformDetector.create()
-        self.assertThat(detector.tablet(), Equals(False))
+        self.assertThat(platform.tablet(), Equals(False))
 
     @patch('autopilot.platform._get_property_file')
     def test_tablet_without_property_file(self, mock_get_property_file):
@@ -172,8 +170,7 @@ class PlatformDetectorTests(TestCase):
         """
         mock_get_property_file.return_value = None
 
-        detector = platform._PlatformDetector.create()
-        self.assertThat(detector.tablet(), Equals(False))
+        self.assertThat(platform.tablet(), Equals(False))
 
 
 class BuildPropertyParserTests(TestCase):

@@ -203,7 +203,7 @@ class Keyboard(KeyboardBase):
             self.release(key, delay)
 
     @classmethod
-    def on_test_end(cls, CleanupRegistered):
+    def on_test_end(cls, test_instance):
         """Generate KeyRelease events for any un-released keys.
 
         Make sure you call this at the end of any test to release
@@ -337,7 +337,7 @@ def _get_touch_tool():
     return touch_tool
 
 
-class _UInputTouchDevice(object):
+class _UInputTouchDevice(CleanupRegistered):
     """Wrapper for the UInput Touch to execute its primitives.
 
     If res_x and res_y are not specified, they will be queried from the system.

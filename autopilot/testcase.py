@@ -60,15 +60,17 @@ from autopilot.application import (
     get_application_launcher_wrapper,
     NormalApplicationLauncher,
 )
-from autopilot.process import ProcessManager
+from autopilot.display import Display
+from autopilot.globals import get_debug_profile_fixture
 from autopilot.input import Keyboard, Mouse
 from autopilot.introspection import (
     get_proxy_object_for_existing_process,
 )
-from autopilot.display import Display
-from autopilot.utilities import on_test_started, sleep
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
+from autopilot.process import ProcessManager
+from autopilot.utilities import on_test_started
+from autopilot._timeout import Timeout
 try:
     from autopilot import tracepoint as tp
     HAVE_TRACEPOINT = True
@@ -132,6 +134,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
     def setUp(self):
         super(AutopilotTestCase, self).setUp()
         on_test_started(self)
+        self.useFixture(get_debug_profile_fixture()(self.addDetail))
 
         _lttng_trace_test_started(self.id())
         self.addCleanup(_lttng_trace_test_ended, self.id())
@@ -254,7 +257,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         return self._launch_test_application(launcher, application, *arguments)
 
-    def launch_click_package(self, package_id, app_name=None, **kwargs):
+    def launch_click_package(self, package_id, app_name=None, app_uris="",
+                             **kwargs):
         """Launch a click package application with introspection enabled.
 
         This method takes care of launching a click package with introspection
@@ -273,6 +277,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :param app_name: Currently, only one application can be packaged in a
             click package, and this parameter can be left at None. If
             specified, it should be the application name you wish to launch.
+        :param app_uris: Parameters used to launch the click package. This
+            parameter will be left empty if not used.
 
         :keyword emulator_base: If set, specifies the base class to be used for
             all emulators for this loaded application.
@@ -286,7 +292,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         launcher = self.useFixture(
             ClickApplicationLauncher(self.addDetail, **kwargs)
         )
-        return self._launch_test_application(launcher, package_id, app_name)
+        return self._launch_test_application(launcher, package_id, app_name,
+                                             app_uris)
 
     # Wrapper function tying the newer ApplicationLauncher behaviour with the
     # previous (to be depreciated) behaviour
@@ -484,17 +491,11 @@ def _compare_system_with_process_snapshot(snapshot_fn, old_snapshot):
 
     """
     new_apps = []
-    for i in range(10):
+    for _ in Timeout.default():
         current_apps = snapshot_fn()
-        new_apps = list(
-            filter(
-                lambda i: i not in old_snapshot,
-                current_apps
-            )
-        )
+        new_apps = [app for app in current_apps if app not in old_snapshot]
         if not new_apps:
             return
-        sleep(1)
     raise AssertionError(
         "The following apps were started during the test and not closed: "
         "%r" % new_apps)

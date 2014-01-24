@@ -19,9 +19,10 @@
 
 from mock import patch
 from testtools import TestCase
-from testtools.matchers import raises
+from testtools.matchers import raises, Equals
 
 from autopilot.application._environment import (
+    _call_upstart_with_args,
     ApplicationEnvironment,
     GtkApplicationEnvironment,
     QtApplicationEnvironment,
@@ -38,6 +39,11 @@ class ApplicationEnvironmentTests(TestCase):
                 NotImplementedError("Sub-classes must implement this method.")
             )
         )
+
+    @patch('autopilot.application._environment.subprocess')
+    def test_call_upstart_with_args_returns_output(self, patched_subprocess):
+        patched_subprocess.check_output.return_value = "Returned Value"
+        self.assertThat(_call_upstart_with_args(), Equals("Returned Value"))
 
 
 class GtkApplicationEnvironmentTests(TestCase):
@@ -103,8 +109,12 @@ class QtApplicationEnvironmentTests(TestCase):
 
 class UpstartApplicationEnvironmentTests(TestCase):
 
+    # These tests patch _unset_upstart_env as cleanUps() calls the unpatched
+    # _unset_upstart_env which in turn calls the real _call_upstart_with_args
+    # (making a system call)
     @patch('autopilot.application._environment._call_upstart_with_args')
-    def test_does_not_alter_app(self, patched_call_upstart):
+    @patch('autopilot.application._environment._unset_upstart_env')
+    def test_does_not_alter_app(self, patched_unset, patched_call_upstart):
         app_environment = self.useFixture(UpstartApplicationEnvironment())
         fake_app = self.getUniqueString()
         app, args = app_environment.prepare_environment(fake_app, [])
@@ -112,7 +122,8 @@ class UpstartApplicationEnvironmentTests(TestCase):
         self.assertEqual(fake_app, app)
 
     @patch('autopilot.application._environment._call_upstart_with_args')
-    def test_does_not_alter_arguments(self, patched_call_upstart):
+    @patch('autopilot.application._environment._unset_upstart_env')
+    def test_does_not_alter_args(self, patched_unset, patched_call_upstart):
         app_environment = self.useFixture(UpstartApplicationEnvironment())
         fake_app = self.getUniqueString()
         app, args = app_environment.prepare_environment(fake_app, [])
@@ -120,7 +131,8 @@ class UpstartApplicationEnvironmentTests(TestCase):
         self.assertEqual([], args)
 
     @patch('autopilot.application._environment._call_upstart_with_args')
-    def test_patches_env(self, patched_call_upstart):
+    @patch('autopilot.application._environment._unset_upstart_env')
+    def test_patches_env(self, patched_unset, patched_call_upstart):
         app_environment = self.useFixture(UpstartApplicationEnvironment())
         fake_app = self.getUniqueString()
         app, args = app_environment.prepare_environment(fake_app, [])

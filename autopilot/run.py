@@ -37,6 +37,7 @@ from testtools import iterate_tests
 
 from autopilot import get_version_string, parse_arguments
 import autopilot.globals
+from autopilot._debug import get_all_debug_profiles
 from autopilot.testresult import get_output_formats
 from autopilot.utilities import DebugLogFilter, LogFormatter
 
@@ -101,7 +102,7 @@ def get_package_location(import_name):
     :raises ImportError: if the name could not be found.
     """
     top_level_pkg = import_name.split('.')[0]
-    _, path, _ = find_module(top_level_pkg, sys.path + [os.getcwd()])
+    _, path, _ = find_module(top_level_pkg, [os.getcwd()] + sys.path)
     return os.path.abspath(
         os.path.join(
             path,
@@ -240,10 +241,65 @@ def _show_test_locations(test_directories):
     print("Loading tests from: %s\n" % ",".join(sorted(test_directories)))
 
 
+def _configure_debug_profile(args):
+    for fixture_class in get_all_debug_profiles():
+        if args.debug_profile == fixture_class.name:
+            autopilot.globals.set_debug_profile_fixture(fixture_class)
+            break
+
+
+def _configure_timeout_profile(args):
+    if args.timeout_profile == 'long':
+        autopilot.globals.set_default_timeout_period(20.0)
+        autopilot.globals.set_long_timeout_period(30.0)
+
+
+def _configure_video_recording(args):
+    """Configure video recording based on contents of ``args``.
+
+    :raises RuntimeError: If the user asked for video recording, but the
+        system does not support video recording.
+
+    """
+    if args.record_directory:
+        args.record = True
+
+    if args.record:
+        if not args.record_directory:
+            args.record_directory = '/tmp/autopilot'
+
+        if not _have_video_recording_facilities():
+            raise RuntimeError(
+                "The application 'recordmydesktop' needs to be installed to "
+                "record failing jobs."
+            )
+        autopilot.globals.configure_video_recording(
+            True,
+            args.record_directory,
+            args.record_options
+        )
+
+
+def _have_video_recording_facilities():
+    call_ret_code = subprocess.call(
+        ['which', 'recordmydesktop'],
+        stdout=subprocess.PIPE
+    )
+    return call_ret_code == 0
+
+
 class TestProgram(object):
 
-    def __init__(self):
-        self.args = parse_arguments()
+    def __init__(self, defined_args=None):
+        """Create a new TestProgram instance.
+
+        :param defined_args: If specified, must be an object representing
+            command line arguments, as returned by the ``parse_arguments``
+            function. Passing in arguments prevents argparse from parsing
+            sys.argv. Used in testing.
+
+        """
+        self.args = defined_args or parse_arguments()
 
     def run(self):
         setup_logging(getattr(self.args, 'verbose', False))
@@ -338,25 +394,13 @@ class TestProgram(object):
             shuffle(test_suite._tests)
             print("Running tests in random order")
 
-        if self.args.record_directory:
-            self.args.record = True
-
-        if self.args.record:
-            if not self.args.record_directory:
-                self.args.record_directory = '/tmp/autopilot'
-            call_ret_code = subprocess.call(
-                ['which', 'recordmydesktop'],
-                stdout=subprocess.PIPE
-            )
-            if call_ret_code != 0:
-                print("ERROR: The application 'recordmydesktop' needs to be "
-                      "installed to record failing jobs.")
-                exit(1)
-            autopilot.globals.configure_video_recording(
-                True,
-                self.args.record_directory,
-                self.args.record_options
-            )
+        _configure_debug_profile(self.args)
+        _configure_timeout_profile(self.args)
+        try:
+            _configure_video_recording(self.args)
+        except RuntimeError as e:
+            print("Error: %s" % str(e))
+            exit(1)
 
         if self.args.verbose:
             autopilot.globals.set_log_verbose(True)

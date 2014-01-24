@@ -17,6 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+if [ "$1" = "-h" ]; then
+	echo "usage: $0 [-h] [-n]"
+	echo
+	echo "Runs unit tests under both python2 and python 3, gathering coverage data."
+	echo "By default, will open HTML coverage report in the default browser. If -n"
+	echo "is specified, will re-generate coverage data, but won't open the browser."
+	exit 0
+fi
+
 if [ -d htmlcov ]; then
 	rm -r htmlcov
 fi
@@ -24,4 +33,7 @@ python -m coverage erase
 python -m coverage run --branch --include "autopilot/*" -m autopilot.run run autopilot.tests.unit
 python3 -m coverage run --append --branch --include "autopilot/*" -m autopilot.run run autopilot.tests.unit
 python -m coverage html --omit "autopilot/tests/*"
-xdg-open htmlcov/index.html
+
+if [ "$1" != "-n" ]; then
+	xdg-open htmlcov/index.html
+fi

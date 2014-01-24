@@ -33,7 +33,13 @@ import subprocess
 from functools import partial
 import os
 import psutil
+from six import u
 
+from autopilot.dbus_handler import (
+    get_session_bus,
+    get_system_bus,
+    get_custom_bus,
+)
 from autopilot.introspection.backends import DBusAddress
 from autopilot.introspection.constants import (
     AUTOPILOT_PATH,
@@ -49,12 +55,7 @@ from autopilot.introspection.utilities import (
     _get_bus_connections_pid,
     _pid_is_running,
 )
-from autopilot.dbus_handler import (
-    get_session_bus,
-    get_system_bus,
-    get_custom_bus,
-)
-from autopilot.utilities import sleep
+from autopilot._timeout import Timeout
 
 
 logger = logging.getLogger(__name__)
@@ -143,14 +144,7 @@ def get_proxy_object_for_existing_process(
         ``process.pid != pid``.
 
     """
-    if process is not None:
-        if pid is None:
-            pid = process.pid
-        elif pid != process.pid:
-            raise RuntimeError("Supplied PID and process.pid do not match.")
-
-    if pid is not None and not _pid_is_running(pid):
-        raise ProcessSearchError("PID %d could not be found" % pid)
+    pid = _check_process_and_pid_details(process, pid)
 
     dbus_addresses = _get_dbus_addresses_from_search_parameters(
         pid,
@@ -160,17 +154,107 @@ def get_proxy_object_for_existing_process(
         process
     )
 
-    if application_name:
-        app_name_check_fn = lambda i: get_classname_from_path(
-            i.introspection_iface.GetState('/')[0][0]) == application_name
-        dbus_addresses = list(filter(app_name_check_fn, dbus_addresses))
+    dbus_addresses = _maybe_filter_connections_by_app_name(
+        application_name,
+        dbus_addresses
+    )
 
     if dbus_addresses is None or len(dbus_addresses) == 0:
-        raise ProcessSearchError("Search criteria returned no results")
+        criteria_string = _get_search_criteria_string_representation(
+            pid,
+            dbus_bus,
+            connection_name,
+            process,
+            object_path,
+            application_name
+        )
+        message_string = "Search criteria (%s) returned no results" % \
+            (criteria_string)
+        raise ProcessSearchError(message_string)
     if len(dbus_addresses) > 1:
-        raise RuntimeError("Search criteria returned multiple results")
+        criteria_string = _get_search_criteria_string_representation(
+            pid,
+            dbus_bus,
+            connection_name,
+            process,
+            object_path,
+            application_name
+        )
+        message_string = "Search criteria (%s) returned multiple results" % \
+            (criteria_string)
+        raise RuntimeError(message_string)
 
     return _make_proxy_object(dbus_addresses[0], emulator_base)
+
+
+def _check_process_and_pid_details(process=None, pid=None):
+    """Do error checking on process and pid specification.
+
+    :raises RuntimeError: if both process and pid are specified, but the
+        process's 'pid' attribute is different to the pid attribute specified.
+    :raises ProcessSearchError: if the process specified is not running.
+    :returns: the pid to use in all search queries.
+
+    """
+    if process is not None:
+        if pid is None:
+            pid = process.pid
+        elif pid != process.pid:
+            raise RuntimeError("Supplied PID and process.pid do not match.")
+
+    if pid is not None and not _pid_is_running(pid):
+        raise ProcessSearchError("PID %d could not be found" % pid)
+    return pid
+
+
+def _maybe_filter_connections_by_app_name(application_name, dbus_addresses):
+    """Filter `dbus_addresses` by the application name exported, if
+    `application_name` has been specified.
+
+    :returns: a filtered list of connections.
+    """
+
+    if application_name:
+        dbus_addresses = [
+            a for a in dbus_addresses
+            if _get_application_name_from_dbus_address(a) == application_name
+        ]
+    return dbus_addresses
+
+
+def _get_application_name_from_dbus_address(dbus_address):
+    """Return the application name from a dbus_address object."""
+    return get_classname_from_path(
+        dbus_address.introspection_iface.GetState('/')[0][0]
+    )
+
+
+def _get_search_criteria_string_representation(
+        pid=None, dbus_bus=None, connection_name=None, process=None,
+        object_path=None, application_name=None):
+    """Get a string representation of the search criteria.
+
+    Used to represent the search criteria to users in error messages.
+    """
+    description_parts = []
+    if pid is not None:
+        description_parts.append(u('pid = %d') % pid)
+    if dbus_bus is not None:
+        description_parts.append(u("dbus bus = '%s'") % dbus_bus)
+    if connection_name is not None:
+        description_parts.append(
+            u("connection name = '%s'") % connection_name
+        )
+    if object_path is not None:
+        description_parts.append(u("object path = '%s'") % object_path)
+    if application_name is not None:
+        description_parts.append(
+            u("application name = '%s'") % application_name
+        )
+    if process is not None:
+        description_parts.append(u("process object = '%r'") % process)
+
+    return ", ".join(description_parts)
 
 
 def _get_dbus_addresses_from_search_parameters(
@@ -181,7 +265,7 @@ def _get_dbus_addresses_from_search_parameters(
     """
     _reset_known_connection_list()
 
-    for i in range(10):
+    for _ in Timeout.default():
         _get_child_pids.reset_cache()
         if process is not None and not _process_is_running(process):
             return_code = process.poll()
@@ -202,8 +286,6 @@ def _get_dbus_addresses_from_search_parameters(
         if len(valid_connections) >= 1:
             return [_get_dbus_address_object(name, object_path, bus) for name
                     in valid_connections]
-
-        sleep(1)
     return []
 
 

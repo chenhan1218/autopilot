@@ -27,6 +27,7 @@ except ImportError:
     # Python 3
     from io import StringIO
 
+from autopilot._debug import DebugProfile
 from autopilot.utilities import LogFormatter, CleanupRegistered
 from testtools.content import text_content
 import subprocess
@@ -216,3 +217,42 @@ def configure_video_recording(enable_recording, record_dir, record_opts=None):
     _video_logger.enable_recording(enable_recording)
     _video_logger.set_recording_dir(record_dir)
     _video_logger.set_recording_opts(record_opts)
+
+
+_debug_profile_fixture = DebugProfile
+
+
+def set_debug_profile_fixture(fixture_class):
+    global _debug_profile_fixture
+    _debug_profile_fixture = fixture_class
+
+
+def get_debug_profile_fixture():
+    global _debug_profile_fixture
+    return _debug_profile_fixture
+
+
+_default_timeout_value = 10
+
+
+def set_default_timeout_period(new_timeout):
+    global _default_timeout_value
+    _default_timeout_value = new_timeout
+
+
+def get_default_timeout_period():
+    global _default_timeout_value
+    return _default_timeout_value
+
+
+_long_timeout_value = 30
+
+
+def set_long_timeout_period(new_timeout):
+    global _long_timeout_value
+    _long_timeout_value = new_timeout
+
+
+def get_long_timeout_period():
+    global _long_timeout_value
+    return _long_timeout_value

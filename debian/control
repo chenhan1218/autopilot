@@ -9,6 +9,7 @@ Build-Depends: debhelper (>= 9.0.0),
                gir1.2-gconf-2.0,
                gir1.2-gtk-3.0,
                gir1.2-ibus-1.0,
+               gir1.2-upstart-app-launch-2,
                graphviz,
                liblttng-ust-dev,
                python-all-dev (>= 2.6),
@@ -52,6 +53,7 @@ Package: python-autopilot
 Architecture: all
 Depends: ${misc:Depends},
          ${python:Depends},
+         gir1.2-upstart-app-launch-2,
          python-contextlib2,
          python-dbus,
          python-fixtures,
@@ -79,6 +81,7 @@ Package: python3-autopilot
 Architecture: all
 Depends: ${misc:Depends},
          ${python3:Depends},
+         gir1.2-upstart-app-launch-2,
          python3-dbus,
          python3-fixtures,
          python3-junitxml,

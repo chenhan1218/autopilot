@@ -295,6 +295,27 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         return self._launch_test_application(launcher, package_id, app_name,
                                              app_uris)
 
+    def launch_upstart_application(self, application_name, **kwargs):
+        """Launch an application with upstart.
+
+        This method launched an application via the ``upstart-app-launch``
+        command, on platforms that support it.
+
+        Usage is similar to the
+        :py:meth:`AutopilotTestCase.launch_test_application`::
+
+            app_proxy = self.launch_upstart_application("gallery-app")
+
+        :param application_name: The name of the application to launch.
+        :keyword emulator_base: If set, specifies the base class to be used for
+            all emulators for this loaded application.
+
+        :raises RuntimeError: If the specified application cannot be launched.
+        :raises ValueError: If unknown keyword arguments are specified.
+        """
+
+
+
     # Wrapper function tying the newer ApplicationLauncher behaviour with the
     # previous (to be depreciated) behaviour
     def _launch_test_application(self, launcher_instance, application, *args):

@@ -19,7 +19,9 @@
 
 """Base module for application launchers."""
 
+from collections import namedtuple
 import fixtures
+from gi.repository import GLib, UpstartAppLaunch
 import json
 import logging
 import os
@@ -92,6 +94,77 @@ class ClickApplicationLauncher(ApplicationLauncher):
             "Application Log",
             _get_click_application_log_content_object(app_id)
         )
+
+
+class UpstartApplicationLauncher(ApplicationLauncher):
+
+    """A launcher class that launched applicaitons with UpstartAppLaunch."""
+
+    Timeout = object()
+    Failed = object()
+    Started = object()
+
+    def __init__(self, case_addDetail, **kwargs):
+        super(UpstartApplicationLauncher, self).__init__(case_addDetail)
+
+        self.emulator_base = kwargs.pop('emulator_base', None)
+        self.dbus_bus = kwargs.pop('dbus_bus', 'session')
+
+        _raise_if_not_empty(kwargs)
+
+    def launch(self, app_id, app_uris=[]):
+        # TODO: Add applicaiton logs from disk.
+        state = {}
+        state['loop'] = self._get_glib_loop()
+        state['expected_app_id'] = app_id
+
+        UpstartAppLaunch.observer_add_app_failed(self._on_failed, state)
+        UpstartAppLaunch.observer_add_app_started(self._on_started, state)
+        GLib.timeout_add_seconds(10.0, self._on_timeout, state)
+
+        self._launch_app(app_id, app_uris)
+        state['loop'].run()
+        UpstartAppLaunch.observer_delete_app_failed(self._on_failed)
+        UpstartAppLaunch.observer_delete_app_started(self._on_started)
+
+        self._check_status_error(state.get('status', None))
+        return self._get_pid_for_launched_app(app_id)
+
+    def _on_failed(self, launched_app_id, state):
+        if launched_app_id == state['expected_app_id']:
+            state['status'] = UpstartApplicationLauncher.Failed
+            state['loop'].quit()
+
+    def _on_started(self, launched_app_id, state):
+        if launched_app_id == state['expected_app_id']:
+            state['status'] = UpstartApplicationLauncher.Started
+            state['loop'].quit()
+
+    def _on_timeout(self, state):
+        state['status'] = UpstartApplicationLauncher.Timeout
+        state['loop'].quit()
+
+    @staticmethod
+    def _get_glib_loop():
+        return GLib.MainLoop()
+
+    @staticmethod
+    def _get_pid_for_launched_app(app_id):
+        return UpstartAppLaunch.get_primary_pid(app_id)
+
+    @staticmethod
+    def _launch_app(app_name, app_uris):
+        UpstartAppLaunch.start_application(app_name, app_uris)
+
+    @staticmethod
+    def _check_status_error(status):
+        # TODO: make error messages more descriptive.
+        if status == UpstartApplicationLauncher.Timeout:
+            raise RuntimeError(
+                "Timed out while waiting for application to launch"
+            )
+        elif status == UpstartApplicationLauncher.Failed:
+            raise RuntimeError("Application Launch Failed")
 
 
 class NormalApplicationLauncher(ApplicationLauncher):

@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from gi.repository import GLib
 import os
 import signal
 import subprocess
@@ -37,6 +38,7 @@ from mock import Mock, patch
 from autopilot.application import (
     ClickApplicationLauncher,
     NormalApplicationLauncher,
+    UpstartApplicationLauncher,
 )
 from autopilot.application._environment import (
     GtkApplicationEnvironment,
@@ -335,6 +337,171 @@ class ClickApplicationLauncherTests(TestCase):
             launcher._add_log_cleanup("appid")
 
             mock_addDetail.assert_called_with("Application Log", log_content())
+
+
+class UpstartApplicationLauncherTests(TestCase):
+
+    def test_can_construct_UpstartApplicationLauncher(self):
+        UpstartApplicationLauncher(self.addDetail)
+
+    def test_default_values_are_set(self):
+        launcher = UpstartApplicationLauncher(self.addDetail)
+        self.assertThat(launcher.emulator_base, Equals(None))
+        self.assertThat(launcher.dbus_bus, Equals('session'))
+
+    def test_can_set_emulator_base(self):
+        mock_emulator_base = Mock()
+        launcher = UpstartApplicationLauncher(
+            self.addDetail,
+            emulator_base=mock_emulator_base
+        )
+
+        self.assertThat(launcher.emulator_base, Equals(mock_emulator_base))
+
+    def test_can_set_dbus_bus(self):
+        launcher = UpstartApplicationLauncher(
+            self.addDetail,
+            dbus_bus='system'
+        )
+
+        self.assertThat(launcher.dbus_bus, Equals('system'))
+
+    def test_raises_exception_on_unknown_kwargs(self):
+        self.assertThat(
+            lambda: UpstartApplicationLauncher(self.addDetail, unknown=True),
+            raises(ValueError("Unknown keyword arguments: 'unknown'."))
+        )
+
+    def test_on_failed_only_sets_status_on_correct_app_id(self):
+        launcher = UpstartApplicationLauncher(self.addDetail)
+        state = {
+            'expected_app_id' : 'gedit',
+        }
+
+        launcher._on_failed('some_game', state)
+
+        self.assertThat(state, Not(Contains('status')))
+
+    def test_on_failed_sets_status_with_correct_app_id(self):
+        launcher = UpstartApplicationLauncher(self.addDetail)
+        state = {
+            'expected_app_id' : 'gedit',
+            'loop': Mock()
+        }
+
+        launcher._on_failed('gedit', state)
+
+        self.assertThat(
+            state['status'],
+            Equals(UpstartApplicationLauncher.Failed)
+        )
+        state['loop'].quit.assert_called_once_with()
+
+    def test_on_started_only_sets_status_on_correct_app_id(self):
+        launcher = UpstartApplicationLauncher(self.addDetail)
+        state = {
+            'expected_app_id' : 'gedit',
+        }
+
+        launcher._on_started('some_game', state)
+
+        self.assertThat(state, Not(Contains('status')))
+
+    def test_on_started_sets_status_with_correct_app_id(self):
+        launcher = UpstartApplicationLauncher(self.addDetail)
+        state = {
+            'expected_app_id' : 'gedit',
+            'loop': Mock()
+        }
+
+        launcher._on_started('gedit', state)
+
+        self.assertThat(
+            state['status'],
+            Equals(UpstartApplicationLauncher.Started)
+        )
+        state['loop'].quit.assert_called_once_with()
+
+    def test_on_timeout_sets_status_and_exits_loop(self):
+        launcher = UpstartApplicationLauncher(self.addDetail)
+        state = {
+            'expected_app_id' : 'gedit',
+            'loop': Mock()
+        }
+
+        launcher._on_timeout(state)
+
+        self.assertThat(
+            state['status'],
+            Equals(UpstartApplicationLauncher.Timeout)
+        )
+        state['loop'].quit.assert_called_once_with()
+
+    def test_get_pid_calls_upstart_module(self):
+        expected_return = self.getUniqueInteger()
+        with patch.object(_l, 'UpstartAppLaunch') as mock_ual:
+            mock_ual.get_primary_pid.return_value = expected_return
+            observed = UpstartApplicationLauncher._get_pid_for_launched_app(
+                'gedit'
+            )
+
+            mock_ual.get_primary_pid.assert_called_once_with('gedit')
+            self.assertThat(expected_return, Equals(observed))
+
+    def test_launch_app_calls_upstart_module(self):
+        with patch.object(_l, 'UpstartAppLaunch') as mock_ual:
+            UpstartApplicationLauncher._launch_app(
+                'gedit',
+                ['some', 'uris']
+            )
+
+            mock_ual.start_application.assert_called_once_with(
+                'gedit',
+                ['some', 'uris']
+            )
+
+    def test_check_error_raises_RuntimeError_on_timeout(self):
+        fn = lambda: UpstartApplicationLauncher._check_status_error(
+            UpstartApplicationLauncher.Timeout
+        )
+        self.assertThat(
+            fn,
+            raises(
+                RuntimeError(
+                    "Timed out while waiting for application to launch"
+                )
+            )
+        )
+
+    def test_check_error_raises_RuntimeError_on_failure(self):
+        fn = lambda: UpstartApplicationLauncher._check_status_error(
+            UpstartApplicationLauncher.Failed
+        )
+        self.assertThat(
+            fn,
+            raises(
+                RuntimeError(
+                    "Application Launch Failed"
+                )
+            )
+        )
+
+    def test_check_error_does_nothing_on_None(self):
+        UpstartApplicationLauncher._check_status_error(None)
+
+    def test_get_loop_returns_glib_mainloop_instance(self):
+        loop = UpstartApplicationLauncher._get_glib_loop()
+        self.assertThat(loop, IsInstance(GLib.MainLoop))
+
+    def test_launch(self):
+        launcher = UpstartApplicationLauncher(self.addDetail)
+        with patch.object(launcher, '_launch_app') as patched_launch:
+            with patch.object(launcher, '_get_glib_loop'):
+                launcher.launch('gedit')
+
+                patched_launch.assert_called_once_with('gedit', [])
+
+
 
 
 class ApplicationLauncherInternalTests(TestCase):

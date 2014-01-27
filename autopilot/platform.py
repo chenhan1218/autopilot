@@ -38,7 +38,7 @@ on. For example::
             # do something else
 
     def test_something_else(self):
-        if platform.tablet():
+        if platform.is_tablet():
             # run a tablet test
         else:
             # run a non-tablet test
@@ -120,7 +120,7 @@ def image_codename():
     return _PlatformDetector.create().image_codename
 
 
-def tablet():
+def is_tablet():
     """Indicate whether system is a tablet.
 
     The 'ro.build.characteristics' property is checked for 'tablet'.
@@ -131,7 +131,7 @@ def tablet():
     ... True
 
     """
-    return _PlatformDetector.create().tablet
+    return _PlatformDetector.create().is_tablet
 
 
 class _PlatformDetector(object):
@@ -149,7 +149,7 @@ class _PlatformDetector(object):
     def __init__(self):
         self.model = "Desktop"
         self.image_codename = "Desktop"
-        self.tablet = False
+        self.is_tablet = False
 
         property_file = _get_property_file()
         if property_file is not None:
@@ -160,8 +160,8 @@ class _PlatformDetector(object):
         properties = _parse_build_properties_file(property_file)
         self.model = properties.get('ro.product.model', "Desktop")
         self.image_codename = properties.get('ro.product.name', "Desktop")
-        self.tablet = ('ro.build.characteristics' in properties and
-                       'tablet' in properties['ro.build.characteristics'])
+        self.is_tablet = ('ro.build.characteristics' in properties and
+                          'tablet' in properties['ro.build.characteristics'])
 
 
 def _get_property_file_path():

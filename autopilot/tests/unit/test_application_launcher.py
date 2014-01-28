@@ -72,7 +72,7 @@ from autopilot.utilities import sleep
 class ApplicationLauncherTests(TestCase):
     def test_raises_on_attempt_to_use_launch(self):
         self.assertThat(
-            lambda: ApplicationnLauncher(self.addDetail).launch(),
+            lambda: ApplicationLauncher(self.addDetail).launch(),
             raises(
                 NotImplementedError("Sub-classes must implement this method.")
             )
@@ -345,31 +345,36 @@ class ClickApplicationLauncherHelperTests(TestWithScenarios, TestCase):
         (
             'dots',
             dict(
-                test_app_id="com.ubuntu.developer.webapps.webapp-amazon_"\
-                "webapp-amazon"
+                test_app_id=
+                "com.ubuntu.developer.webapps.webapp-amazon_webapp-amazon",
+                expected="comubuntudeveloperwebappswebapp-amazon_webapp-amazon"
             )
         ),
         (
             'trailing_version_number',
             dict(
-                test_app_id="com.ubuntu.developer.webapps.webapp-amazon_"\
-                "webapp-amazon_106"
+                test_app_id=
+                "com.ubuntu.developer.webapps.webapp-amazon_webapp-amazon_106",
+                expected="comubuntudeveloperwebappswebapp-amazon_webapp-amazon"
             )
         ),
         (
             'leaves_internal_number',
             dict(
-                test_app_id="com.ubuntu.developer.webapps.webapp-amazon_"\
-                "123_webapp-amazon_106",
+                test_app_id=
+                "com.ubuntu.developer.webapps.webapp-amazon_123_webapp-amazon"
+                "_106",
+
+                expected=
+                "comubuntudeveloperwebappswebapp-amazon_123_webapp-amazon"
             )
         )
     ]
 
     def test_get_dbus_application_name_strips_expected_characters(self):
-        expected = "comubuntudeveloperwebappswebapp-amazon_webapp-amazon"
         self.assertThat(
             _get_dbus_application_name(self.test_app_id),
-            Equals(expected)
+            Equals(self.expected)
         )
 
 

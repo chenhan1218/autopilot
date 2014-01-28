@@ -24,6 +24,7 @@ import json
 import logging
 import os
 import psutil
+import re
 import subprocess
 import signal
 from testtools.content import content_from_file, text_content
@@ -101,7 +102,7 @@ def _get_dbus_application_name(app_id):
     will be used in the dbus search.
 
     """
-    return app_id.replace(".", '')
+    return re.sub(r"_\d+$", "", app_id.replace(".", ''))
 
 
 class NormalApplicationLauncher(ApplicationLauncher):

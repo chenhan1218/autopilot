@@ -70,13 +70,13 @@ class ClickApplicationLauncher(ApplicationLauncher):
         _app_env = self.useFixture(UpstartApplicationEnvironment())
         _app_env.prepare_environment(app_id, app_name)
 
+        self.dbus_application_name = _get_dbus_application_name(package_id)
+
         return self._launch_click_app(app_id, app_uris)
 
     def _launch_click_app(self, app_id, app_uris):
         pid = _launch_click_app(app_id, app_uris)
         self._add_click_launch_cleanup(app_id, pid)
-
-        self.dbus_application_name = _get_dbus_application_name(app_id)
 
         logger.info(
             "Click package %s has been launched with PID %d",
@@ -97,12 +97,12 @@ class ClickApplicationLauncher(ApplicationLauncher):
         )
 
 
-def _get_dbus_application_name(app_id):
-    """Given a click applications id/name returns the application_name that
-    will be used in the dbus search.
+def _get_dbus_application_name(package_id):
+    """Given a click package id returns the application_name that will be used
+    in the dbus search.
 
     """
-    return re.sub(r"_\d+$", "", app_id.replace(".", ''))
+    return package_id.replace(".", '')
 
 
 class NormalApplicationLauncher(ApplicationLauncher):

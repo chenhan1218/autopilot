@@ -338,43 +338,13 @@ class ClickApplicationLauncherTests(TestCase):
 
             mock_addDetail.assert_called_with("Application Log", log_content())
 
-
-class ClickApplicationLauncherHelperTests(TestWithScenarios, TestCase):
-
-    scenarios = [
-        (
-            'dots',
-            dict(
-                test_app_id=
-                "com.ubuntu.developer.webapps.webapp-amazon_webapp-amazon",
-                expected="comubuntudeveloperwebappswebapp-amazon_webapp-amazon"
-            )
-        ),
-        (
-            'trailing_version_number',
-            dict(
-                test_app_id=
-                "com.ubuntu.developer.webapps.webapp-amazon_webapp-amazon_106",
-                expected="comubuntudeveloperwebappswebapp-amazon_webapp-amazon"
-            )
-        ),
-        (
-            'leaves_internal_number',
-            dict(
-                test_app_id=
-                "com.ubuntu.developer.webapps.webapp-amazon_123_webapp-amazon"
-                "_106",
-
-                expected=
-                "comubuntudeveloperwebappswebapp-amazon_123_webapp-amazon"
-            )
-        )
-    ]
-
     def test_get_dbus_application_name_strips_expected_characters(self):
+        package_id="com.ubuntu.developer.webapps.webapp-amazon_webapp-amazon"
+        expected="comubuntudeveloperwebappswebapp-amazon_webapp-amazon"
+
         self.assertThat(
-            _get_dbus_application_name(self.test_app_id),
-            Equals(self.expected)
+            _get_dbus_application_name(package_id),
+            Equals(expected)
         )
 
 

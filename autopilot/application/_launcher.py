@@ -75,6 +75,8 @@ class ClickApplicationLauncher(ApplicationLauncher):
         pid = _launch_click_app(app_id, app_uris)
         self._add_click_launch_cleanup(app_id, pid)
 
+        self.dbus_application_name = _get_dbus_application_name(app_id)
+
         logger.info(
             "Click package %s has been launched with PID %d",
             app_id,
@@ -92,6 +94,14 @@ class ClickApplicationLauncher(ApplicationLauncher):
             "Application Log",
             _get_click_application_log_content_object(app_id)
         )
+
+
+def _get_dbus_application_name(app_id):
+    """Given a click applications id/name returns the application_name that
+    will be used in the dbus search.
+
+    """
+    return app_id.replace(".", '')
 
 
 class NormalApplicationLauncher(ApplicationLauncher):

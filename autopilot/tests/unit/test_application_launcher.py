@@ -20,6 +20,7 @@
 import os
 import signal
 import subprocess
+from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import (
     Contains,
@@ -58,6 +59,7 @@ from autopilot.application._launcher import (
     _get_click_application_log_content_object,
     _get_click_application_log_path,
     _get_click_manifest,
+    _get_dbus_application_name,
     _is_process_running,
     _kill_pid,
     _kill_process,
@@ -70,7 +72,7 @@ from autopilot.utilities import sleep
 class ApplicationLauncherTests(TestCase):
     def test_raises_on_attempt_to_use_launch(self):
         self.assertThat(
-            lambda: ApplicationLauncher(self.addDetail).launch(),
+            lambda: ApplicationnLauncher(self.addDetail).launch(),
             raises(
                 NotImplementedError("Sub-classes must implement this method.")
             )
@@ -335,6 +337,40 @@ class ClickApplicationLauncherTests(TestCase):
             launcher._add_log_cleanup("appid")
 
             mock_addDetail.assert_called_with("Application Log", log_content())
+
+
+class ClickApplicationLauncherHelperTests(TestWithScenarios, TestCase):
+
+    scenarios = [
+        (
+            'dots',
+            dict(
+                test_app_id="com.ubuntu.developer.webapps.webapp-amazon_"\
+                "webapp-amazon"
+            )
+        ),
+        (
+            'trailing_version_number',
+            dict(
+                test_app_id="com.ubuntu.developer.webapps.webapp-amazon_"\
+                "webapp-amazon_106"
+            )
+        ),
+        (
+            'leaves_internal_number',
+            dict(
+                test_app_id="com.ubuntu.developer.webapps.webapp-amazon_"\
+                "123_webapp-amazon_106",
+            )
+        )
+    ]
+
+    def test_get_dbus_application_name_strips_expected_characters(self):
+        expected = "comubuntudeveloperwebappswebapp-amazon_webapp-amazon"
+        self.assertThat(
+            _get_dbus_application_name(self.test_app_id),
+            Equals(expected)
+        )
 
 
 class ApplicationLauncherInternalTests(TestCase):

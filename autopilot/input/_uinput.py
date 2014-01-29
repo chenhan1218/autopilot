@@ -339,11 +339,7 @@ def _get_touch_tool():
 
 
 class _UInputTouchDevice(object):
-    """Wrapper for the UInput Touch to execute its primitives.
-
-    If res_x and res_y are not specified, they will be queried from the system.
-
-    """
+    """Wrapper for the UInput Touch to execute its primitives."""
 
     _device = None
     _touch_fingers_in_use = []
@@ -351,6 +347,12 @@ class _UInputTouchDevice(object):
     _last_tracking_id = 0
 
     def __init__(self, res_x=None, res_y=None, device_class=UInput):
+        """Class constructor.
+
+        If res_x and res_y are not specified, they will be queried from the
+        system.
+
+        """
         super(_UInputTouchDevice, self).__init__()
         if _UInputTouchDevice._device is None:
             _UInputTouchDevice._device = device_class(

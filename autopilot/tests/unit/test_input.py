@@ -359,6 +359,39 @@ class UInputKeyboardTestCase(testscenarios.TestWithScenarios, TestCase):
             keyboard._device.mock_calls)
 
 
+class TouchEventsTestCase(TestCase):
+
+    def assert_expected_ev_abs(self, res_x, res_y, actual_ev_abs):
+        expected_ev_abs = [
+            (ecodes.ABS_X, (0, res_x, 0, 0)),
+            (ecodes.ABS_Y, (0, res_y, 0, 0)),
+            (ecodes.ABS_PRESSURE, (0, 65535, 0, 0)),
+            (ecodes.ABS_MT_POSITION_X, (0, res_x, 0, 0)),
+            (ecodes.ABS_MT_POSITION_Y, (0, res_y, 0, 0)),
+            (ecodes.ABS_MT_TOUCH_MAJOR, (0, 30, 0, 0)),
+            (ecodes.ABS_MT_TRACKING_ID, (0, 65535, 0, 0)),
+            (ecodes.ABS_MT_PRESSURE, (0, 255, 0, 0)),
+            (ecodes.ABS_MT_SLOT, (0, 9, 0, 0))
+        ]
+        self.assertEqual(expected_ev_abs, actual_ev_abs)
+
+    def test_get_touch_events_without_args_must_use_system_resolution(self):
+        with patch.object(
+                _uinput, '_get_system_resolution', spec_set=True,
+                autospec=True) as mock_system_resolution:
+            mock_system_resolution.return_value = (
+                'system_res_x', 'system_res_y')
+            events = _uinput._get_touch_events()
+
+        ev_abs = events.get(ecodes.EV_ABS)
+        self.assert_expected_ev_abs('system_res_x', 'system_res_y', ev_abs)
+
+    def test_get_touch_events_with_args_must_use_given_resulution(self):
+        events = _uinput._get_touch_events('given_res_x', 'given_res_y')
+        ev_abs = events.get(ecodes.EV_ABS)
+        self.assert_expected_ev_abs('given_res_x', 'given_res_y', ev_abs)
+
+
 class UInputTouchDeviceTestCase(TestCase):
     """Test the integration with evdev.UInput for the touch device."""
 

@@ -282,7 +282,7 @@ def create_touch_device(res_x=None, res_y=None):
 # identifies a unique touch for the duration of it's existance.
 
 
-def _get_touch_events(res_x, res_y):
+def _get_touch_events(res_x=None, res_y=None):
     if res_x is None or res_y is None:
         res_x, res_y = _get_system_resolution()
 

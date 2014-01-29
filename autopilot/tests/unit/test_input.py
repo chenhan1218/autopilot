@@ -358,6 +358,17 @@ class UInputKeyboardTestCase(testscenarios.TestWithScenarios, TestCase):
             ignored_calls + expected_release_calls,
             keyboard._device.mock_calls)
 
+    def test_on_test_end_without_device_must_do_nothing(self):
+        _uinput.Keyboard._device = None
+        # This will fail if it calls anything from the device, as it's None.
+        _uinput.Keyboard.on_test_end(self)
+
+    def test_on_test_end_with_device_must_release_pressed_keys(self):
+        keyboard = self.get_keyboard_with_mocked_backend()
+        _uinput.Keyboard.on_test_end(self)
+        self.assertEqual(
+            [call.release_pressed_keys()], keyboard._device.mock_calls)
+
 
 class TouchEventsTestCase(TestCase):
 

@@ -210,7 +210,8 @@ class Keyboard(KeyboardBase):
         any keys that were pressed and not released.
 
         """
-        cls._device.release_pressed_keys()
+        if cls._device is not None:
+            cls._device.release_pressed_keys()
 
     def _get_key_buttons(self, key):
         """Return a list of the key buttons required to press.

@@ -20,7 +20,6 @@
 import os
 import signal
 import subprocess
-from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import (
     Contains,
@@ -59,7 +58,6 @@ from autopilot.application._launcher import (
     _get_click_application_log_content_object,
     _get_click_application_log_path,
     _get_click_manifest,
-    _get_dbus_application_name,
     _is_process_running,
     _kill_pid,
     _kill_process,
@@ -179,6 +177,17 @@ class ClickApplicationLauncherTests(TestCase):
         self.assertThat(
             lambda: ClickApplicationLauncher(self.addDetail, unknown=True),
             raises(ValueError("Unknown keyword arguments: 'unknown'."))
+        )
+
+    def test_application_name_kwarg_stored(self):
+        app_name = self.getUniqueString()
+        launcher = ClickApplicationLauncher(
+            self.addDetail,
+            application_name=app_name
+        )
+
+        self.assertThat(
+            launcher.dbus_application_name, Equals(app_name)
         )
 
     @patch.object(UpstartApplicationEnvironment, 'prepare_environment')
@@ -337,15 +346,6 @@ class ClickApplicationLauncherTests(TestCase):
             launcher._add_log_cleanup("appid")
 
             mock_addDetail.assert_called_with("Application Log", log_content())
-
-    def test_get_dbus_application_name_strips_expected_characters(self):
-        package_id="com.ubuntu.developer.webapps.webapp-amazon_webapp-amazon"
-        expected="comubuntudeveloperwebappswebapp-amazon_webapp-amazon"
-
-        self.assertThat(
-            _get_dbus_application_name(package_id),
-            Equals(expected)
-        )
 
 
 class ApplicationLauncherInternalTests(TestCase):

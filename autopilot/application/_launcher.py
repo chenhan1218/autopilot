@@ -24,7 +24,6 @@ import json
 import logging
 import os
 import psutil
-import re
 import subprocess
 import signal
 from testtools.content import content_from_file, text_content
@@ -61,6 +60,7 @@ class ClickApplicationLauncher(ApplicationLauncher):
 
         self.emulator_base = kwargs.pop('emulator_base', None)
         self.dbus_bus = kwargs.pop('dbus_bus', 'session')
+        self.dbus_application_name = kwargs.pop('application_name', None)
 
         _raise_if_not_empty(kwargs)
 
@@ -69,8 +69,6 @@ class ClickApplicationLauncher(ApplicationLauncher):
 
         _app_env = self.useFixture(UpstartApplicationEnvironment())
         _app_env.prepare_environment(app_id, app_name)
-
-        self.dbus_application_name = _get_dbus_application_name(package_id)
 
         return self._launch_click_app(app_id, app_uris)
 
@@ -95,14 +93,6 @@ class ClickApplicationLauncher(ApplicationLauncher):
             "Application Log",
             _get_click_application_log_content_object(app_id)
         )
-
-
-def _get_dbus_application_name(package_id):
-    """Given a click package id returns the application_name that will be used
-    in the dbus search.
-
-    """
-    return package_id.replace(".", '')
 
 
 class NormalApplicationLauncher(ApplicationLauncher):

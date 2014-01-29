@@ -343,7 +343,6 @@ class _UInputTouchDevice(object):
 
     _device = None
     _touch_fingers_in_use = []
-    _max_number_of_fingers = 9
     _last_tracking_id = 0
 
     def __init__(self, res_x=None, res_y=None, device_class=UInput):
@@ -395,7 +394,8 @@ class _UInputTouchDevice(object):
         :raises RuntimeError: if no more touch slots are available.
 
         """
-        for i in range(_UInputTouchDevice._max_number_of_fingers):
+        max_number_of_fingers = 9
+        for i in range(max_number_of_fingers):
             if i not in _UInputTouchDevice._touch_fingers_in_use:
                 _UInputTouchDevice._touch_fingers_in_use.append(i)
                 return i

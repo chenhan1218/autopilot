@@ -467,8 +467,8 @@ class Touch(TouchBase):
     def tap(self, x, y):
         """Click (or 'tap') at given x and y coordinates.
 
-        :raises RuntimeError: if the touch is already pressed.
-        :raises RuntimeError: if no more touch slots are available.
+        :raises RuntimeError: if the finger is already pressed.
+        :raises RuntimeError: if no more finger slots are available.
 
         """
         logger.debug("Tapping at: %d,%d", x, y)
@@ -476,15 +476,17 @@ class Touch(TouchBase):
         sleep(0.1)
         self._device.finger_up()
 
-    def tap_object(self, object):
+    def tap_object(self, object_):
         """Click (or 'tap') a given object.
 
-        :raises RuntimeError: if the touch is already pressed.
-        :raises RuntimeError: if no more touch slots are available.
+        :raises RuntimeError: if the finger is already pressed.
+        :raises RuntimeError: if no more finger slots are available.
+        :raises ValueError: if `object_` doesn't have any recognised position
+            attributes or if they are not of the correct type.
 
         """
         logger.debug("Tapping object: %r", object)
-        x, y = get_center_point(object)
+        x, y = get_center_point(object_)
         self.tap(x, y)
 
     def press(self, x, y):
@@ -492,8 +494,8 @@ class Touch(TouchBase):
 
         Call release() when the object has been pressed long enough.
 
-        :raises RuntimeError: if the touch is already pressed.
-        :raises RuntimeError: if no more touch slots are available.
+        :raises RuntimeError: if the finger is already pressed.
+        :raises RuntimeError: if no more finger slots are available.
 
         """
         logger.debug("Pressing at: %d,%d", x, y)
@@ -513,7 +515,7 @@ class Touch(TouchBase):
 
         NOTE: The finger has to be down for this to have any effect.
 
-        :raises RuntimeError: if the touch is not pressed.
+        :raises RuntimeError: if the finger is not pressed.
 
         """
         self._device.finger_move(x, y)
@@ -521,8 +523,8 @@ class Touch(TouchBase):
     def drag(self, x1, y1, x2, y2):
         """Perform a drag gesture from (x1,y1) to (x2,y2).
 
-        :raises RuntimeError: if the touch is already pressed.
-        :raises RuntimeError: if no more touch slots are available.
+        :raises RuntimeError: if the finger is already pressed.
+        :raises RuntimeError: if no more finger slots are available.
 
         """
         logger.debug("Dragging from %d,%d to %d,%d", x1, y1, x2, y2)

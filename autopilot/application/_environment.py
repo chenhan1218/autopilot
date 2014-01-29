@@ -95,4 +95,7 @@ def _unset_upstart_env(key):
 
 
 def _call_upstart_with_args(*arguments):
-    return subprocess.check_output(["/sbin/initctl"] + list(arguments))
+    return subprocess.check_output(
+        ["/sbin/initctl"] + list(arguments),
+        universal_newlines=True
+    )

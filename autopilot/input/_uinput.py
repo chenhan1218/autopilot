@@ -228,7 +228,7 @@ class Keyboard(KeyboardBase):
         return key_buttons
 
 
-@deprecated('Touch')
+@deprecated('the Touch class to instantiate a device object')
 def create_touch_device(res_x=None, res_y=None):
     """Create and return a UInput touch device.
 

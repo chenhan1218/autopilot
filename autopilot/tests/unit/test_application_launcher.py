@@ -179,6 +179,17 @@ class ClickApplicationLauncherTests(TestCase):
             raises(ValueError("Unknown keyword arguments: 'unknown'."))
         )
 
+    def test_application_name_kwarg_stored(self):
+        app_name = self.getUniqueString()
+        launcher = ClickApplicationLauncher(
+            self.addDetail,
+            application_name=app_name
+        )
+
+        self.assertThat(
+            launcher.dbus_application_name, Equals(app_name)
+        )
+
     @patch.object(UpstartApplicationEnvironment, 'prepare_environment')
     def test_prepare_environment_called(self, prep_env):
         with patch.object(_l, '_get_click_app_id', return_value="app_id"):

@@ -19,7 +19,7 @@
 from mock import Mock, patch
 from testtools import TestCase
 from testtools.matchers import Contains, raises
-from io import BytesIO
+from six import StringIO
 
 from autopilot.testcase import (
     _compare_system_with_process_snapshot,
@@ -79,7 +79,7 @@ class ProcessSnapshotTests(TestCase):
                 self.pick_app_launcher()
 
         with patch('autopilot.testcase.get_application_launcher_wrapper'):
-            with patch('sys.stderr', new=BytesIO()) as stderr:
+            with patch('sys.stderr', new=StringIO()) as stderr:
                 InnerTest('test_foo').run()
 
                 self.assertThat(

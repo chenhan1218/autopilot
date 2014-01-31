@@ -140,6 +140,9 @@ class RunUtilityFunctionTests(TestCase):
             patched_call.return_value = 1
             self.assertFalse(run._have_video_recording_facilities())
 
+
+class LoggingSetupTests(TestCase):
+
     def test_get_root_logger_returns_logging_instance(self):
         logger = run.get_root_logger()
         self.assertThat(logger, IsInstance(logging.RootLogger))

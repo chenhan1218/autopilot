@@ -37,6 +37,12 @@ on. For example::
         elif platform.model() == "Desktop":
             # do something else
 
+    def test_something_else(self):
+        if platform.is_tablet():
+            # run a tablet test
+        else:
+            # run a non-tablet test
+
 Skipping tests based on Platform
 ++++++++++++++++++++++++++++++++
 
@@ -114,6 +120,20 @@ def image_codename():
     return _PlatformDetector.create().image_codename
 
 
+def is_tablet():
+    """Indicate whether system is a tablet.
+
+    The 'ro.build.characteristics' property is checked for 'tablet'.
+    For example:
+
+    platform.tablet()
+
+    ... True
+
+    """
+    return _PlatformDetector.create().is_tablet
+
+
 class _PlatformDetector(object):
 
     _cached_detector = None
@@ -129,6 +149,7 @@ class _PlatformDetector(object):
     def __init__(self):
         self.model = "Desktop"
         self.image_codename = "Desktop"
+        self.is_tablet = False
 
         property_file = _get_property_file()
         if property_file is not None:
@@ -139,6 +160,8 @@ class _PlatformDetector(object):
         properties = _parse_build_properties_file(property_file)
         self.model = properties.get('ro.product.model', "Desktop")
         self.image_codename = properties.get('ro.product.name', "Desktop")
+        self.is_tablet = ('ro.build.characteristics' in properties and
+                          'tablet' in properties['ro.build.characteristics'])
 
 
 def _get_property_file_path():

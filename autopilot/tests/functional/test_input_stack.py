@@ -40,9 +40,11 @@ from autopilot.utilities import on_test_started
 class InputStackKeyboardBase(AutopilotTestCase):
 
     scenarios = [
-        ('X11', dict(backend='X11')),
         ('UInput', dict(backend='UInput')),
     ]
+
+    if platform.model() == "Desktop":
+        scenarios.append(('X11', dict(backend='X11')))
 
     def setUp(self):
         super(InputStackKeyboardBase, self).setUp()
@@ -61,6 +63,7 @@ class InputStackKeyboardCreationTests(InputStackKeyboardBase):
         self.assertThat(keyboard, IsInstance(Keyboard))
 
 
+@skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
 class InputStackKeyboardTypingTests(InputStackKeyboardBase):
 
     scenarios = multiply_scenarios(
@@ -158,6 +161,7 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
                       )
 
 
+@skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
 class InputStackKeyboardBackspaceTests(InputStackKeyboardBase):
 
     def start_mock_app(self):
@@ -350,6 +354,7 @@ class OSKBackendTests(AutopilotTestCase):
 
 class MouseTestCase(AutopilotTestCase):
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (Mouse)")
     def test_move_to_nonint_point(self):
         """Test mouse does not get stuck when we move to a non-integer point.
 
@@ -376,6 +381,7 @@ class MouseTestCase(AutopilotTestCase):
                         raises(expected_exception))
 
 
+@skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
 class TouchTests(AutopilotTestCase):
 
     def setUp(self):
@@ -526,6 +532,7 @@ class InputStackCleanupTests(TestCase):
 
 class InputStackCleanup(AutopilotTestCase):
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (X11)")
     def test_keyboard_keys_released_X11(self):
         """Cleanup must release any keys that an X11 keyboard has had
         pressed."""
@@ -554,6 +561,7 @@ class InputStackCleanup(AutopilotTestCase):
         from autopilot.input._uinput import _PRESSED_KEYS
         self.assertThat(_PRESSED_KEYS, Equals([]))
 
+    @skipIf(platform.model() != "Desktop", "Not suitable for device (X11)")
     @patch('autopilot.input._X11.fake_input', new=lambda *args: None, )
     def test_mouse_button_released(self):
         """Cleanup must release any mouse buttons that have been pressed."""

@@ -25,11 +25,13 @@ import re
 import subprocess
 import tempfile
 from tempfile import mktemp
+from testtools import skipIf
 from testtools.matchers import Equals, IsInstance, MatchesRegex, Not, Contains
 from testtools.matchers import LessThan, GreaterThan
 from textwrap import dedent
 from six import StringIO
 
+from autopilot import platform
 from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase
 from autopilot.introspection.dbus import CustomEmulatorBase
@@ -41,6 +43,7 @@ class EmulatorBase(CustomEmulatorBase):
     pass
 
 
+@skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
 class IntrospectionFeatureTests(AutopilotTestCase):
     """Test various features of the introspection code."""
 

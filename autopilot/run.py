@@ -290,7 +290,7 @@ def _have_video_recording_facilities():
 
 def _get_app_name_and_args(argument_list):
     """Returns a tuple of (app_name, [app_args])."""
-    return (argument_list.pop(), argument_list)
+    return (argument_list.pop(0), argument_list)
 
 
 def _get_applications_full_path(app_name):

@@ -158,7 +158,7 @@ class TestRunLaunchApp(TestCase):
 
         self.assertThat(
             _get_app_name_and_args(launch_args),
-            Equals((app_name,))
+            Equals((app_name, []))
         )
 
     def test_get_app_name_and_args_returns_app_name_passed_arg_and_name(self):

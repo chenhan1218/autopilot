@@ -28,6 +28,9 @@ else:
     from contextlib2 import ExitStack
 
 from autopilot import run
+from autopilot.run import (
+    _get_app_name_and_args,
+)
 
 
 class RunUtilityFunctionTests(TestCase):
@@ -138,6 +141,46 @@ class RunUtilityFunctionTests(TestCase):
         with patch.object(run.subprocess, 'call') as patched_call:
             patched_call.return_value = 1
             self.assertFalse(run._have_video_recording_facilities())
+
+
+class TestRunLaunchApp(TestCase):
+    """Tests for the 'autopilot launch' command"""
+
+    def test_can_take_application_args(self):
+        pass
+
+    def test_passes_arguments_to_application(self):
+        pass
+
+    def test_get_app_name_and_args_returns_app_name_passed_app_name(self):
+        app_name = self.getUniqueString()
+        launch_args = [app_name]
+
+        self.assertThat(
+            _get_app_name_and_args(launch_args),
+            Equals((app_name,))
+        )
+
+    def test_get_app_name_and_args_returns_app_name_passed_arg_and_name(self):
+        app_name = self.getUniqueString()
+        app_arg = [self.getUniqueString()]
+        launch_args = [app_name] + app_arg
+
+        self.assertThat(
+            _get_app_name_and_args(launch_args),
+            Equals((app_name, app_arg))
+        )
+
+    def test_get_app_name_and_args_returns_app_name_passed_args_and_name(self):
+        app_name = self.getUniqueString()
+        app_args = [self.getUniqueString(), self.getUniqueString()]
+
+        launch_args = [app_name] + app_args
+
+        self.assertThat(
+            _get_app_name_and_args(launch_args),
+            Equals((app_name, app_args))
+        )
 
 
 class TestProgramTests(TestCase):

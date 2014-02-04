@@ -20,9 +20,19 @@
 from argparse import Namespace
 from mock import Mock, patch
 import logging
+import os.path
+from shutil import rmtree
 import six
+import tempfile
 from testtools import TestCase
-from testtools.matchers import Equals, IsInstance, raises
+from testtools.matchers import (
+    DirExists,
+    Equals,
+    IsInstance,
+    Not,
+    raises,
+    StartsWith,
+)
 if six.PY3:
     from contextlib import ExitStack
 else:
@@ -217,6 +227,83 @@ class LoggingSetupTests(TestCase):
             run.setup_logging(2)
 
             enable_debug.assert_called_once_with()
+
+
+class OutputStreamTests(TestCase):
+
+    def remove_tree_if_exists(self, path):
+        if os.path.exists(path):
+            rmtree(path)
+
+    def test_get_log_file_path_returns_file_path(self):
+        requested_path = tempfile.mktemp()
+        result = run._get_log_file_path(requested_path)
+
+        self.assertThat(result, Equals(requested_path))
+
+    def test_get_log_file_path_creates_nonexisting_directories(self):
+        temp_dir = tempfile.mkdtemp()
+        self.addCleanup(self.remove_tree_if_exists, temp_dir)
+        dir_to_store_logs = os.path.join(temp_dir, 'some_directory')
+        requested_path = os.path.join(dir_to_store_logs, 'my_log.txt')
+
+        run._get_log_file_path(requested_path)
+        self.assertThat(dir_to_store_logs, DirExists())
+
+    def test_returns_default_filename_when_passed_directory(self):
+        temp_dir = tempfile.mkdtemp()
+        self.addCleanup(self.remove_tree_if_exists, temp_dir)
+        with patch.object(run, '_get_default_log_filename') as _get_default:
+            result = run._get_log_file_path(temp_dir)
+
+            _get_default.assert_called_once_with(temp_dir)
+            self.assertThat(result, Equals(_get_default.return_value))
+
+    def test_get_default_log_filename_calls_print_fn(self):
+        with patch.object(run, '_print_default_log_path') as patch_print:
+            run._get_default_log_filename('/some/path')
+
+            self.assertThat(
+                patch_print.call_count,
+                Equals(1)
+            )
+            call_arg = patch_print.call_args[0][0]
+            # shouldn't print the directory, since the user already explicitly
+            # specified that.
+            self.assertThat(call_arg, Not(StartsWith('/some/path')))
+
+    @patch.object(run, '_print_default_log_path')
+    def test_get_default_filename_returns_sane_string(self, patched_print):
+        with patch.object(run, 'node', return_value='hostname'):
+            with patch.object(run, 'datetime') as mock_dt:
+                mock_dt.now.return_value.strftime.return_value = 'date-part'
+
+                self.assertThat(
+                    run._get_default_log_filename('/some/path'),
+                    Equals('/some/path/hostname_date-part.log')
+                )
+
+    def test_get_output_stream_gets_stdout_with_no_logfile_specified(self):
+        args = Namespace(output=None)
+        output_stream = run.get_output_stream(args)
+        self.assertThat(output_stream.name, Equals('<stdout>'))
+
+    def test_get_output_stream_opens_correct_file(self):
+        args = Namespace(output=tempfile.mktemp(), format='xml')
+        self.addCleanup(os.unlink, args.output)
+
+        output_stream = run.get_output_stream(args)
+        self.assertThat(output_stream.name, Equals(args.output))
+
+    def test_print_log_file_location_prints_correct_message(self):
+        path = self.getUniqueString()
+
+        with patch('sys.stdout', new=six.StringIO()) as patched_stdout:
+            run._print_default_log_path(path)
+            output = patched_stdout.getvalue()
+
+        expected = "Using default log filename: %s\n" % path
+        self.assertThat(expected, Equals(output))
 
 
 class TestProgramTests(TestCase):

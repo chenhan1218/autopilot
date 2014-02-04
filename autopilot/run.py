@@ -42,7 +42,6 @@ from autopilot.testresult import get_output_formats
 from autopilot.utilities import DebugLogFilter, LogFormatter
 
 
-_output_stream = None
 logger = logging.getLogger(__name__)
 
 
@@ -88,28 +87,40 @@ def construct_test_result(args):
 
 
 def get_output_stream(args):
-    global _output_stream
+    if args.output:
+        log_file = _get_log_file_path(args.output)
+        return open(
+            log_file,
+            'w',
+            encoding='utf-8',
+            errors='backslashreplace'
+        )
+    else:
+        return sys.stdout
 
-    if _output_stream is None:
-        if args.output:
-            path = os.path.dirname(args.output)
-            if path != '' and not os.path.exists(path):
-                os.makedirs(path)
-            log_file = args.output
-            if os.path.isdir(log_file):
-                default_log = "%s_%s.log" % (
-                    node(),
-                    datetime.now().strftime("%d.%m.%y-%H%M%S")
-                )
-                log_file = os.path.join(log_file, default_log)
-                print("Using default log filename: %s " % default_log)
-            if args.format == 'xml':
-                _output_stream = open(log_file, 'w')
-            else:
-                _output_stream = open(log_file, 'w', encoding='utf-8')
-        else:
-            _output_stream = sys.stdout
-    return _output_stream
+
+def _get_log_file_path(requested_path):
+    dirname = os.path.dirname(requested_path)
+    if dirname != '' and not os.path.exists(dirname):
+        os.makedirs(dirname)
+    if os.path.isdir(requested_path):
+        return _get_default_log_filename(requested_path)
+    return requested_path
+
+
+def _get_default_log_filename(target_directory):
+    """Return a filename that's likely to be unique to this test run."""
+    default_log_filename = "%s_%s.log" % (
+        node(),
+        datetime.now().strftime("%d.%m.%y-%H%M%S")
+    )
+    _print_default_log_path(default_log_filename)
+    log_file = os.path.join(target_directory, default_log_filename)
+    return log_file
+
+
+def _print_default_log_path(default_log_filename):
+    print("Using default log filename: %s" % default_log_filename)
 
 
 def get_package_location(import_name):

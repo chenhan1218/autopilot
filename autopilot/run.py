@@ -294,7 +294,7 @@ def _get_app_name_and_args(argument_list):
 
 
 def _get_applications_full_path(app_name):
-    if not os.path.isabs(app_name) or not os.path.exists(app_name):
+    if not _application_name_is_full_path(app_name):
         try:
             app_name = subprocess.check_output(
                 ["which", app_name],
@@ -304,6 +304,10 @@ def _get_applications_full_path(app_name):
             raise ValueError(
                 "Error: cannot find application '%s'" % (app_name)
             )
+
+
+def _application_name_is_full_path(app_name):
+    return os.path.isabs(app_name) or os.path.exists(app_name)
 
 
 def _get_application_launcher_env(application_path):

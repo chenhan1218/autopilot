@@ -29,8 +29,11 @@ else:
 
 from autopilot import run
 from autopilot.run import (
+    _get_applications_full_path,
+    _application_name_is_full_path,
     _get_app_name_and_args,
 )
+
 
 
 class RunUtilityFunctionTests(TestCase):
@@ -182,6 +185,31 @@ class TestRunLaunchApp(TestCase):
             Equals((app_name, app_args))
         )
 
+    def test_application_name_is_full_path_True_when_is_abs_path(self):
+        with patch.object(run.os.path, 'isabs', return_value=True):
+            self.assertTrue(_application_name_is_full_path(""))
+
+    def test_application_name_is_full_path_True_when_path_exists(self):
+        with patch.object(run.os.path, 'exists', return_value=True):
+            self.assertTrue(_application_name_is_full_path(""))
+
+    def test_application_name_is_full_path_False_neither_abs_or_exists(self):
+        with patch.object(run.os.path, 'exists', return_value=False):
+            with patch.object(run.os.path, 'isabs', return_value=False):
+                self.assertFalse(_application_name_is_full_path(""))
+
+    def test_get_applications_full_path_returns_same_when_full_path(self):
+        app_name = self.getUniqueString()
+
+        with patch.object(
+            run,
+            '_application_name_is_full_path',
+            return_value=True
+        ) as is_full_path:
+            self.assertThat(
+                _get_applications_full_path(app_name),
+                Equals(app_name)
+            )
 
 class TestProgramTests(TestCase):
 
@@ -200,7 +228,7 @@ class TestProgramTests(TestCase):
 
     def test_calls_parse_args_by_default(self):
         fake_args = Namespace()
-        with patch('autopilot.run.parse_arguments') as fake_parse_args:
+        with patch('run.parse_arguments') as fake_parse_args:
             fake_parse_args.return_value = fake_args
             program = run.TestProgram()
 
@@ -251,7 +279,7 @@ class TestProgramTests(TestCase):
         """The run_tests method must call all the utility functions.
 
         This test is somewhat ugly, and relies on a lot of mocks. This will be
-        cleaned up once autopilot.run has been completely refactored.
+        cleaned up once run has been completely refactored.
 
         """
         fake_args = create_default_run_args()

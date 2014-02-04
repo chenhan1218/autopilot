@@ -304,6 +304,7 @@ def _get_applications_full_path(app_name):
             raise ValueError(
                 "Error: cannot find application '%s'" % (app_name)
             )
+    return app_name
 
 
 def _application_name_is_full_path(app_name):

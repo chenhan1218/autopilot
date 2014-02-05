@@ -635,7 +635,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             number, i. e. only print children which have at most maxdepth-1
             intermediate parents.
         :param ignore_errors: If set, ignore any errors encountered during
-            thd dump, and continue printing later objects
+            the dump, and continue printing later objects
 
         """
         if maxdepth is not None and _curdepth > maxdepth:
@@ -652,15 +652,15 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             output.write("\n")
         output.write("%s== %s ==\n" % (indent, self._path))
         # print properties
-	try:
-            for p in sorted(self.get_properties()):
-                output.write("%s%s: %s\n" % (indent, p, repr(getattr(self, p))))
-            # print children
-            if maxdepth is None or _curdepth < maxdepth:
-                for c in self.get_children():
-                    c.print_tree(output, maxdepth, _curdepth + 1)
-        except e:
-            output.write("%sError: %s\n" % (indent, e))
+		try:
+			for p in sorted(self.get_properties()):
+				output.write("%s%s: %s\n" % (indent, p, repr(getattr(self, p))))
+				# print children
+				if maxdepth is None or _curdepth < maxdepth:
+					for c in self.get_children():
+					c.print_tree(output, maxdepth, _curdepth + 1)
+		except StateNotFoundError as error:
+			output.write("%sError: %s\n" % (indent, error))
 
     @contextmanager
     def no_automatic_refreshing(self):

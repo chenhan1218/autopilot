@@ -658,7 +658,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
                 # print children
                 if maxdepth is None or _curdepth < maxdepth:
                     for c in self.get_children():
-						c.print_tree(output, maxdepth, _curdepth + 1)
+                        c.print_tree(output, maxdepth, _curdepth + 1)
         except StateNotFoundError as error:
             output.write("%sError: %s\n" % (indent, error))
 

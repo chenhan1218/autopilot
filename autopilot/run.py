@@ -360,6 +360,26 @@ def _print_message_and_exit_error(msg):
     exit(1)
 
 
+def _get_application_path_and_arguments(application):
+    app_name, app_arguments = _get_app_name_and_args(application)
+
+    try:
+        app_name = _get_applications_full_path(app_name)
+    except ValueError as e:
+        _print_message_and_exit_error(str(e))
+
+    return app_name, app_arguments
+
+
+def _prepare_application_for_launch(application, interface):
+    app_name, app_arguments = _get_application_path_and_arguments(application)
+    return _prepare_launcher_environment(
+        interface,
+        app_name,
+        app_arguments
+    )
+
+
 class TestProgram(object):
 
     def __init__(self, defined_args=None):
@@ -402,17 +422,10 @@ class TestProgram(object):
 
     def launch_app(self):
         """Launch an application, with introspection support."""
-        app_name, app_arguments = _get_app_name_and_args(self.args.application)
 
-        try:
-            _get_applications_full_path(app_name)
-        except ValueError as e:
-            _print_message_and_exit_error(str(e))
-
-        app_name, app_arguments = _prepare_launcher_environment(
-            self.args.interface,
-            app_name,
-            app_arguments
+        app_name, app_arguments = _prepare_application_for_launch(
+            self.args.application,
+            self.args.interface
         )
 
         try:
@@ -423,7 +436,6 @@ class TestProgram(object):
             )
         except RuntimeError as e:
             _print_message_and_exit_error("Error: " + str(e))
-
 
     def run_tests(self):
         """Run tests, using input from `args`."""

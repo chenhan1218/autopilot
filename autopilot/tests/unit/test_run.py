@@ -147,6 +147,50 @@ class RunUtilityFunctionTests(TestCase):
             self.assertFalse(run._have_video_recording_facilities())
 
 
+class TestRunLaunchApp(TestCase):
+    @patch.object(run, 'launch_process')
+    def test_launch_app_launches_app_with_arguments(self, patched_launch_proc):
+        app_name = self.getUniqueString()
+        app_arguments = self.getUniqueString()
+        fake_args = Namespace(
+            mode='launch',
+            application=[app_name, app_arguments],
+            interface=None
+        )
+
+        with patch.object(
+            run,
+            '_prepare_application_for_launch',
+            return_value=(app_name, app_arguments)
+        ):
+            program = run.TestProgram(fake_args)
+            program.run()
+            patched_launch_proc.assert_called_once_with(
+                app_name,
+                app_arguments,
+                capture_output=False
+            )
+
+    @patch.object(run, 'launch_process')
+    def test_launch_app_exits_with_message_on_failure(self, patched_launch_proc):
+        app_name = self.getUniqueString()
+        app_arguments = self.getUniqueString()
+        fake_args = Namespace(
+            mode='launch',
+            application=[app_name, app_arguments],
+            interface=None
+        )
+
+        with patch.object(
+            run,
+            '_prepare_application_for_launch',
+            return_value=(app_name, app_arguments)
+        ):
+            patched_launch_proc.side_effect = RuntimeError()
+            program = run.TestProgram(fake_args)
+            self.assertThat(lambda: program.run(), raises(SystemExit(1)))
+
+
 class TestRunLaunchAppHelpers(TestCase):
     """Tests for the 'autopilot launch' command"""
 
@@ -405,6 +449,38 @@ class TestRunLaunchAppHelpers(TestCase):
             lambda: run._print_message_and_exit_error(""),
             raises(SystemExit(1))
         )
+
+    def test_prepare_application_for_launch_returns_prepared_details(self):
+        interface = self.getUniqueString()
+        application = self.getUniqueString()
+        app_name = self.getUniqueString()
+        app_arguments = self.getUniqueString()
+
+        with ExitStack() as stack:
+            get_path_and_args = stack.enter_context(
+                patch.object(
+                    run,
+                    '_get_application_path_and_arguments',
+                    return_value=(app_name, app_arguments)
+                )
+            )
+            prepare_launcher = stack.enter_context(
+                patch.object(
+                    run,
+                    '_prepare_launcher_environment',
+                    return_value=(app_name, app_arguments)
+                )
+            )
+
+            self.assertThat(
+                run._prepare_application_for_launch(application, interface),
+                Equals((app_name, app_arguments))
+            )
+            prepare_launcher.assert_called_once_with(
+                interface,
+                app_name,
+                app_arguments
+            )
 
 
 class TestProgramTests(TestCase):

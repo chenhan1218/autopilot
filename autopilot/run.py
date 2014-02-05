@@ -40,6 +40,11 @@ import autopilot.globals
 from autopilot._debug import get_all_debug_profiles
 from autopilot.testresult import get_output_formats
 from autopilot.utilities import DebugLogFilter, LogFormatter
+from autopilot.application._launcher import (
+    _get_app_env_from_string_hint,
+    get_application_launcher_wrapper,
+    launch_process,
+)
 
 
 _output_stream = None
@@ -311,45 +316,49 @@ def _application_name_is_full_path(app_name):
     return os.path.isabs(app_name) or os.path.exists(app_name)
 
 
-def _get_application_launcher_env(application_path):
-    from autopilot.application._launcher import (
-        _get_app_env_from_string_hint,
-        get_application_launcher_wrapper,
-    )
-
+def _get_application_launcher_env(interface, application_path):
     launcher_env = None
-    if self.args.interface == 'Auto':
-        try:
-            launcher_env = get_application_launcher_wrapper(app_name)
-        except RuntimeError as e:
-            print("Error detecting launcher: %s" % str(e))
-            print(
-                "(Perhaps use the '-i' argument to specify an interface.)"
-            )
-            exit(1)
+    if interface == 'Auto':
+        launcher_env = _try_determine_launcher_env_or_exit(application_path)
     else:
-        launcher_env = _get_app_env_from_string_hint(self.args.interface)
+        launcher_env = _get_app_env_from_string_hint(interface)
 
     return launcher_env
 
 
-def _exit_with_message_if_launcher_is_none(launcher, appname):
+def _try_determine_launcher_env_or_exit(app_name):
+    try:
+        return  get_application_launcher_wrapper(app_name)
+    except RuntimeError as e:
+        _print_message_and_exit_error(
+            "Error detecting launcher: {err}\n"
+            "(Perhaps use the '-i' argument to specify an interface.)".format(
+                err=str(e)
+            )
+        )
+
+
+def _exit_with_message_if_launcher_is_none(launcher_env, app_name):
     if launcher_env is None:
-        print("Error: Could not determine introspection type to use for "
-              "application '%s'." % app_name)
-        print("(Perhaps use the '-i' argument to specify an interface.)")
-        exit(1)
+        _print_message_and_exit_error(
+            "Error: Could not determine introspection type to use for "
+            "application '{app_name}'.\n"
+            "(Perhaps use the '-i' argument to specify an interface.)".format(
+                app_name=app_name
+            )
+        )
 
 
-def _prepare_launcher_environment(app_name, app_arguments):
-    launcher_env = _get_application_launcher_env(app_name)
-    _exit_with_message_if_launcher_is_none(launcher_env)
+def _prepare_launcher_environment(interface, app_name, app_arguments):
+    launcher_env = _get_application_launcher_env(interface, app_name)
+    _exit_with_message_if_launcher_is_none(launcher_env, app_name)
     return launcher_env.prepare_environment(app_name, app_arguments)
 
 
 def _print_message_and_exit_error(msg):
     print(msg)
     exit(1)
+
 
 class TestProgram(object):
 
@@ -393,8 +402,6 @@ class TestProgram(object):
 
     def launch_app(self):
         """Launch an application, with introspection support."""
-        from autopilot.application._launcher import launch_process
-
         app_name, app_arguments = _get_app_name_and_args(self.args.application)
 
         try:
@@ -403,6 +410,7 @@ class TestProgram(object):
             _print_message_and_exit_error(str(e))
 
         app_name, app_arguments = _prepare_launcher_environment(
+            self.args.interface,
             app_name,
             app_arguments
         )

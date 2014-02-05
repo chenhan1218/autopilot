@@ -357,6 +357,7 @@ def _exit_with_message_if_launcher_is_none(launcher_env, app_name):
             )
         )
 
+
 def _get_application_launcher_env(interface, application_path):
     launcher_env = None
     if interface == 'Auto':
@@ -369,7 +370,7 @@ def _get_application_launcher_env(interface, application_path):
 
 def _try_determine_launcher_env_or_exit(app_name):
     try:
-        return  get_application_launcher_wrapper(app_name)
+        return get_application_launcher_wrapper(app_name)
     except RuntimeError as e:
         _print_message_and_exit_error(
             "Error detecting launcher: {err}\n"
@@ -377,9 +378,6 @@ def _try_determine_launcher_env_or_exit(app_name):
                 err=str(e)
             )
         )
-
-
-
 
 
 class TestProgram(object):

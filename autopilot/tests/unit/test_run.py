@@ -36,7 +36,6 @@ from autopilot.run import (
 )
 
 
-
 class RunUtilityFunctionTests(TestCase):
 
     @patch('autopilot.run.autopilot.globals.set_debug_profile_fixture')
@@ -172,7 +171,7 @@ class TestRunLaunchApp(TestCase):
             )
 
     @patch.object(run, 'launch_process')
-    def test_launch_app_exits_with_message_on_failure(self, patched_launch_proc):
+    def test_launch_app_exits_with_message_on_failure(self, patched_launch_proc):  # NOQA
         app_name = self.getUniqueString()
         app_arguments = self.getUniqueString()
         fake_args = Namespace(
@@ -244,7 +243,7 @@ class TestRunLaunchAppHelpers(TestCase):
             run,
             '_application_name_is_full_path',
             return_value=True
-        ) as is_full_path:
+        ):
             self.assertThat(
                 _get_applications_full_path(app_name),
                 Equals(app_name)
@@ -317,17 +316,17 @@ class TestRunLaunchAppHelpers(TestCase):
             run,
             '_get_app_env_from_string_hint',
             return_value=None
-        ) as get_launcher:
+        ):
             self.assertThat(
                 run._get_application_launcher_env(interface, app_path),
                 Equals(None)
             )
 
-    def test_try_determine_launcher_env_or_exit_exits_with_message_on_failure(self):
+    def test_try_determine_launcher_env_or_exit_exits_with_message_on_failure(self):  # NOQA
         app_name = self.getUniqueString()
         err_msg = self.getUniqueString()
         with ExitStack() as stack:
-            get_launcher_wrapper = stack.enter_context(
+            stack.enter_context(
                 patch.object(
                     run,
                     'get_application_launcher_wrapper',
@@ -349,7 +348,7 @@ class TestRunLaunchAppHelpers(TestCase):
                 .format(err=err_msg)
             )
 
-    def test_try_determine_launcher_env_or_exit_returns_launcher_wrapper_result(self):
+    def test_try_determine_launcher_env_or_exit_returns_launcher_wrapper_result(self):  # NOQA
         app_name = self.getUniqueString()
         launcher_env = self.getUniqueString()
 
@@ -457,7 +456,7 @@ class TestRunLaunchAppHelpers(TestCase):
         app_arguments = self.getUniqueString()
 
         with ExitStack() as stack:
-            get_path_and_args = stack.enter_context(
+            stack.enter_context(
                 patch.object(
                     run,
                     '_get_application_path_and_arguments',

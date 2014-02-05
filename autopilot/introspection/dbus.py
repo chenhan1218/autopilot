@@ -652,15 +652,15 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             output.write("\n")
         output.write("%s== %s ==\n" % (indent, self._path))
         # print properties
-		try:
-			for p in sorted(self.get_properties()):
-				output.write("%s%s: %s\n" % (indent, p, repr(getattr(self, p))))
-				# print children
-				if maxdepth is None or _curdepth < maxdepth:
-					for c in self.get_children():
-					c.print_tree(output, maxdepth, _curdepth + 1)
-		except StateNotFoundError as error:
-			output.write("%sError: %s\n" % (indent, error))
+        try:
+            for p in sorted(self.get_properties()):
+                output.write("%s%s: %s\n" % (indent, p, repr(getattr(self, p))))
+                # print children
+                if maxdepth is None or _curdepth < maxdepth:
+                    for c in self.get_children():
+                    c.print_tree(output, maxdepth, _curdepth + 1)
+        except StateNotFoundError as error:
+            output.write("%sError: %s\n" % (indent, error))
 
     @contextmanager
     def no_automatic_refreshing(self):

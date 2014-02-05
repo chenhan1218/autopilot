@@ -293,6 +293,31 @@ def _have_video_recording_facilities():
     return call_ret_code == 0
 
 
+def _print_message_and_exit_error(msg):
+    print(msg)
+    exit(1)
+
+
+def _prepare_application_for_launch(application, interface):
+    app_name, app_arguments = _get_application_path_and_arguments(application)
+    return _prepare_launcher_environment(
+        interface,
+        app_name,
+        app_arguments
+    )
+
+
+def _get_application_path_and_arguments(application):
+    app_name, app_arguments = _get_app_name_and_args(application)
+
+    try:
+        app_name = _get_applications_full_path(app_name)
+    except ValueError as e:
+        _print_message_and_exit_error(str(e))
+
+    return app_name, app_arguments
+
+
 def _get_app_name_and_args(argument_list):
     """Returns a tuple of (app_name, [app_args])."""
     return argument_list[0], argument_list[1:]
@@ -316,6 +341,22 @@ def _application_name_is_full_path(app_name):
     return os.path.isabs(app_name) or os.path.exists(app_name)
 
 
+def _prepare_launcher_environment(interface, app_name, app_arguments):
+    launcher_env = _get_application_launcher_env(interface, app_name)
+    _exit_with_message_if_launcher_is_none(launcher_env, app_name)
+    return launcher_env.prepare_environment(app_name, app_arguments)
+
+
+def _exit_with_message_if_launcher_is_none(launcher_env, app_name):
+    if launcher_env is None:
+        _print_message_and_exit_error(
+            "Error: Could not determine introspection type to use for "
+            "application '{app_name}'.\n"
+            "(Perhaps use the '-i' argument to specify an interface.)".format(
+                app_name=app_name
+            )
+        )
+
 def _get_application_launcher_env(interface, application_path):
     launcher_env = None
     if interface == 'Auto':
@@ -338,46 +379,7 @@ def _try_determine_launcher_env_or_exit(app_name):
         )
 
 
-def _exit_with_message_if_launcher_is_none(launcher_env, app_name):
-    if launcher_env is None:
-        _print_message_and_exit_error(
-            "Error: Could not determine introspection type to use for "
-            "application '{app_name}'.\n"
-            "(Perhaps use the '-i' argument to specify an interface.)".format(
-                app_name=app_name
-            )
-        )
 
-
-def _prepare_launcher_environment(interface, app_name, app_arguments):
-    launcher_env = _get_application_launcher_env(interface, app_name)
-    _exit_with_message_if_launcher_is_none(launcher_env, app_name)
-    return launcher_env.prepare_environment(app_name, app_arguments)
-
-
-def _print_message_and_exit_error(msg):
-    print(msg)
-    exit(1)
-
-
-def _get_application_path_and_arguments(application):
-    app_name, app_arguments = _get_app_name_and_args(application)
-
-    try:
-        app_name = _get_applications_full_path(app_name)
-    except ValueError as e:
-        _print_message_and_exit_error(str(e))
-
-    return app_name, app_arguments
-
-
-def _prepare_application_for_launch(application, interface):
-    app_name, app_arguments = _get_application_path_and_arguments(application)
-    return _prepare_launcher_environment(
-        interface,
-        app_name,
-        app_arguments
-    )
 
 
 class TestProgram(object):

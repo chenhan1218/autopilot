@@ -26,9 +26,9 @@ import os
 import psutil
 import subprocess
 import signal
-from autopilot.utilities import sleep
-
 from testtools.content import content_from_file, text_content
+
+from autopilot._timeout import Timeout
 
 from autopilot.application._environment import (
     _call_upstart_with_args,
@@ -63,33 +63,34 @@ class ClickApplicationLauncher(ApplicationLauncher):
 
         _raise_if_not_empty(kwargs)
 
-    def launch(self, package_id, app_name):
+    def launch(self, package_id, app_name, app_uris):
         app_id = _get_click_app_id(package_id, app_name)
 
         _app_env = self.useFixture(UpstartApplicationEnvironment())
-        _app_env._app_env.prepare_environment(
-            app_id,
-            app_name,
-        )
+        _app_env.prepare_environment(app_id, app_name)
 
-        self._attach_application_logs_at_cleanup(app_id)
-        pid = _launch_click_app(app_id)
-        self.addCleanup(self._kill_pid, pid)
+        return self._launch_click_app(app_id, app_uris)
+
+    def _launch_click_app(self, app_id, app_uris):
+        pid = _launch_click_app(app_id, app_uris)
+        self._add_click_launch_cleanup(app_id, pid)
 
         logger.info(
             "Click package %s has been launched with PID %d",
-            self.app_id,
+            app_id,
             pid
         )
 
         return pid
 
-    def _attach_application_logs_at_cleanup(self, app_id):
-        self.addCleanup(
-            lambda: self.case_addDetail(
-                "Application Log",
-                _get_click_application_log_content_object(app_id)
-            )
+    def _add_click_launch_cleanup(self, app_id, pid):
+        self.addCleanup(_kill_pid, pid)
+        self.addCleanup(self._add_log_cleanup, app_id)
+
+    def _add_log_cleanup(self, app_id):
+        self.case_addDetail(
+            "Application Log",
+            _get_click_application_log_content_object(app_id)
         )
 
 
@@ -107,25 +108,31 @@ class NormalApplicationLauncher(ApplicationLauncher):
 
     def launch(self, application, *arguments):
         app_path = _get_application_path(application)
+        app_path, arguments = self._setup_environment(app_path, *arguments)
+        self.process = self._launch_application_process(app_path, *arguments)
 
+        return self.process.pid
+
+    def _setup_environment(self, app_path, *arguments):
         app_env = self.useFixture(
             _get_application_environment(self.app_hint, app_path)
         )
-        app_path, arguments = app_env.prepare_environment(
+        return app_env.prepare_environment(
             app_path,
             list(arguments),
         )
 
-        self.process = launch_process(
+    def _launch_application_process(self, app_path, *arguments):
+        process = launch_process(
             app_path,
             arguments,
             self.capture_output,
             cwd=self.cwd,
         )
 
-        self.addCleanup(self._kill_process_and_attach_logs, self.process)
+        self.addCleanup(self._kill_process_and_attach_logs, process)
 
-        return self.process.pid
+        return process
 
     def _kill_process_and_attach_logs(self, process):
         stdout, stderr, return_code = _kill_process(process)
@@ -162,18 +169,19 @@ def _is_process_running(pid):
     return psutil.pid_exists(pid)
 
 
-def _launch_click_app(app_id):
+def _launch_click_app(app_id, app_uris):
     subprocess.check_output([
         "/sbin/start",
         "application",
         "APP_ID={}".format(app_id),
+        "APP_URIS='{}'".format(app_uris),
     ])
 
     return _get_click_app_pid(app_id)
 
 
 def _get_click_app_status(app_id):
-    _call_upstart_with_args(
+    return _call_upstart_with_args(
         "status",
         "application-click",
         "APP_ID={}".format(app_id)
@@ -181,18 +189,21 @@ def _get_click_app_status(app_id):
 
 
 def _get_click_application_log_content_object(app_id):
+    return content_from_file(_get_click_application_log_path(app_id))
+
+
+def _get_click_application_log_path(app_id):
     log_dir = os.path.expanduser('~/.cache/upstart/')
     log_name = 'application-click-{}.log'.format(app_id)
-    log_path = os.path.join(log_dir, log_name)
-
-    return content_from_file(log_path)
+    return os.path.join(log_dir, log_name)
 
 
 def _get_click_app_id(package_id, app_name=None):
     for pkg in _get_click_manifest():
         if pkg['name'] == package_id:
             if app_name is None:
-                app_name = pkg['hooks'].keys()[0]
+                # py3 dict.keys isn't indexable.
+                app_name = list(pkg['hooks'].keys())[0]
             elif app_name not in pkg['hooks']:
                 raise RuntimeError(
                     "Application '{}' is not present within the click "
@@ -216,7 +227,7 @@ def _get_click_manifest():
 
 
 def _get_click_app_pid(app_id):
-    for i in range(10):
+    for _ in Timeout.default():
         try:
             list_output = _get_click_app_status(app_id)
         except subprocess.CalledProcessError:
@@ -226,8 +237,6 @@ def _get_click_app_pid(app_id):
             for line in list_output.split('\n'):
                 if app_id in line and "start/running" in line:
                     return int(line.split()[-1])
-        # give the app time to launch - maybe this is not needed?:
-        sleep(1)
     else:
         raise RuntimeError(
             "Could not find autopilot interface for click package"
@@ -239,16 +248,15 @@ def _kill_pid(pid):
     """Kill the process with the specified pid."""
     logger.info("waiting for process to exit.")
     _attempt_kill_pid(pid)
-    for i in range(10):
+    for _ in Timeout.default():
         if not _is_process_running(pid):
             break
-        if i == 9:
-            logger.info(
-                "Killing process group, since it hasn't exited after "
-                "10 seconds."
-            )
-            _attempt_kill_pid(pid, signal.SIGKILL)
-        sleep(1)
+    else:
+        logger.info(
+            "Killing process group, since it hasn't exited after the default"
+            "timeout."
+        )
+        _attempt_kill_pid(pid, signal.SIGKILL)
 
 
 def _attempt_kill_pid(pid, sig=signal.SIGTERM):
@@ -259,11 +267,13 @@ def _attempt_kill_pid(pid, sig=signal.SIGTERM):
         logger.info("Appears process has already exited.")
 
 
-def _get_application_environment(app_hint, app_path):
+def _get_application_environment(app_hint=None, app_path=None):
+    if app_hint is None and app_path is None:
+        raise ValueError("Must specify either app_hint or app_path.")
     try:
         if app_hint is not None:
             return _get_app_env_from_string_hint(app_hint)
-        elif app_path is not None:
+        else:
             return get_application_launcher_wrapper(app_path)
     except (RuntimeError, ValueError) as e:
         logger.error(str(e))
@@ -290,7 +300,7 @@ def get_application_launcher_wrapper(app_path):
             universal_newlines=True
         ).strip().lower()
     except subprocess.CalledProcessError as e:
-        raise RuntimeError(e)
+        raise RuntimeError(str(e))
     if 'libqtcore' in ldd_output or 'libqt5core' in ldd_output:
         return QtApplicationEnvironment()
     elif 'libgtk' in ldd_output:
@@ -312,10 +322,10 @@ def _get_application_path(application):
 
 
 def _get_app_env_from_string_hint(hint):
-    hint = hint.lower()
-    if hint == 'qt':
+    lower_hint = hint.lower()
+    if lower_hint == 'qt':
         return QtApplicationEnvironment()
-    elif hint == 'gtk':
+    elif lower_hint == 'gtk':
         return GtkApplicationEnvironment()
 
     raise ValueError("Unknown hint string: {hint}".format(hint=hint))
@@ -327,19 +337,18 @@ def _kill_process(process):
     stderr = ""
     logger.info("waiting for process to exit.")
     _attempt_kill_pid(process.pid)
-    for i in range(10):
+    for _ in Timeout.default():
         tmp_out, tmp_err = process.communicate()
         stdout += tmp_out
         stderr += tmp_err
         if not _is_process_running(process.pid):
             break
-        if i == 9:
-            logger.info(
-                "Killing process group, since it hasn't exited after "
-                "10 seconds."
-            )
-            _attempt_kill_pid(process.pid, signal.SIGKILL)
-        sleep(1)
+    else:
+        logger.info(
+            "Killing process group, since it hasn't exited after "
+            "10 seconds."
+        )
+        _attempt_kill_pid(process.pid, signal.SIGKILL)
     return stdout, stderr, process.returncode
 
 

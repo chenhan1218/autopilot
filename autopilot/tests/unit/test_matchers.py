@@ -28,17 +28,20 @@ from testtools import TestCase
 from testtools.matchers import (
     Contains,
     Equals,
+    Is,
     IsInstance,
     Mismatch,
     raises,
 )
 
 from autopilot.introspection.dbus import DBusIntrospectionObject
+from autopilot.introspection.types import Color, ValueType
 from autopilot.matchers import Eventually
 from autopilot.utilities import sleep
 
 
-def make_fake_attribute_with_result(result, attribute_type='wait_for'):
+def make_fake_attribute_with_result(result, attribute_type='wait_for',
+                                    typeid=None):
     """Make a fake attribute with the given result.
 
     This will either return a callable, or an attribute patched with a
@@ -64,6 +67,9 @@ def make_fake_attribute_with_result(result, attribute_type='wait_for'):
             obj = FakeObject(
                 dict(id=[0, 123], attr=[0, dbus.UTF8String(result)])
             )
+            return obj.attr
+        elif typeid is not None:
+            obj = FakeObject(dict(id=[0, 123], attr=[typeid] + result))
             return obj.attr
         else:
             obj = FakeObject(dict(id=[0, 123], attr=[0, dbus.Boolean(result)]))
@@ -137,6 +143,21 @@ class EventuallyMatcherTests(TestWithScenarios, MockedSleepTests):
         mismatch = Eventually(Equals(True), timeout=1).match(attr)
         self.assertThat(
             mismatch.describe(), Contains("After 1.0 seconds test"))
+
+    def test_eventually_matcher_works_with_list_type(self):
+        attr = make_fake_attribute_with_result(
+            Color(
+                dbus.Int32(1),
+                dbus.Int32(2),
+                dbus.Int32(3),
+                dbus.Int32(4)
+            ),
+            self.attribute_type,
+            typeid=ValueType.COLOR,
+        )
+
+        mismatch = Eventually(Equals([1, 2, 3, 4])).match(attr)
+        self.assertThat(mismatch, Is(None))
 
 
 class EventuallyNonScenariodTests(MockedSleepTests):

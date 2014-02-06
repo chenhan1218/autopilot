@@ -12,6 +12,7 @@ Build-Depends: debhelper (>= 9.0.0),
                graphviz,
                liblttng-ust-dev,
                python-all-dev (>= 2.6),
+               python-contextlib2,
                python-dbus,
                python-debian,
                python-dev,
@@ -51,6 +52,7 @@ Package: python-autopilot
 Architecture: all
 Depends: ${misc:Depends},
          ${python:Depends},
+         python-contextlib2,
          python-dbus,
          python-fixtures,
          python-junitxml,
@@ -89,7 +91,7 @@ Depends: ${misc:Depends},
 Recommends: python3-xlib,
             python3-evdev,
             gir1.2-gconf-2.0,
-            gir1.2-glib-2.0 (>= 1.39.0-0ubuntu1),
+            gir1.2-glib-2.0,
             gir1.2-gtk-3.0,
             gir1.2-ibus-1.0,
             libautopilot-gtk (>= 1.4),
@@ -125,10 +127,12 @@ Description: Support for tracing in autopilot (Python 3)
  an instrumented application.
 
 Package: autopilot-touch
-Architecture: any
+Architecture: all
 Section: metapackages
 Depends: ${misc:Depends},
-         libautopilot-qt (>= 1.4) [!powerpc],
+         libautopilot-qt (>= 1.4),
+         python3-autopilot,
+         python3-evdev,
          python-autopilot,
          python-evdev,
          fbset,
@@ -141,7 +145,7 @@ Architecture: all
 Section: metapackages
 Depends: ${misc:Depends},
          gir1.2-gconf-2.0,
-         gir1.2-glib-2.0 (>= 1.39.0-0ubuntu1),
+         gir1.2-glib-2.0,
          gir1.2-gtk-3.0,
          gir1.2-ibus-1.0,
          python-autopilot,

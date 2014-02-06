@@ -35,9 +35,8 @@ from autopilot.dbus_handler import get_session_bus
 from autopilot.utilities import (
     addCleanup,
     Silence,
-    sleep,
 )
-
+from autopilot._timeout import Timeout
 from autopilot.process import (
     ProcessManager as ProcessManagerBase,
     Application as ApplicationBase,
@@ -165,7 +164,7 @@ class ProcessManager(ProcessManagerBase):
         apps = self.get_running_applications_by_desktop_file(
             app['desktop-file'])
 
-        for i in range(10):
+        for _ in Timeout.default():
             try:
                 new_windows = []
                 [new_windows.extend(a.get_windows()) for a in apps]
@@ -177,7 +176,6 @@ class ProcessManager(ProcessManagerBase):
                     return new_wins[0]
             except dbus.DBusException:
                 pass
-            sleep(1)
         return None
 
     def get_open_windows_by_application(self, app_name):
@@ -326,17 +324,27 @@ class ProcessManager(ProcessManagerBase):
         """
         if type(files) is not list:
             raise TypeError("files must be a list.")
-        proc = Gio.DesktopAppInfo.new(desktop_file)
-        # simple launch_uris() uses GLib.SpawnFlags.SEARCH_PATH by default
-        # only, but this inherits stdout; we don't want that as it hangs when
-        # tee'ing autopilot output into a file
+        proc = _launch_application(desktop_file, files)
+        if wait:
+            self.wait_until_application_is_running(desktop_file, 10)
+        return proc
+
+
+def _launch_application(desktop_file, files):
+    proc = Gio.DesktopAppInfo.new(desktop_file)
+    # simple launch_uris() uses GLib.SpawnFlags.SEARCH_PATH by default only,
+    # but this inherits stdout; we don't want that as it hangs when tee'ing
+    # autopilot output into a file.
+    # Instead of depending on a newer version of gir/glib attempt to use the
+    # newer verison (i.e. launch_uris_as_manager works) and fall back on using
+    # the simple launch_uris
+    try:
         proc.launch_uris_as_manager(
             files, None,
             GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.STDOUT_TO_DEV_NULL,
             None, None, None, None)
-        if wait:
-            self.wait_until_application_is_running(desktop_file, 10)
-        return proc
+    except TypeError:
+        proc.launch_uris(files, None)
 
 
 class Application(ApplicationBase):

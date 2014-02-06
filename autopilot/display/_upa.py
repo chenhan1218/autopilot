@@ -21,42 +21,46 @@
 import logging
 
 from autopilot.display import Display as DisplayBase
-from subprocess import check_output
+import subprocess
 
-try:
-    FBSET = check_output(["fbset", "-s"]).decode().strip()
-except OSError:
-    FBSET = ''
 
-if FBSET:
-    X, Y = [int(i) for i in
-            FBSET.splitlines()[0].split('"')[1].split('x')]
-else:
+def query_resolution():
     try:
-        DEVICE = check_output(
-            ["/usr/bin/getprop", "ro.product.device"]).decode().strip()
+        FBSET = subprocess.check_output(["fbset", "-s"]).decode().strip()
     except OSError:
-        DEVICE = ''
+        try:
+            DEVICE = subprocess.check_output(
+                ["/usr/bin/getprop", "ro.product.device"]).decode().strip()
+        except OSError:
+            DEVICE = ''
 
-    RESOLUTIONS = {
-        "generic": (480, 800),
-        "mako": (768, 1280),
-        "maguro": (720, 1280),
-        "manta": (2560, 1600),
-        "grouper": (800, 1280),
-    }
+        RESOLUTIONS = {
+            "generic": (480, 800),
+            "mako": (768, 1280),
+            "maguro": (720, 1280),
+            "manta": (2560, 1600),
+            "grouper": (800, 1280),
+        }
 
-    if not FBSET and DEVICE not in RESOLUTIONS:
-        raise NotImplementedError(
-            'Device "{}" is not supported by Autopilot.'.format(DEVICE))
+        if DEVICE not in RESOLUTIONS:
+            raise NotImplementedError(
+                'Device "{}" is not supported by Autopilot.'.format(DEVICE))
 
-    X, Y = RESOLUTIONS[DEVICE]
+        return RESOLUTIONS[DEVICE]
+    else:
+        return tuple([int(i) for i in
+                      FBSET.splitlines()[0].split('"')[1].split('x')])
+
 
 logger = logging.getLogger(__name__)
 
 
 class Display(DisplayBase):
     """The base class/inteface for the display devices"""
+
+    def __init__(self):
+        self._X, self._Y = query_resolution()
+        super(Display, self).__init__()
 
     def get_num_screens(self):
         """Get the number of screens attached to the PC."""
@@ -67,10 +71,10 @@ class Display(DisplayBase):
         return 0
 
     def get_screen_width(self):
-        return X
+        return self._X
 
     def get_screen_height(self):
-        return Y
+        return self._Y
 
     def get_screen_geometry(self, screen_number):
         """Get the geometry for a particular screen.
@@ -78,4 +82,4 @@ class Display(DisplayBase):
         :return: Tuple containing (x, y, width, height).
 
         """
-        return (0, 0, X, Y)
+        return (0, 0, self._X, self._Y)

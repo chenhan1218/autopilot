@@ -447,7 +447,9 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
     assertProperties = assertProperty
 
-    @deprecated("the 'app_type' argument to the launch_test_application method")
+    @deprecated(
+        "the 'app_type' argument to the launch_test_application method"
+    )
     def pick_app_launcher(self, app_path):
         """Given an application path, return an object suitable for launching
         the application.

@@ -142,7 +142,10 @@ class IntrospectionFeatureTests(AutopilotTestCase):
         out = stream.getvalue()
 
         # starts with root node
-        self.assertThat(out, StartsWith("== /window-mocker/QMainWindow ==\nChildren:"))
+        self.assertThat(
+            out,
+            StartsWith("== /window-mocker/QMainWindow ==\nChildren:")
+        )
         # has root node properties
         self.assertThat(
             out,
@@ -153,15 +156,21 @@ class IntrospectionFeatureTests(AutopilotTestCase):
         )
 
         # has level-1 widgets with expected indent
-        self.assertThat(out,
-                        Contains("  == /window-mocker/QMainWindow/QRubberBand ==\n"))
+        self.assertThat(
+            out,
+            Contains("  == /window-mocker/QMainWindow/QRubberBand ==\n")
+        )
         self.assertThat(
             out,
             MatchesRegex(".*  objectName: [u]?'qt_rubberband'\n", re.DOTALL)
         )
         # has level-2 widgets with expected indent
-        self.assertThat(out, Contains("    == /window-mocker/QMainWindow/QMenuBar/"
-                                      "QToolButton =="))
+        self.assertThat(
+            out,
+            Contains(
+                "    == /window-mocker/QMainWindow/QMenuBar/QToolButton =="
+            )
+        )
         self.assertThat(
             out,
             MatchesRegex(
@@ -202,7 +211,9 @@ class IntrospectionFeatureTests(AutopilotTestCase):
         # for multi-monitor setups, make sure we examine the full desktop
         # space:
         for monitor in range(display.get_num_screens()):
-            sx, sy, swidth, sheight = Display.create().get_screen_geometry(monitor)
+            sx, sy, swidth, sheight = Display.create().get_screen_geometry(
+                monitor
+            )
             if left is None or sx < left:
                 left = sx
             if top is None or sy < top:

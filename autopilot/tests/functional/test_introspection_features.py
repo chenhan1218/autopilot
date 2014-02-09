@@ -142,7 +142,7 @@ class IntrospectionFeatureTests(AutopilotTestCase):
         out = stream.getvalue()
 
         # starts with root node
-        self.assertThat(out, StartsWith("== /Root/QMainWindow ==\nChildren:"))
+        self.assertThat(out, StartsWith("== /window-mocker/QMainWindow ==\nChildren:"))
         # has root node properties
         self.assertThat(
             out,
@@ -154,13 +154,13 @@ class IntrospectionFeatureTests(AutopilotTestCase):
 
         # has level-1 widgets with expected indent
         self.assertThat(out,
-                        Contains("  == /Root/QMainWindow/QRubberBand ==\n"))
+                        Contains("  == /window-mocker/QMainWindow/QRubberBand ==\n"))
         self.assertThat(
             out,
             MatchesRegex(".*  objectName: [u]?'qt_rubberband'\n", re.DOTALL)
         )
         # has level-2 widgets with expected indent
-        self.assertThat(out, Contains("    == /Root/QMainWindow/QMenuBar/"
+        self.assertThat(out, Contains("    == /window-mocker/QMainWindow/QMenuBar/"
                                       "QToolButton =="))
         self.assertThat(
             out,
@@ -181,12 +181,12 @@ class IntrospectionFeatureTests(AutopilotTestCase):
         out = stream.getvalue()
 
         # has level-0 (root) node
-        self.assertThat(out, Contains("== /Root/QMainWindow =="))
+        self.assertThat(out, Contains("== /window-mocker/QMainWindow =="))
         # has level-1 widgets
-        self.assertThat(out, Contains("/Root/QMainWindow/QMenuBar"))
+        self.assertThat(out, Contains("/window-mocker/QMainWindow/QMenuBar"))
         # no level-2 widgets
         self.assertThat(out, Not(Contains(
-            "/Root/QMainWindow/QMenuBar/QToolButton")))
+            "/window-mocker/QMainWindow/QMenuBar/QToolButton")))
 
     def test_window_geometry(self):
         """Window.geometry property
@@ -198,15 +198,27 @@ class IntrospectionFeatureTests(AutopilotTestCase):
         self.start_mock_app(EmulatorBase)
 
         display = Display.create()
+        top = left = width = height = None
+        # for multi-monitor setups, make sure we examine the full desktop
+        # space:
         for monitor in range(display.get_num_screens()):
-            (_, _, swidth, sheight) = Display.create().get_screen_geometry(0)
-            for win in self.process_manager.get_open_windows():
-                geom = win.geometry
-                self.assertThat(len(geom), Equals(4))
-                self.assertThat(geom[0], GreaterThan(-1))  # no GreaterEquals
-                self.assertThat(geom[1], GreaterThan(-1))
-                self.assertThat(geom[2], LessThan(swidth + 1))
-                self.assertThat(geom[3], LessThan(sheight + 1))
+            sx, sy, swidth, sheight = Display.create().get_screen_geometry(monitor)
+            if left is None or sx < left:
+                left = sx
+            if top is None or sy < top:
+                top = sy
+            if width is None or swidth >= width:
+                width = swidth
+            if height is None or sheight >= height:
+                height = sheight
+
+        for win in self.process_manager.get_open_windows():
+            geom = win.geometry
+            self.assertThat(len(geom), Equals(4))
+            self.assertThat(geom[0], GreaterThan(left - 1))  # no GreaterEquals
+            self.assertThat(geom[1], GreaterThan(top - 1))
+            self.assertThat(geom[2], LessThan(width + 1))
+            self.assertThat(geom[3], LessThan(height + 1))
 
 
 class QMLCustomEmulatorTestCase(AutopilotTestCase):

@@ -34,5 +34,9 @@ class QueryResolutionFunctionTests(TestCase):
         self.assertEqual((768, 1280), query_resolution())
 
     @patch('subprocess.check_output', side_effect=[OSError(), b'warhog'])
-    def test_dict_lookup_fail(self, mock_check_output):
+    def test_dict_lookup_name_fail(self, mock_check_output):
+        self.assertRaises(NotImplementedError, query_resolution)
+
+    @patch('subprocess.check_output', side_effect=[OSError(), OSError()])
+    def test_dict_lookup_noname_fail(self, mock_check_output):
         self.assertRaises(NotImplementedError, query_resolution)

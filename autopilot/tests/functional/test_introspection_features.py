@@ -19,6 +19,7 @@
 
 from dbus import SessionBus
 import json
+import logging
 from mock import patch
 import os
 import re
@@ -43,6 +44,9 @@ from autopilot.testcase import AutopilotTestCase
 from autopilot.introspection.dbus import CustomEmulatorBase
 from autopilot.introspection import _connection_matches_pid
 from autopilot.display import Display
+
+
+logger = logging.getLogger(__name__)
 
 
 class EmulatorBase(CustomEmulatorBase):
@@ -207,29 +211,45 @@ class IntrospectionFeatureTests(AutopilotTestCase):
         self.start_mock_app(EmulatorBase)
 
         display = Display.create()
-        top = left = width = height = None
+        top = left = right = bottom = None
         # for multi-monitor setups, make sure we examine the full desktop
         # space:
         for monitor in range(display.get_num_screens()):
             sx, sy, swidth, sheight = Display.create().get_screen_geometry(
                 monitor
             )
+            logger.info(
+                "Monitor %d geometry is (%d, %d, %d, %d)",
+                monitor,
+                sx,
+                sy,
+                swidth,
+                sheight,
+            )
             if left is None or sx < left:
                 left = sx
             if top is None or sy < top:
                 top = sy
-            if width is None or swidth >= width:
-                width = swidth
-            if height is None or sheight >= height:
-                height = sheight
+            if right is None or sx + swidth >= right:
+                right = sx + swidth
+            if bottom is None or sy + sheight >= bottom:
+                bottom = sy + sheight
 
+        logger.info(
+            "Total desktop geometry is (%d, %d), (%d, %d)",
+            left,
+            top,
+            right,
+            bottom,
+        )
         for win in self.process_manager.get_open_windows():
+            logger.info("Win '%r' geometry is %r", win, win.geometry)
             geom = win.geometry
             self.assertThat(len(geom), Equals(4))
             self.assertThat(geom[0], GreaterThan(left - 1))  # no GreaterEquals
             self.assertThat(geom[1], GreaterThan(top - 1))
-            self.assertThat(geom[2], LessThan(width + 1))
-            self.assertThat(geom[3], LessThan(height + 1))
+            self.assertThat(geom[2], LessThan(right))
+            self.assertThat(geom[3], LessThan(bottom))
 
 
 class QMLCustomEmulatorTestCase(AutopilotTestCase):

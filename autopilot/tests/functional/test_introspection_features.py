@@ -25,8 +25,16 @@ import re
 import subprocess
 import tempfile
 from tempfile import mktemp
-from testtools.matchers import Equals, IsInstance, MatchesRegex, Not, Contains
-from testtools.matchers import LessThan, GreaterThan
+from testtools.matchers import (
+    Contains,
+    Equals,
+    GreaterThan,
+    IsInstance,
+    LessThan,
+    MatchesRegex,
+    Not,
+    StartsWith,
+)
 from textwrap import dedent
 from six import StringIO
 
@@ -134,8 +142,7 @@ class IntrospectionFeatureTests(AutopilotTestCase):
         out = stream.getvalue()
 
         # starts with root node
-        self.assertThat(out.startswith("== /Root/QMainWindow ==\nChildren:"),
-                        Equals(True))
+        self.assertThat(out, StartsWith("== /Root/QMainWindow ==\nChildren:"))
         # has root node properties
         self.assertThat(
             out,

@@ -313,7 +313,7 @@ def _get_application_path_and_arguments(application):
     try:
         app_name = _get_applications_full_path(app_name)
     except ValueError as e:
-        _print_message_and_exit_error(str(e))
+        raise RuntimeError(str(e))
 
     return app_name, app_arguments
 
@@ -343,13 +343,13 @@ def _application_name_is_full_path(app_name):
 
 def _prepare_launcher_environment(interface, app_name, app_arguments):
     launcher_env = _get_application_launcher_env(interface, app_name)
-    _exit_with_message_if_launcher_is_none(launcher_env, app_name)
+    _raise_if_launcher_is_none(launcher_env, app_name)
     return launcher_env.prepare_environment(app_name, app_arguments)
 
 
-def _exit_with_message_if_launcher_is_none(launcher_env, app_name):
+def _raise_if_launcher_is_none(launcher_env, app_name):
     if launcher_env is None:
-        _print_message_and_exit_error(
+        raise RuntimeError(
             "Error: Could not determine introspection type to use for "
             "application '{app_name}'.\n"
             "(Perhaps use the '-i' argument to specify an interface.)".format(
@@ -361,18 +361,19 @@ def _exit_with_message_if_launcher_is_none(launcher_env, app_name):
 def _get_application_launcher_env(interface, application_path):
     launcher_env = None
     if interface == 'Auto':
-        launcher_env = _try_determine_launcher_env_or_exit(application_path)
+        launcher_env = _try_determine_launcher_env_or_raise(application_path)
     else:
         launcher_env = _get_app_env_from_string_hint(interface)
 
     return launcher_env
 
 
-def _try_determine_launcher_env_or_exit(app_name):
+def _try_determine_launcher_env_or_raise(app_name):
     try:
         return get_application_launcher_wrapper(app_name)
     except RuntimeError as e:
-        _print_message_and_exit_error(
+        # Re-format the runtime error to be more user friendly.
+        raise RuntimeError(
             "Error detecting launcher: {err}\n"
             "(Perhaps use the '-i' argument to specify an interface.)".format(
                 err=str(e)

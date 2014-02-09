@@ -283,7 +283,7 @@ class TestRunLaunchAppHelpers(TestCase):
 
         with patch.object(
             run,
-            '_try_determine_launcher_env_or_exit',
+            '_try_determine_launcher_env_or_raise',
             return_value=test_launcher_env
         ) as get_launcher:
             self.assertThat(
@@ -322,33 +322,27 @@ class TestRunLaunchAppHelpers(TestCase):
                 Equals(None)
             )
 
-    def test_try_determine_launcher_env_or_exit_exits_with_message_on_failure(self):  # NOQA
+    def test_try_determine_launcher_env_or_raise_raises_on_failure(self):
         app_name = self.getUniqueString()
         err_msg = self.getUniqueString()
-        with ExitStack() as stack:
-            stack.enter_context(
-                patch.object(
-                    run,
-                    'get_application_launcher_wrapper',
-                    side_effect=RuntimeError(err_msg)
+        with patch.object(
+            run,
+            'get_application_launcher_wrapper',
+            side_effect=RuntimeError(err_msg)
+        ):
+            self.assertThat(
+                lambda: run._try_determine_launcher_env_or_raise(app_name),
+                raises(
+                    RuntimeError(
+                        "Error detecting launcher: {err}\n"
+                        "(Perhaps use the '-i' argument to specify an "
+                        "interface.)"
+                        .format(err=err_msg)
+                    )
                 )
             )
-            message_and_exit = stack.enter_context(
-                patch.object(
-                    run,
-                    '_print_message_and_exit_error',
-                )
-            )
 
-            run._try_determine_launcher_env_or_exit(app_name)
-
-            message_and_exit.assert_called_once_with(
-                "Error detecting launcher: {err}\n"
-                "(Perhaps use the '-i' argument to specify an interface.)"
-                .format(err=err_msg)
-            )
-
-    def test_try_determine_launcher_env_or_exit_returns_launcher_wrapper_result(self):  # NOQA
+    def test_try_determine_launcher_env_or_raise_returns_launcher_wrapper_result(self):  # NOQA
         app_name = self.getUniqueString()
         launcher_env = self.getUniqueString()
 
@@ -358,35 +352,30 @@ class TestRunLaunchAppHelpers(TestCase):
             return_value=launcher_env
         ):
             self.assertThat(
-                run._try_determine_launcher_env_or_exit(app_name),
+                run._try_determine_launcher_env_or_raise(app_name),
                 Equals(launcher_env)
             )
 
-    def test_exit_with_message_if_launcher_is_none_exits_on_none(self):
+    def test_raise_if_launcher_is_none_raises_on_none(self):
         app_name = self.getUniqueString()
-        with patch.object(
-            run,
-            '_print_message_and_exit_error'
-        ) as message_and_exit:
-            run._exit_with_message_if_launcher_is_none(None, app_name)
 
-            message_and_exit.assert_called_once_with(
-                "Error: Could not determine introspection type to use for "
-                "application '{app_name}'.\n"
-                "(Perhaps use the '-i' argument to specify an interface.)"
-                .format(app_name=app_name)
+        self.assertThat(
+            lambda: run._raise_if_launcher_is_none(None, app_name),
+            raises(
+                RuntimeError(
+                    "Error: Could not determine introspection type to use for "
+                    "application '{app_name}'.\n"
+                    "(Perhaps use the '-i' argument to specify an interface.)"
+                    .format(app_name=app_name)
+                )
             )
+        )
 
-    def test_exit_with_message_if_launcher_is_none_doesnt_exit_on_none(self):
+    def test_raise_if_launcher_is_none_does_not_raise_on_none(self):
         launcher_env = self.getUniqueString()
         app_name = self.getUniqueString()
-        with patch.object(
-            run,
-            '_print_message_and_exit_error'
-        ) as message_and_exit:
-            run._exit_with_message_if_launcher_is_none(launcher_env, app_name)
 
-            self.assertThat(message_and_exit.call_count, Equals(0))
+        run._raise_if_launcher_is_none(launcher_env, app_name)
 
     def test_prepare_launcher_environment_creates_launcher_env(self):
         interface = self.getUniqueString()
@@ -408,7 +397,7 @@ class TestRunLaunchAppHelpers(TestCase):
                 Equals((app_name, app_arguments))
             )
 
-    def test_prepare_launcher_environment_check_launcher_isnt_None(self):
+    def test_prepare_launcher_environment_checks_launcher_isnt_None(self):
         interface = self.getUniqueString()
         app_name = self.getUniqueString()
         app_arguments = self.getUniqueString()
@@ -421,14 +410,14 @@ class TestRunLaunchAppHelpers(TestCase):
 
             with patch.object(
                 run,
-                '_exit_with_message_if_launcher_is_none'
-            ) as exit_with_message:
+                '_raise_if_launcher_is_none'
+            ) as launcher_check:
                 run._prepare_launcher_environment(
                     interface,
                     app_name,
                     app_arguments
                 )
-                exit_with_message.assert_called_once_with(
+                launcher_check.assert_called_once_with(
                     get_launcher.return_value,
                     app_name
                 )

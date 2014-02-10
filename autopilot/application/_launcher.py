@@ -26,7 +26,7 @@ import os
 import psutil
 import subprocess
 import signal
-from testtools.content import content_from_file, text_content
+from testtools.content import content_from_file, text_content, content_from_reader
 
 from autopilot._timeout import Timeout
 
@@ -141,8 +141,8 @@ class NormalApplicationLauncher(ApplicationLauncher):
             'process-return-code',
             text_content(str(return_code))
         )
-        self.case_addDetail('process-stdout', text_content(stdout))
-        self.case_addDetail('process-stderr', text_content(stderr))
+        self.case_addDetail('process-stdout', text_content(stdout.decode('utf-8', errors='replace')))
+        self.case_addDetail('process-stderr', text_content(stderr.decode('utf-8', errors='replace')))
 
 
 def launch_process(application, args, capture_output=False, **kwargs):

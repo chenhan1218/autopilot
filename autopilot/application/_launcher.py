@@ -60,6 +60,7 @@ class ClickApplicationLauncher(ApplicationLauncher):
 
         self.emulator_base = kwargs.pop('emulator_base', None)
         self.dbus_bus = kwargs.pop('dbus_bus', 'session')
+        self.dbus_application_name = kwargs.pop('application_name', None)
 
         _raise_if_not_empty(kwargs)
 
@@ -221,7 +222,8 @@ def _get_click_manifest():
     # get the whole click package manifest every time - it seems fast enough
     # but this is a potential optimisation point for the future:
     click_manifest_str = subprocess.check_output(
-        ["click", "list", "--manifest"]
+        ["click", "list", "--manifest"],
+        universal_newlines=True
     )
     return json.loads(click_manifest_str)
 

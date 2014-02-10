@@ -185,7 +185,7 @@ class TestRunLaunchApp(TestCase):
                     "Failure Message"
                 )
                 program = run.TestProgram(fake_args)
-                self.assertThat(lambda: program.run(), raises(SystemExit(1)) )
+                self.assertThat(lambda: program.run(), raises(SystemExit(1)))
                 self.assertThat(
                     stdout.getvalue(),
                     Contains("Error: Failure Message")

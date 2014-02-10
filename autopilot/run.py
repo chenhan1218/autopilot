@@ -293,11 +293,6 @@ def _have_video_recording_facilities():
     return call_ret_code == 0
 
 
-def _print_message_and_exit_error(msg):
-    print(msg)
-    exit(1)
-
-
 def _prepare_application_for_launch(application, interface):
     app_path, app_arguments = _get_application_path_and_arguments(application)
     return _prepare_launcher_environment(
@@ -380,6 +375,11 @@ def _try_determine_launcher_env_or_raise(app_name):
                 err=str(e)
             )
         )
+
+
+def _print_message_and_exit_error(msg):
+    print(msg)
+    exit(1)
 
 
 class TestProgram(object):

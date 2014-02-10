@@ -299,10 +299,10 @@ def _print_message_and_exit_error(msg):
 
 
 def _prepare_application_for_launch(application, interface):
-    app_name, app_arguments = _get_application_path_and_arguments(application)
+    app_path, app_arguments = _get_application_path_and_arguments(application)
     return _prepare_launcher_environment(
         interface,
-        app_name,
+        app_path,
         app_arguments
     )
 
@@ -312,11 +312,11 @@ def _get_application_path_and_arguments(application):
     app_name, app_arguments = _get_app_name_and_args(application)
 
     try:
-        app_name = _get_applications_full_path(app_name)
+        app_path = _get_applications_full_path(app_name)
     except ValueError as e:
         raise RuntimeError(str(e))
 
-    return app_name, app_arguments
+    return app_path, app_arguments
 
 
 def _get_app_name_and_args(argument_list):
@@ -342,19 +342,19 @@ def _application_name_is_full_path(app_name):
     return os.path.isabs(app_name) or os.path.exists(app_name)
 
 
-def _prepare_launcher_environment(interface, app_name, app_arguments):
-    launcher_env = _get_application_launcher_env(interface, app_name)
-    _raise_if_launcher_is_none(launcher_env, app_name)
-    return launcher_env.prepare_environment(app_name, app_arguments)
+def _prepare_launcher_environment(interface, app_path, app_arguments):
+    launcher_env = _get_application_launcher_env(interface, app_path)
+    _raise_if_launcher_is_none(launcher_env, app_path)
+    return launcher_env.prepare_environment(app_path, app_arguments)
 
 
-def _raise_if_launcher_is_none(launcher_env, app_name):
+def _raise_if_launcher_is_none(launcher_env, app_path):
     if launcher_env is None:
         raise RuntimeError(
             "Error: Could not determine introspection type to use for "
-            "application '{app_name}'.\n"
+            "application '{app_path}'.\n"
             "(Perhaps use the '-i' argument to specify an interface.)".format(
-                app_name=app_name
+                app_path=app_path
             )
         )
 
@@ -425,14 +425,14 @@ class TestProgram(object):
     def launch_app(self):
         """Launch an application, with introspection support."""
 
-        app_name, app_arguments = _prepare_application_for_launch(
+        app_path, app_arguments = _prepare_application_for_launch(
             self.args.application,
             self.args.interface
         )
 
         try:
             launch_process(
-                app_name,
+                app_path,
                 app_arguments,
                 capture_output=False
             )

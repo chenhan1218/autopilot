@@ -170,8 +170,8 @@ class UInputTestCase(TestCase):
             Contains(
                 "This function is deprecated. Please use 'the Touch class to "
                 "instantiate a device object' instead."
-             )
-         )
+            )
+        )
 
 
 class UInputKeyboardDeviceTestCase(TestCase):

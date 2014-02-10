@@ -181,7 +181,7 @@ class TestRunLaunchApp(TestCase):
     def test_launch_app_exits_using_print_message_and_exit_error(self):
         app_name = self.getUniqueString()
         app_arguments = self.getUniqueString()
-        error_message = "Error: cannot find application 'blah'"
+        error_message = "Cannot find application 'blah'"
         fake_args = Namespace(
             mode='launch',
             application=[app_name, app_arguments],
@@ -191,13 +191,15 @@ class TestRunLaunchApp(TestCase):
         with patch.object(
             run,
             '_prepare_application_for_launch',
-            side_effect=RuntimeError(error_message)
+                side_effect=RuntimeError(error_message)
         ):
             with patch.object(
                 run, '_print_message_and_exit_error'
             ) as print_and_exit:
                 run.TestProgram(fake_args).run()
-                print_and_exit.assert_called_once_with(error_message)
+                print_and_exit.assert_called_once_with(
+                    "Error: %s" % error_message
+                )
 
     @patch.object(run, 'launch_process')
     def test_launch_app_exits_with_message_on_failure(self, patched_launch_proc):  # NOQA
@@ -300,7 +302,7 @@ class TestRunLaunchAppHelpers(TestCase):
 
     def test_get_applications_full_path_raises_valueerror_when_not_found(self):
         app_name = self.getUniqueString()
-        expected_error = "Error: cannot find application '%s'" % (app_name)
+        expected_error = "Cannot find application '%s'" % (app_name)
 
         with patch.object(
             run.subprocess,
@@ -314,7 +316,7 @@ class TestRunLaunchAppHelpers(TestCase):
 
     def test_get_application_path_and_arguments_raises_for_unknown_app(self):
         app_name = self.getUniqueString()
-        expected_error = "Error: cannot find application '{app_name}'".format(
+        expected_error = "Cannot find application '{app_name}'".format(
             app_name=app_name
         )
 
@@ -423,7 +425,7 @@ class TestRunLaunchAppHelpers(TestCase):
             lambda: run._raise_if_launcher_is_none(None, app_name),
             raises(
                 RuntimeError(
-                    "Error: Could not determine introspection type to use for "
+                    "Could not determine introspection type to use for "
                     "application '{app_name}'.\n"
                     "(Perhaps use the '-i' argument to specify an interface.)"
                     .format(app_name=app_name)

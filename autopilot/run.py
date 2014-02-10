@@ -369,7 +369,7 @@ def _get_applications_full_path(app_name):
             ).strip()
         except subprocess.CalledProcessError:
             raise ValueError(
-                "Error: cannot find application '%s'" % (app_name)
+                "Cannot find application '%s'" % (app_name)
             )
     return app_name
 
@@ -387,7 +387,7 @@ def _prepare_launcher_environment(interface, app_path, app_arguments):
 def _raise_if_launcher_is_none(launcher_env, app_path):
     if launcher_env is None:
         raise RuntimeError(
-            "Error: Could not determine introspection type to use for "
+            "Could not determine introspection type to use for "
             "application '{app_path}'.\n"
             "(Perhaps use the '-i' argument to specify an interface.)".format(
                 app_path=app_path
@@ -466,12 +466,12 @@ class TestProgram(object):
     def launch_app(self):
         """Launch an application, with introspection support."""
 
-        app_path, app_arguments = _prepare_application_for_launch(
-            self.args.application,
-            self.args.interface
-        )
-
         try:
+            app_path, app_arguments = _prepare_application_for_launch(
+                self.args.application,
+                self.args.interface
+            )
+
             launch_process(
                 app_path,
                 app_arguments,

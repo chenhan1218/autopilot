@@ -20,8 +20,9 @@
 import testscenarios
 from evdev import ecodes, uinput
 from mock import ANY, call, patch, Mock
+from six import StringIO
 from testtools import TestCase
-from testtools.matchers import raises
+from testtools.matchers import Contains, raises
 
 from autopilot.input import _uinput
 from autopilot.input._common import get_center_point
@@ -155,6 +156,22 @@ class InputCenterPointTests(TestCase):
 
         self.assertEqual(123, x)
         self.assertEqual(345, y)
+
+
+class UInputTestCase(TestCase):
+    """Tests for the global methods of the uinput module."""
+
+    def test_create_touch_device_must_print_deprecation_message(self):
+        with patch('sys.stderr', new=StringIO()) as stderr:
+            with patch('autopilot.input._uinput.UInput'):
+                _uinput.create_touch_device()
+        self.assertThat(
+            stderr.getvalue(),
+            Contains(
+                "This function is deprecated. Please use 'the Touch class to "
+                "instantiate a device object' instead."
+             )
+         )
 
 
 class UInputKeyboardDeviceTestCase(TestCase):

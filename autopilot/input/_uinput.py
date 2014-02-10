@@ -235,7 +235,8 @@ def create_touch_device(res_x=None, res_y=None):
     If res_x and res_y are not specified, they will be queried from the system.
 
     """
-    return UInput(events=_get_touch_events(), name='autopilot-finger',
+    return UInput(events=_get_touch_events(res_x, res_y),
+                  name='autopilot-finger',
                   version=0x2, devnode=_get_devnode_path())
 
 

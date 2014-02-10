@@ -164,7 +164,7 @@ class UInputTestCase(TestCase):
     def test_create_touch_device_must_print_deprecation_message(self):
         with patch('sys.stderr', new=StringIO()) as stderr:
             with patch('autopilot.input._uinput.UInput'):
-                _uinput.create_touch_device()
+                _uinput.create_touch_device('dummy', 'dummy')
         self.assertThat(
             stderr.getvalue(),
             Contains(

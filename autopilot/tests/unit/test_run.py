@@ -180,9 +180,16 @@ class TestRunLaunchApp(TestCase):
             '_prepare_application_for_launch',
             return_value=(app_name, app_arguments)
         ):
-            patched_launch_proc.side_effect = RuntimeError()
-            program = run.TestProgram(fake_args)
-            self.assertThat(lambda: program.run(), raises(SystemExit(1)))
+            with patch('sys.stdout', new=six.StringIO()) as stdout:
+                patched_launch_proc.side_effect = RuntimeError(
+                    "Failure Message"
+                )
+                program = run.TestProgram(fake_args)
+                self.assertThat(lambda: program.run(), raises(SystemExit(1)) )
+                self.assertThat(
+                    stdout.getvalue(),
+                    Contains("Error: Failure Message")
+                )
 
 
 class TestRunLaunchAppHelpers(TestCase):
@@ -507,7 +514,7 @@ class TestProgramTests(TestCase):
 
     def test_calls_parse_args_by_default(self):
         fake_args = Namespace()
-        with patch('run.parse_arguments') as fake_parse_args:
+        with patch.object(run, 'parse_arguments') as fake_parse_args:
             fake_parse_args.return_value = fake_args
             program = run.TestProgram()
 

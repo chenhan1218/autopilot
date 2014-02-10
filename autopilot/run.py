@@ -308,6 +308,7 @@ def _prepare_application_for_launch(application, interface):
 
 
 def _get_application_path_and_arguments(application):
+
     app_name, app_arguments = _get_app_name_and_args(application)
 
     try:

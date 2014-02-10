@@ -29,11 +29,6 @@ else:
     from contextlib2 import ExitStack
 
 from autopilot import run
-from autopilot.run import (
-    _get_applications_full_path,
-    _application_name_is_full_path,
-    _get_app_name_and_args,
-)
 
 
 class RunUtilityFunctionTests(TestCase):
@@ -198,7 +193,7 @@ class TestRunLaunchAppHelpers(TestCase):
         launch_args = [app_name]
 
         self.assertThat(
-            _get_app_name_and_args(launch_args),
+            run._get_app_name_and_args(launch_args),
             Equals((app_name, []))
         )
 
@@ -208,7 +203,7 @@ class TestRunLaunchAppHelpers(TestCase):
         launch_args = [app_name] + app_arg
 
         self.assertThat(
-            _get_app_name_and_args(launch_args),
+            run._get_app_name_and_args(launch_args),
             Equals((app_name, app_arg))
         )
 
@@ -219,22 +214,22 @@ class TestRunLaunchAppHelpers(TestCase):
         launch_args = [app_name] + app_args
 
         self.assertThat(
-            _get_app_name_and_args(launch_args),
+            run._get_app_name_and_args(launch_args),
             Equals((app_name, app_args))
         )
 
     def test_application_name_is_full_path_True_when_is_abs_path(self):
         with patch.object(run.os.path, 'isabs', return_value=True):
-            self.assertTrue(_application_name_is_full_path(""))
+            self.assertTrue(run._application_name_is_full_path(""))
 
     def test_application_name_is_full_path_True_when_path_exists(self):
         with patch.object(run.os.path, 'exists', return_value=True):
-            self.assertTrue(_application_name_is_full_path(""))
+            self.assertTrue(run._application_name_is_full_path(""))
 
     def test_application_name_is_full_path_False_neither_abs_or_exists(self):
         with patch.object(run.os.path, 'exists', return_value=False):
             with patch.object(run.os.path, 'isabs', return_value=False):
-                self.assertFalse(_application_name_is_full_path(""))
+                self.assertFalse(run._application_name_is_full_path(""))
 
     def test_get_applications_full_path_returns_same_when_full_path(self):
         app_name = self.getUniqueString()
@@ -245,7 +240,7 @@ class TestRunLaunchAppHelpers(TestCase):
             return_value=True
         ):
             self.assertThat(
-                _get_applications_full_path(app_name),
+                run._get_applications_full_path(app_name),
                 Equals(app_name)
             )
 
@@ -258,7 +253,7 @@ class TestRunLaunchAppHelpers(TestCase):
             return_value=full_path
         ):
             self.assertThat(
-                _get_applications_full_path(app_name),
+                run._get_applications_full_path(app_name),
                 Equals(full_path)
             )
 
@@ -272,8 +267,32 @@ class TestRunLaunchAppHelpers(TestCase):
             side_effect=subprocess.CalledProcessError(1, "")
         ):
             self.assertThat(
-                lambda: _get_applications_full_path(app_name),
+                lambda: run._get_applications_full_path(app_name),
                 raises(ValueError(expected_error))
+            )
+
+    def test_get_application_path_and_arguments_raises_runtime_for_unknown_app(self):
+        app_name = self.getUniqueString()
+        expected_error = "Error: cannot find application '{app_name}'".format(
+            app_name=app_name
+        )
+
+        self.assertThat(
+            lambda: run._get_application_path_and_arguments([app_name]),
+            raises(RuntimeError(expected_error))
+        )
+
+    def test_get_application_path_and_arguments_returns_app_and_args(self):
+        app_name = self.getUniqueString()
+
+        with patch.object(
+            run,
+            '_get_applications_full_path',
+            side_effect=lambda arg: arg
+        ):
+            self.assertThat(
+                run._get_application_path_and_arguments([app_name]),
+                Equals((app_name, []))
             )
 
     def test_get_application_launcher_env_attempts_auto_selection(self):

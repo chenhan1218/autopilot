@@ -178,6 +178,27 @@ class TestRunLaunchApp(TestCase):
                 capture_output=False
             )
 
+    def test_launch_app_exits_using_print_message_and_exit_error(self):
+        app_name = self.getUniqueString()
+        app_arguments = self.getUniqueString()
+        error_message = "Error: cannot find application 'blah'"
+        fake_args = Namespace(
+            mode='launch',
+            application=[app_name, app_arguments],
+            interface=None
+        )
+
+        with patch.object(
+            run,
+            '_prepare_application_for_launch',
+            side_effect=RuntimeError(error_message)
+        ):
+            with patch.object(
+                run, '_print_message_and_exit_error'
+            ) as print_and_exit:
+                run.TestProgram(fake_args).run()
+                print_and_exit.assert_called_once_with(error_message)
+
     @patch.object(run, 'launch_process')
     def test_launch_app_exits_with_message_on_failure(self, patched_launch_proc):  # NOQA
         app_name = self.getUniqueString()

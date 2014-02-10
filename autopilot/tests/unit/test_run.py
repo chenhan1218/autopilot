@@ -271,7 +271,7 @@ class TestRunLaunchAppHelpers(TestCase):
                 raises(ValueError(expected_error))
             )
 
-    def test_get_application_path_and_arguments_raises_runtime_for_unknown_app(self):
+    def test_get_application_path_and_arguments_raises_for_unknown_app(self):
         app_name = self.getUniqueString()
         expected_error = "Error: cannot find application '{app_name}'".format(
             app_name=app_name

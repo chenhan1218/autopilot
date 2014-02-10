@@ -19,10 +19,23 @@
 
 from argparse import Namespace
 from mock import Mock, patch
+import logging
+import os.path
+from shutil import rmtree
 import six
 import subprocess
+import tempfile
 from testtools import TestCase
-from testtools.matchers import Contains, Equals, raises
+from testtools.matchers import (
+    Contains,
+    DirExists,
+    Equals,
+    IsInstance,
+    Not,
+    raises,
+    StartsWith,
+)
+
 if six.PY3:
     from contextlib import ExitStack
 else:
@@ -495,6 +508,191 @@ class TestRunLaunchAppHelpers(TestCase):
                 app_name,
                 app_arguments
             )
+
+
+class LoggingSetupTests(TestCase):
+
+    def test_get_root_logger_returns_logging_instance(self):
+        logger = run.get_root_logger()
+        self.assertThat(logger, IsInstance(logging.RootLogger))
+
+    def test_setup_logging_calls_get_root_logger(self):
+        with patch.object(run, 'get_root_logger') as fake_get_root_logger:
+            run.setup_logging(0)
+            fake_get_root_logger.assert_called_once_with()
+
+    def test_setup_logging_sets_root_logging_level_to_debug(self):
+        with patch.object(run, 'get_root_logger') as fake_get_logger:
+            run.setup_logging(0)
+            fake_get_logger.return_value.setLevel.assert_called_once_with(
+                logging.DEBUG
+            )
+
+    def test_set_null_log_handler(self):
+        mock_root_logger = Mock()
+        run.set_null_log_handler(mock_root_logger)
+
+        self.assertThat(
+            mock_root_logger.addHandler.call_args[0][0],
+            IsInstance(logging.NullHandler)
+        )
+
+    @patch.object(run, 'get_root_logger')
+    def test_verbse_level_zero_sets_null_handler(self, fake_get_logger):
+        with patch.object(run, 'set_null_log_handler') as fake_set_null:
+            run.setup_logging(0)
+
+            fake_set_null.assert_called_once_with(
+                fake_get_logger.return_value
+            )
+
+    def test_stderr_handler_sets_stream_handler_with_custom_formatter(self):
+        mock_root_logger = Mock()
+        run.set_stderr_stream_handler(mock_root_logger)
+
+        self.assertThat(mock_root_logger.addHandler.call_count, Equals(1))
+        created_handler = mock_root_logger.addHandler.call_args[0][0]
+
+        self.assertThat(
+            created_handler,
+            IsInstance(logging.StreamHandler)
+        )
+        self.assertThat(
+            created_handler.formatter,
+            IsInstance(run.LogFormatter)
+        )
+
+    @patch.object(run, 'get_root_logger')
+    def test_verbose_level_one_sets_stream_handler(self, fake_get_logger):
+        with patch.object(run, 'set_stderr_stream_handler') as stderr_handler:
+            run.setup_logging(1)
+
+            stderr_handler.assert_called_once_with(
+                fake_get_logger.return_value
+            )
+
+    def test_enable_debug_log_messages_sets_debugFilter_attr(self):
+        with patch.object(run, 'DebugLogFilter') as patched_filter:
+            patched_filter.debug_log_enabled = False
+            run.enable_debug_log_messages()
+            self.assertThat(
+                patched_filter.debug_log_enabled,
+                Equals(True)
+            )
+
+    @patch.object(run, 'get_root_logger')
+    def test_verbose_level_two_enables_debug_messages(self, fake_get_logger):
+        with patch.object(run, 'enable_debug_log_messages') as enable_debug:
+            run.setup_logging(2)
+
+            enable_debug.assert_called_once_with()
+
+
+class OutputStreamTests(TestCase):
+
+    def remove_tree_if_exists(self, path):
+        if os.path.exists(path):
+            rmtree(path)
+
+    def test_get_log_file_path_returns_file_path(self):
+        requested_path = tempfile.mktemp()
+        result = run._get_log_file_path(requested_path)
+
+        self.assertThat(result, Equals(requested_path))
+
+    def test_get_log_file_path_creates_nonexisting_directories(self):
+        temp_dir = tempfile.mkdtemp()
+        self.addCleanup(self.remove_tree_if_exists, temp_dir)
+        dir_to_store_logs = os.path.join(temp_dir, 'some_directory')
+        requested_path = os.path.join(dir_to_store_logs, 'my_log.txt')
+
+        run._get_log_file_path(requested_path)
+        self.assertThat(dir_to_store_logs, DirExists())
+
+    def test_returns_default_filename_when_passed_directory(self):
+        temp_dir = tempfile.mkdtemp()
+        self.addCleanup(self.remove_tree_if_exists, temp_dir)
+        with patch.object(run, '_get_default_log_filename') as _get_default:
+            result = run._get_log_file_path(temp_dir)
+
+            _get_default.assert_called_once_with(temp_dir)
+            self.assertThat(result, Equals(_get_default.return_value))
+
+    def test_get_default_log_filename_calls_print_fn(self):
+        with patch.object(run, '_print_default_log_path') as patch_print:
+            run._get_default_log_filename('/some/path')
+
+            self.assertThat(
+                patch_print.call_count,
+                Equals(1)
+            )
+            call_arg = patch_print.call_args[0][0]
+            # shouldn't print the directory, since the user already explicitly
+            # specified that.
+            self.assertThat(call_arg, Not(StartsWith('/some/path')))
+
+    @patch.object(run, '_print_default_log_path')
+    def test_get_default_filename_returns_sane_string(self, patched_print):
+        with patch.object(run, 'node', return_value='hostname'):
+            with patch.object(run, 'datetime') as mock_dt:
+                mock_dt.now.return_value.strftime.return_value = 'date-part'
+
+                self.assertThat(
+                    run._get_default_log_filename('/some/path'),
+                    Equals('/some/path/hostname_date-part.log')
+                )
+
+    def test_get_output_stream_gets_stdout_with_no_logfile_specified(self):
+        args = Namespace(output=None)
+        output_stream = run.get_output_stream(args)
+        self.assertThat(output_stream.name, Equals('<stdout>'))
+
+    def test_get_output_stream_opens_correct_file(self):
+        args = Namespace(output=tempfile.mktemp(), format='xml')
+        self.addCleanup(os.unlink, args.output)
+
+        output_stream = run.get_output_stream(args)
+        self.assertThat(output_stream.name, Equals(args.output))
+
+    def test_text_mode_binary_stream_opens_in_text_mode(self):
+        path = tempfile.mktemp()
+        self.addCleanup(os.unlink, path)
+        stream = run._get_text_mode_file_stream(path)
+        self.assertThat(stream.mode, Equals('w'))
+
+    def test_binary_mode_file_stream_opens_in_binary_mode(self):
+        path = tempfile.mktemp()
+        self.addCleanup(os.unlink, path)
+        stream = run._get_binary_mode_file_stream(path)
+        self.assertThat(stream.mode, Equals('wb'))
+
+    def test_xml_format_opens_text_mode_stream(self):
+        args = Namespace(output=tempfile.mktemp(), format='xml')
+        with patch.object(run, '_get_text_mode_file_stream') as pgts:
+            run.get_output_stream(args)
+            pgts.assert_called_once_with(args.output)
+
+    def test_txt_format_opens_binary_mode_stream(self):
+        args = Namespace(output=tempfile.mktemp(), format='txt')
+        with patch.object(run, '_get_binary_mode_file_stream') as pgbs:
+            run.get_output_stream(args)
+            pgbs.assert_called_once_with(args.output)
+
+    def test_subunit_format_opens_binary_mode_stream(self):
+        args = Namespace(output=tempfile.mktemp(), format='subunit')
+        with patch.object(run, '_get_binary_mode_file_stream') as pgbs:
+            run.get_output_stream(args)
+            pgbs.assert_called_once_with(args.output)
+
+    def test_print_log_file_location_prints_correct_message(self):
+        path = self.getUniqueString()
+
+        with patch('sys.stdout', new=six.StringIO()) as patched_stdout:
+            run._print_default_log_path(path)
+            output = patched_stdout.getvalue()
+
+        expected = "Using default log filename: %s\n" % path
+        self.assertThat(expected, Equals(output))
 
 
 class TestProgramTests(TestCase):

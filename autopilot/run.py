@@ -47,25 +47,40 @@ from autopilot.application._launcher import (
 )
 
 
-_output_stream = None
 logger = logging.getLogger(__name__)
 
 
 def setup_logging(verbose):
     """Configure the root logger and verbose logging to stderr"""
-    root_logger = logging.getLogger()
+    root_logger = get_root_logger()
     root_logger.setLevel(logging.DEBUG)
     if verbose == 0:
-        root_logger.addHandler(logging.NullHandler())
+        set_null_log_handler(root_logger)
     if verbose >= 1:
-        formatter = LogFormatter()
-        stderr_handler = logging.StreamHandler(stream=sys.stderr)
-        stderr_handler.setFormatter(formatter)
-        root_logger.addHandler(stderr_handler)
+        set_stderr_stream_handler(root_logger)
     if verbose >= 2:
-        DebugLogFilter.debug_log_enabled = True
+        enable_debug_log_messages()
     #log autopilot version
     root_logger.info(get_version_string())
+
+
+def get_root_logger():
+    return logging.getLogger()
+
+
+def set_null_log_handler(root_logger):
+    root_logger.addHandler(logging.NullHandler())
+
+
+def set_stderr_stream_handler(root_logger):
+    formatter = LogFormatter()
+    stderr_handler = logging.StreamHandler(stream=sys.stderr)
+    stderr_handler.setFormatter(formatter)
+    root_logger.addHandler(stderr_handler)
+
+
+def enable_debug_log_messages():
+    DebugLogFilter.debug_log_enabled = True
 
 
 def construct_test_result(args):
@@ -77,28 +92,54 @@ def construct_test_result(args):
 
 
 def get_output_stream(args):
-    global _output_stream
-
-    if _output_stream is None:
-        if args.output:
-            path = os.path.dirname(args.output)
-            if path != '' and not os.path.exists(path):
-                os.makedirs(path)
-            log_file = args.output
-            if os.path.isdir(log_file):
-                default_log = "%s_%s.log" % (
-                    node(),
-                    datetime.now().strftime("%d.%m.%y-%H%M%S")
-                )
-                log_file = os.path.join(log_file, default_log)
-                print("Using default log filename: %s " % default_log)
-            if args.format == 'xml':
-                _output_stream = open(log_file, 'w')
-            else:
-                _output_stream = open(log_file, 'w', encoding='utf-8')
+    if args.output:
+        log_file = _get_log_file_path(args.output)
+        if args.format == 'xml':
+            return _get_text_mode_file_stream(log_file)
         else:
-            _output_stream = sys.stdout
-    return _output_stream
+            return _get_binary_mode_file_stream(log_file)
+    else:
+        return sys.stdout
+
+
+def _get_text_mode_file_stream(log_file):
+    return open(
+        log_file,
+        'w'
+    )
+
+
+def _get_binary_mode_file_stream(log_file):
+    return open(
+        log_file,
+        'w',
+        encoding='utf-8',
+        errors='backslashreplace'
+    )
+
+
+def _get_log_file_path(requested_path):
+    dirname = os.path.dirname(requested_path)
+    if dirname != '' and not os.path.exists(dirname):
+        os.makedirs(dirname)
+    if os.path.isdir(requested_path):
+        return _get_default_log_filename(requested_path)
+    return requested_path
+
+
+def _get_default_log_filename(target_directory):
+    """Return a filename that's likely to be unique to this test run."""
+    default_log_filename = "%s_%s.log" % (
+        node(),
+        datetime.now().strftime("%d.%m.%y-%H%M%S")
+    )
+    _print_default_log_path(default_log_filename)
+    log_file = os.path.join(target_directory, default_log_filename)
+    return log_file
+
+
+def _print_default_log_path(default_log_filename):
+    print("Using default log filename: %s" % default_log_filename)
 
 
 def get_package_location(import_name):

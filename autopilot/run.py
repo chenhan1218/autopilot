@@ -89,14 +89,28 @@ def construct_test_result(args):
 def get_output_stream(args):
     if args.output:
         log_file = _get_log_file_path(args.output)
-        return open(
-            log_file,
-            'w',
-            encoding='utf-8',
-            errors='backslashreplace'
-        )
+        if args.format == 'xml':
+            return _get_text_mode_file_stream(log_file)
+        else:
+            return _get_binary_mode_file_stream(log_file)
     else:
         return sys.stdout
+
+
+def _get_text_mode_file_stream(log_file):
+    return open(
+        log_file,
+        'w'
+    )
+
+
+def _get_binary_mode_file_stream(log_file):
+    return open(
+        log_file,
+        'w',
+        encoding='utf-8',
+        errors='backslashreplace'
+    )
 
 
 def _get_log_file_path(requested_path):

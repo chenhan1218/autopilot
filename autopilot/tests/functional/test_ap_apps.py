@@ -345,7 +345,7 @@ class QtTests(ApplicationTests):
             stderr.flush()
             app.exec_()
             """ % sys.executable))
-        app_proxy = self.launch_test_application(path, app_type='qt')
+        self.launch_test_application(path, app_type='qt')
         details_dict = self.getDetails()
         for name, content_obj in details_dict.items():
             self.assertThat(
@@ -353,7 +353,6 @@ class QtTests(ApplicationTests):
                 Not(Raises())
             )
         self.assertEqual(1, 2)
-
 
 
 class GtkTests(ApplicationTests):

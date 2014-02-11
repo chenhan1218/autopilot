@@ -737,7 +737,7 @@ class UInputTouchTestCase(TestCase):
         self.assertEqual(
             expected_calls, touch._device.mock_calls)
 
-    def test_drag_to_same_place_should_not_move(self):
+    def test_drag_to_same_place_must_not_move(self):
         expected_calls = [
             call.finger_down(0, 0),
             call.finger_up()

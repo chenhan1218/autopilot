@@ -26,7 +26,7 @@ import subprocess
 
 def query_resolution():
     try:
-        FBSET = subprocess.check_output(["fbset", "-s"]).decode().strip()
+        FBSET = subprocess.check_output(["fbset", "-s", "-x"]).decode().strip()
     except OSError:
         try:
             DEVICE = subprocess.check_output(

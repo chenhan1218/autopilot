@@ -19,9 +19,8 @@
 
 import testscenarios
 
-from mock import call, Mock, patch
 from evdev import ecodes, uinput
-from mock import ANY, call, patch, Mock
+from mock import ANY, call, Mock, patch
 from six import StringIO
 from testtools import TestCase
 from testtools.matchers import Contains, raises

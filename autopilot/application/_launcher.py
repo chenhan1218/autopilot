@@ -24,6 +24,7 @@ import json
 import logging
 import os
 import psutil
+import six
 import subprocess
 import signal
 from testtools.content import content_from_file, text_content
@@ -143,11 +144,11 @@ class NormalApplicationLauncher(ApplicationLauncher):
         )
         self.case_addDetail(
             'process-stdout',
-            text_content(stdout.decode('utf-8', errors='replace'))
+            text_content(stdout)
         )
         self.case_addDetail(
             'process-stderr',
-            text_content(stderr.decode('utf-8', errors='replace'))
+            text_content(stderr)
         )
 
 
@@ -341,14 +342,18 @@ def _get_app_env_from_string_hint(hint):
 
 def _kill_process(process):
     """Kill the process, and return the stdout, stderr and return code."""
-    stdout = ""
-    stderr = ""
+    stdout_parts = []
+    stderr_parts = []
     logger.info("waiting for process to exit.")
     _attempt_kill_pid(process.pid)
     for _ in Timeout.default():
         tmp_out, tmp_err = process.communicate()
-        stdout += tmp_out
-        stderr += tmp_err
+        if isinstance(tmp_out, six.binary_type):
+            tmp_out = tmp_out.decode('utf-8', errors='replace')
+        if isinstance(tmp_err, six.binary_type):
+            tmp_err = tmp_err.decode('utf-8', errors='replace')
+        stdout_parts.append(tmp_out)
+        stderr_parts.append(tmp_err)
         if not _is_process_running(process.pid):
             break
     else:
@@ -357,7 +362,7 @@ def _kill_process(process):
             "10 seconds."
         )
         _attempt_kill_pid(process.pid, signal.SIGKILL)
-    return stdout, stderr, process.returncode
+    return u''.join(stdout_parts), u''.join(stderr_parts), process.returncode
 
 
 def _raise_if_not_empty(kwargs):

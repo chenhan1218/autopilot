@@ -103,7 +103,7 @@ class NormalApplicationLauncherTests(TestCase):
         app_launcher = NormalApplicationLauncher(mock_addDetail)
 
         with patch.object(
-            _l, '_kill_process', return_value=("stdout", "stderr", 0)
+            _l, '_kill_process', return_value=(u"stdout", u"stderr", 0)
         ):
             app_launcher._kill_process_and_attach_logs(0)
 

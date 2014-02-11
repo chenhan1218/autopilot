@@ -135,6 +135,7 @@ Depends: ${misc:Depends},
          python3-evdev,
          python-autopilot,
          python-evdev,
+         fbset,
 Description: Autopilot support for the ubuntu Touch platform
  This metapackage exists to depend on the packages needed to install and use
  autopilot on the Ubuntu Touch platform.

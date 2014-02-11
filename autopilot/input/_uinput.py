@@ -564,11 +564,11 @@ class Touch(TouchBase):
 
             current_x += step_x
             current_y += step_y
-            self.device._finger_move(current_x, current_y)
+            self._device.finger_move(current_x, current_y)
 
             sleep(time_between_events)
 
-        self.device._finger_up()
+        self._device.finger_up()
 
 
 # veebers: there should be a better way to handle this.

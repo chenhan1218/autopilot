@@ -21,35 +21,49 @@
 import logging
 
 from autopilot.display import Display as DisplayBase
+from autopilot.platform import image_codename
 import subprocess
 
 
 def query_resolution():
     try:
-        FBSET = subprocess.check_output(["fbset", "-s", "-x"]).decode().strip()
-    except OSError:
-        try:
-            DEVICE = subprocess.check_output(
-                ["/usr/bin/getprop", "ro.product.device"]).decode().strip()
-        except OSError:
-            DEVICE = ''
+        return _get_fbset_resolution()
+    except Exception as e:
+        return _get_hardcoded_resolution()
 
-        RESOLUTIONS = {
-            "generic": (480, 800),
-            "mako": (768, 1280),
-            "maguro": (720, 1280),
-            "manta": (2560, 1600),
-            "grouper": (800, 1280),
-        }
 
-        if DEVICE not in RESOLUTIONS:
-            raise NotImplementedError(
-                'Device "{}" is not supported by Autopilot.'.format(DEVICE))
+def _get_fbset_resolution():
+    """Return the resolution, as determined by fbset, or None."""
+    fbset_output = _get_fbset_output()
+    for line in fbset_output.split('\n'):
+        line = line.strip()
+        if line.startswith('Mode'):
+            quoted_resolution = line.split()[1]
+            resolution_string = quoted_resolution.strip('"')
+            return tuple(int(piece) for piece in resolution_string.split('x'))
 
-        return RESOLUTIONS[DEVICE]
-    else:
-        return tuple([int(i) for i in
-                      FBSET.splitlines()[0].split('"')[1].split('x')])
+
+
+def _get_fbset_output():
+    return subprocess.check_output(["fbset", "-s", "-x"]).decode().strip()
+
+
+def _get_hardcoded_resolution():
+    name = image_codename()
+
+    resolutions = {
+        "generic": (480, 800),
+        "mako": (768, 1280),
+        "maguro": (720, 1280),
+        "manta": (2560, 1600),
+        "grouper": (800, 1280),
+    }
+
+    if name not in resolutions:
+        raise NotImplementedError(
+            'Device "{}" is not supported by Autopilot.'.format(name))
+
+    return resolutions[name]
 
 
 logger = logging.getLogger(__name__)

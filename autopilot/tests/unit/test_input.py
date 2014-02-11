@@ -854,30 +854,35 @@ class DragUInputTouchTestCase(testscenarios.TestWithScenarios, TestCase):
             expected_calls, touch._device.mock_calls)
 
 
-class PointerTestCase(TestCase):
+class PointerWithTouchBackendTestCase(TestCase):
 
-    def setUp(self):
-        super(PointerTestCase, self).setUp()
-        self.pointer = autopilot.input.Pointer(autopilot.input.Mouse.create())
+    def get_pointer_with_touch_backend_with_mock_device(self):
+        touch = _uinput.Touch(device_class=Mock)
+        touch._device.mock_add_spec(
+            _uinput._UInputTouchDevice, spec_set=True)
+        pointer = autopilot.input.Pointer(touch)
+        return pointer
 
     def test_drag_with_rate(self):
-        with patch.object(self.pointer._device, 'drag') as mock_drag:
-            self.pointer.drag(0, 0, 20, 20, rate='test')
+        pointer = self.get_pointer_with_touch_backend_with_mock_device()
+        with patch.object(pointer._device, 'drag') as mock_drag:
+            pointer.drag(0, 0, 20, 20, rate='test')
 
         mock_drag.assert_called_once_with(
             0, 0, 20, 20, rate='test', time_between_events=0.01)
 
     def test_drag_with_time_between_events(self):
-        with patch.object(self.pointer._device, 'drag') as mock_drag:
-            self.pointer.drag(0, 0, 20, 20, time_between_events='test')
+        pointer = self.get_pointer_with_touch_backend_with_mock_device()
+        with patch.object(pointer._device, 'drag') as mock_drag:
+            pointer.drag(0, 0, 20, 20, time_between_events='test')
 
         mock_drag.assert_called_once_with(
             0, 0, 20, 20, rate=10, time_between_events='test')
 
     def test_drag_with_default_parameters(self):
-        with patch.object(self.pointer._device, 'drag') as mock_drag:
-            self.pointer.drag(0, 0, 20, 20)
+        pointer = self.get_pointer_with_touch_backend_with_mock_device()
+        with patch.object(pointer._device, 'drag') as mock_drag:
+            pointer.drag(0, 0, 20, 20)
 
         mock_drag.assert_called_once_with(
             0, 0, 20, 20, rate=10, time_between_events=0.01)
-

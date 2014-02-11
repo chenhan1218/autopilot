@@ -20,10 +20,14 @@
 import testscenarios
 
 from mock import call, Mock, patch
+from evdev import ecodes, uinput
+from mock import ANY, call, patch, Mock
+from six import StringIO
 from testtools import TestCase
-from testtools.matchers import raises
+from testtools.matchers import Contains, raises
 
 import autopilot.input
+from autopilot import utilities
 from autopilot.input import _uinput, _X11
 from autopilot.input._common import get_center_point
 
@@ -285,6 +289,581 @@ class UinputTouchTestCase(TestCase):
         with MockUinputTouch() as mock_touch:
             mock_touch.drag(0, 0, 0, 0)
         self.assertEqual(mock_touch.mock_calls, expected_finger_calls)
+
+
+class UInputTestCase(TestCase):
+    """Tests for the global methods of the uinput module."""
+
+    def test_create_touch_device_must_print_deprecation_message(self):
+        with patch('sys.stderr', new=StringIO()) as stderr:
+            with patch('autopilot.input._uinput.UInput'):
+                _uinput.create_touch_device('dummy', 'dummy')
+        self.assertThat(
+            stderr.getvalue(),
+            Contains(
+                "This function is deprecated. Please use 'the Touch class to "
+                "instantiate a device object' instead."
+            )
+        )
+
+
+class UInputKeyboardDeviceTestCase(TestCase):
+    """Test the integration with evdev.UInput for the keyboard."""
+
+    _PRESS_VALUE = 1
+    _RELEASE_VALUE = 0
+
+    def get_keyboard_with_mocked_backend(self):
+        keyboard = _uinput._UInputKeyboardDevice(device_class=Mock)
+        keyboard._device.mock_add_spec(uinput.UInput, spec_set=True)
+        return keyboard
+
+    def assert_key_press_emitted_write_and_syn(self, keyboard, key):
+        self.assert_emitted_write_and_syn(keyboard, key, self._PRESS_VALUE)
+
+    def assert_key_release_emitted_write_and_syn(self, keyboard, key):
+        self.assert_emitted_write_and_syn(keyboard, key, self._RELEASE_VALUE)
+
+    def assert_emitted_write_and_syn(self, keyboard, key, value):
+        key_ecode = ecodes.ecodes.get(key)
+        expected_calls = [
+            call.write(ecodes.EV_KEY, key_ecode, value),
+            call.syn()
+        ]
+
+        self.assertEqual(expected_calls, keyboard._device.mock_calls)
+
+    def press_key_and_reset_mock(self, keyboard, key):
+        keyboard.press(key)
+        keyboard._device.reset_mock()
+
+    def test_press_key_must_emit_write_and_syn(self):
+        keyboard = self.get_keyboard_with_mocked_backend()
+        keyboard.press('KEY_A')
+        self.assert_key_press_emitted_write_and_syn(keyboard, 'KEY_A')
+
+    def test_press_key_must_append_leading_string(self):
+        keyboard = self.get_keyboard_with_mocked_backend()
+        keyboard.press('A')
+        self.assert_key_press_emitted_write_and_syn(keyboard, 'KEY_A')
+
+    def test_press_key_must_ignore_case(self):
+        keyboard = self.get_keyboard_with_mocked_backend()
+        keyboard.press('a')
+        self.assert_key_press_emitted_write_and_syn(keyboard, 'KEY_A')
+
+    def test_press_unexisting_key_must_raise_error(self):
+        keyboard = self.get_keyboard_with_mocked_backend()
+        error = self.assertRaises(
+            ValueError, keyboard.press, 'unexisting')
+
+        self.assertEqual('Unknown key name: unexisting.', str(error))
+
+    def test_release_not_pressed_key_must_raise_error(self):
+        keyboard = self.get_keyboard_with_mocked_backend()
+        error = self.assertRaises(
+            ValueError, keyboard.release, 'A')
+
+        self.assertEqual("Key 'A' not pressed.", str(error))
+
+    def test_release_key_must_emit_write_and_syn(self):
+        keyboard = self.get_keyboard_with_mocked_backend()
+        self.press_key_and_reset_mock(keyboard, 'KEY_A')
+
+        keyboard.release('KEY_A')
+        self.assert_key_release_emitted_write_and_syn(keyboard, 'KEY_A')
+
+    def test_release_key_must_append_leading_string(self):
+        keyboard = self.get_keyboard_with_mocked_backend()
+        self.press_key_and_reset_mock(keyboard, 'KEY_A')
+
+        keyboard.release('A')
+        self.assert_key_release_emitted_write_and_syn(keyboard, 'KEY_A')
+
+    def test_release_key_must_ignore_case(self):
+        keyboard = self.get_keyboard_with_mocked_backend()
+        self.press_key_and_reset_mock(keyboard, 'KEY_A')
+
+        keyboard.release('a')
+        self.assert_key_release_emitted_write_and_syn(keyboard, 'KEY_A')
+
+    def test_release_unexisting_key_must_raise_error(self):
+        keyboard = self.get_keyboard_with_mocked_backend()
+        error = self.assertRaises(
+            ValueError, keyboard.release, 'unexisting')
+
+        self.assertEqual('Unknown key name: unexisting.', str(error))
+
+    def test_release_pressed_keys_without_pressed_keys_must_do_nothing(self):
+        keyboard = self.get_keyboard_with_mocked_backend()
+        keyboard.release_pressed_keys()
+        self.assertEqual([], keyboard._device.mock_calls)
+
+    def test_release_pressed_keys_with_pressed_keys(self):
+        expected_calls = [
+            call.write(
+                ecodes.EV_KEY, ecodes.ecodes.get('KEY_A'),
+                self._RELEASE_VALUE),
+            call.syn(),
+            call.write(
+                ecodes.EV_KEY, ecodes.ecodes.get('KEY_B'),
+                self._RELEASE_VALUE),
+            call.syn()
+        ]
+
+        keyboard = self.get_keyboard_with_mocked_backend()
+        self.press_key_and_reset_mock(keyboard, 'KEY_A')
+        self.press_key_and_reset_mock(keyboard, 'KEY_B')
+
+        keyboard.release_pressed_keys()
+
+        self.assertEqual(expected_calls, keyboard._device.mock_calls)
+
+    def test_release_pressed_keys_already_released(self):
+        expected_calls = []
+        keyboard = self.get_keyboard_with_mocked_backend()
+        keyboard.press('KEY_A')
+        keyboard.release_pressed_keys()
+        keyboard._device.reset_mock()
+
+        keyboard.release_pressed_keys()
+        self.assertEqual(expected_calls, keyboard._device.mock_calls)
+
+
+class UInputKeyboardTestCase(testscenarios.TestWithScenarios, TestCase):
+    """Test UInput Keyboard helper for autopilot tests."""
+
+    scenarios = [
+        ('single key', dict(keys='a', expected_calls_args=['a'])),
+        ('upper-case letter', dict(
+            keys='A', expected_calls_args=['KEY_LEFTSHIFT', 'A'])),
+        ('key combination', dict(
+            keys='a+b', expected_calls_args=['a', 'b']))
+    ]
+
+    def setUp(self):
+        super(UInputKeyboardTestCase, self).setUp()
+        # Return to the original device after the test.
+        self.addCleanup(self.set_keyboard_device, _uinput.Keyboard._device)
+        # Mock the sleeps so we don't have to spend time actually sleeping.
+        self.addCleanup(utilities.sleep.disable_mock)
+        utilities.sleep.enable_mock()
+
+    def set_keyboard_device(self, device):
+        _uinput.Keyboard._device = device
+
+    def get_keyboard_with_mocked_backend(self):
+        _uinput.Keyboard._device = None
+        keyboard = _uinput.Keyboard(device_class=Mock)
+        keyboard._device.mock_add_spec(
+            _uinput._UInputKeyboardDevice, spec_set=True)
+        return keyboard
+
+    def test_press_must_put_press_device_keys(self):
+        expected_calls = [
+            call.press(arg) for arg in self.expected_calls_args]
+        keyboard = self.get_keyboard_with_mocked_backend()
+        keyboard.press(self.keys)
+
+        self.assertEqual(expected_calls, keyboard._device.mock_calls)
+
+    def test_release_must_release_device_keys(self):
+        keyboard = self.get_keyboard_with_mocked_backend()
+        keyboard.press(self.keys)
+        keyboard._device.reset_mock()
+
+        expected_calls = [
+            call.release(arg) for arg in
+            reversed(self.expected_calls_args)]
+        keyboard.release(self.keys)
+
+        self.assertEqual(
+            expected_calls, keyboard._device.mock_calls)
+
+    def test_press_and_release_must_press_device_keys(self):
+        expected_press_calls = [
+            call.press(arg) for arg in self.expected_calls_args]
+        ignored_calls = [
+            ANY for arg in self.expected_calls_args]
+
+        keyboard = self.get_keyboard_with_mocked_backend()
+        keyboard.press_and_release(self.keys)
+
+        self.assertEqual(
+            expected_press_calls + ignored_calls,
+            keyboard._device.mock_calls)
+
+    def test_press_and_release_must_release_device_keys_in_reverse_order(
+            self):
+        ignored_calls = [
+            ANY for arg in self.expected_calls_args]
+        expected_release_calls = [
+            call.release(arg) for arg in
+            reversed(self.expected_calls_args)]
+
+        keyboard = self.get_keyboard_with_mocked_backend()
+        keyboard.press_and_release(self.keys)
+
+        self.assertEqual(
+            ignored_calls + expected_release_calls,
+            keyboard._device.mock_calls)
+
+    def test_on_test_end_without_device_must_do_nothing(self):
+        _uinput.Keyboard._device = None
+        # This will fail if it calls anything from the device, as it's None.
+        _uinput.Keyboard.on_test_end(self)
+
+    def test_on_test_end_with_device_must_release_pressed_keys(self):
+        keyboard = self.get_keyboard_with_mocked_backend()
+        _uinput.Keyboard.on_test_end(self)
+        self.assertEqual(
+            [call.release_pressed_keys()], keyboard._device.mock_calls)
+
+
+class TouchEventsTestCase(TestCase):
+
+    def assert_expected_ev_abs(self, res_x, res_y, actual_ev_abs):
+        expected_ev_abs = [
+            (ecodes.ABS_X, (0, res_x, 0, 0)),
+            (ecodes.ABS_Y, (0, res_y, 0, 0)),
+            (ecodes.ABS_PRESSURE, (0, 65535, 0, 0)),
+            (ecodes.ABS_MT_POSITION_X, (0, res_x, 0, 0)),
+            (ecodes.ABS_MT_POSITION_Y, (0, res_y, 0, 0)),
+            (ecodes.ABS_MT_TOUCH_MAJOR, (0, 30, 0, 0)),
+            (ecodes.ABS_MT_TRACKING_ID, (0, 65535, 0, 0)),
+            (ecodes.ABS_MT_PRESSURE, (0, 255, 0, 0)),
+            (ecodes.ABS_MT_SLOT, (0, 9, 0, 0))
+        ]
+        self.assertEqual(expected_ev_abs, actual_ev_abs)
+
+    def test_get_touch_events_without_args_must_use_system_resolution(self):
+        with patch.object(
+                _uinput, '_get_system_resolution', spec_set=True,
+                autospec=True) as mock_system_resolution:
+            mock_system_resolution.return_value = (
+                'system_res_x', 'system_res_y')
+            events = _uinput._get_touch_events()
+
+        ev_abs = events.get(ecodes.EV_ABS)
+        self.assert_expected_ev_abs('system_res_x', 'system_res_y', ev_abs)
+
+    def test_get_touch_events_with_args_must_use_given_resulution(self):
+        events = _uinput._get_touch_events('given_res_x', 'given_res_y')
+        ev_abs = events.get(ecodes.EV_ABS)
+        self.assert_expected_ev_abs('given_res_x', 'given_res_y', ev_abs)
+
+
+class UInputTouchDeviceTestCase(TestCase):
+    """Test the integration with evdev.UInput for the touch device."""
+
+    def setUp(self):
+        super(UInputTouchDeviceTestCase, self).setUp()
+        self._number_of_slots = 9
+
+        # Return to the original device after the test.
+        self.addCleanup(
+            self.set_mouse_device,
+            _uinput._UInputTouchDevice._device,
+            _uinput._UInputTouchDevice._touch_fingers_in_use,
+            _uinput._UInputTouchDevice._last_tracking_id)
+
+        # Always start the tests without fingers in use.
+        _uinput._UInputTouchDevice._touch_fingers_in_use = []
+        _uinput._UInputTouchDevice._last_tracking_id = 0
+
+    def set_mouse_device(
+            self, device, touch_fingers_in_use, last_tracking_id):
+        _uinput._UInputTouchDevice._device = device
+        _uinput._UInputTouchDevice._touch_fingers_in_use = touch_fingers_in_use
+        _uinput._UInputTouchDevice._last_tracking_id = last_tracking_id
+
+    def get_touch_with_mocked_backend(self):
+        dummy_x_resolution = 100
+        dummy_y_resolution = 100
+
+        _uinput._UInputTouchDevice._device = None
+        touch = _uinput._UInputTouchDevice(
+            res_x=dummy_x_resolution, res_y=dummy_y_resolution,
+            device_class=Mock)
+        touch._device.mock_add_spec(uinput.UInput, spec_set=True)
+        return touch
+
+    def assert_finger_down_emitted_write_and_syn(
+            self, touch, slot, tracking_id, x, y):
+        press_value = 1
+        expected_calls = [
+            call.write(ecodes.EV_ABS, ecodes.ABS_MT_SLOT, slot),
+            call.write(
+                ecodes.EV_ABS, ecodes.ABS_MT_TRACKING_ID, tracking_id),
+            call.write(
+                ecodes.EV_KEY, ecodes.BTN_TOOL_FINGER, press_value),
+            call.write(ecodes.EV_ABS, ecodes.ABS_MT_POSITION_X, x),
+            call.write(ecodes.EV_ABS, ecodes.ABS_MT_POSITION_Y, y),
+            call.write(ecodes.EV_ABS, ecodes.ABS_MT_PRESSURE, 400),
+            call.syn()
+        ]
+        self.assertEqual(expected_calls, touch._device.mock_calls)
+
+    def assert_finger_move_emitted_write_and_syn(self, touch, slot, x, y):
+        expected_calls = [
+            call.write(ecodes.EV_ABS, ecodes.ABS_MT_SLOT, slot),
+            call.write(ecodes.EV_ABS, ecodes.ABS_MT_POSITION_X, x),
+            call.write(ecodes.EV_ABS, ecodes.ABS_MT_POSITION_Y, y),
+            call.syn()
+        ]
+        self.assertEqual(expected_calls, touch._device.mock_calls)
+
+    def assert_finger_up_emitted_write_and_syn(self, touch, slot):
+        lift_tracking_id = -1
+        release_value = 0
+        expected_calls = [
+            call.write(ecodes.EV_ABS, ecodes.ABS_MT_SLOT, slot),
+            call.write(
+                ecodes.EV_ABS, ecodes.ABS_MT_TRACKING_ID, lift_tracking_id),
+            call.write(
+                ecodes.EV_KEY, ecodes.BTN_TOOL_FINGER, release_value),
+            call.syn()
+        ]
+        self.assertEqual(expected_calls, touch._device.mock_calls)
+
+    def test_finger_down_must_use_free_slot(self):
+        for slot in range(self._number_of_slots):
+            touch = self.get_touch_with_mocked_backend()
+
+            touch.finger_down(0, 0)
+
+            self.assert_finger_down_emitted_write_and_syn(
+                touch, slot=slot, tracking_id=ANY, x=0, y=0)
+
+    def test_finger_down_without_free_slots_must_raise_error(self):
+        # Claim all the available slots.
+        for slot in range(self._number_of_slots):
+            touch = self.get_touch_with_mocked_backend()
+            touch.finger_down(0, 0)
+
+        touch = self.get_touch_with_mocked_backend()
+
+        # Try to use one more.
+        error = self.assertRaises(RuntimeError, touch.finger_down, 11, 11)
+        self.assertEqual(
+            'All available fingers have been used already.', str(error))
+
+    def test_finger_down_must_use_unique_tracking_id(self):
+        for number in range(self._number_of_slots):
+            touch = self.get_touch_with_mocked_backend()
+            touch.finger_down(0, 0)
+
+            self.assert_finger_down_emitted_write_and_syn(
+                touch, slot=ANY, tracking_id=number + 1, x=0, y=0)
+
+    def test_finger_down_must_not_reuse_tracking_ids(self):
+        # Claim and release all the available slots once.
+        for number in range(self._number_of_slots):
+            touch = self.get_touch_with_mocked_backend()
+            touch.finger_down(0, 0)
+            touch.finger_up()
+
+        touch = self.get_touch_with_mocked_backend()
+
+        touch.finger_down(12, 12)
+        self.assert_finger_down_emitted_write_and_syn(
+            touch, slot=ANY, tracking_id=number + 2, x=12, y=12)
+
+    def test_finger_down_with_finger_pressed_must_raise_error(self):
+        touch = self.get_touch_with_mocked_backend()
+        touch.finger_down(0, 0)
+
+        error = self.assertRaises(RuntimeError, touch.finger_down, 0, 0)
+        self.assertEqual(
+            "Cannot press finger: it's already pressed.", str(error))
+
+    def test_finger_move_without_finger_pressed_must_raise_error(self):
+        touch = self.get_touch_with_mocked_backend()
+
+        error = self.assertRaises(RuntimeError, touch.finger_move, 10, 10)
+        self.assertEqual(
+            'Attempting to move without finger being down.', str(error))
+
+    def test_finger_move_must_use_assigned_slot(self):
+        for slot in range(self._number_of_slots):
+            touch = self.get_touch_with_mocked_backend()
+            touch.finger_down(0, 0)
+            touch._device.reset_mock()
+
+            touch.finger_move(10, 10)
+
+            self.assert_finger_move_emitted_write_and_syn(
+                touch, slot=slot, x=10, y=10)
+
+    def test_finger_move_must_reuse_assigned_slot(self):
+        first_slot = 0
+        touch = self.get_touch_with_mocked_backend()
+        touch.finger_down(1, 1)
+        touch._device.reset_mock()
+
+        touch.finger_move(13, 13)
+        self.assert_finger_move_emitted_write_and_syn(
+            touch, slot=first_slot, x=13, y=13)
+        touch._device.reset_mock()
+
+        touch.finger_move(14, 14)
+        self.assert_finger_move_emitted_write_and_syn(
+            touch, slot=first_slot, x=14, y=14)
+
+    def test_finger_up_without_finger_pressed_must_raise_error(self):
+        touch = self.get_touch_with_mocked_backend()
+
+        error = self.assertRaises(RuntimeError, touch.finger_up)
+        self.assertEqual(
+            "Cannot release finger: it's not pressed.", str(error))
+
+    def test_finger_up_must_use_assigned_slot(self):
+        fingers = []
+        for slot in range(self._number_of_slots):
+            touch = self.get_touch_with_mocked_backend()
+            touch.finger_down(0, 0)
+            touch._device.reset_mock()
+            fingers.append(touch)
+
+        for slot, touch in enumerate(fingers):
+            touch.finger_up()
+
+            self.assert_finger_up_emitted_write_and_syn(touch, slot=slot)
+            touch._device.reset_mock()
+
+    def test_finger_up_must_release_slot(self):
+        fingers = []
+        # Claim all the available slots.
+        for slot in range(self._number_of_slots):
+            touch = self.get_touch_with_mocked_backend()
+            touch.finger_down(0, 0)
+            fingers.append(touch)
+
+        slot_to_reuse = 3
+        fingers[slot_to_reuse].finger_up()
+
+        touch = self.get_touch_with_mocked_backend()
+
+        # Try to use one more.
+        touch.finger_down(15, 15)
+        self.assert_finger_down_emitted_write_and_syn(
+            touch, slot=slot_to_reuse, tracking_id=ANY, x=15, y=15)
+
+    def test_device_with_finger_down_must_be_pressed(self):
+        touch = self.get_touch_with_mocked_backend()
+        touch.finger_down(0, 0)
+
+        self.assertTrue(touch.pressed)
+
+    def test_device_without_finger_down_must_not_be_pressed(self):
+        touch = self.get_touch_with_mocked_backend()
+        self.assertFalse(touch.pressed)
+
+    def test_device_after_finger_up_must_not_be_pressed(self):
+        touch = self.get_touch_with_mocked_backend()
+        touch.finger_down(0, 0)
+        touch.finger_up()
+
+        self.assertFalse(touch.pressed)
+
+    def test_press_other_device_must_not_press_all_of_them(self):
+        other_touch = self.get_touch_with_mocked_backend()
+        other_touch.finger_down(0, 0)
+
+        touch = self.get_touch_with_mocked_backend()
+        self.assertFalse(touch.pressed)
+
+
+class UInputTouchTestCase(TestCase):
+    """Test UInput Touch helper for autopilot tests."""
+
+    def setUp(self):
+        super(UInputTouchTestCase, self).setUp()
+        # Mock the sleeps so we don't have to spend time actually sleeping.
+        self.addCleanup(utilities.sleep.disable_mock)
+        utilities.sleep.enable_mock()
+
+    def get_touch_with_mocked_backend(self):
+        touch = _uinput.Touch(device_class=Mock)
+        touch._device.mock_add_spec(
+            _uinput._UInputTouchDevice, spec_set=True)
+        return touch
+
+    def test_tap_must_put_finger_down_and_then_up(self):
+        expected_calls = [
+            call.finger_down(0, 0),
+            call.finger_up()
+        ]
+
+        touch = self.get_touch_with_mocked_backend()
+        touch.tap(0, 0)
+        self.assertEqual(expected_calls, touch._device.mock_calls)
+
+    def test_tap_object_must_put_finger_down_and_then_up_on_the_center(self):
+        object_ = type('Dummy', (object,), {'globalRect': (0, 0, 10, 10)})
+        expected_calls = [
+            call.finger_down(5, 5),
+            call.finger_up()
+        ]
+
+        touch = self.get_touch_with_mocked_backend()
+        touch.tap_object(object_)
+        self.assertEqual(expected_calls, touch._device.mock_calls)
+
+    def test_press_must_put_finger_down(self):
+        expected_calls = [call.finger_down(0, 0)]
+
+        touch = self.get_touch_with_mocked_backend()
+        touch.press(0, 0)
+        self.assertEqual(expected_calls, touch._device.mock_calls)
+
+    def test_release_must_put_finger_up(self):
+        expected_calls = [call.finger_up()]
+
+        touch = self.get_touch_with_mocked_backend()
+        touch.release()
+        self.assertEqual(expected_calls, touch._device.mock_calls)
+
+    def test_move_must_move_finger(self):
+        expected_calls = [call.finger_move(10, 10)]
+
+        touch = self.get_touch_with_mocked_backend()
+        touch.move(10, 10)
+        self.assertEqual(expected_calls, touch._device.mock_calls)
+
+
+class MultipleUInputTouchBackend(_uinput._UInputTouchDevice):
+
+    def __init__(self, res_x=100, res_y=100, device_class=Mock):
+        super(MultipleUInputTouchBackend, self).__init__(
+            res_x, res_y, device_class)
+
+
+class MultipleUInputTouchTestCase(TestCase):
+
+    def setUp(self):
+        super(MultipleUInputTouchTestCase, self).setUp()
+        # Return to the original device after the test.
+        self.addCleanup(
+            self.set_mouse_device,
+            _uinput._UInputTouchDevice._device,
+            _uinput._UInputTouchDevice._touch_fingers_in_use,
+            _uinput._UInputTouchDevice._last_tracking_id)
+
+    def set_mouse_device(
+            self, device, touch_fingers_in_use, last_tracking_id):
+        _uinput._UInputTouchDevice._device = device
+        _uinput._UInputTouchDevice._touch_fingers_in_use = touch_fingers_in_use
+        _uinput._UInputTouchDevice._last_tracking_id = last_tracking_id
+
+    def test_press_other_device_must_not_press_all_of_them(self):
+        finger1 = _uinput.Touch(device_class=MultipleUInputTouchBackend)
+        finger2 = _uinput.Touch(device_class=MultipleUInputTouchBackend)
+
+        finger1.press(0, 0)
+        self.addCleanup(finger1.release)
+
+        self.assertFalse(finger2.pressed)
 
 
 class DragUinputTouchTestCase(testscenarios.TestWithScenarios, TestCase):

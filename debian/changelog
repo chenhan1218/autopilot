@@ -1,3 +1,178 @@
+autopilot (1.4+14.04.20140129-0ubuntu1) trusty; urgency=low
+
+  [ Barry Warsaw ]
+  * Make Autopilot tracepoint extension module compatible with python 3.
+    (LP: #1266574)
+
+  [ Steve Langasek ]
+  * Fix the autopilot-touch package to be Architecture: all instead of
+    having it be Architecture: any with a wrong architecture exclusion
+    of a dependency.
+
+  [ Christopher Lee ]
+  * Handle xml parse exception nicely as well as add some nicer
+    logging/feedback.
+  * Fixes issues with load_test_suite_from_name.
+  * Make autopilot able to run it's own tests again.
+  * When setting up logging take into account not all modes/commands
+    have a verbose argument.
+  * Fixes the issue when listing an non-existent test suite raised an
+    uncaught exception. .
+  * Minor fix for a failing functional test, now passes under python 2
+    and 3.
+  * Minor fixup of TypeError in platform docs re: skipping tests.
+  * Add details to Faq docs re: launching (click) applications. (LP:
+    #1257148)
+  * Refactor of the application launching code (incl. tests).
+  * Fix issue with launching click app and added test to cover it.
+  * Ensure test discovery looks and uses cwd before system path.
+  * Attempts to use the newer version call to 'launch_uris_as_manager',
+    falls back to the simpler 'launch_uris' if that fails.
+  * Click applications now provide application_name to
+    get_proxy_object_for_existing_process. (LP: #1274292)
+
+  [ Thomi Richards ]
+  * Fix tox.ini config file to restrict flake8 runs to the autopilot/
+    directory.
+  * Make autopilot fail when no command is specified. (LP: #1255334)
+  * Move the contents of the 'autopilot' script into autopilot/run.py,
+    and make setuptools generate the autopilot script for us.
+  * Make autopilot understand how the "-qt=XXX" option works. (LP:
+    #1255405)
+  * Handle xml parse exception nicely as well as add some nicer
+    logging/feedback.
+  * Fix autopilot test case loading. (LP: #1255752, #1255659)
+  * Move the BackendException class to solve a circular import.
+  * Make autopilot support subunit bytestream output. (LP: #1255662)
+  * Make autopilot able to run it's own tests again.
+  * Remove an incorrect comment from the source code.
+  * Fix some unit tests that were printing to stdout.
+  * Lay the groundwork for attaching files to test results.
+  * Fix failing tests in python3.
+  * Add click package log file to test result. (LP: #1257453)
+  * Add a simple shell script that can be used to generate unit test
+    coverage for autopilot itself.
+  * Add unit tests for common input code.
+  * Remove some unused code code in the type support unit tests.
+  * Don't include test lines in coverage count.
+  * Add a few missing test cases, increase test case coverage.
+  * Add unit tests for process snapshot support.
+  * A few tweaks to the make_coverage script to make it a bit more
+    useful.
+  * Fix issue with launching click app and added test to cover it.
+  * Add suppoprt for debugging profiles to autopilot.
+  * Add ability to control autopilot timeout values from the command
+    line. Refactor code so I can add testing to autopilot run module.
+  * Fix flake8 warnings.
+  * Fix Eventually matcher so it can correctly match against complex
+    types. (LP: #1269984)
+  * Improve the error message in the ProcessSearchError exception. (LP:
+    #1239427)
+
+  [ Martin Pitt ]
+  * Fix initialization of GdkDisplay, to fix crash when accessing
+    Window.geometry. (LP: #1258170)
+  * tests: Ensure we don't leave remmina and other processes open. (LP:
+    #1259721)
+  * Don't inherit our stdout to spawned processes, to allow users to
+    redirect autopilot's stdout to tee and other programs which wait for
+    EOF. (LP: #1259721)
+  * Fix functional tests to actually run against the build tree again,
+    and fix some of their failures.
+
+  [ Sergio Schvezov ]
+  * The generic goldfish target as a upa device.
+  * Adding APP_URIS parameter to Click package launching.
+
+  [ Dimitri John Ledkov ]
+  * Fix emulator template screen size.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 29 Jan 2014 21:30:58 +0000
+
+autopilot (1.4+14.04.20140123.1-0ubuntu1) trusty; urgency=low
+
+  [ Barry Warsaw ]
+  * Make Autopilot tracepoint extension module compatible with python 3.
+    (LP: #1266574)
+
+  [ Christopher Lee ]
+  * Handle xml parse exception nicely as well as add some nicer
+    logging/feedback.
+  * Fixes issues with load_test_suite_from_name.
+  * Make autopilot able to run it's own tests again.
+  * When setting up logging take into account not all modes/commands
+    have a verbose argument.
+  * Fixes the issue when listing an non-existent test suite raised an
+    uncaught exception. .
+  * Minor fix for a failing functional test, now passes under python 2
+    and 3.
+  * Minor fixup of TypeError in platform docs re: skipping tests.
+  * Add details to Faq docs re: launching (click) applications. (LP:
+    #1257148)
+  * Refactor of the application launching code (incl. tests).
+  * Fix issue with launching click app and added 100% unit test to cover
+    it.
+  * Fixes the issue where test discovery gets confused when there are
+    local (in cwd) and system installed tests.
+
+  [ Thomi Richards ]
+  * Fix tox.ini config file to restrict flake8 runs to the autopilot/
+    directory.
+  * Make autopilot fail when no command is specified. (LP: #1255334)
+  * Move the contents of the 'autopilot' script into autopilot/run.py,
+    and make setuptools generate the autopilot script for us.
+  * Make autopilot understand how the "-qt=XXX" option works. (LP:
+    #1255405)
+  * Handle xml parse exception nicely as well as add some nicer
+    logging/feedback.
+  * Fix autopilot test case loading. (LP: #1255752, #1255659)
+  * Move the BackendException class to solve a circular import.
+  * Make autopilot support subunit bytestream output. (LP: #1255662)
+  * Make autopilot able to run it's own tests again.
+  * Remove an incorrect comment from the source code.
+  * Fix some unit tests that were printing to stdout.
+  * Lay the groundwork for attaching files to test results.
+  * Fix failing tests in python3.
+  * Add click package log file to test result. (LP: #1257453)
+  * Add a simple shell script that can be used to generate unit test
+    coverage for autopilot itself.
+  * Add unit tests for common input code.
+  * Remove some unused code code in the type support unit tests.
+  * Don't include test lines in coverage count.
+  * Add a few missing test cases, increase test case coverage.
+  * Add unit tests for process snapshot support.
+  * A few tweaks to the make_coverage script to make it a bit more
+    useful.
+  * Fix issue with launching click app and added 100% unit test to cover
+    it.
+  * Fix eventually matcher so it can match against complex types. (LP:
+    #1269984)
+
+  [ Martin Pitt ]
+  * Fix initialization of GdkDisplay, to fix crash when accessing
+    Window.geometry. (LP: #1258170)
+  * tests: Ensure we don't leave remmina and other processes open. (LP:
+    #1259721)
+  * Don't inherit our stdout to spawned processes, to allow users to
+    redirect autopilot's stdout to tee and other programs which wait for
+    EOF. (LP: #1259721)
+  * Fix functional tests to actually run against the build tree again,
+    and fix some of their failures.
+
+  [ Sergio Schvezov ]
+  * The generic goldfish target as a upa device.
+
+  [ Dimitri John Ledkov ]
+  * Fix emulator template screen size.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 23 Jan 2014 23:21:34 +0000
+
+autopilot (1.4+14.04.20131125-0ubuntu4) trusty; urgency=medium
+
+  * Seed python3-autopilots on ubuntu touch by default.
+
+ -- Dimitri John Ledkov <xnox@ubuntu.com>  Fri, 10 Jan 2014 00:00:18 +0000
+
 autopilot (1.4+14.04.20131125-0ubuntu3) trusty; urgency=low
 
   * Cherry-pick resolution constants for the default emulator skin.

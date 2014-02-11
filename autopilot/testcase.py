@@ -305,12 +305,18 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         pid = launcher_instance.launch(application, *args)
         process = getattr(launcher_instance, 'process', None)
+        application_name = getattr(
+            launcher_instance,
+            'dbus_application_name',
+            None
+        )
 
         proxy_obj = get_proxy_object_for_existing_process(
             pid=pid,
             process=process,
             dbus_bus=dbus_bus,
             emulator_base=launcher_instance.emulator_base,
+            application_name=application_name,
         )
         proxy_obj.set_process(process)
 

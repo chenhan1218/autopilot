@@ -47,13 +47,15 @@ class QueryResolutionFunctionTests(TestCase):
             EndMode
             '''
         )
-        with patch.object(upa, '_get_fbset_output', return_value=patched_fbset_resolution):
+        with patch.object(upa, '_get_fbset_output') as patched_gfo:
+            patched_gfo.return_value = patched_fbset_resolution
             observed = upa._get_fbset_resolution()
         self.assertEqual((768, 1280), observed)
 
     def test_get_fbset_resolution_raises_runtimeError(self):
         patched_fbset_resolution = 'something went wrong!'
-        with patch.object(upa, '_get_fbset_output', return_value=patched_fbset_resolution):
+        with patch.object(upa, '_get_fbset_output') as patched_gfo:
+            patched_gfo.return_value = patched_fbset_resolution
             self.assertThat(
                 upa._get_fbset_resolution,
                 raises(RuntimeError),

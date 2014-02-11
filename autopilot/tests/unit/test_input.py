@@ -18,7 +18,6 @@
 #
 
 import testscenarios
-
 from evdev import ecodes, uinput
 from mock import ANY, call, Mock, patch
 from six import StringIO

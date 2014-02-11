@@ -209,7 +209,14 @@ class InputStackKeyboardBackspaceTests(InputStackKeyboardBase):
                         )
 
 
-@skipIf(platform.model() == 'Desktop', "Only suitable on a device")
+def osk_backend_available():
+    try:
+        from autopilot.input._osk import Keyboard
+        return True
+    except ImportError:
+        return False
+
+
 class OSKBackendTests(AutopilotTestCase):
     """Testing the Onscreen Keyboard (Ubuntu Keyboard) backend specifically.
 
@@ -316,6 +323,8 @@ class OSKBackendTests(AutopilotTestCase):
 
         return self._start_qml_script(simple_script)
 
+    @skipIf(platform.model() == 'Desktop', "Only suitable on a device")
+    @skipIf(not osk_backend_available(), "Test requires OSK Backend installed")
     def test_can_type_string(self):
         """Typing text must produce the expected characters in the input
         field.
@@ -332,6 +341,8 @@ class OSKBackendTests(AutopilotTestCase):
 
         self.assertThat(text_area.text, Eventually(Equals(self.input)))
 
+    @skipIf(platform.model() == 'Desktop', "Only suitable on a device")
+    @skipIf(not osk_backend_available(), "Test requires OSK Backend installed")
     def test_focused_typing_contextmanager(self):
         """Typing text using the 'focused_typing' context manager must not only
         produce the expected characters in the input field but also cleanup the

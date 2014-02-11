@@ -27,7 +27,7 @@ from testtools.matchers import Contains, raises
 
 import autopilot.input
 from autopilot import utilities
-from autopilot.input import _uinput, _X11
+from autopilot.input import _uinput
 from autopilot.input._common import get_center_point
 
 

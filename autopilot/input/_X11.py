@@ -455,16 +455,31 @@ class Mouse(MouseBase):
         x, y = coord["root_x"], coord["root_y"]
         return x, y
 
-    def drag(self, x1, y1, x2, y2, rate=10):
-        """Performs a press, move and release.
+    def drag(self, x1, y1, x2, y2, rate=10, time_between_events=0.01):
+        """Perform a press, move and release.
 
         This is to keep a common API between Mouse and Finger as long as
         possible.
 
+        The pointer will be dragged from the starting point to the ending point
+        with multiple moves. The number of moves, and thus the time that it
+        will take to complete the drag can be altered with the `rate`
+        parameter.
+
+        :param x1: The point on the x axis where the drag will start from.
+        :param y1: The point on the y axis where the drag will starts from.
+        :param x2: The point on the x axis where the drag will end at.
+        :param y2: The point on the y axis where the drag will end at.
+        :param rate: The number of pixels the mouse will be moved per
+            iteration. Default is 10 pixels. A higher rate will make the drag
+            faster, and lower rate will make it slower.
+        :param time_between_events: The number of seconds that the drag will
+            wait between iterations.
+
         """
         self.move(x1, y1)
         self.press()
-        self.move(x2, y2, rate=rate)
+        self.move(x2, y2, rate=rate, time_between_events=time_between_events)
         self.release()
 
     @classmethod

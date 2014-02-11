@@ -862,14 +862,22 @@ class PointerTestCase(TestCase):
 
     def test_drag_with_rate(self):
         with patch.object(self.pointer._device, 'drag') as mock_drag:
-            self.pointer.drag(0, 0, 20, 20, rate=5)
+            self.pointer.drag(0, 0, 20, 20, rate='test')
 
         mock_drag.assert_called_once_with(
-            0, 0, 20, 20, rate=5, time_between_events=0.01)
+            0, 0, 20, 20, rate='test', time_between_events=0.01)
 
-    def test_drag_with_default_rate(self):
+    def test_drag_with_time_between_events(self):
+        with patch.object(self.pointer._device, 'drag') as mock_drag:
+            self.pointer.drag(0, 0, 20, 20, time_between_events='test')
+
+        mock_drag.assert_called_once_with(
+            0, 0, 20, 20, rate=10, time_between_events='test')
+
+    def test_drag_with_default_parameters(self):
         with patch.object(self.pointer._device, 'drag') as mock_drag:
             self.pointer.drag(0, 0, 20, 20)
 
         mock_drag.assert_called_once_with(
             0, 0, 20, 20, rate=10, time_between_events=0.01)
+

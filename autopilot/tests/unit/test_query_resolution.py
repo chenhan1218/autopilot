@@ -18,6 +18,7 @@
 #
 
 from testtools import TestCase
+from testtools.matchers import raises
 from testscenarios import WithScenarios
 from textwrap import dedent
 from mock import patch
@@ -50,6 +51,34 @@ class QueryResolutionFunctionTests(TestCase):
             observed = upa._get_fbset_resolution()
         self.assertEqual((768, 1280), observed)
 
+    def test_get_fbset_resolution_raises_runtimeError(self):
+        patched_fbset_resolution = 'something went wrong!'
+        with patch.object(upa, '_get_fbset_output', return_value=patched_fbset_resolution):
+            self.assertThat(
+                upa._get_fbset_resolution,
+                raises(RuntimeError),
+            )
+
+    def test_hardcoded_raises_error_on_unknown_model(self):
+        with patch.object(upa, 'image_codename', return_value="unknown"):
+            self.assertThat(
+                upa._get_hardcoded_resolution,
+                raises(
+                    NotImplementedError(
+                        'Device "unknown" is not supported by Autopilot.'
+                    )
+                )
+            )
+
+    def test_query_resolution_uses_fbset_first(self):
+        with patch.object(upa, '_get_fbset_resolution', return_value=(1,2)):
+            self.assertEqual((1,2), upa.query_resolution())
+
+    def test_query_resolution_uses_hardcoded_second(self):
+        with patch.object(upa, '_get_fbset_resolution', side_effect=Exception):
+            with patch.object(upa, '_get_hardcoded_resolution', return_value=(2,3)):
+                self.assertEqual((2,3), upa.query_resolution())
+
 
 class HardCodedResolutionTests(WithScenarios, TestCase):
 
@@ -67,18 +96,3 @@ class HardCodedResolutionTests(WithScenarios, TestCase):
         self.assertEqual(self.expected, observed)
 
 
-    # @patch('subprocess.check_output', return_value=b'"768x1280"')
-    # def test_fbset_lookup(self, mock_check_output):
-    #     self.assertEqual((768, 1280), query_resolution())
-
-    # @patch('subprocess.check_output', side_effect=[OSError(), b'mako'])
-    # def test_dict_lookup(self, mock_check_output):
-    #     self.assertEqual((768, 1280), query_resolution())
-
-    # @patch('subprocess.check_output', side_effect=[OSError(), b'warhog'])
-    # def test_dict_lookup_name_fail(self, mock_check_output):
-    #     self.assertRaises(NotImplementedError, query_resolution)
-
-    # @patch('subprocess.check_output', side_effect=[OSError(), OSError()])
-    # def test_dict_lookup_noname_fail(self, mock_check_output):
-    #     self.assertRaises(NotImplementedError, query_resolution)

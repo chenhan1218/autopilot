@@ -41,7 +41,7 @@ def _get_fbset_resolution():
             quoted_resolution = line.split()[1]
             resolution_string = quoted_resolution.strip('"')
             return tuple(int(piece) for piece in resolution_string.split('x'))
-
+    raise RuntimeError("No modes found from fbset output")
 
 
 def _get_fbset_output():

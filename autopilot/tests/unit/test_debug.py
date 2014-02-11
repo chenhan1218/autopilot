@@ -210,7 +210,7 @@ class LogFollowerTests(TestCase):
             log_debug_object.cleanUp()
 
         args, _ = self.fake_caseAddDetail.call_args
-        self.assertThat(args[1].as_text(), Not(Raises()))
+        self.assertThat(args[1].as_text, Not(Raises()))
 
     def test_can_create_syslog_follower(self):
         debug_obj = d.SyslogDebugObject(Mock())

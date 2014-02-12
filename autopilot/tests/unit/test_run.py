@@ -19,9 +19,10 @@
 
 from argparse import Namespace
 from mock import Mock, patch
+import logging
 import six
 from testtools import TestCase
-from testtools.matchers import Equals, raises
+from testtools.matchers import Equals, IsInstance, raises
 if six.PY3:
     from contextlib import ExitStack
 else:
@@ -138,6 +139,84 @@ class RunUtilityFunctionTests(TestCase):
         with patch.object(run.subprocess, 'call') as patched_call:
             patched_call.return_value = 1
             self.assertFalse(run._have_video_recording_facilities())
+
+
+class LoggingSetupTests(TestCase):
+
+    def test_get_root_logger_returns_logging_instance(self):
+        logger = run.get_root_logger()
+        self.assertThat(logger, IsInstance(logging.RootLogger))
+
+    def test_setup_logging_calls_get_root_logger(self):
+        with patch.object(run, 'get_root_logger') as fake_get_root_logger:
+            run.setup_logging(0)
+            fake_get_root_logger.assert_called_once_with()
+
+    def test_setup_logging_sets_root_logging_level_to_debug(self):
+        with patch.object(run, 'get_root_logger') as fake_get_logger:
+            run.setup_logging(0)
+            fake_get_logger.return_value.setLevel.assert_called_once_with(
+                logging.DEBUG
+            )
+
+    def test_set_null_log_handler(self):
+        mock_root_logger = Mock()
+        run.set_null_log_handler(mock_root_logger)
+
+        self.assertThat(
+            mock_root_logger.addHandler.call_args[0][0],
+            IsInstance(logging.NullHandler)
+        )
+
+    @patch.object(run, 'get_root_logger')
+    def test_verbse_level_zero_sets_null_handler(self, fake_get_logger):
+        with patch.object(run, 'set_null_log_handler') as fake_set_null:
+            run.setup_logging(0)
+
+            fake_set_null.assert_called_once_with(
+                fake_get_logger.return_value
+            )
+
+    def test_stderr_handler_sets_stream_handler_with_custom_formatter(self):
+        mock_root_logger = Mock()
+        run.set_stderr_stream_handler(mock_root_logger)
+
+        self.assertThat(mock_root_logger.addHandler.call_count, Equals(1))
+        created_handler = mock_root_logger.addHandler.call_args[0][0]
+
+        self.assertThat(
+            created_handler,
+            IsInstance(logging.StreamHandler)
+        )
+        self.assertThat(
+            created_handler.formatter,
+            IsInstance(run.LogFormatter)
+        )
+
+    @patch.object(run, 'get_root_logger')
+    def test_verbose_level_one_sets_stream_handler(self, fake_get_logger):
+        with patch.object(run, 'set_stderr_stream_handler') as stderr_handler:
+            run.setup_logging(1)
+
+            stderr_handler.assert_called_once_with(
+                fake_get_logger.return_value
+            )
+
+    def test_enable_debug_log_messages_sets_debugFilter_attr(self):
+        with patch.object(run, 'DebugLogFilter') as patched_filter:
+            patched_filter.debug_log_enabled = False
+            run.enable_debug_log_messages()
+            self.assertThat(
+                patched_filter.debug_log_enabled,
+                Equals(True)
+            )
+
+    @patch.object(run, 'get_root_logger')
+    def test_verbose_level_two_enables_debug_messages(self, fake_get_logger):
+        with patch.object(run, 'enable_debug_log_messages') as enable_debug:
+            run.setup_logging(2)
+
+            enable_debug.assert_called_once_with()
 
 
 class TestProgramTests(TestCase):

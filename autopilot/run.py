@@ -48,19 +48,35 @@ logger = logging.getLogger(__name__)
 
 def setup_logging(verbose):
     """Configure the root logger and verbose logging to stderr"""
-    root_logger = logging.getLogger()
+    root_logger = get_root_logger()
     root_logger.setLevel(logging.DEBUG)
     if verbose == 0:
-        root_logger.addHandler(logging.NullHandler())
+        set_null_log_handler(root_logger)
     if verbose >= 1:
-        formatter = LogFormatter()
-        stderr_handler = logging.StreamHandler(stream=sys.stderr)
-        stderr_handler.setFormatter(formatter)
-        root_logger.addHandler(stderr_handler)
+        set_stderr_stream_handler(root_logger)
     if verbose >= 2:
-        DebugLogFilter.debug_log_enabled = True
+        enable_debug_log_messages()
     #log autopilot version
     root_logger.info(get_version_string())
+
+
+def get_root_logger():
+    return logging.getLogger()
+
+
+def set_null_log_handler(root_logger):
+    root_logger.addHandler(logging.NullHandler())
+
+
+def set_stderr_stream_handler(root_logger):
+    formatter = LogFormatter()
+    stderr_handler = logging.StreamHandler(stream=sys.stderr)
+    stderr_handler.setFormatter(formatter)
+    root_logger.addHandler(stderr_handler)
+
+
+def enable_debug_log_messages():
+    DebugLogFilter.debug_log_enabled = True
 
 
 def construct_test_result(args):

@@ -304,7 +304,10 @@ class QtTests(ApplicationTests):
         app_proxy = self.launch_test_application(path, app_type='qt')
         proxy_window = app_proxy.select_single('QMainWindow')
         pm = ProcessManager.create()
-        window = [w for w in pm.get_open_windows() if w.name == os.path.basename(path)][0]
+        window = [
+            w for w in pm.get_open_windows()
+            if w.name == os.path.basename(path)
+        ][0]
         self.assertThat(list(window.geometry), Equals(proxy_window.geometry))
 
     def test_can_launch_qt_script_that_aborts(self):

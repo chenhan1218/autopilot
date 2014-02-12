@@ -28,7 +28,7 @@ import subprocess
 def query_resolution():
     try:
         return _get_fbset_resolution()
-    except Exception as e:
+    except Exception:
         return _get_hardcoded_resolution()
 
 

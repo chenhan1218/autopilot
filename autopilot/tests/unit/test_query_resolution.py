@@ -23,7 +23,7 @@ from testscenarios import WithScenarios
 from textwrap import dedent
 from mock import patch
 
-from autopilot.display import _upa  as upa
+from autopilot.display import _upa as upa
 
 
 class QueryResolutionFunctionTests(TestCase):
@@ -73,13 +73,15 @@ class QueryResolutionFunctionTests(TestCase):
             )
 
     def test_query_resolution_uses_fbset_first(self):
-        with patch.object(upa, '_get_fbset_resolution', return_value=(1,2)):
-            self.assertEqual((1,2), upa.query_resolution())
+        with patch.object(upa, '_get_fbset_resolution', return_value=(1, 2)):
+            self.assertEqual((1, 2), upa.query_resolution())
 
     def test_query_resolution_uses_hardcoded_second(self):
         with patch.object(upa, '_get_fbset_resolution', side_effect=Exception):
-            with patch.object(upa, '_get_hardcoded_resolution', return_value=(2,3)):
-                self.assertEqual((2,3), upa.query_resolution())
+            with patch.object(
+                upa, '_get_hardcoded_resolution', return_value=(2, 3)
+            ):
+                self.assertEqual((2, 3), upa.query_resolution())
 
 
 class HardCodedResolutionTests(WithScenarios, TestCase):
@@ -96,5 +98,3 @@ class HardCodedResolutionTests(WithScenarios, TestCase):
         with patch.object(upa, 'image_codename', return_value=self.name):
             observed = upa._get_hardcoded_resolution()
         self.assertEqual(self.expected, observed)
-
-

@@ -505,7 +505,7 @@ class Window(WindowBase):
         geometry = self._x_win.get_geometry()
         origin = GdkX11.X11Window.foreign_new_for_display(
             Gdk.Display().get_default(), self._xid).get_origin()
-        return (origin[0], origin[1], geometry.width, geometry.height)
+        return (origin[1], origin[2], geometry.width, geometry.height)
 
     @property
     def is_maximized(self):

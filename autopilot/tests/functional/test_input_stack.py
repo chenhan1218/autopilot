@@ -211,7 +211,7 @@ class InputStackKeyboardBackspaceTests(InputStackKeyboardBase):
 
 def osk_backend_available():
     try:
-        from autopilot.input._osk import Keyboard
+        from autopilot.input._osk import Keyboard  # NOQA
         return True
     except ImportError:
         return False

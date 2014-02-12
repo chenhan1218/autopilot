@@ -27,8 +27,14 @@ import sys
 import six
 from mock import patch
 from tempfile import mktemp
-from testtools.matchers import raises, LessThan
+from testtools.matchers import (
+    LessThan,
+    Not,
+    Raises,
+    raises,
+)
 from textwrap import dedent
+import unittest
 
 from autopilot.testcase import AutopilotTestCase
 from autopilot.introspection import (
@@ -323,6 +329,32 @@ class QtTests(ApplicationTests):
             extension=".sh")
         app_proxy = self.launch_test_application(wrapper_path, app_type='qt')
         self.assertTrue(app_proxy is not None)
+
+    @unittest.expectedFailure
+    def test_can_handle_non_unicode_stdout_and_stderr(self):
+        path = self.write_script(dedent("""\
+            #!%s
+            # -*- coding: utf-8 -*-
+            from PyQt4.QtGui import QMainWindow, QApplication
+            from sys import argv, stdout, stderr
+
+            app = QApplication(argv)
+            win = QMainWindow()
+            win.show()
+            stdout.write('Hello\x88stdout')
+            stdout.flush()
+            stderr.write('Hello\x88stderr')
+            stderr.flush()
+            app.exec_()
+            """ % sys.executable))
+        self.launch_test_application(path, app_type='qt')
+        details_dict = self.getDetails()
+        for name, content_obj in details_dict.items():
+            self.assertThat(
+                lambda: content_obj.as_text(),
+                Not(Raises())
+            )
+        self.assertEqual(1, 2)
 
 
 class GtkTests(ApplicationTests):

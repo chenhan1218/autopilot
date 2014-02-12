@@ -27,10 +27,12 @@ import sys
 import six
 from mock import patch
 from tempfile import mktemp
+from testtools import skipIf
 from testtools.matchers import Equals, raises, LessThan
 from textwrap import dedent
 
 from autopilot.process import ProcessManager
+from autopilot.platform import model
 from autopilot.testcase import AutopilotTestCase
 from autopilot.introspection import (
     get_proxy_object_for_existing_process,
@@ -290,6 +292,7 @@ class QtTests(ApplicationTests):
         app_proxy = self.launch_test_application(path, app_type='qt')
         self.assertTrue(app_proxy is not None)
 
+    @skipIf(model() != 'Desktop', "Bamf only available on desktop (Qt4)")
     def test_bamf_geometry_gives_reliable_results(self):
         path = self.write_script(dedent("""\
             #!%s

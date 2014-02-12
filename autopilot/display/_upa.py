@@ -73,8 +73,8 @@ class Display(DisplayBase):
     """The base class/inteface for the display devices"""
 
     def __init__(self):
-        self._X, self._Y = query_resolution()
         super(Display, self).__init__()
+        self._X, self._Y = query_resolution()
 
     def get_num_screens(self):
         """Get the number of screens attached to the PC."""

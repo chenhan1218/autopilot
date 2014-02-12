@@ -1,3 +1,33 @@
+autopilot (1.4+14.04.20140212-0ubuntu1) trusty; urgency=low
+
+  [ CI bot ]
+  * Resync trunk
+
+  [ Christopher Lee ]
+  * Deprecating the use of AutopilotTestCase.pick_app_launcher
+  * Fix a regression in the "autopilot launch" command which meant that
+    application arguments were taken as the application to launch. (LP:
+    #1275913)
+
+  [ Thomi Richards ]
+  * Remove ibus.py from autopilot, as it should live in lp:unity. (LP:
+    #1210661)
+  * Add unit tests to the autopilot.run module.
+  * Refactor parts of the 'autopilot.run' module, adding unit tests and
+    simplifying the code along the way.
+  * Fix docs WRT Eventually matcher's interaction with Raises() matcher.
+    (LP: #1244490)
+  * Get display resolution using fbset, falling back to hard coded
+    values based on image codename on phablet devices.
+  * Fix functional tests that started failing when window-mocker
+    changed. (LP: #1278187)
+  * Add unit tests for missing coverage on code that picks device
+    backends at runtime.
+  * Fix a bug where autopilot didn't do the right thing with non-unicode
+    valid bytestrings. (LP: #1278272)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 12 Feb 2014 01:14:02 +0000
+
 autopilot (1.4+14.04.20140129-0ubuntu1) trusty; urgency=low
 
   [ Barry Warsaw ]

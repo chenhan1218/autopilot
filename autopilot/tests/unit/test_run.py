@@ -23,9 +23,11 @@ import logging
 import os.path
 from shutil import rmtree
 import six
+import subprocess
 import tempfile
 from testtools import TestCase
 from testtools.matchers import (
+    Contains,
     DirExists,
     Equals,
     IsInstance,
@@ -33,6 +35,7 @@ from testtools.matchers import (
     raises,
     StartsWith,
 )
+
 if six.PY3:
     from contextlib import ExitStack
 else:
@@ -149,6 +152,385 @@ class RunUtilityFunctionTests(TestCase):
         with patch.object(run.subprocess, 'call') as patched_call:
             patched_call.return_value = 1
             self.assertFalse(run._have_video_recording_facilities())
+
+
+class TestRunLaunchApp(TestCase):
+    @patch.object(run, 'launch_process')
+    def test_launch_app_launches_app_with_arguments(self, patched_launch_proc):
+        app_name = self.getUniqueString()
+        app_arguments = self.getUniqueString()
+        fake_args = Namespace(
+            mode='launch',
+            application=[app_name, app_arguments],
+            interface=None
+        )
+
+        with patch.object(
+            run,
+            '_prepare_application_for_launch',
+            return_value=(app_name, app_arguments)
+        ):
+            program = run.TestProgram(fake_args)
+            program.run()
+            patched_launch_proc.assert_called_once_with(
+                app_name,
+                app_arguments,
+                capture_output=False
+            )
+
+    def test_launch_app_exits_using_print_message_and_exit_error(self):
+        app_name = self.getUniqueString()
+        app_arguments = self.getUniqueString()
+        error_message = "Cannot find application 'blah'"
+        fake_args = Namespace(
+            mode='launch',
+            application=[app_name, app_arguments],
+            interface=None
+        )
+
+        with patch.object(
+            run,
+            '_prepare_application_for_launch',
+                side_effect=RuntimeError(error_message)
+        ):
+            with patch.object(
+                run, '_print_message_and_exit_error'
+            ) as print_and_exit:
+                run.TestProgram(fake_args).run()
+                print_and_exit.assert_called_once_with(
+                    "Error: %s" % error_message
+                )
+
+    @patch.object(run, 'launch_process')
+    def test_launch_app_exits_with_message_on_failure(self, patched_launch_proc):  # NOQA
+        app_name = self.getUniqueString()
+        app_arguments = self.getUniqueString()
+        fake_args = Namespace(
+            mode='launch',
+            application=[app_name, app_arguments],
+            interface=None
+        )
+
+        with patch.object(
+            run,
+            '_prepare_application_for_launch',
+            return_value=(app_name, app_arguments)
+        ):
+            with patch('sys.stdout', new=six.StringIO()) as stdout:
+                patched_launch_proc.side_effect = RuntimeError(
+                    "Failure Message"
+                )
+                program = run.TestProgram(fake_args)
+                self.assertThat(lambda: program.run(), raises(SystemExit(1)))
+                self.assertThat(
+                    stdout.getvalue(),
+                    Contains("Error: Failure Message")
+                )
+
+
+class TestRunLaunchAppHelpers(TestCase):
+    """Tests for the 'autopilot launch' command"""
+
+    def test_get_app_name_and_args_returns_app_name_passed_app_name(self):
+        app_name = self.getUniqueString()
+        launch_args = [app_name]
+
+        self.assertThat(
+            run._get_app_name_and_args(launch_args),
+            Equals((app_name, []))
+        )
+
+    def test_get_app_name_and_args_returns_app_name_passed_arg_and_name(self):
+        app_name = self.getUniqueString()
+        app_arg = [self.getUniqueString()]
+        launch_args = [app_name] + app_arg
+
+        self.assertThat(
+            run._get_app_name_and_args(launch_args),
+            Equals((app_name, app_arg))
+        )
+
+    def test_get_app_name_and_args_returns_app_name_passed_args_and_name(self):
+        app_name = self.getUniqueString()
+        app_args = [self.getUniqueString(), self.getUniqueString()]
+
+        launch_args = [app_name] + app_args
+
+        self.assertThat(
+            run._get_app_name_and_args(launch_args),
+            Equals((app_name, app_args))
+        )
+
+    def test_application_name_is_full_path_True_when_is_abs_path(self):
+        with patch.object(run.os.path, 'isabs', return_value=True):
+            self.assertTrue(run._application_name_is_full_path(""))
+
+    def test_application_name_is_full_path_True_when_path_exists(self):
+        with patch.object(run.os.path, 'exists', return_value=True):
+            self.assertTrue(run._application_name_is_full_path(""))
+
+    def test_application_name_is_full_path_False_neither_abs_or_exists(self):
+        with patch.object(run.os.path, 'exists', return_value=False):
+            with patch.object(run.os.path, 'isabs', return_value=False):
+                self.assertFalse(run._application_name_is_full_path(""))
+
+    def test_get_applications_full_path_returns_same_when_full_path(self):
+        app_name = self.getUniqueString()
+
+        with patch.object(
+            run,
+            '_application_name_is_full_path',
+            return_value=True
+        ):
+            self.assertThat(
+                run._get_applications_full_path(app_name),
+                Equals(app_name)
+            )
+
+    def test_get_applications_full_path_calls_which_command_on_app_name(self):
+        app_name = self.getUniqueString()
+        full_path = "/usr/bin/%s" % app_name
+        with patch.object(
+            run.subprocess,
+            'check_output',
+            return_value=full_path
+        ):
+            self.assertThat(
+                run._get_applications_full_path(app_name),
+                Equals(full_path)
+            )
+
+    def test_get_applications_full_path_raises_valueerror_when_not_found(self):
+        app_name = self.getUniqueString()
+        expected_error = "Cannot find application '%s'" % (app_name)
+
+        with patch.object(
+            run.subprocess,
+            'check_output',
+            side_effect=subprocess.CalledProcessError(1, "")
+        ):
+            self.assertThat(
+                lambda: run._get_applications_full_path(app_name),
+                raises(ValueError(expected_error))
+            )
+
+    def test_get_application_path_and_arguments_raises_for_unknown_app(self):
+        app_name = self.getUniqueString()
+        expected_error = "Cannot find application '{app_name}'".format(
+            app_name=app_name
+        )
+
+        self.assertThat(
+            lambda: run._get_application_path_and_arguments([app_name]),
+            raises(RuntimeError(expected_error))
+        )
+
+    def test_get_application_path_and_arguments_returns_app_and_args(self):
+        app_name = self.getUniqueString()
+
+        with patch.object(
+            run,
+            '_get_applications_full_path',
+            side_effect=lambda arg: arg
+        ):
+            self.assertThat(
+                run._get_application_path_and_arguments([app_name]),
+                Equals((app_name, []))
+            )
+
+    def test_get_application_launcher_env_attempts_auto_selection(self):
+        interface = "Auto"
+        app_path = self.getUniqueString()
+        test_launcher_env = self.getUniqueString()
+
+        with patch.object(
+            run,
+            '_try_determine_launcher_env_or_raise',
+            return_value=test_launcher_env
+        ) as get_launcher:
+            self.assertThat(
+                run._get_application_launcher_env(interface, app_path),
+                Equals(test_launcher_env)
+            )
+            get_launcher.assert_called_once_with(app_path)
+
+    def test_get_application_launcher_env_uses_string_hint_to_determine(self):
+        interface = None
+        app_path = self.getUniqueString()
+        test_launcher_env = self.getUniqueString()
+
+        with patch.object(
+            run,
+            '_get_app_env_from_string_hint',
+            return_value=test_launcher_env
+        ) as get_launcher:
+            self.assertThat(
+                run._get_application_launcher_env(interface, app_path),
+                Equals(test_launcher_env)
+            )
+            get_launcher.assert_called_once_with(interface)
+
+    def test_get_application_launcher_env_returns_None_on_failure(self):
+        interface = None
+        app_path = self.getUniqueString()
+
+        with patch.object(
+            run,
+            '_get_app_env_from_string_hint',
+            return_value=None
+        ):
+            self.assertThat(
+                run._get_application_launcher_env(interface, app_path),
+                Equals(None)
+            )
+
+    def test_try_determine_launcher_env_or_raise_raises_on_failure(self):
+        app_name = self.getUniqueString()
+        err_msg = self.getUniqueString()
+        with patch.object(
+            run,
+            'get_application_launcher_wrapper',
+            side_effect=RuntimeError(err_msg)
+        ):
+            self.assertThat(
+                lambda: run._try_determine_launcher_env_or_raise(app_name),
+                raises(
+                    RuntimeError(
+                        "Error detecting launcher: {err}\n"
+                        "(Perhaps use the '-i' argument to specify an "
+                        "interface.)"
+                        .format(err=err_msg)
+                    )
+                )
+            )
+
+    def test_try_determine_launcher_env_or_raise_returns_launcher_wrapper_result(self):  # NOQA
+        app_name = self.getUniqueString()
+        launcher_env = self.getUniqueString()
+
+        with patch.object(
+            run,
+            'get_application_launcher_wrapper',
+            return_value=launcher_env
+        ):
+            self.assertThat(
+                run._try_determine_launcher_env_or_raise(app_name),
+                Equals(launcher_env)
+            )
+
+    def test_raise_if_launcher_is_none_raises_on_none(self):
+        app_name = self.getUniqueString()
+
+        self.assertThat(
+            lambda: run._raise_if_launcher_is_none(None, app_name),
+            raises(
+                RuntimeError(
+                    "Could not determine introspection type to use for "
+                    "application '{app_name}'.\n"
+                    "(Perhaps use the '-i' argument to specify an interface.)"
+                    .format(app_name=app_name)
+                )
+            )
+        )
+
+    def test_raise_if_launcher_is_none_does_not_raise_on_none(self):
+        launcher_env = self.getUniqueString()
+        app_name = self.getUniqueString()
+
+        run._raise_if_launcher_is_none(launcher_env, app_name)
+
+    def test_prepare_launcher_environment_creates_launcher_env(self):
+        interface = self.getUniqueString()
+        app_name = self.getUniqueString()
+        app_arguments = self.getUniqueString()
+
+        with patch.object(
+            run,
+            '_get_application_launcher_env',
+        ) as get_launcher:
+            get_launcher.return_value.prepare_environment = lambda *args: args
+
+            self.assertThat(
+                run._prepare_launcher_environment(
+                    interface,
+                    app_name,
+                    app_arguments
+                ),
+                Equals((app_name, app_arguments))
+            )
+
+    def test_prepare_launcher_environment_checks_launcher_isnt_None(self):
+        interface = self.getUniqueString()
+        app_name = self.getUniqueString()
+        app_arguments = self.getUniqueString()
+
+        with patch.object(
+            run,
+            '_get_application_launcher_env',
+        ) as get_launcher:
+            get_launcher.return_value.prepare_environment = lambda *args: args
+
+            with patch.object(
+                run,
+                '_raise_if_launcher_is_none'
+            ) as launcher_check:
+                run._prepare_launcher_environment(
+                    interface,
+                    app_name,
+                    app_arguments
+                )
+                launcher_check.assert_called_once_with(
+                    get_launcher.return_value,
+                    app_name
+                )
+
+    def test_print_message_and_exit_error_prints_message(self):
+        err_msg = self.getUniqueString()
+        with patch('sys.stdout', new=six.StringIO()) as stdout:
+            try:
+                run._print_message_and_exit_error(err_msg)
+            except SystemExit:
+                pass
+
+            self.assertThat(stdout.getvalue(), Contains(err_msg))
+
+    def test_print_message_and_exit_error_exits_non_zero(self):
+        self.assertThat(
+            lambda: run._print_message_and_exit_error(""),
+            raises(SystemExit(1))
+        )
+
+    def test_prepare_application_for_launch_returns_prepared_details(self):
+        interface = self.getUniqueString()
+        application = self.getUniqueString()
+        app_name = self.getUniqueString()
+        app_arguments = self.getUniqueString()
+
+        with ExitStack() as stack:
+            stack.enter_context(
+                patch.object(
+                    run,
+                    '_get_application_path_and_arguments',
+                    return_value=(app_name, app_arguments)
+                )
+            )
+            prepare_launcher = stack.enter_context(
+                patch.object(
+                    run,
+                    '_prepare_launcher_environment',
+                    return_value=(app_name, app_arguments)
+                )
+            )
+
+            self.assertThat(
+                run._prepare_application_for_launch(application, interface),
+                Equals((app_name, app_arguments))
+            )
+            prepare_launcher.assert_called_once_with(
+                interface,
+                app_name,
+                app_arguments
+            )
 
 
 class LoggingSetupTests(TestCase):
@@ -353,7 +735,7 @@ class TestProgramTests(TestCase):
 
     def test_calls_parse_args_by_default(self):
         fake_args = Namespace()
-        with patch('autopilot.run.parse_arguments') as fake_parse_args:
+        with patch.object(run, 'parse_arguments') as fake_parse_args:
             fake_parse_args.return_value = fake_args
             program = run.TestProgram()
 
@@ -404,7 +786,7 @@ class TestProgramTests(TestCase):
         """The run_tests method must call all the utility functions.
 
         This test is somewhat ugly, and relies on a lot of mocks. This will be
-        cleaned up once autopilot.run has been completely refactored.
+        cleaned up once run has been completely refactored.
 
         """
         fake_args = create_default_run_args()

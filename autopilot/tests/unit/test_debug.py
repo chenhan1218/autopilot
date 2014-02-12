@@ -23,7 +23,11 @@ from mock import Mock, patch
 import six
 from tempfile import NamedTemporaryFile
 from testtools import TestCase
-from testtools.matchers import Equals
+from testtools.matchers import (
+    Equals,
+    Not,
+    Raises,
+)
 
 
 class CaseAddDetailToNormalAddDetailDecoratorTests(TestCase):
@@ -190,6 +194,23 @@ class LogFollowerTests(TestCase):
             args, _ = self.fake_caseAddDetail.call_args
             self.assertThat(args[0], Equals(temp_file.name))
             self.assertThat(args[1].as_text(), Equals(six.u("World\n")))
+
+    def test_can_follow_file_with_binary_content(self):
+        if six.PY2:
+            open_args = dict(bufsize=0)
+        else:
+            open_args = dict(buffering=0)
+        with NamedTemporaryFile(**open_args) as temp_file:
+            log_debug_object = d.LogFileDebugObject(
+                self.fake_caseAddDetail,
+                temp_file.name
+            )
+            log_debug_object.setUp()
+            temp_file.write(six.b("Hello\x88World"))
+            log_debug_object.cleanUp()
+
+        args, _ = self.fake_caseAddDetail.call_args
+        self.assertThat(args[1].as_text, Not(Raises()))
 
     def test_can_create_syslog_follower(self):
         debug_obj = d.SyslogDebugObject(Mock())

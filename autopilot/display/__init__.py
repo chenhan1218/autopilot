@@ -98,7 +98,7 @@ def move_mouse_to_screen(screen_number):
 #     mouse.release()
 
 
-class Display:
+class Display(object):
     """The base class/inteface for the display devices"""
 
     @staticmethod

@@ -40,5 +40,4 @@
 import autopilot.display as display  # flake8: noqa
 import autopilot.clipboard as clipboard  # flake8: noqa
 import autopilot.dbus_handler as dbus_handler  # flake8: noqa
-import autopilot.ibus as ibus  # flake8: noqa
 import autopilot.input as input  # flake8: noqa

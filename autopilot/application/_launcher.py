@@ -24,6 +24,7 @@ import json
 import logging
 import os
 import psutil
+import six
 import subprocess
 import signal
 from testtools.content import content_from_file, text_content
@@ -98,7 +99,7 @@ class ClickApplicationLauncher(ApplicationLauncher):
 class NormalApplicationLauncher(ApplicationLauncher):
     def __init__(self, case_addDetail, **kwargs):
         super(NormalApplicationLauncher, self).__init__(case_addDetail)
-        self.app_hint = kwargs.pop('app_type', None)
+        self.app_type = kwargs.pop('app_type', None)
         self.cwd = kwargs.pop('launch_dir', None)
         self.capture_output = kwargs.pop('capture_output', True)
 
@@ -116,7 +117,7 @@ class NormalApplicationLauncher(ApplicationLauncher):
 
     def _setup_environment(self, app_path, *arguments):
         app_env = self.useFixture(
-            _get_application_environment(self.app_hint, app_path)
+            _get_application_environment(self.app_type, app_path)
         )
         return app_env.prepare_environment(
             app_path,
@@ -141,8 +142,14 @@ class NormalApplicationLauncher(ApplicationLauncher):
             'process-return-code',
             text_content(str(return_code))
         )
-        self.case_addDetail('process-stdout', text_content(stdout))
-        self.case_addDetail('process-stderr', text_content(stderr))
+        self.case_addDetail(
+            'process-stdout',
+            text_content(stdout)
+        )
+        self.case_addDetail(
+            'process-stderr',
+            text_content(stderr)
+        )
 
 
 def launch_process(application, args, capture_output=False, **kwargs):
@@ -269,20 +276,19 @@ def _attempt_kill_pid(pid, sig=signal.SIGTERM):
         logger.info("Appears process has already exited.")
 
 
-def _get_application_environment(app_hint=None, app_path=None):
-    if app_hint is None and app_path is None:
-        raise ValueError("Must specify either app_hint or app_path.")
+def _get_application_environment(app_type=None, app_path=None):
+    if app_type is None and app_path is None:
+        raise ValueError("Must specify either app_type or app_path.")
     try:
-        if app_hint is not None:
-            return _get_app_env_from_string_hint(app_hint)
+        if app_type is not None:
+            return _get_app_env_from_string_hint(app_type)
         else:
             return get_application_launcher_wrapper(app_path)
     except (RuntimeError, ValueError) as e:
         logger.error(str(e))
         raise RuntimeError(
             "Autopilot could not determine the correct introspection type "
-            "to use. You can specify one by overriding the "
-            "AutopilotTestCase.pick_app_launcher method."
+            "to use. You can specify this by providing app_type."
         )
 
 
@@ -335,14 +341,18 @@ def _get_app_env_from_string_hint(hint):
 
 def _kill_process(process):
     """Kill the process, and return the stdout, stderr and return code."""
-    stdout = ""
-    stderr = ""
+    stdout_parts = []
+    stderr_parts = []
     logger.info("waiting for process to exit.")
     _attempt_kill_pid(process.pid)
     for _ in Timeout.default():
         tmp_out, tmp_err = process.communicate()
-        stdout += tmp_out
-        stderr += tmp_err
+        if isinstance(tmp_out, six.binary_type):
+            tmp_out = tmp_out.decode('utf-8', errors='replace')
+        if isinstance(tmp_err, six.binary_type):
+            tmp_err = tmp_err.decode('utf-8', errors='replace')
+        stdout_parts.append(tmp_out)
+        stderr_parts.append(tmp_err)
         if not _is_process_running(process.pid):
             break
     else:
@@ -351,7 +361,7 @@ def _kill_process(process):
             "10 seconds."
         )
         _attempt_kill_pid(process.pid, signal.SIGKILL)
-    return stdout, stderr, process.returncode
+    return u''.join(stdout_parts), u''.join(stderr_parts), process.returncode
 
 
 def _raise_if_not_empty(kwargs):

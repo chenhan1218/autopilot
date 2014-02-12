@@ -40,27 +40,47 @@ import autopilot.globals
 from autopilot._debug import get_all_debug_profiles
 from autopilot.testresult import get_output_formats
 from autopilot.utilities import DebugLogFilter, LogFormatter
+from autopilot.application._launcher import (
+    _get_app_env_from_string_hint,
+    get_application_launcher_wrapper,
+    launch_process,
+)
 
 
-_output_stream = None
 logger = logging.getLogger(__name__)
 
 
 def setup_logging(verbose):
     """Configure the root logger and verbose logging to stderr"""
-    root_logger = logging.getLogger()
+    root_logger = get_root_logger()
     root_logger.setLevel(logging.DEBUG)
     if verbose == 0:
-        root_logger.addHandler(logging.NullHandler())
+        set_null_log_handler(root_logger)
     if verbose >= 1:
-        formatter = LogFormatter()
-        stderr_handler = logging.StreamHandler(stream=sys.stderr)
-        stderr_handler.setFormatter(formatter)
-        root_logger.addHandler(stderr_handler)
+        set_stderr_stream_handler(root_logger)
     if verbose >= 2:
-        DebugLogFilter.debug_log_enabled = True
+        enable_debug_log_messages()
     #log autopilot version
     root_logger.info(get_version_string())
+
+
+def get_root_logger():
+    return logging.getLogger()
+
+
+def set_null_log_handler(root_logger):
+    root_logger.addHandler(logging.NullHandler())
+
+
+def set_stderr_stream_handler(root_logger):
+    formatter = LogFormatter()
+    stderr_handler = logging.StreamHandler(stream=sys.stderr)
+    stderr_handler.setFormatter(formatter)
+    root_logger.addHandler(stderr_handler)
+
+
+def enable_debug_log_messages():
+    DebugLogFilter.debug_log_enabled = True
 
 
 def construct_test_result(args):
@@ -72,28 +92,54 @@ def construct_test_result(args):
 
 
 def get_output_stream(args):
-    global _output_stream
-
-    if _output_stream is None:
-        if args.output:
-            path = os.path.dirname(args.output)
-            if path != '' and not os.path.exists(path):
-                os.makedirs(path)
-            log_file = args.output
-            if os.path.isdir(log_file):
-                default_log = "%s_%s.log" % (
-                    node(),
-                    datetime.now().strftime("%d.%m.%y-%H%M%S")
-                )
-                log_file = os.path.join(log_file, default_log)
-                print("Using default log filename: %s " % default_log)
-            if args.format == 'xml':
-                _output_stream = open(log_file, 'w')
-            else:
-                _output_stream = open(log_file, 'w', encoding='utf-8')
+    if args.output:
+        log_file = _get_log_file_path(args.output)
+        if args.format == 'xml':
+            return _get_text_mode_file_stream(log_file)
         else:
-            _output_stream = sys.stdout
-    return _output_stream
+            return _get_binary_mode_file_stream(log_file)
+    else:
+        return sys.stdout
+
+
+def _get_text_mode_file_stream(log_file):
+    return open(
+        log_file,
+        'w'
+    )
+
+
+def _get_binary_mode_file_stream(log_file):
+    return open(
+        log_file,
+        'w',
+        encoding='utf-8',
+        errors='backslashreplace'
+    )
+
+
+def _get_log_file_path(requested_path):
+    dirname = os.path.dirname(requested_path)
+    if dirname != '' and not os.path.exists(dirname):
+        os.makedirs(dirname)
+    if os.path.isdir(requested_path):
+        return _get_default_log_filename(requested_path)
+    return requested_path
+
+
+def _get_default_log_filename(target_directory):
+    """Return a filename that's likely to be unique to this test run."""
+    default_log_filename = "%s_%s.log" % (
+        node(),
+        datetime.now().strftime("%d.%m.%y-%H%M%S")
+    )
+    _print_default_log_path(default_log_filename)
+    log_file = os.path.join(target_directory, default_log_filename)
+    return log_file
+
+
+def _print_default_log_path(default_log_filename):
+    print("Using default log filename: %s" % default_log_filename)
 
 
 def get_package_location(import_name):
@@ -288,6 +334,95 @@ def _have_video_recording_facilities():
     return call_ret_code == 0
 
 
+def _prepare_application_for_launch(application, interface):
+    app_path, app_arguments = _get_application_path_and_arguments(application)
+    return _prepare_launcher_environment(
+        interface,
+        app_path,
+        app_arguments
+    )
+
+
+def _get_application_path_and_arguments(application):
+
+    app_name, app_arguments = _get_app_name_and_args(application)
+
+    try:
+        app_path = _get_applications_full_path(app_name)
+    except ValueError as e:
+        raise RuntimeError(str(e))
+
+    return app_path, app_arguments
+
+
+def _get_app_name_and_args(argument_list):
+    """Returns a tuple of (app_name, [app_args])."""
+    return argument_list[0], argument_list[1:]
+
+
+def _get_applications_full_path(app_name):
+    if not _application_name_is_full_path(app_name):
+        try:
+            app_name = subprocess.check_output(
+                ["which", app_name],
+                universal_newlines=True
+            ).strip()
+        except subprocess.CalledProcessError:
+            raise ValueError(
+                "Cannot find application '%s'" % (app_name)
+            )
+    return app_name
+
+
+def _application_name_is_full_path(app_name):
+    return os.path.isabs(app_name) or os.path.exists(app_name)
+
+
+def _prepare_launcher_environment(interface, app_path, app_arguments):
+    launcher_env = _get_application_launcher_env(interface, app_path)
+    _raise_if_launcher_is_none(launcher_env, app_path)
+    return launcher_env.prepare_environment(app_path, app_arguments)
+
+
+def _raise_if_launcher_is_none(launcher_env, app_path):
+    if launcher_env is None:
+        raise RuntimeError(
+            "Could not determine introspection type to use for "
+            "application '{app_path}'.\n"
+            "(Perhaps use the '-i' argument to specify an interface.)".format(
+                app_path=app_path
+            )
+        )
+
+
+def _get_application_launcher_env(interface, application_path):
+    launcher_env = None
+    if interface == 'Auto':
+        launcher_env = _try_determine_launcher_env_or_raise(application_path)
+    else:
+        launcher_env = _get_app_env_from_string_hint(interface)
+
+    return launcher_env
+
+
+def _try_determine_launcher_env_or_raise(app_name):
+    try:
+        return get_application_launcher_wrapper(app_name)
+    except RuntimeError as e:
+        # Re-format the runtime error to be more user friendly.
+        raise RuntimeError(
+            "Error detecting launcher: {err}\n"
+            "(Perhaps use the '-i' argument to specify an interface.)".format(
+                err=str(e)
+            )
+        )
+
+
+def _print_message_and_exit_error(msg):
+    print(msg)
+    exit(1)
+
+
 class TestProgram(object):
 
     def __init__(self, defined_args=None):
@@ -331,58 +466,19 @@ class TestProgram(object):
     def launch_app(self):
         """Launch an application, with introspection support."""
 
-        from autopilot.application._launcher import (
-            _get_app_env_from_string_hint,
-            get_application_launcher_wrapper,
-            launch_process,
-        )
-
-        app_name = self.args.application.pop()
-        app_arguments = self.args.application
-        if not os.path.isabs(app_name) or not os.path.exists(app_name):
-            try:
-                app_name = subprocess.check_output(
-                    ["which", app_name],
-                    universal_newlines=True
-                ).strip()
-            except subprocess.CalledProcessError:
-                print("Error: cannot find application '%s'" % (app_name))
-                exit(1)
-
-        # We now have a full path to the application.
-        launcher_env = None
-        if self.args.interface == 'Auto':
-            try:
-                launcher_env = get_application_launcher_wrapper(app_name)
-            except RuntimeError as e:
-                print("Error detecting launcher: %s" % str(e))
-                print(
-                    "(Perhaps use the '-i' argument to specify an interface.)"
-                )
-                exit(1)
-        else:
-            launcher_env = _get_app_env_from_string_hint(self.args.interface)
-
-        if launcher_env is None:
-            print("Error: Could not determine introspection type to use for "
-                  "application '%s'." % app_name)
-            print("(Perhaps use the '-i' argument to specify an interface.)")
-            exit(1)
-
-        app_name, app_arguments = launcher_env.prepare_environment(
-            app_name,
-            app_arguments
-        )
-
         try:
+            app_path, app_arguments = _prepare_application_for_launch(
+                self.args.application,
+                self.args.interface
+            )
+
             launch_process(
-                app_name,
+                app_path,
                 app_arguments,
                 capture_output=False
             )
         except RuntimeError as e:
-            print("Error: " + str(e))
-            exit(1)
+            _print_message_and_exit_error("Error: " + str(e))
 
     def run_tests(self):
         """Run tests, using input from `args`."""

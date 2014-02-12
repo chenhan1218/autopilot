@@ -135,6 +135,7 @@ Depends: ${misc:Depends},
          python3-evdev,
          python-autopilot,
          python-evdev,
+         fbset,
 Description: Autopilot support for the ubuntu Touch platform
  This metapackage exists to depend on the packages needed to install and use
  autopilot on the Ubuntu Touch platform.
@@ -146,7 +147,6 @@ Depends: ${misc:Depends},
          gir1.2-gconf-2.0,
          gir1.2-glib-2.0,
          gir1.2-gtk-3.0,
-         gir1.2-ibus-1.0,
          python-autopilot,
          python-xlib,
          bamfdaemon,

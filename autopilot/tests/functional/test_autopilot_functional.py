@@ -664,7 +664,7 @@ SyntaxError: invalid syntax
 
         self.assertThat(rc, Equals(1))
         self.assertThat(
-            stdout, Contains("Error: cannot find application 'DoEsNotExist'"))
+            stdout, Contains("Error: Cannot find application 'DoEsNotExist'"))
 
     def test_complains_on_non_dynamic_binary(self):
         """Must give a nice error message when passing in a non-dynamic

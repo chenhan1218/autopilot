@@ -82,9 +82,11 @@ class ApplicationLaunchTests(ApplicationTests):
 
         """
         path = self.write_script("")
-        expected_error_message = "Autopilot could not determine the correct \
-introspection type to use. You can specify one by overriding the \
-AutopilotTestCase.pick_app_launcher method."
+        expected_error_message = (
+            "Autopilot could not determine the correct "
+            "introspection type to use. You can specify this by providing "
+            "app_type."
+        )
 
         self.assertThat(
             lambda: self.launch_test_application(path),

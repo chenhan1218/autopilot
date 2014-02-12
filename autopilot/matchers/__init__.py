@@ -69,7 +69,7 @@ class Eventually(Matcher):
 
         self.assertThat(lambda: self.mouse.x, Eventually(LessThan(10)))
 
-    .. note:: Using this form generally makes your tests less readabvle, and
+    .. note:: Using this form generally makes your tests less readable, and
         should be used with great care. It also relies the test author to have
         knowledge about the implementation of the object being matched against.
         In this example, if ``self.mouse.x`` were ever to change to be a
@@ -81,6 +81,9 @@ class Eventually(Matcher):
     the timeout keyword::
 
         self.assertThat(foo.bar, Eventually(Equals(123), timeout=30))
+
+    .. warning:: The Eventually matcher does not work with any other matcher
+        that expects a callable argument (such as testtools' 'Raises' matcher)
 
     """
 

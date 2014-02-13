@@ -1,3 +1,12 @@
+autopilot (1.4+14.04.20140213-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Fix bamf geometry property.
+  * Fix subunit output when outputting to a file instead of stdout. (LP:
+    #1279507)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 13 Feb 2014 03:11:50 +0000
+
 autopilot (1.4+14.04.20140212-0ubuntu1) trusty; urgency=low
 
   [ CI bot ]

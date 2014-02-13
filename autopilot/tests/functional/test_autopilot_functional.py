@@ -637,6 +637,32 @@ SyntaxError: invalid syntax
             log_contents,
             Contains(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH'))
 
+    def test_can_create_subunit_result_file(self):
+        self.create_test_file(
+            "test_simple.py", dedent(u"""\
+
+            from autopilot.testcase import AutopilotTestCase
+
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    pass
+
+            """)
+        )
+        output_file_path = mktemp()
+        self.addCleanup(remove_if_exists, output_file_path)
+
+        code, output, error = self.run_autopilot([
+            "run",
+            "-o", output_file_path,
+            "-f", "subunit",
+            "tests"])
+
+        self.assertThat(code, Equals(0))
+        self.assertTrue(os.path.exists(output_file_path))
+
     def test_launch_needs_arguments(self):
         """Autopilot launch must complain if not given an application to
         launch."""

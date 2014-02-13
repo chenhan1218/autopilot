@@ -709,9 +709,9 @@ class OutputStreamTests(TestCase):
             run.get_output_stream(args)
             pgbs.assert_called_once_with(args.output)
 
-    def test_subunit_format_opens_binary_mode_stream(self):
+    def test_subunit_format_opens_text_mode_stream(self):
         args = Namespace(output=tempfile.mktemp(), format='subunit')
-        with patch.object(run, '_get_binary_mode_file_stream') as pgbs:
+        with patch.object(run, '_get_text_mode_file_stream') as pgbs:
             run.get_output_stream(args)
             pgbs.assert_called_once_with(args.output)
 

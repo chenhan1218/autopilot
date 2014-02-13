@@ -30,6 +30,7 @@ from testtools.matchers import (
     Contains,
     DirExists,
     Equals,
+    FileExists,
     IsInstance,
     Not,
     raises,
@@ -152,6 +153,21 @@ class RunUtilityFunctionTests(TestCase):
         with patch.object(run.subprocess, 'call') as patched_call:
             patched_call.return_value = 1
             self.assertFalse(run._have_video_recording_facilities())
+
+    def test_run_with_profiling_creates_profile_data_file(self):
+        output_path = tempfile.mktemp()
+        self.addCleanup(os.unlink, output_path)
+        def empty_callable():
+            pass
+        run._run_with_profiling(empty_callable, output_path)
+        self.assertThat(output_path, FileExists())
+
+    def test_run_with_profiling_runs_callable(self):
+        output_path = tempfile.mktemp()
+        self.addCleanup(os.unlink, output_path)
+        empty_callable = Mock()
+        run._run_with_profiling(empty_callable, output_path)
+        empty_callable.assert_called_once_with()
 
 
 class TestRunLaunchApp(TestCase):

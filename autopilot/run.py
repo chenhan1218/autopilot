@@ -22,6 +22,7 @@ from __future__ import absolute_import
 
 from codecs import open
 from collections import OrderedDict
+import cProfile
 from datetime import datetime
 from imp import find_module
 import logging
@@ -421,6 +422,15 @@ def _try_determine_launcher_env_or_raise(app_name):
 def _print_message_and_exit_error(msg):
     print(msg)
     exit(1)
+
+
+def _run_with_profiling(callable, output_file):
+    cProfile.runctx(
+        'callable()',
+        globals(),
+        locals(),
+        filename=output_file,
+    )
 
 
 class TestProgram(object):

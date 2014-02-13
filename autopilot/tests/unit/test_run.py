@@ -227,6 +227,14 @@ class TestRunLaunchApp(TestCase):
                     Contains("Error: Failure Message")
                 )
 
+    @patch('autopilot.vis.vis_main')
+    def test_passes_testability_to_vis_main(self, patched_vis_main):
+        args = Namespace(mode='vis', testability=True)
+        program = run.TestProgram(args)
+        program.run()
+
+        patched_vis_main.assert_called_once_with('-testability')
+
 
 class TestRunLaunchAppHelpers(TestCase):
     """Tests for the 'autopilot launch' command"""

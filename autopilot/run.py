@@ -461,7 +461,8 @@ class TestProgram(object):
         # Once that's been fixed we can remove the following line:
         #
         os.putenv('LIBOVERLAY_SCROLLBAR', '0')
-        vis_main()
+        args = ['-testability'] if self.args.testability else []
+        vis_main(*args)
 
     def launch_app(self):
         """Launch an application, with introspection support."""

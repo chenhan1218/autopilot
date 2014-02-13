@@ -140,6 +140,16 @@ class CommandLineArgsTests(TestCase):
         args = self.parse_args('vis -testability')
         self.assertThat(args.testability, Equals(True))
 
+    @patch('autopilot.have_vis', new=lambda: True)
+    def test_vis_default_profile_flag(self):
+        args = self.parse_args('vis')
+        self.assertThat(args.enable_profile, Equals(False))
+
+    @patch('autopilot.have_vis', new=lambda: True)
+    def test_vis_can_enable_profiling(self):
+        args = self.parse_args('vis --enable-profile')
+        self.assertThat(args.enable_profile, Equals(True))
+
     def test_list_mode(self):
         args = self.parse_args('list foo')
         self.assertThat(args.mode, Equals("list"))

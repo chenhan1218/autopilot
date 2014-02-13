@@ -124,6 +124,13 @@ def parse_arguments(argv=None):
             action='store_true', help="Start the vis tool in testability "
             "mode. Used for self-tests only."
         )
+        parser_vis.add_argument(
+            '--enable-profile', required=False, default=False,
+            action="store_true", help="Enable "
+            "collection of profile data for vis itself. If enabled, profile "
+            " data will be stored in 'vis_tool.profile' in the current "
+            "working directory."
+        )
 
     parser_launch = subparsers.add_parser(
         'launch', help="Launch an application with introspection enabled")

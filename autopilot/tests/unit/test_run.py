@@ -235,6 +235,14 @@ class TestRunLaunchApp(TestCase):
 
         patched_vis_main.assert_called_once_with(['-testability'])
 
+    @patch('autopilot.vis.vis_main')
+    def test_passes_empty_list_without_testability_set(self, patched_vis_main):
+        args = Namespace(mode='vis', testability=False)
+        program = run.TestProgram(args)
+        program.run()
+
+        patched_vis_main.assert_called_once_with([])
+
 
 class TestRunLaunchAppHelpers(TestCase):
     """Tests for the 'autopilot launch' command"""

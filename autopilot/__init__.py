@@ -119,6 +119,11 @@ def parse_arguments(argv=None):
             '-v', '--verbose', required=False, default=False, action='count',
             help="Show autopilot log messages. Set twice to also log data "
             "useful for debugging autopilot itself.")
+        parser_vis.add_argument(
+            '-testability', required=False, default=False,
+            action='store_true', help="Start the vis tool in testability "
+            "mode. Used for self-tests only."
+        )
 
     parser_launch = subparsers.add_parser(
         'launch', help="Launch an application with introspection enabled")

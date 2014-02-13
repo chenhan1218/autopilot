@@ -472,7 +472,10 @@ class TestProgram(object):
         #
         os.putenv('LIBOVERLAY_SCROLLBAR', '0')
         args = ['-testability'] if self.args.testability else []
-        vis_main(args)
+        if self.args.enable_profile:
+            _run_with_profiling(lambda: vis_main(args), 'vis_tool.profile')
+        else:
+            vis_main(args)
 
     def launch_app(self):
         """Launch an application, with introspection support."""

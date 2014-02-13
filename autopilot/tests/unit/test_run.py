@@ -233,7 +233,7 @@ class TestRunLaunchApp(TestCase):
         program = run.TestProgram(args)
         program.run()
 
-        patched_vis_main.assert_called_once_with('-testability')
+        patched_vis_main.assert_called_once_with(['-testability'])
 
 
 class TestRunLaunchAppHelpers(TestCase):

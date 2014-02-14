@@ -128,7 +128,7 @@ def parse_arguments(argv=None):
             '--enable-profile', required=False, default=False,
             action="store_true", help="Enable "
             "collection of profile data for vis itself. If enabled, profile "
-            " data will be stored in 'vis_tool.profile' in the current "
+            "data will be stored in 'vis_tool.profile' in the current "
             "working directory."
         )
 

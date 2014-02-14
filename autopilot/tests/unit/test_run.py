@@ -157,6 +157,7 @@ class RunUtilityFunctionTests(TestCase):
     def test_run_with_profiling_creates_profile_data_file(self):
         output_path = tempfile.mktemp()
         self.addCleanup(os.unlink, output_path)
+
         def empty_callable():
             pass
         run._run_with_profiling(empty_callable, output_path)

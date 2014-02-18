@@ -622,6 +622,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         When writing new tests, this can be called when it is too difficult to
         find the widget or property that you are interested in in "vis".
+        path, state = dbus_tuple
+        name = get_classname_from_path(path)
 
         .. warning:: Do not use this in production tests, this is expensive and
             not at all appropriate for actual testing. Only call this
@@ -719,12 +721,39 @@ class _CustomEmulatorMeta(IntrospectableObjectMetaclass):
         if name != 'CustomEmulatorBase':
             # and only if they don't already have an Id set.
             have_id = False
+            have_validation = False
             for base in bases:
                 if hasattr(base, '_id'):
                     have_id = True
-                    break
+                    if have_validation:
+                        break
+                if hasattr(base, 'validate_dbus_object'):
+                    have_validation = True
+                    if have_id:
+                        break
             if not have_id:
                 d['_id'] = uuid4()
+            if not have_validation:
+                class DefaultValidationMethod(object):
+                    """Class used to provide default validation for objects
+                    without it.
+                    
+                    """
+
+                    def __get__(self, obj, cls=None):
+                        if cls is None:
+                            cls=type(obj)
+                        
+                        def validate_dbus_object(cls, path, state):
+                            path, state = dbus_tuple
+                            name = get_classname_from_path(path)
+                            return cls.__name__ == name
+
+                        return validate_dbus_object
+                            
+
+                d['validate_dbus_object'] = DefaultValidationMethod()
+
         return super(_CustomEmulatorMeta, cls).__new__(cls, name, bases, d)
 
 CustomEmulatorBase = _CustomEmulatorMeta('CustomEmulatorBase',

@@ -593,3 +593,114 @@ class ProxyObjectGenerationTests(TestCase):
                     )
                 )
             )
+
+
+class MakeIntrospectionObjectTests(TestCase):
+
+    def test_class_has_validation_method(self):
+        class Rectangle(CustomEmulatorBase):
+            pass
+        fake_object = Rectangle(
+            dict(id=[0, 123], path=[0, '/some/path']),
+            '/',
+            Mock()
+        )
+
+        self.assertTrue(hasattr(fake_object, 'validate_dbus_object'))
+
+    def test_select_by_name(self):
+        """Correct custom emulator must be returned by name."""
+        class Rectangle(CustomEmulatorBase):
+            pass
+        fake_object = Rectangle(
+            dict(id=[0, 123], path=[0, '/some/path']),
+            '/',
+            Mock()
+        )
+
+        rectangle = fake_object.make_introspection_object(
+            ('/Rectangle',{'id':[0,0]}))
+        self.assertTrue(isinstance(rectangle, Rectangle))
+
+    def test_select_by_function(self):
+        """Correct emulator must be returned by function."""
+        class Square(CustomEmulatorBase):
+            @classmethod
+            def validate_dbus_object(cls, path, state):
+                if ('isSquare' in state and
+                        state['is_square'][1]):
+                    return True
+                else:
+                    return False
+        fake_object = Square(
+            dict(id=[0, 123], path=[0, '/some/path']),
+            '/',
+            Mock()
+        )
+
+        square = fake_object.make_introspection_object(
+            ('/Rectangle',{'id':[0,0], 'isSquare':[0, True]}))
+        self.assertTrue(isinstance(square, Square))
+
+    def test_select_function_fails(self):
+        """Must not use emulator when function returns false."""
+        class Square(CustomEmulatorBase):
+            @classmethod
+            def validate_dbus_object(cls, path, state):
+                if ('isSquare' in state and
+                        state['is_square'][1]):
+                    return True
+                else:
+                    return False
+        fake_object = Square(
+            dict(id=[0, 123], path=[0, '/some/path']),
+            '/',
+            Mock()
+        )
+
+        rectangle = fake_object.make_introspection_object(
+            ('/Rectangle',{'id':[0,0]}))
+        self.assertFalse(isinstance(rectangle, Square))
+
+    def test_multiple_matches(self):
+        """Exception must be raised if multiple emulators match."""
+        class Rectangle(CustomEmulatorBase):
+            pass
+        class Square(CustomEmulatorBase):
+            @classmethod
+            def validate_dbus_object(cls, path, state):
+                if ('isSquare' in state and
+                        state['is_square'][1]):
+                    return True
+                else:
+                    return False
+        fake_object = Square(
+            dict(id=[0, 123], path=[0, '/some/path']),
+            '/',
+            Mock()
+        )
+
+        self.assertThat(
+            fake_object.make_introspection_object(
+            ('/Rectangle',{'id':[0,0], 'isSquare':[0, True]})),
+            raises(ValueError('More than one emulator matches this object')))
+
+    def test_no_matches(self):
+        """Generic emulator must be used if no emulators match."""
+        class Square(CustomEmulatorBase):
+            @classmethod
+            def validate_dbus_object(cls, path, state):
+                if ('isSquare' in state and
+                        state['is_square'][1]):
+                    return True
+                else:
+                    return False
+        fake_object = Square(
+            dict(id=[0, 123], path=[0, '/some/path']),
+            '/',
+            Mock()
+        )
+
+        rectangle = fake_object.make_introspection_object(
+            ('/Rectangle',{'id':[0,0]}))
+        self.assertTrue(isinstance(rectangle, CustomEmulatorBase))

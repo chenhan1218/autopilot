@@ -329,3 +329,19 @@ class CommandLineArgsTests(TestCase):
             self.parse_args,
             'run --timeout-profile nonexistant foo'
         )
+
+    def test_list_mode_strips_single_suite_slash(self):
+        args = self.parse_args('list foo/')
+        self.assertThat(args.suite, Equals(["foo"]))
+
+    def test_list_mode_strips_multiple_suite_slash(self):
+        args = self.parse_args('list foo/ bar/')
+        self.assertThat(args.suite, Equals(["foo", "bar"]))
+
+    def test_run_mode_strips_single_suite_slash(self):
+        args = self.parse_args('run foo/')
+        self.assertThat(args.suite, Equals(["foo"]))
+
+    def test_run_mode_strips_multiple_suite_slash(self):
+        args = self.parse_args('run foo/ bar/')
+        self.assertThat(args.suite, Equals(["foo", "bar"]))

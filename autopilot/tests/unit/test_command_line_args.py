@@ -31,9 +31,8 @@ except ImportError:
     # Python 3
     from io import StringIO
 
-from testtools import TestCase, ExpectedException
+from testtools import TestCase
 from testtools.matchers import Equals
-from unittest import expectedFailure
 
 from autopilot import parse_arguments
 

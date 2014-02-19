@@ -27,6 +27,7 @@ import sys
 import six
 from mock import patch
 from tempfile import mktemp
+from testtools import skipIf
 from testtools.matchers import (
     LessThan,
     Not,
@@ -36,6 +37,8 @@ from testtools.matchers import (
 from textwrap import dedent
 import unittest
 
+from autopilot.process import ProcessManager
+from autopilot.platform import model
 from autopilot.testcase import AutopilotTestCase
 from autopilot.introspection import (
     get_proxy_object_for_existing_process,
@@ -296,6 +299,27 @@ class QtTests(ApplicationTests):
             """ % sys.executable))
         app_proxy = self.launch_test_application(path, app_type='qt')
         self.assertTrue(app_proxy is not None)
+
+    @skipIf(model() != 'Desktop', "Bamf only available on desktop (Qt4)")
+    def test_bamf_geometry_gives_reliable_results(self):
+        path = self.write_script(dedent("""\
+            #!%s
+            from PyQt4.QtGui import QMainWindow, QApplication
+            from sys import argv
+
+            app = QApplication(argv)
+            win = QMainWindow()
+            win.show()
+            app.exec_()
+            """ % sys.executable))
+        app_proxy = self.launch_test_application(path, app_type='qt')
+        proxy_window = app_proxy.select_single('QMainWindow')
+        pm = ProcessManager.create()
+        window = [
+            w for w in pm.get_open_windows()
+            if w.name == os.path.basename(path)
+        ][0]
+        self.assertThat(list(window.geometry), Equals(proxy_window.geometry))
 
     def test_can_launch_qt_script_that_aborts(self):
         path = self.write_script(dedent("""\

@@ -30,6 +30,7 @@ from testtools.matchers import (
     Contains,
     DirExists,
     Equals,
+    FileExists,
     IsInstance,
     Not,
     raises,
@@ -153,6 +154,22 @@ class RunUtilityFunctionTests(TestCase):
             patched_call.return_value = 1
             self.assertFalse(run._have_video_recording_facilities())
 
+    def test_run_with_profiling_creates_profile_data_file(self):
+        output_path = tempfile.mktemp()
+        self.addCleanup(os.unlink, output_path)
+
+        def empty_callable():
+            pass
+        run._run_with_profiling(empty_callable, output_path)
+        self.assertThat(output_path, FileExists())
+
+    def test_run_with_profiling_runs_callable(self):
+        output_path = tempfile.mktemp()
+        self.addCleanup(os.unlink, output_path)
+        empty_callable = Mock()
+        run._run_with_profiling(empty_callable, output_path)
+        empty_callable.assert_called_once_with()
+
 
 class TestRunLaunchApp(TestCase):
     @patch.object(run, 'launch_process')
@@ -226,6 +243,30 @@ class TestRunLaunchApp(TestCase):
                     stdout.getvalue(),
                     Contains("Error: Failure Message")
                 )
+
+    @patch('autopilot.vis.vis_main')
+    def test_passes_testability_to_vis_main(self, patched_vis_main):
+        args = Namespace(
+            mode='vis',
+            testability=True,
+            enable_profile=True,
+        )
+        program = run.TestProgram(args)
+        program.run()
+
+        patched_vis_main.assert_called_once_with(['-testability'])
+
+    @patch('autopilot.vis.vis_main')
+    def test_passes_empty_list_without_testability_set(self, patched_vis_main):
+        args = Namespace(
+            mode='vis',
+            testability=False,
+            enable_profile=False,
+        )
+        program = run.TestProgram(args)
+        program.run()
+
+        patched_vis_main.assert_called_once_with([])
 
 
 class TestRunLaunchAppHelpers(TestCase):
@@ -773,6 +814,21 @@ class TestProgramTests(TestCase):
             program.run()
 
             patched_run_vis.assert_called_once_with()
+
+    def test_vis_command_runs_under_profiling_if_profiling_is_enabled(self):
+        fake_args = Namespace(
+            mode='vis',
+            enable_profile=True,
+            testability=False,
+        )
+        program = run.TestProgram(fake_args)
+        with patch.object(run, '_run_with_profiling') as patched_run_profile:
+            program.run()
+
+            self.assertThat(
+                patched_run_profile.call_count,
+                Equals(1),
+            )
 
     def test_launch_command_calls_launch_app_method(self):
         fake_args = Namespace(mode='launch')

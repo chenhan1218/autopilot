@@ -22,14 +22,14 @@ import dbus
 import sys
 
 
-def vis_main():
+def vis_main(extra_flags):
     # To aid in testing only import when we are launching the GUI component
     from dbus.mainloop.qt import DBusQtMainLoop
     from PyQt4 import QtGui
     from autopilot.vis.main_window import MainWindow
     from autopilot.vis.bus_enumerator import BusEnumerator
 
-    app = QtGui.QApplication(sys.argv)
+    app = QtGui.QApplication(sys.argv + extra_flags)
     app.setApplicationName("Autopilot")
     app.setOrganizationName("Canonical")
 

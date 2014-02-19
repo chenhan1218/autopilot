@@ -29,6 +29,7 @@ from mock import patch
 from tempfile import mktemp
 from testtools import skipIf
 from testtools.matchers import (
+    Equals,
     LessThan,
     Not,
     Raises,

@@ -155,6 +155,10 @@ def parse_arguments(argv=None):
     # http://bugs.python.org/issue16308
     if args.mode is None:
         parser.error("too few arguments")
+
+    if 'suite' in args:
+        args.suite = [suite.rstrip('/') for suite in args.suite]
+
     return args
 
 

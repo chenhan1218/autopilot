@@ -33,9 +33,12 @@ except ImportError:
 
 from testtools import TestCase
 from testtools.matchers import Equals
-from unittest import expectedFailure
 
 from autopilot import parse_arguments
+
+
+class InvalidArguments(Exception):
+    pass
 
 
 class CommandLineArgsTests(TestCase):
@@ -46,7 +49,7 @@ class CommandLineArgsTests(TestCase):
         try:
             return parse_arguments(args)
         except SystemExit as e:
-            self.fail("Caught exception: %r" % e)
+            raise InvalidArguments("%s" % e)
 
     def test_launch_command_accepts_application(self):
         args = self.parse_args("launch app")
@@ -65,9 +68,9 @@ class CommandLineArgsTests(TestCase):
         self.assertThat(args.interface, Equals("Gtk"))
 
     @patch('sys.stderr', new=StringIO())
-    @expectedFailure
     def test_launch_command_fails_on_unknown_interface(self):
-        self.parse_args("launch -i unknown app")
+        self.assertRaises(
+            InvalidArguments, self.parse_args, "launch -i unknown app")
 
     def test_launch_command_has_correct_default_verbosity(self):
         args = self.parse_args("launch app")
@@ -98,9 +101,8 @@ class CommandLineArgsTests(TestCase):
             Equals(["app", "-s", "--long", "--key=val", "arg1", "arg2"]))
 
     @patch('sys.stderr', new=StringIO())
-    @expectedFailure
     def test_launch_command_must_specify_app(self):
-        self.parse_args("launch")
+        self.assertRaises(InvalidArguments, self.parse_args, "launch")
 
     @patch('autopilot.have_vis', new=lambda: True)
     def test_vis_present_when_vis_module_installed(self):
@@ -109,9 +111,8 @@ class CommandLineArgsTests(TestCase):
 
     @patch('autopilot.have_vis', new=lambda: False)
     @patch('sys.stderr', new=StringIO())
-    @expectedFailure
     def test_vis_not_present_when_vis_module_not_installed(self):
-        self.parse_args('vis')
+        self.assertRaises(InvalidArguments, self.parse_args, 'vis')
 
     @patch('autopilot.have_vis', new=lambda: True)
     def test_vis_default_verbosity(self):
@@ -239,14 +240,14 @@ class CommandLineArgsTests(TestCase):
         self.assertThat(args.failfast, Equals(True))
 
     @patch('sys.stderr', new=StringIO())
-    @expectedFailure
     def test_run_command_unknown_format_short_version(self):
-        self.parse_args('run -f unknown foo')
+        self.assertRaises(
+            InvalidArguments, self.parse_args, 'run -f unknown foo')
 
     @patch('sys.stderr', new=StringIO())
-    @expectedFailure
     def test_run_command_unknown_format_long_version(self):
-        self.parse_args('run --format unknown foo')
+        self.assertRaises(
+            InvalidArguments, self.parse_args, 'run --format unknown foo')
 
     def test_run_command_record_flag_default(self):
         args = self.parse_args("run foo")
@@ -326,9 +327,12 @@ class CommandLineArgsTests(TestCase):
         self.assertThat(args.debug_profile, Equals('verbose'))
 
     @patch('sys.stderr', new=StringIO())
-    @expectedFailure
     def test_cannot_select_other_debug_profile(self):
-        self.parse_args('run --debug-profile nonexistant foo')
+        self.assertRaises(
+            InvalidArguments,
+            self.parse_args,
+            'run --debug-profile nonexistant foo'
+        )
 
     def test_default_timeout_profile_is_normal(self):
         args = self.parse_args('run foo')
@@ -339,6 +343,25 @@ class CommandLineArgsTests(TestCase):
         self.assertThat(args.timeout_profile, Equals('long'))
 
     @patch('sys.stderr', new=StringIO())
-    @expectedFailure
     def test_cannot_select_other_timeout_profile(self):
-        self.parse_args('run --timeout-profile nonexistant foo')
+        self.assertRaises(
+            InvalidArguments,
+            self.parse_args,
+            'run --timeout-profile nonexistant foo'
+        )
+
+    def test_list_mode_strips_single_suite_slash(self):
+        args = self.parse_args('list foo/')
+        self.assertThat(args.suite, Equals(["foo"]))
+
+    def test_list_mode_strips_multiple_suite_slash(self):
+        args = self.parse_args('list foo/ bar/')
+        self.assertThat(args.suite, Equals(["foo", "bar"]))
+
+    def test_run_mode_strips_single_suite_slash(self):
+        args = self.parse_args('run foo/')
+        self.assertThat(args.suite, Equals(["foo"]))
+
+    def test_run_mode_strips_multiple_suite_slash(self):
+        args = self.parse_args('run foo/ bar/')
+        self.assertThat(args.suite, Equals(["foo", "bar"]))

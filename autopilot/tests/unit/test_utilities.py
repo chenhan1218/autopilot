@@ -18,14 +18,16 @@
 #
 
 from mock import patch
-from testtools import TestCase
+import six
+from testtools import skipIf, TestCase
 from testtools.matchers import (
     Equals,
+    IsInstance,
     LessThan,
 )
 import time
 
-from autopilot.utilities import sleep
+from autopilot.utilities import sleep, compatible_repr
 
 
 class ElapsedTimeCounter(object):
@@ -78,3 +80,34 @@ class MockableSleepTests(TestCase):
             sleep(1.0)
 
             patched_time.sleep.assert_called_once_with(1.0)
+
+
+class CompatibleReprTests(TestCase):
+
+    @skipIf(six.PY3, "Applicable to python 2 only")
+    def test_py2_unicode_is_returned_as_bytes(self):
+        repr_fn = compatible_repr(lambda: u"unicode")
+        result = repr_fn()
+        self.assertThat(result, IsInstance(six.binary_type))
+        self.assertThat(result, Equals(b'unicode'))
+
+    @skipIf(six.PY3, "Applicable to python 2 only")
+    def test_py2_bytes_are_untouched(self):
+        repr_fn = compatible_repr(lambda: b"bytes")
+        result = repr_fn()
+        self.assertThat(result, IsInstance(six.binary_type))
+        self.assertThat(result, Equals(b'bytes'))
+
+    @skipIf(six.PY2, "Applicable to python 3 only")
+    def test_py3_unicode_is_untouched(self):
+        repr_fn = compatible_repr(lambda: u"unicode")
+        result = repr_fn()
+        self.assertThat(result, IsInstance(six.text_type))
+        self.assertThat(result, Equals(u'unicode'))
+
+    @skipIf(six.PY2, "Applicable to python 3 only.")
+    def test_py3_bytes_are_returned_as_unicode(self):
+        repr_fn = compatible_repr(lambda: b"bytes")
+        result = repr_fn()
+        self.assertThat(result, IsInstance(six.text_type))
+        self.assertThat(result, Equals(u'bytes'))

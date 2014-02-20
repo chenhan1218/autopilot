@@ -245,8 +245,8 @@ class DBusIntrospectionObjectTests(TestCase):
         """common fake object for print_tree tests with error"""
 
         fake_object = DBusIntrospectionObject(
-            dict(id=[0, 123], path=[0, '/some/path'], text=[0, 'Hello']),
-            '/some/path',
+            dict(id=[0, 123], path=[0, '']),
+            '',
             Mock()
         )
         # get_properties() always refreshes state, so can't use
@@ -279,10 +279,9 @@ class DBusIntrospectionObjectTests(TestCase):
 
         fake_object = self._print_test_fake_error_object()
         out = StringIO()
-
-        fake_object.print_tree(out,0)
-
-        self.assertRaises(StateNotFoundError, fake_object.print_tree, (out,0))
+        
+        fn = lambda: fake_object.print_tree(out,0)
+        self.assertThat(fn, raises(StateNotFoundError))
 
     def test_print_tree_fileobj(self):
         """print_tree with file object output"""

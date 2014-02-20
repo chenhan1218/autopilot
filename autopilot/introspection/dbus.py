@@ -599,7 +599,6 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         This only works for classes that derive from DBusIntrospectionObject.
         """
         path, state = dbus_tuple
-#        import pdb ; pdb.set_trace()
         class_type = _select_emulator(_object_registry[self._id], path, state)
         if class_type is None:
             name = get_classname_from_path(path)

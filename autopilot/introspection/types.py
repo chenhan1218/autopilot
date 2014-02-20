@@ -41,7 +41,6 @@ from __future__ import absolute_import
 
 from datetime import datetime, time
 import dbus
-from functools import partial
 import logging
 from testtools.matchers import Equals
 import six
@@ -220,24 +219,26 @@ class PlainType(TypeBase):
 
 def _get_repr_callable_for_value(value):
     repr_map = {
-            dbus.Byte: _integer_repr,
-            dbus.Int16: _integer_repr,
-            dbus.Int32: _integer_repr,
-            dbus.UInt16: _integer_repr,
-            dbus.UInt32: _integer_repr,
-            dbus.Int64: _integer_repr,
-            dbus.UInt64: _integer_repr,
-            dbus.String: _text_repr,
-            dbus.ObjectPath: _text_repr,
-            dbus.Signature: _text_repr,
-            dbus.ByteArray: _bytes_repr,
-            dbus.Boolean: _boolean_repr,
-            dbus.Dictionary: _dict_repr,
-            dbus.Double: _float_repr,
-            dbus.Struct: _tuple_repr,
-            dbus.Array: _list_repr,
+        dbus.Byte: _integer_repr,
+        dbus.Int16: _integer_repr,
+        dbus.Int32: _integer_repr,
+        dbus.UInt16: _integer_repr,
+        dbus.UInt32: _integer_repr,
+        dbus.Int64: _integer_repr,
+        dbus.UInt64: _integer_repr,
+        dbus.String: _text_repr,
+        dbus.ObjectPath: _text_repr,
+        dbus.Signature: _text_repr,
+        dbus.ByteArray: _bytes_repr,
+        dbus.Boolean: _boolean_repr,
+        dbus.Dictionary: _dict_repr,
+        dbus.Double: _float_repr,
+        dbus.Struct: _tuple_repr,
+        dbus.Array: _list_repr,
     }
-    return repr_map.get(type(value), repr)
+    if not six.PY3:
+        repr_map[dbus.UTF8String] = _bytes_repr
+    return repr_map.get(type(value), None)
 
 
 @compatible_repr
@@ -245,85 +246,25 @@ def _integer_repr(self):
     return u'%d' % (self,)
 
 
-@compatible_repr
-def _boolean_repr(self):
-    return u'%r' % (self,)
+def _create_generic_repr(target_type):
+    return compatible_repr(lambda self: repr(target_type(self)))
 
-
-@compatible_repr
-def _generic_repr(target_type, instance):
-    return repr(target_type(instance))
-
-_bytes_repr = partial(_generic_repr, six.binary_type)
-_text_repr = partial(_generic_repr, six.text_type)
-_dict_repr = partial(_generic_repr, dict)
-_list_repr = partial(_generic_repr, list)
-_tuple_repr = partial(_generic_repr, tuple)
-_float_repr = partial(_generic_repr, float)
+_bytes_repr = _create_generic_repr(six.binary_type)
+_text_repr = _create_generic_repr(six.text_type)
+_dict_repr = _create_generic_repr(dict)
+_list_repr = _create_generic_repr(list)
+_tuple_repr = _create_generic_repr(tuple)
+_float_repr = _create_generic_repr(float)
+_boolean_repr = _create_generic_repr(bool)
 
 
 def _make_plain_type(value, parent=None, name=None):
-    def repr(self):
-        # Convert our value to the pythonic type,and call __repr__ on it.
-        # At the moment we switch based on our type, which is less than ideal.
-        if six.PY3:
-            long_type = int
-        else:
-            long_type = long
-        dbus_integer_types = (
-            dbus.Byte,
-            dbus.Int16,
-            dbus.Int32,
-            dbus.UInt16,
-            dbus.UInt32,
-        )
-
-        dbus_string_types = (
-            dbus.String,
-            dbus.ObjectPath,
-            dbus.Signature,
-        )
-
-        # no UTFString in python 3.
-        if six.PY3:
-            dbus_binary_types = (
-                dbus.ByteArray,
-            )
-        else:
-            dbus_binary_types = (
-                dbus.ByteArray,
-                dbus.UTF8String,
-            )
-
-        if isinstance(self, dbus_integer_types):
-            return int(self).__repr__()
-        elif isinstance(self, (dbus.Int64, dbus.UInt64)):
-            # Python 2 integer landling is... odd. The maximum integer size
-            # changes depending on platform, so maybe we can get away with
-            # using an int, in which case we should:
-            if not six.PY3 and self <= six.MAXSIZE:
-                return int(self).__repr__()
-            return long_type(self).__repr__()
-        elif isinstance(self, dbus_string_types):
-            return six.text_type(self).__repr__()
-        elif isinstance(self, dbus.Boolean):
-            return bool(self).__repr__()
-        elif isinstance(self, dbus_binary_types):
-            return six.binary_type(self).__repr__()
-        elif isinstance(self, dbus.Dictionary):
-            return dict(self).__repr__()
-        elif isinstance(self, dbus.Double):
-            return float(self).__repr__()
-        elif isinstance(self, dbus.Struct):
-            return tuple(self).__repr__()
-        elif isinstance(self, dbus.Array):
-            return list(self).__repr__()
-        else:
-            return super(type(self), self).__repr__()
-
     new_type_name = type(value).__name__
     new_type_bases = (type(value), PlainType)
-    new_type_dict = dict(parent=parent, name=name, __repr__=repr)
+    new_type_dict = dict(parent=parent, name=name)
+    repr_callable = _get_repr_callable_for_value(value)
+    if repr_callable:
+        new_type_dict['__repr__'] = repr_callable
     new_type = type(new_type_name, new_type_bases, new_type_dict)
     return new_type(value)
 

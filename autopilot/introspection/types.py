@@ -241,6 +241,14 @@ def _get_repr_callable_for_value(value):
     return repr_map.get(type(value), None)
 
 
+def _get_str_callable_for_value(value):
+    str_map = {
+        dbus.Boolean: _boolean_str,
+        dbus.Byte: _integer_str,
+    }
+    return str_map.get(type(value), None)
+
+
 @compatible_repr
 def _integer_repr(self):
     return u'%d' % (self,)
@@ -258,6 +266,14 @@ _float_repr = _create_generic_repr(float)
 _boolean_repr = _create_generic_repr(bool)
 
 
+def _create_generic_str(target_type):
+    return compatible_repr(lambda self: str(target_type(self)))
+
+
+_boolean_str = _create_generic_str(bool)
+_integer_str = _integer_repr
+
+
 def _make_plain_type(value, parent=None, name=None):
     new_type_name = type(value).__name__
     new_type_bases = (type(value), PlainType)
@@ -265,6 +281,9 @@ def _make_plain_type(value, parent=None, name=None):
     repr_callable = _get_repr_callable_for_value(value)
     if repr_callable:
         new_type_dict['__repr__'] = repr_callable
+    str_callable = _get_str_callable_for_value(value)
+    if str_callable:
+        new_type_dict['__str__'] = str_callable
     new_type = type(new_type_name, new_type_bases, new_type_dict)
     return new_type(value)
 

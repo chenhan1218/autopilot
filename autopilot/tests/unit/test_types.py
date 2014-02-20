@@ -47,6 +47,8 @@ from autopilot.introspection.types import (
     _float_repr,
     _tuple_repr,
     _get_repr_callable_for_value,
+    _boolean_str,
+    _integer_str,
 )
 from autopilot.introspection.dbus import DBusIntrospectionObject
 from autopilot.utilities import compatible_repr
@@ -92,6 +94,18 @@ class PlainTypeTests(TestWithScenarios, TestCase):
         p = PlainType(self.t(self.v))
 
         self.assertThat(repr(p), Equals(repr(self.v)))
+
+    def test_str(self):
+        """str(p) for PlainType must be the same as the pythonic type."""
+        p = PlainType(self.t(self.v))
+        try:
+            expected = str(self.v)
+            observed = str(p)
+            self.assertEqual(expected, observed)
+        # in Python 2.x, str(u'\2603') *should* raise a UnicodeDecode error:
+        except UnicodeEncodeError:
+            if not six.PY2:
+                raise
 
     def test_wait_for_raises_RuntimeError(self):
         """The wait_for method must raise a RuntimeError if it's called."""
@@ -813,5 +827,18 @@ class TypeReprTests(TestCase):
         self.assertEqual(_list_repr, observed)
 
 
+class TypeStrTests(TestCase):
+
+    def test_boolean_str_handles_dbus_boolean(self):
+        observed = _boolean_str(dbus.Boolean(False))
+        self.assertEqual(str(False), observed)
+
+    def test_integer_str_handles_dbus_byte(self):
+        observed = _integer_str(dbus.Byte(14))
+        self.assertEqual(str(14), observed)
+
+
 def repr_type(value):
+    """Convert a text or bytes object into the appropriate return type for
+    the __repr__ method."""
     return compatible_repr(lambda: value)()

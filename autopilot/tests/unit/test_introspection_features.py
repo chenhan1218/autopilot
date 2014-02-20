@@ -259,20 +259,19 @@ class DBusIntrospectionObjectTests(TestCase):
             path: '/some/path'
             text: 'Hello'
             """))
-            
+
     def test_print_tree_exception(self):
         """print_tree with StateNotFound exception"""
 
         fake_object = self._print_test_fake_object()
         out = StringIO()
-        
         child = Mock()
         child.print_tree.side_effect = StateNotFoundError('child')
-        
-        with patch.object(fake_object, 'get_children', return_value = [child]):
+
+        with patch.object(fake_object, 'get_children', return_value=[child]):
             print_func = lambda: fake_object.print_tree(out)
             self.assertThat(print_func, Not(Raises(StateNotFoundError)))
-            
+
     def test_print_tree_fileobj(self):
         """print_tree with file object output"""
 

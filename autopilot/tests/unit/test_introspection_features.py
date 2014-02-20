@@ -241,20 +241,6 @@ class DBusIntrospectionObjectTests(TestCase):
         fake_object.get_state_by_path = lambda query: []
         return fake_object
 
-    def _print_test_fake_error_object(self):
-        """common fake object for print_tree tests with error"""
-
-        fake_object = DBusIntrospectionObject(
-            dict(id=[0, 123], path=[0, '']),
-            '',
-            Mock()
-        )
-        # get_properties() always refreshes state, so can't use
-        # no_automatic_refreshing()
-        fake_object.refresh_state = lambda: None
-        fake_object.get_state_by_path = lambda query: []
-        return fake_object
-
     def test_print_tree_stdout(self):
         """print_tree with default output (stdout)"""
 
@@ -277,12 +263,21 @@ class DBusIntrospectionObjectTests(TestCase):
     def test_print_tree_exception(self):
         """print_tree with StateNotFound exception"""
 
-        fake_object = self._print_test_fake_error_object()
+        fake_object = self._print_test_fake_object()
         out = StringIO()
+        #child = DBusIntrospectionObject(
+        #    dict(id=[0, 123], path=[0, '/some/path']),
+        #    '/root',
+        #    Mock()
+        #)
+        child = Mock()
+        child.print_tree.side_effect = StateNotFoundError
         
-        fn = lambda: fake_object.print_tree(out,0)
-        self.assertThat(fn, raises(StateNotFoundError))
-
+        with patch.object(fake_object, 'get_children', return_value = child):
+            #fn = lambda: fake_object.print_tree(out)
+            #self.assertFalse(fn, raises(StateNotFoundError))
+            self.assertThat(fake_object.print_tree(out), Not(Raises(StateNotFoundError)))
+            
     def test_print_tree_fileobj(self):
         """print_tree with file object output"""
 

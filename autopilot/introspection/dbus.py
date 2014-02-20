@@ -617,8 +617,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             class_type = type(str(name), (base_class,), {})
         return class_type(state, path, self._backend)
 
-    def print_tree(self, output=None, maxdepth=None, _curdepth=0,
-                   ignore_errors=1):
+    def print_tree(self, output=None, maxdepth=None, _curdepth=0):
         """Print properties of the object and its children to a stream.
 
         When writing new tests, this can be called when it is too difficult to
@@ -635,9 +634,6 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         :param maxdepth: If given, limit the maximum recursion level to that
             number, i. e. only print children which have at most maxdepth-1
             intermediate parents.
-        :param ignore_errors: If set, ignore StateNotFound errors encountered
-            during the dump, and continue printing later objects
-
         """
         if maxdepth is not None and _curdepth > maxdepth:
             return
@@ -663,8 +659,6 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
                         c.print_tree(output, maxdepth, _curdepth + 1)
         except StateNotFoundError as error:
             output.write("%sError: %s\n" % (indent, error))
-            if not ignore_errors:
-                return
 
     @contextmanager
     def no_automatic_refreshing(self):

@@ -599,10 +599,10 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         This only works for classes that derive from DBusIntrospectionObject.
         """
         path, state = dbus_tuple
-        name = get_classname_from_path(path)
-        try:
-            class_type = _object_registry[self._id][name]
-        except KeyError:
+#        import pdb ; pdb.set_trace()
+        class_type = _select_emulator(_object_registry[self._id], path, state)
+        if class_type is None:
+            name = get_classname_from_path(path)
             get_debug_logger().warning(
                 "Generating introspection instance for type '%s' based on "
                 "generic class.", name)
@@ -622,7 +622,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         When writing new tests, this can be called when it is too difficult to
         find the widget or property that you are interested in in "vis".
-        path, state = dbus_tuple
+        p<F7>7ath, state = dbus_tuple
         name = get_classname_from_path(path)
 
         .. warning:: Do not use this in production tests, this is expensive and
@@ -679,6 +679,11 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         finally:
             self.__refresh_on_attribute = True
 
+    @classmethod
+    def validate_dbus_object(cls, path, state):
+        name = get_classname_from_path(path)
+        return cls.__name__ == name
+
 
 def _is_valid_server_side_filter_param(key, value):
     """Return True if the key and value parameters are valid for server-side
@@ -714,6 +719,20 @@ def _get_filter_string_for_key_value_pair(key, value):
         raise ValueError("Unsupported value type: {}".format(type(value)))
 
 
+def _select_emulator(objects, path, state):
+    class_type = None
+    for item_name in objects:
+        item = objects[item_name]
+        if (hasattr(item, 'validate_dbus_object') and
+                item.validate_dbus_object(path, state)):
+            if class_type is None:
+                class_type = item
+            else:
+                raise ValueError(
+                    'More than one emulator matches this object')
+    return class_type
+
+
 class _CustomEmulatorMeta(IntrospectableObjectMetaclass):
 
     def __new__(cls, name, bases, d):
@@ -721,38 +740,12 @@ class _CustomEmulatorMeta(IntrospectableObjectMetaclass):
         if name != 'CustomEmulatorBase':
             # and only if they don't already have an Id set.
             have_id = False
-            have_validation = False
             for base in bases:
                 if hasattr(base, '_id'):
                     have_id = True
-                    if have_validation:
-                        break
-                if hasattr(base, 'validate_dbus_object'):
-                    have_validation = True
-                    if have_id:
-                        break
+                    break
             if not have_id:
                 d['_id'] = uuid4()
-            if not have_validation:
-                class DefaultValidationMethod(object):
-                    """Class used to provide default validation for objects
-                    without it.
-                    
-                    """
-
-                    def __get__(self, obj, cls=None):
-                        if cls is None:
-                            cls=type(obj)
-                        
-                        def validate_dbus_object(cls, path, state):
-                            path, state = dbus_tuple
-                            name = get_classname_from_path(path)
-                            return cls.__name__ == name
-
-                        return validate_dbus_object
-                            
-
-                d['validate_dbus_object'] = DefaultValidationMethod()
 
         return super(_CustomEmulatorMeta, cls).__new__(cls, name, bases, d)
 

@@ -723,8 +723,7 @@ def _select_emulator(objects, path, state):
     class_type = None
     for item_name in objects:
         item = objects[item_name]
-        if (hasattr(item, 'validate_dbus_object') and
-                item.validate_dbus_object(path, state)):
+        if item.validate_dbus_object(path, state):
             if class_type is None:
                 class_type = item
             else:

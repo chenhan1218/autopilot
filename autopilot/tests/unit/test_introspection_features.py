@@ -54,6 +54,7 @@ from autopilot.introspection.dbus import (
     _is_valid_server_side_filter_param,
     CustomEmulatorBase,
     DBusIntrospectionObject,
+    StateNotFoundError,
 )
 from autopilot.utilities import sleep
 
@@ -240,6 +241,20 @@ class DBusIntrospectionObjectTests(TestCase):
         fake_object.get_state_by_path = lambda query: []
         return fake_object
 
+    def _print_test_fake_error_object(self):
+        """common fake object for print_tree tests with error"""
+
+        fake_object = DBusIntrospectionObject(
+            dict(id=[0, 123], path=[0, '/some/path'], text=[0, 'Hello']),
+            '/some/path',
+            Mock()
+        )
+        # get_properties() always refreshes state, so can't use
+        # no_automatic_refreshing()
+        fake_object.refresh_state = lambda: None
+        fake_object.get_state_by_path = lambda query: []
+        return fake_object
+
     def test_print_tree_stdout(self):
         """print_tree with default output (stdout)"""
 
@@ -258,6 +273,16 @@ class DBusIntrospectionObjectTests(TestCase):
             path: '/some/path'
             text: 'Hello'
             """))
+            
+    def test_print_tree_exception(self):
+        """print_tree with StateNotFound exception"""
+
+        fake_object = self._print_test_fake_error_object()
+        out = StringIO()
+
+        fake_object.print_tree(out,0)
+
+        self.assertRaises(StateNotFoundError, fake_object.print_tree, (out,0))
 
     def test_print_tree_fileobj(self):
         """print_tree with file object output"""

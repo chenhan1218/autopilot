@@ -38,8 +38,18 @@ from autopilot.introspection.types import (
     Size,
     Time,
     ValueType,
+    _integer_repr,
+    _boolean_repr,
+    _text_repr,
+    _bytes_repr,
+    _dict_repr,
+    _list_repr,
+    _float_repr,
+    _tuple_repr,
+    _get_repr_callable_for_value,
 )
 from autopilot.introspection.dbus import DBusIntrospectionObject
+from autopilot.utilities import compatible_repr
 
 
 class PlainTypeTests(TestWithScenarios, TestCase):
@@ -693,3 +703,115 @@ class DBusIntrospectionObjectTests(TestCase):
             "foo",
             "Cannot create attribute, no data supplied"
         )
+
+
+class TypeReprTests(TestCase):
+
+    def test_integer_repr(self):
+        expected = repr_type('42')
+        observed = _integer_repr(42)
+        self.assertEqual(expected, observed)
+
+    def test_dbus_int_types_all_work(self):
+        expected = repr_type('42')
+        int_types = (
+            dbus.Byte,
+            dbus.Int16,
+            dbus.Int32,
+            dbus.UInt16,
+            dbus.UInt32,
+            dbus.Int64,
+            dbus.UInt64,
+        )
+        for t in int_types:
+            observed = _integer_repr(t(42))
+            self.assertEqual(expected, observed)
+
+    def test_get_repr_gets_integer_repr_for_all_integer_types(self):
+        int_types = (
+            dbus.Byte,
+            dbus.Int16,
+            dbus.Int32,
+            dbus.UInt16,
+            dbus.UInt32,
+            dbus.Int64,
+            dbus.UInt64,
+        )
+        for t in int_types:
+            observed = _get_repr_callable_for_value(t(42))
+            self.assertEqual(_integer_repr, observed)
+
+    def test_boolean_repr_true(self):
+        expected = repr_type('True')
+        for values in (True, dbus.Boolean(True)):
+            observed = _boolean_repr(True)
+            self.assertEqual(expected, observed)
+
+    def test_boolean_repr_false(self):
+        expected = repr_type('False')
+        for values in (False, dbus.Boolean(False)):
+            observed = _boolean_repr(False)
+            self.assertEqual(expected, observed)
+
+    def test_get_repr_gets_boolean_repr_for_dbus_boolean_type(self):
+        observed = _get_repr_callable_for_value(dbus.Boolean(False))
+        self.assertEqual(_boolean_repr, observed)
+
+    def test_text_repr_handles_dbus_string(self):
+        unicode_text = u"plɹoʍ ollǝɥ"
+        observed = _text_repr(dbus.String(unicode_text))
+        self.assertEqual(repr(unicode_text), observed)
+
+    def test_text_repr_handles_dbus_object_path(self):
+        path = u"/path/to/some/object"
+        observed = _text_repr(dbus.ObjectPath(path))
+        self.assertEqual(repr(path), observed)
+
+    def test_binry_repr_handles_dbys_byte_array(self):
+        data = b'Some bytes'
+        observed = _bytes_repr(dbus.ByteArray(data))
+        self.assertEqual(repr(data), observed)
+
+    def test_get_repr_gets_bytes_repr_for_dbus_byte_array(self):
+        observed = _get_repr_callable_for_value(dbus.ByteArray(b''))
+        self.assertEqual(_bytes_repr, observed)
+
+    def test_dict_repr_handles_dbus_dictionary(self):
+        token = dict(foo='bar')
+        observed = _dict_repr(dbus.Dictionary(token))
+        self.assertEqual(repr(token), observed)
+
+    def test_get_repr_gets_dict_repr_on_dbus_dictionary(self):
+        observed = _get_repr_callable_for_value(dbus.Dictionary(dict()))
+        self.assertEqual(_dict_repr, observed)
+
+    def test_float_repr_handles_dbus_double(self):
+        token = 1.2345
+        observed = _float_repr(token)
+        self.assertEqual(repr(token), observed)
+
+    def test_get_repr_gets_float_repr_on_dbus_double(self):
+        observed = _get_repr_callable_for_value(dbus.Double(0.0))
+        self.assertEqual(_float_repr, observed)
+
+    def test_tuple_repr_handles_dbus_struct(self):
+        data = (1, 2, 3)
+        observed = _tuple_repr(dbus.Struct(data))
+        self.assertEqual(repr(data), observed)
+
+    def test_get_repr_gets_tuple_repr_on_dbus_struct(self):
+        observed = _get_repr_callable_for_value(dbus.Struct([1]))
+        self.assertEqual(_tuple_repr, observed)
+
+    def test_list_repr_handles_dbus_array(self):
+        data = [1, 2, 3]
+        observed = _list_repr(dbus.Array(data))
+        self.assertEqual(repr(data), observed)
+
+    def test_get_repr_gets_list_repr_on_dbus_array(self):
+        observed = _get_repr_callable_for_value(dbus.Array([1]))
+        self.assertEqual(_list_repr, observed)
+
+
+def repr_type(value):
+    return compatible_repr(lambda: value)()

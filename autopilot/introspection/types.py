@@ -41,12 +41,13 @@ from __future__ import absolute_import
 
 from datetime import datetime, time
 import dbus
+from functools import partial
 import logging
 from testtools.matchers import Equals
 import six
 
 from autopilot.introspection.utilities import translate_state_keys
-from autopilot.utilities import sleep
+from autopilot.utilities import sleep, compatible_repr
 
 
 logger = logging.getLogger(__name__)
@@ -215,6 +216,50 @@ class PlainType(TypeBase):
 
     def __new__(cls, value, parent=None, name=None):
         return _make_plain_type(value, parent=parent, name=name)
+
+
+def _get_repr_callable_for_value(value):
+    repr_map = {
+            dbus.Byte: _integer_repr,
+            dbus.Int16: _integer_repr,
+            dbus.Int32: _integer_repr,
+            dbus.UInt16: _integer_repr,
+            dbus.UInt32: _integer_repr,
+            dbus.Int64: _integer_repr,
+            dbus.UInt64: _integer_repr,
+            dbus.String: _text_repr,
+            dbus.ObjectPath: _text_repr,
+            dbus.Signature: _text_repr,
+            dbus.ByteArray: _bytes_repr,
+            dbus.Boolean: _boolean_repr,
+            dbus.Dictionary: _dict_repr,
+            dbus.Double: _float_repr,
+            dbus.Struct: _tuple_repr,
+            dbus.Array: _list_repr,
+    }
+    return repr_map.get(type(value), repr)
+
+
+@compatible_repr
+def _integer_repr(self):
+    return u'%d' % (self,)
+
+
+@compatible_repr
+def _boolean_repr(self):
+    return u'%r' % (self,)
+
+
+@compatible_repr
+def _generic_repr(target_type, instance):
+    return repr(target_type(instance))
+
+_bytes_repr = partial(_generic_repr, six.binary_type)
+_text_repr = partial(_generic_repr, six.text_type)
+_dict_repr = partial(_generic_repr, dict)
+_list_repr = partial(_generic_repr, list)
+_tuple_repr = partial(_generic_repr, tuple)
+_float_repr = partial(_generic_repr, float)
 
 
 def _make_plain_type(value, parent=None, name=None):

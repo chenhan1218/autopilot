@@ -286,6 +286,10 @@ class ColorTypeTests(TestCase):
         observed = repr(Color(1, 2, 3, 4))
         self.assertEqual(expected, observed)
 
+    def test_repr_equals_str(self):
+        c = Color(255, 255, 255, 0)
+        self.assertEqual(repr(c), str(c))
+
 
 class DateTimeTests(TestCase):
 

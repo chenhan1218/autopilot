@@ -251,7 +251,7 @@ def _get_str_callable_for_value(value):
 
 @compatible_repr
 def _integer_repr(self):
-    return u'%d' % (self,)
+    return six.text_type(int(self))
 
 
 def _create_generic_repr(target_type):

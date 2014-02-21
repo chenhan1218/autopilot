@@ -197,7 +197,7 @@ class PointTypeTests(TestCase):
 
     def test_repr(self):
         expected = repr_type('Point(1, 2)')
-        observed = repr(Point(1,2))
+        observed = repr(Point(1, 2))
         self.assertEqual(expected, observed)
 
     def test_repr_equals_str(self):

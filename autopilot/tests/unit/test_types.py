@@ -93,7 +93,9 @@ class PlainTypeTests(TestWithScenarios, TestCase):
         """repr for PlainType must be the same as the pythonic type."""
         p = PlainType(self.t(self.v))
 
-        self.assertThat(repr(p), Equals(repr(self.v)))
+        expected = repr(self.v)
+        expected.strip('L')
+        self.assertThat(repr(p), Equals(expected))
 
     def test_str(self):
         """str(p) for PlainType must be the same as the pythonic type."""

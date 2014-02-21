@@ -380,6 +380,11 @@ class Rectangle(_array_packed_type(4)):
     def height(self):
         return self[3]
 
+    @compatible_repr
+    def __repr__(self):
+        coords = u', '.join((str(c) for c in self))
+        return u'Rectangle(%s)' % (coords)
+
 
 class Point(_array_packed_type(2)):
 
@@ -416,6 +421,10 @@ class Point(_array_packed_type(2)):
     @property
     def y(self):
         return self[1]
+
+    @compatible_repr
+    def __repr__(self):
+        return u'Point(%d, %d)' % (self.x, self.y)
 
 
 class Size(_array_packed_type(2)):
@@ -461,6 +470,10 @@ class Size(_array_packed_type(2)):
     @property
     def height(self):
         return self[1]
+
+    @compatible_repr
+    def __repr__(self):
+        return u'Size(%d, %d)' % (self.w, self.h)
 
 
 class Color(_array_packed_type(4)):
@@ -510,6 +523,15 @@ class Color(_array_packed_type(4)):
     @property
     def alpha(self):
         return self[3]
+
+    @compatible_repr
+    def __repr__(self):
+        return u'Color(%d, %d, %d, %d)' % (
+            self.red,
+            self.green,
+            self.blue,
+            self.alpha
+        )
 
 
 class DateTime(_array_packed_type(1)):
@@ -608,6 +630,17 @@ class DateTime(_array_packed_type(1)):
             return other == self._cached_dt
         return super(DateTime, self).__eq__(other)
 
+    @compatible_repr
+    def __repr__(self):
+        return u'DateTime(%d-%02d-%02d %02d:%02d:%02d)' % (
+            self.year,
+            self.month,
+            self.day,
+            self.hour,
+            self.minute,
+            self.second
+        )
+
 
 class Time(_array_packed_type(4)):
 
@@ -688,6 +721,15 @@ class Time(_array_packed_type(4)):
             return other == self._cached_time
         return super(Time, self).__eq__(other)
 
+    @compatible_repr
+    def __repr__(self):
+        return u'Time(%02d:%02d:%02d.%03d)' % (
+            self.hour,
+            self.minute,
+            self.second,
+            self.millisecond
+        )
+
 
 class Point3D(_array_packed_type(3)):
 
@@ -730,3 +772,11 @@ class Point3D(_array_packed_type(3)):
     @property
     def z(self):
         return self[2]
+
+    @compatible_repr
+    def __repr__(self):
+        return u'Point3D(%d, %d, %d)' % (
+            self.x,
+            self.y,
+            self.z,
+        )

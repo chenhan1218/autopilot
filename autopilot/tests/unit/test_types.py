@@ -155,6 +155,15 @@ class RectangleTypeTests(TestCase):
 
         self.assertThat(r1, Equals(r2))
 
+    def test_repr(self):
+        expected = repr_type("Rectangle(1, 2, 3, 4)")
+        observed = repr(Rectangle(1, 2, 3, 4))
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        r = Rectangle(1, 2, 3, 4)
+        self.assertEqual(repr(r), str(r))
+
 
 class PointTypeTests(TestCase):
 
@@ -185,6 +194,15 @@ class PointTypeTests(TestCase):
         p2 = [1, 2]
 
         self.assertThat(p1, Equals(p2))
+
+    def test_repr(self):
+        expected = repr_type('Point(1, 2)')
+        observed = repr(Point(1,2))
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        p = Point(1, 2)
+        self.assertEqual(repr(p), str(p))
 
 
 class SizeTypeTests(TestCase):
@@ -218,6 +236,15 @@ class SizeTypeTests(TestCase):
         s2 = [50, 100]
 
         self.assertThat(s1, Equals(s2))
+
+    def test_repr(self):
+        expected = repr_type('Size(1, 2)')
+        observed = repr(Size(1, 2))
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        s = Size(3, 4)
+        self.assertEqual(repr(s), str(s))
 
 
 class ColorTypeTests(TestCase):
@@ -253,6 +280,11 @@ class ColorTypeTests(TestCase):
         c2 = [123, 234, 55, 255]
 
         self.assertThat(c1, Equals(c2))
+
+    def test_repr(self):
+        expected = repr_type('Color(1, 2, 3, 4)')
+        observed = repr(Color(1, 2, 3, 4))
+        self.assertEqual(expected, observed)
 
 
 class DateTimeTests(TestCase):
@@ -302,6 +334,16 @@ class DateTimeTests(TestCase):
 
         self.assertThat(dt1.datetime, IsInstance(datetime))
 
+    def test_repr(self):
+        dt = DateTime(1377209927)
+        expected = repr_type('DateTime(2013-08-22 22:18:47)')
+        observed = repr(dt)
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        dt = DateTime(1377209927)
+        self.assertEqual(repr(dt), str(dt))
+
 
 class TimeTests(TestCase):
 
@@ -345,6 +387,15 @@ class TimeTests(TestCase):
         dt1 = Time(1, 2, 3, 4)
 
         self.assertThat(dt1.time, IsInstance(time))
+
+    def test_repr(self):
+        expected = repr_type('Time(01:02:03.004)')
+        observed = repr(Time(1, 2, 3, 4))
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        t = Time(2, 3, 4, 5)
+        self.assertEqual(repr(t), str(t))
 
 
 class Point3DTypeTests(TestCase):
@@ -390,6 +441,15 @@ class Point3DTypeTests(TestCase):
         p2 = [1, 2, 4]
 
         self.assertThat(p1, NotEquals(p2))
+
+    def test_repr(self):
+        expected = repr_type('Point3D(1, 2, 3)')
+        observed = repr(Point3D(1, 2, 3))
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        p3d = Point3D(1, 2, 3)
+        self.assertEqual(repr(p3d), str(p3d))
 
 
 class CreateValueInstanceTests(TestCase):

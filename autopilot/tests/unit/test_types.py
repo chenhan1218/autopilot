@@ -102,7 +102,7 @@ class PlainTypeTests(TestWithScenarios, TestCase):
             expected = str(self.v)
             observed = str(p)
             self.assertEqual(expected, observed)
-        # in Python 2.x, str(u'\2603') *should* raise a UnicodeDecode error:
+        # in Python 2.x, str(u'\2603') *should* raise a UnicodeEncode error:
         except UnicodeEncodeError:
             if not six.PY2:
                 raise

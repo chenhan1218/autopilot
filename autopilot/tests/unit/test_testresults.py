@@ -27,6 +27,7 @@ from testscenarios import WithScenarios
 from autopilot import testresult
 from autopilot import run
 
+
 class LoggedTestResultDecoratorTests(TestCase):
 
     def construct_simple_content_object(self):

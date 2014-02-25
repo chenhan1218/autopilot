@@ -18,13 +18,14 @@
 #
 
 from mock import Mock
+import tempfile
 from testtools import TestCase, PlaceHolder
 from testtools.content import text_content
-from testtools.matchers import Contains
+from testtools.matchers import Contains, raises
 from testscenarios import WithScenarios
 
 from autopilot import testresult
-
+from autopilot import run
 
 class LoggedTestResultDecoratorTests(TestCase):
 
@@ -102,7 +103,26 @@ class TestResultOutputStreamTests(WithScenarios, TestCase):
         (f, dict(format=f)) for f in testresult.get_output_formats().keys()
     ]
 
+    def get_supported_options(self):
+        output_path = tempfile.mktemp()
+        options = {
+            'stream': run.get_output_stream(self.format, output_path)
+        }
+        if self.format == 'text':
+            options['failfast'] = False
+        return options
+
     def test_factory_function_is_a_callable(self):
         self.assertTrue(
             callable(testresult.get_output_formats()[self.format])
+        )
+
+    def test_factory_callable_raises_on_unknown_kwargs(self):
+        factory_fn = testresult.get_output_formats()[self.format]
+        options = self.get_supported_options()
+        options['unknown_kwarg'] = True
+
+        self.assertThat(
+            lambda: factory_fn(**options),
+            raises(ValueError)
         )

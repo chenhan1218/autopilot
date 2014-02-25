@@ -62,7 +62,6 @@ from autopilot.application._launcher import (
     _kill_pid,
     _kill_process,
     _launch_click_app,
-    _raise_if_not_empty,
 )
 from autopilot.utilities import sleep
 
@@ -349,20 +348,6 @@ class ClickApplicationLauncherTests(TestCase):
 
 
 class ApplicationLauncherInternalTests(TestCase):
-
-    def test_raise_if_not_empty_raises_on_nonempty_dict(self):
-        populated_dict = dict(testing=True)
-        self.assertThat(
-            lambda: _raise_if_not_empty(populated_dict),
-            raises(ValueError("Unknown keyword arguments: 'testing'."))
-        )
-
-    def test_raise_if_not_empty_does_not_raise_on_empty(self):
-        empty_dict = dict()
-        self.assertThat(
-            lambda: _raise_if_not_empty(empty_dict),
-            Not(Raises())
-        )
 
     def test_get_click_app_status(self):
         with patch.object(_l, '_call_upstart_with_args') as call_upstart:

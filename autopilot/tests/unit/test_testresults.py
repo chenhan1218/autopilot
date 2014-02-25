@@ -21,6 +21,7 @@ from mock import Mock
 from testtools import TestCase, PlaceHolder
 from testtools.content import text_content
 from testtools.matchers import Contains
+from testscenarios import WithScenarios
 
 from autopilot import testresult
 
@@ -92,4 +93,16 @@ class OutputFormatFactoryTests(TestCase):
         self.assertThat(
             testresult.get_output_formats(),
             Contains(testresult.get_default_format())
+        )
+
+
+class TestResultOutputStreamTests(WithScenarios, TestCase):
+
+    scenarios = [
+        (f, dict(format=f)) for f in testresult.get_output_formats().keys()
+    ]
+
+    def test_factory_function_is_a_callable(self):
+        self.assertTrue(
+            callable(testresult.get_output_formats()[self.format])
         )

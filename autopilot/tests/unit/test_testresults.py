@@ -20,12 +20,9 @@
 from mock import Mock
 from testtools import TestCase, PlaceHolder
 from testtools.content import text_content
+from testtools.matchers import Contains
 
-from autopilot.testresult import (
-    get_default_format,
-    get_output_formats,
-    LoggedTestResultDecorator,
-)
+from autopilot import testresult
 
 
 class LoggedTestResultDecoratorTests(TestCase):
@@ -34,11 +31,11 @@ class LoggedTestResultDecoratorTests(TestCase):
         return text_content(self.getUniqueString)
 
     def test_can_construct(self):
-        LoggedTestResultDecorator(Mock())
+        testresult.LoggedTestResultDecorator(Mock())
 
     def test_addSuccess_calls_decorated_test(self):
         wrapped = Mock()
-        result = LoggedTestResultDecorator(wrapped)
+        result = testresult.LoggedTestResultDecorator(wrapped)
         fake_test = PlaceHolder('fake_test')
         fake_details = self.construct_simple_content_object()
 
@@ -51,7 +48,7 @@ class LoggedTestResultDecoratorTests(TestCase):
 
     def test_addError_calls_decorated_test(self):
         wrapped = Mock()
-        result = LoggedTestResultDecorator(wrapped)
+        result = testresult.LoggedTestResultDecorator(wrapped)
         fake_test = PlaceHolder('fake_test')
         fake_error = object()
         fake_details = self.construct_simple_content_object()
@@ -66,7 +63,7 @@ class LoggedTestResultDecoratorTests(TestCase):
 
     def test_addFailure_calls_decorated_test(self):
         wrapped = Mock()
-        result = LoggedTestResultDecorator(wrapped)
+        result = testresult.LoggedTestResultDecorator(wrapped)
         fake_test = PlaceHolder('fake_test')
         fake_error = object()
         fake_details = self.construct_simple_content_object()
@@ -83,13 +80,16 @@ class LoggedTestResultDecoratorTests(TestCase):
 class OutputFormatFactoryTests(TestCase):
 
     def test_has_text_format(self):
-        self.assertTrue('text' in get_output_formats())
+        self.assertTrue('text' in testresult.get_output_formats())
 
     def test_has_xml_format(self):
-        self.assertTrue('xml' in get_output_formats())
+        self.assertTrue('xml' in testresult.get_output_formats())
 
     def test_has_subunit_format(self):
-        self.assertTrue('subunit' in get_output_formats())
+        self.assertTrue('subunit' in testresult.get_output_formats())
 
     def test_default_format_is_available(self):
-        self.assertTrue(get_default_format() in get_output_formats())
+        self.assertThat(
+            testresult.get_output_formats(),
+            Contains(testresult.get_default_format())
+        )

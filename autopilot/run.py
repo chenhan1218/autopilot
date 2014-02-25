@@ -87,17 +87,26 @@ def enable_debug_log_messages():
 def construct_test_result(args):
     formats = get_output_formats()
     return formats[args.format](
-        stream=get_output_stream(args),
+        stream=get_output_stream(args.format, args.output),
         failfast=args.failfast,
     )
 
 
-def get_output_stream(args):
-    if args.output:
-        log_file = _get_log_file_path(args.output)
-        if args.format == 'xml':
+def get_output_stream(format, path):
+    """Get an output stream pointing to 'path' that's appropriate for format
+    'format'.
+
+    :param format: A string that describes one of the output formats supported
+        by autopilot.
+    :param path: A path to the file you wish to write, or None to write to
+        stdout.
+
+    """
+    if path:
+        log_file = _get_log_file_path(path)
+        if format == 'xml':
             return _get_text_mode_file_stream(log_file)
-        elif args.format == 'text':
+        elif format == 'text':
             return _get_binary_mode_file_stream(log_file)
         else:
             return _get_raw_binary_mode_file_stream(log_file)

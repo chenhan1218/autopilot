@@ -187,7 +187,7 @@ class ApplicationLaunchTests(ApplicationTests):
         difference = end - start
         self.assertThat(difference.total_seconds(), LessThan(5))
 
-    @skipIf(platform.model() != "Desktop", "Not suitable for device (Qt4)")
+    @skipIf(model() != "Desktop", "Not suitable for device (Qt4)")
     def test_closing_app_produces_good_error_from_get_state_by_path(self):
         """Testing an application that closes before the test ends must
         produce a good error message when calling get_state_by_path on the
@@ -288,7 +288,7 @@ class QtTests(ApplicationTests):
         app_proxy = self.launch_test_application(self.app_path, app_type='qt')
         self.assertTrue(app_proxy is not None)
 
-    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (Qt4)")
+    @skipIf(model() != "Desktop", "Only suitable on Desktop (Qt4)")
     def test_can_launch_qt_script(self):
         path = self.write_script(dedent("""\
             #!%s
@@ -336,7 +336,7 @@ class QtTests(ApplicationTests):
         launch_fn = lambda: self.launch_test_application(path, app_type='qt')
         self.assertThat(launch_fn, raises(ProcessSearchError))
 
-    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (Qt4)")
+    @skipIf(model() != "Desktop", "Only suitable on Desktop (Qt4)")
     def test_can_launch_wrapper_script(self):
         path = self.write_script(dedent("""\
             #!%s

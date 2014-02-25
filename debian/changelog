@@ -1,3 +1,67 @@
+autopilot (1.4+14.04.20140219-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Vis tool improvements for self-testing: Added ability for vis tool
+    to be run with testability enabled, and able to be profiled. (LP:
+    #1279944)
+  * Add a decorator that makes it easy to write compatible __repr__
+    functions in both python 2.x and 3.x.
+
+  [ Leo Arias ]
+  * Refactor the _uinput module to avoid side-effects when we import it.
+  * Added Mouse, Touch and Pointer drags with rate. (LP: #1257055)
+
+  [ Max Brustkern ]
+  * Handle trailing slashes on suites. (LP: #1199088)
+
+  [ Christopher Lee ]
+  * Fix import error in functional test
+    test_bamf_geometry_gives_reliable_results. (LP: #1281253)
+
+  [ CI bot ]
+  * Fix test_command_line_args issues with python 3.4. (LP: #1281733)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 19 Feb 2014 21:41:38 +0000
+
+autopilot (1.4+14.04.20140213-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Fix bamf geometry property.
+  * Fix subunit output when outputting to a file instead of stdout. (LP:
+    #1279507)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 13 Feb 2014 03:11:50 +0000
+
+autopilot (1.4+14.04.20140212-0ubuntu1) trusty; urgency=low
+
+  [ CI bot ]
+  * Resync trunk
+
+  [ Christopher Lee ]
+  * Deprecating the use of AutopilotTestCase.pick_app_launcher
+  * Fix a regression in the "autopilot launch" command which meant that
+    application arguments were taken as the application to launch. (LP:
+    #1275913)
+
+  [ Thomi Richards ]
+  * Remove ibus.py from autopilot, as it should live in lp:unity. (LP:
+    #1210661)
+  * Add unit tests to the autopilot.run module.
+  * Refactor parts of the 'autopilot.run' module, adding unit tests and
+    simplifying the code along the way.
+  * Fix docs WRT Eventually matcher's interaction with Raises() matcher.
+    (LP: #1244490)
+  * Get display resolution using fbset, falling back to hard coded
+    values based on image codename on phablet devices.
+  * Fix functional tests that started failing when window-mocker
+    changed. (LP: #1278187)
+  * Add unit tests for missing coverage on code that picks device
+    backends at runtime.
+  * Fix a bug where autopilot didn't do the right thing with non-unicode
+    valid bytestrings. (LP: #1278272)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 12 Feb 2014 01:14:02 +0000
+
 autopilot (1.4+14.04.20140129-0ubuntu1) trusty; urgency=low
 
   [ Barry Warsaw ]

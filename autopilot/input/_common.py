@@ -26,8 +26,18 @@ logger = logging.getLogger(__name__)
 
 
 def get_center_point(object_proxy):
-    """Get the center point of an object, searching for several different ways
-    of determining exactly where the center is.
+    """Get the center point of an object.
+
+    It searches for several different ways of determining exactly where the
+    center is.
+
+    :raises ValueError: if `object_proxy` has the globalRect attribute but it
+        is not of the correct type.
+    :raises ValueError: if `object_proxy` doesn't have the globalRect
+        attribute, it has the x and y attributes instead, but they are not of
+        the correct type.
+    :raises ValueError: if `object_proxy` doesn't have any recognised position
+        attributes.
 
     """
     try:

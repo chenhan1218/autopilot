@@ -139,8 +139,6 @@ Autopilot will try and determine the introspection type automatically. If this p
 
 	Method :py:meth:`autopilot.testcase.AutopilotTestCase.launch_test_application`
 		Launch test applications.
-	Method :py:meth:`autopilot.testcase.AutopilotTestCase.pick_app_launcher`
-		Set application type globally.
 
 ``autopilot.emulators`` namespace has been deprecated
 +++++++++++++++++++++++++++++++++++++++++++++++++++++

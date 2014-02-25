@@ -88,6 +88,18 @@ class PickBackendTests(TestCase):
         fn = lambda: _pick_backend(backend_dict, 'be2')
         self.assertThat(fn, raises(BackendException))
 
+    def test_raises_RuntimeError_on_invalid_preferred_backend(self):
+        """Must raise RuntimeError when we pass a backend that's not there"""
+        class Backend(object):
+            pass
+        _create_backend = lambda: Backend()
+        fn = lambda: _pick_backend(dict(foo=_create_backend), 'bar')
+
+        self.assertThat(
+            fn,
+            raises(RuntimeError("Unknown backend 'bar'"))
+        )
+
     def test_backend_exception_wraps_original_exception(self):
         """Raised backend Exception must wrap exception from backend."""
         class Backend1(object):

@@ -24,7 +24,7 @@ from __future__ import absolute_import
 import io
 
 import logging
-from testtools.content import content_from_stream
+from testtools.content import ContentType, content_from_stream
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +70,10 @@ def follow_stream(stream, test_case, content_name):
         file path will be used instead.
     """
     def make_content():
-        content_obj = content_from_stream(stream, buffer_now=True)
+        content_obj = content_from_stream(
+            stream,
+            ContentType('text', 'plain', {'charset': 'iso8859-1'}),
+            buffer_now=True
+        )
         test_case.addDetail(content_name, content_obj)
     test_case.addCleanup(make_content)

@@ -24,9 +24,11 @@
 from __future__ import absolute_import
 
 from contextlib import contextmanager
+from decorator import decorator
 import inspect
 import logging
 import os
+import six
 import time
 from functools import wraps
 
@@ -392,3 +394,13 @@ class MockableSleep(object):
         return self._mock_count
 
 sleep = MockableSleep()
+
+
+@decorator
+def compatible_repr(f, *args, **kwargs):
+    result = f(*args, **kwargs)
+    if not six.PY3 and isinstance(result, six.text_type):
+        return result.encode('utf-8')
+    if six.PY3 and not isinstance(result, six.text_type):
+        return result.decode('utf-8')
+    return result

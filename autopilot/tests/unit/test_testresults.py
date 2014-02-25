@@ -88,5 +88,8 @@ class OutputFormatFactoryTests(TestCase):
     def test_has_xml_format(self):
         self.assertTrue('xml' in get_output_formats())
 
+    def test_has_subunit_format(self):
+        self.assertTrue('subunit' in get_output_formats())
+
     def test_default_format_is_available(self):
         self.assertTrue(get_default_format() in get_output_formats())

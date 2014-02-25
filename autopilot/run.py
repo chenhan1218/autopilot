@@ -22,6 +22,7 @@ from __future__ import absolute_import
 
 from codecs import open
 from collections import OrderedDict
+import cProfile
 from datetime import datetime
 from imp import find_module
 import logging
@@ -423,6 +424,15 @@ def _print_message_and_exit_error(msg):
     exit(1)
 
 
+def _run_with_profiling(callable, output_file):
+    cProfile.runctx(
+        'callable()',
+        globals(),
+        locals(),
+        filename=output_file,
+    )
+
+
 class TestProgram(object):
 
     def __init__(self, defined_args=None):
@@ -461,7 +471,11 @@ class TestProgram(object):
         # Once that's been fixed we can remove the following line:
         #
         os.putenv('LIBOVERLAY_SCROLLBAR', '0')
-        vis_main()
+        args = ['-testability'] if self.args.testability else []
+        if self.args.enable_profile:
+            _run_with_profiling(lambda: vis_main(args), 'vis_tool.profile')
+        else:
+            vis_main(args)
 
     def launch_app(self):
         """Launch an application, with introspection support."""

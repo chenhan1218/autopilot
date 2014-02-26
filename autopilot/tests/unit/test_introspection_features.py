@@ -27,6 +27,7 @@ from textwrap import dedent
 from testtools import TestCase
 from testtools.matchers import (
     Equals,
+    IsInstance,
     Not,
     NotEquals,
     Raises,
@@ -46,13 +47,17 @@ from autopilot.introspection import (
     _get_application_name_from_dbus_address,
     _get_search_criteria_string_representation,
     _maybe_filter_connections_by_app_name,
+    get_classname_from_path,
     get_proxy_object_for_existing_process,
     ProcessSearchError,
 )
 from autopilot.introspection.dbus import (
     _get_filter_string_for_key_value_pair,
+    _get_default_proxy_class,
     _is_valid_server_side_filter_param,
     _get_proxy_object_class,
+    _object_registry,
+    _try_custom_proxy_classes,
     CustomEmulatorBase,
     DBusIntrospectionObject,
 )
@@ -629,53 +634,113 @@ class MakeIntrospectionObjectTests(TestCase):
         """Verify that a class has a validation method by default."""
         self.assertTrue(callable(self.DefaultSelector.validate_dbus_object))
 
+    @patch('autopilot.introspection.dbus._get_proxy_object_class')
+    def test_make_introspection_object(self, gpoc):
+        """Verify that make_introspection_object makes the right call."""
+        gpoc.return_value = self.DefaultSelector
+        fake_object = self.DefaultSelector(
+            dict(id=[0, 123], path=[0, '/some/path']),
+            '/',
+            Mock()
+        )
+        new_fake = fake_object.make_introspection_object(('/Object', {}))
+        self.assertThat(new_fake, IsInstance(self.DefaultSelector))
+        gpoc.assert_called_once_with(_object_registry[fake_object._id],
+                                     self.DefaultSelector,
+                                     '/Object',
+                                     {})
+
+    @patch('autopilot.introspection.dbus._try_custom_proxy_classes')
+    @patch('autopilot.introspection.dbus._get_default_proxy_class')
+    def test_get_proxy_object_class_from_list(self, gdpc, tcpc):
+        """_get_proxy_object_class should return the value of
+        _try_custom_proxy_classes if there is one."""
+        gdpc.side_effect = Exception(
+            'Called _get_default_proxy_class when _try_custom_proxy_classes '
+            'returned a class.')
+        retval = 'return'
+        tcpc.return_value = retval
+        class_dict = {'DefaultSelector': self.DefaultSelector}
+        default = self.DefaultSelector
+        path = '/path/to/DefaultSelector'
+        state = {}
+        gpoc_return = _get_proxy_object_class(class_dict,
+                                              default,
+                                              path,
+                                              state)
+        self.assertThat(gpoc_return, Equals(retval))
+        tcpc.assert_called_once_with(class_dict, path, state)
+
+    @patch('autopilot.introspection.dbus._try_custom_proxy_classes')
+    @patch('autopilot.introspection.dbus._get_default_proxy_class')
+    def test_get_proxy_object_class_default(self, gdpc, tcpc):
+        """_get_proxy_object_class should return the value of
+        _get_default_proxy_class if _try_custom_proxy_classes returns None."""
+        retval = 'return'
+        gdpc.return_value = retval
+        tcpc.return_value = None
+        class_dict = {'DefaultSelector': self.DefaultSelector}
+        default = self.DefaultSelector
+        path = '/path/to/DefaultSelector'
+        state = {}
+        gpoc_return = _get_proxy_object_class(class_dict,
+                                              default,
+                                              path,
+                                              state)
+        self.assertThat(gpoc_return, Equals(retval))
+        tcpc.assert_called_once_with(class_dict, path, state)
+        gdpc.assert_called_once_with(default, get_classname_from_path(path))
+
+    def test_try_custom_proxy_classes_zero_results(self):
+        """_try_custom_proxy_classes must return None if no classes match."""
+        proxy_class_dict = {'NeverSelected': self.NeverSelected}
+        path = '/path/to/NeverSelected'
+        state = {}
+        class_type = _try_custom_proxy_classes(proxy_class_dict, path, state)
+        self.assertThat(class_type, Equals(None))
+
+    def test_try_custom_proxy_classes_one_result(self):
+        """_try_custom_proxy_classes must return the matching class if there is
+        exacly 1."""
+        proxy_class_dict = {'NeverSelected': self.NeverSelected}
+        path = '/path/to/NeverSelected'
+        state = {}
+        class_type = _try_custom_proxy_classes(proxy_class_dict, path, state)
+        self.assertThat(class_type, Equals(None))
+
+        proxy_class_dict = {'DefaultSelector': self.DefaultSelector}
+        path = '/path/to/DefaultSelector'
+        state = {}
+        class_type = _try_custom_proxy_classes(proxy_class_dict, path, state)
+        self.assertThat(class_type, Equals(self.DefaultSelector))
+
+    def test_try_custom_proxy_classes_two_results(self):
+        """_try_custom_proxy_classes must raise ValueError if multiple classes
+        match."""
+        proxy_class_dict = {'DefaultSelector': self.DefaultSelector,
+                            'AlwaysSelected': self.AlwaysSelected}
+        path = '/path/to/DefaultSelector'
+        state = {}
+        self.assertThat(lambda: _try_custom_proxy_classes(proxy_class_dict,
+                                                          path, state),
+                        raises(ValueError))
+
+    def test_get_default_proxy_class_base(self):
+        """Subclass Must return an emulator of base class."""
+        class SubclassedProxy(self.DefaultSelector):
+            pass
+
+        result = _get_default_proxy_class(SubclassedProxy, 'Object')
+        self.assertTrue(result, Equals(self.DefaultSelector))
+        self.assertFalse(issubclass(result, SubclassedProxy))
+
+    def test_get_default_proxy_class(self):
+        """Must default to own class if no usable bases present."""
+        result = _get_default_proxy_class(self.DefaultSelector, 'Object')
+        self.assertTrue(result, Equals(self.DefaultSelector))
+
     def test_validate_dbus_object_matches_on_class_name(self):
         """Validate_dbus_object must match class name."""
         selected = self.DefaultSelector.validate_dbus_object(
             '/DefaultSelector', {})
         self.assertTrue(selected)
-
-    def test_select_by_function(self):
-        """Correct emulator must be returned by function."""
-        object_registry = {'Object': self.AlwaysSelected}
-        self.assertThat(
-            _get_proxy_object_class(object_registry,
-                                    self.AlwaysSelected,
-                                    '/DefaultSelector',
-                                    {'id': [0, 0]}),
-            Equals(self.AlwaysSelected))
-
-    def test_default_return(self):
-        """Must return default when all functions return False."""
-        object_registry = {'Object': self.NeverSelected}
-        self.assertTrue(
-            issubclass(_get_proxy_object_class(object_registry,
-                                               CustomEmulatorBase,
-                                               '/DefaultSelector',
-                                               {'id': [0, 0]}),
-                       CustomEmulatorBase))
-
-    def test_multiple_matches(self):
-        """Exception must be raised if multiple emulators match."""
-        object_registry = {'DefaultSelector': self.DefaultSelector,
-                           'AlwaysSelected': self.AlwaysSelected}
-
-        self.assertThat(
-            lambda: _get_proxy_object_class(object_registry,
-                                            self.DefaultSelector,
-                                            '/DefaultSelector',
-                                            {'id': [0, 0]}),
-            raises(ValueError)
-        )
-
-    def test_no_matches(self):
-        """Generic emulator must be used if no emulators match."""
-        fake_object = self.NeverSelected(
-            dict(id=[0, 123], path=[0, '/some/path']),
-            '/',
-            Mock()
-        )
-
-        rectangle = fake_object.make_introspection_object(
-            ('/DefaultSelector', {'id': [0, 0]}))
-        self.assertTrue(isinstance(rectangle, CustomEmulatorBase))

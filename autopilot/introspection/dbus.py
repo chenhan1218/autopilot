@@ -597,6 +597,10 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         (path, state_dict).
 
         This only works for classes that derive from DBusIntrospectionObject.
+
+        :returns: introspection objection
+        :rtype: instance of appropriate CustomProxyObject class
+
         """
         path, state = dbus_tuple
         class_object = _get_proxy_object_class(
@@ -739,8 +743,8 @@ def _get_proxy_object_class(proxy_class_dict, default_class, path, state):
     class_type = _try_custom_proxy_classes(proxy_class_dict, path, state)
     if class_type:
         return class_type
-    return get_default_proxy_object_class(default_class,
-                                          get_classname_from_path(path))
+    return _get_default_proxy_class(default_class,
+                                    get_classname_from_path(path))
 
 
 def _try_custom_proxy_classes(proxy_class_dict, path, state):
@@ -772,7 +776,7 @@ def _try_custom_proxy_classes(proxy_class_dict, path, state):
     return None
 
 
-def get_default_proxy_object_class(default_class, name):
+def _get_default_proxy_class(default_class, name):
     """Return a custom proxy object class of the default or a base class.
 
     We want the object to inherit from CustomEmulatorBase, not the object

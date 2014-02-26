@@ -23,7 +23,7 @@ from autopilot.tests.functional import TempDesktopFile as TDF
 
 
 import os.path
-from mock import patch
+from mock import patch, call
 from testtools import TestCase
 from testtools.matchers import Equals
 
@@ -54,6 +54,22 @@ class TempDesktopFileTests(TestCase):
                     )
                 )
             )
+
+    def test_any_created_directories_are_removed(self):
+        with patch.object(test_init, 'remove_if_exists') as p_remove_if_exists:
+            with patch.object(test_init.os, 'makedirs'):
+                with patch.object(TDF, 'addCleanup') as p_addCleanup:
+                    tdf = TempDesktopFile()
+                    tdf._create_desktop_file_dir("/part1/part2/part3")
+
+                    self.assertThat(
+                        p_addCleanup.call_args_list,
+                        Equals([
+                            call(p_remove_if_exists, '/part1/part2/part3'),
+                            call(p_remove_if_exists, '/part1/part2'),
+                            call(p_remove_if_exists, '/part1'),
+                        ])
+                    )
 
     def test_desktop_file_removed_at_cleanup(self):
         with patch.object(

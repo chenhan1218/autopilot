@@ -173,6 +173,17 @@ class TempDesktopFile(fixtures.Fixture):
             self._create_desktop_file_dir(desktop_file_dir)
 
     def _create_desktop_file_dir(self, desktop_file_dir):
+        # We might be creating more than just the leaf directory, so we need to
+        # keep track of what doesn't already exist and remove it when we're
+        # done.
+        self.addCleanup(remove_if_exists, desktop_file_dir)
+        paths_to_delete = []
+        head, tail = os.path.split(desktop_file_dir)
+        while tail != "":
+            if not os.path.exists(head):
+                self.addCleanup(remove_if_exists, head)
+            head, tail = os.path.split(head)
+
         os.makedirs(desktop_file_dir)
 
     def _create_desktop_file(self, desktop_file_dir):

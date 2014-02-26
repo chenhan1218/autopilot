@@ -52,7 +52,7 @@ from autopilot.introspection import (
 from autopilot.introspection.dbus import (
     _get_filter_string_for_key_value_pair,
     _is_valid_server_side_filter_param,
-    _select_emulator,
+    _get_proxy_object_class,
     CustomEmulatorBase,
     DBusIntrospectionObject,
 )
@@ -598,77 +598,74 @@ class ProxyObjectGenerationTests(TestCase):
 
 class MakeIntrospectionObjectTests(TestCase):
 
-    def setUp(self):
-        super(MakeIntrospectionObjectTests, self).setUp()
+    class DefaultSelector(CustomEmulatorBase):
+        pass
 
-        class Rectangle(CustomEmulatorBase):
-            pass
+    class AlwaysSelected(CustomEmulatorBase):
+        @classmethod
+        def validate_dbus_object(cls, path, state):
+            return True
 
-        self.Rectangle = Rectangle
-
-        class Square(CustomEmulatorBase):
-            @classmethod
-            def validate_dbus_object(cls, path, state):
-                return True
-
-        self.Square = Square
-
-        class Circle(CustomEmulatorBase):
-            @classmethod
-            def validate_dbus_object(cls, path, state):
-                return False
-
-        self.Circle = Circle
+    class NeverSelected(CustomEmulatorBase):
+        @classmethod
+        def validate_dbus_object(cls, path, state):
+            return False
 
     def test_class_has_validation_method(self):
-        self.assertThat(callable(self.Rectangle.validate_dbus_object),
+        self.assertThat(callable(self.DefaultSelector.validate_dbus_object),
                         Equals(True))
 
     def test_select_by_name(self):
         """Correct custom emulator must be returned by name."""
-        fake_object = self.Rectangle(
+        fake_object = self.DefaultSelector(
             dict(id=[0, 123], path=[0, '/some/path']),
             '/',
             Mock()
         )
 
         rectangle = fake_object.make_introspection_object(
-            ('/Rectangle', {'id': [0, 0]}))
-        self.assertThat(isinstance(rectangle, self.Rectangle),
+            ('/DefaultSelector', {'id': [0, 0]}))
+        self.assertThat(isinstance(rectangle, self.DefaultSelector),
                         Equals(True))
 
     def test_select_by_function(self):
         """Correct emulator must be returned by function."""
-        object_registry = {'Rectangle': self.Rectangle}
+        object_registry = {'DefaultSelector': self.DefaultSelector}
         self.assertThat(
-            _select_emulator(object_registry, '/Rectangle', {'id': [0, 0]}),
-            Equals(self.Rectangle))
+            _get_proxy_object_class(object_registry,
+                                    '/DefaultSelector',
+                                    {'id': [0, 0]}),
+            Equals(self.DefaultSelector))
 
     def test_select_function_fails(self):
         """Must return None when all functions return False."""
-        object_registry = {'Circle': self.Circle}
+        object_registry = {'Circle': self.NeverSelected}
         self.assertThat(
-            _select_emulator(object_registry, '/Rectangle', {'id': [0, 0]}),
+            _get_proxy_object_class(object_registry,
+                                    '/DefaultSelector',
+                                    {'id': [0, 0]}),
             Equals(None))
 
     def test_multiple_matches(self):
         """Exception must be raised if multiple emulators match."""
-        object_registry = {'Rectangle': self.Rectangle, 'Square': self.Square}
+        object_registry = {'DefaultSelector': self.DefaultSelector,
+                           'Square': self.AlwaysSelected}
 
         self.assertThat(
-            lambda: _select_emulator(object_registry, '/Rectangle',
-                                     {'id': [0, 0]}),
-            raises(ValueError('More than one emulator matches this object'))
+            lambda: _get_proxy_object_class(object_registry,
+                                            '/DefaultSelector',
+                                            {'id': [0, 0]}),
+            raises(ValueError)
         )
 
     def test_no_matches(self):
         """Generic emulator must be used if no emulators match."""
-        fake_object = self.Circle(
+        fake_object = self.NeverSelected(
             dict(id=[0, 123], path=[0, '/some/path']),
             '/',
             Mock()
         )
 
         rectangle = fake_object.make_introspection_object(
-            ('/Rectangle', {'id': [0, 0]}))
+            ('/DefaultSelector', {'id': [0, 0]}))
         self.assertTrue(isinstance(rectangle, CustomEmulatorBase))

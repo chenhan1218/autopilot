@@ -758,8 +758,10 @@ def _get_proxy_object_class(proxy_class_dict, path, state):
             ','.join([repr(c) for c in possible_classes]),
             repr(state),
             path)
-    else:
+    elif len(possible_classes) == 1:
         return possible_classes[0]
+    else:
+        return None
 
 
 class _CustomEmulatorMeta(IntrospectableObjectMetaclass):
@@ -775,7 +777,6 @@ class _CustomEmulatorMeta(IntrospectableObjectMetaclass):
                     break
             if not have_id:
                 d['_id'] = uuid4()
-
         return super(_CustomEmulatorMeta, cls).__new__(cls, name, bases, d)
 
 CustomEmulatorBase = _CustomEmulatorMeta('CustomEmulatorBase',

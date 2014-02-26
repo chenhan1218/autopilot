@@ -598,7 +598,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         This only works for classes that derive from DBusIntrospectionObject.
 
-        :returns: introspection objection
+        :returns: introspection object
         :rtype: instance of appropriate CustomProxyObject class
 
         """
@@ -612,8 +612,6 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         When writing new tests, this can be called when it is too difficult to
         find the widget or property that you are interested in in "vis".
-        path, state = dbus_tuple
-        name = get_classname_from_path(path)
 
         .. warning:: Do not use this in production tests, this is expensive and
             not at all appropriate for actual testing. Only call this
@@ -670,7 +668,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             self.__refresh_on_attribute = True
 
     @classmethod
-    def validate_dbus_object(cls, path, state):
+    def validate_dbus_object(cls, path, _state):
         """Return whether this class is the appropriate proxy object class for
         a given dbus path and state.
 
@@ -681,6 +679,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         :param path: The dbus path of the object to check
         :type path: string
         :param state: The dbus state of the object to check
+                      (ignored in default implementation)
         :type state: dict
         :returns: Whether this class is appropriate for the dbus object
         :rtype: boolean
@@ -748,7 +747,7 @@ def _get_proxy_object_class(proxy_class_dict, default_class, path, state):
 
 
 def _try_custom_proxy_classes(proxy_class_dict, path, state):
-    """Identify which custom proxy class in matches the dbus path and state.
+    """Identify which custom proxy class matches the dbus path and state.
 
     If more than one class in proxy_class_dict matches, raise an exception.
     :param proxy_class_dict: dict of proxy classes to try

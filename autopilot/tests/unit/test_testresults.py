@@ -114,7 +114,7 @@ class TestResultOutputStreamTests(WithScenarios, TestCase):
         Pass in keyword arguments to override default options.
         """
         output_path = tempfile.mktemp()
-        self.addCleanup(remove_is_exists, output_path)
+        self.addCleanup(remove_if_exists, output_path)
         options = {
             'stream': run.get_output_stream(self.format, output_path),
             'failfast': False
@@ -254,6 +254,6 @@ class TestResultOutputStreamTests(WithScenarios, TestCase):
         self.assertEqual(1, test_result.testsRun)
 
 
-def remove_is_exists(path):
+def remove_if_exists(path):
     if os.path.exists(path):
         os.remove(path)

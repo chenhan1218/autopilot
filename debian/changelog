@@ -1,3 +1,28 @@
+autopilot (1.4+14.04.20140219-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Vis tool improvements for self-testing: Added ability for vis tool
+    to be run with testability enabled, and able to be profiled. (LP:
+    #1279944)
+  * Add a decorator that makes it easy to write compatible __repr__
+    functions in both python 2.x and 3.x.
+
+  [ Leo Arias ]
+  * Refactor the _uinput module to avoid side-effects when we import it.
+  * Added Mouse, Touch and Pointer drags with rate. (LP: #1257055)
+
+  [ Max Brustkern ]
+  * Handle trailing slashes on suites. (LP: #1199088)
+
+  [ Christopher Lee ]
+  * Fix import error in functional test
+    test_bamf_geometry_gives_reliable_results. (LP: #1281253)
+
+  [ CI bot ]
+  * Fix test_command_line_args issues with python 3.4. (LP: #1281733)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 19 Feb 2014 21:41:38 +0000
+
 autopilot (1.4+14.04.20140213-0ubuntu1) trusty; urgency=low
 
   [ Thomi Richards ]

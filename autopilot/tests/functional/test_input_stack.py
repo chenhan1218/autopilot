@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2012, 2013, 2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -150,8 +150,8 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
             from autopilot.input._X11 import _PRESSED_KEYS
             return _PRESSED_KEYS
         elif self.backend == 'UInput':
-            from autopilot.input._uinput import _PRESSED_KEYS
-            return _PRESSED_KEYS
+            from autopilot.input import _uinput
+            return _uinput.Keyboard._device._pressed_keys_ecodes
         else:
             self.fail("Don't know how to get pressed keys list for backend "
                       + self.backend
@@ -487,7 +487,8 @@ class PointerWrapperTests(AutopilotTestCase):
             def __init__(self):
                 pass
 
-            def drag(self, x1, y1, x2, y2):
+            def drag(self, x1, y1, x2, y2, rate='dummy',
+                     time_between_events='dummy'):
                 pass
 
         p = Pointer(FakeTouch())
@@ -551,8 +552,9 @@ class InputStackCleanup(AutopilotTestCase):
         test_result = FakeTestCase("test_press_key").run()
 
         self.assertThat(test_result.wasSuccessful(), Equals(True))
-        from autopilot.input._uinput import _PRESSED_KEYS
-        self.assertThat(_PRESSED_KEYS, Equals([]))
+        from autopilot.input import _uinput
+        self.assertThat(
+            _uinput.Keyboard._device._pressed_keys_ecodes, Equals([]))
 
     @patch('autopilot.input._X11.fake_input', new=lambda *args: None, )
     def test_mouse_button_released(self):

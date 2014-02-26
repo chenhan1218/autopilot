@@ -20,7 +20,6 @@
 
 from __future__ import absolute_import
 
-from codecs import open
 import os
 import os.path
 import re

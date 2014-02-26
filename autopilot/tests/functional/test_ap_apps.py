@@ -36,7 +36,6 @@ from testtools.matchers import (
     raises,
 )
 from textwrap import dedent
-import unittest
 
 from autopilot.process import ProcessManager
 from autopilot.platform import model

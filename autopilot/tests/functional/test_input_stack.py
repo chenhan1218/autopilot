@@ -20,7 +20,7 @@
 
 import json
 import os
-from tempfile import mktemp, NamedTemporaryFile
+from tempfile import mktemp
 from testtools import TestCase, skipIf
 from testtools.matchers import IsInstance, Equals, raises
 from textwrap import dedent
@@ -34,6 +34,7 @@ from autopilot.input import Keyboard, Mouse, Pointer, Touch
 from autopilot.input._common import get_center_point
 from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase, multiply_scenarios
+from autopilot.tests.functional import TempDesktopFile
 from autopilot.utilities import on_test_started
 
 
@@ -246,7 +247,7 @@ class OSKBackendTests(AutopilotTestCase):
         open(qml_path, 'w').write(script_contents)
         self.addCleanup(os.remove, qml_path)
 
-        desktop_file = self._write_test_desktop_file()
+        desktop_file = self.useFixture(TempDesktopFile()).get_desktop_file()
 
         return self.launch_test_application(
             "qmlscene",
@@ -254,35 +255,6 @@ class OSKBackendTests(AutopilotTestCase):
             qml_path,
             '--desktop_file_hint=%s' % desktop_file,
             app_type='qt',
-        )
-
-    def _write_test_desktop_file(self):
-        desktop_file_dir = self._get_local_desktop_file_directory()
-        if not os.path.exists(desktop_file_dir):
-            os.makedirs(desktop_file_dir)
-        with NamedTemporaryFile(
-            suffix='.desktop',
-            dir=desktop_file_dir,
-            delete=False  # Will ensure it happens with addCleanup
-        ) as desktop_file:
-            desktop_file.write(
-                dedent("""\
-                [Desktop Entry]
-                Type=Application
-                Exec=Not important
-                Path=Not important
-                Name=Test app
-                Icon=Not important""")
-            )
-        self.addCleanup(os.remove, desktop_file.name)
-        return desktop_file.name
-
-    def _get_local_desktop_file_directory(self):
-        return os.path.join(
-            os.getenv('HOME'),
-            '.local',
-            'share',
-            'applications'
         )
 
     def _launch_simple_input(self):
@@ -442,10 +414,21 @@ class TouchGesturesTests(AutopilotTestCase):
         open(qml_path, 'w').write(script_contents)
         self.addCleanup(os.remove, qml_path)
 
+        extra_args = ''
+        if platform.model() != "Desktop":
+            # We need to add the desktop-file-hint
+            desktop_file = self.useFixture(
+                TempDesktopFile()
+            ).get_desktop_file()
+            extra_args = '--desktop_file_hint={hint_file}'.format(
+                hint_file=desktop_file
+            )
+
         return self.launch_test_application(
             "qmlscene",
             "-qt=qt5",
             qml_path,
+            extra_args,
             app_type='qt',
         )
 

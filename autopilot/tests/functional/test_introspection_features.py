@@ -43,6 +43,7 @@ from six import StringIO
 from autopilot import platform
 from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase
+from autopilot.tests.functional import TempDesktopFile
 from autopilot.introspection.dbus import CustomEmulatorBase
 from autopilot.introspection import _connection_matches_pid
 from autopilot.display import Display
@@ -280,9 +281,21 @@ class QMLCustomEmulatorTestCase(AutopilotTestCase):
                 qml_path = tempfile.mktemp(suffix='.qml')
                 open(qml_path, 'w').write(self.test_qml)
                 self.addCleanup(os.remove, qml_path)
+
+                extra_args = ''
+                if platform.model() != "Desktop":
+                    # We need to add the desktop-file-hint
+                    desktop_file = self.useFixture(
+                        TempDesktopFile()
+                    ).get_desktop_file()
+                    extra_args = '--desktop_file_hint={hint_file}'.format(
+                        hint_file=desktop_file
+                    )
+
                 return self.launch_test_application(
                     "/usr/lib/" + arch + "/qt5/bin/qmlscene",
                     qml_path,
+                    extra_args,
                     emulator_base=EmulatorBase)
 
             def test_custom_emulator(self):

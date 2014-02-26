@@ -21,14 +21,16 @@
 from __future__ import absolute_import
 
 from codecs import open
+import fixtures
 import os
 import os.path
 import sys
 import logging
 from shutil import rmtree
 import subprocess
-from tempfile import mkdtemp
+from tempfile import mkdtemp, NamedTemporaryFile
 from testtools.content import text_content
+from textwrap import dedent
 
 from autopilot.testcase import AutopilotTestCase
 
@@ -146,6 +148,37 @@ class AutopilotRunTestBase(AutopilotTestCase):
         open(script_file, 'w').write(load_entry_point_script)
 
         return script_file
+
+
+class TempDesktopFile(fixtures.Fixture):
+    def get_desktop_file(self):
+        desktop_file_dir = self._get_local_desktop_file_directory()
+        if not os.path.exists(desktop_file_dir):
+            os.makedirs(desktop_file_dir)
+        with NamedTemporaryFile(
+            suffix='.desktop',
+            dir=desktop_file_dir,
+            delete=False  # Will ensure it happens with addCleanup
+        ) as desktop_file:
+            desktop_file.write(
+                dedent("""\
+                [Desktop Entry]
+                Type=Application
+                Exec=Not important
+                Path=Not important
+                Name=Test app
+                Icon=Not important""")
+            )
+        self.addCleanup(os.remove, desktop_file.name)
+        return desktop_file.name
+
+    def _get_local_desktop_file_directory(self):
+        return os.path.join(
+            os.getenv('HOME'),
+            '.local',
+            'share',
+            'applications'
+        )
 
 
 def _get_environment_patch(pythonpath):

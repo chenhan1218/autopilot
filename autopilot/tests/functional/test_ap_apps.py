@@ -41,6 +41,7 @@ import unittest
 from autopilot.process import ProcessManager
 from autopilot.platform import model
 from autopilot.testcase import AutopilotTestCase
+from autopilot.tests.functional import TempDesktopFile
 from autopilot.introspection import (
     get_proxy_object_for_existing_process,
     ProcessSearchError,
@@ -285,7 +286,21 @@ class QtTests(ApplicationTests):
             self.skip("Neither qmlviewer nor qmlscene is installed")
 
     def test_can_launch_qt_app(self):
-        app_proxy = self.launch_test_application(self.app_path, app_type='qt')
+        extra_args = ''
+        if model() != "Desktop":
+            # We need to add the desktop-file-hint
+            desktop_file = self.useFixture(
+                TempDesktopFile()
+            ).get_desktop_file()
+            extra_args = '--desktop_file_hint={hint_file}'.format(
+                hint_file=desktop_file
+            )
+
+        app_proxy = self.launch_test_application(
+            self.app_path,
+            extra_args,
+            app_type='qt'
+        )
         self.assertTrue(app_proxy is not None)
 
     @skipIf(model() != "Desktop", "Only suitable on Desktop (Qt4)")

@@ -599,7 +599,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         This only works for classes that derive from DBusIntrospectionObject.
         """
         path, state = dbus_tuple
-        class_type = _select_emulator(_object_registry[self._id], path, state)
+        class_type = _get_proxy_object_class(_object_registry[self._id], path, state)
         if class_type is None:
             name = get_classname_from_path(path)
             get_debug_logger().warning(
@@ -718,7 +718,7 @@ def _get_filter_string_for_key_value_pair(key, value):
         raise ValueError("Unsupported value type: {}".format(type(value)))
 
 
-def _select_emulator(objects, path, state):
+def _get_proxy_object_class(objects, path, state):
     class_type = None
     for item_name in objects:
         item = objects[item_name]

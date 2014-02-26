@@ -19,9 +19,24 @@
 
 from argparse import Namespace
 from mock import Mock, patch
+import logging
+import os.path
+from shutil import rmtree
 import six
+import subprocess
+import tempfile
 from testtools import TestCase
-from testtools.matchers import Equals, raises
+from testtools.matchers import (
+    Contains,
+    DirExists,
+    Equals,
+    FileExists,
+    IsInstance,
+    Not,
+    raises,
+    StartsWith,
+)
+
 if six.PY3:
     from contextlib import ExitStack
 else:
@@ -139,6 +154,610 @@ class RunUtilityFunctionTests(TestCase):
             patched_call.return_value = 1
             self.assertFalse(run._have_video_recording_facilities())
 
+    def test_run_with_profiling_creates_profile_data_file(self):
+        output_path = tempfile.mktemp()
+        self.addCleanup(os.unlink, output_path)
+
+        def empty_callable():
+            pass
+        run._run_with_profiling(empty_callable, output_path)
+        self.assertThat(output_path, FileExists())
+
+    def test_run_with_profiling_runs_callable(self):
+        output_path = tempfile.mktemp()
+        self.addCleanup(os.unlink, output_path)
+        empty_callable = Mock()
+        run._run_with_profiling(empty_callable, output_path)
+        empty_callable.assert_called_once_with()
+
+
+class TestRunLaunchApp(TestCase):
+    @patch.object(run, 'launch_process')
+    def test_launch_app_launches_app_with_arguments(self, patched_launch_proc):
+        app_name = self.getUniqueString()
+        app_arguments = self.getUniqueString()
+        fake_args = Namespace(
+            mode='launch',
+            application=[app_name, app_arguments],
+            interface=None
+        )
+
+        with patch.object(
+            run,
+            '_prepare_application_for_launch',
+            return_value=(app_name, app_arguments)
+        ):
+            program = run.TestProgram(fake_args)
+            program.run()
+            patched_launch_proc.assert_called_once_with(
+                app_name,
+                app_arguments,
+                capture_output=False
+            )
+
+    def test_launch_app_exits_using_print_message_and_exit_error(self):
+        app_name = self.getUniqueString()
+        app_arguments = self.getUniqueString()
+        error_message = "Cannot find application 'blah'"
+        fake_args = Namespace(
+            mode='launch',
+            application=[app_name, app_arguments],
+            interface=None
+        )
+
+        with patch.object(
+            run,
+            '_prepare_application_for_launch',
+                side_effect=RuntimeError(error_message)
+        ):
+            with patch.object(
+                run, '_print_message_and_exit_error'
+            ) as print_and_exit:
+                run.TestProgram(fake_args).run()
+                print_and_exit.assert_called_once_with(
+                    "Error: %s" % error_message
+                )
+
+    @patch.object(run, 'launch_process')
+    def test_launch_app_exits_with_message_on_failure(self, patched_launch_proc):  # NOQA
+        app_name = self.getUniqueString()
+        app_arguments = self.getUniqueString()
+        fake_args = Namespace(
+            mode='launch',
+            application=[app_name, app_arguments],
+            interface=None
+        )
+
+        with patch.object(
+            run,
+            '_prepare_application_for_launch',
+            return_value=(app_name, app_arguments)
+        ):
+            with patch('sys.stdout', new=six.StringIO()) as stdout:
+                patched_launch_proc.side_effect = RuntimeError(
+                    "Failure Message"
+                )
+                program = run.TestProgram(fake_args)
+                self.assertThat(lambda: program.run(), raises(SystemExit(1)))
+                self.assertThat(
+                    stdout.getvalue(),
+                    Contains("Error: Failure Message")
+                )
+
+    @patch('autopilot.vis.vis_main')
+    def test_passes_testability_to_vis_main(self, patched_vis_main):
+        args = Namespace(
+            mode='vis',
+            testability=True,
+            enable_profile=True,
+        )
+        program = run.TestProgram(args)
+        program.run()
+
+        patched_vis_main.assert_called_once_with(['-testability'])
+
+    @patch('autopilot.vis.vis_main')
+    def test_passes_empty_list_without_testability_set(self, patched_vis_main):
+        args = Namespace(
+            mode='vis',
+            testability=False,
+            enable_profile=False,
+        )
+        program = run.TestProgram(args)
+        program.run()
+
+        patched_vis_main.assert_called_once_with([])
+
+
+class TestRunLaunchAppHelpers(TestCase):
+    """Tests for the 'autopilot launch' command"""
+
+    def test_get_app_name_and_args_returns_app_name_passed_app_name(self):
+        app_name = self.getUniqueString()
+        launch_args = [app_name]
+
+        self.assertThat(
+            run._get_app_name_and_args(launch_args),
+            Equals((app_name, []))
+        )
+
+    def test_get_app_name_and_args_returns_app_name_passed_arg_and_name(self):
+        app_name = self.getUniqueString()
+        app_arg = [self.getUniqueString()]
+        launch_args = [app_name] + app_arg
+
+        self.assertThat(
+            run._get_app_name_and_args(launch_args),
+            Equals((app_name, app_arg))
+        )
+
+    def test_get_app_name_and_args_returns_app_name_passed_args_and_name(self):
+        app_name = self.getUniqueString()
+        app_args = [self.getUniqueString(), self.getUniqueString()]
+
+        launch_args = [app_name] + app_args
+
+        self.assertThat(
+            run._get_app_name_and_args(launch_args),
+            Equals((app_name, app_args))
+        )
+
+    def test_application_name_is_full_path_True_when_is_abs_path(self):
+        with patch.object(run.os.path, 'isabs', return_value=True):
+            self.assertTrue(run._application_name_is_full_path(""))
+
+    def test_application_name_is_full_path_True_when_path_exists(self):
+        with patch.object(run.os.path, 'exists', return_value=True):
+            self.assertTrue(run._application_name_is_full_path(""))
+
+    def test_application_name_is_full_path_False_neither_abs_or_exists(self):
+        with patch.object(run.os.path, 'exists', return_value=False):
+            with patch.object(run.os.path, 'isabs', return_value=False):
+                self.assertFalse(run._application_name_is_full_path(""))
+
+    def test_get_applications_full_path_returns_same_when_full_path(self):
+        app_name = self.getUniqueString()
+
+        with patch.object(
+            run,
+            '_application_name_is_full_path',
+            return_value=True
+        ):
+            self.assertThat(
+                run._get_applications_full_path(app_name),
+                Equals(app_name)
+            )
+
+    def test_get_applications_full_path_calls_which_command_on_app_name(self):
+        app_name = self.getUniqueString()
+        full_path = "/usr/bin/%s" % app_name
+        with patch.object(
+            run.subprocess,
+            'check_output',
+            return_value=full_path
+        ):
+            self.assertThat(
+                run._get_applications_full_path(app_name),
+                Equals(full_path)
+            )
+
+    def test_get_applications_full_path_raises_valueerror_when_not_found(self):
+        app_name = self.getUniqueString()
+        expected_error = "Cannot find application '%s'" % (app_name)
+
+        with patch.object(
+            run.subprocess,
+            'check_output',
+            side_effect=subprocess.CalledProcessError(1, "")
+        ):
+            self.assertThat(
+                lambda: run._get_applications_full_path(app_name),
+                raises(ValueError(expected_error))
+            )
+
+    def test_get_application_path_and_arguments_raises_for_unknown_app(self):
+        app_name = self.getUniqueString()
+        expected_error = "Cannot find application '{app_name}'".format(
+            app_name=app_name
+        )
+
+        self.assertThat(
+            lambda: run._get_application_path_and_arguments([app_name]),
+            raises(RuntimeError(expected_error))
+        )
+
+    def test_get_application_path_and_arguments_returns_app_and_args(self):
+        app_name = self.getUniqueString()
+
+        with patch.object(
+            run,
+            '_get_applications_full_path',
+            side_effect=lambda arg: arg
+        ):
+            self.assertThat(
+                run._get_application_path_and_arguments([app_name]),
+                Equals((app_name, []))
+            )
+
+    def test_get_application_launcher_env_attempts_auto_selection(self):
+        interface = "Auto"
+        app_path = self.getUniqueString()
+        test_launcher_env = self.getUniqueString()
+
+        with patch.object(
+            run,
+            '_try_determine_launcher_env_or_raise',
+            return_value=test_launcher_env
+        ) as get_launcher:
+            self.assertThat(
+                run._get_application_launcher_env(interface, app_path),
+                Equals(test_launcher_env)
+            )
+            get_launcher.assert_called_once_with(app_path)
+
+    def test_get_application_launcher_env_uses_string_hint_to_determine(self):
+        interface = None
+        app_path = self.getUniqueString()
+        test_launcher_env = self.getUniqueString()
+
+        with patch.object(
+            run,
+            '_get_app_env_from_string_hint',
+            return_value=test_launcher_env
+        ) as get_launcher:
+            self.assertThat(
+                run._get_application_launcher_env(interface, app_path),
+                Equals(test_launcher_env)
+            )
+            get_launcher.assert_called_once_with(interface)
+
+    def test_get_application_launcher_env_returns_None_on_failure(self):
+        interface = None
+        app_path = self.getUniqueString()
+
+        with patch.object(
+            run,
+            '_get_app_env_from_string_hint',
+            return_value=None
+        ):
+            self.assertThat(
+                run._get_application_launcher_env(interface, app_path),
+                Equals(None)
+            )
+
+    def test_try_determine_launcher_env_or_raise_raises_on_failure(self):
+        app_name = self.getUniqueString()
+        err_msg = self.getUniqueString()
+        with patch.object(
+            run,
+            'get_application_launcher_wrapper',
+            side_effect=RuntimeError(err_msg)
+        ):
+            self.assertThat(
+                lambda: run._try_determine_launcher_env_or_raise(app_name),
+                raises(
+                    RuntimeError(
+                        "Error detecting launcher: {err}\n"
+                        "(Perhaps use the '-i' argument to specify an "
+                        "interface.)"
+                        .format(err=err_msg)
+                    )
+                )
+            )
+
+    def test_try_determine_launcher_env_or_raise_returns_launcher_wrapper_result(self):  # NOQA
+        app_name = self.getUniqueString()
+        launcher_env = self.getUniqueString()
+
+        with patch.object(
+            run,
+            'get_application_launcher_wrapper',
+            return_value=launcher_env
+        ):
+            self.assertThat(
+                run._try_determine_launcher_env_or_raise(app_name),
+                Equals(launcher_env)
+            )
+
+    def test_raise_if_launcher_is_none_raises_on_none(self):
+        app_name = self.getUniqueString()
+
+        self.assertThat(
+            lambda: run._raise_if_launcher_is_none(None, app_name),
+            raises(
+                RuntimeError(
+                    "Could not determine introspection type to use for "
+                    "application '{app_name}'.\n"
+                    "(Perhaps use the '-i' argument to specify an interface.)"
+                    .format(app_name=app_name)
+                )
+            )
+        )
+
+    def test_raise_if_launcher_is_none_does_not_raise_on_none(self):
+        launcher_env = self.getUniqueString()
+        app_name = self.getUniqueString()
+
+        run._raise_if_launcher_is_none(launcher_env, app_name)
+
+    def test_prepare_launcher_environment_creates_launcher_env(self):
+        interface = self.getUniqueString()
+        app_name = self.getUniqueString()
+        app_arguments = self.getUniqueString()
+
+        with patch.object(
+            run,
+            '_get_application_launcher_env',
+        ) as get_launcher:
+            get_launcher.return_value.prepare_environment = lambda *args: args
+
+            self.assertThat(
+                run._prepare_launcher_environment(
+                    interface,
+                    app_name,
+                    app_arguments
+                ),
+                Equals((app_name, app_arguments))
+            )
+
+    def test_prepare_launcher_environment_checks_launcher_isnt_None(self):
+        interface = self.getUniqueString()
+        app_name = self.getUniqueString()
+        app_arguments = self.getUniqueString()
+
+        with patch.object(
+            run,
+            '_get_application_launcher_env',
+        ) as get_launcher:
+            get_launcher.return_value.prepare_environment = lambda *args: args
+
+            with patch.object(
+                run,
+                '_raise_if_launcher_is_none'
+            ) as launcher_check:
+                run._prepare_launcher_environment(
+                    interface,
+                    app_name,
+                    app_arguments
+                )
+                launcher_check.assert_called_once_with(
+                    get_launcher.return_value,
+                    app_name
+                )
+
+    def test_print_message_and_exit_error_prints_message(self):
+        err_msg = self.getUniqueString()
+        with patch('sys.stdout', new=six.StringIO()) as stdout:
+            try:
+                run._print_message_and_exit_error(err_msg)
+            except SystemExit:
+                pass
+
+            self.assertThat(stdout.getvalue(), Contains(err_msg))
+
+    def test_print_message_and_exit_error_exits_non_zero(self):
+        self.assertThat(
+            lambda: run._print_message_and_exit_error(""),
+            raises(SystemExit(1))
+        )
+
+    def test_prepare_application_for_launch_returns_prepared_details(self):
+        interface = self.getUniqueString()
+        application = self.getUniqueString()
+        app_name = self.getUniqueString()
+        app_arguments = self.getUniqueString()
+
+        with ExitStack() as stack:
+            stack.enter_context(
+                patch.object(
+                    run,
+                    '_get_application_path_and_arguments',
+                    return_value=(app_name, app_arguments)
+                )
+            )
+            prepare_launcher = stack.enter_context(
+                patch.object(
+                    run,
+                    '_prepare_launcher_environment',
+                    return_value=(app_name, app_arguments)
+                )
+            )
+
+            self.assertThat(
+                run._prepare_application_for_launch(application, interface),
+                Equals((app_name, app_arguments))
+            )
+            prepare_launcher.assert_called_once_with(
+                interface,
+                app_name,
+                app_arguments
+            )
+
+
+class LoggingSetupTests(TestCase):
+
+    def test_get_root_logger_returns_logging_instance(self):
+        logger = run.get_root_logger()
+        self.assertThat(logger, IsInstance(logging.RootLogger))
+
+    def test_setup_logging_calls_get_root_logger(self):
+        with patch.object(run, 'get_root_logger') as fake_get_root_logger:
+            run.setup_logging(0)
+            fake_get_root_logger.assert_called_once_with()
+
+    def test_setup_logging_sets_root_logging_level_to_debug(self):
+        with patch.object(run, 'get_root_logger') as fake_get_logger:
+            run.setup_logging(0)
+            fake_get_logger.return_value.setLevel.assert_called_once_with(
+                logging.DEBUG
+            )
+
+    def test_set_null_log_handler(self):
+        mock_root_logger = Mock()
+        run.set_null_log_handler(mock_root_logger)
+
+        self.assertThat(
+            mock_root_logger.addHandler.call_args[0][0],
+            IsInstance(logging.NullHandler)
+        )
+
+    @patch.object(run, 'get_root_logger')
+    def test_verbse_level_zero_sets_null_handler(self, fake_get_logger):
+        with patch.object(run, 'set_null_log_handler') as fake_set_null:
+            run.setup_logging(0)
+
+            fake_set_null.assert_called_once_with(
+                fake_get_logger.return_value
+            )
+
+    def test_stderr_handler_sets_stream_handler_with_custom_formatter(self):
+        mock_root_logger = Mock()
+        run.set_stderr_stream_handler(mock_root_logger)
+
+        self.assertThat(mock_root_logger.addHandler.call_count, Equals(1))
+        created_handler = mock_root_logger.addHandler.call_args[0][0]
+
+        self.assertThat(
+            created_handler,
+            IsInstance(logging.StreamHandler)
+        )
+        self.assertThat(
+            created_handler.formatter,
+            IsInstance(run.LogFormatter)
+        )
+
+    @patch.object(run, 'get_root_logger')
+    def test_verbose_level_one_sets_stream_handler(self, fake_get_logger):
+        with patch.object(run, 'set_stderr_stream_handler') as stderr_handler:
+            run.setup_logging(1)
+
+            stderr_handler.assert_called_once_with(
+                fake_get_logger.return_value
+            )
+
+    def test_enable_debug_log_messages_sets_debugFilter_attr(self):
+        with patch.object(run, 'DebugLogFilter') as patched_filter:
+            patched_filter.debug_log_enabled = False
+            run.enable_debug_log_messages()
+            self.assertThat(
+                patched_filter.debug_log_enabled,
+                Equals(True)
+            )
+
+    @patch.object(run, 'get_root_logger')
+    def test_verbose_level_two_enables_debug_messages(self, fake_get_logger):
+        with patch.object(run, 'enable_debug_log_messages') as enable_debug:
+            run.setup_logging(2)
+
+            enable_debug.assert_called_once_with()
+
+
+class OutputStreamTests(TestCase):
+
+    def remove_tree_if_exists(self, path):
+        if os.path.exists(path):
+            rmtree(path)
+
+    def test_get_log_file_path_returns_file_path(self):
+        requested_path = tempfile.mktemp()
+        result = run._get_log_file_path(requested_path)
+
+        self.assertThat(result, Equals(requested_path))
+
+    def test_get_log_file_path_creates_nonexisting_directories(self):
+        temp_dir = tempfile.mkdtemp()
+        self.addCleanup(self.remove_tree_if_exists, temp_dir)
+        dir_to_store_logs = os.path.join(temp_dir, 'some_directory')
+        requested_path = os.path.join(dir_to_store_logs, 'my_log.txt')
+
+        run._get_log_file_path(requested_path)
+        self.assertThat(dir_to_store_logs, DirExists())
+
+    def test_returns_default_filename_when_passed_directory(self):
+        temp_dir = tempfile.mkdtemp()
+        self.addCleanup(self.remove_tree_if_exists, temp_dir)
+        with patch.object(run, '_get_default_log_filename') as _get_default:
+            result = run._get_log_file_path(temp_dir)
+
+            _get_default.assert_called_once_with(temp_dir)
+            self.assertThat(result, Equals(_get_default.return_value))
+
+    def test_get_default_log_filename_calls_print_fn(self):
+        with patch.object(run, '_print_default_log_path') as patch_print:
+            run._get_default_log_filename('/some/path')
+
+            self.assertThat(
+                patch_print.call_count,
+                Equals(1)
+            )
+            call_arg = patch_print.call_args[0][0]
+            # shouldn't print the directory, since the user already explicitly
+            # specified that.
+            self.assertThat(call_arg, Not(StartsWith('/some/path')))
+
+    @patch.object(run, '_print_default_log_path')
+    def test_get_default_filename_returns_sane_string(self, patched_print):
+        with patch.object(run, 'node', return_value='hostname'):
+            with patch.object(run, 'datetime') as mock_dt:
+                mock_dt.now.return_value.strftime.return_value = 'date-part'
+
+                self.assertThat(
+                    run._get_default_log_filename('/some/path'),
+                    Equals('/some/path/hostname_date-part.log')
+                )
+
+    def test_get_output_stream_gets_stdout_with_no_logfile_specified(self):
+        args = Namespace(output=None)
+        output_stream = run.get_output_stream(args)
+        self.assertThat(output_stream.name, Equals('<stdout>'))
+
+    def test_get_output_stream_opens_correct_file(self):
+        args = Namespace(output=tempfile.mktemp(), format='xml')
+        self.addCleanup(os.unlink, args.output)
+
+        output_stream = run.get_output_stream(args)
+        self.assertThat(output_stream.name, Equals(args.output))
+
+    def test_text_mode_binary_stream_opens_in_text_mode(self):
+        path = tempfile.mktemp()
+        self.addCleanup(os.unlink, path)
+        stream = run._get_text_mode_file_stream(path)
+        self.assertThat(stream.mode, Equals('w'))
+
+    def test_binary_mode_file_stream_opens_in_binary_mode(self):
+        path = tempfile.mktemp()
+        self.addCleanup(os.unlink, path)
+        stream = run._get_binary_mode_file_stream(path)
+        self.assertThat(stream.mode, Equals('wb'))
+
+    def test_xml_format_opens_text_mode_stream(self):
+        args = Namespace(output=tempfile.mktemp(), format='xml')
+        with patch.object(run, '_get_text_mode_file_stream') as pgts:
+            run.get_output_stream(args)
+            pgts.assert_called_once_with(args.output)
+
+    def test_txt_format_opens_binary_mode_stream(self):
+        args = Namespace(output=tempfile.mktemp(), format='txt')
+        with patch.object(run, '_get_binary_mode_file_stream') as pgbs:
+            run.get_output_stream(args)
+            pgbs.assert_called_once_with(args.output)
+
+    def test_subunit_format_opens_text_mode_stream(self):
+        args = Namespace(output=tempfile.mktemp(), format='subunit')
+        with patch.object(run, '_get_text_mode_file_stream') as pgbs:
+            run.get_output_stream(args)
+            pgbs.assert_called_once_with(args.output)
+
+    def test_print_log_file_location_prints_correct_message(self):
+        path = self.getUniqueString()
+
+        with patch('sys.stdout', new=six.StringIO()) as patched_stdout:
+            run._print_default_log_path(path)
+            output = patched_stdout.getvalue()
+
+        expected = "Using default log filename: %s\n" % path
+        self.assertThat(expected, Equals(output))
+
 
 class TestProgramTests(TestCase):
 
@@ -157,7 +776,7 @@ class TestProgramTests(TestCase):
 
     def test_calls_parse_args_by_default(self):
         fake_args = Namespace()
-        with patch('autopilot.run.parse_arguments') as fake_parse_args:
+        with patch.object(run, 'parse_arguments') as fake_parse_args:
             fake_parse_args.return_value = fake_args
             program = run.TestProgram()
 
@@ -196,6 +815,21 @@ class TestProgramTests(TestCase):
 
             patched_run_vis.assert_called_once_with()
 
+    def test_vis_command_runs_under_profiling_if_profiling_is_enabled(self):
+        fake_args = Namespace(
+            mode='vis',
+            enable_profile=True,
+            testability=False,
+        )
+        program = run.TestProgram(fake_args)
+        with patch.object(run, '_run_with_profiling') as patched_run_profile:
+            program.run()
+
+            self.assertThat(
+                patched_run_profile.call_count,
+                Equals(1),
+            )
+
     def test_launch_command_calls_launch_app_method(self):
         fake_args = Namespace(mode='launch')
         program = run.TestProgram(fake_args)
@@ -208,7 +842,7 @@ class TestProgramTests(TestCase):
         """The run_tests method must call all the utility functions.
 
         This test is somewhat ugly, and relies on a lot of mocks. This will be
-        cleaned up once autopilot.run has been completely refactored.
+        cleaned up once run has been completely refactored.
 
         """
         fake_args = create_default_run_args()

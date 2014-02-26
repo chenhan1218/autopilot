@@ -69,7 +69,7 @@ from autopilot.introspection import (
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
 from autopilot.process import ProcessManager
-from autopilot.utilities import on_test_started
+from autopilot.utilities import deprecated, on_test_started
 from autopilot._timeout import Timeout
 try:
     from autopilot import tracepoint as tp
@@ -217,11 +217,6 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             app_proxy = self.launch_test_application(
                 'my_gtk_app.py', app_type='gtk')
 
-        .. seealso::
-
-            Method :py:meth:`AutopilotTestCase.pick_app_launcher`
-                Specify application introspection type globally.
-
         :param application: The application to launch. The application can be
             specified as:
 
@@ -326,12 +321,18 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         pid = launcher_instance.launch(application, *args)
         process = getattr(launcher_instance, 'process', None)
+        application_name = getattr(
+            launcher_instance,
+            'dbus_application_name',
+            None
+        )
 
         proxy_obj = get_proxy_object_for_existing_process(
             pid=pid,
             process=process,
             dbus_bus=dbus_bus,
             emulator_base=launcher_instance.emulator_base,
+            application_name=application_name,
         )
         proxy_obj.set_process(process)
 
@@ -473,6 +474,9 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
     assertProperties = assertProperty
 
+    @deprecated(
+        "the 'app_type' argument to the launch_test_application method"
+    )
     def pick_app_launcher(self, app_path):
         """Given an application path, return an object suitable for launching
         the application.

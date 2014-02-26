@@ -27,9 +27,19 @@ import sys
 import six
 from mock import patch
 from tempfile import mktemp
-from testtools.matchers import raises, LessThan
+from testtools import skipIf
+from testtools.matchers import (
+    Equals,
+    LessThan,
+    Not,
+    Raises,
+    raises,
+)
 from textwrap import dedent
+import unittest
 
+from autopilot.process import ProcessManager
+from autopilot.platform import model
 from autopilot.testcase import AutopilotTestCase
 from autopilot.introspection import (
     get_proxy_object_for_existing_process,
@@ -82,9 +92,11 @@ class ApplicationLaunchTests(ApplicationTests):
 
         """
         path = self.write_script("")
-        expected_error_message = "Autopilot could not determine the correct \
-introspection type to use. You can specify one by overriding the \
-AutopilotTestCase.pick_app_launcher method."
+        expected_error_message = (
+            "Autopilot could not determine the correct "
+            "introspection type to use. You can specify this by providing "
+            "app_type."
+        )
 
         self.assertThat(
             lambda: self.launch_test_application(path),
@@ -289,6 +301,27 @@ class QtTests(ApplicationTests):
         app_proxy = self.launch_test_application(path, app_type='qt')
         self.assertTrue(app_proxy is not None)
 
+    @skipIf(model() != 'Desktop', "Bamf only available on desktop (Qt4)")
+    def test_bamf_geometry_gives_reliable_results(self):
+        path = self.write_script(dedent("""\
+            #!%s
+            from PyQt4.QtGui import QMainWindow, QApplication
+            from sys import argv
+
+            app = QApplication(argv)
+            win = QMainWindow()
+            win.show()
+            app.exec_()
+            """ % sys.executable))
+        app_proxy = self.launch_test_application(path, app_type='qt')
+        proxy_window = app_proxy.select_single('QMainWindow')
+        pm = ProcessManager.create()
+        window = [
+            w for w in pm.get_open_windows()
+            if w.name == os.path.basename(path)
+        ][0]
+        self.assertThat(list(window.geometry), Equals(proxy_window.geometry))
+
     def test_can_launch_qt_script_that_aborts(self):
         path = self.write_script(dedent("""\
             #!/usr/bin/python
@@ -321,6 +354,32 @@ class QtTests(ApplicationTests):
             extension=".sh")
         app_proxy = self.launch_test_application(wrapper_path, app_type='qt')
         self.assertTrue(app_proxy is not None)
+
+    @unittest.expectedFailure
+    def test_can_handle_non_unicode_stdout_and_stderr(self):
+        path = self.write_script(dedent("""\
+            #!%s
+            # -*- coding: utf-8 -*-
+            from PyQt4.QtGui import QMainWindow, QApplication
+            from sys import argv, stdout, stderr
+
+            app = QApplication(argv)
+            win = QMainWindow()
+            win.show()
+            stdout.write('Hello\x88stdout')
+            stdout.flush()
+            stderr.write('Hello\x88stderr')
+            stderr.flush()
+            app.exec_()
+            """ % sys.executable))
+        self.launch_test_application(path, app_type='qt')
+        details_dict = self.getDetails()
+        for name, content_obj in details_dict.items():
+            self.assertThat(
+                lambda: content_obj.as_text(),
+                Not(Raises())
+            )
+        self.assertEqual(1, 2)
 
 
 class GtkTests(ApplicationTests):

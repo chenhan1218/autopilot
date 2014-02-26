@@ -355,7 +355,6 @@ class QtTests(ApplicationTests):
         app_proxy = self.launch_test_application(wrapper_path, app_type='qt')
         self.assertTrue(app_proxy is not None)
 
-    @unittest.expectedFailure
     def test_can_handle_non_unicode_stdout_and_stderr(self):
         path = self.write_script(dedent("""\
             #!%s
@@ -379,7 +378,6 @@ class QtTests(ApplicationTests):
                 lambda: content_obj.as_text(),
                 Not(Raises())
             )
-        self.assertEqual(1, 2)
 
 
 class GtkTests(ApplicationTests):

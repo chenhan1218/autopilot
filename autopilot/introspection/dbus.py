@@ -599,23 +599,9 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         This only works for classes that derive from DBusIntrospectionObject.
         """
         path, state = dbus_tuple
-        class_type = _get_proxy_object_class(_object_registry[self._id],
-                                             path, state)
-        if class_type is None:
-            name = get_classname_from_path(path)
-            get_debug_logger().warning(
-                "Generating introspection instance for type '%s' based on "
-                "generic class.", name)
-            # we want the object to inherit from the custom emulator base, not
-            # the object class that is doing the selecting
-            for base in type(self).__bases__:
-                if issubclass(base, CustomEmulatorBase):
-                    base_class = base
-                    break
-            else:
-                base_class = type(self)
-            class_type = type(str(name), (base_class,), {})
-        return class_type(state, path, self._backend)
+        class_object = _get_proxy_object_class(
+            _object_registry[self._id], type(self), path, state)
+        return class_object(state, path, self._backend)
 
     def print_tree(self, output=None, maxdepth=None, _curdepth=0):
         """Print properties of the object and its children to a stream.
@@ -734,7 +720,41 @@ def _get_filter_string_for_key_value_pair(key, value):
         raise ValueError("Unsupported value type: {}".format(type(value)))
 
 
-def _get_proxy_object_class(proxy_class_dict, path, state):
+def _get_proxy_object_class(proxy_class_dict, default_class, path, state):
+    """Return a custom proxy class, either from the list or the default.
+
+    Use helper functions to check the class list or return the default.
+    :param proxy_class_dict: dict of proxy classes to try
+    :type proxy_class_dict: dict
+    :param default_class: default class to use if nothing in dict matches
+    :type default_class: Class
+    :param path: dbus path
+    :type path: str
+    :param state: dbus state
+    :type state: dict
+    :returns: appropriate custom proxy class
+    :rtype: Class
+
+    """
+    class_type = _try_custom_proxy_classes(proxy_class_dict, path, state)
+    if class_type:
+        return class_type
+    name = get_classname_from_path(path)
+    get_debug_logger().warning(
+        "Generating introspection instance for type '%s' based on generic "
+        "class.", name)
+    # we want the object to inherit from the custom emulator base, not
+    # the object class that is doing the selecting
+    for base in default_class.__bases__:
+        if issubclass(base, CustomEmulatorBase):
+            base_class = base
+            break
+    else:
+        base_class = default_class
+    return type(str(name), (base_class,), {})
+
+
+def _try_custom_proxy_classes(proxy_class_dict, path, state):
     """Identify which custom proxy class in matches the dbus path and state.
 
     If more than one class in proxy_class_dict matches, raise an exception.
@@ -758,10 +778,9 @@ def _get_proxy_object_class(proxy_class_dict, path, state):
             ','.join([repr(c) for c in possible_classes]),
             repr(state),
             path)
-    elif len(possible_classes) == 1:
+    if len(possible_classes) == 1:
         return possible_classes[0]
-    else:
-        return None
+    return None
 
 
 class _CustomEmulatorMeta(IntrospectableObjectMetaclass):

@@ -623,29 +623,32 @@ class MakeIntrospectionObjectTests(TestCase):
 
     def test_select_by_function(self):
         """Correct emulator must be returned by function."""
-        object_registry = {'DefaultSelector': self.DefaultSelector}
+        object_registry = {'Object': self.AlwaysSelected}
         self.assertThat(
             _get_proxy_object_class(object_registry,
+                                    self.AlwaysSelected,
                                     '/DefaultSelector',
                                     {'id': [0, 0]}),
-            Equals(self.DefaultSelector))
+            Equals(self.AlwaysSelected))
 
-    def test_select_function_fails(self):
-        """Must return None when all functions return False."""
-        object_registry = {'Circle': self.NeverSelected}
+    def test_default_return(self):
+        """Must return default when all functions return False."""
+        object_registry = {'Object': self.NeverSelected}
         self.assertThat(
             _get_proxy_object_class(object_registry,
-                                    '/DefaultSelector',
+                                    CustomEmulatorBase,
+                                    '/CustomEmulatorBase',
                                     {'id': [0, 0]}),
-            Equals(None))
+            Equals(CustomEmulatorBase))
 
     def test_multiple_matches(self):
         """Exception must be raised if multiple emulators match."""
         object_registry = {'DefaultSelector': self.DefaultSelector,
-                           'Square': self.AlwaysSelected}
+                           'AlwaysSelected': self.AlwaysSelected}
 
         self.assertThat(
             lambda: _get_proxy_object_class(object_registry,
+                                            self.DefaultSelector,
                                             '/DefaultSelector',
                                             {'id': [0, 0]}),
             raises(ValueError)

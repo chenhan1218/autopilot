@@ -153,14 +153,27 @@ class AutopilotRunTestBase(AutopilotTestCase):
 class TempDesktopFile(fixtures.Fixture):
     def setUp(self):
         super(TempDesktopFile, self).setUp()
-        desktop_file_dir = self._get_local_desktop_file_directory()
-        self._ensure_desktop_dir_exists(desktop_file_dir)
-        self._desktop_file_path = self._create_desktop_file(desktop_file_dir)
+        path_created = TempDesktopFile._ensure_desktop_dir_exists()
+        self._desktop_file_path = self._create_desktop_file()
+
+        self.addCleanup(
+            TempDesktopFile._remove_desktop_file_components,
+            path_created,
+            self._desktop_file_path,
+        )
 
     def get_desktop_file_path(self):
         return self._desktop_file_path
 
-    def _get_local_desktop_file_directory(self):
+    @staticmethod
+    def _ensure_desktop_dir_exists():
+        desktop_file_dir = TempDesktopFile._desktop_file_dir()
+        if not os.path.exists(desktop_file_dir):
+            return TempDesktopFile._create_desktop_file_dir(desktop_file_dir)
+        return ''
+
+    @staticmethod
+    def _desktop_file_dir():
         return os.path.join(
             os.getenv('HOME'),
             '.local',
@@ -168,11 +181,14 @@ class TempDesktopFile(fixtures.Fixture):
             'applications'
         )
 
-    def _ensure_desktop_dir_exists(self, desktop_file_dir):
-        if not os.path.exists(desktop_file_dir):
-            self._create_desktop_file_dir(desktop_file_dir)
+    @staticmethod
+    def _create_desktop_file_dir(desktop_file_dir):
+        """Create the directory specified.
 
-    def _create_desktop_file_dir(self, desktop_file_dir):
+        Returns the component of the path that did not exist, or the empty
+        string if the entire path already existed.
+
+        """
         # We might be creating more than just the leaf directory, so we need to
         # keep track of what doesn't already exist and remove it when we're
         # done. Defaults to removing the full path
@@ -184,10 +200,21 @@ class TempDesktopFile(fixtures.Fixture):
             full_path, leaf = os.path.split(full_path)
 
         os.makedirs(desktop_file_dir)
-        self.addCleanup(remove_if_exists, path_to_delete)
+        return path_to_delete
 
-    def _create_desktop_file(self, desktop_file_dir):
-        _, tmp_file_path = mkstemp(suffix='.desktop', dir=desktop_file_dir)
+    @staticmethod
+    def _remove_desktop_file_components(created_path, created_file):
+        if created_path != "":
+            rmtree(created_path)
+        else:
+            os.remove(created_file)
+
+    @staticmethod
+    def _create_desktop_file():
+        _, tmp_file_path = mkstemp(
+            suffix='.desktop',
+            dir=TempDesktopFile._desktop_file_dir()
+        )
         with open(tmp_file_path, 'w') as desktop_file:
             desktop_file.write(
                 dedent("""\
@@ -198,7 +225,6 @@ class TempDesktopFile(fixtures.Fixture):
                 Name=Test app
                 Icon=Not important""")
             )
-        self.addCleanup(os.remove, tmp_file_path)
         return tmp_file_path
 
 

@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import codecs
 from mock import Mock
 import os
 import tempfile
@@ -183,6 +184,30 @@ class TestResultOutputStreamTests(WithScenarios, TestCase):
         )
         self.assertFalse(test_result.wasSuccessful())
         self.assertThat(open(output_path, 'rb').read(), NotEquals(b''))
+
+    def test_creates_non_empty_log_file_when_failing_with_unicode(self):
+        class FailingTests(TestCase):
+
+            def test_fails_unicode(self):
+                self.fail(
+                    u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH'
+                )
+        test_result, output_path = self.run_test_with_result(
+            FailingTests('test_fails_unicode')
+        )
+        # We need to specify 'errors="ignore"' because subunit write non-valid
+        # unicode data.
+        log_contents = codecs.open(
+            output_path,
+            'r',
+            encoding='utf-8',
+            errors='ignore'
+        ).read()
+        self.assertFalse(test_result.wasSuccessful())
+        self.assertThat(
+            log_contents,
+            Contains(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH')
+        )
 
 
 def remove_is_exists(path):

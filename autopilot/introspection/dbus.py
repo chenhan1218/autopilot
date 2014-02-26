@@ -621,7 +621,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         When writing new tests, this can be called when it is too difficult to
         find the widget or property that you are interested in in "vis".
-        p<F7>7ath, state = dbus_tuple
+        path, state = dbus_tuple
         name = get_classname_from_path(path)
 
         .. warning:: Do not use this in production tests, this is expensive and

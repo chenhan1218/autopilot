@@ -17,8 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import autopilot.tests.functional as test_init
-from autopilot.tests.functional import TempDesktopFile, remove_if_exists,
+from autopilot.tests.functional import TempDesktopFile, remove_if_exists
 
 import os.path
 from mock import patch
@@ -30,31 +29,25 @@ from testtools.matchers import Equals
 class TempDesktopFileTests(TestCase):
     def test_desktop_file_dir_created_if_doesnt_exist(self):
         test_desktop_file_dir = self.getUniqueString()
-        with patch.object(test_init.os.path, 'exists', return_value=False):
-            with patch.object(
-                TempDesktopFile, '_create_desktop_file_dir'
-            ) as p_create_dir:
-                temp_desktop_file = TempDesktopFile()
-                temp_desktop_file._ensure_desktop_dir_exists(
-                    test_desktop_file_dir
-                )
+        with patch.object(
+            TempDesktopFile, '_create_desktop_file_dir'
+        ) as p_create_dir:
+            temp_desktop_file = TempDesktopFile()
+            temp_desktop_file._ensure_desktop_dir_exists(test_desktop_file_dir)
 
-                p_create_dir.assert_called_once_with(test_desktop_file_dir)
+            p_create_dir.assert_called_once_with(test_desktop_file_dir)
 
     def test_correct_desktop_file_path_used(self):
-        test_user_home_path = self.getUniqueString()
-        with patch.object(
-            test_init.os, 'getenv', return_value=test_user_home_path
-        ):
-            temp_desktop_file = TempDesktopFile()
-            self.assertThat(
-                temp_desktop_file._get_local_desktop_file_directory(),
-                Equals(
-                    os.path.join(
-                        test_user_home_path, '.local', 'share', 'applications'
-                    )
+        test_user_home_path = os.getenv('HOME')
+        temp_desktop_file = TempDesktopFile()
+        self.assertThat(
+            temp_desktop_file._get_local_desktop_file_directory(),
+            Equals(
+                os.path.join(
+                    test_user_home_path, '.local', 'share', 'applications'
                 )
             )
+        )
 
     def test_any_created_directories_are_removed(self):
         dir_to_create = self.getUniqueString()
@@ -73,16 +66,14 @@ class TempDesktopFileTests(TestCase):
 
     def test_desktop_file_removed_at_cleanup(self):
         with patch.object(
-            test_init.os, 'getenv', return_value="/tmp"
+            TempDesktopFile,
+            '_get_local_desktop_file_directory',
+            return_value="/tmp"
         ):
             desktop_file_fixture = self.useFixture(TempDesktopFile())
             tmp_file_name = desktop_file_fixture.get_desktop_file_path()
-            self.addCleanup(self.remove_if_exists, tmp_file_name)
+            self.addCleanup(remove_if_exists, tmp_file_name)
 
             self.assertTrue(os.path.exists(tmp_file_name))
             desktop_file_fixture.cleanUp()
             self.assertFalse(os.path.exists(tmp_file_name))
-
-    def remove_if_exists(self, path):
-        if os.path.exists(path):
-            os.remove(path)

@@ -25,6 +25,7 @@ from testtools import TestCase, PlaceHolder
 from testtools.content import text_content
 from testtools.matchers import Contains, raises, NotEquals
 from testscenarios import WithScenarios
+import unittest
 
 from autopilot import testresult
 from autopilot import run
@@ -106,26 +107,30 @@ class TestResultOutputStreamTests(WithScenarios, TestCase):
         (f, dict(format=f)) for f in testresult.get_output_formats().keys()
     ]
 
-    def get_supported_options(self):
+    def get_supported_options(self, **kwargs):
         """Get a dictionary of all supported keyword arguments for the current
-        result class."""
+        result class.
+
+        Pass in keyword arguments to override default options.
+        """
         output_path = tempfile.mktemp()
         self.addCleanup(remove_is_exists, output_path)
         options = {
-            'stream': run.get_output_stream(self.format, output_path)
+            'stream': run.get_output_stream(self.format, output_path),
+            'failfast': False
         }
-        if self.format == 'text':
-            options['failfast'] = False
+        options.update(kwargs)
         return options
 
-    def run_test_with_result(self, test_suite):
+    def run_test_with_result(self, test_suite, **kwargs):
         """Run the given test with the current result object.
 
         Returns the test result and output file path.
+        Use keyword arguments to alter result object options.
 
         """
         ResultClass = testresult.get_output_formats()[self.format]
-        result_options = self.get_supported_options()
+        result_options = self.get_supported_options(**kwargs)
         output_path = result_options['stream'].name
         result = ResultClass(**result_options)
         result.startTestRun()
@@ -208,6 +213,45 @@ class TestResultOutputStreamTests(WithScenarios, TestCase):
             log_contents,
             Contains(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH')
         )
+
+    def test_result_object_supports_many_tests(self):
+        class ManyFailingTests(TestCase):
+
+            def test_fail1(self):
+                self.fail("Failing test")
+
+            def test_fail2(self):
+                self.fail("Failing test")
+        suite = unittest.TestSuite(
+            tests=(
+                ManyFailingTests('test_fail1'),
+                ManyFailingTests('test_fail2'),
+            )
+        )
+        test_result, output_path = self.run_test_with_result(suite)
+        self.assertFalse(test_result.wasSuccessful())
+        self.assertEqual(2, test_result.testsRun)
+
+    def test_result_object_supports_failfast(self):
+        class ManyFailingTests(TestCase):
+
+            def test_fail1(self):
+                self.fail("Failing test")
+
+            def test_fail2(self):
+                self.fail("Failing test")
+        suite = unittest.TestSuite(
+            tests=(
+                ManyFailingTests('test_fail1'),
+                ManyFailingTests('test_fail2'),
+            )
+        )
+        test_result, output_path = self.run_test_with_result(
+            suite,
+            failfast=True
+        )
+        self.assertFalse(test_result.wasSuccessful())
+        self.assertEqual(1, test_result.testsRun)
 
 
 def remove_is_exists(path):

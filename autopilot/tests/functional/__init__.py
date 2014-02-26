@@ -175,16 +175,16 @@ class TempDesktopFile(fixtures.Fixture):
     def _create_desktop_file_dir(self, desktop_file_dir):
         # We might be creating more than just the leaf directory, so we need to
         # keep track of what doesn't already exist and remove it when we're
-        # done.
-        self.addCleanup(remove_if_exists, desktop_file_dir)
-        paths_to_delete = []
-        head, tail = os.path.split(desktop_file_dir)
-        while tail != "":
-            if not os.path.exists(head):
-                self.addCleanup(remove_if_exists, head)
-            head, tail = os.path.split(head)
+        # done. Defaults to removing the full path
+        path_to_delete = desktop_file_dir
+        full_path, leaf = os.path.split(desktop_file_dir)
+        while leaf != "":
+            if not os.path.exists(full_path):
+                path_to_delete = full_path
+            full_path, leaf = os.path.split(full_path)
 
         os.makedirs(desktop_file_dir)
+        self.addCleanup(remove_if_exists, path_to_delete)
 
     def _create_desktop_file(self, desktop_file_dir):
         _, tmp_file_path = mkstemp(suffix='.desktop', dir=desktop_file_dir)

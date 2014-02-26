@@ -18,12 +18,11 @@
 #
 
 import autopilot.tests.functional as test_init
-from autopilot.tests.functional import TempDesktopFile
-from autopilot.tests.functional import TempDesktopFile as TDF
-
+from autopilot.tests.functional import TempDesktopFile, remove_if_exists,
 
 import os.path
-from mock import patch, call
+from mock import patch
+import tempfile
 from testtools import TestCase
 from testtools.matchers import Equals
 
@@ -32,7 +31,9 @@ class TempDesktopFileTests(TestCase):
     def test_desktop_file_dir_created_if_doesnt_exist(self):
         test_desktop_file_dir = self.getUniqueString()
         with patch.object(test_init.os.path, 'exists', return_value=False):
-            with patch.object(TDF, '_create_desktop_file_dir') as p_create_dir:
+            with patch.object(
+                TempDesktopFile, '_create_desktop_file_dir'
+            ) as p_create_dir:
                 temp_desktop_file = TempDesktopFile()
                 temp_desktop_file._ensure_desktop_dir_exists(
                     test_desktop_file_dir
@@ -56,20 +57,19 @@ class TempDesktopFileTests(TestCase):
             )
 
     def test_any_created_directories_are_removed(self):
-        with patch.object(test_init, 'remove_if_exists') as p_remove_if_exists:
-            with patch.object(test_init.os, 'makedirs'):
-                with patch.object(TDF, 'addCleanup') as p_addCleanup:
-                    tdf = TempDesktopFile()
-                    tdf._create_desktop_file_dir("/part1/part2/part3")
+        dir_to_create = self.getUniqueString()
+        existing_dir = tempfile.mkdtemp(dir="/tmp")
+        self.addCleanup(remove_if_exists, existing_dir)
 
-                    self.assertThat(
-                        p_addCleanup.call_args_list,
-                        Equals([
-                            call(p_remove_if_exists, '/part1/part2/part3'),
-                            call(p_remove_if_exists, '/part1/part2'),
-                            call(p_remove_if_exists, '/part1'),
-                        ])
-                    )
+        desktop_file_dir = os.path.join(existing_dir, dir_to_create)
+
+        tdf = self.useFixture(TempDesktopFile())
+        tdf._create_desktop_file_dir(desktop_file_dir)
+
+        self.assertTrue(os.path.exists(desktop_file_dir))
+        tdf.cleanUp()
+        self.assertFalse(os.path.exists(desktop_file_dir))
+        self.assertTrue(os.path.exists(existing_dir))
 
     def test_desktop_file_removed_at_cleanup(self):
         with patch.object(

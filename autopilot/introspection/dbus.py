@@ -680,6 +680,21 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
     @classmethod
     def validate_dbus_object(cls, path, state):
+        """Returns whether this class is the appropriate proxy object class
+        for a given dbus path and state.
+
+        The default version matches the name of the dbus object and the class.
+        Subclasses of CustomProxyObject can override it to define a different
+        validation method.
+
+        :param path: The dbus path of the object to check
+        :type path: string
+        :param state: The dbus state of the object to check
+        :type state: dict
+        :returns: Whether this class is appropriate for the dbus object
+        :rtype: boolean
+
+        """
         name = get_classname_from_path(path)
         return cls.__name__ == name
 

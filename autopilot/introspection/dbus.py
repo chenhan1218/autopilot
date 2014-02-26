@@ -733,17 +733,18 @@ def _get_filter_string_for_key_value_pair(key, value):
         raise ValueError("Unsupported value type: {}".format(type(value)))
 
 
-def _get_proxy_object_class(objects, path, state):
-    class_type = None
-    for item_name in objects:
-        item = objects[item_name]
-        if item.validate_dbus_object(path, state):
-            if class_type is None:
-                class_type = item
-            else:
-                raise ValueError(
-                    'More than one emulator matches this object')
-    return class_type
+def _get_proxy_object_class(proxy_class_dict, path, state):
+    possible_classes = [ c for c in proxy_class_dict.values() if
+                        c.validate_dbus_object(path, state) ]
+    if len(possible_classes) > 1:
+        raise ValueError(
+            'More than one custom proxy class matches this object: '
+            'Matching classes are: %s. State is %s.  Path is %s.'
+            ','.join([repr(c) for c in possible_classes]),
+            repr(state),
+            path)
+    else:
+        return possible_classes[0]
 
 
 class _CustomEmulatorMeta(IntrospectableObjectMetaclass):

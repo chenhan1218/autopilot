@@ -739,19 +739,8 @@ def _get_proxy_object_class(proxy_class_dict, default_class, path, state):
     class_type = _try_custom_proxy_classes(proxy_class_dict, path, state)
     if class_type:
         return class_type
-    name = get_classname_from_path(path)
-    get_debug_logger().warning(
-        "Generating introspection instance for type '%s' based on generic "
-        "class.", name)
-    # we want the object to inherit from the custom emulator base, not
-    # the object class that is doing the selecting
-    for base in default_class.__bases__:
-        if issubclass(base, CustomEmulatorBase):
-            base_class = base
-            break
-    else:
-        base_class = default_class
-    return type(str(name), (base_class,), {})
+    return get_default_proxy_object_class(default_class,
+                                          get_classname_from_path(path))
 
 
 def _try_custom_proxy_classes(proxy_class_dict, path, state):
@@ -781,6 +770,31 @@ def _try_custom_proxy_classes(proxy_class_dict, path, state):
     if len(possible_classes) == 1:
         return possible_classes[0]
     return None
+
+
+def get_default_proxy_object_class(default_class, name):
+    """Return a custom proxy object class of the default or a base class.
+
+    We want the object to inherit from CustomEmulatorBase, not the object
+    class that is doing the selecting.
+    :param default_class: default class to use if no bases match
+    :type default_class: Class
+    :param name: name of new class
+    :type name: str
+    :returns: custom proxy object class
+    :rtype: class
+
+    """
+    get_debug_logger().warning(
+        "Generating introspection instance for type '%s' based on generic "
+        "class.", name)
+    for base in default_class.__bases__:
+        if issubclass(base, CustomEmulatorBase):
+            base_class = base
+            break
+    else:
+        base_class = default_class
+    return type(str(name), (base_class,), {})
 
 
 class _CustomEmulatorMeta(IntrospectableObjectMetaclass):

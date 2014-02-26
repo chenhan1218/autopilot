@@ -598,24 +598,39 @@ class ProxyObjectGenerationTests(TestCase):
 
 class MakeIntrospectionObjectTests(TestCase):
 
+    """Test selection of custom proxy object class."""
+
     class DefaultSelector(CustomEmulatorBase):
         pass
 
     class AlwaysSelected(CustomEmulatorBase):
         @classmethod
         def validate_dbus_object(cls, path, state):
+            """Validate always.
+
+            :returns: True
+            :rtype: boolean
+
+            """
             return True
 
     class NeverSelected(CustomEmulatorBase):
         @classmethod
         def validate_dbus_object(cls, path, state):
+            """Validate never.
+
+            :returns: False
+            :rtype: boolean:
+
+            """
             return False
 
     def test_class_has_validation_method(self):
+        """Verify that a class has a validation method by default."""
         self.assertTrue(callable(self.DefaultSelector.validate_dbus_object))
 
     def test_validate_dbus_object_matches_on_class_name(self):
-        """validate_dbus_object must match class name."""
+        """Validate_dbus_object must match class name."""
         selected = self.DefaultSelector.validate_dbus_object(
             '/DefaultSelector', {})
         self.assertTrue(selected)

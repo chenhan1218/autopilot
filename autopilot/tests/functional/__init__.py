@@ -28,7 +28,7 @@ import sys
 import logging
 from shutil import rmtree
 import subprocess
-from tempfile import mkdtemp, NamedTemporaryFile
+from tempfile import mkdtemp, mkstemp
 from testtools.content import text_content
 from textwrap import dedent
 
@@ -151,15 +151,14 @@ class AutopilotRunTestBase(AutopilotTestCase):
 
 
 class TempDesktopFile(fixtures.Fixture):
-    def get_desktop_file(self):
+    def setUp(self):
+        super(TempDesktopFile, self).setUp()
         desktop_file_dir = self._get_local_desktop_file_directory()
         if not os.path.exists(desktop_file_dir):
             os.makedirs(desktop_file_dir)
-        with NamedTemporaryFile(
-            suffix='.desktop',
-            dir=desktop_file_dir,
-            delete=False  # Will ensure it happens with addCleanup
-        ) as desktop_file:
+
+        _, tmp_file_path = mkstemp(suffix='.desktop', dir=desktop_file_dir)
+        with open(tmp_file_path, 'w') as desktop_file:
             desktop_file.write(
                 dedent("""\
                 [Desktop Entry]
@@ -169,8 +168,11 @@ class TempDesktopFile(fixtures.Fixture):
                 Name=Test app
                 Icon=Not important""")
             )
-        self.addCleanup(os.remove, desktop_file.name)
-        return desktop_file.name
+        self.addCleanup(os.remove, tmp_file_path)
+        self._desktop_file_path = tmp_file_path
+
+    def get_desktop_file_path(self):
+        return self._desktop_file_path
 
     def _get_local_desktop_file_directory(self):
         return os.path.join(

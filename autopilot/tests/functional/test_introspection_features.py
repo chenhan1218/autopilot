@@ -287,7 +287,7 @@ class QMLCustomEmulatorTestCase(AutopilotTestCase):
                     # We need to add the desktop-file-hint
                     desktop_file = self.useFixture(
                         TempDesktopFile()
-                    ).get_desktop_file()
+                    ).get_desktop_file_path()
                     extra_args = '--desktop_file_hint={hint_file}'.format(
                         hint_file=desktop_file
                     )

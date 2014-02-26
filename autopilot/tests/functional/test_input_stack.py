@@ -247,7 +247,9 @@ class OSKBackendTests(AutopilotTestCase):
         open(qml_path, 'w').write(script_contents)
         self.addCleanup(os.remove, qml_path)
 
-        desktop_file = self.useFixture(TempDesktopFile()).get_desktop_file()
+        desktop_file = self.useFixture(
+            TempDesktopFile()
+        ).get_desktop_file_path()
 
         return self.launch_test_application(
             "qmlscene",
@@ -419,7 +421,7 @@ class TouchGesturesTests(AutopilotTestCase):
             # We need to add the desktop-file-hint
             desktop_file = self.useFixture(
                 TempDesktopFile()
-            ).get_desktop_file()
+            ).get_desktop_file_path()
             extra_args = '--desktop_file_hint={hint_file}'.format(
                 hint_file=desktop_file
             )

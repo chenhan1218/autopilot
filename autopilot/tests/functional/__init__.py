@@ -154,9 +154,28 @@ class TempDesktopFile(fixtures.Fixture):
     def setUp(self):
         super(TempDesktopFile, self).setUp()
         desktop_file_dir = self._get_local_desktop_file_directory()
-        if not os.path.exists(desktop_file_dir):
-            os.makedirs(desktop_file_dir)
+        self._ensure_desktop_dir_exists(desktop_file_dir)
+        self._desktop_file_path = self._create_desktop_file(desktop_file_dir)
 
+    def get_desktop_file_path(self):
+        return self._desktop_file_path
+
+    def _get_local_desktop_file_directory(self):
+        return os.path.join(
+            os.getenv('HOME'),
+            '.local',
+            'share',
+            'applications'
+        )
+
+    def _ensure_desktop_dir_exists(self, desktop_file_dir):
+        if not os.path.exists(desktop_file_dir):
+            self._create_desktop_file_dir(desktop_file_dir)
+
+    def _create_desktop_file_dir(self, desktop_file_dir):
+        os.makedirs(desktop_file_dir)
+
+    def _create_desktop_file(self, desktop_file_dir):
         _, tmp_file_path = mkstemp(suffix='.desktop', dir=desktop_file_dir)
         with open(tmp_file_path, 'w') as desktop_file:
             desktop_file.write(
@@ -169,18 +188,7 @@ class TempDesktopFile(fixtures.Fixture):
                 Icon=Not important""")
             )
         self.addCleanup(os.remove, tmp_file_path)
-        self._desktop_file_path = tmp_file_path
-
-    def get_desktop_file_path(self):
-        return self._desktop_file_path
-
-    def _get_local_desktop_file_directory(self):
-        return os.path.join(
-            os.getenv('HOME'),
-            '.local',
-            'share',
-            'applications'
-        )
+        return tmp_file_path
 
 
 def _get_environment_patch(pythonpath):

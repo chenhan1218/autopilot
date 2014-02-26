@@ -612,14 +612,13 @@ class MakeIntrospectionObjectTests(TestCase):
             return False
 
     def test_class_has_validation_method(self):
-        self.assertThat(callable(self.DefaultSelector.validate_dbus_object),
-                        Equals(True))
+        self.assertTrue(callable(self.DefaultSelector.validate_dbus_object))
 
     def test_validate_dbus_object_matches_on_class_name(self):
         """validate_dbus_object must match class name."""
         selected = self.DefaultSelector.validate_dbus_object(
             '/DefaultSelector', {})
-        self.assertThat(selected, Equals(True))
+        self.assertTrue(selected)
 
     def test_select_by_function(self):
         """Correct emulator must be returned by function."""
@@ -634,12 +633,12 @@ class MakeIntrospectionObjectTests(TestCase):
     def test_default_return(self):
         """Must return default when all functions return False."""
         object_registry = {'Object': self.NeverSelected}
-        self.assertThat(
-            _get_proxy_object_class(object_registry,
-                                    CustomEmulatorBase,
-                                    '/CustomEmulatorBase',
-                                    {'id': [0, 0]}),
-            Equals(CustomEmulatorBase))
+        self.assertTrue(
+            issubclass(_get_proxy_object_class(object_registry,
+                                               CustomEmulatorBase,
+                                               '/DefaultSelector',
+                                               {'id': [0, 0]}),
+                       CustomEmulatorBase))
 
     def test_multiple_matches(self):
         """Exception must be raised if multiple emulators match."""

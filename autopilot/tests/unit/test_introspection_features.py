@@ -615,18 +615,11 @@ class MakeIntrospectionObjectTests(TestCase):
         self.assertThat(callable(self.DefaultSelector.validate_dbus_object),
                         Equals(True))
 
-    def test_select_by_name(self):
-        """Correct custom emulator must be returned by name."""
-        fake_object = self.DefaultSelector(
-            dict(id=[0, 123], path=[0, '/some/path']),
-            '/',
-            Mock()
-        )
-
-        rectangle = fake_object.make_introspection_object(
-            ('/DefaultSelector', {'id': [0, 0]}))
-        self.assertThat(isinstance(rectangle, self.DefaultSelector),
-                        Equals(True))
+    def test_validate_dbus_object_matches_on_class_name(self):
+        """validate_dbus_object must match class name."""
+        selected = self.DefaultSelector.validate_dbus_object(
+            '/DefaultSelector', {})
+        self.assertThat(selected, Equals(True))
 
     def test_select_by_function(self):
         """Correct emulator must be returned by function."""

@@ -18,10 +18,11 @@
 #
 
 from mock import Mock
+import os
 import tempfile
 from testtools import TestCase, PlaceHolder
 from testtools.content import text_content
-from testtools.matchers import Contains, raises
+from testtools.matchers import Contains, raises, NotEquals
 from testscenarios import WithScenarios
 
 from autopilot import testresult
@@ -105,13 +106,32 @@ class TestResultOutputStreamTests(WithScenarios, TestCase):
     ]
 
     def get_supported_options(self):
+        """Get a dictionary of all supported keyword arguments for the current
+        result class."""
         output_path = tempfile.mktemp()
+        self.addCleanup(remove_is_exists, output_path)
         options = {
             'stream': run.get_output_stream(self.format, output_path)
         }
         if self.format == 'text':
             options['failfast'] = False
         return options
+
+    def run_test_with_result(self, test_suite):
+        """Run the given test with the current result object.
+
+        Returns the test result and output file path.
+
+        """
+        ResultClass = testresult.get_output_formats()[self.format]
+        result_options = self.get_supported_options()
+        output_path = result_options['stream'].name
+        result = ResultClass(**result_options)
+        result.startTestRun()
+        test_result = test_suite.run(result)
+        result.stopTestRun()
+        result_options['stream'].flush()
+        return test_result, output_path
 
     def test_factory_function_is_a_callable(self):
         self.assertTrue(
@@ -127,3 +147,44 @@ class TestResultOutputStreamTests(WithScenarios, TestCase):
             lambda: factory_fn(**options),
             raises(ValueError)
         )
+
+    def test_creates_non_empty_file_on_passing_test(self):
+        class PassingTests(TestCase):
+
+            def test_passes(self):
+                pass
+
+        test_result, output_path = self.run_test_with_result(
+            PassingTests('test_passes')
+        )
+        self.assertTrue(test_result.wasSuccessful())
+        self.assertThat(open(output_path, 'rb').read(), NotEquals(b''))
+
+    def test_creates_non_empty_file_on_failing_test(self):
+        class FailingTests(TestCase):
+
+            def test_fails(self):
+                self.fail("Failing Test: ")
+
+        test_result, output_path = self.run_test_with_result(
+            FailingTests('test_fails')
+        )
+        self.assertFalse(test_result.wasSuccessful())
+        self.assertThat(open(output_path, 'rb').read(), NotEquals(b''))
+
+    def test_creates_non_empty_file_on_erroring_test(self):
+        class ErroringTests(TestCase):
+
+            def test_errors(self):
+                raise RuntimeError("Uncaught Exception!")
+
+        test_result, output_path = self.run_test_with_result(
+            ErroringTests('test_errors')
+        )
+        self.assertFalse(test_result.wasSuccessful())
+        self.assertThat(open(output_path, 'rb').read(), NotEquals(b''))
+
+
+def remove_is_exists(path):
+    if os.path.exists(path):
+        os.remove(path)

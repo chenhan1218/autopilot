@@ -599,7 +599,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         This only works for classes that derive from DBusIntrospectionObject.
         """
         path, state = dbus_tuple
-        class_type = _get_proxy_object_class(_object_registry[self._id], path, state)
+        class_type = _get_proxy_object_class(_object_registry[self._id],
+                                             path, state)
         if class_type is None:
             name = get_classname_from_path(path)
             get_debug_logger().warning(
@@ -680,8 +681,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
     @classmethod
     def validate_dbus_object(cls, path, state):
-        """Returns whether this class is the appropriate proxy object class
-        for a given dbus path and state.
+        """Return whether this class is the appropriate proxy object class for
+        a given dbus path and state.
 
         The default version matches the name of the dbus object and the class.
         Subclasses of CustomProxyObject can override it to define a different
@@ -734,8 +735,22 @@ def _get_filter_string_for_key_value_pair(key, value):
 
 
 def _get_proxy_object_class(proxy_class_dict, path, state):
-    possible_classes = [ c for c in proxy_class_dict.values() if
-                        c.validate_dbus_object(path, state) ]
+    """Identify which custom proxy class in matches the dbus path and state.
+
+    If more than one class in proxy_class_dict matches, raise an exception.
+    :param proxy_class_dict: dict of proxy classes to try
+    :type proxy_class_dict: dict
+    :param path: dbus path
+    :type path: str
+    :param state: dbus state
+    :type state: dict
+    :returns: matching custom proxy class
+    :rtype: Class
+    :raises: ValueError if more than one class matches
+
+    """
+    possible_classes = [c for c in proxy_class_dict.values() if
+                        c.validate_dbus_object(path, state)]
     if len(possible_classes) > 1:
         raise ValueError(
             'More than one custom proxy class matches this object: '

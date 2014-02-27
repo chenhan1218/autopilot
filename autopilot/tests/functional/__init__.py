@@ -192,14 +192,19 @@ class TempDesktopFile(fixtures.Fixture):
         # We might be creating more than just the leaf directory, so we need to
         # keep track of what doesn't already exist and remove it when we're
         # done. Defaults to removing the full path
-        path_to_delete = desktop_file_dir
+        path_to_delete = ""
+        if not os.path.exists(desktop_file_dir):
+            path_to_delete = desktop_file_dir
         full_path, leaf = os.path.split(desktop_file_dir)
         while leaf != "":
             if not os.path.exists(full_path):
                 path_to_delete = full_path
             full_path, leaf = os.path.split(full_path)
 
-        os.makedirs(desktop_file_dir)
+        try:
+            os.makedirs(desktop_file_dir)
+        except OSError:
+            logger.warning("Directory already exists: %s" % desktop_file_dir)
         return path_to_delete
 
     @staticmethod

@@ -17,63 +17,153 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from autopilot.tests.functional import TempDesktopFile, remove_if_exists
+from autopilot.tests.functional import TempDesktopFile
 
 import os.path
 from mock import patch
+from shutil import rmtree
 import tempfile
 from testtools import TestCase
-from testtools.matchers import Equals
+from testtools.matchers import Equals, FileContains
+from textwrap import dedent
 
 
 class TempDesktopFileTests(TestCase):
-    def test_desktop_file_dir_created_if_doesnt_exist(self):
-        test_desktop_file_dir = self.getUniqueString()
+    def test_setUp_creates_desktop_file(self):
+        desktop_file_dir = tempfile.mkdtemp(dir="/tmp")
+        self.addCleanup(rmtree, desktop_file_dir)
+
         with patch.object(
-            TempDesktopFile, '_create_desktop_file_dir'
-        ) as p_create_dir:
+            TempDesktopFile, '_desktop_file_dir', return_value=desktop_file_dir
+        ):
             temp_desktop_file = TempDesktopFile()
-            temp_desktop_file._ensure_desktop_dir_exists(test_desktop_file_dir)
+            temp_desktop_file.setUp()
+            desktop_file_path = temp_desktop_file.get_desktop_file_path()
 
-            p_create_dir.assert_called_once_with(test_desktop_file_dir)
+            self.assertTrue(os.path.exists(desktop_file_path))
+            temp_desktop_file.cleanUp()
+            self.assertFalse(os.path.exists(desktop_file_path))
 
-    def test_correct_desktop_file_path_used(self):
-        test_user_home_path = os.getenv('HOME')
-        temp_desktop_file = TempDesktopFile()
+    def test_desktop_file_dir_returns_expected_directory(self):
+        expected_directory = os.path.join(
+            os.getenv('HOME'),
+            '.local',
+            'share',
+            'applications'
+        )
         self.assertThat(
-            temp_desktop_file._get_local_desktop_file_directory(),
-            Equals(
-                os.path.join(
-                    test_user_home_path, '.local', 'share', 'applications'
-                )
-            )
+            TempDesktopFile._desktop_file_dir(),
+            Equals(expected_directory)
         )
 
-    def test_any_created_directories_are_removed(self):
-        dir_to_create = self.getUniqueString()
-        existing_dir = tempfile.mkdtemp(dir="/tmp")
-        self.addCleanup(remove_if_exists, existing_dir)
+    def test_ensure_desktop_dir_exists_returns_empty_string_when_exists(self):
+        desktop_file_dir = tempfile.mkdtemp(dir="/tmp")
+        self.addCleanup(rmtree, desktop_file_dir)
 
-        desktop_file_dir = os.path.join(existing_dir, dir_to_create)
-
-        tdf = self.useFixture(TempDesktopFile())
-        tdf._create_desktop_file_dir(desktop_file_dir)
-
-        self.assertTrue(os.path.exists(desktop_file_dir))
-        tdf.cleanUp()
-        self.assertFalse(os.path.exists(desktop_file_dir))
-        self.assertTrue(os.path.exists(existing_dir))
-
-    def test_desktop_file_removed_at_cleanup(self):
         with patch.object(
-            TempDesktopFile,
-            '_get_local_desktop_file_directory',
-            return_value="/tmp"
+            TempDesktopFile, '_desktop_file_dir', return_value=desktop_file_dir
         ):
-            desktop_file_fixture = self.useFixture(TempDesktopFile())
-            tmp_file_name = desktop_file_fixture.get_desktop_file_path()
-            self.addCleanup(remove_if_exists, tmp_file_name)
+            self.assertThat(
+                TempDesktopFile._ensure_desktop_dir_exists(),
+                Equals("")
+            )
 
-            self.assertTrue(os.path.exists(tmp_file_name))
-            desktop_file_fixture.cleanUp()
-            self.assertFalse(os.path.exists(tmp_file_name))
+    def test_ensure_desktop_dir_exists_creates_dir_when_needed(self):
+        tmp_dir = tempfile.mkdtemp(dir="/tmp")
+        self.addCleanup(rmtree, tmp_dir)
+        desktop_file_dir = os.path.join(
+            tmp_dir, '.local', 'share', 'applications'
+        )
+
+        with patch.object(
+            TempDesktopFile, '_desktop_file_dir', return_value=desktop_file_dir
+        ):
+            TempDesktopFile._ensure_desktop_dir_exists()
+            self.assertTrue(os.path.exists(desktop_file_dir))
+
+    def test_ensure_desktop_dir_exists_returns_path_to_delete(self):
+        tmp_dir = tempfile.mkdtemp(dir="/tmp")
+        self.addCleanup(rmtree, tmp_dir)
+        desktop_file_dir = os.path.join(
+            tmp_dir, '.local', 'share', 'applications'
+        )
+        expected_to_remove = os.path.join(tmp_dir, '.local')
+
+        with patch.object(
+            TempDesktopFile, '_desktop_file_dir', return_value=desktop_file_dir
+        ):
+            self.assertThat(
+                TempDesktopFile._ensure_desktop_dir_exists(),
+                Equals(expected_to_remove)
+            )
+
+    def test_create_desktop_file_dir_returns_path_to_delete(self):
+        tmp_dir = tempfile.mkdtemp(dir="/tmp")
+        self.addCleanup(rmtree, tmp_dir)
+        desktop_file_dir = os.path.join(
+            tmp_dir, '.local', 'share', 'applications'
+        )
+        expected_to_remove = os.path.join(tmp_dir, '.local')
+
+        self.assertThat(
+            TempDesktopFile._create_desktop_file_dir(desktop_file_dir),
+            Equals(expected_to_remove)
+        )
+
+    def test_create_desktop_file_dir_returns_empty_str_when_path_exists(self):
+        desktop_file_dir = tempfile.mkdtemp(dir="/tmp")
+        self.addCleanup(rmtree, desktop_file_dir)
+
+        self.assertThat(
+            TempDesktopFile._create_desktop_file_dir(desktop_file_dir),
+            Equals("")
+        )
+
+    def test_remove_desktop_file_removes_created_file_when_path_exists(self):
+        test_created_path = self.getUniqueString()
+        with patch('autopilot.tests.functional.rmtree') as p_rmtree:
+            TempDesktopFile._remove_desktop_file_components(
+                test_created_path, ""
+            )
+            p_rmtree.assert_called_once_with(test_created_path)
+
+    def test_remove_desktop_file_removes_created_path(self):
+        test_created_file = self.getUniqueString()
+        with patch('autopilot.tests.functional.os.remove') as p_remove:
+            TempDesktopFile._remove_desktop_file_components(
+                "", test_created_file
+            )
+            p_remove.assert_called_once_with(test_created_file)
+
+    def test_create_desktop_file_creates_file_in_correct_place(self):
+        desktop_file_dir = tempfile.mkdtemp(dir="/tmp")
+        self.addCleanup(rmtree, desktop_file_dir)
+
+        with patch.object(
+            TempDesktopFile, '_desktop_file_dir', return_value=desktop_file_dir
+        ):
+            desktop_file = TempDesktopFile._create_desktop_file()
+            path, head = os.path.split(desktop_file)
+            self.assertThat(path, Equals(desktop_file_dir))
+
+    def test_create_desktop_file_writes_correct_data(self):
+        desktop_file_dir = tempfile.mkdtemp(dir="/tmp")
+        self.addCleanup(rmtree, desktop_file_dir)
+
+        with patch.object(
+            TempDesktopFile, '_desktop_file_dir', return_value=desktop_file_dir
+        ):
+            desktop_file = TempDesktopFile._create_desktop_file()
+            self.assertTrue(desktop_file.endswith('.desktop'))
+            self.assertThat(
+                desktop_file,
+                FileContains(
+                    dedent("""\
+                    [Desktop Entry]
+                    Type=Application
+                    Exec=Not important
+                    Path=Not important
+                    Name=Test app
+                    Icon=Not important""")
+                )
+            )

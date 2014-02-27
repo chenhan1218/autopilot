@@ -94,7 +94,7 @@ class PlainTypeTests(TestWithScenarios, TestCase):
         p = PlainType(self.t(self.v))
 
         expected = repr(self.v)
-        expected.strip('L')
+        expected = expected.rstrip('L')
         self.assertThat(repr(p), Equals(expected))
 
     def test_str(self):

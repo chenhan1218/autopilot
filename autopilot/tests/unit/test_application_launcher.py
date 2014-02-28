@@ -26,6 +26,7 @@ from testtools.matchers import (
     Contains,
     Equals,
     GreaterThan,
+    HasLength,
     IsInstance,
     MatchesListwise,
     Not,
@@ -33,6 +34,7 @@ from testtools.matchers import (
     raises,
 )
 from testtools.content import text_content
+import tempfile
 from mock import Mock, patch
 
 from autopilot.application import (
@@ -384,69 +386,66 @@ class UpstartApplicationLauncherTests(TestCase):
         )
 
     def test_on_failed_only_sets_status_on_correct_app_id(self):
-        launcher = UpstartApplicationLauncher(self.addDetail)
         state = {
-            'expected_app_id' : 'gedit',
+            'expected_app_id': 'gedit',
         }
 
-        launcher._on_failed('some_game', state)
+        UpstartApplicationLauncher._on_failed('some_game', None, state)
 
         self.assertThat(state, Not(Contains('status')))
+
+    def assertFunctionSetsCorrectStateAndQuits(self, observer, expected_state):
+        """Assert that the observer observer sets the correct state id.
+
+        :param observer: The observer callable you want to test.
+        :param expected_state: The state id the observer callable must set.
+
+        """
+        expected_app_id = self.getUniqueString()
+        state = {
+            'expected_app_id': expected_app_id,
+            'loop': Mock()
+        }
+
+        if observer == UpstartApplicationLauncher._on_failed:
+            observer(expected_app_id, None, state)
+        elif observer == UpstartApplicationLauncher._on_started:
+            observer(expected_app_id, state)
+        else:
+            observer(state)
+
+        self.assertThat(
+            state['status'],
+            Equals(expected_state)
+        )
+        state['loop'].quit.assert_called_once_with()
 
     def test_on_failed_sets_status_with_correct_app_id(self):
-        launcher = UpstartApplicationLauncher(self.addDetail)
-        state = {
-            'expected_app_id' : 'gedit',
-            'loop': Mock()
-        }
-
-        launcher._on_failed('gedit', state)
-
-        self.assertThat(
-            state['status'],
-            Equals(UpstartApplicationLauncher.Failed)
+        self.assertFunctionSetsCorrectStateAndQuits(
+            UpstartApplicationLauncher._on_failed,
+            UpstartApplicationLauncher.Failed
         )
-        state['loop'].quit.assert_called_once_with()
-
-    def test_on_started_only_sets_status_on_correct_app_id(self):
-        launcher = UpstartApplicationLauncher(self.addDetail)
-        state = {
-            'expected_app_id' : 'gedit',
-        }
-
-        launcher._on_started('some_game', state)
-
-        self.assertThat(state, Not(Contains('status')))
 
     def test_on_started_sets_status_with_correct_app_id(self):
-        launcher = UpstartApplicationLauncher(self.addDetail)
-        state = {
-            'expected_app_id' : 'gedit',
-            'loop': Mock()
-        }
-
-        launcher._on_started('gedit', state)
-
-        self.assertThat(
-            state['status'],
-            Equals(UpstartApplicationLauncher.Started)
+        self.assertFunctionSetsCorrectStateAndQuits(
+            UpstartApplicationLauncher._on_started,
+            UpstartApplicationLauncher.Started
         )
-        state['loop'].quit.assert_called_once_with()
 
     def test_on_timeout_sets_status_and_exits_loop(self):
-        launcher = UpstartApplicationLauncher(self.addDetail)
+        self.assertFunctionSetsCorrectStateAndQuits(
+            UpstartApplicationLauncher._on_timeout,
+            UpstartApplicationLauncher.Timeout
+        )
+
+    def test_on_started_only_sets_status_on_correct_app_id(self):
         state = {
-            'expected_app_id' : 'gedit',
-            'loop': Mock()
+            'expected_app_id': 'gedit',
         }
 
-        launcher._on_timeout(state)
+        UpstartApplicationLauncher._on_started('some_game', state)
 
-        self.assertThat(
-            state['status'],
-            Equals(UpstartApplicationLauncher.Timeout)
-        )
-        state['loop'].quit.assert_called_once_with()
+        self.assertThat(state, Not(Contains('status')))
 
     def test_get_pid_calls_upstart_module(self):
         expected_return = self.getUniqueInteger()
@@ -466,7 +465,7 @@ class UpstartApplicationLauncherTests(TestCase):
                 ['some', 'uris']
             )
 
-            mock_ual.start_application.assert_called_once_with(
+            mock_ual.start_application_test.assert_called_once_with(
                 'gedit',
                 ['some', 'uris']
             )
@@ -497,6 +496,20 @@ class UpstartApplicationLauncherTests(TestCase):
             )
         )
 
+    def test_check_error_raises_RuntimeError_with_extra_message(self):
+        fn = lambda: UpstartApplicationLauncher._check_status_error(
+            UpstartApplicationLauncher.Failed,
+            "extra message"
+        )
+        self.assertThat(
+            fn,
+            raises(
+                RuntimeError(
+                    "Application Launch Failed: extra message"
+                )
+            )
+        )
+
     def test_check_error_does_nothing_on_None(self):
         UpstartApplicationLauncher._check_status_error(None)
 
@@ -512,7 +525,107 @@ class UpstartApplicationLauncherTests(TestCase):
 
                 patched_launch.assert_called_once_with('gedit', [])
 
+    def assertFailedObserverSetsExtraMessage(self, fail_type, expected_msg):
+        """Assert that the on_failed observer must set the expected message
+        for a particular failure_type."""
+        expected_app_id = self.getUniqueString()
+        state = {
+            'expected_app_id': expected_app_id,
+            'loop': Mock()
+        }
+        UpstartApplicationLauncher._on_failed(
+            expected_app_id,
+            fail_type,
+            state
+        )
+        self.assertEqual(expected_msg, state['message'])
 
+    def test_on_failed_sets_message_for_app_crash(self):
+        self.assertFailedObserverSetsExtraMessage(
+            _l.UpstartAppLaunch.AppFailed.CRASH,
+            'Application crashed.'
+        )
+
+    def test_on_failed_sets_message_for_app_start_failure(self):
+        self.assertFailedObserverSetsExtraMessage(
+            _l.UpstartAppLaunch.AppFailed.START_FAILURE,
+            'Application failed to start.'
+        )
+
+    def test_add_application_cleanups_adds_both_cleanup_actions(self):
+        token = self.getUniqueString()
+        state = {
+            'status': UpstartApplicationLauncher.Started,
+            'expected_app_id': token,
+        }
+        launcher = UpstartApplicationLauncher(Mock())
+        launcher.setUp()
+        launcher._maybe_add_application_cleanups(state)
+        self.assertThat(
+            launcher._cleanups._cleanups,
+            Contains(
+                (launcher._attach_application_log, (token,), {})
+            )
+        )
+        self.assertThat(
+            launcher._cleanups._cleanups,
+            Contains(
+                (launcher._stop_application, (token,), {})
+            )
+        )
+
+    def test_add_application_cleanups_does_nothing_when_app_timedout(self):
+        state = {
+            'status': UpstartApplicationLauncher.Timeout,
+        }
+        launcher = UpstartApplicationLauncher(Mock())
+        launcher.setUp()
+        launcher._maybe_add_application_cleanups(state)
+        self.assertThat(launcher._cleanups._cleanups, HasLength(0))
+
+    def test_add_application_cleanups_does_nothing_when_app_failed(self):
+        state = {
+            'status': UpstartApplicationLauncher.Failed,
+        }
+        launcher = UpstartApplicationLauncher(Mock())
+        launcher.setUp()
+        launcher._maybe_add_application_cleanups(state)
+        self.assertThat(launcher._cleanups._cleanups, HasLength(0))
+
+    def test_attach_application_log_does_nothing_wth_no_log_specified(self):
+        app_id = self.getUniqueString()
+        case_addDetail = Mock()
+        launcher = UpstartApplicationLauncher(case_addDetail)
+        with patch.object(_l.UpstartAppLaunch, 'application_log_path') as p:
+            p.return_value = None
+            launcher._attach_application_log(app_id)
+
+            p.assert_called_once_with(app_id)
+            self.assertEqual(0, case_addDetail.call_count)
+
+    def test_attach_application_log_attaches_log_file(self):
+        token = self.getUniqueString()
+        case_addDetail = Mock()
+        launcher = UpstartApplicationLauncher(case_addDetail)
+        app_id = self.getUniqueString()
+        with tempfile.NamedTemporaryFile(mode='w') as f:
+            f.write(token)
+            f.flush()
+            with patch.object(_l.UpstartAppLaunch, 'application_log_path',
+                              return_value=f.name):
+                launcher._attach_application_log(app_id)
+
+                self.assertEqual(1, case_addDetail.call_count)
+                content_name, content_obj = case_addDetail.call_args[0]
+                self.assertEqual("Application Log", content_name)
+                self.assertThat(content_obj.as_text(), Contains(token))
+
+    def test_stop_applications_calls_UAL_stop_application(self):
+        app_id = self.getUniqueString()
+        launcher = UpstartApplicationLauncher(Mock())
+        with patch.object(_l.UpstartAppLaunch, 'stop_application') as p_stop:
+            launcher._stop_application(app_id)
+            p_stop.assert_called_once_with(app_id)
 
 
 class ApplicationLauncherInternalTests(TestCase):

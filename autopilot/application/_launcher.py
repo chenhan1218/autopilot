@@ -115,10 +115,10 @@ class UpstartApplicationLauncher(ApplicationLauncher):
         _raise_if_not_empty(kwargs)
 
     def launch(self, app_id, app_uris=[]):
-        # TODO: Add applicaiton logs from disk.
         state = {}
         state['loop'] = self._get_glib_loop()
         state['expected_app_id'] = app_id
+        state['message'] = ''
 
         UpstartAppLaunch.observer_add_app_failed(self._on_failed, state)
         UpstartAppLaunch.observer_add_app_started(self._on_started, state)
@@ -128,23 +128,50 @@ class UpstartApplicationLauncher(ApplicationLauncher):
         state['loop'].run()
         UpstartAppLaunch.observer_delete_app_failed(self._on_failed)
         UpstartAppLaunch.observer_delete_app_started(self._on_started)
-
-        self._check_status_error(state.get('status', None))
+        self._maybe_add_application_cleanups(state)
+        self._check_status_error(
+            state.get('status', None),
+            state.get('message', '')
+        )
         return self._get_pid_for_launched_app(app_id)
 
-    def _on_failed(self, launched_app_id, state):
+    @staticmethod
+    def _on_failed(launched_app_id, failure_type, state):
         if launched_app_id == state['expected_app_id']:
+            if failure_type == UpstartAppLaunch.AppFailed.CRASH:
+                state['message'] = 'Application crashed.'
+            elif failure_type == UpstartAppLaunch.AppFailed.START_FAILURE:
+                state['message'] = 'Application failed to start.'
             state['status'] = UpstartApplicationLauncher.Failed
             state['loop'].quit()
 
-    def _on_started(self, launched_app_id, state):
+    @staticmethod
+    def _on_started(launched_app_id, state):
         if launched_app_id == state['expected_app_id']:
             state['status'] = UpstartApplicationLauncher.Started
             state['loop'].quit()
 
-    def _on_timeout(self, state):
+    @staticmethod
+    def _on_timeout(state):
         state['status'] = UpstartApplicationLauncher.Timeout
         state['loop'].quit()
+
+    def _maybe_add_application_cleanups(self, state):
+        if state.get('status', None) == UpstartApplicationLauncher.Started:
+            app_id = state['expected_app_id']
+            self.addCleanup(self._stop_application, app_id)
+            self.addCleanup(self._attach_application_log, app_id)
+
+    def _attach_application_log(self, app_id):
+        log_path = UpstartAppLaunch.application_log_path(app_id)
+        if log_path:
+            self.case_addDetail(
+                "Application Log",
+                content_from_file(log_path)
+            )
+
+    def _stop_application(self, app_id):
+        UpstartAppLaunch.stop_application(app_id)
 
     @staticmethod
     def _get_glib_loop():
@@ -156,17 +183,21 @@ class UpstartApplicationLauncher(ApplicationLauncher):
 
     @staticmethod
     def _launch_app(app_name, app_uris):
-        UpstartAppLaunch.start_application(app_name, app_uris)
+        UpstartAppLaunch.start_application_test(app_name, app_uris)
 
     @staticmethod
-    def _check_status_error(status):
-        # TODO: make error messages more descriptive.
+    def _check_status_error(status, extra_message=''):
+        message_parts = []
         if status == UpstartApplicationLauncher.Timeout:
-            raise RuntimeError(
+            message_parts.append(
                 "Timed out while waiting for application to launch"
             )
         elif status == UpstartApplicationLauncher.Failed:
-            raise RuntimeError("Application Launch Failed")
+            message_parts.append("Application Launch Failed")
+        if message_parts and extra_message:
+            message_parts.append(extra_message)
+        if message_parts:
+            raise RuntimeError(': '.join(message_parts))
 
 
 class NormalApplicationLauncher(ApplicationLauncher):

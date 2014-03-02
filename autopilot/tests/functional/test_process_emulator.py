@@ -20,12 +20,18 @@
 
 from autopilot.exceptions import BackendException
 from autopilot.testcase import AutopilotTestCase
+from autopilot.tests.functional.fixtures import ExecutableScript
 from autopilot.process import ProcessManager
+from autopilot.platform import model
 
+import os.path
 from subprocess import Popen, call
+import sys
 from testtools.matchers import Equals, NotEquals, LessThan
+from textwrap import dedent
 from threading import Thread
 from time import sleep, time
+from unittest import skipIf
 
 
 class ProcessEmulatorTests(AutopilotTestCase):
@@ -86,6 +92,28 @@ class ProcessEmulatorTests(AutopilotTestCase):
 
         self.assertThat(app, NotEquals(None))
         self.assertThat(app.name, Equals('Calculator'))
+
+    @skipIf(model() != 'Desktop', "Bamf only available on desktop (Qt4)")
+    def test_bamf_geometry_gives_reliable_results(self):
+        script = dedent("""\
+            #!%s
+            from PyQt4.QtGui import QMainWindow, QApplication
+            from sys import argv
+
+            app = QApplication(argv)
+            win = QMainWindow()
+            win.show()
+            app.exec_()
+            """ % sys.executable)
+        path = self.useFixture(ExecutableScript(script)).path
+        app_proxy = self.launch_test_application(path, app_type='qt')
+        proxy_window = app_proxy.select_single('QMainWindow')
+        pm = ProcessManager.create()
+        window = [
+            w for w in pm.get_open_windows()
+            if w.name == os.path.basename(path)
+        ][0]
+        self.assertThat(list(window.geometry), Equals(proxy_window.geometry))
 
 
 class ProcessManagerApplicationNoCleanupTests(AutopilotTestCase):

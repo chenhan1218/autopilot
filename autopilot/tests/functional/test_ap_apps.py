@@ -41,6 +41,7 @@ import unittest
 from autopilot.process import ProcessManager
 from autopilot.platform import model
 from autopilot.testcase import AutopilotTestCase
+from autopilot.tests.functional.fixtures import ExecutableScript
 from autopilot.introspection import (
     get_proxy_object_for_existing_process,
     ProcessSearchError,
@@ -76,12 +77,7 @@ class ApplicationTests(AutopilotTestCase):
         and return the path to the script file.
 
         """
-        path = mktemp(extension)
-        open(path, 'w').write(content)
-        self.addCleanup(os.unlink, path)
-
-        os.chmod(path, os.stat(path).st_mode | stat.S_IXUSR)
-        return path
+        return self.useFixture(ExecutableScript(content, extension)).path
 
 
 class ApplicationLaunchTests(ApplicationTests):
@@ -224,7 +220,39 @@ class ApplicationLaunchTests(ApplicationTests):
         )
 
 
-class QtTests(ApplicationTests):
+class QmlTestMixin(object):
+
+    def get_qml_viewer_app_path(self):
+        try:
+            qtversions = subprocess.check_output(
+                ['qtchooser', '-list-versions'],
+                universal_newlines=True
+            ).split('\n')
+            check_func = self._find_qt_binary_chooser
+        except OSError:
+            # This means no qtchooser is installed, so let's check for
+            # qmlviewer and qmlscene manually, the old way
+            qtversions = ['qt4', 'qt5']
+            check_func = self._find_qt_binary_old
+
+        not_found = True
+        if 'qt4' in qtversions:
+            path = check_func('qt4', 'qmlviewer')
+            if path:
+                not_found = False
+                self.qml_viewer_app_path = path
+                self.patch_environment("QT_SELECT", "qt4")
+
+        if 'qt5' in qtversions:
+            path = check_func('qt5', 'qmlscene')
+            if path:
+                not_found = False
+                self.qml_viewer_app_path = path
+                self.patch_environment("QT_SELECT", "qt5")
+
+        if not_found:
+            self.skip("Neither qmlviewer nor qmlscene is installed")
+        return self.get_qml_viewer_app_path
 
     def _find_qt_binary_chooser(self, version, name):
         # Check for existence of the binary when qtchooser is installed
@@ -250,44 +278,19 @@ class QtTests(ApplicationTests):
             path = None
         return path
 
-    def setUp(self):
-        super(QtTests, self).setUp()
 
-        try:
-            qtversions = subprocess.check_output(
-                ['qtchooser', '-list-versions'],
-                universal_newlines=True
-            ).split('\n')
-            check_func = self._find_qt_binary_chooser
-        except OSError:
-            # This means no qtchooser is installed, so let's check for
-            # qmlviewer and qmlscene manually, the old way
-            qtversions = ['qt4', 'qt5']
-            check_func = self._find_qt_binary_old
+class QtTests(ApplicationTests, QmlTestMixin):
 
-        not_found = True
-        if 'qt4' in qtversions:
-            path = check_func('qt4', 'qmlviewer')
-            if path:
-                not_found = False
-                self.app_path = path
-                self.patch_environment("QT_SELECT", "qt4")
-
-        if 'qt5' in qtversions:
-            path = check_func('qt5', 'qmlscene')
-            if path:
-                not_found = False
-                self.app_path = path
-                self.patch_environment("QT_SELECT", "qt5")
-
-        if not_found:
-            self.skip("Neither qmlviewer nor qmlscene is installed")
-
-    def test_can_launch_qt_app(self):
-        app_proxy = self.launch_test_application(self.app_path, app_type='qt')
+    def test_can_launch_normal_app(self):
+        path = self.get_qml_viewer_app_path()
+        app_proxy = self.launch_test_application(path, app_type='qt')
         self.assertTrue(app_proxy is not None)
 
-    def test_can_launch_qt_script(self):
+    def test_can_launch_upstart_app(self):
+        path = self.get_qml_viewer_app_path()
+        self.launch_upstart_application(path)
+
+    def test_can_launch_normal_qt_script(self):
         path = self.write_script(dedent("""\
             #!%s
             from PyQt4.QtGui import QMainWindow, QApplication
@@ -301,6 +304,7 @@ class QtTests(ApplicationTests):
         app_proxy = self.launch_test_application(path, app_type='qt')
         self.assertTrue(app_proxy is not None)
 
+    # TODO: move this into a test module that tests bamf.
     @skipIf(model() != 'Desktop', "Bamf only available on desktop (Qt4)")
     def test_bamf_geometry_gives_reliable_results(self):
         path = self.write_script(dedent("""\
@@ -384,17 +388,18 @@ class QtTests(ApplicationTests):
 
 class GtkTests(ApplicationTests):
 
-    def setUp(self):
-        super(GtkTests, self).setUp()
-
+    def _get_mahjongg_path(self):
         try:
-            self.app_path = subprocess.check_output(
+            return subprocess.check_output(
                 ['which', 'gnome-mahjongg'], universal_newlines=True).strip()
-        except subprocess.CalledProcessError:
-            self.skip("gnome-mahjongg not found.")
+        except:
+            return
 
     def test_can_launch_gtk_app(self):
-        app_proxy = self.launch_test_application(self.app_path)
+        mahjongg_path = self._get_mahjongg_path()
+        if not mahjongg_path:
+            self.skip("gnome-mahjongg not found.")
+        app_proxy = self.launch_test_application(mahjongg_path)
         self.assertTrue(app_proxy is not None)
 
     def test_can_launch_gtk_script(self):

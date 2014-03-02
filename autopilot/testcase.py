@@ -59,6 +59,7 @@ from autopilot.application import (
     ClickApplicationLauncher,
     get_application_launcher_wrapper,
     NormalApplicationLauncher,
+    UpstartApplicationLauncher,
 )
 from autopilot.display import Display
 from autopilot.globals import get_debug_profile_fixture
@@ -290,11 +291,11 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         return self._launch_test_application(launcher, package_id, app_name,
                                              app_uris)
 
-    def launch_upstart_application(self, application_name, **kwargs):
+    def launch_upstart_application(self, application_name, uris=[], **kwargs):
         """Launch an application with upstart.
 
         This method launched an application via the ``upstart-app-launch``
-        command, on platforms that support it.
+        library, on platforms that support it.
 
         Usage is similar to the
         :py:meth:`AutopilotTestCase.launch_test_application`::
@@ -308,8 +309,10 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :raises RuntimeError: If the specified application cannot be launched.
         :raises ValueError: If unknown keyword arguments are specified.
         """
-
-
+        launcher = self.useFixture(
+            UpstartApplicationLauncher(self.addDetail, **kwargs)
+        )
+        return self._launch_test_application(launcher, application_name, uris)
 
     # Wrapper function tying the newer ApplicationLauncher behaviour with the
     # previous (to be depreciated) behaviour

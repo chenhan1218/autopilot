@@ -305,9 +305,9 @@ class ClickApplicationLauncherTests(TestCase):
             '_get_click_application_log_path',
             return_value=token
         ):
-            content_obj = _l._get_click_application_log_content_object("foo")
+
             self.assertThat(
-                lambda: content_obj.as_text(),
+                lambda: _l._get_click_application_log_content_object("foo"),
                 Not(raises(IOError))
             )
 

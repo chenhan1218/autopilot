@@ -20,7 +20,7 @@
 
 import json
 import os
-from tempfile import mktemp, NamedTemporaryFile
+from tempfile import mktemp
 from testtools import TestCase, skipIf
 from testtools.matchers import IsInstance, Equals, raises
 from textwrap import dedent
@@ -34,15 +34,18 @@ from autopilot.input import Keyboard, Mouse, Pointer, Touch
 from autopilot.input._common import get_center_point
 from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase, multiply_scenarios
+from autopilot.tests.functional import TempDesktopFile
 from autopilot.utilities import on_test_started
 
 
 class InputStackKeyboardBase(AutopilotTestCase):
 
     scenarios = [
-        ('X11', dict(backend='X11')),
         ('UInput', dict(backend='UInput')),
     ]
+
+    if platform.model() == "Desktop":
+        scenarios.append(('X11', dict(backend='X11')))
 
     def setUp(self):
         super(InputStackKeyboardBase, self).setUp()
@@ -61,6 +64,7 @@ class InputStackKeyboardCreationTests(InputStackKeyboardBase):
         self.assertThat(keyboard, IsInstance(Keyboard))
 
 
+@skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
 class InputStackKeyboardTypingTests(InputStackKeyboardBase):
 
     scenarios = multiply_scenarios(
@@ -158,6 +162,7 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
                       )
 
 
+@skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
 class InputStackKeyboardBackspaceTests(InputStackKeyboardBase):
 
     def start_mock_app(self):
@@ -205,7 +210,14 @@ class InputStackKeyboardBackspaceTests(InputStackKeyboardBase):
                         )
 
 
-@skipIf(platform.model() == 'Desktop', "Only suitable on a device")
+def osk_backend_available():
+    try:
+        from autopilot.input._osk import Keyboard  # NOQA
+        return True
+    except ImportError:
+        return False
+
+
 class OSKBackendTests(AutopilotTestCase):
     """Testing the Onscreen Keyboard (Ubuntu Keyboard) backend specifically.
 
@@ -235,7 +247,9 @@ class OSKBackendTests(AutopilotTestCase):
         open(qml_path, 'w').write(script_contents)
         self.addCleanup(os.remove, qml_path)
 
-        desktop_file = self._write_test_desktop_file()
+        desktop_file = self.useFixture(
+            TempDesktopFile()
+        ).get_desktop_file_path()
 
         return self.launch_test_application(
             "qmlscene",
@@ -243,35 +257,6 @@ class OSKBackendTests(AutopilotTestCase):
             qml_path,
             '--desktop_file_hint=%s' % desktop_file,
             app_type='qt',
-        )
-
-    def _write_test_desktop_file(self):
-        desktop_file_dir = self._get_local_desktop_file_directory()
-        if not os.path.exists(desktop_file_dir):
-            os.makedirs(desktop_file_dir)
-        with NamedTemporaryFile(
-            suffix='.desktop',
-            dir=desktop_file_dir,
-            delete=False  # Will ensure it happens with addCleanup
-        ) as desktop_file:
-            desktop_file.write(
-                dedent("""\
-                [Desktop Entry]
-                Type=Application
-                Exec=Not important
-                Path=Not important
-                Name=Test app
-                Icon=Not important""")
-            )
-        self.addCleanup(os.remove, desktop_file.name)
-        return desktop_file.name
-
-    def _get_local_desktop_file_directory(self):
-        return os.path.join(
-            os.getenv('HOME'),
-            '.local',
-            'share',
-            'applications'
         )
 
     def _launch_simple_input(self):
@@ -312,6 +297,8 @@ class OSKBackendTests(AutopilotTestCase):
 
         return self._start_qml_script(simple_script)
 
+    @skipIf(platform.model() == 'Desktop', "Only suitable on a device")
+    @skipIf(not osk_backend_available(), "Test requires OSK Backend installed")
     def test_can_type_string(self):
         """Typing text must produce the expected characters in the input
         field.
@@ -328,6 +315,8 @@ class OSKBackendTests(AutopilotTestCase):
 
         self.assertThat(text_area.text, Eventually(Equals(self.input)))
 
+    @skipIf(platform.model() == 'Desktop', "Only suitable on a device")
+    @skipIf(not osk_backend_available(), "Test requires OSK Backend installed")
     def test_focused_typing_contextmanager(self):
         """Typing text using the 'focused_typing' context manager must not only
         produce the expected characters in the input field but also cleanup the
@@ -350,6 +339,7 @@ class OSKBackendTests(AutopilotTestCase):
 
 class MouseTestCase(AutopilotTestCase):
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (Mouse)")
     def test_move_to_nonint_point(self):
         """Test mouse does not get stuck when we move to a non-integer point.
 
@@ -376,6 +366,7 @@ class MouseTestCase(AutopilotTestCase):
                         raises(expected_exception))
 
 
+@skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
 class TouchTests(AutopilotTestCase):
 
     def setUp(self):
@@ -425,10 +416,21 @@ class TouchGesturesTests(AutopilotTestCase):
         open(qml_path, 'w').write(script_contents)
         self.addCleanup(os.remove, qml_path)
 
+        extra_args = ''
+        if platform.model() != "Desktop":
+            # We need to add the desktop-file-hint
+            desktop_file = self.useFixture(
+                TempDesktopFile()
+            ).get_desktop_file_path()
+            extra_args = '--desktop_file_hint={hint_file}'.format(
+                hint_file=desktop_file
+            )
+
         return self.launch_test_application(
             "qmlscene",
             "-qt=qt5",
             qml_path,
+            extra_args,
             app_type='qt',
         )
 
@@ -527,6 +529,7 @@ class InputStackCleanupTests(TestCase):
 
 class InputStackCleanup(AutopilotTestCase):
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (X11)")
     def test_keyboard_keys_released_X11(self):
         """Cleanup must release any keys that an X11 keyboard has had
         pressed."""
@@ -556,6 +559,7 @@ class InputStackCleanup(AutopilotTestCase):
         self.assertThat(
             _uinput.Keyboard._device._pressed_keys_ecodes, Equals([]))
 
+    @skipIf(platform.model() != "Desktop", "Not suitable for device (X11)")
     @patch('autopilot.input._X11.fake_input', new=lambda *args: None, )
     def test_mouse_button_released(self):
         """Cleanup must release any mouse buttons that have been pressed."""

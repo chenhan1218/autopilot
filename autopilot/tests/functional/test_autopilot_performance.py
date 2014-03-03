@@ -23,9 +23,11 @@ from __future__ import absolute_import
 from contextlib import contextmanager
 from time import time
 from textwrap import dedent
+from testtools import skipIf
 from testtools.matchers import Equals
 
 import logging
+from autopilot import platform
 from autopilot.tests.functional import AutopilotRunTestBase
 
 
@@ -51,6 +53,7 @@ def maximum_runtime(max_time):
         )
 
 
+@skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
 class AutopilotPerformanceTests(AutopilotRunTestBase):
 
     """A suite of functional tests that will fail if autopilot performance

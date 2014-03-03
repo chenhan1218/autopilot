@@ -298,6 +298,19 @@ class ClickApplicationLauncherTests(TestCase):
                 Equals(from_file())
             )
 
+    def test_get_click_app_log_works_when_no_log_file_exists(self):
+        token = self.getUniqueString()
+        with patch.object(
+            _l,
+            '_get_click_application_log_path',
+            return_value=token
+        ):
+            content_obj = _l._get_click_application_log_content_object("foo")
+            self.assertThat(
+                lambda: content_obj.as_text(),
+                Not(raises(IOError))
+            )
+
     @patch.object(_l, '_launch_click_app', return_value=123)
     def test_launch_click_app_returns_pid(self, patched_launch_click_app):
         launcher = ClickApplicationLauncher(self.addDetail)

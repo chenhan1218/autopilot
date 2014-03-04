@@ -752,7 +752,7 @@ class MakeIntrospectionObjectTests(TestCase):
             raises(ValueError)
         )
 
-    @patch('autopilot.utilities.get_debug_logger')
+    @patch('autopilot.introspection.dbus.get_debug_logger')
     def test_get_default_proxy_class_logging(self, gdl):
         """_get_default_proxy_class should log a message."""
         _get_default_proxy_class(self.DefaultSelector, None)

@@ -660,7 +660,7 @@ class MakeIntrospectionObjectTests(TestCase):
         gpoc_return = _get_proxy_object_class(None, None, None, None)
 
         self.assertThat(gpoc_return, Equals(token))
-        self.assertThat(gdpc.call_count, Equals(0))
+        self.assertFalse(gdpc.called)
 
     @patch('autopilot.introspection.dbus._try_custom_proxy_classes')
     def test_get_proxy_object_class_send_right_args(self, tcpc):
@@ -694,7 +694,7 @@ class MakeIntrospectionObjectTests(TestCase):
         _try_custom_proxy_classes returns None."""
         tcpc.return_value = None
         _get_proxy_object_class(None, None, None, None)
-        gdpc.assert_called_once()
+        self.assertTrue(gdpc.called)
 
     @patch('autopilot.introspection.dbus._try_custom_proxy_classes')
     @patch('autopilot.introspection.dbus._get_default_proxy_class')
@@ -752,19 +752,41 @@ class MakeIntrospectionObjectTests(TestCase):
             raises(ValueError)
         )
 
+    @patch('autopilot.utilities.get_debug_logger')
+    def test_get_default_proxy_class_logging(self, gdl):
+        """_get_default_proxy_class should log a message."""
+        _get_default_proxy_class(self.DefaultSelector, None)
+        gdl.assert_called_once_with()
+
     def test_get_default_proxy_class_base(self):
-        """Subclass Must return an emulator of base class."""
+        """Subclass must return an emulator of base class."""
         class SubclassedProxy(self.DefaultSelector):
             pass
 
         result = _get_default_proxy_class(SubclassedProxy, 'Object')
         self.assertTrue(result, Equals(self.DefaultSelector))
+
+    def test_get_default_proxy_class_base_instead_of_self(self):
+        """Subclass must not use self if base class works."""
+        class SubclassedProxy(self.DefaultSelector):
+            pass
+
+        result = _get_default_proxy_class(SubclassedProxy, 'Object')
         self.assertFalse(issubclass(result, SubclassedProxy))
 
     def test_get_default_proxy_class(self):
         """Must default to own class if no usable bases present."""
         result = _get_default_proxy_class(self.DefaultSelector, 'Object')
         self.assertTrue(result, Equals(self.DefaultSelector))
+
+    def test_get_default_proxy_name(self):
+        """Must default to own class if no usable bases present."""
+        token = self.getUniqueString()
+        result = _get_default_proxy_class(self.DefaultSelector, token)
+        print result.__name__
+        print type(result.__name__)
+        self.assertTrue(result.__name__, Equals('fail'))
+        self.assertFalse(result.__name__, Equals('fail'))
 
     def test_validate_dbus_object_matches_on_class_name(self):
         """Validate_dbus_object must match class name."""

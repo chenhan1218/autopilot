@@ -783,10 +783,7 @@ class MakeIntrospectionObjectTests(TestCase):
         """Must default to own class if no usable bases present."""
         token = self.getUniqueString()
         result = _get_default_proxy_class(self.DefaultSelector, token)
-        print result.__name__
-        print type(result.__name__)
-        self.assertTrue(result.__name__, Equals('fail'))
-        self.assertFalse(result.__name__, Equals('fail'))
+        self.assertThat(result.__name__, Equals(token))
 
     def test_validate_dbus_object_matches_on_class_name(self):
         """Validate_dbus_object must match class name."""

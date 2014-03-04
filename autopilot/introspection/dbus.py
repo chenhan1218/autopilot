@@ -599,6 +599,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         This only works for classes that derive from DBusIntrospectionObject.
 
         :returns: A proxy object that derives from DBusIntrospectionObject
+        :raises: ValueError if more than one class is appropriate for this
+                 dbus_tuple
 
         """
         path, state = dbus_tuple
@@ -728,6 +730,7 @@ def _get_proxy_object_class(proxy_class_dict, default_class, path, state):
     :param path: dbus path
     :param state: dbus state
     :returns: appropriate custom proxy class
+    :raises: ValueError if more than one class in the dict matches
 
     """
     class_type = _try_custom_proxy_classes(proxy_class_dict, path, state)

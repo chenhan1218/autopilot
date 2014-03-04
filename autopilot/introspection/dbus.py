@@ -598,8 +598,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         This only works for classes that derive from DBusIntrospectionObject.
 
-        :returns: introspection object
-        :rtype: instance of appropriate CustomProxyObject class
+        :returns: A proxy object that derives from DBusIntrospectionObject
 
         """
         path, state = dbus_tuple
@@ -677,12 +676,9 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         validation method.
 
         :param path: The dbus path of the object to check
-        :type path: string
-        :param state: The dbus state of the object to check
+        :param state: The dbus state dict of the object to check
                       (ignored in default implementation)
-        :type state: dict
         :returns: Whether this class is appropriate for the dbus object
-        :rtype: boolean
 
         """
         name = get_classname_from_path(path)
@@ -728,15 +724,10 @@ def _get_proxy_object_class(proxy_class_dict, default_class, path, state):
 
     Use helper functions to check the class list or return the default.
     :param proxy_class_dict: dict of proxy classes to try
-    :type proxy_class_dict: dict
     :param default_class: default class to use if nothing in dict matches
-    :type default_class: Class
     :param path: dbus path
-    :type path: str
     :param state: dbus state
-    :type state: dict
     :returns: appropriate custom proxy class
-    :rtype: Class
 
     """
     class_type = _try_custom_proxy_classes(proxy_class_dict, path, state)
@@ -751,13 +742,9 @@ def _try_custom_proxy_classes(proxy_class_dict, path, state):
 
     If more than one class in proxy_class_dict matches, raise an exception.
     :param proxy_class_dict: dict of proxy classes to try
-    :type proxy_class_dict: dict
     :param path: dbus path
-    :type path: str
-    :param state: dbus state
-    :type state: dict
+    :param state: dbus state dict
     :returns: matching custom proxy class
-    :rtype: Class
     :raises: ValueError if more than one class matches
 
     """
@@ -781,11 +768,8 @@ def _get_default_proxy_class(default_class, name):
     We want the object to inherit from CustomEmulatorBase, not the object
     class that is doing the selecting.
     :param default_class: default class to use if no bases match
-    :type default_class: Class
     :param name: name of new class
-    :type name: str
     :returns: custom proxy object class
-    :rtype: class
 
     """
     get_debug_logger().warning(

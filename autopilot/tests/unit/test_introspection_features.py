@@ -614,7 +614,6 @@ class MakeIntrospectionObjectTests(TestCase):
             """Validate always.
 
             :returns: True
-            :rtype: boolean
 
             """
             return True
@@ -625,7 +624,6 @@ class MakeIntrospectionObjectTests(TestCase):
             """Validate never.
 
             :returns: False
-            :rtype: boolean:
 
             """
             return False

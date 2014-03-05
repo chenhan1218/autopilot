@@ -52,7 +52,7 @@ logger = logging.getLogger(__name__)
 
 
 def setup_logging(verbose):
-    """Configure the root logger and verbose logging to stderr"""
+    """Configure the root logger and verbose logging to stderr."""
     root_logger = get_root_logger()
     root_logger.setLevel(logging.DEBUG)
     if verbose == 0:
@@ -147,6 +147,7 @@ def get_package_location(import_name):
     """Get the on-disk location of a package from a test id name.
 
     :raises ImportError: if the name could not be found.
+    :returns: path as a string
     """
     top_level_pkg = import_name.split('.')[0]
     _, path, _ = find_module(top_level_pkg, [os.getcwd()] + sys.path)
@@ -175,9 +176,9 @@ def _reexecute_autopilot_using_module():
 
 
 def _discover_test(test_name):
-    """Returns tuple of TestSuite of found test , top_level_dir of test
+    """Return tuple of (TestSuite of found test, top_level_dir of test).
 
-    raises ImportError if test_name isn't a valid module or test name
+    :raises: ImportError if test_name isn't a valid module or test name
 
     """
     loader = TestLoader()
@@ -197,7 +198,7 @@ def _discover_test(test_name):
 
 
 def _discover_requested_tests(test_names):
-    """Returns a collection of tests that are under test_names.
+    """Return a collection of tests that are under test_names.
 
     returns a tuple containig a TestSuite of tests found and a boolean
     depicting wherether any difficulties were encountered while searching
@@ -226,7 +227,7 @@ def _handle_discovery_error(test_name, exception):
 
 
 def _filter_tests(all_tests, test_names):
-    """Filters a given TestSuite for tests starting with any name contained
+    """Filter a given TestSuite for tests starting with any name contained
     within test_names.
 
     """
@@ -252,7 +253,7 @@ def _filter_tests(all_tests, test_names):
 
 
 def load_test_suite_from_name(test_names):
-    """Returns a test suite object given a dotted test names.
+    """Return a test suite object given a dotted test names.
 
     Returns a tuple containing the TestSuite and a boolean indicating wherever
     any issues where encountered during the loading process.
@@ -357,7 +358,7 @@ def _get_application_path_and_arguments(application):
 
 
 def _get_app_name_and_args(argument_list):
-    """Returns a tuple of (app_name, [app_args])."""
+    """Return a tuple of (app_name, [app_args])."""
     return argument_list[0], argument_list[1:]
 
 

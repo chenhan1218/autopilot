@@ -122,6 +122,7 @@ def _lttng_trace_test_ended(test_id):
 
 
 class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
+
     """Wrapper around testtools.TestCase that adds significant functionality.
 
     This class should be the base class for all autopilot test case classes.
@@ -282,6 +283,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             the click package manifest.
         :raises RuntimeError: If the specified app_name cannot be found within
             the specified click package.
+
+        :returns: proxy object for the launched package application
 
         """
         launcher = self.useFixture(
@@ -485,7 +488,7 @@ def _get_process_snapshot():
 
 
 def _compare_system_with_process_snapshot(snapshot_fn, old_snapshot):
-    """Compares an existing process snapshot with current running processes.
+    """Compare an existing process snapshot with current running processes.
 
     :param snapshot_fn: A callable that returns the current running process
         list.

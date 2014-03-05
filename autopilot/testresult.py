@@ -35,15 +35,16 @@ from testtools import (
 
 
 class LoggedTestResultDecorator(TestResultDecorator):
+
     """A decorator that logs messages to python's logging system."""
 
     def _log(self, level, message):
-        """Performs the actual message logging"""
+        """Perform the actual message logging."""
         if get_log_verbose():
             logging.getLogger().log(level, message)
 
     def _log_details(self, level, details):
-        """Logs the relavent test details"""
+        """Log the relavent test details."""
         for detail in details:
             # Skip the test-log as it was logged while the test executed
             if detail == "test-log":
@@ -62,7 +63,7 @@ class LoggedTestResultDecorator(TestResultDecorator):
         return super(type(self), self).addError(test, err, details)
 
     def addFailure(self, test, err=None, details=None):
-        """Called for a test which failed an assert"""
+        """Called for a test which failed an assert."""
         self._log(logging.ERROR, "FAIL: %s" % (test.id()))
         if hasattr(test, "getDetails"):
             self._log_details(logging.ERROR, test.getDetails())
@@ -70,7 +71,11 @@ class LoggedTestResultDecorator(TestResultDecorator):
 
 
 def get_output_formats():
-    """Get information regarding the different output formats supported."""
+    """Get information regarding the different output formats supported.
+    
+    :returns: dict of supported formats and appropriate construct functions
+
+    """
     supported_formats = {}
 
     supported_formats['text'] = _construct_text

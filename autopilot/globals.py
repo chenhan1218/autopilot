@@ -39,11 +39,12 @@ logger = logging.getLogger(__name__)
 
 
 def get_log_verbose():
-    """Returns true if the user asked for verbose logging."""
+    """Return true if the user asked for verbose logging."""
     return _test_logger._log_verbose
 
 
 class _TestLogger(CleanupRegistered):
+
     """A class that handles adding test logs as test result content."""
 
     def __init__(self):
@@ -98,6 +99,7 @@ def set_log_verbose(verbose):
 
 
 class _VideoLogger(CleanupRegistered):
+
     """Video capture autopilot tests, saving the results if the test failed."""
 
     _recording_app = '/usr/bin/recordmydesktop'

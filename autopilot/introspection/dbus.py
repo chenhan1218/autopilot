@@ -77,16 +77,16 @@ class StateNotFoundError(RuntimeError):
 
         if class_name is None:
             self._message = \
-                u"State not found with filters {}.".format(
+                u"Object not found with properties {}.".format(
                     repr(filters)
                 )
         elif not filters:
-            self._message = u"State not found for class '{}'.".format(
+            self._message = u"Object not found with name '{}'.".format(
                 class_name
             )
         else:
             self._message = \
-                u"State not found for class '{}' and filters {}.".format(
+                u"Object not found with name '{}' and properties {}.".format(
                     class_name,
                     repr(filters)
                 )

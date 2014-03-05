@@ -20,14 +20,17 @@
 
 from __future__ import absolute_import
 
+from testtools import skipIf
 from testtools.matchers import Equals
 
+from autopilot import platform
 from autopilot.testcase import AutopilotTestCase
 from autopilot.process import ProcessManager
 import logging
 logger = logging.getLogger(__name__)
 
 
+@skipIf(platform.model() != "Desktop", "Not suitable for device (ProcManager)")
 class OpenWindowTests(AutopilotTestCase):
 
     scenarios = [

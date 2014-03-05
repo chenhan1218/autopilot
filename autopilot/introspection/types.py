@@ -46,7 +46,7 @@ from testtools.matchers import Equals
 import six
 
 from autopilot.introspection.utilities import translate_state_keys
-from autopilot.utilities import sleep
+from autopilot.utilities import sleep, compatible_repr
 
 
 logger = logging.getLogger(__name__)
@@ -217,68 +217,73 @@ class PlainType(TypeBase):
         return _make_plain_type(value, parent=parent, name=name)
 
 
+def _get_repr_callable_for_value(value):
+    repr_map = {
+        dbus.Byte: _integer_repr,
+        dbus.Int16: _integer_repr,
+        dbus.Int32: _integer_repr,
+        dbus.UInt16: _integer_repr,
+        dbus.UInt32: _integer_repr,
+        dbus.Int64: _integer_repr,
+        dbus.UInt64: _integer_repr,
+        dbus.String: _text_repr,
+        dbus.ObjectPath: _text_repr,
+        dbus.Signature: _text_repr,
+        dbus.ByteArray: _bytes_repr,
+        dbus.Boolean: _boolean_repr,
+        dbus.Dictionary: _dict_repr,
+        dbus.Double: _float_repr,
+        dbus.Struct: _tuple_repr,
+        dbus.Array: _list_repr,
+    }
+    if not six.PY3:
+        repr_map[dbus.UTF8String] = _bytes_repr
+    return repr_map.get(type(value), None)
+
+
+def _get_str_callable_for_value(value):
+    str_map = {
+        dbus.Boolean: _boolean_str,
+        dbus.Byte: _integer_str,
+    }
+    return str_map.get(type(value), None)
+
+
+@compatible_repr
+def _integer_repr(self):
+    return six.text_type(int(self))
+
+
+def _create_generic_repr(target_type):
+    return compatible_repr(lambda self: repr(target_type(self)))
+
+_bytes_repr = _create_generic_repr(six.binary_type)
+_text_repr = _create_generic_repr(six.text_type)
+_dict_repr = _create_generic_repr(dict)
+_list_repr = _create_generic_repr(list)
+_tuple_repr = _create_generic_repr(tuple)
+_float_repr = _create_generic_repr(float)
+_boolean_repr = _create_generic_repr(bool)
+
+
+def _create_generic_str(target_type):
+    return compatible_repr(lambda self: str(target_type(self)))
+
+
+_boolean_str = _create_generic_str(bool)
+_integer_str = _integer_repr
+
+
 def _make_plain_type(value, parent=None, name=None):
-    def repr(self):
-        # Convert our value to the pythonic type,and call __repr__ on it.
-        # At the moment we switch based on our type, which is less than ideal.
-        if six.PY3:
-            long_type = int
-        else:
-            long_type = long
-        dbus_integer_types = (
-            dbus.Byte,
-            dbus.Int16,
-            dbus.Int32,
-            dbus.UInt16,
-            dbus.UInt32,
-        )
-
-        dbus_string_types = (
-            dbus.String,
-            dbus.ObjectPath,
-            dbus.Signature,
-        )
-
-        # no UTFString in python 3.
-        if six.PY3:
-            dbus_binary_types = (
-                dbus.ByteArray,
-            )
-        else:
-            dbus_binary_types = (
-                dbus.ByteArray,
-                dbus.UTF8String,
-            )
-
-        if isinstance(self, dbus_integer_types):
-            return int(self).__repr__()
-        elif isinstance(self, (dbus.Int64, dbus.UInt64)):
-            # Python 2 integer landling is... odd. The maximum integer size
-            # changes depending on platform, so maybe we can get away with
-            # using an int, in which case we should:
-            if not six.PY3 and self <= six.MAXSIZE:
-                return int(self).__repr__()
-            return long_type(self).__repr__()
-        elif isinstance(self, dbus_string_types):
-            return six.text_type(self).__repr__()
-        elif isinstance(self, dbus.Boolean):
-            return bool(self).__repr__()
-        elif isinstance(self, dbus_binary_types):
-            return six.binary_type(self).__repr__()
-        elif isinstance(self, dbus.Dictionary):
-            return dict(self).__repr__()
-        elif isinstance(self, dbus.Double):
-            return float(self).__repr__()
-        elif isinstance(self, dbus.Struct):
-            return tuple(self).__repr__()
-        elif isinstance(self, dbus.Array):
-            return list(self).__repr__()
-        else:
-            return super(type(self), self).__repr__()
-
     new_type_name = type(value).__name__
     new_type_bases = (type(value), PlainType)
-    new_type_dict = dict(parent=parent, name=name, __repr__=repr)
+    new_type_dict = dict(parent=parent, name=name)
+    repr_callable = _get_repr_callable_for_value(value)
+    if repr_callable:
+        new_type_dict['__repr__'] = repr_callable
+    str_callable = _get_str_callable_for_value(value)
+    if str_callable:
+        new_type_dict['__str__'] = str_callable
     new_type = type(new_type_name, new_type_bases, new_type_dict)
     return new_type(value)
 
@@ -375,6 +380,11 @@ class Rectangle(_array_packed_type(4)):
     def height(self):
         return self[3]
 
+    @compatible_repr
+    def __repr__(self):
+        coords = u', '.join((str(c) for c in self))
+        return u'Rectangle(%s)' % (coords)
+
 
 class Point(_array_packed_type(2)):
 
@@ -411,6 +421,10 @@ class Point(_array_packed_type(2)):
     @property
     def y(self):
         return self[1]
+
+    @compatible_repr
+    def __repr__(self):
+        return u'Point(%d, %d)' % (self.x, self.y)
 
 
 class Size(_array_packed_type(2)):
@@ -456,6 +470,10 @@ class Size(_array_packed_type(2)):
     @property
     def height(self):
         return self[1]
+
+    @compatible_repr
+    def __repr__(self):
+        return u'Size(%d, %d)' % (self.w, self.h)
 
 
 class Color(_array_packed_type(4)):
@@ -505,6 +523,15 @@ class Color(_array_packed_type(4)):
     @property
     def alpha(self):
         return self[3]
+
+    @compatible_repr
+    def __repr__(self):
+        return u'Color(%d, %d, %d, %d)' % (
+            self.red,
+            self.green,
+            self.blue,
+            self.alpha
+        )
 
 
 class DateTime(_array_packed_type(1)):
@@ -603,6 +630,17 @@ class DateTime(_array_packed_type(1)):
             return other == self._cached_dt
         return super(DateTime, self).__eq__(other)
 
+    @compatible_repr
+    def __repr__(self):
+        return u'DateTime(%d-%02d-%02d %02d:%02d:%02d)' % (
+            self.year,
+            self.month,
+            self.day,
+            self.hour,
+            self.minute,
+            self.second
+        )
+
 
 class Time(_array_packed_type(4)):
 
@@ -683,6 +721,15 @@ class Time(_array_packed_type(4)):
             return other == self._cached_time
         return super(Time, self).__eq__(other)
 
+    @compatible_repr
+    def __repr__(self):
+        return u'Time(%02d:%02d:%02d.%03d)' % (
+            self.hour,
+            self.minute,
+            self.second,
+            self.millisecond
+        )
+
 
 class Point3D(_array_packed_type(3)):
 
@@ -725,3 +772,11 @@ class Point3D(_array_packed_type(3)):
     @property
     def z(self):
         return self[2]
+
+    @compatible_repr
+    def __repr__(self):
+        return u'Point3D(%d, %d, %d)' % (
+            self.x,
+            self.y,
+            self.z,
+        )

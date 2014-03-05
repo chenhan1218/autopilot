@@ -17,13 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from testtools import TestCase
+from testtools import skipIf, TestCase
 from testtools.matchers import Equals
 from mock import patch
 
+from autopilot import platform
 from autopilot.input import Pointer, Mouse
 
 
+@skipIf(platform.model() != "Desktop", "Not suitable for device (X11)")
 class MouseEmulatorTests(TestCase):
     """Tests for the autopilot mouse emulator."""
 

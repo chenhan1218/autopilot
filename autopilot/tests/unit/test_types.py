@@ -38,8 +38,20 @@ from autopilot.introspection.types import (
     Size,
     Time,
     ValueType,
+    _integer_repr,
+    _boolean_repr,
+    _text_repr,
+    _bytes_repr,
+    _dict_repr,
+    _list_repr,
+    _float_repr,
+    _tuple_repr,
+    _get_repr_callable_for_value,
+    _boolean_str,
+    _integer_str,
 )
 from autopilot.introspection.dbus import DBusIntrospectionObject
+from autopilot.utilities import compatible_repr
 
 
 class PlainTypeTests(TestWithScenarios, TestCase):
@@ -81,7 +93,21 @@ class PlainTypeTests(TestWithScenarios, TestCase):
         """repr for PlainType must be the same as the pythonic type."""
         p = PlainType(self.t(self.v))
 
-        self.assertThat(repr(p), Equals(repr(self.v)))
+        expected = repr(self.v)
+        expected = expected.rstrip('L')
+        self.assertThat(repr(p), Equals(expected))
+
+    def test_str(self):
+        """str(p) for PlainType must be the same as the pythonic type."""
+        p = PlainType(self.t(self.v))
+        try:
+            expected = str(self.v)
+            observed = str(p)
+            self.assertEqual(expected, observed)
+        # in Python 2.x, str(u'\2603') *should* raise a UnicodeEncode error:
+        except UnicodeEncodeError:
+            if not six.PY2:
+                raise
 
     def test_wait_for_raises_RuntimeError(self):
         """The wait_for method must raise a RuntimeError if it's called."""
@@ -131,6 +157,15 @@ class RectangleTypeTests(TestCase):
 
         self.assertThat(r1, Equals(r2))
 
+    def test_repr(self):
+        expected = repr_type("Rectangle(1, 2, 3, 4)")
+        observed = repr(Rectangle(1, 2, 3, 4))
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        r = Rectangle(1, 2, 3, 4)
+        self.assertEqual(repr(r), str(r))
+
 
 class PointTypeTests(TestCase):
 
@@ -161,6 +196,15 @@ class PointTypeTests(TestCase):
         p2 = [1, 2]
 
         self.assertThat(p1, Equals(p2))
+
+    def test_repr(self):
+        expected = repr_type('Point(1, 2)')
+        observed = repr(Point(1, 2))
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        p = Point(1, 2)
+        self.assertEqual(repr(p), str(p))
 
 
 class SizeTypeTests(TestCase):
@@ -194,6 +238,15 @@ class SizeTypeTests(TestCase):
         s2 = [50, 100]
 
         self.assertThat(s1, Equals(s2))
+
+    def test_repr(self):
+        expected = repr_type('Size(1, 2)')
+        observed = repr(Size(1, 2))
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        s = Size(3, 4)
+        self.assertEqual(repr(s), str(s))
 
 
 class ColorTypeTests(TestCase):
@@ -229,6 +282,15 @@ class ColorTypeTests(TestCase):
         c2 = [123, 234, 55, 255]
 
         self.assertThat(c1, Equals(c2))
+
+    def test_repr(self):
+        expected = repr_type('Color(1, 2, 3, 4)')
+        observed = repr(Color(1, 2, 3, 4))
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        c = Color(255, 255, 255, 0)
+        self.assertEqual(repr(c), str(c))
 
 
 class DateTimeTests(TestCase):
@@ -278,6 +340,16 @@ class DateTimeTests(TestCase):
 
         self.assertThat(dt1.datetime, IsInstance(datetime))
 
+    def test_repr(self):
+        dt = DateTime(1377209927)
+        expected = repr_type('DateTime(2013-08-22 22:18:47)')
+        observed = repr(dt)
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        dt = DateTime(1377209927)
+        self.assertEqual(repr(dt), str(dt))
+
 
 class TimeTests(TestCase):
 
@@ -321,6 +393,15 @@ class TimeTests(TestCase):
         dt1 = Time(1, 2, 3, 4)
 
         self.assertThat(dt1.time, IsInstance(time))
+
+    def test_repr(self):
+        expected = repr_type('Time(01:02:03.004)')
+        observed = repr(Time(1, 2, 3, 4))
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        t = Time(2, 3, 4, 5)
+        self.assertEqual(repr(t), str(t))
 
 
 class Point3DTypeTests(TestCase):
@@ -366,6 +447,15 @@ class Point3DTypeTests(TestCase):
         p2 = [1, 2, 4]
 
         self.assertThat(p1, NotEquals(p2))
+
+    def test_repr(self):
+        expected = repr_type('Point3D(1, 2, 3)')
+        observed = repr(Point3D(1, 2, 3))
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        p3d = Point3D(1, 2, 3)
+        self.assertEqual(repr(p3d), str(p3d))
 
 
 class CreateValueInstanceTests(TestCase):
@@ -693,3 +783,128 @@ class DBusIntrospectionObjectTests(TestCase):
             "foo",
             "Cannot create attribute, no data supplied"
         )
+
+
+class TypeReprTests(TestCase):
+
+    def test_integer_repr(self):
+        expected = repr_type('42')
+        observed = _integer_repr(42)
+        self.assertEqual(expected, observed)
+
+    def test_dbus_int_types_all_work(self):
+        expected = repr_type('42')
+        int_types = (
+            dbus.Byte,
+            dbus.Int16,
+            dbus.Int32,
+            dbus.UInt16,
+            dbus.UInt32,
+            dbus.Int64,
+            dbus.UInt64,
+        )
+        for t in int_types:
+            observed = _integer_repr(t(42))
+            self.assertEqual(expected, observed)
+
+    def test_get_repr_gets_integer_repr_for_all_integer_types(self):
+        int_types = (
+            dbus.Byte,
+            dbus.Int16,
+            dbus.Int32,
+            dbus.UInt16,
+            dbus.UInt32,
+            dbus.Int64,
+            dbus.UInt64,
+        )
+        for t in int_types:
+            observed = _get_repr_callable_for_value(t(42))
+            self.assertEqual(_integer_repr, observed)
+
+    def test_boolean_repr_true(self):
+        expected = repr_type('True')
+        for values in (True, dbus.Boolean(True)):
+            observed = _boolean_repr(True)
+            self.assertEqual(expected, observed)
+
+    def test_boolean_repr_false(self):
+        expected = repr_type('False')
+        for values in (False, dbus.Boolean(False)):
+            observed = _boolean_repr(False)
+            self.assertEqual(expected, observed)
+
+    def test_get_repr_gets_boolean_repr_for_dbus_boolean_type(self):
+        observed = _get_repr_callable_for_value(dbus.Boolean(False))
+        self.assertEqual(_boolean_repr, observed)
+
+    def test_text_repr_handles_dbus_string(self):
+        unicode_text = u"plɹoʍ ollǝɥ"
+        observed = _text_repr(dbus.String(unicode_text))
+        self.assertEqual(repr(unicode_text), observed)
+
+    def test_text_repr_handles_dbus_object_path(self):
+        path = u"/path/to/some/object"
+        observed = _text_repr(dbus.ObjectPath(path))
+        self.assertEqual(repr(path), observed)
+
+    def test_binry_repr_handles_dbys_byte_array(self):
+        data = b'Some bytes'
+        observed = _bytes_repr(dbus.ByteArray(data))
+        self.assertEqual(repr(data), observed)
+
+    def test_get_repr_gets_bytes_repr_for_dbus_byte_array(self):
+        observed = _get_repr_callable_for_value(dbus.ByteArray(b''))
+        self.assertEqual(_bytes_repr, observed)
+
+    def test_dict_repr_handles_dbus_dictionary(self):
+        token = dict(foo='bar')
+        observed = _dict_repr(dbus.Dictionary(token))
+        self.assertEqual(repr(token), observed)
+
+    def test_get_repr_gets_dict_repr_on_dbus_dictionary(self):
+        observed = _get_repr_callable_for_value(dbus.Dictionary(dict()))
+        self.assertEqual(_dict_repr, observed)
+
+    def test_float_repr_handles_dbus_double(self):
+        token = 1.2345
+        observed = _float_repr(token)
+        self.assertEqual(repr(token), observed)
+
+    def test_get_repr_gets_float_repr_on_dbus_double(self):
+        observed = _get_repr_callable_for_value(dbus.Double(0.0))
+        self.assertEqual(_float_repr, observed)
+
+    def test_tuple_repr_handles_dbus_struct(self):
+        data = (1, 2, 3)
+        observed = _tuple_repr(dbus.Struct(data))
+        self.assertEqual(repr(data), observed)
+
+    def test_get_repr_gets_tuple_repr_on_dbus_struct(self):
+        observed = _get_repr_callable_for_value(dbus.Struct([1]))
+        self.assertEqual(_tuple_repr, observed)
+
+    def test_list_repr_handles_dbus_array(self):
+        data = [1, 2, 3]
+        observed = _list_repr(dbus.Array(data))
+        self.assertEqual(repr(data), observed)
+
+    def test_get_repr_gets_list_repr_on_dbus_array(self):
+        observed = _get_repr_callable_for_value(dbus.Array([1]))
+        self.assertEqual(_list_repr, observed)
+
+
+class TypeStrTests(TestCase):
+
+    def test_boolean_str_handles_dbus_boolean(self):
+        observed = _boolean_str(dbus.Boolean(False))
+        self.assertEqual(str(False), observed)
+
+    def test_integer_str_handles_dbus_byte(self):
+        observed = _integer_str(dbus.Byte(14))
+        self.assertEqual(str(14), observed)
+
+
+def repr_type(value):
+    """Convert a text or bytes object into the appropriate return type for
+    the __repr__ method."""
+    return compatible_repr(lambda: value)()

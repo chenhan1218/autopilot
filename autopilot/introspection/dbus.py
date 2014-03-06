@@ -138,6 +138,7 @@ def _object_passes_filters(instance, **kwargs):
                 return False
     return True
 
+
 DBusIntrospectionObjectBase = IntrospectableObjectMetaclass(
     'DBusIntrospectionObjectBase',
     (object,),

@@ -91,7 +91,7 @@ class AutopilotRunTestBase(AutopilotTestCase):
         else:
             arg = [sys.executable, '-m', 'autopilot.run']
 
-        environ = os.environ
+        environ = os.environ.copy()
         environ.update(environment_patch)
 
         logger.info("Starting autopilot command with:")

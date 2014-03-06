@@ -111,6 +111,7 @@ class ServerSideParamMatchingTests(TestWithScenarios, TestCase):
         ('int overflow 2', dict(key='key', value=-2147483649, result=False)),
         ('int overflow 3', dict(key='key', value=2147483647, result=True)),
         ('int overflow 4', dict(key='key', value=2147483648, result=False)),
+        ('unicode string', dict(key='key', value=u'H\u2026i', result=False)),
     ]
 
     def test_valid_server_side_param(self):

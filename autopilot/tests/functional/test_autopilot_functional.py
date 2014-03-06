@@ -24,9 +24,11 @@ import os
 import os.path
 import re
 from tempfile import mktemp
+from testtools import skipIf
 from testtools.matchers import Contains, Equals, MatchesRegex, Not
 from textwrap import dedent
 
+from autopilot import platform
 from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional import AutopilotRunTestBase, remove_if_exists
 
@@ -303,6 +305,7 @@ Loading tests from: %s
              'tests.test_simple_suites.AnotherSimpleTest'],
             output, total_title='suites')
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_record_flag_works(self):
         """Must be able to record videos when the -r flag is present."""
 
@@ -340,6 +343,7 @@ Loading tests from: %s
         if should_delete:
             self.addCleanup(remove_if_exists, "/tmp/autopilot")
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_record_dir_option_and_record_works(self):
         """Must be able to specify record directory flag and record."""
 
@@ -383,6 +387,7 @@ Loading tests from: %s
             os.path.exists(
                 '%s/tests.test_simple.SimpleTest.test_simple.ogv' % (ap_dir)))
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_record_dir_option_works(self):
         """Must be able to specify record directory flag."""
 
@@ -416,6 +421,7 @@ Loading tests from: %s
                 '%s/tests.test_simple.SimpleTest.test_simple.ogv' %
                 (video_dir)))
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_no_videos_saved_when_record_option_is_not_present(self):
         """Videos must not be saved if the '-r' option is not specified."""
         self.create_test_file(
@@ -441,6 +447,7 @@ Loading tests from: %s
         self.assertFalse(os.path.exists(
             '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv'))
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_no_videos_saved_for_skipped_test(self):
         """Videos must not be saved if the test has been skipped (not
         failed).
@@ -469,6 +476,7 @@ Loading tests from: %s
         self.assertThat(code, Equals(0))
         self.assertThat(os.path.exists(video_file_path), Equals(False))
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_no_video_for_nested_testcase_when_parent_and_child_fail(self):
         """Test recording must not create a new recording for nested testcases
         where both the parent and the child testcase fail.

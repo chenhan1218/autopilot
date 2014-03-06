@@ -1,3 +1,25 @@
+autopilot (1.4+14.04.20140303-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Prepare functional tests so that they can run on a device (Skips any
+    that cannot run on a device).
+  * Make proxy object attributes look more pythonic when calling
+    repr(...) or str(...) on them. (LP: #1279977)
+
+  [ Nicholas Skaggs ]
+  * Fix the veribage for statenotfound errors, fixes
+    https://bugs.launchpad.net/autopilot/+bug/1269649 (LP: #1269649)
+
+  [ nskaggs ]
+  * Fix the veribage for statenotfound errors, fixes
+    https://bugs.launchpad.net/autopilot/+bug/1269649 (LP: #1269649)
+
+  [ Christopher Lee ]
+  * Prepare functional tests so that they can run on a device (Skips any
+    that cannot run on a device).
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 03 Mar 2014 04:38:08 +0000
+
 autopilot (1.4+14.04.20140219-0ubuntu1) trusty; urgency=low
 
   [ Thomi Richards ]

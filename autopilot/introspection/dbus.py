@@ -126,7 +126,7 @@ def get_classname_from_path(object_path):
     return object_path.split("/")[-1]
 
 
-def object_passes_filters(instance, **kwargs):
+def _object_passes_filters(instance, **kwargs):
     """Return true if *instance* satisifies all the filters present in
     kwargs."""
     with instance.no_automatic_refreshing():
@@ -228,7 +228,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
                 continue
 
             #skip instances that fail attribute check:
-            if object_passes_filters(instance, **kwargs):
+            if _object_passes_filters(instance, **kwargs):
                 result.append(instance)
         return result
 
@@ -456,7 +456,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         state_dicts = self.get_state_by_path(query_path)
         instances = [self.make_introspection_object(i) for i in state_dicts]
         return [i for i in instances
-                if object_passes_filters(i, **client_side_filters)]
+                if _object_passes_filters(i, **client_side_filters)]
 
     def refresh_state(self):
         """Refreshes the object's state.

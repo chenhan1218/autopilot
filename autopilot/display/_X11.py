@@ -44,11 +44,15 @@ class Display(DisplayBase):
         self._blacklisted_drivers = ["NVIDIA"]
 
     def get_num_screens(self):
-        """Get the number of screens attached to the PC."""
+        """Get the number of screens attached to the PC.
+        
+        :returns: int indicating number of screens attached.
+
+        """
         return self._default_screen.get_n_monitors()
 
     def get_primary_screen(self):
-        """Returns an integer of which screen is considered the primary"""
+        """Return an integer of which screen is considered the primary."""
         return self._default_screen.get_primary_monitor()
 
     def get_screen_width(self, screen_number=0):

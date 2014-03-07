@@ -242,7 +242,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :keyword emulator_base: If set, specifies the base class to be used for
             all emulators for this loaded application.
 
-        :raises: **ValueError** if unknown keyword arguments are passed.
+        :raises ValueError: if unknown keyword arguments are passed.
         :return: A proxy object that represents the application. Introspection
          data is retrievable via this object.
 
@@ -400,7 +400,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         :param stack_start: An iterable of
          :class:`~autopilot.process.Window` instances.
-        :raises: **AssertionError** if the top of the window stack does not
+        :raises AssertionError: if the top of the window stack does not
          match the contents of the stack_start parameter.
 
         """
@@ -430,9 +430,9 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :param obj: The object to test.
         :param kwargs: One or more keyword arguments to match against the
          attributes of the *obj* parameter.
-        :raises: **ValueError** if no keyword arguments were given.
-        :raises: **ValueError** if a named attribute is a callable object.
-        :raises: **AssertionError** if any of the attribute/value pairs in
+        :raises ValueError: if no keyword arguments were given.
+        :raises ValueError: if a named attribute is a callable object.
+        :raises AssertionError: if any of the attribute/value pairs in
          kwargs do not match the attributes on the object passed in.
 
         """

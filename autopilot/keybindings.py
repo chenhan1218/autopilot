@@ -137,9 +137,9 @@ def get(binding_name):
     """Get a keybinding, given its well-known name.
 
     :param string binding_name:
-    :raises: **TypeError** if binding_name is not a string
-    :raises: **ValueError** if binding_name cannot be found in the bindings
-             dictionaries.
+    :raises TypeError: if binding_name is not a string
+    :raises ValueError: if binding_name cannot be found in the bindings
+                        dictionaries.
     :returns: string for keybinding
 
     """
@@ -160,7 +160,7 @@ def get_hold_part(binding_name):
     Use this function to split bindings like "Alt+Tab" into the part that must
     be held down. See :meth:`get_tap_part` for the part that must be tapped.
 
-    :raises: **ValueError** if the binding specified does not have multiple
+    :raises ValueError: if the binding specified does not have multiple
      parts.
 
     """
@@ -180,7 +180,7 @@ def get_tap_part(binding_name):
     be held tapped. See :meth:`get_hold_part` for the part that must be held
     down.
 
-    :raises: **ValueError** if the binding specified does not have multiple
+    :raises ValueError: if the binding specified does not have multiple
      parts.
 
     """
@@ -197,9 +197,9 @@ def _get_compiz_keybinding(compiz_tuple):
     """Given a keybinding name, get the keybinding string from the compiz
     option.
 
-    :raises: **ValueError** if the compiz setting described does not hold a
+    :raises ValueError: if the compiz setting described does not hold a
      keybinding.
-    :raises: **RuntimeError** if the compiz keybinding has been disabled.
+    :raises RuntimeError: if the compiz keybinding has been disabled.
     :returns: compiz keybinding
 
     """
@@ -299,10 +299,10 @@ _global_compiz_context = None
 
 def _get_global_compiz_context():
     """Get the compizconfig global context object.
-    
+
     :returns: global compiz context, either already defined or from compiz
               config
-    
+
     """
     global _global_compiz_context
     if _global_compiz_context is None:
@@ -315,7 +315,7 @@ def _get_global_compiz_context():
 def _get_compiz_plugin(plugin_name):
     """Get a compizconfig plugin with the specified name.
 
-    :raises: KeyError of the plugin named does not exist.
+    :raises KeyError: if the plugin named does not exist.
     :returns: compizconfig plugin
 
     """
@@ -331,7 +331,7 @@ def _get_compiz_plugin(plugin_name):
 def _get_compiz_setting(plugin_name, setting_name):
     """Get a compizconfig setting object, given a plugin name and setting name.
 
-    :raises: KeyError if the plugin or setting is not found.
+    :raises KeyError: if the plugin or setting is not found.
     :returns: compiz setting object
 
     """

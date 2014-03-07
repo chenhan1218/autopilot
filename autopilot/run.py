@@ -178,7 +178,7 @@ def _reexecute_autopilot_using_module():
 def _discover_test(test_name):
     """Return tuple of (TestSuite of found test, top_level_dir of test).
 
-    :raises: ImportError if test_name isn't a valid module or test name
+    :raises ImportError: if test_name isn't a valid module or test name
 
     """
     loader = TestLoader()

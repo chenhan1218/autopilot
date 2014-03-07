@@ -189,7 +189,7 @@ class StagnantStateDetector(object):
         :param threshold: Amount of times the updated state can fail to
           differ consecutively before raising an exception.
 
-        :raises: **ValueError** if *threshold* isn't a positive integer.
+        :raises ValueError: if *threshold* isn't a positive integer.
 
         """
         if type(threshold) is not int or threshold <= 0:
@@ -205,7 +205,7 @@ class StagnantStateDetector(object):
         :param state: Hashable state argument to compare against the previous
           iteration
 
-        :raises: **TypeError** when state is unhashable
+        :raises TypeError: when state is unhashable
 
         """
         state_hash = hash(state)

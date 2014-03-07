@@ -412,7 +412,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             of the appropriate type (the latter case is for overridden emulator
             classes).
 
-        :raises: **TypeError** if neither *type_name* or keyword filters are
+        :raises TypeError: if neither *type_name* or keyword filters are
             provided.
 
         .. seealso::
@@ -465,7 +465,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         automatically retrieves new state every time this object's attributes
         are read.
 
-        :raises: **StateNotFound** if the object in the application under test
+        :raises StateNotFound: if the object in the application under test
             has been destroyed.
 
         """
@@ -529,7 +529,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         :param piece: an XPath-like query that specifies which bit of the tree
             you want to look at.
-        :raises: **TypeError** on invalid *piece* parameter.
+        :raises TypeError: on invalid *piece* parameter.
 
         """
         if not isinstance(piece, six.string_types):
@@ -599,7 +599,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         This only works for classes that derive from DBusIntrospectionObject.
 
         :returns: A proxy object that derives from DBusIntrospectionObject
-        :raises: ValueError if more than one class is appropriate for this
+        :raises ValueError: if more than one class is appropriate for this
                  dbus_tuple
 
         """
@@ -730,7 +730,7 @@ def _get_proxy_object_class(proxy_class_dict, default_class, path, state):
     :param path: dbus path
     :param state: dbus state
     :returns: appropriate custom proxy class
-    :raises: ValueError if more than one class in the dict matches
+    :raises ValueError: if more than one class in the dict matches
 
     """
     class_type = _try_custom_proxy_classes(proxy_class_dict, path, state)
@@ -748,7 +748,7 @@ def _try_custom_proxy_classes(proxy_class_dict, path, state):
     :param path: dbus path
     :param state: dbus state dict
     :returns: matching custom proxy class
-    :raises: ValueError if more than one class matches
+    :raises ValueError: if more than one class matches
 
     """
     possible_classes = [c for c in proxy_class_dict.values() if

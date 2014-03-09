@@ -197,7 +197,13 @@ def _get_click_app_status(app_id):
 
 
 def _get_click_application_log_content_object(app_id):
-    return content_from_file(_get_click_application_log_path(app_id))
+    try:
+        return content_from_file(
+            _get_click_application_log_path(app_id),
+            buffer_now=True
+        )
+    except IOError as e:
+        return text_content(u'Unable to open application log: %s' % (e,))
 
 
 def _get_click_application_log_path(app_id):

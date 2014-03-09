@@ -22,7 +22,7 @@ from tempfile import NamedTemporaryFile
 from mock import Mock, patch
 import os
 from testtools import TestCase
-from testtools.matchers import Contains, Not, Raises
+from testtools.matchers import Contains, Equals, Not, Raises
 
 from autopilot.content import follow_file
 
@@ -105,6 +105,15 @@ class FileFollowerTests(TestCase):
                     content_name,
                     "[Errno 13] Permission denied: '%s'" % f.name
                 )
+
+    def test_follow_file_returns_empty_content_object_on_error(self):
+        fake_test = Mock()
+        content_name = self.getUniqueString()
+        with NamedTemporaryFile() as f:
+            os.chmod(f.name, 0)
+
+            content_obj = follow_file(f.name, fake_test, content_name)
+            self.assertThat(content_obj.as_text(), Equals(u''))
 
     def test_real_test_has_detail_added(self):
         with NamedTemporaryFile() as f:

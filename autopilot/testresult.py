@@ -24,7 +24,6 @@ from __future__ import absolute_import
 
 import logging
 
-from autopilot.globals import get_log_verbose
 from testtools import (
     ExtendedToOriginalDecorator,
     ExtendedToStreamDecorator,
@@ -32,6 +31,9 @@ from testtools import (
     TextTestResult,
     try_import,
 )
+
+from autopilot.globals import get_log_verbose
+from autopilot.utilities import _raise_on_unknown_kwargs
 
 
 class LoggedTestResultDecorator(TestResultDecorator):
@@ -89,24 +91,33 @@ def get_default_format():
 def _construct_xml(**kwargs):
     from junitxml import JUnitXmlResult
     stream = kwargs.pop('stream')
-    return LoggedTestResultDecorator(
+    failfast = kwargs.pop('failfast')
+    _raise_on_unknown_kwargs(kwargs)
+    result_object = LoggedTestResultDecorator(
         ExtendedToOriginalDecorator(
             JUnitXmlResult(stream)
         )
     )
+    result_object.failfast = failfast
+    return result_object
 
 
 def _construct_text(**kwargs):
     stream = kwargs.pop('stream')
     failfast = kwargs.pop('failfast')
+    _raise_on_unknown_kwargs(kwargs)
     return LoggedTestResultDecorator(TextTestResult(stream, failfast))
 
 
 def _construct_subunit(**kwargs):
     from subunit import StreamResultToBytes
     stream = kwargs.pop('stream')
-    return LoggedTestResultDecorator(
+    failfast = kwargs.pop('failfast')
+    _raise_on_unknown_kwargs(kwargs)
+    result_object = LoggedTestResultDecorator(
         ExtendedToStreamDecorator(
             StreamResultToBytes(stream)
         )
     )
+    result_object.failfast = failfast
+    return result_object

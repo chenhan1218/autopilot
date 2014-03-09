@@ -34,6 +34,7 @@ from testtools.matchers import (
     IsInstance,
     Not,
     raises,
+    Raises,
     StartsWith,
 )
 
@@ -707,22 +708,36 @@ class OutputStreamTests(TestCase):
                 )
 
     def test_get_output_stream_gets_stdout_with_no_logfile_specified(self):
-        args = Namespace(output=None)
-        output_stream = run.get_output_stream(args)
+        output_stream = run.get_output_stream('text', None)
         self.assertThat(output_stream.name, Equals('<stdout>'))
 
     def test_get_output_stream_opens_correct_file(self):
-        args = Namespace(output=tempfile.mktemp(), format='xml')
-        self.addCleanup(os.unlink, args.output)
+        format = 'xml'
+        output = tempfile.mktemp()
+        self.addCleanup(os.unlink, output)
 
-        output_stream = run.get_output_stream(args)
-        self.assertThat(output_stream.name, Equals(args.output))
+        output_stream = run.get_output_stream(format, output)
+        self.assertThat(output_stream.name, Equals(output))
 
-    def test_text_mode_binary_stream_opens_in_text_mode(self):
+    def test_text_mode_file_stream_opens_in_text_mode(self):
         path = tempfile.mktemp()
         self.addCleanup(os.unlink, path)
         stream = run._get_text_mode_file_stream(path)
         self.assertThat(stream.mode, Equals('w'))
+
+    def test_text_mode_file_stream_accepts_text_type_only(self):
+        path = tempfile.mktemp()
+        self.addCleanup(os.unlink, path)
+        stream = run._get_text_mode_file_stream(path)
+        self.assertThat(
+            lambda: stream.write(u'Text!'),
+            Not(Raises())
+        )
+        if six.PY3:
+            self.assertThat(
+                lambda: stream.write(b'Bytes'),
+                raises(TypeError)
+            )
 
     def test_binary_mode_file_stream_opens_in_binary_mode(self):
         path = tempfile.mktemp()
@@ -730,23 +745,60 @@ class OutputStreamTests(TestCase):
         stream = run._get_binary_mode_file_stream(path)
         self.assertThat(stream.mode, Equals('wb'))
 
+    def test_binary_mode_file_stream_accepts_text_only(self):
+        path = tempfile.mktemp()
+        self.addCleanup(os.unlink, path)
+        stream = run._get_binary_mode_file_stream(path)
+        self.assertThat(
+            lambda: stream.write(u'Text!'),
+            Not(Raises())
+        )
+        if six.PY3:
+            self.assertThat(
+                lambda: stream.write(b'Bytes'),
+                raises(TypeError)
+            )
+
+    def test_raw_binary_mode_file_stream_opens_in_binary_mode(self):
+        path = tempfile.mktemp()
+        self.addCleanup(os.unlink, path)
+        stream = run._get_raw_binary_mode_file_stream(path)
+        self.assertThat(stream.mode, Equals('wb'))
+
+    def test_raw_binary_mode_file_stream_accepts_bytes_only(self):
+        path = tempfile.mktemp()
+        self.addCleanup(os.unlink, path)
+        stream = run._get_raw_binary_mode_file_stream(path)
+        self.assertThat(
+            lambda: stream.write(b'Bytes'),
+            Not(Raises())
+        )
+        if six.PY3:
+            self.assertThat(
+                lambda: stream.write(u'Text'),
+                raises(TypeError)
+            )
+
     def test_xml_format_opens_text_mode_stream(self):
-        args = Namespace(output=tempfile.mktemp(), format='xml')
+        output = tempfile.mktemp()
+        format = 'xml'
         with patch.object(run, '_get_text_mode_file_stream') as pgts:
-            run.get_output_stream(args)
-            pgts.assert_called_once_with(args.output)
+            run.get_output_stream(format, output)
+            pgts.assert_called_once_with(output)
 
     def test_txt_format_opens_binary_mode_stream(self):
-        args = Namespace(output=tempfile.mktemp(), format='txt')
+        output = tempfile.mktemp()
+        format = 'text'
         with patch.object(run, '_get_binary_mode_file_stream') as pgbs:
-            run.get_output_stream(args)
-            pgbs.assert_called_once_with(args.output)
+            run.get_output_stream(format, output)
+            pgbs.assert_called_once_with(output)
 
-    def test_subunit_format_opens_text_mode_stream(self):
-        args = Namespace(output=tempfile.mktemp(), format='subunit')
-        with patch.object(run, '_get_text_mode_file_stream') as pgbs:
-            run.get_output_stream(args)
-            pgbs.assert_called_once_with(args.output)
+    def test_subunit_format_opens_raw_binary_mode_stream(self):
+        output = tempfile.mktemp()
+        format = 'subunit'
+        with patch.object(run, '_get_raw_binary_mode_file_stream') as pgrbs:
+            run.get_output_stream(format, output)
+            pgrbs.assert_called_once_with(output)
 
     def test_print_log_file_location_prints_correct_message(self):
         path = self.getUniqueString()

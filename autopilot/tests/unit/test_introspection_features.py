@@ -22,7 +22,7 @@ import tempfile
 import shutil
 import os.path
 
-from mock import patch, Mock
+from mock import patch, Mock, MagicMock
 from textwrap import dedent
 from testtools import TestCase
 from testtools.matchers import (
@@ -52,6 +52,7 @@ from autopilot.introspection import (
 from autopilot.introspection.dbus import (
     _get_filter_string_for_key_value_pair,
     _is_valid_server_side_filter_param,
+    _object_passes_filters,
     CustomEmulatorBase,
     DBusIntrospectionObject,
 )
@@ -140,6 +141,43 @@ class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):
     def test_query_string(self):
         s = _get_filter_string_for_key_value_pair(self.k, self.v)
         self.assertThat(s, Equals(self.r))
+
+
+class ClientSideFilteringTests(TestCase):
+
+    def get_empty_fake_object(self):
+        return type(
+            'EmptyObject',
+            (object,),
+            {'no_automatic_refreshing': MagicMock()}
+        )
+
+    def test_object_passes_filters_disables_refreshing(self):
+        obj = self.get_empty_fake_object()
+        _object_passes_filters(obj)
+
+        obj.no_automatic_refreshing.assert_called_once_with()
+        self.assertTrue(
+            obj.no_automatic_refreshing.return_value.__enter__.called
+        )
+
+    def test_object_passes_filters_works_with_no_filters(self):
+        obj = self.get_empty_fake_object()
+        self.assertTrue(_object_passes_filters(obj))
+
+    def test_object_passes_filters_fails_when_attr_missing(self):
+        obj = self.get_empty_fake_object()
+        self.assertFalse(_object_passes_filters(obj, foo=123))
+
+    def test_object_passes_filters_fails_when_attr_has_wrong_value(self):
+        obj = self.get_empty_fake_object()
+        obj.foo = 456
+        self.assertFalse(_object_passes_filters(obj, foo=123))
+
+    def test_object_passes_filters_succeeds_with_one_correct_parameter(self):
+        obj = self.get_empty_fake_object()
+        obj.foo = 123
+        self.assertTrue(_object_passes_filters(obj, foo=123))
 
 
 class DBusIntrospectionObjectTests(TestCase):

@@ -683,10 +683,27 @@ def _is_valid_server_side_filter_param(key, value):
     processing.
 
     """
-    return (
-        type(value) in (str, int, bool) and
-        re.match(r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$', key) is not None and
-        (type(value) != int or -2**31 <= value <= 2**31 - 1))
+    key_is_valid = re.match(
+        r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$',
+        key
+    ) is not None
+
+    if type(value) == int:
+        return key_is_valid and (-2**31 <= value <= 2**31 - 1)
+
+    elif type(value) == bool:
+        return key_is_valid
+
+    elif type(value) == six.binary_type:
+        return key_is_valid
+
+    elif type(value) == six.text_type:
+        try:
+            value.encode('ascii')
+            return key_is_valid
+        except UnicodeEncodeError:
+            pass
+    return False
 
 
 def _get_filter_string_for_key_value_pair(key, value):

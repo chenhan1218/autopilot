@@ -113,8 +113,8 @@ class NormalApplicationLauncherTests(TestCase):
                     Equals([('process-return-code', text_content('0')), {}]),
                     Equals([('process-stdout', text_content('stdout')), {}]),
                     Equals([('process-stderr', text_content('stderr')), {}]),
-                    ])
-                )
+                ])
+            )
 
     def test_setup_environment_returns_prepare_environment_return_value(self):
         token = self.getUniqueString()

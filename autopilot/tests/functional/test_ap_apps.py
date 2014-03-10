@@ -59,7 +59,8 @@ logger = logging.getLogger(__name__)
 def locale_is_supported():
     """Check if our currently set locale supports writing unicode to stdout."""
     try:
-        u'\u2026'.encode(sys.stdout.encoding)
+        encoding = sys.stdout.encoding or sys.getfilesystemencoding()
+        u'\u2026'.encode(encoding)
         return True
     except UnicodeEncodeError:
         return False

@@ -56,6 +56,15 @@ if six.PY3:
 logger = logging.getLogger(__name__)
 
 
+def locale_is_supported():
+    """Check if our currently set locale supports writing unicode to stdout."""
+    try:
+        u'\u2026'.encode(sys.stdout.encoding)
+        return True
+    except UnicodeEncodeError:
+        return False
+
+
 def _get_unused_pid():
     """Returns a Process ID number that isn't currently running.
 
@@ -77,7 +86,10 @@ class ApplicationTests(AutopilotTestCase):
 
         """
         path = mktemp(extension)
-        open(path, 'w').write(content)
+        if six.PY3:
+            open(path, 'w', encoding='utf-8').write(content)
+        else:
+            open(path, 'w').write(content)
         self.addCleanup(os.unlink, path)
 
         os.chmod(path, os.stat(path).st_mode | stat.S_IXUSR)
@@ -372,6 +384,7 @@ class QtTests(ApplicationTests):
         app_proxy = self.launch_test_application(wrapper_path, app_type='qt')
         self.assertTrue(app_proxy is not None)
 
+    @skipIf(not locale_is_supported(), "Current locale is not supported")
     def test_can_handle_non_unicode_stdout_and_stderr(self):
         path = self.write_script(dedent("""\
             #!%s

@@ -62,7 +62,6 @@ from autopilot.application._launcher import (
     _kill_pid,
     _kill_process,
     _launch_click_app,
-    _raise_if_not_empty,
 )
 from autopilot.utilities import sleep
 
@@ -113,8 +112,8 @@ class NormalApplicationLauncherTests(TestCase):
                     Equals([('process-return-code', text_content('0')), {}]),
                     Equals([('process-stdout', text_content('stdout')), {}]),
                     Equals([('process-stderr', text_content('stderr')), {}]),
-                    ])
-                )
+                ])
+            )
 
     def test_setup_environment_returns_prepare_environment_return_value(self):
         token = self.getUniqueString()
@@ -298,6 +297,19 @@ class ClickApplicationLauncherTests(TestCase):
                 Equals(from_file())
             )
 
+    def test_get_click_app_log_works_when_no_log_file_exists(self):
+        token = self.getUniqueString()
+        with patch.object(
+            _l,
+            '_get_click_application_log_path',
+            return_value=token
+        ):
+
+            self.assertThat(
+                lambda: _l._get_click_application_log_content_object("foo"),
+                Not(raises(IOError))
+            )
+
     @patch.object(_l, '_launch_click_app', return_value=123)
     def test_launch_click_app_returns_pid(self, patched_launch_click_app):
         launcher = ClickApplicationLauncher(self.addDetail)
@@ -349,20 +361,6 @@ class ClickApplicationLauncherTests(TestCase):
 
 
 class ApplicationLauncherInternalTests(TestCase):
-
-    def test_raise_if_not_empty_raises_on_nonempty_dict(self):
-        populated_dict = dict(testing=True)
-        self.assertThat(
-            lambda: _raise_if_not_empty(populated_dict),
-            raises(ValueError("Unknown keyword arguments: 'testing'."))
-        )
-
-    def test_raise_if_not_empty_does_not_raise_on_empty(self):
-        empty_dict = dict()
-        self.assertThat(
-            lambda: _raise_if_not_empty(empty_dict),
-            Not(Raises())
-        )
 
     def test_get_click_app_status(self):
         with patch.object(_l, '_call_upstart_with_args') as call_upstart:

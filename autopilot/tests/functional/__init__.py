@@ -246,9 +246,9 @@ def _get_environment_patch(pythonpath):
     )
 
     pythonpath_additions = []
-    if pythonpath is not None:
+    if pythonpath:
         pythonpath_additions.append(pythonpath)
-    if not os.getcwd().startswith('/usr/'):
+    if not ap_base_path.startswith('/usr/'):
         pythonpath_additions.append(ap_base_path)
     environment_patch['PYTHONPATH'] = ":".join(pythonpath_additions)
 

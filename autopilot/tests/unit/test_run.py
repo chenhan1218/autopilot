@@ -723,7 +723,10 @@ class OutputStreamTests(TestCase):
         path = tempfile.mktemp()
         self.addCleanup(os.unlink, path)
         stream = run._get_text_mode_file_stream(path)
-        self.assertThat(stream.mode, Equals('w'))
+        if six.PY2:
+            self.assertThat(stream.mode, Equals('w'))
+        else:
+            self.assertThat(stream.mode, Equals('wb'))
 
     def test_text_mode_file_stream_accepts_text_type_only(self):
         path = tempfile.mktemp()

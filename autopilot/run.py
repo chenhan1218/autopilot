@@ -30,6 +30,7 @@ import os
 import os.path
 from platform import node
 from random import shuffle
+import six
 import subprocess
 import sys
 from unittest import TestLoader, TestSuite
@@ -115,10 +116,17 @@ def get_output_stream(format, path):
 
 
 def _get_text_mode_file_stream(log_file):
-    return open(
-        log_file,
-        'w'
-    )
+    if six.PY2:
+        return open(
+            log_file,
+            'w'
+        )
+    else:
+        return open(
+            log_file,
+            'w',
+            encoding='utf-8',
+        )
 
 
 def _get_binary_mode_file_stream(log_file):

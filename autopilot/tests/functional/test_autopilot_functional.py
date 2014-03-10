@@ -50,23 +50,33 @@ class AutopilotFunctionalTestsBase(AutopilotRunTestBase):
         return self.run_autopilot(args_list)
 
     def assertTestsInOutput(self, tests, output, total_title='tests'):
-        """Asserts that 'tests' are all present in 'output'."""
+        """Asserts that 'tests' are all present in 'output'.
+
+        This assertion is intelligent enough to know that tests are not always
+        printed in alphabetical order.
+
+        """
 
         if type(tests) is not list:
             raise TypeError("tests must be a list, not %r" % type(tests))
         if not isinstance(output, str):
             raise TypeError("output must be a string, not %r" % type(output))
 
-        test_names = ''.join(['    %s\n' % t for t in sorted(tests)])
-        expected = '''\
-Loading tests from: %s
+        expected_heading = 'Loading tests from: %s\n\n' % self.base_path
+        expected_tests = ['    %s' % t for t in tests]
+        expected_footer = ' %d total %s.' % (len(tests), total_title)
 
-%s
+        parts = output.split('\n')
+        observed_heading = '\n'.join(parts[:2]) + '\n'
+        observed_test_list = parts[2:-4]
+        observed_footer = parts[-2]
 
- %d total %s.
-''' % (self.base_path, test_names, len(tests), total_title)
-
-        self.assertThat(output, Equals(expected))
+        self.assertThat(expected_heading, Equals(observed_heading))
+        self.assertThat(
+            sorted(expected_tests),
+            Equals(sorted(observed_test_list))
+        )
+        self.assertThat(expected_footer, Equals(observed_footer))
 
     def test_can_list_empty_test_dir(self):
         """Autopilot list must report 0 tests found with an empty test

@@ -133,11 +133,16 @@ class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):
         ('simple bytes', dict(k='Name', v=b"btn1", r="Name=\"btn1\"")),
         ('string space', dict(k='Name', v=u"a b  c ", r="Name=\"a b  c \"")),
         ('bytes space', dict(k='Name', v=b"a b  c ", r="Name=\"a b  c \"")),
-        ('str escapes', dict(
+        ('string escapes', dict(
             k='a',
-            v="\a\b\f\n\r\t\v\\",
+            v=u"\a\b\f\n\r\t\v\\",
             r=r'a="\x07\x08\x0c\n\r\t\x0b\\"')),
-        ('escape quotes', dict(k='b', v="'", r='b="\\' + "'" + '"')),
+        ('byte escapes', dict(
+            k='a',
+            v=b"\a\b\f\n\r\t\v\\",
+            r=r'a="\x07\x08\x0c\n\r\t\x0b\\"')),
+        ('escape quotes (str)', dict(k='b', v="'", r='b="\\' + "'" + '"')),
+        ('escape quotes (bytes)', dict(k='b', v=b"'", r='b="\\' + "'" + '"')),
     ]
 
     def test_query_string(self):

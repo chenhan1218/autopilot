@@ -129,7 +129,8 @@ class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):
         ('bool false', dict(k='visible', v=False, r="visible=False")),
         ('int +ve', dict(k='size', v=123, r="size=123")),
         ('int -ve', dict(k='prio', v=-12, r="prio=-12")),
-        ('simple string', dict(k='Name', v="btn1", r="Name=\"btn1\"")),
+        ('simple string', dict(k='Name', v=u"btn1", r="Name=\"btn1\"")),
+        ('simple bytes', dict(k='Name', v=u"btn1", r="Name=\"btn1\"")),
         ('string space', dict(k='Name', v="a b  c ", r="Name=\"a b  c \"")),
         ('str escapes', dict(
             k='a',

@@ -726,12 +726,15 @@ def _get_filter_string_for_key_value_pair(key, value):
         return '{}="{}"'.format(key, escaped_value)
     elif isinstance(value, six.binary_type):
         if six.PY3:
-            return key + b'=' + value
+            escaped_value = value.decode('utf-8')\
+                .encode("unicode_escape")\
+                .decode('ASCII')\
+                .replace("'", "\\'")
         else:
             escaped_value = value.encode("string_escape")
             # note: string_escape codec escapes "'" but not '"'...
             escaped_value = escaped_value.replace('"', r'\"')
-            return '{}="{}"'.format(key, escaped_value)
+        return '{}="{}"'.format(key, escaped_value)
     elif isinstance(value, int) or isinstance(value, bool):
         return "{}={}".format(key, repr(value))
     else:

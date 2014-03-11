@@ -714,9 +714,20 @@ def _get_filter_string_for_key_value_pair(key, value):
     this is not the case.
 
     """
-    if isinstance(value, str):
+    if isinstance(value, six.text_type):
         if six.PY3:
             escaped_value = value.encode("unicode_escape")\
+                .decode('ASCII')\
+                .replace("'", "\\'")
+        else:
+            escaped_value = value.encode('utf-8').encode("string_escape")
+            # note: string_escape codec escapes "'" but not '"'...
+            escaped_value = escaped_value.replace('"', r'\"')
+        return '{}="{}"'.format(key, escaped_value)
+    elif isinstance(value, six.binary_type):
+        if six.PY3:
+            escaped_value = value.decode('utf-8')\
+                .encode("unicode_escape")\
                 .decode('ASCII')\
                 .replace("'", "\\'")
         else:

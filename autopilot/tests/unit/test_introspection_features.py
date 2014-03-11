@@ -129,13 +129,20 @@ class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):
         ('bool false', dict(k='visible', v=False, r="visible=False")),
         ('int +ve', dict(k='size', v=123, r="size=123")),
         ('int -ve', dict(k='prio', v=-12, r="prio=-12")),
-        ('simple string', dict(k='Name', v="btn1", r="Name=\"btn1\"")),
-        ('string space', dict(k='Name', v="a b  c ", r="Name=\"a b  c \"")),
-        ('str escapes', dict(
+        ('simple string', dict(k='Name', v=u"btn1", r="Name=\"btn1\"")),
+        ('simple bytes', dict(k='Name', v=b"btn1", r="Name=\"btn1\"")),
+        ('string space', dict(k='Name', v=u"a b  c ", r="Name=\"a b  c \"")),
+        ('bytes space', dict(k='Name', v=b"a b  c ", r="Name=\"a b  c \"")),
+        ('string escapes', dict(
             k='a',
-            v="\a\b\f\n\r\t\v\\",
+            v=u"\a\b\f\n\r\t\v\\",
             r=r'a="\x07\x08\x0c\n\r\t\x0b\\"')),
-        ('escape quotes', dict(k='b', v="'", r='b="\\' + "'" + '"')),
+        ('byte escapes', dict(
+            k='a',
+            v=b"\a\b\f\n\r\t\v\\",
+            r=r'a="\x07\x08\x0c\n\r\t\x0b\\"')),
+        ('escape quotes (str)', dict(k='b', v="'", r='b="\\' + "'" + '"')),
+        ('escape quotes (bytes)', dict(k='b', v=b"'", r='b="\\' + "'" + '"')),
     ]
 
     def test_query_string(self):

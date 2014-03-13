@@ -20,21 +20,39 @@
 
 from __future__ import absolute_import
 
+import os.path
+from testtools import skipIf
 from testtools.matchers import Equals
 
+from autopilot import platform
 from autopilot.testcase import AutopilotTestCase
 from autopilot.process import ProcessManager
 import logging
 logger = logging.getLogger(__name__)
 
 
+@skipIf(platform.model() != "Desktop", "Not suitable for device (ProcManager)")
 class OpenWindowTests(AutopilotTestCase):
 
     scenarios = [
-        (k, {'app_name': k}) for k in ProcessManager.KNOWN_APPS.keys()]
+        (
+            k,
+            {
+                'app_name': k,
+                'app_details': v,
+            }
+        ) for k, v in ProcessManager.KNOWN_APPS.items()
+    ]
 
     def test_open_window(self):
         """self.start_app_window must open a new window of the given app."""
+        if not os.path.exists(
+            os.path.join(
+                '/usr/share/applications',
+                self.app_details['desktop-file']
+            )
+        ):
+            self.skip("Application '%s' is not installed" % self.app_name)
         existing_apps = self.process_manager.get_app_instances(self.app_name)
         # if we opened the app, ensure that we close it again to avoid leaking
         # processes like remmina

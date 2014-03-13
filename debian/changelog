@@ -1,3 +1,39 @@
+autopilot (1.4+14.04.20140310.1-0ubuntu1) trusty; urgency=low
+
+  * 
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 10 Mar 2014 19:39:00 +0000
+
+autopilot (1.4+14.04.20140303.is.1.4+14.04.20140219-0ubuntu1) trusty; urgency=medium
+
+  * Revert to previous version as it creates some AP tests to fail.
+    Autopilot was part of the autopilot-qt transaction, so reverting that one
+    as well to have a tested combination. (LP: #1287727)
+
+ -- Didier Roche <didrocks@ubuntu.com>  Tue, 04 Mar 2014 15:53:30 +0100
+
+autopilot (1.4+14.04.20140303-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Prepare functional tests so that they can run on a device (Skips any
+    that cannot run on a device).
+  * Make proxy object attributes look more pythonic when calling
+    repr(...) or str(...) on them. (LP: #1279977)
+
+  [ Nicholas Skaggs ]
+  * Fix the veribage for statenotfound errors, fixes
+    https://bugs.launchpad.net/autopilot/+bug/1269649 (LP: #1269649)
+
+  [ nskaggs ]
+  * Fix the veribage for statenotfound errors, fixes
+    https://bugs.launchpad.net/autopilot/+bug/1269649 (LP: #1269649)
+
+  [ Christopher Lee ]
+  * Prepare functional tests so that they can run on a device (Skips any
+    that cannot run on a device).
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 03 Mar 2014 04:38:08 +0000
+
 autopilot (1.4+14.04.20140219-0ubuntu1) trusty; urgency=low
 
   [ Thomi Richards ]

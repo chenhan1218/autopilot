@@ -36,7 +36,6 @@ from testtools.matchers import (
     raises,
 )
 from textwrap import dedent
-import unittest
 
 from autopilot.process import ProcessManager
 from autopilot.platform import model
@@ -55,6 +54,16 @@ if six.PY3:
     xrange = range
 
 logger = logging.getLogger(__name__)
+
+
+def locale_is_supported():
+    """Check if our currently set locale supports writing unicode to stdout."""
+    try:
+        encoding = sys.stdout.encoding or sys.getfilesystemencoding()
+        u'\u2026'.encode(encoding)
+        return True
+    except UnicodeEncodeError:
+        return False
 
 
 def _get_unused_pid():
@@ -183,6 +192,7 @@ class ApplicationLaunchTests(ApplicationTests):
         difference = end - start
         self.assertThat(difference.total_seconds(), LessThan(5))
 
+    @skipIf(model() != "Desktop", "Not suitable for device (Qt4)")
     def test_closing_app_produces_good_error_from_get_state_by_path(self):
         """Testing an application that closes before the test ends must
         produce a good error message when calling get_state_by_path on the
@@ -290,6 +300,7 @@ class QtTests(ApplicationTests, QmlTestMixin):
         path = self.get_qml_viewer_app_path()
         self.launch_upstart_application(path)
 
+    @skipIf(model() != "Desktop", "Only suitable on Desktop (Qt4)")
     def test_can_launch_normal_qt_script(self):
         path = self.write_script(dedent("""\
             #!%s
@@ -338,6 +349,7 @@ class QtTests(ApplicationTests, QmlTestMixin):
         launch_fn = lambda: self.launch_test_application(path, app_type='qt')
         self.assertThat(launch_fn, raises(ProcessSearchError))
 
+    @skipIf(model() != "Desktop", "Only suitable on Desktop (Qt4)")
     def test_can_launch_wrapper_script(self):
         path = self.write_script(dedent("""\
             #!%s
@@ -359,7 +371,7 @@ class QtTests(ApplicationTests, QmlTestMixin):
         app_proxy = self.launch_test_application(wrapper_path, app_type='qt')
         self.assertTrue(app_proxy is not None)
 
-    @unittest.expectedFailure
+    @skipIf(not locale_is_supported(), "Current locale is not supported")
     def test_can_handle_non_unicode_stdout_and_stderr(self):
         path = self.write_script(dedent("""\
             #!%s
@@ -383,7 +395,6 @@ class QtTests(ApplicationTests, QmlTestMixin):
                 lambda: content_obj.as_text(),
                 Not(Raises())
             )
-        self.assertEqual(1, 2)
 
 
 class GtkTests(ApplicationTests):

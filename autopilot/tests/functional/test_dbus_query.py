@@ -24,12 +24,15 @@ import subprocess
 import signal
 from time import time
 from tempfile import mktemp
-
-from autopilot.testcase import AutopilotTestCase
+from testtools import skipIf
 from testtools.matchers import Equals, NotEquals, raises, LessThan, GreaterThan
+
+from autopilot import platform
+from autopilot.testcase import AutopilotTestCase
 from autopilot.introspection.dbus import StateNotFoundError
 
 
+@skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
 class DbusQueryTests(AutopilotTestCase):
     """A collection of dbus query tests for autopilot."""
 
@@ -198,6 +201,7 @@ class DbusQueryTests(AutopilotTestCase):
         self.assertThat(abs(end_time - start_time), LessThan(11))
 
 
+@skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
 class DbusCustomBusTests(AutopilotTestCase):
     """Test the ability to use custom dbus buses during a test."""
 

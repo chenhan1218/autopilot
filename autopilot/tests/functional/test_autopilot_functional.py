@@ -20,14 +20,15 @@
 
 from __future__ import absolute_import
 
-from codecs import open
 import os
 import os.path
 import re
 from tempfile import mktemp
+from testtools import skipIf
 from testtools.matchers import Contains, Equals, MatchesRegex, Not
 from textwrap import dedent
 
+from autopilot import platform
 from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional import AutopilotRunTestBase, remove_if_exists
 
@@ -49,23 +50,33 @@ class AutopilotFunctionalTestsBase(AutopilotRunTestBase):
         return self.run_autopilot(args_list)
 
     def assertTestsInOutput(self, tests, output, total_title='tests'):
-        """Asserts that 'tests' are all present in 'output'."""
+        """Asserts that 'tests' are all present in 'output'.
+
+        This assertion is intelligent enough to know that tests are not always
+        printed in alphabetical order.
+
+        """
 
         if type(tests) is not list:
             raise TypeError("tests must be a list, not %r" % type(tests))
         if not isinstance(output, str):
             raise TypeError("output must be a string, not %r" % type(output))
 
-        test_names = ''.join(['    %s\n' % t for t in sorted(tests)])
-        expected = '''\
-Loading tests from: %s
+        expected_heading = 'Loading tests from: %s\n\n' % self.base_path
+        expected_tests = ['    %s' % t for t in tests]
+        expected_footer = ' %d total %s.' % (len(tests), total_title)
 
-%s
+        parts = output.split('\n')
+        observed_heading = '\n'.join(parts[:2]) + '\n'
+        observed_test_list = parts[2:-4]
+        observed_footer = parts[-2]
 
- %d total %s.
-''' % (self.base_path, test_names, len(tests), total_title)
-
-        self.assertThat(output, Equals(expected))
+        self.assertThat(expected_heading, Equals(observed_heading))
+        self.assertThat(
+            sorted(expected_tests),
+            Equals(sorted(observed_test_list))
+        )
+        self.assertThat(expected_footer, Equals(observed_footer))
 
     def test_can_list_empty_test_dir(self):
         """Autopilot list must report 0 tests found with an empty test
@@ -304,6 +315,7 @@ Loading tests from: %s
              'tests.test_simple_suites.AnotherSimpleTest'],
             output, total_title='suites')
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_record_flag_works(self):
         """Must be able to record videos when the -r flag is present."""
 
@@ -341,6 +353,7 @@ Loading tests from: %s
         if should_delete:
             self.addCleanup(remove_if_exists, "/tmp/autopilot")
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_record_dir_option_and_record_works(self):
         """Must be able to specify record directory flag and record."""
 
@@ -384,6 +397,7 @@ Loading tests from: %s
             os.path.exists(
                 '%s/tests.test_simple.SimpleTest.test_simple.ogv' % (ap_dir)))
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_record_dir_option_works(self):
         """Must be able to specify record directory flag."""
 
@@ -417,6 +431,7 @@ Loading tests from: %s
                 '%s/tests.test_simple.SimpleTest.test_simple.ogv' %
                 (video_dir)))
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_no_videos_saved_when_record_option_is_not_present(self):
         """Videos must not be saved if the '-r' option is not specified."""
         self.create_test_file(
@@ -442,6 +457,7 @@ Loading tests from: %s
         self.assertFalse(os.path.exists(
             '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv'))
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_no_videos_saved_for_skipped_test(self):
         """Videos must not be saved if the test has been skipped (not
         failed).
@@ -470,6 +486,7 @@ Loading tests from: %s
         self.assertThat(code, Equals(0))
         self.assertThat(os.path.exists(video_file_path), Equals(False))
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_no_video_for_nested_testcase_when_parent_and_child_fail(self):
         """Test recording must not create a new recording for nested testcases
         where both the parent and the child testcase fail.
@@ -569,73 +586,6 @@ SyntaxError: invalid syntax
         self.assertThat(error, Equals(''))
         self.assertThat(output, Contains(expected_error))
         self.assertThat(output, Contains("FAILED (failures=1)"))
-
-    def test_can_error_with_unicode_data(self):
-        """Tests that assert with unicode errors must get saved to a log
-        file."""
-        self.create_test_file(
-            "test_simple.py", dedent(u"""\
-            # encoding: utf-8
-
-            # from autopilot.testcase import AutopilotTestCase
-            from testtools import TestCase
-
-            class SimpleTest(TestCase):
-
-                def test_simple(self):
-                    self.fail(
-                        u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll'
-                        u'\u01ddH')
-
-            """)
-        )
-        output_file_path = mktemp()
-        self.addCleanup(remove_if_exists, output_file_path)
-
-        code, output, error = self.run_autopilot(
-            ["run", "-o", output_file_path, "tests"])
-
-        self.assertThat(code, Equals(1))
-        self.assertTrue(os.path.exists(output_file_path))
-        log_contents = open(output_file_path, encoding='utf-8').read()
-        self.assertThat(
-            log_contents,
-            Contains(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH'))
-
-    def test_can_write_xml_error_with_unicode_data(self):
-        """Tests that assert with unicode errors must get saved to XML log
-        file."""
-        self.create_test_file(
-            "test_simple.py", dedent(u"""\
-            # encoding: utf-8
-
-            # from autopilot.testcase import AutopilotTestCase
-            from testtools import TestCase
-
-            class SimpleTest(TestCase):
-
-                def test_simple(self):
-                    error = (u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u'
-                        u'\u2229 oll\u01ddH')
-                    self.fail(error)
-
-            """)
-        )
-        output_file_path = mktemp()
-        self.addCleanup(remove_if_exists, output_file_path)
-
-        code, output, error = self.run_autopilot([
-            "run",
-            "-o", output_file_path,
-            "-f", "xml",
-            "tests"])
-
-        self.assertThat(code, Equals(1))
-        self.assertTrue(os.path.exists(output_file_path))
-        log_contents = open(output_file_path, encoding='utf-8').read()
-        self.assertThat(
-            log_contents,
-            Contains(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH'))
 
     def test_can_create_subunit_result_file(self):
         self.create_test_file(

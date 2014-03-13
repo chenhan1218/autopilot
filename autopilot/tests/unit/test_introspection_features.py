@@ -22,7 +22,7 @@ import tempfile
 import shutil
 import os.path
 
-from mock import patch, Mock
+from mock import patch, Mock, MagicMock
 from textwrap import dedent
 from testtools import TestCase
 from testtools.matchers import (
@@ -56,6 +56,7 @@ from autopilot.introspection.dbus import (
     _get_default_proxy_class,
     _is_valid_server_side_filter_param,
     _get_proxy_object_class,
+    _object_passes_filters,
     _object_registry,
     _try_custom_proxy_classes,
     CustomEmulatorBase,
@@ -117,6 +118,7 @@ class ServerSideParamMatchingTests(TestWithScenarios, TestCase):
         ('int overflow 2', dict(key='key', value=-2147483649, result=False)),
         ('int overflow 3', dict(key='key', value=2147483647, result=True)),
         ('int overflow 4', dict(key='key', value=2147483648, result=False)),
+        ('unicode string', dict(key='key', value=u'H\u2026i', result=False)),
     ]
 
     def test_valid_server_side_param(self):
@@ -133,18 +135,62 @@ class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):
         ('bool false', dict(k='visible', v=False, r="visible=False")),
         ('int +ve', dict(k='size', v=123, r="size=123")),
         ('int -ve', dict(k='prio', v=-12, r="prio=-12")),
-        ('simple string', dict(k='Name', v="btn1", r="Name=\"btn1\"")),
-        ('string space', dict(k='Name', v="a b  c ", r="Name=\"a b  c \"")),
-        ('str escapes', dict(
+        ('simple string', dict(k='Name', v=u"btn1", r="Name=\"btn1\"")),
+        ('simple bytes', dict(k='Name', v=b"btn1", r="Name=\"btn1\"")),
+        ('string space', dict(k='Name', v=u"a b  c ", r="Name=\"a b  c \"")),
+        ('bytes space', dict(k='Name', v=b"a b  c ", r="Name=\"a b  c \"")),
+        ('string escapes', dict(
             k='a',
-            v="\a\b\f\n\r\t\v\\",
+            v=u"\a\b\f\n\r\t\v\\",
             r=r'a="\x07\x08\x0c\n\r\t\x0b\\"')),
-        ('escape quotes', dict(k='b', v="'", r='b="\\' + "'" + '"')),
+        ('byte escapes', dict(
+            k='a',
+            v=b"\a\b\f\n\r\t\v\\",
+            r=r'a="\x07\x08\x0c\n\r\t\x0b\\"')),
+        ('escape quotes (str)', dict(k='b', v="'", r='b="\\' + "'" + '"')),
+        ('escape quotes (bytes)', dict(k='b', v=b"'", r='b="\\' + "'" + '"')),
     ]
 
     def test_query_string(self):
         s = _get_filter_string_for_key_value_pair(self.k, self.v)
         self.assertThat(s, Equals(self.r))
+
+
+class ClientSideFilteringTests(TestCase):
+
+    def get_empty_fake_object(self):
+        return type(
+            'EmptyObject',
+            (object,),
+            {'no_automatic_refreshing': MagicMock()}
+        )
+
+    def test_object_passes_filters_disables_refreshing(self):
+        obj = self.get_empty_fake_object()
+        _object_passes_filters(obj)
+
+        obj.no_automatic_refreshing.assert_called_once_with()
+        self.assertTrue(
+            obj.no_automatic_refreshing.return_value.__enter__.called
+        )
+
+    def test_object_passes_filters_works_with_no_filters(self):
+        obj = self.get_empty_fake_object()
+        self.assertTrue(_object_passes_filters(obj))
+
+    def test_object_passes_filters_fails_when_attr_missing(self):
+        obj = self.get_empty_fake_object()
+        self.assertFalse(_object_passes_filters(obj, foo=123))
+
+    def test_object_passes_filters_fails_when_attr_has_wrong_value(self):
+        obj = self.get_empty_fake_object()
+        obj.foo = 456
+        self.assertFalse(_object_passes_filters(obj, foo=123))
+
+    def test_object_passes_filters_succeeds_with_one_correct_parameter(self):
+        obj = self.get_empty_fake_object()
+        obj.foo = 123
+        self.assertTrue(_object_passes_filters(obj, foo=123))
 
 
 class DBusIntrospectionObjectTests(TestCase):

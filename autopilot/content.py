@@ -24,7 +24,7 @@ from __future__ import absolute_import
 import io
 
 import logging
-from testtools.content import ContentType, content_from_stream
+from testtools.content import ContentType, content_from_stream, text_content
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +48,7 @@ def follow_file(path, test_case, content_name=None):
             content_name,
             str(e)
         )
+        return text_content(u'')
     else:
         file_obj.seek(0, io.SEEK_END)
         return follow_stream(

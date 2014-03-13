@@ -404,3 +404,30 @@ def compatible_repr(f, *args, **kwargs):
     if six.PY3 and not isinstance(result, six.text_type):
         return result.decode('utf-8')
     return result
+
+
+def _raise_on_unknown_kwargs(kwargs):
+    """Raise ValueError on unknown keyword arguments.
+
+    The standard use case is to warn callers that they've passed an unknown
+    keyword argument. For example::
+
+        def my_function(**kwargs):
+            known_option = kwargs.pop('known_option')
+            _raise_on_unknown_kwargs(kwargs)
+
+    Given the code above, this will not raise any exceptions::
+
+        my_function(known_option=123)
+
+    ...but this code *will* raise a ValueError::
+
+        my_function(known_option=123, other_option=456)
+
+    """
+    if kwargs:
+        arglist = [repr(k) for k in kwargs.keys()]
+        arglist.sort()
+        raise ValueError(
+            "Unknown keyword arguments: %s." % (', '.join(arglist))
+        )

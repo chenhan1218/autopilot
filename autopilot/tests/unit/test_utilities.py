@@ -24,10 +24,17 @@ from testtools.matchers import (
     Equals,
     IsInstance,
     LessThan,
+    Not,
+    raises,
+    Raises,
 )
 import time
 
-from autopilot.utilities import sleep, compatible_repr
+from autopilot.utilities import (
+    sleep,
+    compatible_repr,
+    _raise_on_unknown_kwargs,
+)
 
 
 class ElapsedTimeCounter(object):
@@ -111,3 +118,20 @@ class CompatibleReprTests(TestCase):
         result = repr_fn()
         self.assertThat(result, IsInstance(six.text_type))
         self.assertThat(result, Equals(u'bytes'))
+
+
+class UnknownKWArgsTests(TestCase):
+
+    def test_raise_if_not_empty_raises_on_nonempty_dict(self):
+        populated_dict = dict(testing=True)
+        self.assertThat(
+            lambda: _raise_on_unknown_kwargs(populated_dict),
+            raises(ValueError("Unknown keyword arguments: 'testing'."))
+        )
+
+    def test_raise_if_not_empty_does_not_raise_on_empty(self):
+        empty_dict = dict()
+        self.assertThat(
+            lambda: _raise_on_unknown_kwargs(empty_dict),
+            Not(Raises())
+        )

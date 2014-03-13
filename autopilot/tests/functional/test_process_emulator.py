@@ -117,6 +117,11 @@ class ProcessManagerApplicationNoCleanupTests(AutopilotTestCase):
 class BAMFWindowTestCase(AutopilotTestCase):
     """Tests for the BAMF window helpers."""
 
+    scenarios = [
+        ('increase size', dict(delta_width=10, delta_height=10)),
+        ('decrease size', dict(delta_width=-10, delta_height=-10))
+    ]
+
     def test_resize_window_must_update_width_and_height_geometry(self):
         # Start any application that can be resized.
         window = self.process_manager.start_app_window('Character Map')
@@ -127,8 +132,8 @@ class BAMFWindowTestCase(AutopilotTestCase):
 
         initial_width, initial_height = get_size()
 
-        expected_width = initial_width + 10
-        expected_height = initial_height + 10
+        expected_width = initial_width + self.delta_width
+        expected_height = initial_height + self.delta_height
         window.resize(width=expected_width, height=expected_height)
 
         self.assertThat(

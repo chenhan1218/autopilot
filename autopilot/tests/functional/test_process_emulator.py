@@ -25,8 +25,9 @@ from time import sleep, time
 
 from autopilot import platform
 from autopilot.exceptions import BackendException
-from autopilot.testcase import AutopilotTestCase
+from autopilot.matchers import Eventually
 from autopilot.process import ProcessManager
+from autopilot.testcase import AutopilotTestCase
 
 
 @skipIf(platform.model() != "Desktop", "Not suitable for device (ProcManager)")
@@ -111,3 +112,24 @@ class ProcessManagerApplicationNoCleanupTests(AutopilotTestCase):
         # bug:1174911)
         ret_code = call(["pgrep", "-c", "gnome-calculato"])
         self.assertThat(ret_code, Equals(1), "Application is still running")
+
+
+class BAMFWindowTestCase(AutopilotTestCase):
+    """Tests for the BAMF window helpers."""
+
+    def test_resize_window_must_update_width_and_height_geometry(self):
+        # Start any application that can be resized.
+        window = self.process_manager.start_app_window('Character Map')
+
+        def get_size():
+            _, _, width, height = window.geometry
+            return width, height
+
+        initial_width, initial_height = get_size()
+
+        expected_width = initial_width + 10
+        expected_height = initial_height + 10
+        window.resize(width=expected_width, height=expected_height)
+
+        self.assertThat(
+            get_size, Eventually(Equals((expected_width, expected_height))))

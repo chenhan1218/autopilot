@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
+import os
 from subprocess import Popen, call
 import sys
 from testtools import skipIf
@@ -24,15 +24,15 @@ from testtools.matchers import Equals, NotEquals, LessThan
 from textwrap import dedent
 from threading import Thread
 from time import sleep, time
-from unittest import skipIf
 
-from autopilot import platform
+from autopilot.platform import model
 from autopilot.exceptions import BackendException
 from autopilot.testcase import AutopilotTestCase
 from autopilot.process import ProcessManager
+from autopilot.tests.functional.fixtures import ExecutableScript
 
 
-@skipIf(platform.model() != "Desktop", "Not suitable for device (ProcManager)")
+@skipIf(model() != "Desktop", "Not suitable for device (ProcManager)")
 class ProcessEmulatorTests(AutopilotTestCase):
 
     def ensure_gedit_not_running(self):

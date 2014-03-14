@@ -20,13 +20,11 @@
 
 import datetime
 import os
-import stat
 import subprocess
 import logging
 import sys
 import six
 from mock import patch
-from tempfile import mktemp
 from testtools import skipIf
 from testtools.matchers import (
     Equals,
@@ -262,7 +260,7 @@ class QmlTestMixin(object):
 
         if not_found:
             self.skip("Neither qmlviewer nor qmlscene is installed")
-        return self.get_qml_viewer_app_path
+        return self.qml_viewer_app_path
 
     def _find_qt_binary_chooser(self, version, name):
         # Check for existence of the binary when qtchooser is installed

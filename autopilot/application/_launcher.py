@@ -19,7 +19,6 @@
 
 """Base module for application launchers."""
 
-from collections import namedtuple
 import fixtures
 from gi.repository import GLib, UpstartAppLaunch
 import json
@@ -112,7 +111,7 @@ class UpstartApplicationLauncher(ApplicationLauncher):
         self.emulator_base = kwargs.pop('emulator_base', None)
         self.dbus_bus = kwargs.pop('dbus_bus', 'session')
 
-        _raise_if_not_empty(kwargs)
+        _raise_on_unknown_kwargs(kwargs)
 
     def launch(self, app_id, app_uris=[]):
         state = {}

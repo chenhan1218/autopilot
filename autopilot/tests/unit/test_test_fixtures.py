@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from autopilot.tests.functional import TempDesktopFile
+from autopilot.tests.functional.fixtures import TempDesktopFile
 
 import os.path
 from mock import patch
@@ -121,7 +121,7 @@ class TempDesktopFileTests(TestCase):
 
     def test_remove_desktop_file_removes_created_file_when_path_exists(self):
         test_created_path = self.getUniqueString()
-        with patch('autopilot.tests.functional.rmtree') as p_rmtree:
+        with patch('autopilot.tests.functional.fixtures.rmtree') as p_rmtree:
             TempDesktopFile._remove_desktop_file_components(
                 test_created_path, ""
             )

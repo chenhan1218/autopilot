@@ -167,3 +167,11 @@ class TempDesktopFileTests(TestCase):
                     Icon=Not important""")
                 )
             )
+
+    def test_can_specify_exec_path(self):
+        token = self.getUniqueString()
+        fixture = self.useFixture(TempDesktopFile(exec_=token))
+        self.assertThat(
+            fixture.get_desktop_file_path(),
+            FileContains("Exec="+token)
+        )

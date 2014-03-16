@@ -24,8 +24,7 @@ from mock import patch
 from shutil import rmtree
 import tempfile
 from testtools import TestCase
-from testtools.matchers import Equals, FileContains
-from textwrap import dedent
+from testtools.matchers import Contains, Equals, FileContains
 
 
 class TempDesktopFileTests(TestCase):
@@ -142,36 +141,53 @@ class TempDesktopFileTests(TestCase):
         with patch.object(
             TempDesktopFile, '_desktop_file_dir', return_value=desktop_file_dir
         ):
-            desktop_file = TempDesktopFile._create_desktop_file()
+            desktop_file = TempDesktopFile._create_desktop_file("")
             path, head = os.path.split(desktop_file)
             self.assertThat(path, Equals(desktop_file_dir))
 
     def test_create_desktop_file_writes_correct_data(self):
         desktop_file_dir = tempfile.mkdtemp(dir="/tmp")
         self.addCleanup(rmtree, desktop_file_dir)
+        token = self.getUniqueString()
 
         with patch.object(
             TempDesktopFile, '_desktop_file_dir', return_value=desktop_file_dir
         ):
-            desktop_file = TempDesktopFile._create_desktop_file()
+            desktop_file = TempDesktopFile._create_desktop_file(token)
             self.assertTrue(desktop_file.endswith('.desktop'))
-            self.assertThat(
-                desktop_file,
-                FileContains(
-                    dedent("""\
-                    [Desktop Entry]
-                    Type=Application
-                    Exec=Not important
-                    Path=Not important
-                    Name=Test app
-                    Icon=Not important""")
-                )
-            )
+            self.assertThat(desktop_file, FileContains(token))
+
+    def do_parameter_contents_test(self, matcher, **kwargs):
+        fixture = self.useFixture(TempDesktopFile(**kwargs))
+        self.assertThat(
+            fixture.get_desktop_file_path(),
+            FileContains(matcher=matcher),
+        )
 
     def test_can_specify_exec_path(self):
         token = self.getUniqueString()
-        fixture = self.useFixture(TempDesktopFile(exec_=token))
-        self.assertThat(
-            fixture.get_desktop_file_path(),
-            FileContains("Exec="+token)
+        self.do_parameter_contents_test(
+            Contains("Exec="+token),
+            exec_=token
+        )
+
+    def test_can_specify_type(self):
+        token = self.getUniqueString()
+        self.do_parameter_contents_test(
+            Contains("Type="+token),
+            type=token
+        )
+
+    def test_can_specify_name(self):
+        token = self.getUniqueString()
+        self.do_parameter_contents_test(
+            Contains("Name="+token),
+            name=token
+        )
+
+    def test_can_specify_icon(self):
+        token = self.getUniqueString()
+        self.do_parameter_contents_test(
+            Contains("Icon="+token),
+            icon=token
         )

@@ -63,10 +63,40 @@ class ExecutableScript(Fixture):
 
 
 class TempDesktopFile(Fixture):
+
+    def __init__(self, type=None, exec_=None, name=None, icon=None):
+        """Create a TempDesktopFile instance.
+
+        Parameters control the contents of the created desktop file. Default
+        values will create a desktop file with bogus contents.
+
+        :param type: The type field in the created file. Defaults to
+            'Application'.
+        :param exec_: The path to the file to execute.
+        :param name: The name of the application being launched. Defaults to
+            "Test App".
+        """
+        super(TempDesktopFile, self).__init__()
+        type_line = type if type is not None else "Application"
+        exec_line = exec_ if exec_ is not None else "Not Important"
+        name_line = name if name is not None else "Test App"
+        icon_line = icon if icon is not None else "Not Important"
+        self._file_contents = dedent(
+            """\
+            [Desktop Entry]
+            Type={}
+            Exec={}
+            Name={}
+            Icon={}
+            """.format(type_line, exec_line, name_line, icon_line)
+        )
+
     def setUp(self):
         super(TempDesktopFile, self).setUp()
         path_created = TempDesktopFile._ensure_desktop_dir_exists()
-        self._desktop_file_path = self._create_desktop_file()
+        self._desktop_file_path = self._create_desktop_file(
+            self._file_contents,
+        )
 
         self.addCleanup(
             TempDesktopFile._remove_desktop_file_components,
@@ -127,19 +157,11 @@ class TempDesktopFile(Fixture):
             os.remove(created_file)
 
     @staticmethod
-    def _create_desktop_file():
+    def _create_desktop_file(file_contents):
         _, tmp_file_path = tempfile.mkstemp(
             suffix='.desktop',
             dir=TempDesktopFile._desktop_file_dir()
         )
         with open(tmp_file_path, 'w') as desktop_file:
-            desktop_file.write(
-                dedent("""\
-                [Desktop Entry]
-                Type=Application
-                Exec=Not important
-                Path=Not important
-                Name=Test app
-                Icon=Not important""")
-            )
+            desktop_file.write(file_contents)
         return tmp_file_path

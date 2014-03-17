@@ -21,16 +21,14 @@
 from __future__ import absolute_import
 
 from codecs import open
-import fixtures
 import os
 import os.path
 import sys
 import logging
 from shutil import rmtree
 import subprocess
-from tempfile import mkdtemp, mkstemp
+from tempfile import mkdtemp
 from testtools.content import text_content
-from textwrap import dedent
 
 from autopilot.testcase import AutopilotTestCase
 

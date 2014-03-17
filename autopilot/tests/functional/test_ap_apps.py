@@ -38,7 +38,10 @@ from textwrap import dedent
 from autopilot.process import ProcessManager
 from autopilot.platform import model
 from autopilot.testcase import AutopilotTestCase
-from autopilot.tests.functional.fixtures import ExecutableScript, TempDesktopFile
+from autopilot.tests.functional.fixtures import (
+    ExecutableScript,
+    TempDesktopFile,
+)
 from autopilot.introspection import (
     get_proxy_object_for_existing_process,
     ProcessSearchError,

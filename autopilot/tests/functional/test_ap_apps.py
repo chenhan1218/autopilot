@@ -36,11 +36,11 @@ from testtools.matchers import (
     raises,
 )
 from textwrap import dedent
-import unittest
 
 from autopilot.process import ProcessManager
 from autopilot.platform import model
 from autopilot.testcase import AutopilotTestCase
+from autopilot.tests.functional import TempDesktopFile
 from autopilot.introspection import (
     get_proxy_object_for_existing_process,
     ProcessSearchError,
@@ -54,6 +54,16 @@ if six.PY3:
     xrange = range
 
 logger = logging.getLogger(__name__)
+
+
+def locale_is_supported():
+    """Check if our currently set locale supports writing unicode to stdout."""
+    try:
+        encoding = sys.stdout.encoding or sys.getfilesystemencoding()
+        u'\u2026'.encode(encoding)
+        return True
+    except UnicodeEncodeError:
+        return False
 
 
 def _get_unused_pid():
@@ -77,7 +87,10 @@ class ApplicationTests(AutopilotTestCase):
 
         """
         path = mktemp(extension)
-        open(path, 'w').write(content)
+        if six.PY3:
+            open(path, 'w', encoding='utf-8').write(content)
+        else:
+            open(path, 'w').write(content)
         self.addCleanup(os.unlink, path)
 
         os.chmod(path, os.stat(path).st_mode | stat.S_IXUSR)
@@ -187,6 +200,7 @@ class ApplicationLaunchTests(ApplicationTests):
         difference = end - start
         self.assertThat(difference.total_seconds(), LessThan(5))
 
+    @skipIf(model() != "Desktop", "Not suitable for device (Qt4)")
     def test_closing_app_produces_good_error_from_get_state_by_path(self):
         """Testing an application that closes before the test ends must
         produce a good error message when calling get_state_by_path on the
@@ -284,9 +298,24 @@ class QtTests(ApplicationTests):
             self.skip("Neither qmlviewer nor qmlscene is installed")
 
     def test_can_launch_qt_app(self):
-        app_proxy = self.launch_test_application(self.app_path, app_type='qt')
+        extra_args = ''
+        if model() != "Desktop":
+            # We need to add the desktop-file-hint
+            desktop_file = self.useFixture(
+                TempDesktopFile()
+            ).get_desktop_file_path()
+            extra_args = '--desktop_file_hint={hint_file}'.format(
+                hint_file=desktop_file
+            )
+
+        app_proxy = self.launch_test_application(
+            self.app_path,
+            extra_args,
+            app_type='qt'
+        )
         self.assertTrue(app_proxy is not None)
 
+    @skipIf(model() != "Desktop", "Only suitable on Desktop (Qt4)")
     def test_can_launch_qt_script(self):
         path = self.write_script(dedent("""\
             #!%s
@@ -334,6 +363,7 @@ class QtTests(ApplicationTests):
         launch_fn = lambda: self.launch_test_application(path, app_type='qt')
         self.assertThat(launch_fn, raises(ProcessSearchError))
 
+    @skipIf(model() != "Desktop", "Only suitable on Desktop (Qt4)")
     def test_can_launch_wrapper_script(self):
         path = self.write_script(dedent("""\
             #!%s
@@ -355,7 +385,7 @@ class QtTests(ApplicationTests):
         app_proxy = self.launch_test_application(wrapper_path, app_type='qt')
         self.assertTrue(app_proxy is not None)
 
-    @unittest.expectedFailure
+    @skipIf(not locale_is_supported(), "Current locale is not supported")
     def test_can_handle_non_unicode_stdout_and_stderr(self):
         path = self.write_script(dedent("""\
             #!%s
@@ -379,7 +409,6 @@ class QtTests(ApplicationTests):
                 lambda: content_obj.as_text(),
                 Not(Raises())
             )
-        self.assertEqual(1, 2)
 
 
 class GtkTests(ApplicationTests):

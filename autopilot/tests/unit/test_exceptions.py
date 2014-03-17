@@ -41,12 +41,12 @@ class StateNotFoundTests(TestCase):
         err = StateNotFoundError("MyClass")
         self.assertThat(
             str(err),
-            Equals("State not found for class 'MyClass'.")
+            Equals("Object not found with name 'MyClass'.")
         )
         if not six.PY3:
             self.assertThat(
                 unicode(err),
-                Equals(u"State not found for class 'MyClass'.")
+                Equals(u"Object not found with name 'MyClass'.")
             )
 
     def test_can_be_constructed_with_filters_only(self):
@@ -54,12 +54,12 @@ class StateNotFoundTests(TestCase):
         err = StateNotFoundError(foo="bar")
         self.assertThat(
             str(err),
-            Equals("State not found with filters {'foo': 'bar'}.")
+            Equals("Object not found with properties {'foo': 'bar'}.")
         )
         if not six.PY3:
             self.assertThat(
                 unicode(err),
-                Equals(u"State not found with filters {'foo': 'bar'}.")
+                Equals(u"Object not found with properties {'foo': 'bar'}.")
             )
 
     def test_can_be_constructed_with_class_name_and_filters(self):
@@ -67,12 +67,12 @@ class StateNotFoundTests(TestCase):
         err = StateNotFoundError('MyClass', foo="bar")
         self.assertThat(
             str(err),
-            Equals("State not found for class 'MyClass'"
-                   " and filters {'foo': 'bar'}.")
+            Equals("Object not found with name 'MyClass'"
+                   " and properties {'foo': 'bar'}.")
         )
         if not six.PY3:
             self.assertThat(
                 unicode(err),
-                Equals(u"State not found for class 'MyClass'"
-                       " and filters {'foo': 'bar'}.")
+                Equals(u"Object not found with name 'MyClass'"
+                       " and properties {'foo': 'bar'}.")
             )

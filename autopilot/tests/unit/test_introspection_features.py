@@ -269,8 +269,14 @@ class DBusIntrospectionObjectTests(TestCase):
         child.print_tree.side_effect = StateNotFoundError('child')
 
         with patch.object(fake_object, 'get_children', return_value=[child]):
-            print_func = lambda: fake_object.print_tree(out)
-            self.assertThat(print_func, Not(Raises(StateNotFoundError)))
+            self.assertThat(fake_object.print_tree(out), Not(Raises(StateNotFoundError)))
+            result = fake_object.print_tree(out)
+            self.assertEqual(result, dedent("""\
+            == /some/path ==
+            id: 123
+            path: '/some/path'
+            text: 'Hello'
+            """))
 
     def test_print_tree_fileobj(self):
         """print_tree with file object output"""

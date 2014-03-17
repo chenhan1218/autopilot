@@ -64,7 +64,8 @@ class ExecutableScript(Fixture):
 
 class TempDesktopFile(Fixture):
 
-    def __init__(self, type=None, exec_=None, name=None, icon=None):
+    def __init__(self, type=None, exec_=None, name=None, icon=None,
+                 filename=None):
         """Create a TempDesktopFile instance.
 
         Parameters control the contents of the created desktop file. Default
@@ -75,6 +76,9 @@ class TempDesktopFile(Fixture):
         :param exec_: The path to the file to execute.
         :param name: The name of the application being launched. Defaults to
             "Test App".
+        :param filename: The name of the desktop file to write. Defaults to a
+            random filename.
+
         """
         super(TempDesktopFile, self).__init__()
         type_line = type if type is not None else "Application"
@@ -90,11 +94,13 @@ class TempDesktopFile(Fixture):
             Icon={}
             """.format(type_line, exec_line, name_line, icon_line)
         )
+        self._filename = filename
 
     def setUp(self):
         super(TempDesktopFile, self).setUp()
         path_created = TempDesktopFile._ensure_desktop_dir_exists()
         self._desktop_file_path = self._create_desktop_file(
+            self._filename,
             self._file_contents,
         )
 
@@ -157,11 +163,19 @@ class TempDesktopFile(Fixture):
             os.remove(created_file)
 
     @staticmethod
-    def _create_desktop_file(file_contents):
-        _, tmp_file_path = tempfile.mkstemp(
-            suffix='.desktop',
-            dir=TempDesktopFile._desktop_file_dir()
-        )
+    def _create_desktop_file(file_name, file_contents):
+        if file_name:
+            if not file_name.endswith(".desktop"):
+                file_name += ".desktop"
+            tmp_file_path = os.path.join(
+                TempDesktopFile._desktop_file_dir(),
+                file_name
+            )
+        else:
+            _, tmp_file_path = tempfile.mkstemp(
+                suffix='.desktop',
+                dir=TempDesktopFile._desktop_file_dir()
+            )
         with open(tmp_file_path, 'w') as desktop_file:
             desktop_file.write(file_contents)
         return tmp_file_path

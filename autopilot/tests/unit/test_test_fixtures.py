@@ -17,14 +17,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from autopilot.tests.functional.fixtures import TempDesktopFile
+from autopilot.tests.functional.fixtures import (
+    ExecutableScript,
+    TempDesktopFile,
+)
 
+import os
 import os.path
+import stat
 from mock import patch
 from shutil import rmtree
 import tempfile
 from testtools import TestCase
-from testtools.matchers import Contains, Equals, FileContains
+from testtools.matchers import Contains, EndsWith, Equals, FileContains
 
 
 class TempDesktopFileTests(TestCase):
@@ -191,3 +196,20 @@ class TempDesktopFileTests(TestCase):
             Contains("Icon="+token),
             icon=token
         )
+
+
+class ExecutableScriptTests(TestCase):
+
+    def test_creates_file_with_content(self):
+        token = self.getUniqueString()
+        fixture = self.useFixture(ExecutableScript(script=token))
+        self.assertThat(fixture.path, FileContains(token))
+
+    def test_creates_file_with_correct_extension(self):
+        token = self.getUniqueString()
+        fixture = self.useFixture(ExecutableScript(script="", extension=token))
+        self.assertThat(fixture.path, EndsWith(token))
+
+    def test_creates_file_with_execute_bit_set(self):
+        fixture = self.useFixture(ExecutableScript(script=""))
+        self.assertTrue(os.stat(fixture.path).st_mode & stat.S_IXUSR)

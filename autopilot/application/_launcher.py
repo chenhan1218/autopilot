@@ -56,47 +56,6 @@ class ApplicationLauncher(fixtures.Fixture):
         raise NotImplementedError("Sub-classes must implement this method.")
 
 
-class ClickApplicationLauncher(ApplicationLauncher):
-    def __init__(self, case_addDetail, **kwargs):
-        super(ClickApplicationLauncher, self).__init__(case_addDetail)
-
-        self.emulator_base = kwargs.pop('emulator_base', None)
-        self.dbus_bus = kwargs.pop('dbus_bus', 'session')
-        self.dbus_application_name = kwargs.pop('application_name', None)
-
-        _raise_on_unknown_kwargs(kwargs)
-
-    def launch(self, package_id, app_name, app_uris):
-        app_id = _get_click_app_id(package_id, app_name)
-
-        _app_env = self.useFixture(UpstartApplicationEnvironment())
-        _app_env.prepare_environment(app_id, app_name)
-
-        return self._launch_click_app(app_id, app_uris)
-
-    def _launch_click_app(self, app_id, app_uris):
-        pid = _launch_click_app(app_id, app_uris)
-        self._add_click_launch_cleanup(app_id, pid)
-
-        logger.info(
-            "Click package %s has been launched with PID %d",
-            app_id,
-            pid
-        )
-
-        return pid
-
-    def _add_click_launch_cleanup(self, app_id, pid):
-        self.addCleanup(_kill_pid, pid)
-        self.addCleanup(self._add_log_cleanup, app_id)
-
-    def _add_log_cleanup(self, app_id):
-        self.case_addDetail(
-            "Application Log",
-            _get_click_application_log_content_object(app_id)
-        )
-
-
 class UpstartApplicationLauncher(ApplicationLauncher):
 
     """A launcher class that launched applicaitons with UpstartAppLaunch."""
@@ -197,6 +156,13 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             message_parts.append(extra_message)
         if message_parts:
             raise RuntimeError(': '.join(message_parts))
+
+
+class ClickApplicationLauncher(UpstartApplicationLauncher):
+
+    def launch(self, package_id, app_name, app_uris):
+        app_id = _get_click_app_id(package_id, app_name)
+        super(ClickApplicationLauncher, self).launch(app_id, app_uris)
 
 
 class NormalApplicationLauncher(ApplicationLauncher):

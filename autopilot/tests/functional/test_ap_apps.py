@@ -38,7 +38,7 @@ from textwrap import dedent
 from autopilot.process import ProcessManager
 from autopilot.platform import model
 from autopilot.testcase import AutopilotTestCase
-from autopilot.tests.functional.fixtures import ExecutableScript
+from autopilot.tests.functional.fixtures import ExecutableScript, TempDesktopFile
 from autopilot.introspection import (
     get_proxy_object_for_existing_process,
     ProcessSearchError,
@@ -296,7 +296,8 @@ class QtTests(ApplicationTests, QmlTestMixin):
 
     def test_can_launch_upstart_app(self):
         path = self.get_qml_viewer_app_path()
-        self.launch_upstart_application(path)
+        fixture = self.useFixture(TempDesktopFile(exec_=path,))
+        self.launch_upstart_application(fixture.get_desktop_file_id())
 
     @skipIf(model() != "Desktop", "Only suitable on Desktop (Qt4)")
     def test_can_launch_normal_qt_script(self):

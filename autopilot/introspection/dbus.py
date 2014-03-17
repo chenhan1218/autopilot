@@ -635,6 +635,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         :param maxdepth: If given, limit the maximum recursion level to that
             number, i. e. only print children which have at most maxdepth-1
             intermediate parents.
+
         """
         if maxdepth is not None and _curdepth > maxdepth:
             return

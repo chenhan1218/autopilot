@@ -247,6 +247,12 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
          data is retrievable via this object.
 
         """
+        logger.info(
+            "Attempting to launch application '%s' with arguments '%s' as a "
+            "normal process",
+            application,
+            ' '.join(arguments)
+        )
         launcher = self.useFixture(
             NormalApplicationLauncher(self.addDetail, **kwargs)
         )
@@ -285,6 +291,13 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             the specified click package.
 
         """
+        logger.info(
+            "Attempting to launch click application '%s' from click package "
+            " '%s' and URIs '%s'",
+            app_name if app_name is not None else "(default)",
+            package_id,
+            ','.join(app_uris)
+        )
         launcher = self.useFixture(
             ClickApplicationLauncher(self.addDetail, **kwargs)
         )
@@ -309,6 +322,12 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :raises RuntimeError: If the specified application cannot be launched.
         :raises ValueError: If unknown keyword arguments are specified.
         """
+        logger.info(
+            "Attempting to launch application '%s' with URIs '%s' via "
+            "upstart-app-launch",
+            application_name,
+            ','.join(uris)
+        )
         launcher = self.useFixture(
             UpstartApplicationLauncher(self.addDetail, **kwargs)
         )

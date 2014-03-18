@@ -243,45 +243,6 @@ def launch_process(application, args, capture_output=False, **kwargs):
     return process
 
 
-def _is_process_running(pid):
-    return psutil.pid_exists(pid)
-
-
-def _launch_click_app(app_id, app_uris):
-    subprocess.check_output([
-        "/sbin/start",
-        "application",
-        "APP_ID={}".format(app_id),
-        "APP_URIS='{}'".format(app_uris),
-    ])
-
-    return _get_click_app_pid(app_id)
-
-
-def _get_click_app_status(app_id):
-    return _call_upstart_with_args(
-        "status",
-        "application-click",
-        "APP_ID={}".format(app_id)
-    )
-
-
-def _get_click_application_log_content_object(app_id):
-    try:
-        return content_from_file(
-            _get_click_application_log_path(app_id),
-            buffer_now=True
-        )
-    except IOError as e:
-        return text_content(u'Unable to open application log: %s' % (e,))
-
-
-def _get_click_application_log_path(app_id):
-    log_dir = os.path.expanduser('~/.cache/upstart/')
-    log_name = 'application-click-{}.log'.format(app_id)
-    return os.path.join(log_dir, log_name)
-
-
 def _get_click_app_id(package_id, app_name=None):
     for pkg in _get_click_manifest():
         if pkg['name'] == package_id:
@@ -309,47 +270,6 @@ def _get_click_manifest():
         universal_newlines=True
     )
     return json.loads(click_manifest_str)
-
-
-def _get_click_app_pid(app_id):
-    for _ in Timeout.default():
-        try:
-            list_output = _get_click_app_status(app_id)
-        except subprocess.CalledProcessError:
-            # application not started yet.
-            pass
-        else:
-            for line in list_output.split('\n'):
-                if app_id in line and "start/running" in line:
-                    return int(line.split()[-1])
-    else:
-        raise RuntimeError(
-            "Could not find autopilot interface for click package"
-            " '{}' after 10 seconds.".format(app_id)
-        )
-
-
-def _kill_pid(pid):
-    """Kill the process with the specified pid."""
-    logger.info("waiting for process to exit.")
-    _attempt_kill_pid(pid)
-    for _ in Timeout.default():
-        if not _is_process_running(pid):
-            break
-    else:
-        logger.info(
-            "Killing process group, since it hasn't exited after the default"
-            "timeout."
-        )
-        _attempt_kill_pid(pid, signal.SIGKILL)
-
-
-def _attempt_kill_pid(pid, sig=signal.SIGTERM):
-    try:
-        logger.info("Killing process %d", pid)
-        os.killpg(pid, sig)
-    except OSError:
-        logger.info("Appears process has already exited.")
 
 
 def _get_application_environment(app_type=None, app_path=None):
@@ -438,3 +358,16 @@ def _kill_process(process):
         )
         _attempt_kill_pid(process.pid, signal.SIGKILL)
     return u''.join(stdout_parts), u''.join(stderr_parts), process.returncode
+
+
+def _attempt_kill_pid(pid, sig=signal.SIGTERM):
+    try:
+        logger.info("Killing process %d", pid)
+        os.killpg(pid, sig)
+    except OSError:
+        logger.info("Appears process has already exited.")
+
+
+def _is_process_running(pid):
+    return psutil.pid_exists(pid)
+

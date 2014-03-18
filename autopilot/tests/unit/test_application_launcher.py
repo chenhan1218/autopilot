@@ -57,15 +57,9 @@ from autopilot.application._launcher import (
     _get_application_environment,
     _get_application_path,
     _get_click_app_id,
-    _get_click_app_pid,
-    _get_click_app_status,
-    _get_click_application_log_content_object,
-    _get_click_application_log_path,
     _get_click_manifest,
     _is_process_running,
-    _kill_pid,
     _kill_process,
-    _launch_click_app,
 )
 from autopilot.utilities import sleep
 
@@ -272,36 +266,6 @@ class ClickApplicationLauncherTests(TestCase):
             self.assertThat(
                 _get_click_app_id("com.autopilot.testing"),
                 Equals("com.autopilot.testing_bar_1.0")
-            )
-
-    def test_get_click_application_log_path_formats_correct_path(self):
-        path_token = self.getUniqueString()
-        expected = os.path.join(path_token, "application-click-foo.log")
-
-        with patch.object(_l.os.path, 'expanduser', return_value=path_token):
-            self.assertThat(
-                _get_click_application_log_path("foo"),
-                Equals(expected)
-            )
-
-    def test_get_click_application_log_content_object_returns_content_object(self):  # NOQA
-        with patch.object(_l, 'content_from_file') as from_file:
-            self.assertThat(
-                _get_click_application_log_content_object("foo"),
-                Equals(from_file())
-            )
-
-    def test_get_click_app_log_works_when_no_log_file_exists(self):
-        token = self.getUniqueString()
-        with patch.object(
-            _l,
-            '_get_click_application_log_path',
-            return_value=token
-        ):
-
-            self.assertThat(
-                lambda: _l._get_click_application_log_content_object("foo"),
-                Not(raises(IOError))
             )
 
 
@@ -583,90 +547,6 @@ class UpstartApplicationLauncherTests(TestCase):
 
 class ApplicationLauncherInternalTests(TestCase):
 
-    def test_get_click_app_status(self):
-        with patch.object(_l, '_call_upstart_with_args') as call_upstart:
-            _get_click_app_status("app_id")
-            call_upstart.assert_called_with(
-                "status",
-                "application-click",
-                "APP_ID=app_id"
-            )
-
-    def test_get_click_app_pid(self):
-        with patch.object(_l.subprocess, 'check_output') as check_output:
-            check_output.return_value = """
-            application-click (com.autopilot.testing.test_app_id)
-            dummy/data\napplication-click (blah) dummy/data\napplication-click
-            (com.autopilot.testing.test_app_id) start/running, process 1234
-            """
-            self.assertThat(
-                _get_click_app_pid("test_app_id"),
-                Equals(1234)
-            )
-
-    def test_get_click_app_pid_raises_runtimeerror_with_no_status(self):
-        test_app_id = self.getUniqueString()
-        expected_error = "Could not find autopilot interface for click "\
-                         "package '%s' after 10 seconds." % test_app_id
-        with sleep.mocked():
-            with patch.object(_l, '_get_click_app_status', return_value=""):
-                self.assertThat(
-                    lambda: _get_click_app_pid(test_app_id),
-                    raises(RuntimeError(expected_error))
-                )
-
-    def test_get_click_app_pid_tries_10_times_and_raises(self):
-        test_app_name = self.getUniqueString()
-        expected_error = "Could not find autopilot interface for click "\
-                         "package '%s' after 10 seconds." % test_app_name
-        with sleep.mocked():
-            with patch.object(
-                    _l, '_get_click_app_status',
-                    side_effect=subprocess.CalledProcessError(1, "")
-            ):
-                self.assertThat(
-                    lambda: _get_click_app_pid(test_app_name),
-                    raises(RuntimeError(expected_error))
-                )
-                self.assertThat(
-                    sleep.total_time_slept(),
-                    Equals(10)
-                )
-
-    @patch('autopilot.application._launcher.subprocess.check_output')
-    def test_launch_click_app_starts_application(self, check_output):
-        test_app_name = self.getUniqueString()
-        with patch.object(
-            _l, '_get_click_app_pid'
-        ) as patched_get_click_app_pid:
-            _launch_click_app(test_app_name, "")
-
-            check_output.assert_called_with([
-                "/sbin/start",
-                "application",
-                "APP_ID=%s" % test_app_name,
-                "APP_URIS=''",
-            ])
-            patched_get_click_app_pid.assert_called_with(test_app_name)
-
-    @patch('autopilot.application._launcher.subprocess.check_output')
-    def test_launch_click_app_starts_application_with_uri(self, check_output):
-        test_app_name = self.getUniqueString()
-        test_app_uris = "%s %s" % (self.getUniqueString(),
-                                   self.getUniqueString())
-        with patch.object(
-            _l, '_get_click_app_pid'
-        ) as patched_get_click_app_pid:
-            _launch_click_app(test_app_name, test_app_uris)
-
-            check_output.assert_called_with([
-                "/sbin/start",
-                "application",
-                "APP_ID=%s" % test_app_name,
-                "APP_URIS='%s'" % test_app_uris,
-            ])
-            patched_get_click_app_pid.assert_called_with(test_app_name)
-
     def test_get_app_env_from_string_hint_returns_qt_env(self):
         self.assertThat(
             _get_app_env_from_string_hint('QT'),
@@ -737,27 +617,6 @@ class ApplicationLauncherInternalTests(TestCase):
                     "type to use. You can specify this by providing app_type."
                 ))
             )
-
-    @patch.object(_l, '_attempt_kill_pid')
-    def test_kill_pid_succeeds(self, patched_killpg):
-        with patch.object(
-            _l, '_is_process_running', return_value=False
-        ) as proc_running:
-            _kill_pid(0)
-            proc_running.assert_called_once_with(0)
-            patched_killpg.assert_called_once_with(0)
-
-    @patch.object(_l, '_attempt_kill_pid')
-    def test_kill_pid_retried(self, patched_killpid):
-        with sleep.mocked():
-            with patch.object(
-                _l, '_is_process_running', return_value=True
-            ) as proc_running:
-                _kill_pid(0)
-                proc_running.assert_called_with(0)
-                self.assertThat(proc_running.call_count, GreaterThan(1))
-                self.assertThat(patched_killpid.call_count, Equals(2))
-                patched_killpid.assert_called_with(0, signal.SIGKILL)
 
     @patch.object(_l.os, 'killpg')
     def test_attempt_kill_pid_logs_if_process_already_exited(self, killpg):

@@ -18,7 +18,6 @@
 #
 
 from gi.repository import GLib
-import os
 import signal
 import subprocess
 from testtools import TestCase
@@ -45,7 +44,6 @@ from autopilot.application import (
 from autopilot.application._environment import (
     GtkApplicationEnvironment,
     QtApplicationEnvironment,
-    UpstartApplicationEnvironment,
 )
 import autopilot.application._launcher as _l
 from autopilot.application._launcher import (

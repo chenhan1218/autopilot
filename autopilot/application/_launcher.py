@@ -33,10 +33,8 @@ from testtools.content import content_from_file, text_content
 from autopilot._timeout import Timeout
 from autopilot.utilities import _raise_on_unknown_kwargs
 from autopilot.application._environment import (
-    _call_upstart_with_args,
     GtkApplicationEnvironment,
     QtApplicationEnvironment,
-    UpstartApplicationEnvironment,
 )
 
 
@@ -370,4 +368,3 @@ def _attempt_kill_pid(pid, sig=signal.SIGTERM):
 
 def _is_process_running(pid):
     return psutil.pid_exists(pid)
-

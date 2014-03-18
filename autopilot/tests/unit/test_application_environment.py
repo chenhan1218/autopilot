@@ -19,7 +19,7 @@
 
 from mock import patch
 from testtools import TestCase
-from testtools.matchers import raises, Equals
+from testtools.matchers import raises
 
 from autopilot.application._environment import (
     ApplicationEnvironment,

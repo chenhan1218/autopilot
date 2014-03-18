@@ -21,7 +21,6 @@
 
 import fixtures
 import os
-import subprocess
 
 
 class ApplicationEnvironment(fixtures.Fixture):

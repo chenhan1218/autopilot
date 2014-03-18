@@ -161,6 +161,9 @@ class ClickApplicationLauncher(UpstartApplicationLauncher):
 
     def launch(self, package_id, app_name, app_uris):
         app_id = _get_click_app_id(package_id, app_name)
+        self._do_upstart_launch(app_id, app_uris)
+
+    def _do_upstart_launch(self, app_id, app_uris):
         super(ClickApplicationLauncher, self).launch(app_id, app_uris)
 
 

@@ -185,6 +185,39 @@ class ClickApplicationLauncherTests(TestCase):
             launcher.dbus_application_name, Equals(app_name)
         )
 
+    def test_click_launch_calls_upstart_launch(self):
+        launcher = ClickApplicationLauncher(self.addDetail)
+        token = self.getUniqueString()
+        with patch.object(launcher, '_do_upstart_launch') as p_dul:
+            with patch.object(_l, '_get_click_app_id') as p_gcai:
+                p_gcai.return_value = token
+                launcher.launch('some_app_id', 'some_app_name', [])
+                p_dul.assert_called_once_with(token, [])
+
+    def test_upcalls_to_upstart(self):
+        class FakeUpstartBase(_l.ApplicationLauncher):
+            launch_call_args = []
+
+            def launch(self, *args):
+                FakeUpstartBase.launch_call_args = list(args)
+
+        patcher = patch.object(
+            _l.ClickApplicationLauncher,
+            '__bases__',
+            (FakeUpstartBase,)
+        )
+        with patcher:
+            # Prevent mock from trying to delete __bases__
+            patcher.is_local = True
+            launcher = ClickApplicationLauncher(self.addDetail)
+            launcher._do_upstart_launch('app_id', [])
+        self.assertEqual(
+            FakeUpstartBase.launch_call_args,
+            ['app_id', []])
+
+
+class ClickFunctionTests(TestCase):
+
     def test_get_click_app_id_raises_runtimeerror_on_empty_manifest(self):
         """_get_click_app_id must raise a RuntimeError if the requested
         package id is not found in the click manifest.

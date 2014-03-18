@@ -193,16 +193,6 @@ class ClickApplicationLauncherTests(TestCase):
             launcher.dbus_application_name, Equals(app_name)
         )
 
-    @patch.object(UpstartApplicationEnvironment, 'prepare_environment')
-    def test_prepare_environment_called(self, prep_env):
-        with patch.object(_l, '_get_click_app_id', return_value="app_id"):
-            launcher = ClickApplicationLauncher(self.addDetail)
-            launcher.setUp()
-            launcher._launch_click_app = Mock()
-
-            launcher.launch("package_id", "app_name", "")
-            prep_env.assert_called_with("app_id", "app_name")
-
     def test_get_click_app_id_raises_runtimeerror_on_empty_manifest(self):
         """_get_click_app_id must raise a RuntimeError if the requested
         package id is not found in the click manifest.
@@ -313,55 +303,6 @@ class ClickApplicationLauncherTests(TestCase):
                 lambda: _l._get_click_application_log_content_object("foo"),
                 Not(raises(IOError))
             )
-
-    @patch.object(_l, '_launch_click_app', return_value=123)
-    def test_launch_click_app_returns_pid(self, patched_launch_click_app):
-        launcher = ClickApplicationLauncher(self.addDetail)
-        launcher._add_click_launch_cleanup = Mock()
-
-        with patch.object(_l, 'logger'):
-            self.assertThat(
-                launcher._launch_click_app("appid", ""),
-                Equals(123)
-            )
-
-    def test_add_click_launch_cleanup_queues_correct_cleanup_steps(self):
-        test_app_name = self.getUniqueString()
-        test_app_pid = self.getUniqueInteger()
-        launcher = ClickApplicationLauncher(self.addDetail)
-        launcher.setUp()
-        launcher._add_click_launch_cleanup(test_app_name, test_app_pid)
-
-        self.assertThat(
-            launcher._cleanups._cleanups,
-            MatchesListwise([
-                Equals((_kill_pid, (test_app_pid,), {})),
-                Equals((launcher._add_log_cleanup, (test_app_name,), {})),
-            ])
-        )
-
-    def test_add_click_launch_cleanup_provides_correct_details(self):
-        launcher = ClickApplicationLauncher(self.addDetail)
-        launcher.addCleanup = Mock()
-        test_app_id = self.getUniqueString()
-        test_app_pid = self.getUniqueInteger()
-
-        launcher._add_click_launch_cleanup(test_app_id, test_app_pid)
-        launcher.addCleanup.assert_any_call(_kill_pid, test_app_pid)
-        launcher.addCleanup.assert_any_call(
-            launcher._add_log_cleanup,
-            test_app_id
-        )
-
-    def test_add_log_cleanup_adds_details(self):
-        mock_addDetail = Mock()
-        launcher = ClickApplicationLauncher(mock_addDetail)
-        with patch.object(
-            _l, '_get_click_application_log_content_object'
-        ) as log_content:
-            launcher._add_log_cleanup("appid")
-
-            mock_addDetail.assert_called_with("Application Log", log_content())
 
 
 class UpstartApplicationLauncherTests(TestCase):

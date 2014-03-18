@@ -69,6 +69,7 @@ class UpstartApplicationLauncher(ApplicationLauncher):
 
         self.emulator_base = kwargs.pop('emulator_base', None)
         self.dbus_bus = kwargs.pop('dbus_bus', 'session')
+        self.dbus_application_name = kwargs.pop('application_name', None)
 
         _raise_on_unknown_kwargs(kwargs)
 

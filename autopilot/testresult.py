@@ -72,7 +72,7 @@ class LoggedTestResultDecorator(TestResultDecorator):
 
 def get_output_formats():
     """Get information regarding the different output formats supported.
-    
+
     :returns: dict of supported formats and appropriate construct functions
 
     """

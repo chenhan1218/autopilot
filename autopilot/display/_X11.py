@@ -45,7 +45,7 @@ class Display(DisplayBase):
 
     def get_num_screens(self):
         """Get the number of screens attached to the PC.
-        
+
         :returns: int indicating number of screens attached.
 
         """

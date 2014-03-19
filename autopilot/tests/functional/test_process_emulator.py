@@ -126,28 +126,22 @@ class BAMFResizeWindowTestCase(AutopilotTestCase):
         ('decrease size', dict(delta_width=-40, delta_height=-40))
     ]
 
-    def start_mock_app(self):
-        window_spec_file = tempfile.mktemp(suffix='.json')
-        window_spec = {"Contents": "TextEdit"}
-        json.dump(
-            window_spec,
-            open(window_spec_file, 'w')
-        )
-        self.addCleanup(os.remove, window_spec_file)
-
-        return self.launch_test_application(
+    def start_mock_window(self):
+        self.launch_test_application(
             'window-mocker',
-            window_spec_file,
             app_type='qt'
         )
 
-    def test_resize_window_must_update_width_and_height_geometry(self):
-        self.start_mock_app()
         process_manager = ProcessManager.create()
         window = [
             w for w in process_manager.get_open_windows()
             if w.name == 'Default Window Title'
         ][0]
+
+        return window
+
+    def test_resize_window_must_update_width_and_height_geometry(self):
+        window = self.start_mock_window()
 
         def get_size():
             _, _, width, height = window.geometry

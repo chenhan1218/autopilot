@@ -34,7 +34,7 @@ except ImportError:
 from testtools import TestCase
 from testtools.matchers import Equals
 
-from autopilot import parse_arguments
+from autopilot.run import _parse_arguments
 
 
 class InvalidArguments(Exception):
@@ -47,7 +47,7 @@ class CommandLineArgsTests(TestCase):
         if isinstance(args, str):
             args = args.split()
         try:
-            return parse_arguments(args)
+            return _parse_arguments(args)
         except SystemExit as e:
             raise InvalidArguments("%s" % e)
 
@@ -104,49 +104,49 @@ class CommandLineArgsTests(TestCase):
     def test_launch_command_must_specify_app(self):
         self.assertRaises(InvalidArguments, self.parse_args, "launch")
 
-    @patch('autopilot.have_vis', new=lambda: True)
+    @patch('autopilot.run.have_vis', new=lambda: True)
     def test_vis_present_when_vis_module_installed(self):
         args = self.parse_args('vis')
         self.assertThat(args.mode, Equals("vis"))
 
-    @patch('autopilot.have_vis', new=lambda: False)
+    @patch('autopilot.run.have_vis', new=lambda: False)
     @patch('sys.stderr', new=StringIO())
     def test_vis_not_present_when_vis_module_not_installed(self):
         self.assertRaises(InvalidArguments, self.parse_args, 'vis')
 
-    @patch('autopilot.have_vis', new=lambda: True)
+    @patch('autopilot.run.have_vis', new=lambda: True)
     def test_vis_default_verbosity(self):
         args = self.parse_args('vis')
         self.assertThat(args.verbose, Equals(False))
 
-    @patch('autopilot.have_vis', new=lambda: True)
+    @patch('autopilot.run.have_vis', new=lambda: True)
     def test_vis_single_verbosity(self):
         args = self.parse_args('vis -v')
         self.assertThat(args.verbose, Equals(1))
 
-    @patch('autopilot.have_vis', new=lambda: True)
+    @patch('autopilot.run.have_vis', new=lambda: True)
     def test_vis_double_verbosity(self):
         args = self.parse_args('vis -vv')
         self.assertThat(args.verbose, Equals(2))
         args = self.parse_args('vis -v -v')
         self.assertThat(args.verbose, Equals(2))
 
-    @patch('autopilot.have_vis', new=lambda: True)
+    @patch('autopilot.run.have_vis', new=lambda: True)
     def test_vis_default_testability_flag(self):
         args = self.parse_args('vis')
         self.assertThat(args.testability, Equals(False))
 
-    @patch('autopilot.have_vis', new=lambda: True)
+    @patch('autopilot.run.have_vis', new=lambda: True)
     def test_vis_can_set_testability_flag(self):
         args = self.parse_args('vis -testability')
         self.assertThat(args.testability, Equals(True))
 
-    @patch('autopilot.have_vis', new=lambda: True)
+    @patch('autopilot.run.have_vis', new=lambda: True)
     def test_vis_default_profile_flag(self):
         args = self.parse_args('vis')
         self.assertThat(args.enable_profile, Equals(False))
 
-    @patch('autopilot.have_vis', new=lambda: True)
+    @patch('autopilot.run.have_vis', new=lambda: True)
     def test_vis_can_enable_profiling(self):
         args = self.parse_args('vis --enable-profile')
         self.assertThat(args.enable_profile, Equals(True))
@@ -303,7 +303,7 @@ class CommandLineArgsTests(TestCase):
     def test_fails_with_no_arguments_supplied(self):
         with patch('sys.stderr', new=StringIO()) as patched_err:
             try:
-                parse_arguments([])
+                _parse_arguments([])
             except SystemExit as e:
                 self.assertThat(e.code, Equals(2))
                 stderr_lines = patched_err.getvalue().split('\n')

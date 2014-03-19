@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2012-2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,11 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from subprocess import Popen, call
-from testtools import skipIf
-from testtools.matchers import Equals, NotEquals, LessThan
+import json
+import os
+import tempfile
 from threading import Thread
 from time import sleep, time
+from subprocess import Popen, call
+
+from testtools import skipIf
+from testtools.matchers import Equals, NotEquals, LessThan
 
 from autopilot import platform
 from autopilot.exceptions import BackendException
@@ -114,17 +118,37 @@ class ProcessManagerApplicationNoCleanupTests(AutopilotTestCase):
         self.assertThat(ret_code, Equals(1), "Application is still running")
 
 
-class BAMFWindowTestCase(AutopilotTestCase):
+class BAMFResizeWindowTestCase(AutopilotTestCase):
     """Tests for the BAMF window helpers."""
 
     scenarios = [
-        ('increase size', dict(delta_width=10, delta_height=10)),
-        ('decrease size', dict(delta_width=-10, delta_height=-10))
+        ('increase size', dict(delta_width=40, delta_height=40)),
+        ('decrease size', dict(delta_width=-40, delta_height=-40))
     ]
 
+    def start_mock_app(self):
+        window_spec_file = tempfile.mktemp(suffix='.json')
+        window_spec = {"Contents": "TextEdit"}
+        json.dump(
+            window_spec,
+            open(window_spec_file, 'w')
+        )
+        self.addCleanup(os.remove, window_spec_file)
+
+        return self.launch_test_application(
+            'window-mocker',
+            window_spec_file,
+            app_type='qt'
+        )
+
+
     def test_resize_window_must_update_width_and_height_geometry(self):
-        # Start any application that can be resized.
-        window = self.process_manager.start_app_window('Character Map')
+        self.start_mock_app()
+        process_manager = ProcessManager.create()
+        window = [
+            w for w in process_manager.get_open_windows()
+            if w.name == 'Default Window Title'
+        ][0]
 
         def get_size():
             _, _, width, height = window.geometry

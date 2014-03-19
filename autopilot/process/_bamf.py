@@ -637,8 +637,11 @@ class Window(WindowBase):
 
         :param width: The new width for the window.
         :param height: The new height for the window.
+        :return: A tuple with the new width and height of the window.
 
         """
         self.x_win.configure(width=width, height=height)
         self.x_win.change_attributes(
             win_gravity=X.NorthWestGravity, bit_gravity=X.StaticGravity)
+        # A call to get the window geometry commits the changes.
+        self.geometry

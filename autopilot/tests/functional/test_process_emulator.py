@@ -141,7 +141,6 @@ class BAMFResizeWindowTestCase(AutopilotTestCase):
             app_type='qt'
         )
 
-
     def test_resize_window_must_update_width_and_height_geometry(self):
         self.start_mock_app()
         process_manager = ProcessManager.create()

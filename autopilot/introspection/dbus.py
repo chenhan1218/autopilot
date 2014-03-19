@@ -653,7 +653,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         # print properties
         try:
             for prop, value in sorted(self.get_properties().items()):
-                output.write("%s%s: %s\n" % (indent, prop, value))
+                output.write("%s%s: %r\n" % (indent, prop, value))
                 # print children
                 if maxdepth is None or _curdepth < maxdepth:
                     for c in self.get_children():

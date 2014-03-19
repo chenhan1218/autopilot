@@ -57,6 +57,13 @@ def _parse_arguments(argv=None):
     """Parse command-line arguments, and return an argparse arguments
     object.
     """
+    common_arguments = ArgumentParser(add_help=False)
+    common_arguments.add_argument(
+        '--enable-profile', required=False, default=False,
+        action="store_true", help="Enable collection of profile data for "
+        "autopilot itself. If enabled, profile data will be stored in "
+        "'autopilot_<pid>.profile' in the current working directory."
+    )
     parser = ArgumentParser(
         description="Autopilot test tool.",
         epilog="Each command (run, list, launch etc.) has additional help that"
@@ -69,7 +76,9 @@ def _parse_arguments(argv=None):
                         help="Display autopilot version and exit.")
     subparsers = parser.add_subparsers(help='Run modes', dest="mode")
 
-    parser_run = subparsers.add_parser('run', help="Run autopilot tests")
+    parser_run = subparsers.add_parser(
+        'run', help="Run autopilot tests", parents=[common_arguments]
+    )
     parser_run.add_argument('-o', "--output", required=False,
                             help='Write test result report to file.\
                             Defaults to stdout.\
@@ -122,7 +131,9 @@ def _parse_arguments(argv=None):
     parser_run.add_argument("suite", nargs="+",
                             help="Specify test suite(s) to run.")
 
-    parser_list = subparsers.add_parser('list', help="List autopilot tests")
+    parser_list = subparsers.add_parser(
+        'list', help="List autopilot tests", parents=[common_arguments]
+    )
     parser_list.add_argument(
         "-ro", "--run-order", required=False, default=False,
         action="store_true",
@@ -137,7 +148,9 @@ def _parse_arguments(argv=None):
 
     if have_vis():
         parser_vis = subparsers.add_parser(
-            'vis', help="Open the Autopilot visualiser tool")
+            'vis', help="Open the Autopilot visualiser tool",
+            parents=[common_arguments]
+        )
         parser_vis.add_argument(
             '-v', '--verbose', required=False, default=False, action='count',
             help="Show autopilot log messages. Set twice to also log data "
@@ -147,16 +160,11 @@ def _parse_arguments(argv=None):
             action='store_true', help="Start the vis tool in testability "
             "mode. Used for self-tests only."
         )
-        parser_vis.add_argument(
-            '--enable-profile', required=False, default=False,
-            action="store_true", help="Enable "
-            "collection of profile data for vis itself. If enabled, profile "
-            "data will be stored in 'vis_tool.profile' in the current "
-            "working directory."
-        )
 
     parser_launch = subparsers.add_parser(
-        'launch', help="Launch an application with introspection enabled")
+        'launch', help="Launch an application with introspection enabled",
+        parents=[common_arguments]
+    )
     parser_launch.add_argument(
         '-i', '--interface', choices=('Gtk', 'Qt', 'Auto'), default='Auto',
         help="Specify which introspection interface to load. The default"
@@ -592,7 +600,9 @@ def _print_message_and_exit_error(msg):
     exit(1)
 
 
-def _run_with_profiling(callable, output_file):
+def _run_with_profiling(callable, output_file=None):
+    if output_file is None:
+        output_file = 'autopilot_%d.profile' % (os.getpid())
     cProfile.runctx(
         'callable()',
         globals(),
@@ -617,14 +627,21 @@ class TestProgram(object):
     def run(self):
         setup_logging(getattr(self.args, 'verbose', False))
 
+        action = None
         if self.args.mode == 'list':
-            self.list_tests()
+            action = self.list_tests
         elif self.args.mode == 'run':
-            self.run_tests()
+            action = self.run_tests
         elif self.args.mode == 'vis':
-            self.run_vis()
+            action = self.run_vis
         elif self.args.mode == 'launch':
-            self.launch_app()
+            action = self.launch_app
+
+        if action is not None:
+            if getattr(self.args, 'enable_profile', False):
+                _run_with_profiling(action)
+            else:
+                action()
 
     def run_vis(self):
         # importing this requires that DISPLAY is set. Since we don't always
@@ -640,10 +657,7 @@ class TestProgram(object):
         #
         os.putenv('LIBOVERLAY_SCROLLBAR', '0')
         args = ['-testability'] if self.args.testability else []
-        if self.args.enable_profile:
-            _run_with_profiling(lambda: vis_main(args), 'vis_tool.profile')
-        else:
-            vis_main(args)
+        vis_main(args)
 
     def launch_app(self):
         """Launch an application, with introspection support."""

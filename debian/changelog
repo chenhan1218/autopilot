@@ -1,3 +1,16 @@
+autopilot (1.4+14.04.20140319.1-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Launch upstart and click applications via upstart app launch.
+
+  [ Max Brustkern ]
+  * PEP257 docstring fixes.
+  * Autopilot emulators can declare a validate_dbus_object class method
+    that takes a dbus path and state as arguments. (LP:1210260) (LP:
+    #1210260)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 19 Mar 2014 20:13:30 +0000
+
 autopilot (1.4+14.04.20140311-0ubuntu1) trusty; urgency=low
 
   [ Thomi Richards ]

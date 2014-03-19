@@ -50,6 +50,7 @@ from __future__ import absolute_import
 
 import logging
 import os
+import six
 
 from testscenarios import TestWithScenarios
 from testtools import TestCase
@@ -259,7 +260,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         return self._launch_test_application(launcher, application, *arguments)
 
-    def launch_click_package(self, package_id, app_name=None, app_uris="",
+    def launch_click_package(self, package_id, app_name=None, app_uris=[],
                              **kwargs):
         """Launch a click package application with introspection enabled.
 
@@ -291,6 +292,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             the specified click package.
 
         """
+        if isinstance(app_uris, (six.text_type, six.binary_type)):
+            app_uris = [app_uris]
         logger.info(
             "Attempting to launch click application '%s' from click package "
             " '%s' and URIs '%s'",
@@ -322,6 +325,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :raises RuntimeError: If the specified application cannot be launched.
         :raises ValueError: If unknown keyword arguments are specified.
         """
+        if isinstance(uris, (six.text_type, six.binary_type)):
+            uris = [uris]
         logger.info(
             "Attempting to launch application '%s' with URIs '%s' via "
             "upstart-app-launch",

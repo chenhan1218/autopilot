@@ -275,14 +275,17 @@ _integer_str = _integer_repr
 
 
 def _make_plain_type(value, parent=None, name=None):
-    new_type = _get_plain_type_class(type(value), parent, name)
+    new_type = _get_plain_type_class(type(value))
+    new_type.parent = parent
+    new_type.name = name
     return new_type(value)
 
+
 @cached_result
-def _get_plain_type_class(value_class, parent, name):
+def _get_plain_type_class(value_class):
     new_type_name = value_class.__name__
     new_type_bases = (value_class, PlainType)
-    new_type_dict = dict(parent=parent, name=name)
+    new_type_dict = {}
     repr_callable = _get_repr_callable_for_value_class(value_class)
     if repr_callable:
         new_type_dict['__repr__'] = repr_callable

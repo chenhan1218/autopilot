@@ -126,7 +126,7 @@ def get_classname_from_path(object_path):
     return object_path.split("/")[-1]
 
 
-def object_passes_filters(instance, **kwargs):
+def _object_passes_filters(instance, **kwargs):
     """Return true if *instance* satisifies all the filters present in
     kwargs."""
     with instance.no_automatic_refreshing():
@@ -137,6 +137,7 @@ def object_passes_filters(instance, **kwargs):
                 # list.
                 return False
     return True
+
 
 DBusIntrospectionObjectBase = IntrospectableObjectMetaclass(
     'DBusIntrospectionObjectBase',
@@ -228,7 +229,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
                 continue
 
             #skip instances that fail attribute check:
-            if object_passes_filters(instance, **kwargs):
+            if _object_passes_filters(instance, **kwargs):
                 result.append(instance)
         return result
 
@@ -456,7 +457,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         state_dicts = self.get_state_by_path(query_path)
         instances = [self.make_introspection_object(i) for i in state_dicts]
         return [i for i in instances
-                if object_passes_filters(i, **client_side_filters)]
+                if _object_passes_filters(i, **client_side_filters)]
 
     def refresh_state(self):
         """Refreshes the object's state.
@@ -683,10 +684,27 @@ def _is_valid_server_side_filter_param(key, value):
     processing.
 
     """
-    return (
-        type(value) in (str, int, bool) and
-        re.match(r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$', key) is not None and
-        (type(value) != int or -2**31 <= value <= 2**31 - 1))
+    key_is_valid = re.match(
+        r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$',
+        key
+    ) is not None
+
+    if type(value) == int:
+        return key_is_valid and (-2**31 <= value <= 2**31 - 1)
+
+    elif type(value) == bool:
+        return key_is_valid
+
+    elif type(value) == six.binary_type:
+        return key_is_valid
+
+    elif type(value) == six.text_type:
+        try:
+            value.encode('ascii')
+            return key_is_valid
+        except UnicodeEncodeError:
+            pass
+    return False
 
 
 def _get_filter_string_for_key_value_pair(key, value):
@@ -696,9 +714,20 @@ def _get_filter_string_for_key_value_pair(key, value):
     this is not the case.
 
     """
-    if isinstance(value, str):
+    if isinstance(value, six.text_type):
         if six.PY3:
             escaped_value = value.encode("unicode_escape")\
+                .decode('ASCII')\
+                .replace("'", "\\'")
+        else:
+            escaped_value = value.encode('utf-8').encode("string_escape")
+            # note: string_escape codec escapes "'" but not '"'...
+            escaped_value = escaped_value.replace('"', r'\"')
+        return '{}="{}"'.format(key, escaped_value)
+    elif isinstance(value, six.binary_type):
+        if six.PY3:
+            escaped_value = value.decode('utf-8')\
+                .encode("unicode_escape")\
                 .decode('ASCII')\
                 .replace("'", "\\'")
         else:

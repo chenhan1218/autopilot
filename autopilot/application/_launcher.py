@@ -30,7 +30,7 @@ import signal
 from testtools.content import content_from_file, text_content
 
 from autopilot._timeout import Timeout
-
+from autopilot.utilities import _raise_on_unknown_kwargs
 from autopilot.application._environment import (
     _call_upstart_with_args,
     GtkApplicationEnvironment,
@@ -65,7 +65,7 @@ class ClickApplicationLauncher(ApplicationLauncher):
         self.dbus_bus = kwargs.pop('dbus_bus', 'session')
         self.dbus_application_name = kwargs.pop('application_name', None)
 
-        _raise_if_not_empty(kwargs)
+        _raise_on_unknown_kwargs(kwargs)
 
     def launch(self, package_id, app_name, app_uris):
         app_id = _get_click_app_id(package_id, app_name)
@@ -108,7 +108,7 @@ class NormalApplicationLauncher(ApplicationLauncher):
         self.dbus_bus = kwargs.pop('dbus_bus', 'session')
         self.emulator_base = kwargs.pop('emulator_base', None)
 
-        _raise_if_not_empty(kwargs)
+        _raise_on_unknown_kwargs(kwargs)
 
     def launch(self, application, *arguments):
         app_path = _get_application_path(application)
@@ -199,7 +199,13 @@ def _get_click_app_status(app_id):
 
 
 def _get_click_application_log_content_object(app_id):
-    return content_from_file(_get_click_application_log_path(app_id))
+    try:
+        return content_from_file(
+            _get_click_application_log_path(app_id),
+            buffer_now=True
+        )
+    except IOError as e:
+        return text_content(u'Unable to open application log: %s' % (e,))
 
 
 def _get_click_application_log_path(app_id):
@@ -364,12 +370,3 @@ def _kill_process(process):
         )
         _attempt_kill_pid(process.pid, signal.SIGKILL)
     return u''.join(stdout_parts), u''.join(stderr_parts), process.returncode
-
-
-def _raise_if_not_empty(kwargs):
-    if kwargs:
-        arglist = [repr(k) for k in kwargs.keys()]
-        arglist.sort()
-        raise ValueError(
-            "Unknown keyword arguments: %s." % (', '.join(arglist))
-        )

@@ -140,6 +140,14 @@ class UnknownKWArgsTests(TestCase):
 
 class CachedResultTests(TestCase):
 
+    def get_wrapped_mock_pair(self):
+        inner = Mock()
+        # Mock() under python 2 does not support __name__. When we drop py2
+        # support we can obviously delete this hack:
+        if six.PY2:
+            inner.__name__ = ""
+        return inner, cached_result(inner)
+
     def test_can_be_used_as_decorator(self):
         @cached_result
         def foo():
@@ -161,29 +169,25 @@ class CachedResultTests(TestCase):
         self.assertThat(foo.__doc__, Equals("xxXX super docstring XXxx"))
 
     def test_call_passes_through_once(self):
-        inner = Mock()
-        wrapped = cached_result(inner)
+        inner, wrapped = self.get_wrapped_mock_pair()
         wrapped()
         inner.assert_called_once_with()
 
     def test_call_passes_through_only_once(self):
-        inner = Mock()
-        wrapped = cached_result(inner)
+        inner, wrapped = self.get_wrapped_mock_pair()
         wrapped()
         wrapped()
         inner.assert_called_once_with()
 
     def test_first_call_returns_actual_result(self):
-        inner = Mock()
-        wrapped = cached_result(inner)
+        inner, wrapped = self.get_wrapped_mock_pair()
         self.assertThat(
             wrapped(),
             Equals(inner.return_value)
         )
 
     def test_subsequent_calls_return_actual_results(self):
-        inner = Mock()
-        wrapped = cached_result(inner)
+        inner, wrapped = self.get_wrapped_mock_pair()
         wrapped()
         self.assertThat(
             wrapped(),
@@ -191,30 +195,26 @@ class CachedResultTests(TestCase):
         )
 
     def test_can_pass_hashable_arguments(self):
-        inner = Mock()
-        wrapped = cached_result(inner)
+        inner, wrapped = self.get_wrapped_mock_pair()
         wrapped(1, True, 2.0, "Hello", tuple(), )
         inner.assert_called_once_with(1, True, 2.0, "Hello", tuple())
 
     def test_passing_kwargs_raises_TypeError(self):
-        inner = Mock()
-        wrapped = cached_result(inner)
+        inner, wrapped = self.get_wrapped_mock_pair()
         self.assertThat(
             lambda: wrapped(foo='bar'),
             raises(TypeError)
         )
 
     def test_passing_unhashable_args_raises_TypeError(self):
-        inner = Mock()
-        wrapped = cached_result(inner)
+        inner, wrapped = self.get_wrapped_mock_pair()
         self.assertThat(
             lambda: wrapped([]),
             raises(TypeError)
         )
 
     def test_resetting_cache_works(self):
-        inner = Mock()
-        wrapped = cached_result(inner)
+        inner, wrapped = self.get_wrapped_mock_pair()
         wrapped()
         wrapped.reset_cache()
         wrapped()

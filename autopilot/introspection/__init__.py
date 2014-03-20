@@ -495,6 +495,76 @@ def _get_proxy_object_class_name_and_state(backend):
     return get_classname_from_path(object_path), object_state
 
 
+def _make_proxy_object_async(data_source, emulator_base, reply_handler, error_handler):
+    """Make a proxy object for a dbus backend.
+
+    Similar to :meth:`_make_proxy_object` except this method runs
+    asynchronously and must have a reply_handler callable set. The
+    reply_handler will be called with a single argument: The proxy object.
+
+    """
+    def get_proxy_bases(data_source, emulator_base, reply_handler, error_handler, proxy_bases):
+        def build_proxy(reply_handler, cls_name, path, state):
+            clsobj = type(str("%sBase" % cls_name), proxy_bases, {})
+
+            proxy_class = type(str(cls_name), (clsobj,), {})
+            reply_handler(proxy_class(state, path, data_source))
+
+        if emulator_base is None:
+            emulator_base = type('DefaultEmulatorBase', (CustomEmulatorBase,), {})
+        proxy_bases = proxy_bases + (emulator_base, )
+
+        _get_proxy_object_class_name_and_state_async(
+            data_source,
+            reply_handler=partial(build_proxy, reply_handler),
+            error_handler=error_handler
+        )
+
+    _get_proxy_object_base_classes_async(
+        data_source,
+        partial(get_proxy_bases, data_source, emulator_base, reply_handler, error_handler),
+        error_handler,
+    )
+
+
+def _get_proxy_object_base_classes_async(backend, reply_handler, error_handler):
+    """Return  tuple of the base classes to use when creating a proxy object
+    for the given service name & path.
+
+    :raises: **RuntimeError** if the autopilot interface cannot be found.
+
+    """
+    def on_introspection_return(backend, reply_handler, intro_xml):
+        bases = [ApplicationProxyObject]
+        if AP_INTROSPECTION_IFACE not in intro_xml:
+            raise RuntimeError(
+                "Could not find Autopilot interface on DBus backend '%s'" %
+                backend)
+
+        if QT_AUTOPILOT_IFACE in intro_xml:
+            from autopilot.introspection.qt import QtObjectProxyMixin
+            bases.append(QtObjectProxyMixin)
+
+        reply_handler(tuple(bases))
+
+    backend.dbus_introspection_iface.Introspect(
+        reply_handler=partial(on_introspection_return, backend, reply_handler),
+        error_handler=error_handler,
+    )
+
+
+def _get_proxy_object_class_name_and_state_async(backend, reply_handler, error_handler):
+    """Return the class name and root state dictionary."""
+    def on_dbus_reply(reply_handler, state_list):
+        object_path, object_state = state_list[0]
+        reply_handler(get_classname_from_path(object_path), object_path, object_state)
+    backend.introspection_iface.GetState(
+        "/",
+        reply_handler=partial(on_dbus_reply, reply_handler),
+        error_handler=error_handler
+    )
+
+
 class ApplicationProxyObject(DBusIntrospectionObject):
     """A class that better supports query data from an application."""
 

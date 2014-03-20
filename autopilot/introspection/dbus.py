@@ -262,6 +262,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         # Thomi: 2014-03-20: There used to be a call to 'self.refresh_state()'
         # here. That's not needed, since the only thing we use is the proxy
         # path, which isn't affected by the current state.
+
         query = self.get_class_query_string() + "/*"
         state_dicts = self.get_state_by_path(query)
         children = [self.make_introspection_object(i) for i in state_dicts]
@@ -664,10 +665,10 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         try:
             for key in sorted(properties.keys()):
                 output.write("%s%s: %r\n" % (indent, key, properties[key]))
-            # print children
-            if maxdepth is None or _curdepth < maxdepth:
-                for c in self.get_children():
-                    c.print_tree(output, maxdepth, _curdepth + 1)
+                    # print children
+                    if maxdepth is None or _curdepth < maxdepth:
+                        for c in self.get_children():
+                            c.print_tree(output, maxdepth, _curdepth + 1)
         except StateNotFoundError as error:
             output.write("%sError: %s\n" % (indent, error))
 

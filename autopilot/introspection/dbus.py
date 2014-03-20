@@ -259,8 +259,9 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         :meth:`select_many`.
 
         """
-        self.refresh_state()
-
+        # Thomi: 2014-03-20: There used to be a call to 'self.refresh_state()'
+        # here. That's not needed, since the only thing we use is the proxy
+        # path, which isn't affected by the current state.
         query = self.get_class_query_string() + "/*"
         state_dicts = self.get_state_by_path(query)
         children = [self.make_introspection_object(i) for i in state_dicts]

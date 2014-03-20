@@ -250,7 +250,7 @@ class TestRunLaunchApp(TestCase):
         args = Namespace(
             mode='vis',
             testability=True,
-            enable_profile=True,
+            enable_profile=False,
         )
         program = run.TestProgram(args)
         program.run()

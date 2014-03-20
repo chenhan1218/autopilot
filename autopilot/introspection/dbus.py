@@ -651,8 +651,16 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         if _curdepth > 0:
             output.write("\n")
         output.write("%s== %s ==\n" % (indent, self._path))
+        # Thomi 2014-03-20: For all levels other than the top level, we can
+        # avoid an entire dbus round trip if we grab the underlying property
+        # dictionary directly. We can do this since the print_tree function
+        # that called us will have retrieved us via a call to get_children(),
+        # which gets the latest state anyway.
+        if _curdepth > 0:
+            properties = self.__state.copy()
+        else:
+            properties = self.get_properties()
         # print properties
-        properties = self.get_properties()
         for key in sorted(properties.keys()):
             output.write("%s%s: %r\n" % (indent, key, properties[key]))
         # print children

@@ -63,6 +63,7 @@ def _pick_backend(backends, preferred_backend):
 # Taken from http://ur1.ca/eqapv
 # licensed under the MIT license.
 class Silence(object):
+
     """Context manager which uses low-level file descriptors to suppress
     output to stdout/stderr, optionally redirecting to the named file(s).
 
@@ -72,6 +73,7 @@ class Silence(object):
             # do something that prints to stdout or stderr
 
     """
+
     def __init__(self, stdout=os.devnull, stderr=os.devnull, mode='wb'):
         self.outfiles = stdout, stderr
         self.combine = (stdout == stderr)
@@ -138,6 +140,7 @@ class LogFormatter(logging.Formatter):
 
 
 class Timer(object):
+
     """A context-manager that times a block of code, writing the results to
     the log."""
 
@@ -158,6 +161,7 @@ class Timer(object):
 
 
 class StagnantStateDetector(object):
+
     """Detect when the state of something doesn't change over many iterations.
 
 
@@ -185,7 +189,7 @@ class StagnantStateDetector(object):
         :param threshold: Amount of times the updated state can fail to
           differ consecutively before raising an exception.
 
-        :raises: **ValueError** if *threshold* isn't a positive integer.
+        :raises ValueError: if *threshold* isn't a positive integer.
 
         """
         if type(threshold) is not int or threshold <= 0:
@@ -195,13 +199,13 @@ class StagnantStateDetector(object):
         self._previous_state_hash = -1
 
     def check_state(self, *state):
-        """Checks if there is a difference between the previous state and
+        """Check if there is a difference between the previous state and
         state.
 
         :param state: Hashable state argument to compare against the previous
           iteration
 
-        :raises: **TypeError** when state is unhashable
+        :raises TypeError: when state is unhashable
 
         """
         state_hash = hash(state)
@@ -218,7 +222,11 @@ class StagnantStateDetector(object):
 
 
 def get_debug_logger():
-    """Get a logging object to be used as a debug logger only."""
+    """Get a logging object to be used as a debug logger only.
+
+    :returns: logger object from logging module
+
+    """
     logger = logging.getLogger("autopilot.debug")
     logger.addFilter(DebugLogFilter())
     return logger
@@ -258,6 +266,7 @@ def deprecated(alternative):
 
 
 class _CleanupWrapper(object):
+
     """Support for calling 'addCleanup' outside the test case."""
 
     def __init__(self):
@@ -285,7 +294,9 @@ _cleanup_objects = []
 
 
 class _TestCleanupMeta(type):
-    """Metaclass to inject the object into on test start/end functionality"""
+
+    """Metaclass to inject the object into on test start/end functionality."""
+
     def __new__(cls, classname, bases, classdict):
         class EmptyStaticMethod(object):
             """Class used to give us 'default classmethods' for those that
@@ -346,6 +357,7 @@ def on_test_started(test_case_instance):
 
 
 class MockableSleep(object):
+
     """Delay execution for a certain number of seconds.
 
     Functionally identical to `time.sleep`, except we can replace it during
@@ -365,6 +377,7 @@ class MockableSleep(object):
             self.assertEqual(mock_sleep.total_time_slept(), 10.0)
 
     """
+
     def __init__(self):
         self._mock_count = 0.0
         self._mocked = False

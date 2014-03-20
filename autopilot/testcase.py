@@ -50,6 +50,7 @@ from __future__ import absolute_import
 
 import logging
 import os
+import six
 
 from testscenarios import TestWithScenarios
 from testtools import TestCase
@@ -59,6 +60,7 @@ from autopilot.application import (
     ClickApplicationLauncher,
     get_application_launcher_wrapper,
     NormalApplicationLauncher,
+    UpstartApplicationLauncher,
 )
 from autopilot.display import Display
 from autopilot.globals import get_debug_profile_fixture
@@ -247,13 +249,19 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
          data is retrievable via this object.
 
         """
+        logger.info(
+            "Attempting to launch application '%s' with arguments '%s' as a "
+            "normal process",
+            application,
+            ' '.join(arguments)
+        )
         launcher = self.useFixture(
             NormalApplicationLauncher(self.addDetail, **kwargs)
         )
 
         return self._launch_test_application(launcher, application, *arguments)
 
-    def launch_click_package(self, package_id, app_name=None, app_uris="",
+    def launch_click_package(self, package_id, app_name=None, app_uris=[],
                              **kwargs):
         """Launch a click package application with introspection enabled.
 
@@ -287,11 +295,51 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :returns: proxy object for the launched package application
 
         """
+        if isinstance(app_uris, (six.text_type, six.binary_type)):
+            app_uris = [app_uris]
+        logger.info(
+            "Attempting to launch click application '%s' from click package "
+            " '%s' and URIs '%s'",
+            app_name if app_name is not None else "(default)",
+            package_id,
+            ','.join(app_uris)
+        )
         launcher = self.useFixture(
             ClickApplicationLauncher(self.addDetail, **kwargs)
         )
         return self._launch_test_application(launcher, package_id, app_name,
                                              app_uris)
+
+    def launch_upstart_application(self, application_name, uris=[], **kwargs):
+        """Launch an application with upstart.
+
+        This method launched an application via the ``upstart-app-launch``
+        library, on platforms that support it.
+
+        Usage is similar to the
+        :py:meth:`AutopilotTestCase.launch_test_application`::
+
+            app_proxy = self.launch_upstart_application("gallery-app")
+
+        :param application_name: The name of the application to launch.
+        :keyword emulator_base: If set, specifies the base class to be used for
+            all emulators for this loaded application.
+
+        :raises RuntimeError: If the specified application cannot be launched.
+        :raises ValueError: If unknown keyword arguments are specified.
+        """
+        if isinstance(uris, (six.text_type, six.binary_type)):
+            uris = [uris]
+        logger.info(
+            "Attempting to launch application '%s' with URIs '%s' via "
+            "upstart-app-launch",
+            application_name,
+            ','.join(uris)
+        )
+        launcher = self.useFixture(
+            UpstartApplicationLauncher(self.addDetail, **kwargs)
+        )
+        return self._launch_test_application(launcher, application_name, uris)
 
     # Wrapper function tying the newer ApplicationLauncher behaviour with the
     # previous (to be depreciated) behaviour

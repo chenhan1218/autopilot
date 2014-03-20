@@ -156,9 +156,9 @@ class BAMFResizeWindowTestCase(AutopilotTestCase):
         )
 
         try:
-            process_manager = ProcessManager.create(preferred_backend="BAMF")
+            process_manager = ProcessManager.create(preferred_backend='BAMF')
         except BackendException as e:
-            self.skip("Test is only for BAMF backend ({}).".format(str(e)))
+            self.skip('Test is only for BAMF backend ({}).'.format(str(e)))
 
         window = [
             w for w in process_manager.get_open_windows()

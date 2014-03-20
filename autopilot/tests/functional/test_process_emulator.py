@@ -17,9 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import json
-import os
-import tempfile
 from threading import Thread
 from time import sleep, time
 from subprocess import Popen, call

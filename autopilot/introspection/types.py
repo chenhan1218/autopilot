@@ -46,7 +46,7 @@ from testtools.matchers import Equals
 import six
 
 from autopilot.introspection.utilities import translate_state_keys
-from autopilot.utilities import sleep, compatible_repr
+from autopilot.utilities import sleep, compatible_repr, cached_result
 
 
 logger = logging.getLogger(__name__)
@@ -278,7 +278,7 @@ def _make_plain_type(value, parent=None, name=None):
     new_type = _get_plain_type_class(type(value), parent, name)
     return new_type(value)
 
-
+@cached_result
 def _get_plain_type_class(value_class, parent, name):
     new_type_name = value_class.__name__
     new_type_bases = (value_class, PlainType)

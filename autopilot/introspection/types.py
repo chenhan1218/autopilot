@@ -217,7 +217,7 @@ class PlainType(TypeBase):
         return _make_plain_type(value, parent=parent, name=name)
 
 
-def _get_repr_callable_for_value(value):
+def _get_repr_callable_for_value_class(cls):
     repr_map = {
         dbus.Byte: _integer_repr,
         dbus.Int16: _integer_repr,
@@ -238,15 +238,15 @@ def _get_repr_callable_for_value(value):
     }
     if not six.PY3:
         repr_map[dbus.UTF8String] = _bytes_repr
-    return repr_map.get(type(value), None)
+    return repr_map.get(cls, None)
 
 
-def _get_str_callable_for_value(value):
+def _get_str_callable_for_value_class(cls):
     str_map = {
         dbus.Boolean: _boolean_str,
         dbus.Byte: _integer_str,
     }
-    return str_map.get(type(value), None)
+    return str_map.get(cls, None)
 
 
 @compatible_repr
@@ -275,17 +275,21 @@ _integer_str = _integer_repr
 
 
 def _make_plain_type(value, parent=None, name=None):
-    new_type_name = type(value).__name__
-    new_type_bases = (type(value), PlainType)
+    new_type = _get_plain_type_class(type(value), parent, name)
+    return new_type(value)
+
+
+def _get_plain_type_class(value_class, parent, name):
+    new_type_name = value_class.__name__
+    new_type_bases = (value_class, PlainType)
     new_type_dict = dict(parent=parent, name=name)
-    repr_callable = _get_repr_callable_for_value(value)
+    repr_callable = _get_repr_callable_for_value_class(value_class)
     if repr_callable:
         new_type_dict['__repr__'] = repr_callable
-    str_callable = _get_str_callable_for_value(value)
+    str_callable = _get_str_callable_for_value_class(value_class)
     if str_callable:
         new_type_dict['__str__'] = str_callable
-    new_type = type(new_type_name, new_type_bases, new_type_dict)
-    return new_type(value)
+    return type(new_type_name, new_type_bases, new_type_dict)
 
 
 def _array_packed_type(num_args):

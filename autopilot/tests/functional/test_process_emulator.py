@@ -17,21 +17,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os
+import sys
+from subprocess import Popen, call
+from textwrap import dedent
 from threading import Thread
 from time import sleep, time
-from subprocess import Popen, call
 
 from testtools import skipIf
 from testtools.matchers import Equals, NotEquals, LessThan
 
-from autopilot import platform
 from autopilot.exceptions import BackendException
 from autopilot.matchers import Eventually
+from autopilot.platform import model
 from autopilot.process import ProcessManager
 from autopilot.testcase import AutopilotTestCase
+from autopilot.tests.functional.fixtures import ExecutableScript
 
 
-@skipIf(platform.model() != "Desktop", "Not suitable for device (ProcManager)")
+@skipIf(model() != "Desktop", "Not suitable for device (ProcManager)")
 class ProcessEmulatorTests(AutopilotTestCase):
 
     def ensure_gedit_not_running(self):
@@ -90,6 +94,28 @@ class ProcessEmulatorTests(AutopilotTestCase):
 
         self.assertThat(app, NotEquals(None))
         self.assertThat(app.name, Equals('Calculator'))
+
+    @skipIf(model() != 'Desktop', "Bamf only available on desktop (Qt4)")
+    def test_bamf_geometry_gives_reliable_results(self):
+        script = dedent("""\
+            #!%s
+            from PyQt4.QtGui import QMainWindow, QApplication
+            from sys import argv
+
+            app = QApplication(argv)
+            win = QMainWindow()
+            win.show()
+            app.exec_()
+            """ % sys.executable)
+        path = self.useFixture(ExecutableScript(script)).path
+        app_proxy = self.launch_test_application(path, app_type='qt')
+        proxy_window = app_proxy.select_single('QMainWindow')
+        pm = ProcessManager.create()
+        window = [
+            w for w in pm.get_open_windows()
+            if w.name == os.path.basename(path)
+        ][0]
+        self.assertThat(list(window.geometry), Equals(proxy_window.geometry))
 
 
 class ProcessManagerApplicationNoCleanupTests(AutopilotTestCase):

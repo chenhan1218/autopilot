@@ -124,6 +124,7 @@ def _lttng_trace_test_ended(test_id):
 
 
 class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
+
     """Wrapper around testtools.TestCase that adds significant functionality.
 
     This class should be the base class for all autopilot test case classes.
@@ -243,7 +244,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :keyword emulator_base: If set, specifies the base class to be used for
             all emulators for this loaded application.
 
-        :raises: **ValueError** if unknown keyword arguments are passed.
+        :raises ValueError: if unknown keyword arguments are passed.
         :return: A proxy object that represents the application. Introspection
          data is retrievable via this object.
 
@@ -290,6 +291,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             the click package manifest.
         :raises RuntimeError: If the specified app_name cannot be found within
             the specified click package.
+
+        :returns: proxy object for the launched package application
 
         """
         if isinstance(app_uris, (six.text_type, six.binary_type)):
@@ -445,7 +448,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         :param stack_start: An iterable of
          :class:`~autopilot.process.Window` instances.
-        :raises: **AssertionError** if the top of the window stack does not
+        :raises AssertionError: if the top of the window stack does not
          match the contents of the stack_start parameter.
 
         """
@@ -475,9 +478,9 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :param obj: The object to test.
         :param kwargs: One or more keyword arguments to match against the
          attributes of the *obj* parameter.
-        :raises: **ValueError** if no keyword arguments were given.
-        :raises: **ValueError** if a named attribute is a callable object.
-        :raises: **AssertionError** if any of the attribute/value pairs in
+        :raises ValueError: if no keyword arguments were given.
+        :raises ValueError: if a named attribute is a callable object.
+        :raises AssertionError: if any of the attribute/value pairs in
          kwargs do not match the attributes on the object passed in.
 
         """
@@ -533,7 +536,7 @@ def _get_process_snapshot():
 
 
 def _compare_system_with_process_snapshot(snapshot_fn, old_snapshot):
-    """Compares an existing process snapshot with current running processes.
+    """Compare an existing process snapshot with current running processes.
 
     :param snapshot_fn: A callable that returns the current running process
         list.

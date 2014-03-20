@@ -259,8 +259,9 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         :meth:`select_many`.
 
         """
-        self.refresh_state()
-
+        # Thomi: 2014-03-20: There used to be a call to 'self.refresh_state()'
+        # here. That's not needed, since the only thing we use is the proxy
+        # path, which isn't affected by the current state.
         query = self.get_class_query_string() + "/*"
         state_dicts = self.get_state_by_path(query)
         children = [self.make_introspection_object(i) for i in state_dicts]
@@ -650,14 +651,23 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         if _curdepth > 0:
             output.write("\n")
         output.write("%s== %s ==\n" % (indent, self._path))
+        # Thomi 2014-03-20: For all levels other than the top level, we can
+        # avoid an entire dbus round trip if we grab the underlying property
+        # dictionary directly. We can do this since the print_tree function
+        # that called us will have retrieved us via a call to get_children(),
+        # which gets the latest state anyway.
+        if _curdepth > 0:
+            properties = self.__state.copy()
+        else:
+            properties = self.get_properties()
         # print properties
         try:
-            for prop, value in sorted(self.get_properties().items()):
-                output.write("%s%s: %r\n" % (indent, prop, value))
-                # print children
-                if maxdepth is None or _curdepth < maxdepth:
-                    for c in self.get_children():
-                        c.print_tree(output, maxdepth, _curdepth + 1)
+            for key in sorted(properties.keys()):
+                output.write("%s%s: %r\n" % (indent, key, properties[key]))
+            # print children
+            if maxdepth is None or _curdepth < maxdepth:
+                for c in self.get_children():
+                    c.print_tree(output, maxdepth, _curdepth + 1)
         except StateNotFoundError as error:
             output.write("%sError: %s\n" % (indent, error))
 

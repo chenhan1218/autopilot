@@ -57,6 +57,7 @@ Package: python-autopilot
 Architecture: all
 Depends: ${misc:Depends},
          ${python:Depends},
+         python-gi,
          gir1.2-upstart-app-launch-2,
          python-contextlib2,
          python-dbus,
@@ -86,6 +87,7 @@ Package: python3-autopilot
 Architecture: all
 Depends: ${misc:Depends},
          ${python3:Depends},
+         python3-gi,
          gir1.2-upstart-app-launch-2,
          python3-dbus,
          python3-decorator,

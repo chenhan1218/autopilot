@@ -1,3 +1,11 @@
+autopilot (1.4+14.04.20140319.1-0ubuntu2) UNRELEASED; urgency=medium
+
+  * Add python-gi and python3-gi dependencies which provide gi.repository
+    modules. (since gir1.2-upstart-app-launch is accessed via
+    gi.repository)
+
+ -- Dimitri John Ledkov <xnox@ubuntu.com>  Sat, 22 Mar 2014 18:18:46 +0000
+
 autopilot (1.4+14.04.20140319.1-0ubuntu1) trusty; urgency=low
 
   [ Thomi Richards ]

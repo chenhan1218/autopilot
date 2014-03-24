@@ -356,7 +356,7 @@ Display Information
 
 .. Document the display stack.
 
-.. _custom_emulators:
+.. _custom_proxy_classes:
 
 Writing Custom Proxy Classes
 ========================

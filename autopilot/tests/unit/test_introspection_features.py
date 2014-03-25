@@ -692,8 +692,9 @@ class GetDetailsFromStateDataTests(TestCase):
 class FooTests(TestCase):
 
     fake_data_with_ap_interface = """
-        <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
-                              "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+        <!DOCTYPE node PUBLIC
+            "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+            "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
         <!-- GDBus 2.39.92 -->
         <node>
           <interface name="com.canonical.Autopilot.Introspection">
@@ -712,8 +713,9 @@ class FooTests(TestCase):
     """
 
     fake_data_with_ap_and_qt_interfaces = """
-        <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
-        "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+        <!DOCTYPE node PUBLIC
+            "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+            "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
         <node>
             <interface name="com.canonical.Autopilot.Introspection">
                 <method name='GetState'>

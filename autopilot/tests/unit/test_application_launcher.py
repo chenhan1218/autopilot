@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import os
+from gi.repository import GLib
 import signal
 import subprocess
 from testtools import TestCase
@@ -25,6 +25,7 @@ from testtools.matchers import (
     Contains,
     Equals,
     GreaterThan,
+    HasLength,
     IsInstance,
     MatchesListwise,
     Not,
@@ -32,16 +33,17 @@ from testtools.matchers import (
     raises,
 )
 from testtools.content import text_content
+import tempfile
 from mock import Mock, patch
 
 from autopilot.application import (
     ClickApplicationLauncher,
     NormalApplicationLauncher,
+    UpstartApplicationLauncher,
 )
 from autopilot.application._environment import (
     GtkApplicationEnvironment,
     QtApplicationEnvironment,
-    UpstartApplicationEnvironment,
 )
 import autopilot.application._launcher as _l
 from autopilot.application._launcher import (
@@ -53,15 +55,9 @@ from autopilot.application._launcher import (
     _get_application_environment,
     _get_application_path,
     _get_click_app_id,
-    _get_click_app_pid,
-    _get_click_app_status,
-    _get_click_application_log_content_object,
-    _get_click_application_log_path,
     _get_click_manifest,
     _is_process_running,
-    _kill_pid,
     _kill_process,
-    _launch_click_app,
 )
 from autopilot.utilities import sleep
 
@@ -189,15 +185,38 @@ class ClickApplicationLauncherTests(TestCase):
             launcher.dbus_application_name, Equals(app_name)
         )
 
-    @patch.object(UpstartApplicationEnvironment, 'prepare_environment')
-    def test_prepare_environment_called(self, prep_env):
-        with patch.object(_l, '_get_click_app_id', return_value="app_id"):
-            launcher = ClickApplicationLauncher(self.addDetail)
-            launcher.setUp()
-            launcher._launch_click_app = Mock()
+    def test_click_launch_calls_upstart_launch(self):
+        launcher = ClickApplicationLauncher(self.addDetail)
+        token = self.getUniqueString()
+        with patch.object(launcher, '_do_upstart_launch') as p_dul:
+            with patch.object(_l, '_get_click_app_id') as p_gcai:
+                p_gcai.return_value = token
+                launcher.launch('some_app_id', 'some_app_name', [])
+                p_dul.assert_called_once_with(token, [])
 
-            launcher.launch("package_id", "app_name", "")
-            prep_env.assert_called_with("app_id", "app_name")
+    def test_upcalls_to_upstart(self):
+        class FakeUpstartBase(_l.ApplicationLauncher):
+            launch_call_args = []
+
+            def launch(self, *args):
+                FakeUpstartBase.launch_call_args = list(args)
+
+        patcher = patch.object(
+            _l.ClickApplicationLauncher,
+            '__bases__',
+            (FakeUpstartBase,)
+        )
+        with patcher:
+            # Prevent mock from trying to delete __bases__
+            patcher.is_local = True
+            launcher = ClickApplicationLauncher(self.addDetail)
+            launcher._do_upstart_launch('app_id', [])
+        self.assertEqual(
+            FakeUpstartBase.launch_call_args,
+            ['app_id', []])
+
+
+class ClickFunctionTests(TestCase):
 
     def test_get_click_app_id_raises_runtimeerror_on_empty_manifest(self):
         """_get_click_app_id must raise a RuntimeError if the requested
@@ -280,171 +299,284 @@ class ClickApplicationLauncherTests(TestCase):
                 Equals("com.autopilot.testing_bar_1.0")
             )
 
-    def test_get_click_application_log_path_formats_correct_path(self):
-        path_token = self.getUniqueString()
-        expected = os.path.join(path_token, "application-click-foo.log")
 
-        with patch.object(_l.os.path, 'expanduser', return_value=path_token):
-            self.assertThat(
-                _get_click_application_log_path("foo"),
-                Equals(expected)
-            )
+class UpstartApplicationLauncherTests(TestCase):
 
-    def test_get_click_application_log_content_object_returns_content_object(self):  # NOQA
-        with patch.object(_l, 'content_from_file') as from_file:
-            self.assertThat(
-                _get_click_application_log_content_object("foo"),
-                Equals(from_file())
-            )
+    def test_can_construct_UpstartApplicationLauncher(self):
+        UpstartApplicationLauncher(self.addDetail)
 
-    def test_get_click_app_log_works_when_no_log_file_exists(self):
-        token = self.getUniqueString()
-        with patch.object(
-            _l,
-            '_get_click_application_log_path',
-            return_value=token
-        ):
+    def test_default_values_are_set(self):
+        launcher = UpstartApplicationLauncher(self.addDetail)
+        self.assertThat(launcher.emulator_base, Equals(None))
+        self.assertThat(launcher.dbus_bus, Equals('session'))
 
-            self.assertThat(
-                lambda: _l._get_click_application_log_content_object("foo"),
-                Not(raises(IOError))
-            )
+    def test_can_set_emulator_base(self):
+        mock_emulator_base = Mock()
+        launcher = UpstartApplicationLauncher(
+            self.addDetail,
+            emulator_base=mock_emulator_base
+        )
 
-    @patch.object(_l, '_launch_click_app', return_value=123)
-    def test_launch_click_app_returns_pid(self, patched_launch_click_app):
-        launcher = ClickApplicationLauncher(self.addDetail)
-        launcher._add_click_launch_cleanup = Mock()
+        self.assertThat(launcher.emulator_base, Equals(mock_emulator_base))
 
-        with patch.object(_l, 'logger'):
-            self.assertThat(
-                launcher._launch_click_app("appid", ""),
-                Equals(123)
-            )
+    def test_can_set_dbus_bus(self):
+        launcher = UpstartApplicationLauncher(
+            self.addDetail,
+            dbus_bus='system'
+        )
 
-    def test_add_click_launch_cleanup_queues_correct_cleanup_steps(self):
-        test_app_name = self.getUniqueString()
-        test_app_pid = self.getUniqueInteger()
-        launcher = ClickApplicationLauncher(self.addDetail)
-        launcher.setUp()
-        launcher._add_click_launch_cleanup(test_app_name, test_app_pid)
+        self.assertThat(launcher.dbus_bus, Equals('system'))
+
+    def test_raises_exception_on_unknown_kwargs(self):
+        self.assertThat(
+            lambda: UpstartApplicationLauncher(self.addDetail, unknown=True),
+            raises(ValueError("Unknown keyword arguments: 'unknown'."))
+        )
+
+    def test_on_failed_only_sets_status_on_correct_app_id(self):
+        state = {
+            'expected_app_id': 'gedit',
+        }
+
+        UpstartApplicationLauncher._on_failed('some_game', None, state)
+
+        self.assertThat(state, Not(Contains('status')))
+
+    def assertFunctionSetsCorrectStateAndQuits(self, observer, expected_state):
+        """Assert that the observer observer sets the correct state id.
+
+        :param observer: The observer callable you want to test.
+        :param expected_state: The state id the observer callable must set.
+
+        """
+        expected_app_id = self.getUniqueString()
+        state = {
+            'expected_app_id': expected_app_id,
+            'loop': Mock()
+        }
+
+        if observer == UpstartApplicationLauncher._on_failed:
+            observer(expected_app_id, None, state)
+        elif observer == UpstartApplicationLauncher._on_started:
+            observer(expected_app_id, state)
+        else:
+            observer(state)
 
         self.assertThat(
+            state['status'],
+            Equals(expected_state)
+        )
+        state['loop'].quit.assert_called_once_with()
+
+    def test_on_failed_sets_status_with_correct_app_id(self):
+        self.assertFunctionSetsCorrectStateAndQuits(
+            UpstartApplicationLauncher._on_failed,
+            UpstartApplicationLauncher.Failed
+        )
+
+    def test_on_started_sets_status_with_correct_app_id(self):
+        self.assertFunctionSetsCorrectStateAndQuits(
+            UpstartApplicationLauncher._on_started,
+            UpstartApplicationLauncher.Started
+        )
+
+    def test_on_timeout_sets_status_and_exits_loop(self):
+        self.assertFunctionSetsCorrectStateAndQuits(
+            UpstartApplicationLauncher._on_timeout,
+            UpstartApplicationLauncher.Timeout
+        )
+
+    def test_on_started_only_sets_status_on_correct_app_id(self):
+        state = {
+            'expected_app_id': 'gedit',
+        }
+
+        UpstartApplicationLauncher._on_started('some_game', state)
+
+        self.assertThat(state, Not(Contains('status')))
+
+    def test_get_pid_calls_upstart_module(self):
+        expected_return = self.getUniqueInteger()
+        with patch.object(_l, 'UpstartAppLaunch') as mock_ual:
+            mock_ual.get_primary_pid.return_value = expected_return
+            observed = UpstartApplicationLauncher._get_pid_for_launched_app(
+                'gedit'
+            )
+
+            mock_ual.get_primary_pid.assert_called_once_with('gedit')
+            self.assertThat(expected_return, Equals(observed))
+
+    def test_launch_app_calls_upstart_module(self):
+        with patch.object(_l, 'UpstartAppLaunch') as mock_ual:
+            UpstartApplicationLauncher._launch_app(
+                'gedit',
+                ['some', 'uris']
+            )
+
+            mock_ual.start_application_test.assert_called_once_with(
+                'gedit',
+                ['some', 'uris']
+            )
+
+    def test_check_error_raises_RuntimeError_on_timeout(self):
+        fn = lambda: UpstartApplicationLauncher._check_status_error(
+            UpstartApplicationLauncher.Timeout
+        )
+        self.assertThat(
+            fn,
+            raises(
+                RuntimeError(
+                    "Timed out while waiting for application to launch"
+                )
+            )
+        )
+
+    def test_check_error_raises_RuntimeError_on_failure(self):
+        fn = lambda: UpstartApplicationLauncher._check_status_error(
+            UpstartApplicationLauncher.Failed
+        )
+        self.assertThat(
+            fn,
+            raises(
+                RuntimeError(
+                    "Application Launch Failed"
+                )
+            )
+        )
+
+    def test_check_error_raises_RuntimeError_with_extra_message(self):
+        fn = lambda: UpstartApplicationLauncher._check_status_error(
+            UpstartApplicationLauncher.Failed,
+            "extra message"
+        )
+        self.assertThat(
+            fn,
+            raises(
+                RuntimeError(
+                    "Application Launch Failed: extra message"
+                )
+            )
+        )
+
+    def test_check_error_does_nothing_on_None(self):
+        UpstartApplicationLauncher._check_status_error(None)
+
+    def test_get_loop_returns_glib_mainloop_instance(self):
+        loop = UpstartApplicationLauncher._get_glib_loop()
+        self.assertThat(loop, IsInstance(GLib.MainLoop))
+
+    def test_launch(self):
+        launcher = UpstartApplicationLauncher(self.addDetail)
+        with patch.object(launcher, '_launch_app') as patched_launch:
+            with patch.object(launcher, '_get_glib_loop'):
+                launcher.launch('gedit')
+
+                patched_launch.assert_called_once_with('gedit', [])
+
+    def assertFailedObserverSetsExtraMessage(self, fail_type, expected_msg):
+        """Assert that the on_failed observer must set the expected message
+        for a particular failure_type."""
+        expected_app_id = self.getUniqueString()
+        state = {
+            'expected_app_id': expected_app_id,
+            'loop': Mock()
+        }
+        UpstartApplicationLauncher._on_failed(
+            expected_app_id,
+            fail_type,
+            state
+        )
+        self.assertEqual(expected_msg, state['message'])
+
+    def test_on_failed_sets_message_for_app_crash(self):
+        self.assertFailedObserverSetsExtraMessage(
+            _l.UpstartAppLaunch.AppFailed.CRASH,
+            'Application crashed.'
+        )
+
+    def test_on_failed_sets_message_for_app_start_failure(self):
+        self.assertFailedObserverSetsExtraMessage(
+            _l.UpstartAppLaunch.AppFailed.START_FAILURE,
+            'Application failed to start.'
+        )
+
+    def test_add_application_cleanups_adds_both_cleanup_actions(self):
+        token = self.getUniqueString()
+        state = {
+            'status': UpstartApplicationLauncher.Started,
+            'expected_app_id': token,
+        }
+        launcher = UpstartApplicationLauncher(Mock())
+        launcher.setUp()
+        launcher._maybe_add_application_cleanups(state)
+        self.assertThat(
             launcher._cleanups._cleanups,
-            MatchesListwise([
-                Equals((_kill_pid, (test_app_pid,), {})),
-                Equals((launcher._add_log_cleanup, (test_app_name,), {})),
-            ])
+            Contains(
+                (launcher._attach_application_log, (token,), {})
+            )
+        )
+        self.assertThat(
+            launcher._cleanups._cleanups,
+            Contains(
+                (launcher._stop_application, (token,), {})
+            )
         )
 
-    def test_add_click_launch_cleanup_provides_correct_details(self):
-        launcher = ClickApplicationLauncher(self.addDetail)
-        launcher.addCleanup = Mock()
-        test_app_id = self.getUniqueString()
-        test_app_pid = self.getUniqueInteger()
+    def test_add_application_cleanups_does_nothing_when_app_timedout(self):
+        state = {
+            'status': UpstartApplicationLauncher.Timeout,
+        }
+        launcher = UpstartApplicationLauncher(Mock())
+        launcher.setUp()
+        launcher._maybe_add_application_cleanups(state)
+        self.assertThat(launcher._cleanups._cleanups, HasLength(0))
 
-        launcher._add_click_launch_cleanup(test_app_id, test_app_pid)
-        launcher.addCleanup.assert_any_call(_kill_pid, test_app_pid)
-        launcher.addCleanup.assert_any_call(
-            launcher._add_log_cleanup,
-            test_app_id
-        )
+    def test_add_application_cleanups_does_nothing_when_app_failed(self):
+        state = {
+            'status': UpstartApplicationLauncher.Failed,
+        }
+        launcher = UpstartApplicationLauncher(Mock())
+        launcher.setUp()
+        launcher._maybe_add_application_cleanups(state)
+        self.assertThat(launcher._cleanups._cleanups, HasLength(0))
 
-    def test_add_log_cleanup_adds_details(self):
-        mock_addDetail = Mock()
-        launcher = ClickApplicationLauncher(mock_addDetail)
-        with patch.object(
-            _l, '_get_click_application_log_content_object'
-        ) as log_content:
-            launcher._add_log_cleanup("appid")
+    def test_attach_application_log_does_nothing_wth_no_log_specified(self):
+        app_id = self.getUniqueString()
+        case_addDetail = Mock()
+        launcher = UpstartApplicationLauncher(case_addDetail)
+        with patch.object(_l.UpstartAppLaunch, 'application_log_path') as p:
+            p.return_value = None
+            launcher._attach_application_log(app_id)
 
-            mock_addDetail.assert_called_with("Application Log", log_content())
+            p.assert_called_once_with(app_id)
+            self.assertEqual(0, case_addDetail.call_count)
+
+    def test_attach_application_log_attaches_log_file(self):
+        token = self.getUniqueString()
+        case_addDetail = Mock()
+        launcher = UpstartApplicationLauncher(case_addDetail)
+        app_id = self.getUniqueString()
+        with tempfile.NamedTemporaryFile(mode='w') as f:
+            f.write(token)
+            f.flush()
+            with patch.object(_l.UpstartAppLaunch, 'application_log_path',
+                              return_value=f.name):
+                launcher._attach_application_log(app_id)
+
+                self.assertEqual(1, case_addDetail.call_count)
+                content_name, content_obj = case_addDetail.call_args[0]
+                self.assertEqual("Application Log", content_name)
+                self.assertThat(content_obj.as_text(), Contains(token))
+
+    def test_stop_applications_calls_UAL_stop_application(self):
+        app_id = self.getUniqueString()
+        launcher = UpstartApplicationLauncher(Mock())
+        with patch.object(_l.UpstartAppLaunch, 'stop_application') as p_stop:
+            launcher._stop_application(app_id)
+            p_stop.assert_called_once_with(app_id)
 
 
 class ApplicationLauncherInternalTests(TestCase):
-
-    def test_get_click_app_status(self):
-        with patch.object(_l, '_call_upstart_with_args') as call_upstart:
-            _get_click_app_status("app_id")
-            call_upstart.assert_called_with(
-                "status",
-                "application-click",
-                "APP_ID=app_id"
-            )
-
-    def test_get_click_app_pid(self):
-        with patch.object(_l.subprocess, 'check_output') as check_output:
-            check_output.return_value = """
-            application-click (com.autopilot.testing.test_app_id)
-            dummy/data\napplication-click (blah) dummy/data\napplication-click
-            (com.autopilot.testing.test_app_id) start/running, process 1234
-            """
-            self.assertThat(
-                _get_click_app_pid("test_app_id"),
-                Equals(1234)
-            )
-
-    def test_get_click_app_pid_raises_runtimeerror_with_no_status(self):
-        test_app_id = self.getUniqueString()
-        expected_error = "Could not find autopilot interface for click "\
-                         "package '%s' after 10 seconds." % test_app_id
-        with sleep.mocked():
-            with patch.object(_l, '_get_click_app_status', return_value=""):
-                self.assertThat(
-                    lambda: _get_click_app_pid(test_app_id),
-                    raises(RuntimeError(expected_error))
-                )
-
-    def test_get_click_app_pid_tries_10_times_and_raises(self):
-        test_app_name = self.getUniqueString()
-        expected_error = "Could not find autopilot interface for click "\
-                         "package '%s' after 10 seconds." % test_app_name
-        with sleep.mocked():
-            with patch.object(
-                    _l, '_get_click_app_status',
-                    side_effect=subprocess.CalledProcessError(1, "")
-            ):
-                self.assertThat(
-                    lambda: _get_click_app_pid(test_app_name),
-                    raises(RuntimeError(expected_error))
-                )
-                self.assertThat(
-                    sleep.total_time_slept(),
-                    Equals(10)
-                )
-
-    @patch('autopilot.application._launcher.subprocess.check_output')
-    def test_launch_click_app_starts_application(self, check_output):
-        test_app_name = self.getUniqueString()
-        with patch.object(
-            _l, '_get_click_app_pid'
-        ) as patched_get_click_app_pid:
-            _launch_click_app(test_app_name, "")
-
-            check_output.assert_called_with([
-                "/sbin/start",
-                "application",
-                "APP_ID=%s" % test_app_name,
-                "APP_URIS=''",
-            ])
-            patched_get_click_app_pid.assert_called_with(test_app_name)
-
-    @patch('autopilot.application._launcher.subprocess.check_output')
-    def test_launch_click_app_starts_application_with_uri(self, check_output):
-        test_app_name = self.getUniqueString()
-        test_app_uris = "%s %s" % (self.getUniqueString(),
-                                   self.getUniqueString())
-        with patch.object(
-            _l, '_get_click_app_pid'
-        ) as patched_get_click_app_pid:
-            _launch_click_app(test_app_name, test_app_uris)
-
-            check_output.assert_called_with([
-                "/sbin/start",
-                "application",
-                "APP_ID=%s" % test_app_name,
-                "APP_URIS='%s'" % test_app_uris,
-            ])
-            patched_get_click_app_pid.assert_called_with(test_app_name)
 
     def test_get_app_env_from_string_hint_returns_qt_env(self):
         self.assertThat(
@@ -516,27 +648,6 @@ class ApplicationLauncherInternalTests(TestCase):
                     "type to use. You can specify this by providing app_type."
                 ))
             )
-
-    @patch.object(_l, '_attempt_kill_pid')
-    def test_kill_pid_succeeds(self, patched_killpg):
-        with patch.object(
-            _l, '_is_process_running', return_value=False
-        ) as proc_running:
-            _kill_pid(0)
-            proc_running.assert_called_once_with(0)
-            patched_killpg.assert_called_once_with(0)
-
-    @patch.object(_l, '_attempt_kill_pid')
-    def test_kill_pid_retried(self, patched_killpid):
-        with sleep.mocked():
-            with patch.object(
-                _l, '_is_process_running', return_value=True
-            ) as proc_running:
-                _kill_pid(0)
-                proc_running.assert_called_with(0)
-                self.assertThat(proc_running.call_count, GreaterThan(1))
-                self.assertThat(patched_killpid.call_count, Equals(2))
-                patched_killpid.assert_called_with(0, signal.SIGKILL)
 
     @patch.object(_l.os, 'killpg')
     def test_attempt_kill_pid_logs_if_process_already_exited(self, killpg):

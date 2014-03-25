@@ -653,7 +653,7 @@ class ApplicationLauncherInternalTests(TestCase):
     def test_attempt_kill_pid_logs_if_process_already_exited(self, killpg):
         killpg.side_effect = OSError()
 
-        with patch.object(_l, 'logger') as patched_log:
+        with patch.object(_l, '_logger') as patched_log:
             _attempt_kill_pid(0)
             patched_log.info.assert_called_with(
                 "Appears process has already exited."

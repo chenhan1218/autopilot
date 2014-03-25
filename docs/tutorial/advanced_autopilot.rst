@@ -359,7 +359,7 @@ Display Information
 .. _custom_proxy_classes:
 
 Writing Custom Proxy Classes
-========================
+============================
 
 By default, autopilot will generate an object for every introspectable item in your application under test. These are generated on the fly, and derive from
 :class:`~autopilot.introspection.dbus.DBusIntrospectionObject`. This gives you the usual methods of selecting other nodes in the object tree, as well the the means to inspect all the properties in that class.

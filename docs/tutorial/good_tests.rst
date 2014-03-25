@@ -340,7 +340,7 @@ Since we can use any testtools matcher, we can also write code like this:
 Note that you can pass any object that follows the testtools matcher protocol (so you can write your own matchers, if you like).
 
 In Proxy Classes
-------------
+----------------
 
 Proxy classes are not test cases, and do not have access to the ``self.assertThat`` method. However, we want proxy class methods to block until unity has had time to process the commands given. For example, the ``ensure_visible`` method on the Dash controller should block until the dash really is visible.
 

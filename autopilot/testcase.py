@@ -248,7 +248,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
          data is retrievable via this object.
 
         """
-        logger.info(
+        _logger.info(
             "Attempting to launch application '%s' with arguments '%s' as a "
             "normal process",
             application,
@@ -296,7 +296,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         """
         if isinstance(app_uris, (six.text_type, six.binary_type)):
             app_uris = [app_uris]
-        logger.info(
+        _logger.info(
             "Attempting to launch click application '%s' from click package "
             " '%s' and URIs '%s'",
             app_name if app_name is not None else "(default)",
@@ -329,7 +329,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         """
         if isinstance(uris, (six.text_type, six.binary_type)):
             uris = [uris]
-        logger.info(
+        _logger.info(
             "Attempting to launch application '%s' with URIs '%s' via "
             "upstart-app-launch",
             application_name,

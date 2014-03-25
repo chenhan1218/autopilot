@@ -413,7 +413,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             of the appropriate type (the latter case is for overridden emulator
             classes).
 
-        :raises: **TypeError** if neither *type_name* or keyword filters are
+        :raises TypeError: if neither *type_name* or keyword filters are
             provided.
 
         .. seealso::
@@ -466,7 +466,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         automatically retrieves new state every time this object's attributes
         are read.
 
-        :raises: **StateNotFound** if the object in the application under test
+        :raises StateNotFound: if the object in the application under test
             has been destroyed.
 
         """
@@ -530,7 +530,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         :param piece: an XPath-like query that specifies which bit of the tree
             you want to look at.
-        :raises: **TypeError** on invalid *piece* parameter.
+        :raises TypeError: on invalid *piece* parameter.
 
         """
         if not isinstance(piece, six.string_types):
@@ -598,25 +598,16 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         (path, state_dict).
 
         This only works for classes that derive from DBusIntrospectionObject.
+
+        :returns: A proxy object that derives from DBusIntrospectionObject
+        :raises ValueError: if more than one class is appropriate for this
+                 dbus_tuple
+
         """
         path, state = dbus_tuple
-        name = get_classname_from_path(path)
-        try:
-            class_type = _object_registry[self._id][name]
-        except KeyError:
-            get_debug_logger().warning(
-                "Generating introspection instance for type '%s' based on "
-                "generic class.", name)
-            # we want the object to inherit from the custom emulator base, not
-            # the object class that is doing the selecting
-            for base in type(self).__bases__:
-                if issubclass(base, CustomEmulatorBase):
-                    base_class = base
-                    break
-            else:
-                base_class = type(self)
-            class_type = type(str(name), (base_class,), {})
-        return class_type(state, path, self._backend)
+        class_object = _get_proxy_object_class(
+            _object_registry[self._id], type(self), path, state)
+        return class_object(state, path, self._backend)
 
     def print_tree(self, output=None, maxdepth=None, _curdepth=0):
         """Print properties of the object and its children to a stream.
@@ -678,6 +669,24 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         finally:
             self.__refresh_on_attribute = True
 
+    @classmethod
+    def validate_dbus_object(cls, path, _state):
+        """Return whether this class is the appropriate proxy object class for
+        a given dbus path and state.
+
+        The default version matches the name of the dbus object and the class.
+        Subclasses of CustomProxyObject can override it to define a different
+        validation method.
+
+        :param path: The dbus path of the object to check
+        :param state: The dbus state dict of the object to check
+                      (ignored in default implementation)
+        :returns: Whether this class is appropriate for the dbus object
+
+        """
+        name = get_classname_from_path(path)
+        return cls.__name__ == name
+
 
 def _is_valid_server_side_filter_param(key, value):
     """Return True if the key and value parameters are valid for server-side
@@ -714,9 +723,20 @@ def _get_filter_string_for_key_value_pair(key, value):
     this is not the case.
 
     """
-    if isinstance(value, str):
+    if isinstance(value, six.text_type):
         if six.PY3:
             escaped_value = value.encode("unicode_escape")\
+                .decode('ASCII')\
+                .replace("'", "\\'")
+        else:
+            escaped_value = value.encode('utf-8').encode("string_escape")
+            # note: string_escape codec escapes "'" but not '"'...
+            escaped_value = escaped_value.replace('"', r'\"')
+        return '{}="{}"'.format(key, escaped_value)
+    elif isinstance(value, six.binary_type):
+        if six.PY3:
+            escaped_value = value.decode('utf-8')\
+                .encode("unicode_escape")\
                 .decode('ASCII')\
                 .replace("'", "\\'")
         else:
@@ -728,6 +748,72 @@ def _get_filter_string_for_key_value_pair(key, value):
         return "{}={}".format(key, repr(value))
     else:
         raise ValueError("Unsupported value type: {}".format(type(value)))
+
+
+def _get_proxy_object_class(proxy_class_dict, default_class, path, state):
+    """Return a custom proxy class, either from the list or the default.
+
+    Use helper functions to check the class list or return the default.
+    :param proxy_class_dict: dict of proxy classes to try
+    :param default_class: default class to use if nothing in dict matches
+    :param path: dbus path
+    :param state: dbus state
+    :returns: appropriate custom proxy class
+    :raises ValueError: if more than one class in the dict matches
+
+    """
+    class_type = _try_custom_proxy_classes(proxy_class_dict, path, state)
+    if class_type:
+        return class_type
+    return _get_default_proxy_class(default_class,
+                                    get_classname_from_path(path))
+
+
+def _try_custom_proxy_classes(proxy_class_dict, path, state):
+    """Identify which custom proxy class matches the dbus path and state.
+
+    If more than one class in proxy_class_dict matches, raise an exception.
+    :param proxy_class_dict: dict of proxy classes to try
+    :param path: dbus path
+    :param state: dbus state dict
+    :returns: matching custom proxy class
+    :raises ValueError: if more than one class matches
+
+    """
+    possible_classes = [c for c in proxy_class_dict.values() if
+                        c.validate_dbus_object(path, state)]
+    if len(possible_classes) > 1:
+        raise ValueError(
+            'More than one custom proxy class matches this object: '
+            'Matching classes are: %s. State is %s.  Path is %s.'
+            ','.join([repr(c) for c in possible_classes]),
+            repr(state),
+            path)
+    if len(possible_classes) == 1:
+        return possible_classes[0]
+    return None
+
+
+def _get_default_proxy_class(default_class, name):
+    """Return a custom proxy object class of the default or a base class.
+
+    We want the object to inherit from CustomEmulatorBase, not the object
+    class that is doing the selecting.
+    :param default_class: default class to use if no bases match
+    :param name: name of new class
+    :returns: custom proxy object class
+
+    """
+    get_debug_logger().warning(
+        "Generating introspection instance for type '%s' based on generic "
+        "class.", name)
+    for base in default_class.__bases__:
+        if issubclass(base, CustomEmulatorBase):
+            base_class = base
+            break
+    else:
+        base_class = default_class
+    return type(str(name), (base_class,), {})
 
 
 class _CustomEmulatorMeta(IntrospectableObjectMetaclass):

@@ -21,12 +21,14 @@
 
 from autopilot.application._launcher import (
     ClickApplicationLauncher,
-    NormalApplicationLauncher,
     get_application_launcher_wrapper,
+    NormalApplicationLauncher,
+    UpstartApplicationLauncher,
 )
 
 __all__ = [
     'ClickApplicationLauncher',
-    'NormalApplicationLauncher',
     'get_application_launcher_wrapper',
+    'NormalApplicationLauncher',
+    'UpstartApplicationLauncher',
 ]

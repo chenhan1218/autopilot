@@ -42,7 +42,7 @@ import six
 from autopilot.input import Keyboard
 from autopilot.utilities import Silence
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 #
@@ -167,7 +167,7 @@ def get_hold_part(binding_name):
     binding = get(binding_name)
     parts = binding.split('+')
     if len(parts) == 1:
-        logger.warning(
+        _logger.warning(
             "Key binding '%s' does not have a hold part.", binding_name)
         return parts[0]
     return '+'.join(parts[:-1])
@@ -187,7 +187,7 @@ def get_tap_part(binding_name):
     binding = get(binding_name)
     parts = binding.split('+')
     if len(parts) == 1:
-        logger.warning(
+        _logger.warning(
             "Key binding '%s' does not have a tap part.", binding_name)
         return parts[0]
     return parts[-1]
@@ -211,7 +211,7 @@ def _get_compiz_keybinding(compiz_tuple):
             "Key binding maps to a compiz option that does not hold a "
             "keybinding.")
     if not plugin.Enabled:
-        logger.warning(
+        _logger.warning(
             "Returning keybinding for '%s' which is in un-enabled plugin '%s'",
             setting.ShortDesc,
             plugin.ShortDesc)

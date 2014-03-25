@@ -47,7 +47,7 @@ from autopilot.process import (
 _BAMF_BUS_NAME = 'org.ayatana.bamf'
 _X_DISPLAY = None
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 def get_display():
@@ -152,11 +152,11 @@ class ProcessManager(ProcessManagerBase):
         if locale:
             os.putenv("LC_ALL", locale)
             addCleanup(os.unsetenv, "LC_ALL")
-            logger.info(
+            _logger.info(
                 "Starting application '%s' with files %r in locale %s",
                 app_name, files, locale)
         else:
-            logger.info(
+            _logger.info(
                 "Starting application '%s' with files %r", app_name, files)
 
         app = self.KNOWN_APPS[app_name]
@@ -200,7 +200,7 @@ class ProcessManager(ProcessManagerBase):
             if len(pids):
                 call(["kill"] + pids)
         except CalledProcessError:
-            logger.warning(
+            _logger.warning(
                 "Tried to close applicaton '%s' but it wasn't running.",
                 app_name)
 

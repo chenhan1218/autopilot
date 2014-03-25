@@ -58,7 +58,7 @@ from autopilot.introspection.utilities import (
 from autopilot._timeout import Timeout
 
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 # Keep track of known connections during search
 connection_list = []
@@ -382,7 +382,7 @@ def _connection_matches_pid(bus, connection_name, pid):
             return False
         bus_pid = _get_bus_connections_pid(bus, connection_name)
     except DBusException as e:
-        logger.info(
+        _logger.info(
             "dbus.DBusException while attempting to get PID for %s: %r" %
             (connection_name, e))
         return False

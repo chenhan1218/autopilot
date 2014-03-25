@@ -18,8 +18,6 @@
 #
 
 
-import logging
-
 from autopilot.display import Display as DisplayBase
 from autopilot.platform import image_codename
 import subprocess
@@ -64,9 +62,6 @@ def _get_hardcoded_resolution():
             'Device "{}" is not supported by Autopilot.'.format(name))
 
     return resolutions[name]
-
-
-logger = logging.getLogger(__name__)
 
 
 class Display(DisplayBase):

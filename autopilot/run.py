@@ -49,9 +49,6 @@ from autopilot.application._launcher import (
 )
 
 
-logger = logging.getLogger(__name__)
-
-
 def setup_logging(verbose):
     """Configure the root logger and verbose logging to stderr."""
     root_logger = get_root_logger()

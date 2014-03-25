@@ -204,7 +204,7 @@ class DBusIntrospectionObjectTests(TestCase):
         with fake_object.no_automatic_refreshing():
             self.assertThat(fake_object.path, Equals('/some/path'))
 
-    @patch('autopilot.introspection.dbus.logger')
+    @patch('autopilot.introspection.dbus._logger')
     def test_large_query_returns_log_warnings(self, mock_logger):
         """Queries that return large numbers of items must cause a log warning.
 
@@ -227,7 +227,7 @@ class DBusIntrospectionObjectTests(TestCase):
             "some_query",
             16)
 
-    @patch('autopilot.introspection.dbus.logger')
+    @patch('autopilot.introspection.dbus._logger')
     def test_small_query_returns_dont_log_warnings(self, mock_logger):
         """Queries that return small numbers of items must not log a warning.
 

@@ -56,6 +56,7 @@ from autopilot.introspection.dbus import (
     CustomEmulatorBase,
     DBusIntrospectionObject,
 )
+from autopilot.introspection.qt import QtObjectProxyMixin
 import autopilot.introspection as _i
 from autopilot.utilities import sleep
 
@@ -686,3 +687,88 @@ class GetDetailsFromStateDataTests(TestCase):
     def test_returns_state_dict(self):
         _, _, state = _i._get_details_from_state_data(self.fake_state_data)
         self.assertThat(state, Equals(dict(foo=123)))
+
+
+class FooTests(TestCase):
+
+    fake_data_with_ap_interface = """
+        <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+                              "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+        <!-- GDBus 2.39.92 -->
+        <node>
+          <interface name="com.canonical.Autopilot.Introspection">
+            <method name="GetState">
+              <arg type="s" name="piece" direction="in">
+              </arg>
+              <arg type="a(sv)" name="state" direction="out">
+              </arg>
+            </method>
+            <method name="GetVersion">
+              <arg type="s" name="version" direction="out">
+              </arg>
+            </method>
+          </interface>
+        </node>
+    """
+
+    fake_data_with_ap_and_qt_interfaces = """
+        <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+        "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+        <node>
+            <interface name="com.canonical.Autopilot.Introspection">
+                <method name='GetState'>
+                    <arg type='s' name='piece' direction='in' />
+                    <arg type='a(sv)' name='state' direction='out' />
+                </method>
+                <method name='GetVersion'>
+                    <arg type='s' name='version' direction='out' />
+                </method>
+            </interface>
+            <interface name="com.canonical.Autopilot.Qt">
+                <method name='RegisterSignalInterest'>
+                    <arg type='i' name='object_id' direction='in' />
+                    <arg type='s' name='signal_name' direction='in' />
+                </method>
+                <method name='GetSignalEmissions'>
+                    <arg type='i' name='object_id' direction='in' />
+                    <arg type='s' name='signal_name' direction='in' />
+                    <arg type='i' name='sigs' direction='out' />
+                </method>
+                <method name='ListSignals'>
+                    <arg type='i' name='object_id' direction='in' />
+                    <arg type='as' name='signals' direction='out' />
+                </method>
+                <method name='ListMethods'>
+                    <arg type='i' name='object_id' direction='in' />
+                    <arg type='as' name='methods' direction='out' />
+                </method>
+                <method name='InvokeMethod'>
+                    <arg type='i' name='object_id' direction='in' />
+                    <arg type='s' name='method_name' direction='in' />
+                    <arg type='av' name='arguments' direction='in' />
+                </method>
+            </interface>
+        </node>
+    """
+
+    def test_raises_RuntimeError_when_no_interface_is_found(self):
+        self.assertThat(
+            lambda: _i._get_proxy_bases_from_introspection_xml(""),
+            raises(RuntimeError("Could not find Autopilot interface."))
+        )
+
+    def test_returns_ApplicationProxyObject_claws_for_base_interface(self):
+        self.assertThat(
+            _i._get_proxy_bases_from_introspection_xml(
+                self.fake_data_with_ap_interface
+            ),
+            Equals((_i.ApplicationProxyObject,))
+        )
+
+    def test_returns_both_base_and_qt_interface(self):
+        self.assertThat(
+            _i._get_proxy_bases_from_introspection_xml(
+                self.fake_data_with_ap_and_qt_interfaces
+            ),
+            Equals((_i.ApplicationProxyObject, QtObjectProxyMixin))
+        )

@@ -772,3 +772,24 @@ class FooTests(TestCase):
             ),
             Equals((_i.ApplicationProxyObject, QtObjectProxyMixin))
         )
+
+
+class ExtendProxyBasesWithEmulatorBaseTests(TestCase):
+
+    def test_default_emulator_base_name(self):
+        bases = _i._extend_proxy_bases_with_emulator_base(tuple(), None)
+        self.assertThat(len(bases), Equals(1))
+        self.assertThat(bases[0].__name__, Equals("DefaultEmulatorBase"))
+        self.assertThat(bases[0].__bases__[0], Equals(_i.CustomEmulatorBase))
+
+    def test_appends_custom_emulator_base(self):
+        existing_bases = ('token',)
+        custom_emulator_base = Mock()
+        new_bases = _i._extend_proxy_bases_with_emulator_base(
+            existing_bases,
+            custom_emulator_base
+        )
+        self.assertThat(
+            new_bases,
+            Equals(existing_bases + (custom_emulator_base,))
+        )

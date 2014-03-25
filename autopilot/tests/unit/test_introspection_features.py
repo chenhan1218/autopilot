@@ -667,3 +667,22 @@ class MakeProxyClassObjectTests(TestCase):
             (self.BaseOne, self.BaseTwo)
         )
         self.assertThat(cls.__name__, Equals("MyProxy"))
+
+
+class GetDetailsFromStateDataTests(TestCase):
+
+    fake_state_data = ('/some/path', dict(foo=123))
+
+    def test_returns_classname(self):
+        class_name, _, _ = _i._get_details_from_state_data(
+            self.fake_state_data
+        )
+        self.assertThat(class_name, Equals('path'))
+
+    def test_returns_path(self):
+        _, path, _ = _i._get_details_from_state_data(self.fake_state_data)
+        self.assertThat(path, Equals('/some/path'))
+
+    def test_returns_state_dict(self):
+        _, _, state = _i._get_details_from_state_data(self.fake_state_data)
+        self.assertThat(state, Equals(dict(foo=123)))

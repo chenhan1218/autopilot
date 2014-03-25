@@ -56,6 +56,7 @@ from autopilot.introspection.dbus import (
     CustomEmulatorBase,
     DBusIntrospectionObject,
 )
+import autopilot.introspection as _i
 from autopilot.utilities import sleep
 
 
@@ -639,3 +640,30 @@ class ProxyObjectGenerationTests(TestCase):
                     )
                 )
             )
+
+
+class MakeProxyClassObjectTests(TestCase):
+
+    class BaseOne(object):
+        pass
+
+    class BaseTwo(object):
+        pass
+
+    def test_merges_multiple_proxy_bases(self):
+        cls = _i._make_proxy_class_object(
+            "MyProxy",
+            (self.BaseOne, self.BaseTwo)
+        )
+        self.assertThat(
+            len(cls.__bases__),
+            Equals(1)
+        )
+        self.assertThat(cls.__bases__[0].__name__, Equals("MyProxyBase"))
+
+    def test_uses_class_name(self):
+        cls = _i._make_proxy_class_object(
+            "MyProxy",
+            (self.BaseOne, self.BaseTwo)
+        )
+        self.assertThat(cls.__name__, Equals("MyProxy"))

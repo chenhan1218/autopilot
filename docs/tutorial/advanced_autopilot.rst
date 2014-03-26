@@ -371,18 +371,18 @@ However, sometimes you want to customize the class used to create these objects.
     from autopilot.introspection.dbus import CustomEmulatorBase
 
 
-    class CustomProxyObject(CustomEmulatorBase):
+    class CustomProxyObjectBase(CustomEmulatorBase):
         """A base class for all custom proxy objects within this test suite."""
 
 2. Define the classes you want autopilot to use, instead of the default. The simplest method is to give the class the same name as the type you wish to override. For example, if you want to define your own custom class to be used every time autopilot generates an instance of a 'QLabel' object, the class definition would look like this::
 
-    class QLabel(EmulatorBase):
+    class QLabel(CustomProxyObjectBase):
 
         # Add custom methods here...
 
 If you wish to implement more specific selection criteria, your class can override the validate_dbus_object method, which takes as arguments the dbus path and state.  For example::
 
-    class SpecificQLabel(EmulatorBase):
+    class SpecificQLabel(CustomProxyObjectBase):
 
         def validate_dbus_object(path, state):
             if (path.endswith('object_we_want') or
@@ -402,7 +402,7 @@ This method should return True if the object matches this custom proxy class, an
             super(TestCase, self).setUp()
             self.app = self.launch_test_application(
                 '/path/to/the/application',
-                emulator_base=CustomProxyObject)
+                emulator_base=CustomProxyObjectBase)
 
 4. You can pass the custom proxy class to methods like :meth:`~autopilot.introspection.dbus.DBusIntrospectionObject.select_single` instead of a string. So, for example, the following is a valid way of selecting the QLabel instances in an application::
 

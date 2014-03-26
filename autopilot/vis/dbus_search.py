@@ -50,9 +50,12 @@ class DBusInspector(object):
 
         # avoid introspecting our own PID, as that locks up with libdbus
         try:
-              obj_pid = self.p_dbus.GetConnectionUnixProcessID(conn_name, dbus_interface='org.freedesktop.DBus')
-              if obj_pid == os.getpid():
-                  return
+            obj_pid = self.p_dbus.GetConnectionUnixProcessID(
+                conn_name,
+                dbus_interface='org.freedesktop.DBus'
+            )
+            if obj_pid == os.getpid():
+                return
         except:
             # can't get D-BUS daemon's own pid, ignore
             pass

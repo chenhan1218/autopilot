@@ -507,6 +507,7 @@ def _compare_system_with_process_snapshot(snapshot_fn, old_snapshot):
         "The following apps were started during the test and not closed: "
         "%r" % new_apps)
 
+
 def _ensure_uinput_device_created():
     # This exists for a work around for bug lp:1297592. Need to create
     # an input device before an application launch.

@@ -622,8 +622,6 @@ def _get_proxy_object_class_name_and_state(
 def _get_details_from_state_data(state_data):
     """Get details from a state data array.
 
-    TODO: DOcument better.
-
     Returns class name, path, and state dictionary.
     """
     object_path, object_state = state_data

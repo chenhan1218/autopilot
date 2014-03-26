@@ -527,6 +527,10 @@ class TestProgram(object):
             self.args.suite
         )
 
+        if not test_suite.countTestCases():
+            print('Did not find any tests')
+            return
+
         if self.args.random_order:
             shuffle(test_suite._tests)
             print("Running tests in random order")

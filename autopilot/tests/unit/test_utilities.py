@@ -18,12 +18,14 @@
 #
 
 from mock import patch
+import re
 import six
 from testtools import skipIf, TestCase
 from testtools.matchers import (
     Equals,
     IsInstance,
     LessThan,
+    MatchesRegex,
     Not,
     raises,
     Raises,
@@ -31,9 +33,10 @@ from testtools.matchers import (
 import time
 
 from autopilot.utilities import (
-    sleep,
-    compatible_repr,
     _raise_on_unknown_kwargs,
+    compatible_repr,
+    deprecated,
+    sleep,
 )
 
 
@@ -135,3 +138,25 @@ class UnknownKWArgsTests(TestCase):
             lambda: _raise_on_unknown_kwargs(empty_dict),
             Not(Raises())
         )
+
+
+class DeprecatedDecoratorTests(TestCase):
+
+    def test_deprecated_logs_warning(self):
+
+        @deprecated('Testing')
+        def not_testing():
+            pass
+
+        with patch('autopilot.utilities.logger') as patched_log:
+            not_testing()
+
+            self.assertThat(
+                patched_log.warning.call_args[0][0],
+                MatchesRegex(
+                    "WARNING: in file \".*.py\", line \d+ in "
+                    "test_deprecated_logs_warning\nThis "
+                    "function is deprecated. Please use 'Testing' instead.\n",
+                    re.DOTALL
+                )
+            )

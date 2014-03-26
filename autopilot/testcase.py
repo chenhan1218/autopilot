@@ -62,7 +62,7 @@ from autopilot.application import (
 )
 from autopilot.display import Display
 from autopilot.globals import get_debug_profile_fixture
-from autopilot.input import Keyboard, Mouse, Touch
+from autopilot.input import Keyboard, Mouse
 from autopilot.introspection import (
     get_proxy_object_for_existing_process,
 )
@@ -144,15 +144,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         self._kb = None
         self._display = None
 
-        try:
-            # This exists for a work around for bug lp:1297595. Need to create
-            # an input device before an application launch.
-            Touch.create()
-        except Exception as e:
-            logger.warning(
-                "Failed to create Touch device for bug lp:1297595 workaround: "
-                "%s" % str(e)
-            )
+        # Work around for bug lp:1297592.
+        _ensure_uinput_device_created()
 
         try:
             self._app_snapshot = _get_process_snapshot()
@@ -513,3 +506,16 @@ def _compare_system_with_process_snapshot(snapshot_fn, old_snapshot):
     raise AssertionError(
         "The following apps were started during the test and not closed: "
         "%r" % new_apps)
+
+def _ensure_uinput_device_created():
+    # This exists for a work around for bug lp:1297592. Need to create
+    # an input device before an application launch.
+    try:
+        from autopilot.input._uinput import Touch, _UInputTouchDevice
+        if _UInputTouchDevice._device is None:
+            Touch.create()
+    except Exception as e:
+        logger.warning(
+            "Failed to create Touch device for bug lp:1297595 workaround: "
+            "%s" % str(e)
+        )

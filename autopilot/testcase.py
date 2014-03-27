@@ -50,6 +50,7 @@ from __future__ import absolute_import
 
 import logging
 import os
+import six
 
 from testscenarios import TestWithScenarios
 from testtools import TestCase
@@ -59,6 +60,7 @@ from autopilot.application import (
     ClickApplicationLauncher,
     get_application_launcher_wrapper,
     NormalApplicationLauncher,
+    UpstartApplicationLauncher,
 )
 from autopilot.display import Display
 from autopilot.globals import get_debug_profile_fixture
@@ -122,6 +124,7 @@ def _lttng_trace_test_ended(test_id):
 
 
 class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
+
     """Wrapper around testtools.TestCase that adds significant functionality.
 
     This class should be the base class for all autopilot test case classes.
@@ -244,18 +247,24 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :keyword emulator_base: If set, specifies the base class to be used for
             all emulators for this loaded application.
 
-        :raises: **ValueError** if unknown keyword arguments are passed.
+        :raises ValueError: if unknown keyword arguments are passed.
         :return: A proxy object that represents the application. Introspection
          data is retrievable via this object.
 
         """
+        logger.info(
+            "Attempting to launch application '%s' with arguments '%s' as a "
+            "normal process",
+            application,
+            ' '.join(arguments)
+        )
         launcher = self.useFixture(
             NormalApplicationLauncher(self.addDetail, **kwargs)
         )
 
         return self._launch_test_application(launcher, application, *arguments)
 
-    def launch_click_package(self, package_id, app_name=None, app_uris="",
+    def launch_click_package(self, package_id, app_name=None, app_uris=[],
                              **kwargs):
         """Launch a click package application with introspection enabled.
 
@@ -286,12 +295,54 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :raises RuntimeError: If the specified app_name cannot be found within
             the specified click package.
 
+        :returns: proxy object for the launched package application
+
         """
+        if isinstance(app_uris, (six.text_type, six.binary_type)):
+            app_uris = [app_uris]
+        logger.info(
+            "Attempting to launch click application '%s' from click package "
+            " '%s' and URIs '%s'",
+            app_name if app_name is not None else "(default)",
+            package_id,
+            ','.join(app_uris)
+        )
         launcher = self.useFixture(
             ClickApplicationLauncher(self.addDetail, **kwargs)
         )
         return self._launch_test_application(launcher, package_id, app_name,
                                              app_uris)
+
+    def launch_upstart_application(self, application_name, uris=[], **kwargs):
+        """Launch an application with upstart.
+
+        This method launched an application via the ``upstart-app-launch``
+        library, on platforms that support it.
+
+        Usage is similar to the
+        :py:meth:`AutopilotTestCase.launch_test_application`::
+
+            app_proxy = self.launch_upstart_application("gallery-app")
+
+        :param application_name: The name of the application to launch.
+        :keyword emulator_base: If set, specifies the base class to be used for
+            all emulators for this loaded application.
+
+        :raises RuntimeError: If the specified application cannot be launched.
+        :raises ValueError: If unknown keyword arguments are specified.
+        """
+        if isinstance(uris, (six.text_type, six.binary_type)):
+            uris = [uris]
+        logger.info(
+            "Attempting to launch application '%s' with URIs '%s' via "
+            "upstart-app-launch",
+            application_name,
+            ','.join(uris)
+        )
+        launcher = self.useFixture(
+            UpstartApplicationLauncher(self.addDetail, **kwargs)
+        )
+        return self._launch_test_application(launcher, application_name, uris)
 
     # Wrapper function tying the newer ApplicationLauncher behaviour with the
     # previous (to be depreciated) behaviour
@@ -400,7 +451,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         :param stack_start: An iterable of
          :class:`~autopilot.process.Window` instances.
-        :raises: **AssertionError** if the top of the window stack does not
+        :raises AssertionError: if the top of the window stack does not
          match the contents of the stack_start parameter.
 
         """
@@ -430,9 +481,9 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :param obj: The object to test.
         :param kwargs: One or more keyword arguments to match against the
          attributes of the *obj* parameter.
-        :raises: **ValueError** if no keyword arguments were given.
-        :raises: **ValueError** if a named attribute is a callable object.
-        :raises: **AssertionError** if any of the attribute/value pairs in
+        :raises ValueError: if no keyword arguments were given.
+        :raises ValueError: if a named attribute is a callable object.
+        :raises AssertionError: if any of the attribute/value pairs in
          kwargs do not match the attributes on the object passed in.
 
         """
@@ -488,7 +539,7 @@ def _get_process_snapshot():
 
 
 def _compare_system_with_process_snapshot(snapshot_fn, old_snapshot):
-    """Compares an existing process snapshot with current running processes.
+    """Compare an existing process snapshot with current running processes.
 
     :param snapshot_fn: A callable that returns the current running process
         list.

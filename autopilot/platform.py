@@ -130,6 +130,8 @@ def is_tablet():
 
     ... True
 
+    :returns: boolean indicating whether this is a tablet
+
     """
     return _PlatformDetector.create().is_tablet
 

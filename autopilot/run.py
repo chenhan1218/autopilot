@@ -20,6 +20,7 @@
 
 from __future__ import absolute_import
 
+from argparse import ArgumentParser, Action, REMAINDER
 from codecs import open
 from collections import OrderedDict
 import cProfile
@@ -37,10 +38,13 @@ from unittest import TestLoader, TestSuite
 
 from testtools import iterate_tests
 
-from autopilot import get_version_string, parse_arguments
+from autopilot import get_version_string, have_vis
 import autopilot.globals
-from autopilot._debug import get_all_debug_profiles
-from autopilot.testresult import get_output_formats
+from autopilot._debug import (
+    get_all_debug_profiles,
+    get_default_debug_profile,
+)
+from autopilot.testresult import get_default_format, get_output_formats
 from autopilot.utilities import DebugLogFilter, LogFormatter
 from autopilot.application._launcher import (
     _get_app_env_from_string_hint,
@@ -49,11 +53,157 @@ from autopilot.application._launcher import (
 )
 
 
-logger = logging.getLogger(__name__)
+def _parse_arguments(argv=None):
+    """Parse command-line arguments, and return an argparse arguments
+    object.
+    """
+    common_arguments = ArgumentParser(add_help=False)
+    common_arguments.add_argument(
+        '--enable-profile', required=False, default=False,
+        action="store_true", help="Enable collection of profile data for "
+        "autopilot itself. If enabled, profile data will be stored in "
+        "'autopilot_<pid>.profile' in the current working directory."
+    )
+    parser = ArgumentParser(
+        description="Autopilot test tool.",
+        epilog="Each command (run, list, launch etc.) has additional help that"
+        " can be viewed by passing the '-h' flag to the command. For "
+        "example: 'autopilot run -h' displays further help for the "
+        "'run' command."
+    )
+    parser.add_argument('-v', '--version', action='version',
+                        version=get_version_string(),
+                        help="Display autopilot version and exit.")
+    subparsers = parser.add_subparsers(help='Run modes', dest="mode")
+
+    parser_run = subparsers.add_parser(
+        'run', help="Run autopilot tests", parents=[common_arguments]
+    )
+    parser_run.add_argument('-o', "--output", required=False,
+                            help='Write test result report to file.\
+                            Defaults to stdout.\
+                            If given a directory instead of a file will \
+                            write to a file in that directory named: \
+                            <hostname>_<dd.mm.yyy_HHMMSS>.log')
+    available_formats = get_output_formats().keys()
+    parser_run.add_argument('-f', "--format", choices=available_formats,
+                            default=get_default_format(),
+                            required=False,
+                            help='Specify desired output format. \
+                            Default is "text".')
+    parser_run.add_argument("-ff", "--failfast", action='store_true',
+                            required=False, default=False,
+                            help="Stop the test run on the first error \
+                            or failure.")
+    parser_run.add_argument('-r', '--record', action='store_true',
+                            default=False, required=False,
+                            help="Record failing tests. Required \
+                            'recordmydesktop' app to be installed.\
+                            Videos are stored in /tmp/autopilot.")
+    parser_run.add_argument("-rd", "--record-directory", required=False,
+                            type=str, help="Directory to put recorded tests")
+    parser_run.add_argument("--record-options", required=False,
+                            type=str, help="Comma separated list of options \
+                            to pass to recordmydesktop")
+    parser_run.add_argument("-ro", "--random-order", action='store_true',
+                            required=False, default=False,
+                            help="Run the tests in random order")
+    parser_run.add_argument(
+        '-v', '--verbose', default=False, required=False, action='count',
+        help="If set, autopilot will output test log data to stderr during a "
+        "test run. Set twice to also log data useful for debugging autopilot "
+        "itself.")
+    parser_run.add_argument(
+        "--debug-profile",
+        choices=[p.name for p in get_all_debug_profiles()],
+        default=get_default_debug_profile().name,
+        help="Select a profile for what additional debugging information "
+        "should be attached to failed test results."
+    )
+    parser_run.add_argument(
+        "--timeout-profile",
+        choices=['normal', 'long'],
+        default='normal',
+        help="Alter the timeout values Autopilot uses. Selecting 'long' will "
+        "make autopilot use longer timeouts for various polling loops. This "
+        "useful if autopilot is running on very slow hardware"
+    )
+    parser_run.add_argument("suite", nargs="+",
+                            help="Specify test suite(s) to run.")
+
+    parser_list = subparsers.add_parser(
+        'list', help="List autopilot tests", parents=[common_arguments]
+    )
+    parser_list.add_argument(
+        "-ro", "--run-order", required=False, default=False,
+        action="store_true",
+        help="List tests in run order, rather than alphabetical order (the "
+        "default).")
+    parser_list.add_argument(
+        "--suites", required=False, action='store_true',
+        help="Lists only available suites, not tests contained within the "
+        "suite.")
+    parser_list.add_argument("suite", nargs="+",
+                             help="Specify test suite(s) to run.")
+
+    if have_vis():
+        parser_vis = subparsers.add_parser(
+            'vis', help="Open the Autopilot visualiser tool",
+            parents=[common_arguments]
+        )
+        parser_vis.add_argument(
+            '-v', '--verbose', required=False, default=False, action='count',
+            help="Show autopilot log messages. Set twice to also log data "
+            "useful for debugging autopilot itself.")
+        parser_vis.add_argument(
+            '-testability', required=False, default=False,
+            action='store_true', help="Start the vis tool in testability "
+            "mode. Used for self-tests only."
+        )
+
+    parser_launch = subparsers.add_parser(
+        'launch', help="Launch an application with introspection enabled",
+        parents=[common_arguments]
+    )
+    parser_launch.add_argument(
+        '-i', '--interface', choices=('Gtk', 'Qt', 'Auto'), default='Auto',
+        help="Specify which introspection interface to load. The default"
+        "('Auto') uses ldd to try and detect which interface to load.")
+    parser_launch.add_argument(
+        '-v', '--verbose', required=False, default=False, action='count',
+        help="Show autopilot log messages. Set twice to also log data useful "
+        "for debugging autopilot itself.")
+    parser_launch.add_argument(
+        'application', action=_OneOrMoreArgumentStoreAction, type=str,
+        nargs=REMAINDER,
+        help="The application to launch. Can be a full path, or just an "
+        "application name (in which case Autopilot will search for it in "
+        "$PATH).")
+    args = parser.parse_args(args=argv)
+
+    # TR - 2013-11-27 - a bug in python3.3 means argparse doesn't fail
+    # correctly when no commands are specified.
+    # http://bugs.python.org/issue16308
+    if args.mode is None:
+        parser.error("too few arguments")
+
+    if 'suite' in args:
+        args.suite = [suite.rstrip('/') for suite in args.suite]
+
+    return args
+
+
+class _OneOrMoreArgumentStoreAction(Action):
+
+    def __call__(self,  parser, namespace, values, option_string=None):
+        if len(values) == 0:
+            parser.error(
+                "Must specify at least one argument to the 'launch' command")
+        setattr(namespace, self.dest, values)
 
 
 def setup_logging(verbose):
-    """Configure the root logger and verbose logging to stderr"""
+    """Configure the root logger and verbose logging to stderr."""
     root_logger = get_root_logger()
     root_logger.setLevel(logging.DEBUG)
     if verbose == 0:
@@ -173,6 +323,7 @@ def get_package_location(import_name):
     """Get the on-disk location of a package from a test id name.
 
     :raises ImportError: if the name could not be found.
+    :returns: path as a string
     """
     top_level_pkg = import_name.split('.')[0]
     _, path, _ = find_module(top_level_pkg, [os.getcwd()] + sys.path)
@@ -201,9 +352,9 @@ def _reexecute_autopilot_using_module():
 
 
 def _discover_test(test_name):
-    """Returns tuple of TestSuite of found test , top_level_dir of test
+    """Return tuple of (TestSuite of found test, top_level_dir of test).
 
-    raises ImportError if test_name isn't a valid module or test name
+    :raises ImportError: if test_name isn't a valid module or test name
 
     """
     loader = TestLoader()
@@ -223,7 +374,7 @@ def _discover_test(test_name):
 
 
 def _discover_requested_tests(test_names):
-    """Returns a collection of tests that are under test_names.
+    """Return a collection of tests that are under test_names.
 
     returns a tuple containig a TestSuite of tests found and a boolean
     depicting wherether any difficulties were encountered while searching
@@ -252,7 +403,7 @@ def _handle_discovery_error(test_name, exception):
 
 
 def _filter_tests(all_tests, test_names):
-    """Filters a given TestSuite for tests starting with any name contained
+    """Filter a given TestSuite for tests starting with any name contained
     within test_names.
 
     """
@@ -278,7 +429,7 @@ def _filter_tests(all_tests, test_names):
 
 
 def load_test_suite_from_name(test_names):
-    """Returns a test suite object given a dotted test names.
+    """Return a test suite object given a dotted test names.
 
     Returns a tuple containing the TestSuite and a boolean indicating wherever
     any issues where encountered during the loading process.
@@ -383,7 +534,7 @@ def _get_application_path_and_arguments(application):
 
 
 def _get_app_name_and_args(argument_list):
-    """Returns a tuple of (app_name, [app_args])."""
+    """Return a tuple of (app_name, [app_args])."""
     return argument_list[0], argument_list[1:]
 
 
@@ -450,7 +601,9 @@ def _print_message_and_exit_error(msg):
     exit(1)
 
 
-def _run_with_profiling(callable, output_file):
+def _run_with_profiling(callable, output_file=None):
+    if output_file is None:
+        output_file = 'autopilot_%d.profile' % (os.getpid())
     cProfile.runctx(
         'callable()',
         globals(),
@@ -465,24 +618,31 @@ class TestProgram(object):
         """Create a new TestProgram instance.
 
         :param defined_args: If specified, must be an object representing
-            command line arguments, as returned by the ``parse_arguments``
+            command line arguments, as returned by the ``_parse_arguments``
             function. Passing in arguments prevents argparse from parsing
             sys.argv. Used in testing.
 
         """
-        self.args = defined_args or parse_arguments()
+        self.args = defined_args or _parse_arguments()
 
     def run(self):
         setup_logging(getattr(self.args, 'verbose', False))
 
+        action = None
         if self.args.mode == 'list':
-            self.list_tests()
+            action = self.list_tests
         elif self.args.mode == 'run':
-            self.run_tests()
+            action = self.run_tests
         elif self.args.mode == 'vis':
-            self.run_vis()
+            action = self.run_vis
         elif self.args.mode == 'launch':
-            self.launch_app()
+            action = self.launch_app
+
+        if action is not None:
+            if getattr(self.args, 'enable_profile', False):
+                _run_with_profiling(action)
+            else:
+                action()
 
     def run_vis(self):
         # importing this requires that DISPLAY is set. Since we don't always
@@ -498,10 +658,7 @@ class TestProgram(object):
         #
         os.putenv('LIBOVERLAY_SCROLLBAR', '0')
         args = ['-testability'] if self.args.testability else []
-        if self.args.enable_profile:
-            _run_with_profiling(lambda: vis_main(args), 'vis_tool.profile')
-        else:
-            vis_main(args)
+        vis_main(args)
 
     def launch_app(self):
         """Launch an application, with introspection support."""

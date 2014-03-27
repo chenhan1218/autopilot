@@ -82,3 +82,11 @@ class AutopilotPerformanceTests(AutopilotRunTestBase):
         with maximum_runtime(5.0):
             rc, out, err = self.run_autopilot(['run', 'tests'])
             self.assertThat(rc, Equals(0))
+
+    def test_print_tree(self):
+        app_proxy = self.launch_test_application(
+            'window-mocker',
+            app_type='qt'
+        )
+        for i in range(100):
+            app_proxy.print_tree('window_mocker_tree')

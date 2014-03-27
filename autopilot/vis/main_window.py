@@ -71,10 +71,10 @@ class MainWindow(QtGui.QMainWindow):
         self.splitter.setStretchFactor(1, 100)
         self.setCentralWidget(self.splitter)
 
-        self.connection_list = QtGui.QComboBox()
-        self.connection_list.setSizeAdjustPolicy(
-            QtGui.QComboBox.AdjustToContents)
-        self.connection_list.activated.connect(self.conn_list_activated)
+        self.connection_list = ConnectionList()
+        self.connection_list.currentIndexChanged.connect(
+            self.conn_list_activated
+        )
 
         self.toolbar = self.addToolBar('Connection')
         self.toolbar.setObjectName('Connection Toolbar')
@@ -141,6 +141,21 @@ class MainWindow(QtGui.QMainWindow):
     def tree_item_changed(self, current, previous):
         proxy = current.internalPointer().dbus_object
         self.detail_widget.tree_node_changed(proxy)
+
+
+class ConnectionList(QtGui.QComboBox):
+    """Used to show a list of applications we can connect to."""
+
+    def __init__(self):
+        super(ConnectionList, self).__init__()
+        self.setObjectName("ConnectionList")
+        self.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
+
+    @QtCore.pyqtSlot(str)
+    def trySetSelectedItem(self, desired_text):
+        index = self.findText(desired_text)
+        if index != -1:
+            self.setCurrentIndex(index)
 
 
 class TreeNode(object):
@@ -240,9 +255,6 @@ class VisTreeModel(QtCore.QAbstractItemModel):
     def headerData(self, column, orientation, role):
         if (orientation == QtCore.Qt.Horizontal and
                 role == QtCore.Qt.DisplayRole):
-            try:
                 return "Tree Node"
-            except IndexError:
-                pass
 
         return None

@@ -209,8 +209,9 @@ class VisTreeModel(QtCore.QAbstractItemModel):
         if not self.hasIndex(row, col, parent):
             return QtCore.QModelIndex()
 
+        # If there's no parent, return the root of our tree:
         if not parent.isValid():
-            parentItem = self.tree_root
+            return self.createIndex(row, col, self.tree_root)
         else:
             parentItem = parent.internalPointer()
 
@@ -230,7 +231,7 @@ class VisTreeModel(QtCore.QAbstractItemModel):
 
         parentItem = childItem.parent
 
-        if parentItem == self.tree_root:
+        if parentItem is None:
             return QtCore.QModelIndex()
 
         row = parentItem.children.index(childItem)
@@ -238,7 +239,7 @@ class VisTreeModel(QtCore.QAbstractItemModel):
 
     def rowCount(self, parent):
         if not parent.isValid():
-            p_Item = self.tree_root
+            return 1
         else:
             p_Item = parent.internalPointer()
         return p_Item.num_children

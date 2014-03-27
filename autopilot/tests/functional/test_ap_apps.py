@@ -297,9 +297,7 @@ class QtTests(ApplicationTests, QmlTestMixin):
         fixture = self.useFixture(TempDesktopFile(exec_=path,))
         app_proxy = self.launch_test_application(
             path,
-            '--desktop_file_hint={hint_file}'.format(
-                hint_file=fixture.get_desktop_file_path()
-            ),
+            '--desktop_file_hint=%s' % fixture.get_desktop_file_path(),
             app_type='qt'
         )
         self.assertTrue(app_proxy is not None)

@@ -166,9 +166,9 @@ class TreeNode(object):
     snapshot of the apps whole state.
 
     """
-    def __init__(self, parent=None, name='', dbus_object=None):
+    def __init__(self, parent=None, dbus_object=None):
         self.parent = parent
-        self.name = name
+        self.name = dbus_object.__class__.__name__
         self.dbus_object = dbus_object
         self._children = None
 
@@ -178,8 +178,7 @@ class TreeNode(object):
             self._children = []
             try:
                 for child in self.dbus_object.get_children():
-                    name = child.__class__.__name__
-                    self._children.append(TreeNode(self, name, child))
+                    self._children.append(TreeNode(self, child))
             except StateNotFoundError:
                 pass
         return self._children
@@ -202,8 +201,7 @@ class TreeNode(object):
 class VisTreeModel(QtCore.QAbstractItemModel):
     def __init__(self, introspectable_obj):
         super(VisTreeModel, self).__init__()
-        name = introspectable_obj.__class__.__name__
-        self.tree_root = TreeNode(name=name, dbus_object=introspectable_obj)
+        self.tree_root = TreeNode(dbus_object=introspectable_obj)
 
     def index(self, row, col, parent):
         if not self.hasIndex(row, col, parent):

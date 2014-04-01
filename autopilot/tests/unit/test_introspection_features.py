@@ -345,17 +345,6 @@ class DBusIntrospectionObjectTests(TestCase):
             text: 'Hello'
             """))
 
-    def test_hash_value_doesnt_change_with_same_id(self):
-        p1 = self._print_test_fake_object()
-        p2 = self._print_test_fake_object()
-        self.assertEqual(hash(p1), hash(p2))
-
-    def test_hash_value_changes_with_id(self):
-        p1 = self._print_test_fake_object()
-        p1.id += 1
-        p2 = self._print_test_fake_object()
-        self.assertNotEqual(hash(p1), hash(p2))
-
 
 class ProcessSearchErrorStringRepTests(TestCase):
 

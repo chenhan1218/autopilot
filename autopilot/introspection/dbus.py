@@ -174,14 +174,11 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         """
         self.__state = {}
-        # Note: id attribute must be set first. This is because our hash value
-        # depends on it being set, and we need to be hashable before we create
-        # attribute types, since we're part of their cached key.
-        translated_state = translate_state_keys(state_dict)
-        maybe_id = translated_state.pop('id', None)
-        if maybe_id is not None:
-            self.id = maybe_id[1]
-        for key, value in translated_state.items():
+        for key, value in translate_state_keys(state_dict).items():
+            # don't store id in state dictionary -make it a proper instance
+            # attribute
+            if key == 'id':
+                self.id = int(value[1])
             try:
                 self.__state[key] = create_value_instance(value, self, key)
             except ValueError as e:
@@ -699,9 +696,6 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         """
         name = get_classname_from_path(path)
         return cls.__name__ == name
-
-    def __hash__(self):
-        return hash(self.id)
 
 
 def _is_valid_server_side_filter_param(key, value):

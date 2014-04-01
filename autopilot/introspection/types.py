@@ -284,7 +284,10 @@ def _make_plain_type(value, parent=None, name=None):
 # as type attributes, which means that this cache doesn't speed things up that
 # much. Ideally we'd not rely on the dbus types at all, and simply transform
 # them into our own types, but that's work for a separate branch.
-@cached_result
+#
+# Further to the above, we cannot cache these results, since the hash for
+# the parent parameter is almost always the same, leading to incorrect cache
+# hits. We really need to implement our own types here I think.
 def _get_plain_type_class(value_class, parent, name):
     new_type_name = value_class.__name__
     new_type_bases = (value_class, PlainType)

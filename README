@@ -1,4 +1,5 @@
 Welcome to the Autopilot source code!
+#####################################
 
 Autopilot is a tool for writing functional tests for GUI applications.
 
@@ -10,4 +11,20 @@ Autopilot is free software, licensed under GNU General Public License (GPLv3+).
 - Documentation (Tutorial, FAQ, API Reference, etc):
   http://unity.ubuntu.com/autopilot/
 
-happy hacking.
+- IRC channel is #ubuntu-autopilot on irc.freenode.net
+
+happy hacking!
+
+Release Manual Tests
+====================
+
+Not all our tests are automated at the moment. Specifically, the vis tool is lacking some automated tests due to deficiancies in other packages. Until we remedy this situation, the following things need to be manually tested upon an autopilot release:
+
+- Run the following tests by running both: ``autopilot vis`` and ``autopilot3 vis``.
+ - Run 'window-mocker -testability' and the vis tool. 
+  - Make sure you can select window-mocker from the connection list.
+  - Make sure the top-level tree node is 'window-mocker'
+ - Run the vis tool with the '-testability' flag enabled. Run a second vis tool, and make sure that the second vis tool can introspect the first.
+
+
+

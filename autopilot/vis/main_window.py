@@ -45,6 +45,7 @@ class MainWindow(QtGui.QMainWindow):
         self.initUI()
         self.readSettings()
         self._dbus_bus = dbus_bus
+        self.proxy_object = None
 
     def readSettings(self):
         settings = QtCore.QSettings()
@@ -65,6 +66,9 @@ class MainWindow(QtGui.QMainWindow):
 
         self.splitter = QtGui.QSplitter(self)
         self.tree_view = QtGui.QTreeView(self.splitter)
+        self.tree_view.setSelectionMode(
+            QtGui.QAbstractItemView.SingleSelection
+        )
         self.detail_widget = TreeNodeDetailWidget(self.splitter)
 
         self.splitter.setStretchFactor(0, 0)
@@ -79,6 +83,20 @@ class MainWindow(QtGui.QMainWindow):
         self.toolbar = self.addToolBar('Connection')
         self.toolbar.setObjectName('Connection Toolbar')
         self.toolbar.addWidget(self.connection_list)
+
+        self.filter_widget = FilterPane()
+        self.filter_widget.apply_filter.connect(self.on_filter)
+        self.filter_widget.reset_filter.connect(self.on_reset_filter)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.filter_widget)
+
+    def on_filter(self, node_name, filters):
+        node_name = str(node_name)
+        if self.proxy_object:
+            p = self.proxy_object.select_many(node_name)
+            self.tree_view.model().set_tree_roots(p)
+
+    def on_reset_filter(self):
+        self.tree_view.model().set_tree_roots([self.proxy_object])
 
     def on_interface_found(self, conn, obj, iface):
         if iface == AP_INTROSPECTION_IFACE:
@@ -129,11 +147,12 @@ class MainWindow(QtGui.QMainWindow):
         self.connection_list.setCurrentIndex(prev_selected)
 
     def conn_list_activated(self, index):
-        dbus_details = self.connection_list.itemData(index)
+        proxy_object = self.connection_list.itemData(index)
         if not six.PY3:
-            dbus_details = dbus_details.toPyObject()
-        if dbus_details:
-            self.tree_model = VisTreeModel(dbus_details)
+            proxy_object = proxy_object.toPyObject()
+        self.proxy_object = proxy_object
+        if self.proxy_object:
+            self.tree_model = VisTreeModel(self.proxy_object)
             self.tree_view.setModel(self.tree_model)
             self.tree_view.selectionModel().currentChanged.connect(
                 self.tree_item_changed)
@@ -199,9 +218,29 @@ class TreeNode(object):
 
 
 class VisTreeModel(QtCore.QAbstractItemModel):
-    def __init__(self, introspectable_obj):
+
+    def __init__(self, proxy_object):
+        """Create a new proxy object tree model.
+
+        :param proxy_object: A DBus proxy object representing the root of the
+            tree to show.
+
+        """
         super(VisTreeModel, self).__init__()
-        self.tree_root = TreeNode(dbus_object=introspectable_obj)
+        self.tree_roots = [
+            TreeNode(dbus_object=proxy_object),
+        ]
+
+    def set_tree_roots(self, new_tree_roots):
+        """Call this method to change the root nodes the model shows.
+
+        :param new_tree_roots: An iterable of dbus proxy objects, each one will
+            be a root node in the model after calling this method.
+
+        """
+        self.beginResetModel()
+        self.tree_roots = [TreeNode(dbus_object=r) for r in new_tree_roots]
+        self.endResetModel()
 
     def index(self, row, col, parent):
         if not self.hasIndex(row, col, parent):
@@ -209,7 +248,10 @@ class VisTreeModel(QtCore.QAbstractItemModel):
 
         # If there's no parent, return the root of our tree:
         if not parent.isValid():
-            return self.createIndex(row, col, self.tree_root)
+            if row < len(self.tree_roots):
+                return self.createIndex(row, col, self.tree_roots[row])
+            else:
+                return QtCore.QModelIndex()
         else:
             parentItem = parent.internalPointer()
 
@@ -237,7 +279,7 @@ class VisTreeModel(QtCore.QAbstractItemModel):
 
     def rowCount(self, parent):
         if not parent.isValid():
-            return 1
+            return len(self.tree_roots)
         else:
             p_Item = parent.internalPointer()
         return p_Item.num_children
@@ -257,3 +299,43 @@ class VisTreeModel(QtCore.QAbstractItemModel):
                 return "Tree Node"
 
         return None
+
+
+class FilterPane(QtGui.QDockWidget):
+
+    """A widget that provides a filter UI."""
+
+    apply_filter = QtCore.pyqtSignal(str, list)
+    reset_filter = QtCore.pyqtSignal()
+
+    class ControlWidget(QtGui.QWidget):
+
+        def __init__(self, parent=None):
+            super(FilterPane.ControlWidget, self).__init__(parent)
+            self._layout = QtGui.QFormLayout(self)
+
+            self.node_name_edit = QtGui.QComboBox()
+            self.node_name_edit.setEditable(True)
+            self._layout.addRow(QtGui.QLabel("Node Name:"), self.node_name_edit)
+
+            btn_box = QtGui.QDialogButtonBox()
+            self.apply_btn = btn_box.addButton(QtGui.QDialogButtonBox.Apply)
+            self.reset_btn = btn_box.addButton(QtGui.QDialogButtonBox.Reset)
+            self._layout.addRow(btn_box)
+
+            self.setLayout(self._layout)
+
+    def __init__(self, parent=None):
+        super(FilterPane, self).__init__("Filter Tree", parent)
+        self.setObjectName("FilterTreePane")
+        self.control_widget = FilterPane.ControlWidget(self)
+
+        self.control_widget.apply_btn.clicked.connect(self.on_apply_clicked)
+        self.control_widget.reset_btn.clicked.connect(self.reset_filter)
+
+        self.setWidget(self.control_widget)
+
+    def on_apply_clicked(self):
+        node_name = self.control_widget.node_name_edit.currentText()
+        self.apply_filter.emit(node_name, [])
+

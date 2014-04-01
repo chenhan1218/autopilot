@@ -36,6 +36,9 @@ from functools import wraps
 from autopilot.exceptions import BackendException
 
 
+logger = logging.getLogger(__name__)
+
+
 def _pick_backend(backends, preferred_backend):
     """Pick a backend and return an instance of it."""
     possible_backends = list(backends.keys())
@@ -247,20 +250,20 @@ class DebugLogFilter(object):
 
 
 def deprecated(alternative):
-    """Write a deprecation warning directly to stderr."""
+    """Write a deprecation warning to the logging framework."""
+
     def fdec(fn):
         @wraps(fn)
         def wrapped(*args, **kwargs):
-            import sys
             outerframe_details = inspect.getouterframes(
                 inspect.currentframe())[1]
             filename, line_number, function_name = outerframe_details[1:4]
-            sys.stderr.write(
-                "WARNING: in file \"{0}\", line {1} in {2}\n".format(
-                    filename, line_number, function_name))
-            sys.stderr.write(
-                "This function is deprecated. Please use '%s' instead.\n" %
-                alternative)
+
+            logger.warning(
+                "WARNING: in file \"{0}\", line {1} in {2}\n"
+                "This function is deprecated. Please use '{3}' instead.\n"
+                .format(filename, line_number, function_name, alternative)
+            )
             return fn(*args, **kwargs)
         return wrapped
     return fdec

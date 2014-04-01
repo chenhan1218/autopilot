@@ -19,7 +19,6 @@
 from mock import Mock, patch
 from testtools import TestCase
 from testtools.matchers import Contains, raises
-from six import StringIO
 
 from autopilot.testcase import (
     _compare_system_with_process_snapshot,
@@ -79,11 +78,11 @@ class ProcessSnapshotTests(TestCase):
                 self.pick_app_launcher()
 
         with patch('autopilot.testcase.get_application_launcher_wrapper'):
-            with patch('sys.stderr', new=StringIO()) as stderr:
+            with patch('autopilot.utilities.logger') as patched_log:
                 InnerTest('test_foo').run()
 
                 self.assertThat(
-                    stderr.getvalue(),
+                    patched_log.warning.call_args[0][0],
                     Contains(
                         "This function is deprecated. Please use "
                         "'the 'app_type' argument to the "

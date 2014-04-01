@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from mock import patch
+from mock import Mock, patch
 import six
 from testtools import skipIf, TestCase
 from testtools.matchers import (
@@ -34,6 +34,7 @@ from autopilot.utilities import (
     sleep,
     compatible_repr,
     _raise_on_unknown_kwargs,
+    cached_result
 )
 
 
@@ -135,3 +136,86 @@ class UnknownKWArgsTests(TestCase):
             lambda: _raise_on_unknown_kwargs(empty_dict),
             Not(Raises())
         )
+
+
+class CachedResultTests(TestCase):
+
+    def get_wrapped_mock_pair(self):
+        inner = Mock()
+        # Mock() under python 2 does not support __name__. When we drop py2
+        # support we can obviously delete this hack:
+        if six.PY2:
+            inner.__name__ = ""
+        return inner, cached_result(inner)
+
+    def test_can_be_used_as_decorator(self):
+        @cached_result
+        def foo():
+            pass
+
+    def test_adds_reset_cache_callable_to_function(self):
+        @cached_result
+        def foo():
+            pass
+
+        self.assertTrue(hasattr(foo, 'reset_cache'))
+
+    def test_retains_docstring(self):
+        @cached_result
+        def foo():
+            """xxXX super docstring XXxx"""
+            pass
+
+        self.assertThat(foo.__doc__, Equals("xxXX super docstring XXxx"))
+
+    def test_call_passes_through_once(self):
+        inner, wrapped = self.get_wrapped_mock_pair()
+        wrapped()
+        inner.assert_called_once_with()
+
+    def test_call_passes_through_only_once(self):
+        inner, wrapped = self.get_wrapped_mock_pair()
+        wrapped()
+        wrapped()
+        inner.assert_called_once_with()
+
+    def test_first_call_returns_actual_result(self):
+        inner, wrapped = self.get_wrapped_mock_pair()
+        self.assertThat(
+            wrapped(),
+            Equals(inner.return_value)
+        )
+
+    def test_subsequent_calls_return_actual_results(self):
+        inner, wrapped = self.get_wrapped_mock_pair()
+        wrapped()
+        self.assertThat(
+            wrapped(),
+            Equals(inner.return_value)
+        )
+
+    def test_can_pass_hashable_arguments(self):
+        inner, wrapped = self.get_wrapped_mock_pair()
+        wrapped(1, True, 2.0, "Hello", tuple(), )
+        inner.assert_called_once_with(1, True, 2.0, "Hello", tuple())
+
+    def test_passing_kwargs_raises_TypeError(self):
+        inner, wrapped = self.get_wrapped_mock_pair()
+        self.assertThat(
+            lambda: wrapped(foo='bar'),
+            raises(TypeError)
+        )
+
+    def test_passing_unhashable_args_raises_TypeError(self):
+        inner, wrapped = self.get_wrapped_mock_pair()
+        self.assertThat(
+            lambda: wrapped([]),
+            raises(TypeError)
+        )
+
+    def test_resetting_cache_works(self):
+        inner, wrapped = self.get_wrapped_mock_pair()
+        wrapped()
+        wrapped.reset_cache()
+        wrapped()
+        self.assertThat(inner.call_count, Equals(2))

@@ -25,6 +25,7 @@ from __future__ import absolute_import
 
 from contextlib import contextmanager
 from decorator import decorator
+import functools
 import inspect
 import logging
 import os
@@ -444,3 +445,33 @@ def _raise_on_unknown_kwargs(kwargs):
         raise ValueError(
             "Unknown keyword arguments: %s." % (', '.join(arglist))
         )
+
+
+class cached_result(object):
+
+    """A simple caching decorator.
+
+    This class is deliberately simple. It does not handle unhashable types,
+    keyword arguments, and has no built-in size control.
+
+    """
+
+    def __init__(self, f):
+        functools.update_wrapper(self, f)
+        self.f = f
+        self._cache = {}
+
+    def __call__(self, *args):
+        try:
+            return self._cache[args]
+        except KeyError:
+            result = self.f(*args)
+            self._cache[args] = result
+            return result
+        except TypeError:
+            raise TypeError(
+                "The '%r' function can only be called with hashable arguments."
+            )
+
+    def reset_cache(self):
+        self._cache.clear()

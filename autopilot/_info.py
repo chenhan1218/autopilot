@@ -41,6 +41,7 @@ def have_vis():
 
 
 def get_version_string():
+    """Return the autopilot source and package versions."""
     version_string = "Autopilot Source Version: " + _get_source_version()
     pkg_version = _get_package_version()
     if pkg_version:

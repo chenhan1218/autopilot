@@ -33,7 +33,7 @@ from autopilot.introspection.constants import AP_INTROSPECTION_IFACE
 from autopilot.introspection.dbus import StateNotFoundError
 from autopilot.introspection.qt import QtObjectProxyMixin
 from autopilot.vis.objectproperties import TreeNodeDetailWidget
-from autopilot.vis.resources import get_qt_icon
+from autopilot.vis.resources import get_qt_icon, get_filter_icon
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +55,11 @@ class MainWindow(QtGui.QMainWindow):
         else:
             self.restoreGeometry(settings.value("geometry").toByteArray())
             self.restoreState(settings.value("windowState").toByteArray())
+        self.restoreDockWidget(self.filter_widget)
+        self.toggle_wock_widget_action.setChecked(
+            self.dockWidgetArea(self.filter_widget) !=
+            QtCore.Qt.NoDockWidgetArea
+        )
 
     def closeEvent(self, event):
         settings = QtCore.QSettings()
@@ -62,13 +67,11 @@ class MainWindow(QtGui.QMainWindow):
         settings.setValue("windowState", self.saveState())
 
     def initUI(self):
+        self.setWindowTitle("Autopilot Vis")
         self.statusBar().showMessage('Waiting for first valid dbus connection')
 
         self.splitter = QtGui.QSplitter(self)
-        self.tree_view = QtGui.QTreeView(self.splitter)
-        self.tree_view.setSelectionMode(
-            QtGui.QAbstractItemView.SingleSelection
-        )
+        self.tree_view = ProxyObjectTreeView(self.splitter)
         self.detail_widget = TreeNodeDetailWidget(self.splitter)
 
         self.splitter.setStretchFactor(0, 0)
@@ -83,20 +86,45 @@ class MainWindow(QtGui.QMainWindow):
         self.toolbar = self.addToolBar('Connection')
         self.toolbar.setObjectName('Connection Toolbar')
         self.toolbar.addWidget(self.connection_list)
+        self.toolbar.addSeparator()
+
+        self.toggle_wock_widget_action = self.toolbar.addAction(
+            get_filter_icon(),
+            "Show/Hide Filter Pane"
+        )
+        self.toggle_wock_widget_action.setCheckable(True)
+        self.toggle_wock_widget_action.toggled.connect(
+            self.on_toggle_filter_widget
+        )
 
         self.filter_widget = FilterPane()
         self.filter_widget.apply_filter.connect(self.on_filter)
         self.filter_widget.reset_filter.connect(self.on_reset_filter)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.filter_widget)
+        self.filter_widget.set_enabled(False)
+
+        # our model object gets created later.
+        self.tree_model = None
 
     def on_filter(self, node_name, filters):
         node_name = str(node_name)
         if self.proxy_object:
             p = self.proxy_object.select_many(node_name)
-            self.tree_view.model().set_tree_roots(p)
+            self.tree_model.set_tree_roots(p)
+            self.tree_view.set_filtered(True)
 
     def on_reset_filter(self):
-        self.tree_view.model().set_tree_roots([self.proxy_object])
+        self.tree_model.set_tree_roots([self.proxy_object])
+        self.tree_view.set_filtered(False)
+
+    def on_toggle_filter_widget(self, show_widget):
+        if show_widget:
+            self.addDockWidget(
+                QtCore.Qt.RightDockWidgetArea,
+                self.filter_widget
+            )
+            self.filter_widget.show()
+        else:
+            self.removeDockWidget(self.filter_widget)
 
     def on_interface_found(self, conn, obj, iface):
         if iface == AP_INTROSPECTION_IFACE:
@@ -152,14 +180,55 @@ class MainWindow(QtGui.QMainWindow):
             proxy_object = proxy_object.toPyObject()
         self.proxy_object = proxy_object
         if self.proxy_object:
+            self.filter_widget.set_enabled(True)
             self.tree_model = VisTreeModel(self.proxy_object)
-            self.tree_view.setModel(self.tree_model)
-            self.tree_view.selectionModel().currentChanged.connect(
-                self.tree_item_changed)
+            self.tree_view.set_model(self.tree_model)
+            self.tree_view.selection_changed.connect(self.tree_item_changed)
+        else:
+            self.filter_widget.set_enabled(False)
 
     def tree_item_changed(self, current, previous):
         proxy = current.internalPointer().dbus_object
         self.detail_widget.tree_node_changed(proxy)
+
+
+class ProxyObjectTreeView(QtGui.QWidget):
+    """A Widget that contains a tree view and a few other things."""
+
+    selection_changed = QtCore.pyqtSignal('QModelIndex', 'QModelIndex')
+
+    def __init__(self, parent=None):
+        super(ProxyObjectTreeView, self).__init__(parent)
+        layout = QtGui.QVBoxLayout(self)
+        self.tree_view = QtGui.QTreeView()
+        self.tree_view.setSelectionMode(
+            QtGui.QAbstractItemView.SingleSelection
+        )
+        layout.addWidget(self.tree_view)
+
+        self.status_label = QtGui.QLabel("Showing Filtered Results ONLY")
+        self.status_label.hide()
+        layout.addWidget(self.status_label)
+        self.setLayout(layout)
+
+    def set_model(self, model):
+        self.tree_view.setModel(model)
+        self.tree_view.selectionModel().currentChanged.connect(
+            self.selection_changed
+        )
+        self.set_filtered(False)
+
+    def set_filtered(self, is_filtered):
+        if is_filtered:
+            self.status_label.show()
+            self.tree_view.setStyleSheet("""\
+                QTreeView {
+                    background-color: #fdffe1;
+                }
+            """)
+        else:
+            self.status_label.hide()
+            self.tree_view.setStyleSheet("")
 
 
 class ConnectionList(QtGui.QComboBox):
@@ -339,3 +408,5 @@ class FilterPane(QtGui.QDockWidget):
         node_name = self.control_widget.node_name_edit.currentText()
         self.apply_filter.emit(node_name, [])
 
+    def set_enabled(self, enabled):
+        self.control_widget.setEnabled(enabled)

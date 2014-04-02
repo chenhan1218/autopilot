@@ -65,6 +65,7 @@ class MainWindow(QtGui.QMainWindow):
         settings = QtCore.QSettings()
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("windowState", self.saveState())
+        self.visual_indicator.close()
 
     def initUI(self):
         self.setWindowTitle("Autopilot Vis")
@@ -104,6 +105,8 @@ class MainWindow(QtGui.QMainWindow):
 
         # our model object gets created later.
         self.tree_model = None
+
+        self.visual_indicator = VisualComponentPositionIndicator()
 
     def on_filter(self, node_name, filters):
         node_name = str(node_name)
@@ -190,6 +193,46 @@ class MainWindow(QtGui.QMainWindow):
     def tree_item_changed(self, current, previous):
         proxy = current.internalPointer().dbus_object
         self.detail_widget.tree_node_changed(proxy)
+        self.visual_indicator.tree_node_changed(proxy)
+
+
+class VisualComponentPositionIndicator(QtGui.QWidget):
+
+    def __init__(self, parent=None):
+        super(VisualComponentPositionIndicator, self).__init__(None)
+        self.setWindowFlags(
+            QtCore.Qt.Window |
+            QtCore.Qt.X11BypassWindowManagerHint |
+            QtCore.Qt.FramelessWindowHint |
+            QtCore.Qt.WindowStaysOnTopHint
+        )
+        # self.setAttribute(QtCore.Qt.WA_PaintOnScreen)
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        self.setStyleSheet(
+            """\
+            QWidget {
+                background-color: rgba(253, 255, 225, 128);
+            }
+            """
+        )
+
+    def tree_node_changed(self, proxy):
+        position = getattr(proxy, 'globalRect', None)
+        if position is not None:
+            self.setGeometry(*position)
+            if not self.isVisible():
+                self.show()
+
+    def paintEvent(self, paint_evt):
+        opt = QtGui.QStyleOption()
+        opt.init(self)
+        p = QtGui.QPainter(self)
+        self.style().drawPrimitive(
+            QtGui.QStyle.PE_Widget,
+            opt,
+            p,
+            self
+        )
 
 
 class ProxyObjectTreeView(QtGui.QWidget):

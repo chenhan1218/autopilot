@@ -171,6 +171,7 @@ Package: python-autopilot-vis
 Architecture: all
 Depends: ${misc:Depends},
          ${python:Depends},
+         gnome-icon-theme,
          python-autopilot,
          python-dbus,
          python-qt4,
@@ -184,6 +185,7 @@ Package: python3-autopilot-vis
 Architecture: all
 Depends: ${misc:Depends},
          ${python3:Depends},
+         gnome-icon-theme,
          python3-autopilot,
          python3-dbus,
          python3-pyqt4,

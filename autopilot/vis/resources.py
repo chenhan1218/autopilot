@@ -27,6 +27,10 @@ def get_qt_icon():
     return QtGui.QIcon(":/trolltech/qmessagebox/images/qtlogo-64.png")
 
 
+def get_filter_icon():
+    return QtGui.QIcon("/usr/share/icons/gnome/32x32/actions/search.png")
+
+
 def dbus_string_rep(dbus_type):
     """Get a string representation of various dbus types."""
     if isinstance(dbus_type, dbus.Boolean):

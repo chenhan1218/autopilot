@@ -383,9 +383,11 @@ class FilterPane(QtGui.QDockWidget):
             super(FilterPane.ControlWidget, self).__init__(parent)
             self._layout = QtGui.QFormLayout(self)
 
-            self.node_name_edit = QtGui.QComboBox()
-            self.node_name_edit.setEditable(True)
-            self._layout.addRow(QtGui.QLabel("Node Name:"), self.node_name_edit)
+            self.node_name_edit = QtGui.QLineEdit()
+            self._layout.addRow(
+                QtGui.QLabel("Node Name:"),
+                self.node_name_edit
+            )
 
             btn_box = QtGui.QDialogButtonBox()
             self.apply_btn = btn_box.addButton(QtGui.QDialogButtonBox.Apply)
@@ -405,7 +407,7 @@ class FilterPane(QtGui.QDockWidget):
         self.setWidget(self.control_widget)
 
     def on_apply_clicked(self):
-        node_name = self.control_widget.node_name_edit.currentText()
+        node_name = self.control_widget.node_name_edit.text()
         self.apply_filter.emit(node_name, [])
 
     def set_enabled(self, enabled):

@@ -103,7 +103,7 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
 
         # make sure the text edit has keyboard focus:
         self.mouse.click_object(text_edit)
-        self.assertThat(text_edit.focus, Eventually(Equals(True))) 
+        self.assertThat(text_edit.focus, Eventually(Equals(True)))
 
         # create keyboard and type the text.
         keyboard = Keyboard.create(self.backend)

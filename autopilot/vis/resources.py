@@ -18,6 +18,7 @@
 #
 
 
+import os.path
 import dbus
 
 from PyQt4 import QtGui
@@ -29,6 +30,10 @@ def get_qt_icon():
 
 def get_filter_icon():
     return QtGui.QIcon("/usr/share/icons/gnome/32x32/actions/search.png")
+
+
+def get_overlay_icon():
+    return QtGui.QIcon("icons/overlay.svg")
 
 
 def dbus_string_rep(dbus_type):

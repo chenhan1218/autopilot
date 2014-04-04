@@ -33,7 +33,11 @@ from autopilot.introspection.constants import AP_INTROSPECTION_IFACE
 from autopilot.introspection.dbus import StateNotFoundError
 from autopilot.introspection.qt import QtObjectProxyMixin
 from autopilot.vis.objectproperties import TreeNodeDetailWidget
-from autopilot.vis.resources import get_qt_icon, get_filter_icon
+from autopilot.vis.resources import (
+    get_filter_icon,
+    get_overlay_icon,
+    get_qt_icon,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +59,12 @@ class MainWindow(QtGui.QMainWindow):
         else:
             self.restoreGeometry(settings.value("geometry").toByteArray())
             self.restoreState(settings.value("windowState").toByteArray())
-        self.restoreDockWidget(self.filter_widget)
-        self.toggle_wock_widget_action.setChecked(
+        # if not self.restoreDockWidget(self.filter_widget):
+        #     self.addDockWidget(
+        #         QtCore.Qt.RightDockWidgetArea,
+        #         self.filter_widget,
+        #     )
+        self.toggle_dock_widget_action.setChecked(
             self.dockWidgetArea(self.filter_widget) !=
             QtCore.Qt.NoDockWidgetArea
         )
@@ -89,13 +97,23 @@ class MainWindow(QtGui.QMainWindow):
         self.toolbar.addWidget(self.connection_list)
         self.toolbar.addSeparator()
 
-        self.toggle_wock_widget_action = self.toolbar.addAction(
+        self.toggle_dock_widget_action = self.toolbar.addAction(
             get_filter_icon(),
             "Show/Hide Filter Pane"
         )
-        self.toggle_wock_widget_action.setCheckable(True)
-        self.toggle_wock_widget_action.toggled.connect(
+        self.toggle_dock_widget_action.setCheckable(True)
+        self.toggle_dock_widget_action.toggled.connect(
             self.on_toggle_filter_widget
+        )
+
+        self.visual_indicator = VisualComponentPositionIndicator()
+        self.toggle_overlay_action = self.toolbar.addAction(
+            get_overlay_icon(),
+            "Enable/Disable component overlay"
+        )
+        self.toggle_overlay_action.setCheckable(True)
+        self.toggle_overlay_action.toggled.connect(
+            self.visual_indicator.setEnabled
         )
 
         self.filter_widget = FilterPane()
@@ -105,8 +123,6 @@ class MainWindow(QtGui.QMainWindow):
 
         # our model object gets created later.
         self.tree_model = None
-
-        self.visual_indicator = VisualComponentPositionIndicator()
 
     def on_filter(self, node_name, filters):
         node_name = str(node_name)
@@ -215,12 +231,15 @@ class VisualComponentPositionIndicator(QtGui.QWidget):
             }
             """
         )
+        self.enabled = False
+        self.proxy = None
 
     def tree_node_changed(self, proxy):
+        self.proxy = proxy
         position = getattr(proxy, 'globalRect', None)
         if position is not None:
             self.setGeometry(*position)
-            if not self.isVisible():
+            if not self.isVisible() and self.enabled:
                 self.show()
 
     def paintEvent(self, paint_evt):
@@ -233,6 +252,13 @@ class VisualComponentPositionIndicator(QtGui.QWidget):
             p,
             self
         )
+
+    def setEnabled(self, enabled):
+        self.enabled = enabled
+        if not enabled:
+            self.setVisible(enabled)
+        elif self.proxy is not None:
+            self.setVisible(enabled)
 
 
 class ProxyObjectTreeView(QtGui.QWidget):
@@ -434,6 +460,7 @@ class FilterPane(QtGui.QDockWidget):
 
             btn_box = QtGui.QDialogButtonBox()
             self.apply_btn = btn_box.addButton(QtGui.QDialogButtonBox.Apply)
+            self.apply_btn.setDefault(True)
             self.reset_btn = btn_box.addButton(QtGui.QDialogButtonBox.Reset)
             self._layout.addRow(btn_box)
 
@@ -444,6 +471,9 @@ class FilterPane(QtGui.QDockWidget):
         self.setObjectName("FilterTreePane")
         self.control_widget = FilterPane.ControlWidget(self)
 
+        self.control_widget.node_name_edit.returnPressed.connect(
+            self.on_apply_clicked
+        )
         self.control_widget.apply_btn.clicked.connect(self.on_apply_clicked)
         self.control_widget.reset_btn.clicked.connect(self.reset_filter)
 

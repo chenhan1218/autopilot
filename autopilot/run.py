@@ -53,10 +53,8 @@ from autopilot.application._launcher import (
 )
 
 
-def _parse_arguments(argv=None):
-    """Parse command-line arguments, and return an argparse arguments
-    object.
-    """
+def _get_parser():
+    """Return a parser object for handling command line arguments."""
     common_arguments = ArgumentParser(add_help=False)
     common_arguments.add_argument(
         '--enable-profile', required=False, default=False,
@@ -179,6 +177,14 @@ def _parse_arguments(argv=None):
         help="The application to launch. Can be a full path, or just an "
         "application name (in which case Autopilot will search for it in "
         "$PATH).")
+    return parser
+
+
+def _parse_arguments(argv=None):
+    """Parse command-line arguments, and return an argparse arguments
+    object.
+    """
+    parser = _get_parser()
     args = parser.parse_args(args=argv)
 
     # TR - 2013-11-27 - a bug in python3.3 means argparse doesn't fail

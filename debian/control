@@ -171,8 +171,8 @@ Package: python-autopilot-vis
 Architecture: all
 Depends: ${misc:Depends},
          ${python:Depends},
-         gnome-icon-theme,
          python-autopilot,
+         python-autopilot-vis-common,
          python-dbus,
          python-qt4,
          python-qt4-dbus,
@@ -185,7 +185,7 @@ Package: python3-autopilot-vis
 Architecture: all
 Depends: ${misc:Depends},
          ${python3:Depends},
-         gnome-icon-theme,
+         python-autopilot-vis-common,
          python3-autopilot,
          python3-dbus,
          python3-pyqt4,
@@ -194,6 +194,14 @@ Description: The visualisation application for Autopilot (Python 3)
  The Autopilot vis tool allows you to inspect an application introspection
  tree. It is a useful tool for test authors, but not required to run autopilot
  tests.
+
+Package: python-autopilot-vis-common
+Architecture: all
+Depends: ${misc:Depends},
+         ${python:Depends},
+         gnome-icon-theme,
+Description: The visualisation application for Autopilot.
+ This package contains common data files needed by the Autopilot vis tool.
 
 Package: python-autopilot-tests
 Architecture: all

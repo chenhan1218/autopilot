@@ -183,6 +183,7 @@ class MainWindow(QtGui.QMainWindow):
         else:
             self.filter_widget.set_enabled(False)
             self.tree_view.set_model(None)
+            self.visual_indicator.tree_node_changed(None)
 
     def tree_item_changed(self, current, previous):
         proxy = current.internalPointer().dbus_object
@@ -214,11 +215,7 @@ class VisualComponentPositionIndicator(QtGui.QWidget):
 
     def tree_node_changed(self, proxy):
         self.proxy = proxy
-        position = getattr(proxy, 'globalRect', None)
-        if position is not None:
-            self.setGeometry(*position)
-            if not self.isVisible() and self.enabled:
-                self.show()
+        self._maybe_update()
 
     def paintEvent(self, paint_evt):
         opt = QtGui.QStyleOption()
@@ -233,10 +230,28 @@ class VisualComponentPositionIndicator(QtGui.QWidget):
 
     def setEnabled(self, enabled):
         self.enabled = enabled
-        if not enabled:
-            self.setVisible(enabled)
-        elif self.proxy is not None:
-            self.setVisible(enabled)
+        self._maybe_update()
+
+    def _maybe_update(self):
+        """Maybe update the visual overlay.
+
+        Several things need to be taken into account:
+
+        1. The state of the UI toggle button, which determines whether the
+           user expects us to be visible or not. Stored in 'self.enabled'
+        2. The current proxy object set, and whether it has a 'globalRect'
+           attribute (stored in self.proxy) - the proxy object may be None as
+           well.
+
+        """
+
+        position = getattr(self.proxy, 'globalRect', None)
+        should_be_visible = self.enabled and (position is not None)
+
+        if should_be_visible:
+            self.setGeometry(*position)
+        if should_be_visible != self.isVisible():
+            self.setVisible(should_be_visible)
 
 
 class ProxyObjectTreeView(QtGui.QWidget):

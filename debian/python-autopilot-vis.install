@@ -1,3 +1,4 @@
 usr/lib/python2*/*/autopilot/vis/*.py
 icons/autopilot-toggle-overlay.svg /usr/share/icons/hicolor/scalable/actions/
+icons/autopilot.svg /usr/share/icons/hicolor/scalable/apps/
 debian/ap_vis.desktop /usr/share/applications

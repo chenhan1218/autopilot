@@ -46,7 +46,7 @@ from testtools.matchers import Equals
 import six
 
 from autopilot.introspection.utilities import translate_state_keys
-from autopilot.utilities import sleep, compatible_repr, cached_result
+from autopilot.utilities import sleep, compatible_repr
 
 
 logger = logging.getLogger(__name__)

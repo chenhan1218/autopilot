@@ -56,14 +56,24 @@ class MainWindow(QtGui.QMainWindow):
         if six.PY3:
             self.restoreGeometry(settings.value("geometry").data())
             self.restoreState(settings.value("windowState").data())
+            self.toggle_overlay_action.setChecked(
+                settings.value("overlayChecked", type="bool")
+            )
         else:
             self.restoreGeometry(settings.value("geometry").toByteArray())
             self.restoreState(settings.value("windowState").toByteArray())
+            self.toggle_overlay_action.setChecked(
+                settings.value("overlayChecked").toBool()
+            )
 
     def closeEvent(self, event):
         settings = QtCore.QSettings()
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("windowState", self.saveState())
+        settings.setValue(
+            "overlayChecked",
+            self.toggle_overlay_action.isChecked()
+        )
         self.visual_indicator.close()
 
     def initUI(self):

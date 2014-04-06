@@ -42,6 +42,8 @@ class GtkApplicationEnvironment(ApplicationEnvironment):
         """Prepare the application, or environment to launch with
         autopilot-support.
 
+        :returns: unmodified app_path and arguments
+
         """
         modules = os.getenv('GTK_MODULES', '').split(':')
         if 'autopilot' not in modules:
@@ -56,6 +58,8 @@ class QtApplicationEnvironment(ApplicationEnvironment):
     def prepare_environment(self, app_path, arguments):
         """Prepare the application, or environment to launch with
         autopilot-support.
+
+        :returns: unmodified app_path and arguments
 
         """
         if '-testability' not in arguments:

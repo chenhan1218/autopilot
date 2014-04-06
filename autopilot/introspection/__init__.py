@@ -601,7 +601,7 @@ def _get_proxy_object_class_name_and_state(
     if callable(reply_handler) and callable(error_handler):
         # Async call:
         # Since we get an array of state, and we only care about the first one
-        # we use a lambda to unpack it, and then so some trivial
+        # we use a lambda to unpack it and get the details we want.
         backend.introspection_iface.GetState(
             "/",
             reply_handler=lambda r: reply_handler(

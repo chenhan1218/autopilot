@@ -250,7 +250,7 @@ class TestRunLaunchApp(TestCase):
         args = Namespace(
             mode='vis',
             testability=True,
-            enable_profile=True,
+            enable_profile=False,
         )
         program = run.TestProgram(args)
         program.run()
@@ -831,7 +831,7 @@ class TestProgramTests(TestCase):
 
     def test_calls_parse_args_by_default(self):
         fake_args = Namespace()
-        with patch.object(run, 'parse_arguments') as fake_parse_args:
+        with patch.object(run, '_parse_arguments') as fake_parse_args:
             fake_parse_args.return_value = fake_args
             program = run.TestProgram()
 

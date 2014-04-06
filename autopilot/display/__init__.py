@@ -26,7 +26,7 @@ from autopilot.input import Mouse
 
 
 def is_rect_on_screen(screen_number, rect):
-    """Returns True if *rect* is **entirely** on the specified screen, with no
+    """Return True if *rect* is **entirely** on the specified screen, with no
     overlap."""
     (x, y, w, h) = rect
     (mx, my, mw, mh) = Display.create().get_screen_geometry(screen_number)
@@ -34,7 +34,7 @@ def is_rect_on_screen(screen_number, rect):
 
 
 def is_point_on_screen(screen_number, point):
-    """Returns True if *point* is on the specified screen.
+    """Return True if *point* is on the specified screen.
 
     *point* must be an iterable type with two elements: (x, y)
 
@@ -45,7 +45,7 @@ def is_point_on_screen(screen_number, point):
 
 
 def is_point_on_any_screen(point):
-    """Returns true if *point* is on any currently configured screen."""
+    """Return true if *point* is on any currently configured screen."""
     return any([is_point_on_screen(m, point) for m in
                 range(Display.create().get_num_screens())])
 
@@ -99,7 +99,8 @@ def move_mouse_to_screen(screen_number):
 
 
 class Display(object):
-    """The base class/inteface for the display devices"""
+
+    """The base class/inteface for the display devices."""
 
     @staticmethod
     def create(preferred_backend=''):
@@ -121,6 +122,7 @@ class Display(object):
             one of the possible backends for this device class.
         :raises: :class:`~autopilot.BackendException` if the preferred_backend
             is set, but that backend could not be instantiated.
+        :returns: Instance of Display with appropriate backend.
 
         """
         def get_x11_display():

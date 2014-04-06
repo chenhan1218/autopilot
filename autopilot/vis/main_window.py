@@ -426,8 +426,7 @@ class VisTreeModel(QtCore.QAbstractItemModel):
         if not parent.isValid():
             return len(self.tree_roots)
         else:
-            p_Item = parent.internalPointer()
-        return p_Item.num_children
+            return parent.internalPointer().num_children
 
     def columnCount(self, parent):
         return 1

@@ -3,3 +3,4 @@ Type=Application
 Name=Autopilot Vis
 Exec=autopilot vis
 Icon=autopilot
+Comment=Inspect autopilot-enabled application internals

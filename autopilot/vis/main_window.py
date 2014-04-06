@@ -59,15 +59,6 @@ class MainWindow(QtGui.QMainWindow):
         else:
             self.restoreGeometry(settings.value("geometry").toByteArray())
             self.restoreState(settings.value("windowState").toByteArray())
-        # if not self.restoreDockWidget(self.filter_widget):
-        #     self.addDockWidget(
-        #         QtCore.Qt.RightDockWidgetArea,
-        #         self.filter_widget,
-        #     )
-        self.toggle_dock_widget_action.setChecked(
-            self.dockWidgetArea(self.filter_widget) !=
-            QtCore.Qt.NoDockWidgetArea
-        )
 
     def closeEvent(self, event):
         settings = QtCore.QSettings()
@@ -97,14 +88,16 @@ class MainWindow(QtGui.QMainWindow):
         self.toolbar.addWidget(self.connection_list)
         self.toolbar.addSeparator()
 
-        self.toggle_dock_widget_action = self.toolbar.addAction(
-            get_filter_icon(),
-            "Show/Hide Filter Pane"
-        )
-        self.toggle_dock_widget_action.setCheckable(True)
-        self.toggle_dock_widget_action.toggled.connect(
-            self.on_toggle_filter_widget
-        )
+        self.filter_widget = FilterPane()
+        self.filter_widget.apply_filter.connect(self.on_filter)
+        self.filter_widget.reset_filter.connect(self.on_reset_filter)
+        self.filter_widget.set_enabled(False)
+
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.filter_widget)
+        self.toggle_dock_widget_action = self.filter_widget.toggleViewAction()
+        self.toggle_dock_widget_action.setText('Show/Hide Filter Pane')
+        self.toggle_dock_widget_action.setIcon(get_filter_icon())
+        self.toolbar.addAction(self.toggle_dock_widget_action)
 
         self.visual_indicator = VisualComponentPositionIndicator()
         self.toggle_overlay_action = self.toolbar.addAction(
@@ -115,12 +108,6 @@ class MainWindow(QtGui.QMainWindow):
         self.toggle_overlay_action.toggled.connect(
             self.visual_indicator.setEnabled
         )
-
-        self.filter_widget = FilterPane()
-        self.filter_widget.apply_filter.connect(self.on_filter)
-        self.filter_widget.reset_filter.connect(self.on_reset_filter)
-        self.filter_widget.set_enabled(False)
-
         # our model object gets created later.
         self.tree_model = None
 

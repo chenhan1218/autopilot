@@ -194,6 +194,7 @@ class MainWindow(QtGui.QMainWindow):
             self.filter_widget.set_enabled(False)
             self.tree_view.set_model(None)
             self.visual_indicator.tree_node_changed(None)
+            self.detail_widget.tree_node_changed(None)
 
     def tree_item_changed(self, current, previous):
         proxy = current.internalPointer().dbus_object

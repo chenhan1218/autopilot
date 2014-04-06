@@ -115,7 +115,7 @@ class PropertyView(AbstractView):
         return "Properties"
 
     def is_relevant(self, node):
-        return True
+        return node is not None
 
     def new_node_selected(self, node):
         self.table_view.setSortingEnabled(False)
@@ -161,7 +161,7 @@ class SignalView(AbstractView):
         return get_qt_icon()
 
     def is_relevant(self, node):
-        return isinstance(node, QtObjectProxyMixin)
+        return node is not None and isinstance(node, QtObjectProxyMixin)
 
     def new_node_selected(self, node):
         self.signals_table.setSortingEnabled(False)
@@ -201,7 +201,7 @@ class SlotView(AbstractView):
         return get_qt_icon()
 
     def is_relevant(self, node):
-        return isinstance(node, QtObjectProxyMixin)
+        return node is not None and isinstance(node, QtObjectProxyMixin)
 
     def new_node_selected(self, node):
         self.slots_table.setSortingEnabled(False)

@@ -122,16 +122,6 @@ class MainWindow(QtGui.QMainWindow):
         self.tree_model.set_tree_roots([self.proxy_object])
         self.tree_view.set_filtered(False)
 
-    def on_toggle_filter_widget(self, show_widget):
-        if show_widget:
-            self.addDockWidget(
-                QtCore.Qt.RightDockWidgetArea,
-                self.filter_widget
-            )
-            self.filter_widget.show()
-        else:
-            self.removeDockWidget(self.filter_widget)
-
     def on_interface_found(self, conn, obj, iface):
         if iface == AP_INTROSPECTION_IFACE:
             self.statusBar().showMessage('Updating connection list')

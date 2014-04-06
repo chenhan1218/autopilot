@@ -276,6 +276,10 @@ class ProxyObjectTreeView(QtGui.QWidget):
         self.tree_view.setSelectionMode(
             QtGui.QAbstractItemView.SingleSelection
         )
+        self.tree_view.header().setResizeMode(
+            QtGui.QHeaderView.ResizeToContents
+        )
+        self.tree_view.header().setStretchLastSection(False)
         layout.addWidget(self.tree_view)
 
         self.status_label = QtGui.QLabel("Showing Filtered Results ONLY")

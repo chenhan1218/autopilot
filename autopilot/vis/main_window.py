@@ -201,7 +201,6 @@ class VisualComponentPositionIndicator(QtGui.QWidget):
             QtCore.Qt.FramelessWindowHint |
             QtCore.Qt.WindowStaysOnTopHint
         )
-        # self.setAttribute(QtCore.Qt.WA_PaintOnScreen)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         self.setStyleSheet(
             """\

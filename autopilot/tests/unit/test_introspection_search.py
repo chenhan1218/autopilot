@@ -38,7 +38,38 @@ class FilterTests(TestCase):
             raises(ValueError("Filter list must not be empty"))
         )
 
-    def test_can_run_can_be_called(self):
+    def test_matches_returns_True_with_PassingFilter(self):
         runner = _s.FilterRunner([_s.PassingFilter])
+        dbus_connection = self.getUniqueString()
 
-        runner.run()
+        self.assertTrue(runner.matches(dbus_connection, {}))
+
+    def test_matches_returns_False_with_FailingFilter(self):
+        runner = _s.FilterRunner([_s.FailingFilter])
+        dbus_connection = self.getUniqueString()
+
+        self.assertFalse(runner.matches(dbus_connection, {}))
+
+    def test_fails_when_first_filter_fails(self):
+        runner = _s.FilterRunner([_s.FailingFilter, _s.PassingFilter])
+        dbus_connection = self.getUniqueString()
+
+        self.assertFalse(runner.matches(dbus_connection, {}))
+
+    def test_fails_when_second_filter_fails(self):
+        runner = _s.FilterRunner([_s.PassingFilter, _s.FailingFilter])
+        dbus_connection = self.getUniqueString()
+
+        self.assertFalse(runner.matches(dbus_connection, {}))
+
+    def test_passes_when_two_filters_pass(self):
+        runner = _s.FilterRunner([_s.PassingFilter, _s.PassingFilter])
+        dbus_connection = self.getUniqueString()
+
+        self.assertTrue(runner.matches(dbus_connection, {}))
+
+    def test_fails_when_two_filters_fail(self):
+        runner = _s.FilterRunner([_s.FailingFilter, _s.FailingFilter])
+        dbus_connection = self.getUniqueString()
+
+        self.assertFalse(runner.matches(dbus_connection, {}))

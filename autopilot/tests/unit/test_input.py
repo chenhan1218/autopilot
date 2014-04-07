@@ -20,7 +20,6 @@
 import testscenarios
 from evdev import ecodes, uinput
 from mock import ANY, call, Mock, patch
-from six import StringIO
 from testtools import TestCase
 from testtools.matchers import Contains, raises
 
@@ -163,11 +162,11 @@ class UInputTestCase(TestCase):
     """Tests for the global methods of the uinput module."""
 
     def test_create_touch_device_must_print_deprecation_message(self):
-        with patch('sys.stderr', new=StringIO()) as stderr:
+        with patch('autopilot.utilities.logger') as patched_log:
             with patch('autopilot.input._uinput.UInput'):
                 _uinput.create_touch_device('dummy', 'dummy')
         self.assertThat(
-            stderr.getvalue(),
+            patched_log.warning.call_args[0][0],
             Contains(
                 "This function is deprecated. Please use 'the Touch class to "
                 "instantiate a device object' instead."

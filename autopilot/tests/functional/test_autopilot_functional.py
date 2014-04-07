@@ -55,6 +55,9 @@ class AutopilotFunctionalTestsBase(AutopilotRunTestBase):
         This assertion is intelligent enough to know that tests are not always
         printed in alphabetical order.
 
+        'tests' can either be a list of test ids, or a list of tuples
+        containing (scenario_count, test_id), in the case of scenarios.
+
         """
 
         if type(tests) is not list:
@@ -63,8 +66,16 @@ class AutopilotFunctionalTestsBase(AutopilotRunTestBase):
             raise TypeError("output must be a string, not %r" % type(output))
 
         expected_heading = 'Loading tests from: %s\n\n' % self.base_path
-        expected_tests = ['    %s' % t for t in tests]
-        expected_footer = ' %d total %s.' % (len(tests), total_title)
+        expected_tests = []
+        expected_total = 0
+        for test in tests:
+            if type(test) == tuple:
+                expected_tests.append(' *%d %s' % test)
+                expected_total += test[0]
+            else:
+                expected_tests.append('    %s' % test)
+                expected_total += 1
+        expected_footer = ' %d total %s.' % (expected_total, total_title)
 
         parts = output.split('\n')
         observed_heading = '\n'.join(parts[:2]) + '\n'
@@ -232,20 +243,16 @@ Loading tests from: %s
             """)
         )
 
-        expected_output = '''\
-Loading tests from: %s
-
- *2 tests.test_simple.SimpleTest.test_simple
- *2 tests.test_simple.SimpleTest.test_simple_two
-
-
- 4 total tests.
-''' % self.base_path
-
         code, output, error = self.run_autopilot_list()
         self.assertThat(code, Equals(0))
         self.assertThat(error, Equals(''))
-        self.assertThat(output, Equals(expected_output))
+        self.assertTestsInOutput(
+            [
+                (2, 'tests.test_simple.SimpleTest.test_simple'),
+                (2, 'tests.test_simple.SimpleTest.test_simple_two'),
+            ],
+            output
+        )
 
     def test_can_list_invalid_scenarios(self):
         """Autopilot must ignore scenarios that are not lists."""

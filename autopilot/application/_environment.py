@@ -21,7 +21,6 @@
 
 import fixtures
 import os
-import subprocess
 
 
 class ApplicationEnvironment(fixtures.Fixture):
@@ -43,6 +42,8 @@ class GtkApplicationEnvironment(ApplicationEnvironment):
         """Prepare the application, or environment to launch with
         autopilot-support.
 
+        :returns: unmodified app_path and arguments
+
         """
         modules = os.getenv('GTK_MODULES', '').split(':')
         if 'autopilot' not in modules:
@@ -58,6 +59,8 @@ class QtApplicationEnvironment(ApplicationEnvironment):
         """Prepare the application, or environment to launch with
         autopilot-support.
 
+        :returns: unmodified app_path and arguments
+
         """
         if '-testability' not in arguments:
             insert_pos = 0
@@ -68,34 +71,3 @@ class QtApplicationEnvironment(ApplicationEnvironment):
             arguments.insert(insert_pos, '-testability')
 
         return app_path, arguments
-
-
-class UpstartApplicationEnvironment(ApplicationEnvironment):
-
-    def prepare_environment(self, app_path, arguments):
-        """Prepare the application, or environment to launch with
-        autopilot-support.
-
-        """
-        _set_upstart_env("QT_LOAD_TESTABILITY", 1)
-        self.addCleanup(_unset_upstart_env, "QT_LOAD_TESTABILITY")
-
-        return app_path, arguments
-
-
-def _set_upstart_env(key, value):
-    _call_upstart_with_args(
-        "set-env",
-        "{key}={value}".format(key=key, value=value)
-    )
-
-
-def _unset_upstart_env(key):
-    _call_upstart_with_args("unset-env", key)
-
-
-def _call_upstart_with_args(*arguments):
-    return subprocess.check_output(
-        ["/sbin/initctl"] + list(arguments),
-        universal_newlines=True
-    )

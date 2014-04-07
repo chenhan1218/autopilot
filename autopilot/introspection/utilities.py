@@ -21,8 +21,6 @@ from __future__ import absolute_import
 from dbus import Interface
 import os.path
 
-from autopilot.utilities import cached_result
-
 
 def _pid_is_running(pid):
     """Check for the existence of a currently running PID.
@@ -32,7 +30,6 @@ def _pid_is_running(pid):
     return os.path.exists("/proc/%d" % pid)
 
 
-@cached_result
 def _get_bus_connections_pid(bus, connection_name):
     """Returns the pid for the connection **connection_name** on **bus**
 

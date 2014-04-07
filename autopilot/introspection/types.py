@@ -275,17 +275,23 @@ _integer_str = _integer_repr
 
 
 def _make_plain_type(value, parent=None, name=None):
-    new_type = _get_plain_type_class(type(value))
-    new_type.parent = parent
-    new_type.name = name
+    new_type = _get_plain_type_class(type(value), parent, name)
     return new_type(value)
 
 
-@cached_result
-def _get_plain_type_class(value_class):
+# Thomi 2014-03-27: dbus types are immutable, which means that we cannot set
+# parent and name on the instances we create. This means we have to set them
+# as type attributes, which means that this cache doesn't speed things up that
+# much. Ideally we'd not rely on the dbus types at all, and simply transform
+# them into our own types, but that's work for a separate branch.
+#
+# Further to the above, we cannot cache these results, since the hash for
+# the parent parameter is almost always the same, leading to incorrect cache
+# hits. We really need to implement our own types here I think.
+def _get_plain_type_class(value_class, parent, name):
     new_type_name = value_class.__name__
     new_type_bases = (value_class, PlainType)
-    new_type_dict = {}
+    new_type_dict = dict(parent=parent, name=name)
     repr_callable = _get_repr_callable_for_value_class(value_class)
     if repr_callable:
         new_type_dict['__repr__'] = repr_callable

@@ -130,17 +130,3 @@ class FilterRunner(object):
             if result == FilterResult.FAIL:
                 return False
         return True
-
-
-class PassingFilter(object):
-
-    @classmethod
-    def matches(cls, dbus_connection, params):
-        return FilterResult.PASS
-
-
-class FailingFilter(object):
-
-    @classmethod
-    def matches(cls, dbus_connection, params):
-        return FilterResult.FAIL

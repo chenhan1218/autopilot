@@ -27,10 +27,24 @@ from testtools.matchers import (
 )
 
 
+class PassingFilter(object):
+
+    @classmethod
+    def matches(cls, dbus_connection, params):
+        return _s.FilterResult.PASS
+
+
+class FailingFilter(object):
+
+    @classmethod
+    def matches(cls, dbus_connection, params):
+        return _s.FilterResult.FAIL
+
+
 class FilterTests(TestCase):
 
     def test_can_provide_list_of_filters_to_FilterRunner(self):
-        _s.FilterRunner([_s.PassingFilter])
+        _s.FilterRunner([PassingFilter])
 
     def test_passing_empty_filter_list_raises(self):
         self.assertThat(
@@ -39,37 +53,37 @@ class FilterTests(TestCase):
         )
 
     def test_matches_returns_True_with_PassingFilter(self):
-        runner = _s.FilterRunner([_s.PassingFilter])
+        runner = _s.FilterRunner([PassingFilter])
         dbus_connection = self.getUniqueString()
 
         self.assertTrue(runner.matches(dbus_connection, {}))
 
     def test_matches_returns_False_with_FailingFilter(self):
-        runner = _s.FilterRunner([_s.FailingFilter])
+        runner = _s.FilterRunner([FailingFilter])
         dbus_connection = self.getUniqueString()
 
         self.assertFalse(runner.matches(dbus_connection, {}))
 
     def test_fails_when_first_filter_fails(self):
-        runner = _s.FilterRunner([_s.FailingFilter, _s.PassingFilter])
+        runner = _s.FilterRunner([FailingFilter, PassingFilter])
         dbus_connection = self.getUniqueString()
 
         self.assertFalse(runner.matches(dbus_connection, {}))
 
     def test_fails_when_second_filter_fails(self):
-        runner = _s.FilterRunner([_s.PassingFilter, _s.FailingFilter])
+        runner = _s.FilterRunner([PassingFilter, FailingFilter])
         dbus_connection = self.getUniqueString()
 
         self.assertFalse(runner.matches(dbus_connection, {}))
 
     def test_passes_when_two_filters_pass(self):
-        runner = _s.FilterRunner([_s.PassingFilter, _s.PassingFilter])
+        runner = _s.FilterRunner([PassingFilter, PassingFilter])
         dbus_connection = self.getUniqueString()
 
         self.assertTrue(runner.matches(dbus_connection, {}))
 
     def test_fails_when_two_filters_fail(self):
-        runner = _s.FilterRunner([_s.FailingFilter, _s.FailingFilter])
+        runner = _s.FilterRunner([FailingFilter, FailingFilter])
         dbus_connection = self.getUniqueString()
 
         self.assertFalse(runner.matches(dbus_connection, {}))

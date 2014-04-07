@@ -81,7 +81,7 @@ class MainWindow(QtGui.QMainWindow):
         self.statusBar().showMessage('Waiting for first valid dbus connection')
 
         self.splitter = QtGui.QSplitter(self)
-        self.tree_view = ProxyObjectTreeView(self.splitter)
+        self.tree_view = ProxyObjectTreeViewWidget(self.splitter)
         self.detail_widget = TreeNodeDetailWidget(self.splitter)
 
         self.splitter.setStretchFactor(0, 0)
@@ -264,22 +264,38 @@ class VisualComponentPositionIndicator(QtGui.QWidget):
             self.setVisible(should_be_visible)
 
 
-class ProxyObjectTreeView(QtGui.QWidget):
+class ProxyObjectTreeView(QtGui.QTreeView):
+
+    def __init__(self, parent=None):
+        super(ProxyObjectTreeView, self).__init__(parent)
+        self.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
+        self.header().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+        self.header().setStretchLastSection(False)
+
+    def scrollTo(self, index, hint=QtGui.QAbstractItemView.EnsureVisible):
+        """Scroll the view to make the node at index visible.
+
+        Overriden to stop autoScroll from horizontally jumping when selecting
+        nodes.
+
+        :param index: The node to be made visible.
+        :param hint: Where the visible item should be.
+        """
+        horizPos = self.horizontalScrollBar().value()
+        super(ProxyObjectTreeView, self).scrollTo(index, hint)
+        self.horizontalScrollBar().setValue(horizPos)
+
+
+class ProxyObjectTreeViewWidget(QtGui.QWidget):
     """A Widget that contains a tree view and a few other things."""
 
     selection_changed = QtCore.pyqtSignal('QModelIndex', 'QModelIndex')
 
     def __init__(self, parent=None):
-        super(ProxyObjectTreeView, self).__init__(parent)
+        super(ProxyObjectTreeViewWidget, self).__init__(parent)
         layout = QtGui.QVBoxLayout(self)
-        self.tree_view = QtGui.QTreeView()
-        self.tree_view.setSelectionMode(
-            QtGui.QAbstractItemView.SingleSelection
-        )
-        self.tree_view.header().setResizeMode(
-            QtGui.QHeaderView.ResizeToContents
-        )
-        self.tree_view.header().setStretchLastSection(False)
+        self.tree_view = ProxyObjectTreeView()
+
         layout.addWidget(self.tree_view)
 
         self.status_label = QtGui.QLabel("Showing Filtered Results ONLY")

@@ -328,6 +328,8 @@ class DBusIntrospectionObjectTests(TestCase):
             self.assertEqual(out.getvalue(), dedent("""\
             == /some/path ==
             id: 123
+            path: '/some/path'
+            text: 'Hello'
             Error: Object not found with name 'child'.
             """))
 

@@ -49,6 +49,7 @@ extensions = [
     'sphinx.ext.pngmath',
     'sphinx.ext.viewcode',
     'otto',
+    'man',
 ]
 
 autodoc_member_order = 'bysource'
@@ -253,7 +254,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'autopilot', u'Autopilot Documentation',
+    ('man', 'autopilot', u'Automated acceptance test tool',
      [u'Thomi Richards'], 1)
 ]
 

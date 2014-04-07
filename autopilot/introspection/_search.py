@@ -110,3 +110,29 @@ class SearchParamters(object):
     def __str__(self):
         # duplicate _get_search_criteria_string_representation
         pass
+
+
+class FilterResult(object):
+    PASS = object()
+    FAIL = object()
+    NOT_APPLICABLE = object()
+
+
+class FilterRunner(object):
+
+    def __init__(self, filter_list):
+        if not filter_list:
+            raise ValueError("Filter list must not be empty")
+        self._filters = filter_list
+
+
+def PassingFilter(dbus_connection, params):
+    return FilterResult.PASS
+
+
+def FailingFilter(dbus_connection, params):
+    return FilterResult.FAIL
+
+
+def NotApplicableFilter(dbus_connection, params):
+    return FilterResult.NOT_APPLICABLE

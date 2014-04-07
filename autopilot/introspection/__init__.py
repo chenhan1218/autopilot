@@ -446,53 +446,204 @@ _get_child_pids = _cached_get_child_pids()
 
 
 def _make_proxy_object(data_source, emulator_base):
-    """Returns a root proxy object given a DBus service name."""
-    proxy_bases = _get_proxy_object_base_classes(data_source)
-    if emulator_base is None:
-        emulator_base = type('DefaultEmulatorBase', (CustomEmulatorBase,), {})
-    proxy_bases = proxy_bases + (emulator_base, )
-    cls_name, cls_state = _get_proxy_object_class_name_and_state(data_source)
+    """Returns a root proxy object given a DBus service name.
 
-    # Merge the object hierarchy.
-    clsobj = type(str("%sBase" % cls_name), proxy_bases, {})
-
-    proxy_class = type(str(cls_name), (clsobj,), {})
+    :param data_source: The dbus backend address object we're querying.
+    :param emulator_base: The emulator base object (or None), as provided by
+        the user.
+    """
+    intro_xml = _get_introspection_xml_from_backend(data_source)
+    cls_name, path, cls_state = _get_proxy_object_class_name_and_state(
+        data_source
+    )
 
     try:
-        dbus_tuple = data_source.introspection_iface.GetState("/")[0]
-        path, state = dbus_tuple
-        return proxy_class(state, path, data_source)
-    except IndexError:
-        raise RuntimeError("Unable to find root object of %r" % proxy_class)
+        proxy_bases = _get_proxy_bases_from_introspection_xml(intro_xml)
+    except RuntimeError as e:
+        e.args = (
+            "Could not find Autopilot interface on dbus address '%s'."
+            % data_source,
+        )
+        raise e
+    proxy_bases = _extend_proxy_bases_with_emulator_base(
+        proxy_bases,
+        emulator_base
+    )
+    proxy_class = _make_proxy_class_object(cls_name, proxy_bases)
+
+    return proxy_class(cls_state, path, data_source)
 
 
-def _get_proxy_object_base_classes(backend):
-    """Return  tuple of the base classes to use when creating a proxy object
-    for the given service name & path.
+def _make_proxy_object_async(
+        data_source, emulator_base, reply_handler, error_handler):
+    """Make a proxy object for a dbus backend.
+
+    Similar to :meth:`_make_proxy_object` except this method runs
+    asynchronously and must have a reply_handler callable set. The
+    reply_handler will be called with a single argument: The proxy object.
+
+    """
+    # Note: read this function backwards!
+    #
+    # Due to the callbacks, I need to define the end of the callback chain
+    # first, so start reading from the bottom of the function upwards, and
+    # it'll make a whole lot more sense.
+
+    # Final phase: We have all the information we need, now we construct
+    # everything. This phase has no dbus calls, and so is very fast:
+    def build_proxy(introspection_xml, cls_name, path, cls_state):
+        proxy_bases = _get_proxy_bases_from_introspection_xml(
+            introspection_xml
+        )
+        proxy_bases = _extend_proxy_bases_with_emulator_base(
+            proxy_bases,
+            emulator_base
+        )
+        proxy_class = _make_proxy_class_object(cls_name, proxy_bases)
+        reply_handler(proxy_class(cls_state, path, data_source))
+
+    # Phase 2: We recieve the introspection string, and make an asynchronous
+    # dbus call to get the state information for the root of this applicaiton.
+    def get_root_state(introspection_xml):
+        _get_proxy_object_class_name_and_state(
+            data_source,
+            reply_handler=partial(build_proxy, introspection_xml),
+            error_handler=error_handler,
+        )
+
+    # Phase 1: Make an asynchronous dbus call to get the introspection xml
+    # from the data_source provided for us.
+    _get_introspection_xml_from_backend(
+        data_source,
+        reply_handler=get_root_state,
+        error_handler=error_handler
+    )
+
+
+def _get_introspection_xml_from_backend(
+        backend, reply_handler=None, error_handler=None):
+    """Get DBus Introspection xml from a backend.
+
+    :param backend: The backend object to query.
+    :param reply_handler: If set, makes a dbus async call, and the result will
+        be sent to reply_handler. This must be a callable object.
+    :param error_handler: If set, this callable will recieve any errors, and
+        the call will be made asyncronously.
+    :returns: A string containing introspection xml, if called synchronously.
+    :raises ValueError: if one, but not both of 'reply_handler' and
+        'error_handler' are set.
+
+    """
+    if callable(reply_handler) and callable(error_handler):
+        backend.dbus_introspection_iface.Introspect(
+            reply_handler=reply_handler,
+            error_handler=error_handler,
+        )
+    elif reply_handler or error_handler:
+        raise ValueError(
+            "Both 'reply_handler' and 'error_handler' must be set."
+        )
+    else:
+        return backend.dbus_introspection_iface.Introspect()
+
+
+def _get_proxy_bases_from_introspection_xml(introspection_xml):
+    """Return  tuple of the base classes to use when creating a proxy object.
+
+    Currently this works by looking for certain interface names in the XML. In
+    the future we may want to parse the XML and perform more rigerous checks.
+
+    :param introspection_xml: An xml string that describes the exported object
+        on the dbus backend. This determines which capabilities are present in
+        the backend, and therefore which base classes should be used to create
+        the proxy object.
 
     :raises: **RuntimeError** if the autopilot interface cannot be found.
 
     """
-
     bases = [ApplicationProxyObject]
+    if AP_INTROSPECTION_IFACE not in introspection_xml:
+        raise RuntimeError("Could not find Autopilot interface.")
 
-    intro_xml = backend.dbus_introspection_iface.Introspect()
-    if AP_INTROSPECTION_IFACE not in intro_xml:
-        raise RuntimeError(
-            "Could not find Autopilot interface on DBus backend '%s'" %
-            backend)
-
-    if QT_AUTOPILOT_IFACE in intro_xml:
+    if QT_AUTOPILOT_IFACE in introspection_xml:
         from autopilot.introspection.qt import QtObjectProxyMixin
         bases.append(QtObjectProxyMixin)
 
     return tuple(bases)
 
 
-def _get_proxy_object_class_name_and_state(backend):
-    """Return the class name and root state dictionary."""
-    object_path, object_state = backend.introspection_iface.GetState("/")[0]
-    return get_classname_from_path(object_path), object_state
+def _extend_proxy_bases_with_emulator_base(proxy_bases, emulator_base):
+    if emulator_base is None:
+        emulator_base = type('DefaultEmulatorBase', (CustomEmulatorBase,), {})
+    return proxy_bases + (emulator_base, )
+
+
+def _get_proxy_object_class_name_and_state(
+        backend, reply_handler=None, error_handler=None):
+    """Get details about this autopilot backend via a dbus GetState call.
+
+    :param reply_handler: A callable that must accept three positional
+        arguments, which correspond to the return value of this function when
+        called synchronously.
+
+    :param error_handler: A callable which will recieve any dbus errors, should
+        they occur.
+
+    :raises ValueError: if one, but not both of reply_handler and error_handler
+        are set.
+
+    :returns: A tuple containing the class name of the root of the
+        introspection tree, the full path to the root of the introspection
+        tree, and the state dictionary of the root node in the introspection
+        tree.
+
+    """
+    if callable(reply_handler) and callable(error_handler):
+        # Async call:
+        # Since we get an array of state, and we only care about the first one
+        # we use a lambda to unpack it and get the details we want.
+        backend.introspection_iface.GetState(
+            "/",
+            reply_handler=lambda r: reply_handler(
+                *_get_details_from_state_data(r[0])
+            ),
+            error_handler=error_handler,
+        )
+    elif reply_handler or error_handler:
+        raise ValueError(
+            "Both 'reply_handler' and 'error_handler' must be set."
+        )
+    else:
+        # Sync call
+        state = backend.introspection_iface.GetState("/")[0]
+        return _get_details_from_state_data(state)
+
+
+def _get_details_from_state_data(state_data):
+    """Get details from a state data array.
+
+    Returns class name, path, and state dictionary.
+    """
+    object_path, object_state = state_data
+    return (
+        get_classname_from_path(object_path),
+        object_path,
+        object_state,
+    )
+
+
+def _make_proxy_class_object(cls_name, proxy_bases):
+    """Return a class object for a proxy.
+
+    :param cls_name: The name of the class to be created. This is usually the
+        type as returned over the wire from an autopilot backend.
+    :param proxy_bases: A list of base classes this proxy class should derive
+        from. This determines the specific abilities of the new proxy.
+
+    """
+    clsobj = type(str("%sBase" % cls_name), proxy_bases, {})
+    proxy_class = type(str(cls_name), (clsobj,), {})
+    return proxy_class
 
 
 class ApplicationProxyObject(DBusIntrospectionObject):

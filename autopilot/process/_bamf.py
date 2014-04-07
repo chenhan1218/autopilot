@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2012-2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -631,3 +631,16 @@ class Window(WindowBase):
         get_display().sync()
         return [get_display().get_atom_name(p)
                 for p in self._getProperty('_NET_WM_STATE')]
+
+    def resize(self, width, height):
+        """Resize the window.
+
+        :param width: The new width for the window.
+        :param height: The new height for the window.
+
+        """
+        self.x_win.configure(width=width, height=height)
+        self.x_win.change_attributes(
+            win_gravity=X.NorthWestGravity, bit_gravity=X.StaticGravity)
+        # A call to get the window geometry commits the changes.
+        self.geometry

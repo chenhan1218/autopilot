@@ -19,6 +19,7 @@
 
 
 import logging
+import os
 from os.path import join
 from xml.etree import ElementTree
 
@@ -29,6 +30,7 @@ class DBusInspector(object):
     def __init__(self, bus):
         self._bus = bus
         self._xml_processor = None
+        self.p_dbus = self._bus.get_object('org.freedesktop.DBus', '/')
 
     def set_xml_processor(self, processor):
         self._xml_processor = processor
@@ -45,6 +47,18 @@ class DBusInspector(object):
         )
         error_handler = lambda *args: _logger.error("Error occured: %r" % args)
         obj = self._bus.get_object(conn_name, obj_name)
+
+        # avoid introspecting our own PID, as that locks up with libdbus
+        try:
+            obj_pid = self.p_dbus.GetConnectionUnixProcessID(
+                conn_name,
+                dbus_interface='org.freedesktop.DBus'
+            )
+            if obj_pid == os.getpid():
+                return
+        except:
+            # can't get D-BUS daemon's own pid, ignore
+            pass
         obj.Introspect(
             dbus_interface='org.freedesktop.DBus.Introspectable',
             reply_handler=handler,

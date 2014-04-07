@@ -1,3 +1,27 @@
+autopilot (1.4+14.04.20140401-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Make the --enable-profile option for all autopilot commands.
+  * Refactor introspection code to make the vis tool call only
+    asynchronous dbus calls.
+  * Optimisations for print_tree method.
+
+  [ Leo Arias ]
+  * Added a window resize for the BAMF process helper.
+
+  [ Christopher Lee ]
+  * Move functionality out of __init__.py
+  * Add workaround for bug lp:1297592 by creating Touch device in
+    AutopilotTestCase setUp. (LP: #1297592)
+  * Fixes some functional tests that were failing on the devices. (skip
+    Gtk, use desktop file hint for the qt one).
+
+  [ Max Brustkern ]
+  * Move functionality out of __init__.py
+  * Additional pep257 changes.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 01 Apr 2014 01:30:45 +0000
+
 autopilot (1.4+14.04.20140319.1-0ubuntu2) trusty; urgency=medium
 
   * Add python-gi and python3-gi dependencies which provide gi.repository

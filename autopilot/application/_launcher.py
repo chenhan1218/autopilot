@@ -41,10 +41,12 @@ _logger = logging.getLogger(__name__)
 
 
 class ApplicationLauncher(fixtures.Fixture):
+
     """A class that knows how to launch an application with a certain type of
     introspection enabled.
 
     """
+
     def __init__(self, case_addDetail):
         self.case_addDetail = case_addDetail
         super(ApplicationLauncher, self).__init__()

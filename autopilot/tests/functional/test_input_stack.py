@@ -24,6 +24,7 @@ from tempfile import mktemp
 from testtools import TestCase, skipIf
 from testtools.matchers import IsInstance, Equals, raises
 from textwrap import dedent
+from time import sleep
 from unittest import SkipTest
 from mock import patch
 
@@ -104,6 +105,11 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
         # make sure the text edit has keyboard focus:
         self.mouse.click_object(text_edit)
         self.assertThat(text_edit.focus, Eventually(Equals(True)))
+        
+        # even though we ensured the textedit has focus, it occasionally
+        # does not yet accept keyboard input, causing this test to fail
+        # intermittently.  to remedy this, we just add a sleep.
+        time.sleep(2)
 
         # create keyboard and type the text.
         keyboard = Keyboard.create(self.backend)

@@ -126,15 +126,21 @@ class FilterRunner(object):
 
     def matches(self, dbus_connection, search_parameters):
         for f in self._filters:
-            result = f(dbus_connection, search_parameters)
+            result = f.matches(dbus_connection, search_parameters)
             if result == FilterResult.FAIL:
                 return False
         return True
 
 
-def PassingFilter(dbus_connection, params):
-    return FilterResult.PASS
+class PassingFilter(object):
+
+    @classmethod
+    def matches(cls, dbus_connection, params):
+        return FilterResult.PASS
 
 
-def FailingFilter(dbus_connection, params):
-    return FilterResult.FAIL
+class FailingFilter(object):
+
+    @classmethod
+    def matches(cls, dbus_connection, params):
+        return FilterResult.FAIL

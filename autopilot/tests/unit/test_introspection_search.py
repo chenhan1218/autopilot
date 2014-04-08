@@ -22,7 +22,9 @@ from autopilot.introspection import _search as _s
 from mock import Mock
 from testtools import TestCase
 from testtools.matchers import (
+    Contains,
     Equals,
+    Not,
     raises,
 )
 
@@ -39,6 +41,20 @@ class FailingFilter(object):
     @classmethod
     def matches(cls, dbus_connection, params):
         return _s.FilterResult.FAIL
+
+
+class LowPriorityFilter(object):
+
+    @classmethod
+    def priority(cls):
+        return 0
+
+
+class HighPriorityFilter(object):
+
+    @classmethod
+    def priority(cls):
+        return 10
 
 
 class FilterTests(TestCase):
@@ -87,3 +103,81 @@ class FilterTests(TestCase):
         dbus_connection = self.getUniqueString()
 
         self.assertFalse(runner.matches(dbus_connection, {}))
+
+
+class FilterPrioritySorterTests(TestCase):
+
+    def test_foo(self):
+        runner_class = Mock()
+
+        _s.FilterPrioritySorter(
+            [LowPriorityFilter, HighPriorityFilter],
+            runner_class
+        )
+
+        runner_class.assert_called_once_with(
+            [HighPriorityFilter, LowPriorityFilter]
+        )
+
+    def test_FilterPrioritySorter_returns_runner_instance(self):
+        runner_class = Mock()
+        runner = _s.FilterPrioritySorter(
+            [LowPriorityFilter, HighPriorityFilter],
+            runner_class
+        )
+
+        self.assertThat(runner, Equals(runner_class.return_value))
+
+
+class FilterListGeneratorTests(TestCase):
+
+    def test_FilterListGenerator_raises_with_unknown_search_parameter(self):
+        search_parameters = dict(unexpected_key=True)
+
+        self.assertThat(
+            lambda: _s.FilterListGenerator(search_parameters, {}),
+            raises(
+                KeyError(
+                    "Search parameter unexpected_key doesn't have a "
+                    "corresponding filter in %r" % {}
+                )
+            )
+        )
+
+    def test_FilterListGenerator_returns_filter(self):
+        search_parameters = dict(high=True)
+        filter_parameter_requirements = dict(
+            high=HighPriorityFilter,
+        )
+        filter_list = _s.FilterListGenerator(
+            search_parameters,
+            filter_parameter_requirements
+        )
+
+        self.assertThat(filter_list, Equals([HighPriorityFilter]))
+
+    def test_FilterListGenerator_returns_only_required_filters(self):
+        search_parameters = dict(high=True, passing=True)
+        filter_parameter_requirements = dict(
+            high=HighPriorityFilter,
+            low=LowPriorityFilter,
+            passing=PassingFilter,
+        )
+        filter_list = _s.FilterListGenerator(
+            search_parameters,
+            filter_parameter_requirements
+        )
+
+        self.assertThat(filter_list, Contains(HighPriorityFilter))
+        self.assertThat(filter_list, Contains(PassingFilter))
+
+    def test_FilterListGenerator_doesnt_modify_search_parameters(self):
+        search_parameters = dict(high=True)
+        filter_parameter_requirements = dict(high=HighPriorityFilter)
+
+        _s.FilterListGenerator(
+            search_parameters,
+            filter_parameter_requirements
+        )
+
+        self.assertThat(search_parameters.get('high', None), Not(Equals(None)))

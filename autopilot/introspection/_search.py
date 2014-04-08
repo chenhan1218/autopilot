@@ -19,6 +19,8 @@
 
 """Private Package for searching dbus for useful connections."""
 
+from autopilot.utilities import _raise_on_unknown_kwargs
+
 
 class FilterDecision(object):
     """Makes the decision if this connection matches the criteria given the
@@ -130,3 +132,27 @@ class FilterRunner(object):
             if result == FilterResult.FAIL:
                 return False
         return True
+
+
+def FilterPrioritySorter(filter_list, runner_class):
+    return runner_class(
+        sorted(filter_list, cmp=lambda a, b: cmp(b.priority(), a.priority()))
+    )
+
+
+def FilterListGenerator(search_parameters, parameter_filter_lookup):
+    filter_list = []
+    search_param_copy = search_parameters.copy()
+    try:
+        for search_key in search_param_copy.keys():
+            filter_list.append(parameter_filter_lookup[search_key])
+            search_param_copy.pop(search_key)
+    except KeyError as e:
+        raise KeyError(
+            "Search parameter %s doesn't have a corresponding filter in %r"
+            % (search_key, parameter_filter_lookup),
+        )
+
+    _raise_on_unknown_kwargs(search_param_copy)
+
+    return filter_list

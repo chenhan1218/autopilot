@@ -566,7 +566,7 @@ def _ensure_uinput_device_created():
         if _UInputTouchDevice._device is None:
             Touch.create()
     except Exception as e:
-        logger.warning(
+        _logger.warning(
             "Failed to create Touch device for bug lp:1297595 workaround: "
             "%s" % str(e)
         )

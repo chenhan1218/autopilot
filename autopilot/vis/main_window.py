@@ -197,7 +197,8 @@ class MainWindow(QtGui.QMainWindow):
             self.detail_widget.tree_node_changed(None)
 
     def tree_item_changed(self, current, previous):
-        proxy = current.internalPointer().dbus_object
+        tree_node = current.internalPointer()
+        proxy = tree_node.dbus_object if tree_node is not None else None
         self.detail_widget.tree_node_changed(proxy)
         self.visual_indicator.tree_node_changed(proxy)
 
@@ -266,6 +267,8 @@ class VisualComponentPositionIndicator(QtGui.QWidget):
 
 class ProxyObjectTreeView(QtGui.QTreeView):
 
+    """A subclass of QTreeView with a few customisations."""
+
     def __init__(self, parent=None):
         super(ProxyObjectTreeView, self).__init__(parent)
         self.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
@@ -276,14 +279,51 @@ class ProxyObjectTreeView(QtGui.QTreeView):
         """Scroll the view to make the node at index visible.
 
         Overriden to stop autoScroll from horizontally jumping when selecting
-        nodes.
+        nodes, and to make arrow navigation work correctly when scrolling off
+        the bottom of the viewport.
 
         :param index: The node to be made visible.
-        :param hint: Where the visible item should be.
+        :param hint: Where the visible item should be - this is ignored.
         """
-        horizPos = self.horizontalScrollBar().value()
-        super(ProxyObjectTreeView, self).scrollTo(index, hint)
-        self.horizontalScrollBar().setValue(horizPos)
+        # calculate the visual rect of the item we're scrolling to in viewport
+        # coordinates. The default implementation gives us a rect that ends
+        # in the RHS of the viewport, which isn't what we want. We use a
+        # QFontMetrics instance to calculate the probably width of the text
+        # beign rendered. This may not be totally accurate, but it seems good
+        # enough.
+        visual_rect = self.visualRect(index)
+        fm = self.fontMetrics()
+        text_width = fm.width(index.data().toString())
+        visual_rect.setRight(visual_rect.left() + text_width)
+
+        # horizontal scrolling is done per-pixel, with the scrollbar value
+        # being the number of pixels past the RHS of the VP. For some reason
+        # one needs to add 8 pixels - possibly this is for the tree expansion
+        # widget?
+        hbar = self.horizontalScrollBar()
+        if visual_rect.right() + 8 > self.viewport().width():
+            offset = (visual_rect.right() -
+                      self.viewport().width() +
+                      hbar.value() + 8)
+            hbar.setValue(offset)
+        if visual_rect.left() < 0:
+            offset = hbar.value() + visual_rect.left() - 8
+            hbar.setValue(offset)
+
+        # Vertical scrollbar scrolls in steps equal to the height of each item
+        vbar = self.verticalScrollBar()
+        if visual_rect.bottom() > self.viewport().height():
+            offset_pixels = (visual_rect.bottom() -
+                             self.viewport().height() +
+                             vbar.value())
+            new_position = max(
+                offset_pixels / visual_rect.height(),
+                1
+            ) + vbar.value()
+            vbar.setValue(new_position)
+        if visual_rect.top() < 0:
+            new_position = min(visual_rect.top() / visual_rect.height(), -1)
+            vbar.setValue(vbar.value() + new_position)
 
 
 class ProxyObjectTreeViewWidget(QtGui.QWidget):

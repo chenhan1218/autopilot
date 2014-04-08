@@ -64,6 +64,7 @@ class MainWindow(QtGui.QMainWindow):
         self.statusBar().showMessage('Waiting for first valid dbus connection')
 
         self.splitter = QtGui.QSplitter(self)
+        self.splitter.setChildrenCollapsible(False)
         self.tree_view = QtGui.QTreeView(self.splitter)
         self.detail_widget = TreeNodeDetailWidget(self.splitter)
 

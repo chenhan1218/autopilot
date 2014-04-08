@@ -18,6 +18,7 @@
 #
 
 
+import argparse
 from docutils import nodes
 from sphinx.util.compat import Directive
 
@@ -60,9 +61,16 @@ class ArgparseOptions(_ArgparseSection):
 
 class ArgparseUsage(_ArgparseSection):
     def run(self):
-        parser_usage = self.parser.format_usage()
-        usage_words = parser_usage.split()
-        del usage_words[0]
-        usage_words[0] = 'autopilot'
-        usage = ' '.join(usage_words) + '\n'
-        return [nodes.Text(usage)]
+        usage_nodes = []
+        for action in self.parser._subparsers._actions:
+            if type(action) == argparse._SubParsersAction:
+                choices = action.choices
+                break
+        for choice in choices.values():
+            parser_usage = choice.format_usage()
+            usage_words = parser_usage.split()
+            del usage_words[0]
+            usage_words[0] = 'autopilot'
+            usage = ' '.join(usage_words) + '\n.br\n'
+            usage_nodes.append(nodes.Text(usage))
+        return usage_nodes

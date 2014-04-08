@@ -211,7 +211,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             custom emulators)
 
         .. seealso::
-            Tutorial Section :ref:`custom_emulators`
+            Tutorial Section :ref:`custom_proxy_classes`
 
         """
         #TODO: if kwargs has exactly one item in it we should specify the
@@ -314,7 +314,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         :raises StateNotFoundError: if the requested object was not found.
 
         .. seealso::
-            Tutorial Section :ref:`custom_emulators`
+            Tutorial Section :ref:`custom_proxy_classes`
 
         """
         instances = self.select_many(type_name, **kwargs)
@@ -367,7 +367,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         :raises StateNotFoundError: if the requested object was not found.
 
         .. seealso::
-            Tutorial Section :ref:`custom_emulators`
+            Tutorial Section :ref:`custom_proxy_classes`
 
         """
         for i in range(self._poll_time):
@@ -418,7 +418,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             provided.
 
         .. seealso::
-            Tutorial Section :ref:`custom_emulators`
+            Tutorial Section :ref:`custom_proxy_classes`
 
         """
         if not isinstance(type_name, str) and issubclass(
@@ -849,6 +849,6 @@ CustomEmulatorBase.__doc__ = \
     within a test case.
 
     .. seealso::
-        Tutorial Section :ref:`custom_emulators`
+        Tutorial Section :ref:`custom_proxy_classes`
             Information on how to write custom emulators.
     """

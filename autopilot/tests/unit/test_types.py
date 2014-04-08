@@ -766,7 +766,7 @@ class CreateValueInstanceTests(TestCase):
 
 class DBusIntrospectionObjectTests(TestCase):
 
-    @patch('autopilot.introspection.dbus.logger.warning')
+    @patch('autopilot.introspection.dbus._logger.warning')
     def test_dbus_introspection_object_logs_bad_data(self, error_logger):
         """The DBusIntrospectionObject class must log an error when it gets
         bad data from the autopilot backend.

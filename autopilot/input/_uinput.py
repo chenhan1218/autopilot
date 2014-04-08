@@ -32,7 +32,7 @@ from autopilot.input._common import get_center_point
 from autopilot.utilities import deprecated, sleep
 
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 def _get_devnode_path():
@@ -59,7 +59,7 @@ class _UInputKeyboardDevice(object):
 
         """
         ecode = self._get_ecode_for_key(key)
-        logger.debug('Pressing %s (%r).', key, ecode)
+        _logger.debug('Pressing %s (%r).', key, ecode)
         self._emit_press_event(ecode)
         self._pressed_keys_ecodes.append(ecode)
 
@@ -90,7 +90,7 @@ class _UInputKeyboardDevice(object):
         """
         ecode = self._get_ecode_for_key(key)
         if ecode in self._pressed_keys_ecodes:
-            logger.debug('Releasing %s (%r).', key, ecode)
+            _logger.debug('Releasing %s (%r).', key, ecode)
             self._emit_release_event(ecode)
             self._pressed_keys_ecodes.remove(ecode)
         else:
@@ -182,7 +182,7 @@ class Keyboard(KeyboardBase):
         :raises TypeError: if ``keys`` is not a string.
 
         """
-        logger.debug("Pressing and Releasing: %s", keys)
+        _logger.debug("Pressing and Releasing: %s", keys)
         self.press(keys, delay)
         self.release(keys, delay)
 
@@ -197,7 +197,7 @@ class Keyboard(KeyboardBase):
         """
         if not isinstance(string, six.string_types):
             raise TypeError("'keys' argument must be a string.")
-        logger.debug("Typing text %r", string)
+        _logger.debug("Typing text %r", string)
         for key in string:
             self.press(key, delay)
             self.release(key, delay)
@@ -472,7 +472,7 @@ class Touch(TouchBase):
         :raises RuntimeError: if no more finger slots are available.
 
         """
-        logger.debug("Tapping at: %d,%d", x, y)
+        _logger.debug("Tapping at: %d,%d", x, y)
         self._device.finger_down(x, y)
         sleep(0.1)
         self._device.finger_up()
@@ -486,7 +486,7 @@ class Touch(TouchBase):
             attributes or if they are not of the correct type.
 
         """
-        logger.debug("Tapping object: %r", object)
+        _logger.debug("Tapping object: %r", object)
         x, y = get_center_point(object_)
         self.tap(x, y)
 
@@ -499,7 +499,7 @@ class Touch(TouchBase):
         :raises RuntimeError: if no more finger slots are available.
 
         """
-        logger.debug("Pressing at: %d,%d", x, y)
+        _logger.debug("Pressing at: %d,%d", x, y)
         self._device.finger_down(x, y)
 
     def release(self):
@@ -508,7 +508,7 @@ class Touch(TouchBase):
         :raises RuntimeError: if the touch is not pressed.
 
         """
-        logger.debug("Releasing")
+        _logger.debug("Releasing")
         self._device.finger_up()
 
     def move(self, x, y):
@@ -543,7 +543,7 @@ class Touch(TouchBase):
         :raises RuntimeError: if no more finger slots are available.
 
         """
-        logger.debug("Dragging from %d,%d to %d,%d", x1, y1, x2, y2)
+        _logger.debug("Dragging from %d,%d to %d,%d", x1, y1, x2, y2)
         self._device.finger_down(x1, y1)
 
         current_x, current_y = x1, y1

@@ -35,7 +35,7 @@ from autopilot.introspection.qt import QtObjectProxyMixin
 from autopilot.vis.objectproperties import TreeNodeDetailWidget
 from autopilot.vis.resources import get_qt_icon
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -94,7 +94,7 @@ class MainWindow(QtGui.QMainWindow):
                     self.on_dbus_error
                 )
             except (dbus.DBusException, RuntimeError) as e:
-                logger.warning("Invalid introspection interface: %s" % str(e))
+                _logger.warning("Invalid introspection interface: %s" % str(e))
 
             if self.connection_list.count() == 0:
                 self.statusBar().showMessage('No valid connections exist.')

@@ -49,7 +49,7 @@ from autopilot.introspection.utilities import translate_state_keys
 from autopilot.utilities import sleep, compatible_repr
 
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class ValueType(object):
@@ -95,7 +95,7 @@ def create_value_instance(value, parent, name):
     value = value[1:]
 
     if type_id not in type_dict:
-        logger.warning("Unknown type id %d", type_id)
+        _logger.warning("Unknown type id %d", type_id)
         type_id = ValueType.UNKNOWN
 
     type_class = type_dict.get(type_id, None)

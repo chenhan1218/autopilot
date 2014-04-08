@@ -37,8 +37,7 @@ from autopilot.application._environment import (
     QtApplicationEnvironment,
 )
 
-
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class ApplicationLauncher(fixtures.Fixture):
@@ -229,7 +228,7 @@ def launch_process(application, args, capture_output=False, **kwargs):
     """Launch an autopilot-enabled process and return the process object."""
     commandline = [application]
     commandline.extend(args)
-    logger.info("Launching process: %r", commandline)
+    _logger.info("Launching process: %r", commandline)
     cap_mode = None
     if capture_output:
         cap_mode = subprocess.PIPE
@@ -284,7 +283,7 @@ def _get_application_environment(app_type=None, app_path=None):
         else:
             return get_application_launcher_wrapper(app_path)
     except (RuntimeError, ValueError) as e:
-        logger.error(str(e))
+        _logger.error(str(e))
         raise RuntimeError(
             "Autopilot could not determine the correct introspection type "
             "to use. You can specify this by providing app_type."
@@ -342,7 +341,7 @@ def _kill_process(process):
     """Kill the process, and return the stdout, stderr and return code."""
     stdout_parts = []
     stderr_parts = []
-    logger.info("waiting for process to exit.")
+    _logger.info("waiting for process to exit.")
     _attempt_kill_pid(process.pid)
     for _ in Timeout.default():
         tmp_out, tmp_err = process.communicate()
@@ -355,7 +354,7 @@ def _kill_process(process):
         if not _is_process_running(process.pid):
             break
     else:
-        logger.info(
+        _logger.info(
             "Killing process group, since it hasn't exited after "
             "10 seconds."
         )
@@ -365,10 +364,10 @@ def _kill_process(process):
 
 def _attempt_kill_pid(pid, sig=signal.SIGTERM):
     try:
-        logger.info("Killing process %d", pid)
+        _logger.info("Killing process %d", pid)
         os.killpg(pid, sig)
     except OSError:
-        logger.info("Appears process has already exited.")
+        _logger.info("Appears process has already exited.")
 
 
 def _is_process_running(pid):

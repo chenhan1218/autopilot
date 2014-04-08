@@ -44,7 +44,7 @@ from autopilot.utilities import (
 
 
 _object_registry = {}
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class StateNotFoundError(RuntimeError):
@@ -182,7 +182,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             try:
                 self.__state[key] = create_value_instance(value, self, key)
             except ValueError as e:
-                logger.warning(
+                _logger.warning(
                     "While constructing attribute '%s.%s': %s",
                     self.__class__.__name__,
                     key,
@@ -428,7 +428,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         if type_name == "*" and not kwargs:
             raise TypeError("You must specify either a type name or a filter.")
 
-        logger.debug(
+        _logger.debug(
             "Selecting objects of %s with attributes: %r",
             'any type' if type_name == '*' else 'type ' + type_name, kwargs)
 
@@ -505,7 +505,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         """
         instances = self.get_state_by_path("/")
         if len(instances) != 1:
-            logger.error("Could not retrieve root object.")
+            _logger.error("Could not retrieve root object.")
             return None
         return self.make_introspection_object(instances[0])
 
@@ -541,7 +541,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         with Timer("GetState %s" % piece):
             data = self._backend.introspection_iface.GetState(piece)
             if len(data) > 15:
-                logger.warning(
+                _logger.warning(
                     "Your query '%s' returned a lot of data (%d items). This "
                     "is likely to be slow. You may want to consider optimising"
                     " your query to return fewer items.",

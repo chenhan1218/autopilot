@@ -61,6 +61,7 @@ from autopilot.introspection.dbus import (
     _try_custom_proxy_classes,
     CustomEmulatorBase,
     DBusIntrospectionObject,
+    StateNotFoundError,
 )
 from autopilot.introspection.qt import QtObjectProxyMixin
 import autopilot.introspection as _i
@@ -311,6 +312,25 @@ class DBusIntrospectionObjectTests(TestCase):
             id: 123
             path: '/some/path'
             text: 'Hello'
+            """))
+
+    def test_print_tree_exception(self):
+        """print_tree with StateNotFound exception"""
+
+        fake_object = self._print_test_fake_object()
+        child = Mock()
+        child.print_tree.side_effect = StateNotFoundError('child')
+
+        with patch.object(fake_object, 'get_children', return_value=[child]):
+            out = StringIO()
+            print_func = lambda: fake_object.print_tree(out)
+            self.assertThat(print_func, Not(Raises(StateNotFoundError)))
+            self.assertEqual(out.getvalue(), dedent("""\
+            == /some/path ==
+            id: 123
+            path: '/some/path'
+            text: 'Hello'
+            Error: Object not found with name 'child'.
             """))
 
     def test_print_tree_fileobj(self):

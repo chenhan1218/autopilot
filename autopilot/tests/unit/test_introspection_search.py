@@ -57,7 +57,7 @@ class HighPriorityFilter(object):
         return 10
 
 
-class FilterTests(TestCase):
+class FilterRunnerTests(TestCase):
 
     def test_can_provide_list_of_filters_to_FilterRunner(self):
         _s.FilterRunner([PassingFilter])
@@ -107,7 +107,7 @@ class FilterTests(TestCase):
 
 class FilterPrioritySorterTests(TestCase):
 
-    def test_foo(self):
+    def test_FilterPrioritySorter_uses_sorted_filter_list(self):
         runner_class = Mock()
 
         _s.FilterPrioritySorter(

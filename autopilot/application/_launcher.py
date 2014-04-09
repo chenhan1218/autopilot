@@ -62,6 +62,7 @@ class UpstartApplicationLauncher(ApplicationLauncher):
     Timeout = object()
     Failed = object()
     Started = object()
+    Stopped = object()
 
     def __init__(self, case_addDetail, **kwargs):
         super(UpstartApplicationLauncher, self).__init__(case_addDetail)
@@ -110,6 +111,12 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             state['loop'].quit()
 
     @staticmethod
+    def _on_stopped(stopped_app_id, state):
+        if stopped_app_id == state['expected_app_id']:
+            state['status'] = UpstartApplicationLauncher.Stopped
+            state['loop'].quit()
+
+    @staticmethod
     def _on_timeout(state):
         state['status'] = UpstartApplicationLauncher.Timeout
         state['loop'].quit()
@@ -129,7 +136,22 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             )
 
     def _stop_application(self, app_id):
+        state = {}
+        state['loop'] = self._get_glib_loop()
+        state['expected_app_id'] = app_id
+
+        UpstartAppLaunch.observer_add_app_stop(self._on_stopped, state)
+        GLib.timeout_add_seconds(10.0, self._on_timeout, state)
+
         UpstartAppLaunch.stop_application(app_id)
+        state['loop'].run()
+        UpstartAppLaunch.observer_delete_app_stop(self._on_stopped)
+
+        if state.get('status', None) == UpstartApplicationLauncher.Timeout:
+            _logger.error(
+                "Timed out waiting for Application with app_id '%s' to stop.",
+                app_id
+            )
 
     @staticmethod
     def _get_glib_loop():

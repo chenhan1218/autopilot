@@ -411,6 +411,13 @@ class TreeNode(object):
         doesn't need to know about the details.
 
         """
+        # Thomi - 2014-04-09 - the code below is subtly broken because
+        # libautopilot-qt returns items in the Children property that it never
+        # exports. I'm reverting this optimisation and doing the simple thing
+        # until that gets fixed.
+        # https://bugs.launchpad.net/autopilot-qt/+bug/1286985
+        return len(self.children)
+        # old code - re-enable once above bug has been fixed.
         num_children = 0
         with self.dbus_object.no_automatic_refreshing():
             if hasattr(self.dbus_object, 'Children'):

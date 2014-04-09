@@ -140,12 +140,12 @@ class UpstartApplicationLauncher(ApplicationLauncher):
         state['loop'] = self._get_glib_loop()
         state['expected_app_id'] = app_id
 
-        UpstartAppLaunch.observer_add_app_stopped(self._on_stopped, state)
+        UpstartAppLaunch.observer_add_app_stop(self._on_stopped, state)
         GLib.timeout_add_seconds(10.0, self._on_timeout, state)
 
         UpstartAppLaunch.stop_application(app_id)
         state['loop'].run()
-        UpstartAppLaunch.observer_delete_app_stopped(self._on_stopped)
+        UpstartAppLaunch.observer_delete_app_stop(self._on_stopped)
 
         if state.get('status', None) == UpstartApplicationLauncher.Timeout:
             _logger.error(

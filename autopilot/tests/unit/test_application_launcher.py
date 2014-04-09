@@ -605,7 +605,7 @@ class UpstartApplicationLauncherTests(TestCase):
             patches.enter_context(patch_UAL)
 
             launcher._stop_application(app_id)
-            call_args = mock_UAL.observer_add_app_stopped.call_args[0]
+            call_args = mock_UAL.observer_add_app_stop.call_args[0]
             self.assertThat(
                 call_args[0],
                 Equals(UpstartApplicationLauncher._on_stopped)
@@ -646,7 +646,7 @@ class UpstartApplicationLauncherTests(TestCase):
         # glib loop. This is ugly, but necessary.
         def fake_add_observer(fn, state):
             state['status'] = UpstartApplicationLauncher.Timeout
-        mock_UAL.observer_add_app_stopped = fake_add_observer
+        mock_UAL.observer_add_app_stop = fake_add_observer
         patch_UAL = patch.object(_l, 'UpstartAppLaunch', new=mock_UAL)
         launcher = UpstartApplicationLauncher(mock_add_detail)
         app_id = self.getUniqueString()

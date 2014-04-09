@@ -1,3 +1,11 @@
+autopilot (1.4+14.04.20140409-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Ensure autopilot waits for upstart applications to end before ending
+    the test. (LP: #1305320)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 09 Apr 2014 22:15:25 +0000
+
 autopilot (1.4+14.04.20140408-0ubuntu1) trusty; urgency=low
 
   [ Thomi Richards ]

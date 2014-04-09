@@ -21,7 +21,10 @@
 import logging
 import os
 from os.path import join
-from xml.etree import ElementTree
+try:
+    import lxml.etree as ET
+except ImportError:
+    from xml.etree import ElementTree as ET
 
 logger = logging.getLogger(__name__)
 
@@ -80,10 +83,13 @@ class XmlProcessor(object):
 
     def __call__(self, conn_name, obj_name, xml):
         try:
-            root = ElementTree.fromstring(xml)
+            root = ET.fromstring(xml)
 
             for child in root.getchildren():
-                child_name = join(obj_name, child.attrib['name'])
+                try:
+                    child_name = join(obj_name, child.attrib['name'])
+                except KeyError:
+                    continue
                 # If we found another node, make sure we get called again with
                 # a new XML block.
                 if child.tag == 'node':
@@ -93,7 +99,7 @@ class XmlProcessor(object):
                 elif child.tag == 'interface':
                     iface_name = child_name.split('/')[-1]
                     self._success_callback(conn_name, obj_name, iface_name)
-        except ElementTree.ParseError:
+        except ET.ParseError:
             logger.warning(
                 "Unable to parse XML response for %s (%s)"
                 % (conn_name, obj_name)

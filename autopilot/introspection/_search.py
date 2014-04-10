@@ -20,6 +20,10 @@
 """Private Package for searching dbus for useful connections."""
 
 from autopilot.utilities import _raise_on_unknown_kwargs
+from collections import namedtuple
+
+
+DbusConnection = namedtuple('DbusConnection', ['bus', 'connection_name'])
 
 
 class FilterResult(object):
@@ -53,8 +57,9 @@ def FilterListGenerator(search_parameters, parameter_filter_lookup):
     search_param_copy = search_parameters.copy()
     try:
         for search_key in search_param_copy.keys():
-            if parameter_filter_lookup[search_key] not in filter_list:
-                filter_list.append(parameter_filter_lookup[search_key])
+            required_filter = parameter_filter_lookup[search_key]
+            if required_filter not in filter_list:
+                filter_list.append(required_filter)
             search_param_copy.pop(search_key)
     except KeyError:
         raise KeyError(

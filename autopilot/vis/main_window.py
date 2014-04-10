@@ -39,7 +39,7 @@ from autopilot.vis.resources import (
     get_qt_icon,
 )
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -81,6 +81,7 @@ class MainWindow(QtGui.QMainWindow):
         self.statusBar().showMessage('Waiting for first valid dbus connection')
 
         self.splitter = QtGui.QSplitter(self)
+        self.splitter.setChildrenCollapsible(False)
         self.tree_view = ProxyObjectTreeViewWidget(self.splitter)
         self.detail_widget = TreeNodeDetailWidget(self.splitter)
 
@@ -145,7 +146,7 @@ class MainWindow(QtGui.QMainWindow):
                     self.on_dbus_error
                 )
             except (dbus.DBusException, RuntimeError) as e:
-                logger.warning("Invalid introspection interface: %s" % str(e))
+                _logger.warning("Invalid introspection interface: %s" % str(e))
 
             if self.connection_list.count() == 0:
                 self.statusBar().showMessage('No valid connections exist.')

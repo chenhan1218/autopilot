@@ -934,6 +934,14 @@ class TestProgramTests(TestCase):
             fake_construct.assert_called_once_with(fake_args)
             load_tests.assert_called_once_with(fake_args.suite)
 
+    def test_dont_run_when_zero_tests_loaded(self):
+        fake_args = create_default_run_args()
+        program = run.TestProgram(fake_args)
+        with patch('sys.stdout', new=six.StringIO()):
+            self.assertRaisesRegexp(RuntimeError,
+                                    'Did not find any tests',
+                                    program.run)
+
 
 def create_default_run_args(**kwargs):
     """Create a an argparse.Namespace object containing arguments required

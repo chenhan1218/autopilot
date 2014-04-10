@@ -26,7 +26,7 @@ try:
 except ImportError:
     from xml.etree import ElementTree as ET
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class DBusInspector(object):
@@ -48,7 +48,7 @@ class DBusInspector(object):
             obj_name,
             xml
         )
-        error_handler = lambda *args: logger.error("Error occured: %r" % args)
+        error_handler = lambda *args: _logger.error("Error occured: %r" % args)
         obj = self._bus.get_object(conn_name, obj_name)
 
         # avoid introspecting our own PID, as that locks up with libdbus
@@ -100,7 +100,7 @@ class XmlProcessor(object):
                     iface_name = child_name.split('/')[-1]
                     self._success_callback(conn_name, obj_name, iface_name)
         except ET.ParseError:
-            logger.warning(
+            _logger.warning(
                 "Unable to parse XML response for %s (%s)"
                 % (conn_name, obj_name)
             )

@@ -23,11 +23,6 @@
 
 import functools
 
-import logging
-
-
-logger = logging.getLogger(__name__)
-
 
 class QtSignalWatcher(object):
     """A utility class to make watching Qt signals easy."""

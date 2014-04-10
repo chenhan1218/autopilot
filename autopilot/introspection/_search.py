@@ -53,7 +53,8 @@ def FilterListGenerator(search_parameters, parameter_filter_lookup):
     search_param_copy = search_parameters.copy()
     try:
         for search_key in search_param_copy.keys():
-            filter_list.append(parameter_filter_lookup[search_key])
+            if parameter_filter_lookup[search_key] not in filter_list:
+                filter_list.append(parameter_filter_lookup[search_key])
             search_param_copy.pop(search_key)
     except KeyError:
         raise KeyError(

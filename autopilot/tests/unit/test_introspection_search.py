@@ -171,6 +171,20 @@ class FilterListGeneratorTests(TestCase):
         self.assertThat(filter_list, Contains(HighPriorityFilter))
         self.assertThat(filter_list, Contains(PassingFilter))
 
+    def test_FilterListGenerator_creates_unique_list_of_filters(self):
+        search_parameters = dict(pid=True, process=True)
+        filter_parameter_requirements = dict(
+            pid=PassingFilter,
+            process=PassingFilter
+        )
+
+        filter_list = _s.FilterListGenerator(
+            search_parameters,
+            filter_parameter_requirements
+        )
+
+        self.assertEquals(len(filter_list), 1)
+
     def test_FilterListGenerator_doesnt_modify_search_parameters(self):
         search_parameters = dict(high=True)
         filter_parameter_requirements = dict(high=HighPriorityFilter)

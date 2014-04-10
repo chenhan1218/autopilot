@@ -197,7 +197,7 @@ Description: The visualisation application for Autopilot (Python 3)
  tree. It is a useful tool for test authors, but not required to run autopilot
  tests.
 
-Package: python-autopilot-vis-common
+Package: autopilot-common
 Architecture: all
 Depends: ${misc:Depends},
          ${python:Depends},

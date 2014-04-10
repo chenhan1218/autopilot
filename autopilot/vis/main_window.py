@@ -128,10 +128,14 @@ class MainWindow(QtGui.QMainWindow):
             p = self.proxy_object.select_many(node_name)
             self.tree_model.set_tree_roots(p)
             self.tree_view.set_filtered(True)
+        # applying the filter will always invalidate the current overlay
+        self.visual_indicator.tree_node_changed(None)
 
     def on_reset_filter(self):
         self.tree_model.set_tree_roots([self.proxy_object])
         self.tree_view.set_filtered(False)
+        # resetting the filter will always invalidate the current overlay
+        self.visual_indicator.tree_node_changed(None)
 
     def on_interface_found(self, conn, obj, iface):
         if iface == AP_INTROSPECTION_IFACE:

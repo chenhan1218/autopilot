@@ -46,7 +46,7 @@ from autopilot.introspection.types import (
     _list_repr,
     _float_repr,
     _tuple_repr,
-    _get_repr_callable_for_value,
+    _get_repr_callable_for_value_class,
     _boolean_str,
     _integer_str,
 )
@@ -766,7 +766,7 @@ class CreateValueInstanceTests(TestCase):
 
 class DBusIntrospectionObjectTests(TestCase):
 
-    @patch('autopilot.introspection.dbus.logger.warning')
+    @patch('autopilot.introspection.dbus._logger.warning')
     def test_dbus_introspection_object_logs_bad_data(self, error_logger):
         """The DBusIntrospectionObject class must log an error when it gets
         bad data from the autopilot backend.
@@ -818,7 +818,7 @@ class TypeReprTests(TestCase):
             dbus.UInt64,
         )
         for t in int_types:
-            observed = _get_repr_callable_for_value(t(42))
+            observed = _get_repr_callable_for_value_class(t)
             self.assertEqual(_integer_repr, observed)
 
     def test_boolean_repr_true(self):
@@ -834,7 +834,7 @@ class TypeReprTests(TestCase):
             self.assertEqual(expected, observed)
 
     def test_get_repr_gets_boolean_repr_for_dbus_boolean_type(self):
-        observed = _get_repr_callable_for_value(dbus.Boolean(False))
+        observed = _get_repr_callable_for_value_class(dbus.Boolean)
         self.assertEqual(_boolean_repr, observed)
 
     def test_text_repr_handles_dbus_string(self):
@@ -853,7 +853,7 @@ class TypeReprTests(TestCase):
         self.assertEqual(repr(data), observed)
 
     def test_get_repr_gets_bytes_repr_for_dbus_byte_array(self):
-        observed = _get_repr_callable_for_value(dbus.ByteArray(b''))
+        observed = _get_repr_callable_for_value_class(dbus.ByteArray)
         self.assertEqual(_bytes_repr, observed)
 
     def test_dict_repr_handles_dbus_dictionary(self):
@@ -862,7 +862,7 @@ class TypeReprTests(TestCase):
         self.assertEqual(repr(token), observed)
 
     def test_get_repr_gets_dict_repr_on_dbus_dictionary(self):
-        observed = _get_repr_callable_for_value(dbus.Dictionary(dict()))
+        observed = _get_repr_callable_for_value_class(dbus.Dictionary)
         self.assertEqual(_dict_repr, observed)
 
     def test_float_repr_handles_dbus_double(self):
@@ -871,7 +871,7 @@ class TypeReprTests(TestCase):
         self.assertEqual(repr(token), observed)
 
     def test_get_repr_gets_float_repr_on_dbus_double(self):
-        observed = _get_repr_callable_for_value(dbus.Double(0.0))
+        observed = _get_repr_callable_for_value_class(dbus.Double)
         self.assertEqual(_float_repr, observed)
 
     def test_tuple_repr_handles_dbus_struct(self):
@@ -880,7 +880,7 @@ class TypeReprTests(TestCase):
         self.assertEqual(repr(data), observed)
 
     def test_get_repr_gets_tuple_repr_on_dbus_struct(self):
-        observed = _get_repr_callable_for_value(dbus.Struct([1]))
+        observed = _get_repr_callable_for_value_class(dbus.Struct)
         self.assertEqual(_tuple_repr, observed)
 
     def test_list_repr_handles_dbus_array(self):
@@ -889,7 +889,7 @@ class TypeReprTests(TestCase):
         self.assertEqual(repr(data), observed)
 
     def test_get_repr_gets_list_repr_on_dbus_array(self):
-        observed = _get_repr_callable_for_value(dbus.Array([1]))
+        observed = _get_repr_callable_for_value_class(dbus.Array)
         self.assertEqual(_list_repr, observed)
 
 

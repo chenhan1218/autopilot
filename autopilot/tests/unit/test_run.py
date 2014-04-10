@@ -250,7 +250,7 @@ class TestRunLaunchApp(TestCase):
         args = Namespace(
             mode='vis',
             testability=True,
-            enable_profile=True,
+            enable_profile=False,
         )
         program = run.TestProgram(args)
         program.run()
@@ -831,7 +831,7 @@ class TestProgramTests(TestCase):
 
     def test_calls_parse_args_by_default(self):
         fake_args = Namespace()
-        with patch.object(run, 'parse_arguments') as fake_parse_args:
+        with patch.object(run, '_parse_arguments') as fake_parse_args:
             fake_parse_args.return_value = fake_args
             program = run.TestProgram()
 
@@ -933,6 +933,14 @@ class TestProgramTests(TestCase):
             configure_debug.assert_called_once_with(fake_args)
             fake_construct.assert_called_once_with(fake_args)
             load_tests.assert_called_once_with(fake_args.suite)
+
+    def test_dont_run_when_zero_tests_loaded(self):
+        fake_args = create_default_run_args()
+        program = run.TestProgram(fake_args)
+        with patch('sys.stdout', new=six.StringIO()):
+            self.assertRaisesRegexp(RuntimeError,
+                                    'Did not find any tests',
+                                    program.run)
 
 
 def create_default_run_args(**kwargs):

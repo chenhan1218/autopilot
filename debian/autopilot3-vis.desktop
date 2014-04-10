@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Autopilot Vis
+Exec=autopilot3 vis
+Icon=autopilot
+Comment=Inspect autopilot-enabled application internals (python 3 version).

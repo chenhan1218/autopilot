@@ -1,1 +1,2 @@
 usr/lib/python3*/*/autopilot/vis/*.py
+debian/autopilot3-vis.desktop /usr/share/applications

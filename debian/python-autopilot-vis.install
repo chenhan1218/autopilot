@@ -1,2 +1,2 @@
 usr/lib/python2*/*/autopilot/vis/*.py
-debian/ap_vis.desktop /usr/share/applications
+debian/autopilot-vis.desktop /usr/share/applications

@@ -172,7 +172,7 @@ Architecture: all
 Depends: ${misc:Depends},
          ${python:Depends},
          python-autopilot,
-         python-autopilot-vis-common,
+         autopilot-common,
          python-dbus,
          python-qt4,
          python-qt4-dbus,
@@ -186,7 +186,7 @@ Package: python3-autopilot-vis
 Architecture: all
 Depends: ${misc:Depends},
          ${python3:Depends},
-         python-autopilot-vis-common,
+         autopilot-common,
          python3-autopilot,
          python3-dbus,
          python3-pyqt4,

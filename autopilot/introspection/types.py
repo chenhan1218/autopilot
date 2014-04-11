@@ -49,7 +49,7 @@ from autopilot.introspection.utilities import translate_state_keys
 from autopilot.utilities import sleep, compatible_repr
 
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class ValueType(object):
@@ -95,7 +95,7 @@ def create_value_instance(value, parent, name):
     value = value[1:]
 
     if type_id not in type_dict:
-        logger.warning("Unknown type id %d", type_id)
+        _logger.warning("Unknown type id %d", type_id)
         type_id = ValueType.UNKNOWN
 
     type_class = type_dict.get(type_id, None)
@@ -217,7 +217,7 @@ class PlainType(TypeBase):
         return _make_plain_type(value, parent=parent, name=name)
 
 
-def _get_repr_callable_for_value(value):
+def _get_repr_callable_for_value_class(cls):
     repr_map = {
         dbus.Byte: _integer_repr,
         dbus.Int16: _integer_repr,
@@ -238,15 +238,15 @@ def _get_repr_callable_for_value(value):
     }
     if not six.PY3:
         repr_map[dbus.UTF8String] = _bytes_repr
-    return repr_map.get(type(value), None)
+    return repr_map.get(cls, None)
 
 
-def _get_str_callable_for_value(value):
+def _get_str_callable_for_value_class(cls):
     str_map = {
         dbus.Boolean: _boolean_str,
         dbus.Byte: _integer_str,
     }
-    return str_map.get(type(value), None)
+    return str_map.get(cls, None)
 
 
 @compatible_repr
@@ -275,17 +275,30 @@ _integer_str = _integer_repr
 
 
 def _make_plain_type(value, parent=None, name=None):
-    new_type_name = type(value).__name__
-    new_type_bases = (type(value), PlainType)
+    new_type = _get_plain_type_class(type(value), parent, name)
+    return new_type(value)
+
+
+# Thomi 2014-03-27: dbus types are immutable, which means that we cannot set
+# parent and name on the instances we create. This means we have to set them
+# as type attributes, which means that this cache doesn't speed things up that
+# much. Ideally we'd not rely on the dbus types at all, and simply transform
+# them into our own types, but that's work for a separate branch.
+#
+# Further to the above, we cannot cache these results, since the hash for
+# the parent parameter is almost always the same, leading to incorrect cache
+# hits. We really need to implement our own types here I think.
+def _get_plain_type_class(value_class, parent, name):
+    new_type_name = value_class.__name__
+    new_type_bases = (value_class, PlainType)
     new_type_dict = dict(parent=parent, name=name)
-    repr_callable = _get_repr_callable_for_value(value)
+    repr_callable = _get_repr_callable_for_value_class(value_class)
     if repr_callable:
         new_type_dict['__repr__'] = repr_callable
-    str_callable = _get_str_callable_for_value(value)
+    str_callable = _get_str_callable_for_value_class(value_class)
     if str_callable:
         new_type_dict['__str__'] = str_callable
-    new_type = type(new_type_name, new_type_bases, new_type_dict)
-    return new_type(value)
+    return type(new_type_name, new_type_bases, new_type_dict)
 
 
 def _array_packed_type(num_args):

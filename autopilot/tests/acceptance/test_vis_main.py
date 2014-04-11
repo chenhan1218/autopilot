@@ -33,22 +33,6 @@ class VisToolEmulatorBase(CustomEmulatorBase):
     pass
 
 
-class ConnectionList(VisToolEmulatorBase):
-
-    @classmethod
-    def validate_dbus_object(cls, path, state):
-        return state['objectName'] == 'ConnectionList'
-
-    def set_selected_item(self, item_text):
-        """Try to make the connection list set the current item to 'item_text'.
-
-        If the item exists in the combo box, the 'currentText property will
-        change to 'item_text'. If it does not exist, it won't, and this method
-        will silently return.
-        """
-        self.slots.trySetSelectedItem(item_text)
-
-
 class VisToolLauncher(NormalApplicationLauncher):
 
     """Override code that prepares application environment.
@@ -86,7 +70,6 @@ class VisAcceptanceTests(AutopilotTestCase):
             "-m"
             "autopilot.run",
             "vis",
-            "--enable-profile"
         )
         return vis_proxy
 
@@ -94,7 +77,7 @@ class VisAcceptanceTests(AutopilotTestCase):
         wm = self.launch_windowmocker()
         vis = self.launch_vis()
         connection_list = vis.select_single('ConnectionList')
-        connection_list.set_selected_item(wm.applicationName)
+        connection_list.slots.trySetSelectedItem(wm.applicationName)
         self.assertThat(
             connection_list.currentText,
             Eventually(Equals(wm.applicationName))

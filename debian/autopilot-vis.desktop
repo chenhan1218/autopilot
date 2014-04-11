@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=Autopilot Vis
+Name=Autopilot Vis (py2)
 Exec=autopilot vis
 Icon=autopilot
 Comment=Inspect autopilot-enabled application internals (python 2 version).

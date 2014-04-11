@@ -23,8 +23,10 @@ language.
 This module is internal, and should not be used directly.
 
 """
-
+import re
 import six
+
+from autopilot.utilities import compatible_repr
 
 
 class Query(object):
@@ -39,7 +41,123 @@ class Query(object):
         self._query = query
 
     @staticmethod
-    def create_root_query(app_name):
+    def root(app_name):
         """Create a root query object."""
+        app_name = _try_encode_type_name(app_name)
         return Query(b'/' + app_name)
 
+    def query_bytes(self):
+        """Get the query bytes."""
+        return self._query
+
+    @compatible_repr
+    def __repr__(self):
+        return "Query(%r)" % self._query
+
+    def select_child(self, child_name, **filters):
+        """Return a query matching an immediate child.
+
+        Keyword arguments may be used to restrict which nodes to match.
+
+        :param child_name: The name of the child node to match.
+
+        :returns: A Query instance that will match the child.
+
+        """
+        child_name = _try_encode_type_name(child_name)
+        return Query(b"/".join([self._query, child_name]))
+
+    def select_ancestor(self, ancestor_name):
+        """Return a query matching an ancestor of the current node.
+
+        :param ancestor_name: The name of the ancestor node to match.
+
+        :returns: A Query instance that will match the ancestor.
+
+        """
+        ancestor_name = _try_encode_type_name(ancestor_name)
+        return Query(b"//".join([self._query, ancestor_name]))
+
+
+def _try_encode_type_name(name):
+    if isinstance(name, six.string_types):
+        try:
+            name = name.encode('ascii')
+        except UnicodeEncodeError:
+            raise ValueError(
+                "Type name '%s', must be ASCII encodable" % (name)
+            )
+    return name
+
+
+def _validate_filters(filter_dict):
+    for k, v in filter_dict.items():
+        if not _is_valid_server_side_filter_param(k, v):
+            raise ValueError(
+                "Filter %s = %r is not a valid server-side query." % (
+                    k, v)
+            )
+
+
+# TODO: Remove this function from autopilot.introspection.dbus.
+def _is_valid_server_side_filter_param(key, value):
+    """Return True if the key and value parameters are valid for server-side
+    processing.
+
+    """
+    key_is_valid = re.match(
+        r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$',
+        key
+    ) is not None
+
+    if type(value) == int:
+        return key_is_valid and (-2**31 <= value <= 2**31 - 1)
+
+    elif type(value) == bool:
+        return key_is_valid
+
+    elif type(value) == six.binary_type:
+        return key_is_valid
+
+    elif type(value) == six.text_type:
+        try:
+            value.encode('ascii')
+            return key_is_valid
+        except UnicodeEncodeError:
+            pass
+    return False
+
+
+# TODO: Remove this function from autopilot.introspection.dbus.
+def _get_filter_string_for_key_value_pair(key, value):
+    """Return a string representing the filter query for this key/value pair.
+
+    The value must be suitable for server-side filtering. Raises ValueError if
+    this is not the case.
+
+    """
+    if isinstance(value, six.text_type):
+        if six.PY3:
+            escaped_value = value.encode("unicode_escape")\
+                .decode('ASCII')\
+                .replace("'", "\\'")
+        else:
+            escaped_value = value.encode('utf-8').encode("string_escape")
+            # note: string_escape codec escapes "'" but not '"'...
+            escaped_value = escaped_value.replace('"', r'\"')
+        return '{}="{}"'.format(key, escaped_value)
+    elif isinstance(value, six.binary_type):
+        if six.PY3:
+            escaped_value = value.decode('utf-8')\
+                .encode("unicode_escape")\
+                .decode('ASCII')\
+                .replace("'", "\\'")
+        else:
+            escaped_value = value.encode("string_escape")
+            # note: string_escape codec escapes "'" but not '"'...
+            escaped_value = escaped_value.replace('"', r'\"')
+        return '{}="{}"'.format(key, escaped_value)
+    elif isinstance(value, int) or isinstance(value, bool):
+        return "{}={}".format(key, repr(value))
+    else:
+        raise ValueError("Unsupported value type: {}".format(type(value)))

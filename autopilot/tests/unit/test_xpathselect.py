@@ -18,6 +18,7 @@
 #
 
 from testtools import TestCase
+from testtools.matchers import raises
 
 from autopilot.introspection import _xpathselect as xpathselect
 
@@ -30,3 +31,48 @@ class XPathSelectQueryTests(TestCase):
     def test_raises_typeerror_on_unicode(self):
         self.assertRaises(TypeError, lambda: xpathselect.Query(u'/foo'))
 
+    def test_can_create_root_query(self):
+        q = xpathselect.Query.root(b'Foo')
+        self.assertEqual(b"/Foo", q.query_bytes())
+
+    def test_can_create_app_name_from_ascii_string(self):
+        q = xpathselect.Query.root(u'Foo')
+        self.assertEqual(b"/Foo", q.query_bytes())
+
+    def test_creating_root_query_with_unicode_app_name_raises(self):
+        self.assertThat(
+            lambda: xpathselect.Query.root(u"\u2026"),
+            raises(
+                ValueError("Type name '%s', must be ASCII encodable"
+                           % (u'\u2026'))
+                )
+        )
+
+    def test_repr(self):
+        path = b"/some/path"
+        q = xpathselect.Query(path)
+        self.assertEqual("Query(%r)" % path, repr(q))
+
+    def test_select_child(self):
+        q = xpathselect.Query.root("Foo").select_child("Bar")
+        self.assertEqual(q.query_bytes(), b"/Foo/Bar")
+
+    def test_many_select_children(self):
+        q = xpathselect.Query.root("Foo") \
+            .select_child("Bar") \
+            .select_child("Baz")
+
+        self.assertEqual(b"/Foo/Bar/Baz", q.query_bytes())
+
+    def test_select_ancestor(self):
+        q = xpathselect.Query.root("Foo") \
+            .select_ancestor("Bar")
+
+        self.assertEqual(b"/Foo//Bar", q.query_bytes())
+
+    def test_many_select_ancestor(self):
+        q = xpathselect.Query.root("Foo") \
+            .select_ancestor("Bar") \
+            .select_ancestor("Baz")
+
+        self.assertEqual(b"/Foo//Bar//Baz", q.query_bytes())

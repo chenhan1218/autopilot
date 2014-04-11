@@ -33,28 +33,57 @@ class Query(object):
 
     """Encapsulate an XPathSelect query."""
 
-    def __init__(self, query):
+    class Operation(object):
+        ROOT = b'/'
+        CHILD = b'/'
+        DESCENDANT = b'//'
+
+    def __init__(self, parent, operation, query, filters={}):
+        """Create a new query object.
+
+        You shouldn't need to call this directly.
+
+        :param parent: The parent query object. Pass in None to make the root
+            query object.
+        :param operation: The operation object to perform on the result from
+            the parent node.
+        :param query: The query expression for this node.
+        :param filters: A dictionary of filters to apply.
+
+        """
         if not isinstance(query, six.binary_type):
             raise TypeError(
                 "'query' parameter must be bytes, not %r" % type(bytes)
             )
+        self._parent = parent
+        self._operation = operation
         self._query = query
+        self._filters = filters
 
     @staticmethod
     def root(app_name):
         """Create a root query object."""
         app_name = _try_encode_type_name(app_name)
-        return Query(b'/' + app_name)
+        return Query(
+            None,
+            Query.Operation.ROOT,
+            app_name
+        )
 
     def query_bytes(self):
         """Get the query bytes."""
-        return self._query
+        parent_query = self._parent.query_bytes() \
+            if self._parent is not None else b''
+        return parent_query + self._operation + self._query
 
     @compatible_repr
     def __repr__(self):
-        return "Query(%r)" % self._query
+        return "Query(%r%s)" % (
+            self.query_bytes(),
+            " " + repr(self._filters) if self._filters else ""
+        )
 
-    def select_child(self, child_name, **filters):
+    def select_child(self, child_name, filters={}):
         """Return a query matching an immediate child.
 
         Keyword arguments may be used to restrict which nodes to match.
@@ -65,9 +94,14 @@ class Query(object):
 
         """
         child_name = _try_encode_type_name(child_name)
-        return Query(b"/".join([self._query, child_name]))
+        return Query(
+            self,
+            Query.Operation.CHILD,
+            child_name,
+            filters
+        )
 
-    def select_ancestor(self, ancestor_name):
+    def select_descendant(self, ancestor_name):
         """Return a query matching an ancestor of the current node.
 
         :param ancestor_name: The name of the ancestor node to match.
@@ -76,7 +110,11 @@ class Query(object):
 
         """
         ancestor_name = _try_encode_type_name(ancestor_name)
-        return Query(b"//".join([self._query, ancestor_name]))
+        return Query(
+            self,
+            Query.Operation.DESCENDANT,
+            ancestor_name
+        )
 
 
 def _try_encode_type_name(name):

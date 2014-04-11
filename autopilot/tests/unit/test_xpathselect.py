@@ -25,12 +25,6 @@ from autopilot.introspection import _xpathselect as xpathselect
 
 class XPathSelectQueryTests(TestCase):
 
-    def test_can_construct_query(self):
-        xpathselect.Query(b'/foo')
-
-    def test_raises_typeerror_on_unicode(self):
-        self.assertRaises(TypeError, lambda: xpathselect.Query(u'/foo'))
-
     def test_can_create_root_query(self):
         q = xpathselect.Query.root(b'Foo')
         self.assertEqual(b"/Foo", q.query_bytes())
@@ -48,10 +42,16 @@ class XPathSelectQueryTests(TestCase):
                 )
         )
 
-    def test_repr(self):
+    def test_repr_with_path(self):
         path = b"/some/path"
-        q = xpathselect.Query(path)
+        q = xpathselect.Query.root('some').select_child('path')
         self.assertEqual("Query(%r)" % path, repr(q))
+
+    def test_repr_with_path_and_filters(self):
+        path = b"/some/path"
+        filters = dict(foo=123, bar=456)
+        q = xpathselect.Query.root('some').select_child('path', filters)
+        self.assertEqual("Query(%r %r)" % (path, filters), repr(q))
 
     def test_select_child(self):
         q = xpathselect.Query.root("Foo").select_child("Bar")
@@ -66,13 +66,13 @@ class XPathSelectQueryTests(TestCase):
 
     def test_select_ancestor(self):
         q = xpathselect.Query.root("Foo") \
-            .select_ancestor("Bar")
+            .select_descendant("Bar")
 
         self.assertEqual(b"/Foo//Bar", q.query_bytes())
 
-    def test_many_select_ancestor(self):
+    def test_many_select_descendant(self):
         q = xpathselect.Query.root("Foo") \
-            .select_ancestor("Bar") \
-            .select_ancestor("Baz")
+            .select_descendant("Bar") \
+            .select_descendant("Baz")
 
         self.assertEqual(b"/Foo//Bar//Baz", q.query_bytes())

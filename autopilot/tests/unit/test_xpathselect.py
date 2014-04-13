@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import raises
 
@@ -48,10 +49,10 @@ class XPathSelectQueryTests(TestCase):
         self.assertEqual("Query(%r)" % path, repr(q))
 
     def test_repr_with_path_and_filters(self):
-        path = b"/some/path"
+        expected = b"/some/path[bar=456,foo=123]"
         filters = dict(foo=123, bar=456)
         q = xpathselect.Query.root('some').select_child('path', filters)
-        self.assertEqual("Query(%r %r)" % (path, filters), repr(q))
+        self.assertEqual("Query(%r)" % expected, repr(q))
 
     def test_select_child(self):
         q = xpathselect.Query.root("Foo").select_child("Bar")
@@ -76,3 +77,31 @@ class XPathSelectQueryTests(TestCase):
             .select_descendant("Baz")
 
         self.assertEqual(b"/Foo//Bar//Baz", q.query_bytes())
+
+
+class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):
+
+    scenarios = [
+        ('bool true', dict(k='visible', v=True, r=b"visible=True")),
+        ('bool false', dict(k='visible', v=False, r=b"visible=False")),
+        ('int +ve', dict(k='size', v=123, r=b"size=123")),
+        ('int -ve', dict(k='prio', v=-12, r=b"prio=-12")),
+        ('simple string', dict(k='Name', v=u"btn1", r=b"Name=\"btn1\"")),
+        ('simple bytes', dict(k='Name', v=b"btn1", r=b"Name=\"btn1\"")),
+        ('string space', dict(k='Name', v=u"a b  c ", r=b"Name=\"a b  c \"")),
+        ('bytes space', dict(k='Name', v=b"a b  c ", r=b"Name=\"a b  c \"")),
+        ('string escapes', dict(
+            k='a',
+            v=u"\a\b\f\n\r\t\v\\",
+            r=br'a="\x07\x08\x0c\n\r\t\x0b\\"')),
+        ('byte escapes', dict(
+            k='a',
+            v=b"\a\b\f\n\r\t\v\\",
+            r=br'a="\x07\x08\x0c\n\r\t\x0b\\"')),
+        ('escape quotes (str)', dict(k='b', v="'", r=b'b="\\' + b"'" + b'"')),
+        ('escape quotes (bytes)', dict(k='b', v=b"'", r=b'b="\\' + b"'" + b'"')),
+    ]
+
+    def test_query_string(self):
+        s = xpathselect._get_filter_string_for_key_value_pair(self.k, self.v)
+        self.assertEqual(s, self.r)

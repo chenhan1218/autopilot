@@ -62,7 +62,13 @@ class Query(object):
 
     @staticmethod
     def root(app_name):
-        """Create a root query object."""
+        """Create a root query object.
+
+        :param app_name: The name of the root node in the introspection tree.
+            This is also typically the application name.
+
+        :returns: A new Query instance, representing the root of the tree.
+        """
         app_name = _try_encode_type_name(app_name)
         return Query(
             None,
@@ -74,14 +80,30 @@ class Query(object):
         """Get the query bytes."""
         parent_query = self._parent.query_bytes() \
             if self._parent is not None else b''
-        return parent_query + self._operation + self._query
+
+        return parent_query + \
+            self._operation + \
+            self._query + \
+            self._get_filter_bytes()
+
+    def _get_filter_bytes(self):
+        if self._filters:
+            keys = sorted(self._filters.keys())
+            return b'[' + \
+                b",".join(
+                    [
+                        _get_filter_string_for_key_value_pair(
+                            k,
+                            self._filters[k]
+                        ) for k in keys
+                    ]
+                ) + \
+                b']'
+        return b''
 
     @compatible_repr
     def __repr__(self):
-        return "Query(%r%s)" % (
-            self.query_bytes(),
-            " " + repr(self._filters) if self._filters else ""
-        )
+        return "Query(%r)" % self.query_bytes()
 
     def select_child(self, child_name, filters={}):
         """Return a query matching an immediate child.
@@ -168,7 +190,7 @@ def _is_valid_server_side_filter_param(key, value):
 
 # TODO: Remove this function from autopilot.introspection.dbus.
 def _get_filter_string_for_key_value_pair(key, value):
-    """Return a string representing the filter query for this key/value pair.
+    """Return bytes representing the filter query for this key/value pair.
 
     The value must be suitable for server-side filtering. Raises ValueError if
     this is not the case.
@@ -183,7 +205,7 @@ def _get_filter_string_for_key_value_pair(key, value):
             escaped_value = value.encode('utf-8').encode("string_escape")
             # note: string_escape codec escapes "'" but not '"'...
             escaped_value = escaped_value.replace('"', r'\"')
-        return '{}="{}"'.format(key, escaped_value)
+        return '{}="{}"'.format(key, escaped_value).encode('utf-8')
     elif isinstance(value, six.binary_type):
         if six.PY3:
             escaped_value = value.decode('utf-8')\
@@ -194,8 +216,8 @@ def _get_filter_string_for_key_value_pair(key, value):
             escaped_value = value.encode("string_escape")
             # note: string_escape codec escapes "'" but not '"'...
             escaped_value = escaped_value.replace('"', r'\"')
-        return '{}="{}"'.format(key, escaped_value)
+        return '{}="{}"'.format(key, escaped_value).encode('utf-8')
     elif isinstance(value, int) or isinstance(value, bool):
-        return "{}={}".format(key, repr(value))
+        return "{}={}".format(key, repr(value)).encode('utf-8')
     else:
         raise ValueError("Unsupported value type: {}".format(type(value)))

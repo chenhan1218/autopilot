@@ -144,8 +144,6 @@ Depends: ${misc:Depends},
          libautopilot-qt (>= 1.4),
          python3-autopilot,
          python3-evdev,
-         python-autopilot,
-         python-evdev,
          fbset,
 Description: Autopilot support for the ubuntu Touch platform
  This metapackage exists to depend on the packages needed to install and use

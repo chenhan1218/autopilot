@@ -175,6 +175,16 @@ class XPathSelectQueryTests(TestCase):
             raises(ValueError("Invalid operation 'foo'."))
         )
 
+    def test_init_raises_ValueError_on_invalid_descendant_search(self):
+        fn = lambda: xpathselect.Query(None, b'//', b'*')
+        self.assertThat(
+            fn,
+            raises(ValueError(
+                "Must provide at least one server-side filter when searching "
+                "for descendants and using a wildcard node."
+            ))
+        )
+
 
 class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):
 
@@ -238,41 +248,3 @@ class ServerSideParamMatchingTests(TestWithScenarios, TestCase):
             ),
             self.result
         )
-
-
-class FunctionTests(TestCase):
-    """Tests for functions that don't fit anywhere else."""
-
-    def test_filters_contains_client_side_filters_returns_true_single(self):
-        client = xpathselect._filters_contains_client_side_filters(
-            {
-                'k  e': True,        # client - key contains spaces
-            }
-        )
-        self.assertTrue(client)
-
-    def test_filters_contains_client_side_filters_returns_true_double(self):
-        client = xpathselect._filters_contains_client_side_filters(
-            {
-                'k  e': True,        # client - key contains spaces
-                'key': u'\u2026',   # client - string not ascii encodable
-            }
-        )
-        self.assertTrue(client)
-
-    def test_filters_contains_client_side_filters_returns_true_mixed(self):
-        client = xpathselect._filters_contains_client_side_filters(
-            {
-                'key': True,        # server
-                'key2': u'\u2026',   # client - string not ascii encodable
-            }
-        )
-        self.assertTrue(client)
-
-    def test_filters_contains_client_side_filters_returns_false_single(self):
-        client = xpathselect._filters_contains_client_side_filters(
-            {
-                'key': True,        # server
-            }
-        )
-        self.assertFalse(client)

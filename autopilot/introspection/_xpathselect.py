@@ -78,8 +78,11 @@ class Query(object):
             client side filter processing. Only the last query in the query
             chain can have filters that need to be executed on the client-side.
         :raises TypeError: If the operation parameter is not 'bytes'.
-        :raises ValueError: if operation is not one of the members of the
+        :raises ValueError: If operation is not one of the members of the
             Query.Operation class.
+        :raises ValueError: If the query is set to b'*' and 'filters' does not
+            contain any server-side filters, and operation is set to
+            Query.Operation.DESCENDANT.
 
         """
         if not isinstance(query, six.binary_type):
@@ -111,6 +114,15 @@ class Query(object):
         self._client_filters = {
             k: v for k, v in filters.items() if k not in self._server_filters
         }
+        if (
+            operation == Query.Operation.DESCENDANT
+            and query == b'*'
+            and not self._server_filters
+        ):
+            raise ValueError(
+                "Must provide at least one server-side filter when searching "
+                "for descendants and using a wildcard node."
+            )
 
     @staticmethod
     def root(app_name):
@@ -216,16 +228,6 @@ def _try_encode_type_name(name):
                 "Type name '%s', must be ASCII encodable" % (name)
             )
     return name
-
-
-def _filters_contains_client_side_filters(filters):
-    """Return True if 'filters' contains at least one filter pair that must
-    be executed on the client-side.
-
-    """
-    return not all(
-        (_is_valid_server_side_filter_param(k, v) for k, v in filters.items())
-    )
 
 
 # TODO: Remove this function from autopilot.introspection.dbus.

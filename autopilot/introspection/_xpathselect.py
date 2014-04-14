@@ -121,9 +121,14 @@ class Query(object):
             if self._parent else False
         )
 
-    def query_bytes(self):
-        """Get the query bytes."""
-        parent_query = self._parent.query_bytes() \
+    def all_query_bytes(self):
+        """Get a bytestring representing the entire query.
+
+        This method returns a query bytestring suitable for showing to the
+        user, but not suitable for sending to the server: It includes filter
+        strings for both server-side and client-side processing.
+        """
+        parent_query = self._parent.all_query_bytes() \
             if self._parent is not None else b''
 
         return parent_query + \
@@ -148,7 +153,7 @@ class Query(object):
 
     @compatible_repr
     def __repr__(self):
-        return "Query(%r)" % self.query_bytes()
+        return "Query(%r)" % self.all_query_bytes()
 
     def select_child(self, child_name, filters={}):
         """Return a query matching an immediate child.

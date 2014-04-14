@@ -44,11 +44,11 @@ class XPathSelectQueryTests(TestCase):
 
     def test_can_create_root_query(self):
         q = xpathselect.Query.root(b'Foo')
-        self.assertEqual(b"/Foo", q.query_bytes())
+        self.assertEqual(b"/Foo", q.all_query_bytes())
 
     def test_can_create_app_name_from_ascii_string(self):
         q = xpathselect.Query.root(u'Foo')
-        self.assertEqual(b"/Foo", q.query_bytes())
+        self.assertEqual(b"/Foo", q.all_query_bytes())
 
     def test_creating_root_query_with_unicode_app_name_raises(self):
         self.assertThat(
@@ -72,19 +72,19 @@ class XPathSelectQueryTests(TestCase):
 
     def test_select_child(self):
         q = xpathselect.Query.root("Foo").select_child("Bar")
-        self.assertEqual(q.query_bytes(), b"/Foo/Bar")
+        self.assertEqual(q.all_query_bytes(), b"/Foo/Bar")
 
     def test_select_child_with_filters(self):
         q = xpathselect.Query.root("Foo")\
             .select_child("Bar", dict(visible=True))
-        self.assertEqual(q.query_bytes(), b"/Foo/Bar[visible=True]")
+        self.assertEqual(q.all_query_bytes(), b"/Foo/Bar[visible=True]")
 
     def test_many_select_children(self):
         q = xpathselect.Query.root("Foo") \
             .select_child("Bar") \
             .select_child("Baz")
 
-        self.assertEqual(b"/Foo/Bar/Baz", q.query_bytes())
+        self.assertEqual(b"/Foo/Bar/Baz", q.all_query_bytes())
 
     def test_many_select_children_with_filters(self):
         q = xpathselect.Query.root("Foo") \
@@ -93,27 +93,27 @@ class XPathSelectQueryTests(TestCase):
 
         self.assertEqual(
             b"/Foo/Bar[visible=True]/Baz[id=123]",
-            q.query_bytes()
+            q.all_query_bytes()
         )
 
     def test_select_descendant(self):
         q = xpathselect.Query.root("Foo") \
             .select_descendant("Bar")
 
-        self.assertEqual(b"/Foo//Bar", q.query_bytes())
+        self.assertEqual(b"/Foo//Bar", q.all_query_bytes())
 
     def test_select_descendant_with_filters(self):
         q = xpathselect.Query.root("Foo") \
             .select_descendant("Bar", dict(name="Hello"))
 
-        self.assertEqual(b'/Foo//Bar[name="Hello"]', q.query_bytes())
+        self.assertEqual(b'/Foo//Bar[name="Hello"]', q.all_query_bytes())
 
     def test_many_select_descendants(self):
         q = xpathselect.Query.root("Foo") \
             .select_descendant("Bar") \
             .select_descendant("Baz")
 
-        self.assertEqual(b"/Foo//Bar//Baz", q.query_bytes())
+        self.assertEqual(b"/Foo//Bar//Baz", q.all_query_bytes())
 
     def test_many_select_descendants_with_filters(self):
         q = xpathselect.Query.root("Foo") \
@@ -122,7 +122,7 @@ class XPathSelectQueryTests(TestCase):
 
         self.assertEqual(
             b"/Foo//Bar[visible=True]//Baz[id=123]",
-            q.query_bytes()
+            q.all_query_bytes()
         )
 
     def test_full_server_side_filter(self):
@@ -148,7 +148,6 @@ class XPathSelectQueryTests(TestCase):
                 "client-side filter processing."
             ))
         )
-
 
 
 class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):

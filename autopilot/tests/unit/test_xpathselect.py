@@ -137,6 +137,19 @@ class XPathSelectQueryTests(TestCase):
             .select_descendant("Baz", dict(name=u"\u2026"))
         self.assertTrue(q.needs_client_side_filtering())
 
+    def test_multiple_client_side_filter_operations_raises_ValueError(self):
+        q = xpathselect.Query.root("Foo") \
+            .select_descendant("Baz", dict(name=u"\u2026"))
+        fn = lambda: q.select_child("Foo")
+        self.assertThat(
+            fn,
+            raises(ValueError(
+                "Cannot create a new query from a parent that requires "
+                "client-side filter processing."
+            ))
+        )
+
+
 
 class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):
 

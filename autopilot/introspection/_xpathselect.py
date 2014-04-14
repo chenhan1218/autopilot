@@ -73,11 +73,24 @@ class Query(object):
         :param query: The query expression for this node.
         :param filters: A dictionary of filters to apply.
 
+        :raises TypeError: If the 'query' parameter is not 'bytes'.
+        :raises ValueError: If parent is specified, and the parent query needs
+            client side filter processing. Only the last query in the query
+            chain can have filters that need to be executed on the client-side.
+
         """
         if not isinstance(query, six.binary_type):
             raise TypeError(
                 "'query' parameter must be bytes, not %s"
                 % type(query).__name__
+            )
+        if (
+            parent
+            and parent.needs_client_side_filtering()
+        ):
+            raise ValueError(
+                "Cannot create a new query from a parent that requires "
+                "client-side filter processing."
             )
         self._parent = parent
         self._operation = operation

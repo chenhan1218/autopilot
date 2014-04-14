@@ -95,7 +95,13 @@ class Query(object):
         self._parent = parent
         self._operation = operation
         self._query = query
-        self._filters = filters
+        self._server_filters = {
+            k: v for k, v in filters.items()
+            if _is_valid_server_side_filter_param(k, v)
+        }
+        self._client_filters = {
+            k: v for k, v in filters.items() if k not in self._server_filters
+        }
 
     @staticmethod
     def root(app_name):
@@ -116,36 +122,38 @@ class Query(object):
     def needs_client_side_filtering(self):
         """Return true if this query requires some filtering on the client-side
         """
-        return _filters_contains_client_side_filters(self._filters) or (
+        return self._client_filters or (
             self._parent.needs_client_side_filtering()
             if self._parent else False
         )
 
-    def all_query_bytes(self):
+    def server_query_bytes(self):
         """Get a bytestring representing the entire query.
 
-        This method returns a query bytestring suitable for showing to the
-        user, but not suitable for sending to the server: It includes filter
-        strings for both server-side and client-side processing.
+        This method returns a bytestring suitable for sending to the server.
         """
-        parent_query = self._parent.all_query_bytes() \
+        parent_query = self._parent.server_query_bytes() \
             if self._parent is not None else b''
 
         return parent_query + \
             self._operation + \
             self._query + \
-            self._get_filter_bytes()
+            self._get_server_filter_bytes()
 
-    def _get_filter_bytes(self):
-        if self._filters:
-            keys = sorted(self._filters.keys())
+    def _get_server_filter_bytes(self):
+        if self._server_filters:
+            keys = sorted(self._server_filters.keys())
             return b'[' + \
                 b",".join(
                     [
                         _get_filter_string_for_key_value_pair(
                             k,
-                            self._filters[k]
+                            self._server_filters[k]
                         ) for k in keys
+                        if _is_valid_server_side_filter_param(
+                            k,
+                            self._server_filters[k]
+                        )
                     ]
                 ) + \
                 b']'
@@ -153,7 +161,7 @@ class Query(object):
 
     @compatible_repr
     def __repr__(self):
-        return "Query(%r)" % self.all_query_bytes()
+        return "Query(%r)" % self.server_query_bytes()
 
     def select_child(self, child_name, filters={}):
         """Return a query matching an immediate child.

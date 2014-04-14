@@ -185,6 +185,41 @@ class XPathSelectQueryTests(TestCase):
             ))
         )
 
+    def test_new_from_path_and_id_raises_TypeError_on_unicode_path(self):
+        fn = lambda: xpathselect.Query.new_from_path_and_id(u'bad_path', 42)
+        self.assertThat(
+            fn,
+            raises(TypeError(
+                "'path' attribute must be bytes, not '%s'" % type(u'').__name__
+            ))
+        )
+
+    def test_new_from_path_and_id_raises_ValueError_on_invalid_path(self):
+        fn = lambda: xpathselect.Query.new_from_path_and_id(b'bad_path', 42)
+        self.assertThat(
+            fn,
+            raises(ValueError("Invalid path 'bad_path'."))
+        )
+
+    def test_new_from_path_and_id_raises_ValueError_on_invalid_path2(self):
+        fn = lambda: xpathselect.Query.new_from_path_and_id(b'/', 42)
+        self.assertThat(
+            fn,
+            raises(ValueError("Invalid path '/'."))
+        )
+
+    def test_new_from_path_and_id_works_for_root_node(self):
+        q = xpathselect.Query.new_from_path_and_id(b'/root', 42)
+        self.assertEqual(b'/root', q.server_query_bytes())
+
+    def test_new_from_path_and_id_works_for_small_tree(self):
+        q = xpathselect.Query.new_from_path_and_id(b'/root/child', 42)
+        self.assertEqual(b'/root/child[id=42]', q.server_query_bytes())
+
+    def test_new_from_path_and_id_works_for_larger_tree(self):
+        q = xpathselect.Query.new_from_path_and_id(b'/root/child/leaf', 42)
+        self.assertEqual(b'/root/child/leaf[id=42]', q.server_query_bytes())
+
 
 class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):
 

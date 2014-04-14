@@ -140,6 +140,39 @@ class Query(object):
             app_name
         )
 
+    @staticmethod
+    def new_from_path_and_id(path, id):
+        """Create a new Query object from a path and id.
+
+        :param path: THe full path to the node you want to construct the query
+            for.
+        :param id: The object id of the node you want to construct the query
+            for.
+
+        :raises TypeError: If the path attribute is not 'bytes'.
+        :raises ValueError: If the path does not start with b'/'
+
+        """
+        if not isinstance(path, six.binary_type):
+            raise TypeError(
+                "'path' attribute must be bytes, not '%s'"
+                % type(path).__name__
+            )
+        nodes = list(filter(None, path.split(b'/')))
+        if not path.startswith(b'/') or not nodes:
+            raise ValueError("Invalid path '%s'." % path.decode())
+
+        query = None
+        for i, n in enumerate(nodes):
+            if query is None:
+                query = Query.root(n)
+            else:
+                if i == len(nodes) - 1:
+                    query = query.select_child(n, dict(id=id))
+                else:
+                    query = query.select_child(n)
+        return query
+
     def needs_client_side_filtering(self):
         """Return true if this query requires some filtering on the client-side
         """

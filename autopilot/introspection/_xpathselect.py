@@ -77,6 +77,9 @@ class Query(object):
         :raises ValueError: If parent is specified, and the parent query needs
             client side filter processing. Only the last query in the query
             chain can have filters that need to be executed on the client-side.
+        :raises TypeError: If the operation parameter is not 'bytes'.
+        :raises ValueError: if operation is not one of the members of the
+            Query.Operation class.
 
         """
         if not isinstance(query, six.binary_type):
@@ -92,6 +95,12 @@ class Query(object):
                 "Cannot create a new query from a parent that requires "
                 "client-side filter processing."
             )
+        if not isinstance(operation, six.binary_type):
+            raise TypeError(
+                "'operation' parameter must be bytes, not '%s'"
+                % type(operation).__name__)
+        if operation not in Query.Operation.ALL:
+            raise ValueError("Invalid operation '%s'." % operation.decode())
         self._parent = parent
         self._operation = operation
         self._query = query

@@ -146,7 +146,7 @@ class XPathSelectQueryTests(TestCase):
             q.server_query_bytes()
         )
 
-    def test_multiple_client_side_filter_operations_raises_ValueError(self):
+    def test_deriving_from_client_side_filtered_query_raises_ValueError(self):
         q = xpathselect.Query.root("Foo") \
             .select_descendant("Baz", dict(name=u"\u2026"))
         fn = lambda: q.select_child("Foo")
@@ -156,6 +156,23 @@ class XPathSelectQueryTests(TestCase):
                 "Cannot create a new query from a parent that requires "
                 "client-side filter processing."
             ))
+        )
+
+    def test_init_raises_TypeError_on_invalid_operation_type(self):
+        fn = lambda: xpathselect.Query(None, u'/', b'sdf')
+        self.assertThat(
+            fn,
+            raises(TypeError(
+                "'operation' parameter must be bytes, not '%s'"
+                % type(u'').__name__
+            ))
+        )
+
+    def test_init_raises_ValueError_on_invalid_operation(self):
+        fn = lambda: xpathselect.Query(None, b'foo', b'sdf')
+        self.assertThat(
+            fn,
+            raises(ValueError("Invalid operation 'foo'."))
         )
 
 

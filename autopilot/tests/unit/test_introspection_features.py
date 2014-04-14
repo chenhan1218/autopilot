@@ -33,7 +33,6 @@ from testtools.matchers import (
     Raises,
     raises,
 )
-from testscenarios import TestWithScenarios
 from six import StringIO, u, PY3
 from contextlib import contextmanager
 if PY3:
@@ -52,9 +51,7 @@ from autopilot.introspection import (
     ProcessSearchError,
 )
 from autopilot.introspection.dbus import (
-    _get_filter_string_for_key_value_pair,
     _get_default_proxy_class,
-    _is_valid_server_side_filter_param,
     _get_proxy_object_class,
     _object_passes_filters,
     _object_registry,
@@ -99,36 +96,6 @@ class IntrospectionFeatureTests(TestCase):
             pass
 
         self.assertThat(MyEmulatorBase._id, NotEquals(MyEmulatorBase2._id))
-
-
-class ServerSideParamMatchingTests(TestWithScenarios, TestCase):
-
-    """Tests for the server side matching decision function."""
-
-    scenarios = [
-        ('should work', dict(key='keyname', value='value', result=True)),
-        ('invalid key', dict(key='k  e', value='value', result=False)),
-        ('string value', dict(key='key', value='v  e', result=True)),
-        ('string value2', dict(key='key', value='v?e', result=True)),
-        ('string value3', dict(key='key', value='1/2."!@#*&^%', result=True)),
-        ('bool value', dict(key='key', value=False, result=True)),
-        ('int value', dict(key='key', value=123, result=True)),
-        ('int value2', dict(key='key', value=-123, result=True)),
-        ('float value', dict(key='key', value=1.0, result=False)),
-        ('dict value', dict(key='key', value={}, result=False)),
-        ('obj value', dict(key='key', value=TestCase, result=False)),
-        ('int overflow 1', dict(key='key', value=-2147483648, result=True)),
-        ('int overflow 2', dict(key='key', value=-2147483649, result=False)),
-        ('int overflow 3', dict(key='key', value=2147483647, result=True)),
-        ('int overflow 4', dict(key='key', value=2147483648, result=False)),
-        ('unicode string', dict(key='key', value=u'H\u2026i', result=False)),
-    ]
-
-    def test_valid_server_side_param(self):
-        self.assertThat(
-            _is_valid_server_side_filter_param(self.key, self.value),
-            Equals(self.result)
-        )
 
 
 class ClientSideFilteringTests(TestCase):

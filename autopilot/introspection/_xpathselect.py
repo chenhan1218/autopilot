@@ -17,10 +17,31 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Classes and functions that encopde knowledge of the xpathselect query
+"""Classes and functions that encode knowledge of the xpathselect query
 language.
 
 This module is internal, and should not be used directly.
+
+The main class is 'Query', which represents an xpathselect query. Query is a
+read-only object - once it has been constructed, it cannot be changed. This is
+partially to ease testing, but also to provide guarantees in the proxy object
+classes.
+
+To create a query, you must either have a reference to an existing query, or
+you must know the name of the root note. To create a query from an existing
+query::
+
+    >>> new_query = existing_query.select_child("NodeName")
+
+To create a query given the root node name::
+
+    >>> new_root_query = Query.root("AppName")
+
+Since the XPathSelect language is not perfect, and since we'd like to support
+a rich set of selection criteria, not all queries can be executed totally on
+the server side. Query instnaces are intelligent enough to know when they must
+invoke some client-side processing - in this case the
+'needs_client_side_filtering' method will return True.
 
 """
 import re
@@ -38,6 +59,8 @@ class Query(object):
         CHILD = b'/'
         DESCENDANT = b'//'
 
+        ALL = (ROOT, CHILD, DESCENDANT)
+
     def __init__(self, parent, operation, query, filters={}):
         """Create a new query object.
 
@@ -53,7 +76,8 @@ class Query(object):
         """
         if not isinstance(query, six.binary_type):
             raise TypeError(
-                "'query' parameter must be bytes, not %r" % type(bytes)
+                "'query' parameter must be bytes, not %s"
+                % type(query).__name__
             )
         self._parent = parent
         self._operation = operation
@@ -74,6 +98,14 @@ class Query(object):
             None,
             Query.Operation.ROOT,
             app_name
+        )
+
+    def needs_client_side_filtering(self):
+        """Return true if this query requires some filtering on the client-side
+        """
+        return _filters_contains_client_side_filters(self._filters) or (
+            self._parent.needs_client_side_filtering()
+            if self._parent else False
         )
 
     def query_bytes(self):
@@ -123,7 +155,7 @@ class Query(object):
             filters
         )
 
-    def select_descendant(self, ancestor_name):
+    def select_descendant(self, ancestor_name, filters={}):
         """Return a query matching an ancestor of the current node.
 
         :param ancestor_name: The name of the ancestor node to match.
@@ -135,7 +167,8 @@ class Query(object):
         return Query(
             self,
             Query.Operation.DESCENDANT,
-            ancestor_name
+            ancestor_name,
+            filters
         )
 
 
@@ -150,13 +183,14 @@ def _try_encode_type_name(name):
     return name
 
 
-def _validate_filters(filter_dict):
-    for k, v in filter_dict.items():
-        if not _is_valid_server_side_filter_param(k, v):
-            raise ValueError(
-                "Filter %s = %r is not a valid server-side query." % (
-                    k, v)
-            )
+def _filters_contains_client_side_filters(filters):
+    """Return True if 'filters' contains at least one filter pair that must
+    be executed on the client-side.
+
+    """
+    return not all(
+        (_is_valid_server_side_filter_param(k, v) for k, v in filters.items())
+    )
 
 
 # TODO: Remove this function from autopilot.introspection.dbus.

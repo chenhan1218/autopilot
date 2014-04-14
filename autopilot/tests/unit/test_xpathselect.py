@@ -26,6 +26,22 @@ from autopilot.introspection import _xpathselect as xpathselect
 
 class XPathSelectQueryTests(TestCase):
 
+    def test_query_raises_TypeError_on_non_bytes_query(self):
+        fn = lambda: xpathselect.Query(
+            None,
+            xpathselect.Query.Operation.CHILD,
+            u'asd'
+        )
+        self.assertThat(
+            fn,
+            raises(
+                TypeError(
+                    "'query' parameter must be bytes, not %s"
+                    % type(u'').__name__
+                )
+            )
+        )
+
     def test_can_create_root_query(self):
         q = xpathselect.Query.root(b'Foo')
         self.assertEqual(b"/Foo", q.query_bytes())
@@ -58,6 +74,11 @@ class XPathSelectQueryTests(TestCase):
         q = xpathselect.Query.root("Foo").select_child("Bar")
         self.assertEqual(q.query_bytes(), b"/Foo/Bar")
 
+    def test_select_child_with_filters(self):
+        q = xpathselect.Query.root("Foo")\
+            .select_child("Bar", dict(visible=True))
+        self.assertEqual(q.query_bytes(), b"/Foo/Bar[visible=True]")
+
     def test_many_select_children(self):
         q = xpathselect.Query.root("Foo") \
             .select_child("Bar") \
@@ -65,18 +86,56 @@ class XPathSelectQueryTests(TestCase):
 
         self.assertEqual(b"/Foo/Bar/Baz", q.query_bytes())
 
-    def test_select_ancestor(self):
+    def test_many_select_children_with_filters(self):
+        q = xpathselect.Query.root("Foo") \
+            .select_child("Bar", dict(visible=True)) \
+            .select_child("Baz", dict(id=123))
+
+        self.assertEqual(
+            b"/Foo/Bar[visible=True]/Baz[id=123]",
+            q.query_bytes()
+        )
+
+    def test_select_descendant(self):
         q = xpathselect.Query.root("Foo") \
             .select_descendant("Bar")
 
         self.assertEqual(b"/Foo//Bar", q.query_bytes())
 
-    def test_many_select_descendant(self):
+    def test_select_descendant_with_filters(self):
+        q = xpathselect.Query.root("Foo") \
+            .select_descendant("Bar", dict(name="Hello"))
+
+        self.assertEqual(b'/Foo//Bar[name="Hello"]', q.query_bytes())
+
+    def test_many_select_descendants(self):
         q = xpathselect.Query.root("Foo") \
             .select_descendant("Bar") \
             .select_descendant("Baz")
 
         self.assertEqual(b"/Foo//Bar//Baz", q.query_bytes())
+
+    def test_many_select_descendants_with_filters(self):
+        q = xpathselect.Query.root("Foo") \
+            .select_descendant("Bar", dict(visible=True)) \
+            .select_descendant("Baz", dict(id=123))
+
+        self.assertEqual(
+            b"/Foo//Bar[visible=True]//Baz[id=123]",
+            q.query_bytes()
+        )
+
+    def test_full_server_side_filter(self):
+        q = xpathselect.Query.root("Foo") \
+            .select_descendant("Bar", dict(visible=True)) \
+            .select_descendant("Baz", dict(id=123))
+        self.assertFalse(q.needs_client_side_filtering())
+
+    def test_client_side_filter(self):
+        q = xpathselect.Query.root("Foo") \
+            .select_descendant("Bar", dict(visible=True)) \
+            .select_descendant("Baz", dict(name=u"\u2026"))
+        self.assertTrue(q.needs_client_side_filtering())
 
 
 class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):
@@ -99,9 +158,83 @@ class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):
             v=b"\a\b\f\n\r\t\v\\",
             r=br'a="\x07\x08\x0c\n\r\t\x0b\\"')),
         ('escape quotes (str)', dict(k='b', v="'", r=b'b="\\' + b"'" + b'"')),
-        ('escape quotes (bytes)', dict(k='b', v=b"'", r=b'b="\\' + b"'" + b'"')),
+        (
+            'escape quotes (bytes)',
+            dict(k='b', v=b"'", r=b'b="\\' + b"'" + b'"')
+        ),
     ]
 
     def test_query_string(self):
         s = xpathselect._get_filter_string_for_key_value_pair(self.k, self.v)
         self.assertEqual(s, self.r)
+
+
+class ServerSideParamMatchingTests(TestWithScenarios, TestCase):
+
+    """Tests for the server side matching decision function."""
+
+    scenarios = [
+        ('should work', dict(key='keyname', value='value', result=True)),
+        ('invalid key', dict(key='k  e', value='value', result=False)),
+        ('string value', dict(key='key', value='v  e', result=True)),
+        ('string value2', dict(key='key', value='v?e', result=True)),
+        ('string value3', dict(key='key', value='1/2."!@#*&^%', result=True)),
+        ('bool value', dict(key='key', value=False, result=True)),
+        ('int value', dict(key='key', value=123, result=True)),
+        ('int value2', dict(key='key', value=-123, result=True)),
+        ('float value', dict(key='key', value=1.0, result=False)),
+        ('dict value', dict(key='key', value={}, result=False)),
+        ('obj value', dict(key='key', value=TestCase, result=False)),
+        ('int overflow 1', dict(key='key', value=-2147483648, result=True)),
+        ('int overflow 2', dict(key='key', value=-2147483649, result=False)),
+        ('int overflow 3', dict(key='key', value=2147483647, result=True)),
+        ('int overflow 4', dict(key='key', value=2147483648, result=False)),
+        ('unicode string', dict(key='key', value=u'H\u2026i', result=False)),
+    ]
+
+    def test_valid_server_side_param(self):
+        self.assertEqual(
+            xpathselect._is_valid_server_side_filter_param(
+                self.key,
+                self.value
+            ),
+            self.result
+        )
+
+
+class FunctionTests(TestCase):
+    """Tests for functions that don't fit anywhere else."""
+
+    def test_filters_contains_client_side_filters_returns_true_single(self):
+        client = xpathselect._filters_contains_client_side_filters(
+            {
+                'k  e': True,        # client - key contains spaces
+            }
+        )
+        self.assertTrue(client)
+
+    def test_filters_contains_client_side_filters_returns_true_double(self):
+        client = xpathselect._filters_contains_client_side_filters(
+            {
+                'k  e': True,        # client - key contains spaces
+                'key': u'\u2026',   # client - string not ascii encodable
+            }
+        )
+        self.assertTrue(client)
+
+    def test_filters_contains_client_side_filters_returns_true_mixed(self):
+        client = xpathselect._filters_contains_client_side_filters(
+            {
+                'key': True,        # server
+                'key2': u'\u2026',   # client - string not ascii encodable
+            }
+        )
+        self.assertTrue(client)
+
+    def test_filters_contains_client_side_filters_returns_false_single(self):
+        client = xpathselect._filters_contains_client_side_filters(
+            {
+                'key': True,        # server
+            }
+        )
+        self.assertFalse(client)

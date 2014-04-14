@@ -495,7 +495,6 @@ Loading tests from: %s
         self.assertThat(code, Equals(0))
         self.assertThat(os.path.exists(video_file_path), Equals(False))
 
-    #@skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     @skip("test hangs on CI")
     def test_no_video_session_dirs_saved_for_passed_test(self):
         """RecordMyDesktop should clean up its session files in tmp dir."""

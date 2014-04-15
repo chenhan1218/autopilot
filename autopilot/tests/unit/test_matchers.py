@@ -55,7 +55,7 @@ def make_fake_attribute_with_result(result, attribute_type='wait_for',
 
         @classmethod
         def get_state_by_path(cls, piece):
-            return [('/FakeObject', cls._fake_props)]
+            return [('/FakeObject', cls._fake_props.copy())]
 
     if attribute_type == 'callable':
         return lambda: result

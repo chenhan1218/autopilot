@@ -951,7 +951,10 @@ class MakeIntrospectionObjectTests(TestCase):
         class SubclassedProxy(self.DefaultSelector):
             pass
 
-        result = object_registry._get_default_proxy_class(SubclassedProxy, 'Object')
+        result = object_registry._get_default_proxy_class(
+            SubclassedProxy,
+            'Object'
+        )
         self.assertTrue(result, Equals(self.DefaultSelector))
 
     def test_get_default_proxy_class_base_instead_of_self(self):

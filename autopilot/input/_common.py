@@ -22,7 +22,7 @@
 
 import logging
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 def get_center_point(object_proxy):
@@ -42,7 +42,7 @@ def get_center_point(object_proxy):
     """
     try:
         x, y, w, h = object_proxy.globalRect
-        logger.debug("Moving to object's globalRect coordinates.")
+        _logger.debug("Moving to object's globalRect coordinates.")
         return x+w/2, y+h/2
     except AttributeError:
         pass
@@ -53,7 +53,7 @@ def get_center_point(object_proxy):
 
     try:
         x, y = object_proxy.center_x, object_proxy.center_y
-        logger.debug("Moving to object's center_x, center_y coordinates.")
+        _logger.debug("Moving to object's center_x, center_y coordinates.")
         return x, y
     except AttributeError:
         pass
@@ -61,7 +61,7 @@ def get_center_point(object_proxy):
     try:
         x, y, w, h = (
             object_proxy.x, object_proxy.y, object_proxy.w, object_proxy.h)
-        logger.debug(
+        _logger.debug(
             "Moving to object's center point calculated from x,y,w,h "
             "attributes.")
         return x+w/2, y+h/2

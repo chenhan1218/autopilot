@@ -68,11 +68,11 @@ These affected methods are:
 
 For example, if your old code is something along the lines of::
 
-    all_keys = KeyCustomEmulator.get_all_instances()
+    all_keys = KeyCustomProxy.get_all_instances()
 
 You will instead need to have something like this instead::
 
-    all_keys = app_proxy.select_many(KeyCustomEmulator)
+    all_keys = app_proxy.select_many(KeyCustomProxy)
 
 
 Python 3

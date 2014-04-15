@@ -62,7 +62,7 @@ from autopilot.input._common import get_center_point
 
 import logging
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class Keyboard(CleanupRegistered):
@@ -282,7 +282,7 @@ class Mouse(CleanupRegistered):
 
         from autopilot.platform import model
         if model() != 'Desktop':
-            logger.info(
+            _logger.info(
                 "You cannot create a Mouse on the devices where X11 is not "
                 "available. consider using a Touch or Pointer device. "
                 "For more information, see: "

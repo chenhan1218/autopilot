@@ -19,16 +19,18 @@
 
 
 import logging
+import os
 from os.path import join
 from xml.etree import ElementTree
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class DBusInspector(object):
     def __init__(self, bus):
         self._bus = bus
         self._xml_processor = None
+        self.p_dbus = self._bus.get_object('org.freedesktop.DBus', '/')
 
     def set_xml_processor(self, processor):
         self._xml_processor = processor
@@ -43,8 +45,20 @@ class DBusInspector(object):
             obj_name,
             xml
         )
-        error_handler = lambda *args: logger.error("Error occured: %r" % args)
+        error_handler = lambda *args: _logger.error("Error occured: %r" % args)
         obj = self._bus.get_object(conn_name, obj_name)
+
+        # avoid introspecting our own PID, as that locks up with libdbus
+        try:
+            obj_pid = self.p_dbus.GetConnectionUnixProcessID(
+                conn_name,
+                dbus_interface='org.freedesktop.DBus'
+            )
+            if obj_pid == os.getpid():
+                return
+        except:
+            # can't get D-BUS daemon's own pid, ignore
+            pass
         obj.Introspect(
             dbus_interface='org.freedesktop.DBus.Introspectable',
             reply_handler=handler,
@@ -80,7 +94,7 @@ class XmlProcessor(object):
                     iface_name = child_name.split('/')[-1]
                     self._success_callback(conn_name, obj_name, iface_name)
         except ElementTree.ParseError:
-            logger.warning(
+            _logger.warning(
                 "Unable to parse XML response for %s (%s)"
                 % (conn_name, obj_name)
             )

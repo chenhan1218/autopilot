@@ -98,7 +98,7 @@ class FileFollowerTests(TestCase):
         with NamedTemporaryFile() as f:
             os.chmod(f.name, 0)
 
-            with patch('autopilot.content.logger') as fake_logger:
+            with patch('autopilot.content._logger') as fake_logger:
                 follow_file(f.name, fake_test, content_name)
                 fake_logger.error.assert_called_once_with(
                     "Could not add content object '%s' due to IO Error: %s",

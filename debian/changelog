@@ -1,3 +1,77 @@
+autopilot (1.4+14.04.20140410-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Remove python2 from the autopilot-touch metapackage.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 10 Apr 2014 20:51:07 +0000
+
+autopilot (1.4+14.04.20140409-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Ensure autopilot waits for upstart applications to end before ending
+    the test. (LP: #1305320)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 09 Apr 2014 22:15:25 +0000
+
+autopilot (1.4+14.04.20140408-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Fix flake8 errors in trunk.
+  * Make the make-coverage.sh script exit non-0 when tests fail.
+  * Don't abort print_tree when we catch the StateNotFoundError
+    exception. (LP: #1276672)
+  * Tweak the vis tool so the splitter between the tree widget and the
+    properties pane cannot be completely dragged to one side or the
+    other. (LP: #1281360)
+  * Fix functional test that was very dependant on timing. (LP:
+    #1301005)
+  * Make logger objects within autopilot private.
+
+  [ Nicholas Skaggs ]
+  * Don't abort print_tree when we catch the StateNotFoundError
+    exception. (LP: #1276672)
+
+  [ Corey Goldberg ]
+  * When no tests are found, display "Did not find any tests" and exit,
+    instead of invoking the runner. (LP: #1282995)
+  * Fix functional test that was very dependant on timing. (LP:
+    #1301005)
+
+  [ nskaggs ]
+  * Don't abort print_tree when we catch the StateNotFoundError
+    exception. (LP: #1276672)
+
+  [ Max Brustkern ]
+  * Update documentation to reflect new terminology (LP:1288054) (LP:
+    #1288054)
+  * Make logger objects within autopilot private.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 08 Apr 2014 00:29:56 +0000
+
+autopilot (1.4+14.04.20140401-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Make the --enable-profile option for all autopilot commands.
+  * Refactor introspection code to make the vis tool call only
+    asynchronous dbus calls.
+  * Optimisations for print_tree method.
+
+  [ Leo Arias ]
+  * Added a window resize for the BAMF process helper.
+
+  [ Christopher Lee ]
+  * Move functionality out of __init__.py
+  * Add workaround for bug lp:1297592 by creating Touch device in
+    AutopilotTestCase setUp. (LP: #1297592)
+  * Fixes some functional tests that were failing on the devices. (skip
+    Gtk, use desktop file hint for the qt one).
+
+  [ Max Brustkern ]
+  * Move functionality out of __init__.py
+  * Additional pep257 changes.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 01 Apr 2014 01:30:45 +0000
+
 autopilot (1.4+14.04.20140319.1-0ubuntu2) trusty; urgency=medium
 
   * Add python-gi and python3-gi dependencies which provide gi.repository

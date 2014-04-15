@@ -294,7 +294,12 @@ class QtTests(ApplicationTests, QmlTestMixin):
 
     def test_can_launch_normal_app(self):
         path = self.get_qml_viewer_app_path()
-        app_proxy = self.launch_test_application(path, app_type='qt')
+        fixture = self.useFixture(TempDesktopFile(exec_=path,))
+        app_proxy = self.launch_test_application(
+            path,
+            '--desktop_file_hint=%s' % fixture.get_desktop_file_path(),
+            app_type='qt'
+        )
         self.assertTrue(app_proxy is not None)
 
     def test_can_launch_upstart_app(self):
@@ -399,6 +404,7 @@ class QtTests(ApplicationTests, QmlTestMixin):
             )
 
 
+@skipIf(model() != "Desktop", "Only suitable on Desktop (Gtk)")
 class GtkTests(ApplicationTests):
 
     def _get_mahjongg_path(self):

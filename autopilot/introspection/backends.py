@@ -209,7 +209,13 @@ def execute_query(query, backend, id, proxy_type):
                 query,
                 len(data)
             )
-        return [make_introspection_object(t) for t in data]
+        objects = [make_introspection_object(t) for t in data]
+        if query.needs_client_side_filtering():
+            return filter(
+                lambda i: _object_passes_filters(i, **query.get_client_side_filters()),
+                objects
+            )
+        return objects
 
 
 def make_introspection_object(dbus_tuple, backend, object_id, proxy_type):
@@ -226,3 +232,16 @@ def make_introspection_object(dbus_tuple, backend, object_id, proxy_type):
     path, state = dbus_tuple
     class_object = _get_proxy_object_class(object_id, proxy_type, path, state)
     return class_object(state, path, backend)
+
+
+def _object_passes_filters(instance, **kwargs):
+    """Return true if *instance* satisifies all the filters present in
+    kwargs."""
+    with instance.no_automatic_refreshing():
+        for attr, val in kwargs.items():
+            if not hasattr(instance, attr) or getattr(instance, attr) != val:
+                # Either attribute is not present, or is present but with
+                # the wrong value - don't add this instance to the results
+                # list.
+                return False
+    return True

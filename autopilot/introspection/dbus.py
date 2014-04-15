@@ -50,19 +50,6 @@ from autopilot.utilities import (
 _logger = logging.getLogger(__name__)
 
 
-def _object_passes_filters(instance, **kwargs):
-    """Return true if *instance* satisifies all the filters present in
-    kwargs."""
-    with instance.no_automatic_refreshing():
-        for attr, val in kwargs.items():
-            if not hasattr(instance, attr) or getattr(instance, attr) != val:
-                # Either attribute is not present, or is present but with
-                # the wrong value - don't add this instance to the results
-                # list.
-                return False
-    return True
-
-
 class DBusIntrospectionObject(DBusIntrospectionObjectBase):
     """A class that supports transparent data retrieval from the application
     under test.

@@ -55,7 +55,6 @@ from autopilot.introspection import backends
 from autopilot.introspection import _object_registry as object_registry
 from autopilot.introspection import _xpathselect as xpathselect
 from autopilot.introspection.dbus import (
-    _object_passes_filters,
     DBusIntrospectionObject,
 )
 from autopilot.introspection.qt import QtObjectProxyMixin
@@ -107,7 +106,7 @@ class ClientSideFilteringTests(TestCase):
 
     def test_object_passes_filters_disables_refreshing(self):
         obj = self.get_empty_fake_object()
-        _object_passes_filters(obj)
+        backends._object_passes_filters(obj)
 
         obj.no_automatic_refreshing.assert_called_once_with()
         self.assertTrue(
@@ -116,21 +115,21 @@ class ClientSideFilteringTests(TestCase):
 
     def test_object_passes_filters_works_with_no_filters(self):
         obj = self.get_empty_fake_object()
-        self.assertTrue(_object_passes_filters(obj))
+        self.assertTrue(backends._object_passes_filters(obj))
 
     def test_object_passes_filters_fails_when_attr_missing(self):
         obj = self.get_empty_fake_object()
-        self.assertFalse(_object_passes_filters(obj, foo=123))
+        self.assertFalse(backends._object_passes_filters(obj, foo=123))
 
     def test_object_passes_filters_fails_when_attr_has_wrong_value(self):
         obj = self.get_empty_fake_object()
         obj.foo = 456
-        self.assertFalse(_object_passes_filters(obj, foo=123))
+        self.assertFalse(backends._object_passes_filters(obj, foo=123))
 
     def test_object_passes_filters_succeeds_with_one_correct_parameter(self):
         obj = self.get_empty_fake_object()
         obj.foo = 123
-        self.assertTrue(_object_passes_filters(obj, foo=123))
+        self.assertTrue(backends._object_passes_filters(obj, foo=123))
 
 
 class DBusIntrospectionObjectTests(TestCase):

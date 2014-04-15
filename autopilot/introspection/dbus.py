@@ -195,10 +195,9 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         try:
             self.id = int(state_dict.pop('id')[1])
         except KeyError:
-            # raise ValueError(
-            #     "State dictionary does not contain required 'id' key."
-            # )
-            pass
+            raise ValueError(
+                "State dictionary does not contain required 'id' key."
+            )
 
         self.__state = {}
         for key, value in translate_state_keys(state_dict).items():

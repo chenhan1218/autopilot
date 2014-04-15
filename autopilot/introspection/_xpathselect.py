@@ -266,7 +266,6 @@ def _try_encode_type_name(name):
     return name
 
 
-# TODO: Remove this function from autopilot.introspection.dbus.
 def _is_valid_server_side_filter_param(key, value):
     """Return True if the key and value parameters are valid for server-side
     processing.
@@ -295,7 +294,6 @@ def _is_valid_server_side_filter_param(key, value):
     return False
 
 
-# TODO: Remove this function from autopilot.introspection.dbus.
 def _get_filter_string_for_key_value_pair(key, value):
     """Return bytes representing the filter query for this key/value pair.
 

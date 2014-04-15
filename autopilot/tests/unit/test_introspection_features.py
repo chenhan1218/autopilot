@@ -140,7 +140,7 @@ class DBusIntrospectionObjectTests(TestCase):
     def test_can_access_path_attribute(self):
         fake_object = DBusIntrospectionObject(
             dict(id=[0, 123], path=[0, '/some/path']),
-            '/root',
+            b'/root',
             Mock()
         )
         with fake_object.no_automatic_refreshing():
@@ -155,18 +155,18 @@ class DBusIntrospectionObjectTests(TestCase):
         """
         fake_object = DBusIntrospectionObject(
             dict(id=[0, 123], path=[0, '/some/path']),
-            '/root',
+            b'/root',
             Mock()
         )
         fake_object._backend.introspection_iface.GetState.return_value = \
-            [('/root/path', {}) for i in range(16)]
-        fake_object.get_state_by_path('some_query')
+            [(b'/root/path', {}) for i in range(16)]
+        fake_object.get_state_by_path(b'some_query')
 
         mock_logger.warning.assert_called_once_with(
             "Your query '%s' returned a lot of data (%d items). This "
             "is likely to be slow. You may want to consider optimising"
             " your query to return fewer items.",
-            "some_query",
+            b"some_query",
             16)
 
     @patch('autopilot.introspection.dbus._logger')
@@ -178,12 +178,12 @@ class DBusIntrospectionObjectTests(TestCase):
         """
         fake_object = DBusIntrospectionObject(
             dict(id=[0, 123], path=[0, '/some/path']),
-            '/root',
+            b'/root',
             Mock()
         )
         fake_object._backend.introspection_iface.GetState.return_value = \
-            [('/root/path', {}) for i in range(15)]
-        fake_object.get_state_by_path('some_query')
+            [(b'/root/path', {}) for i in range(15)]
+        fake_object.get_state_by_path(b'some_query')
 
         self.assertThat(mock_logger.warning.called, Equals(False))
 
@@ -191,7 +191,7 @@ class DBusIntrospectionObjectTests(TestCase):
         """wait_until_destroyed must return if no new state is found."""
         fake_object = DBusIntrospectionObject(
             dict(id=[0, 123]),
-            '/root',
+            b'/root',
             Mock()
         )
         fake_object._backend.introspection_iface.GetState.return_value = []
@@ -206,7 +206,7 @@ class DBusIntrospectionObjectTests(TestCase):
         fake_state = dict(id=[0, 123])
         fake_object = DBusIntrospectionObject(
             fake_state,
-            '/root',
+            b'/root',
             Mock()
         )
         fake_object._backend.introspection_iface.GetState.return_value = \
@@ -217,7 +217,7 @@ class DBusIntrospectionObjectTests(TestCase):
                 lambda: fake_object.wait_until_destroyed(timeout=1),
                 raises(
                     RuntimeError("Object was not destroyed after 1 seconds")
-                )
+                ),
             )
 
     def _print_test_fake_object(self):
@@ -225,7 +225,7 @@ class DBusIntrospectionObjectTests(TestCase):
 
         fake_object = DBusIntrospectionObject(
             dict(id=[0, 123], path=[0, '/some/path'], text=[0, 'Hello']),
-            '/some/path',
+            b'/some/path',
             Mock()
         )
         # get_properties() always refreshes state, so can't use
@@ -799,17 +799,17 @@ class MakeIntrospectionObjectTests(TestCase):
         gpoc.return_value = self.DefaultSelector
         fake_object = self.DefaultSelector(
             dict(id=[0, 123], path=[0, '/some/path']),
-            '/root',
+            b'/root',
             Mock()
         )
         new_fake = fake_object.make_introspection_object(
-            ('/Object', {'id': [0, 42]})
+            (b'/Object', {'id': [0, 42]})
         )
         self.assertThat(new_fake, IsInstance(self.DefaultSelector))
         gpoc.assert_called_once_with(
             _object_registry[fake_object._id],
             self.DefaultSelector,
-            '/Object',
+            b'/Object',
             {}
         )
 

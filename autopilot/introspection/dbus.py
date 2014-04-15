@@ -285,7 +285,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         # Thomi: 2014-03-20: There used to be a call to 'self.refresh_state()'
         # here. That's not needed, since the only thing we use is the proxy
         # path, which isn't affected by the current state.
-        query = self.get_class_query_string() + "/*"
+        query = self.get_class_query_string() + b"/*"
         state_dicts = self.get_state_by_path(query)
         children = [self.make_introspection_object(i) for i in state_dicts]
         return children
@@ -557,9 +557,9 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         :raises TypeError: on invalid *piece* parameter.
 
         """
-        if not isinstance(piece, six.string_types):
+        if not isinstance(piece, six.binary_type):
             raise TypeError(
-                "XPath query must be a string, not %r", type(piece))
+                "XPath query must be a bytestring, not %r", type(piece))
 
         with Timer("GetState %s" % piece):
             data = self._backend.introspection_iface.GetState(piece)
@@ -609,13 +609,16 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
                 "Object was not destroyed after %d seconds" % timeout
             )
 
+    # TODO: Marked for removal!
     def get_class_query_string(self):
         """Get the XPath query string required to refresh this class's
         state."""
-        if not self._path.startswith('/'):
-            return "//" + self._path + "[id=%d]" % self.id
+        filter_str = "[id=%d]" % self.id
+
+        if not self._path.startswith(b'/'):
+            return b"//" + self._path + filter_str.encode('utf-8')
         else:
-            return self._path + "[id=%d]" % self.id
+            return self._path + filter_str.encode('utf-8')
 
     def make_introspection_object(self, dbus_tuple):
         """Make an introspection object given a DBus tuple of
@@ -664,7 +667,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         # print path
         if _curdepth > 0:
             output.write("\n")
-        output.write("%s== %s ==\n" % (indent, self._path))
+        output.write("%s== %s ==\n" % (indent, self._path.decode('utf-8')))
         # Thomi 2014-03-20: For all levels other than the top level, we can
         # avoid an entire dbus round trip if we grab the underlying property
         # dictionary directly. We can do this since the print_tree function

@@ -29,7 +29,7 @@ from testtools.matchers import Equals, NotEquals, raises, LessThan, GreaterThan
 
 from autopilot import platform
 from autopilot.testcase import AutopilotTestCase
-from autopilot.introspection.dbus import StateNotFoundError
+from autopilot.exceptions import StateNotFoundError
 
 
 @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")

@@ -6,7 +6,7 @@
 
 
 .. automodule:: autopilot.introspection.dbus
-	:members: CustomEmulatorBase, DBusIntrospectionObject, StateNotFoundError
+	:members: CustomEmulatorBase, DBusIntrospectionObject
 
 .. automodule:: autopilot.introspection.types
 	:members: PlainType, Rectangle, Point, Size, DateTime, Time

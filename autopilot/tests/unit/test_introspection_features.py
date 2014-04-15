@@ -41,6 +41,7 @@ else:
     from contextlib2 import ExitStack
 
 
+from autopilot.exceptions import StateNotFoundError
 from autopilot.introspection import (
     _check_process_and_pid_details,
     _get_application_name_from_dbus_address,
@@ -58,7 +59,6 @@ from autopilot.introspection.dbus import (
     _try_custom_proxy_classes,
     CustomEmulatorBase,
     DBusIntrospectionObject,
-    StateNotFoundError,
 )
 from autopilot.introspection.qt import QtObjectProxyMixin
 import autopilot.introspection as _i

@@ -34,6 +34,7 @@ import re
 import six
 from uuid import uuid4
 
+from autopilot.exceptions import StateNotFoundError
 from autopilot.introspection.types import create_value_instance
 from autopilot.introspection.utilities import translate_state_keys
 from autopilot.introspection import _xpathselect as xpathselect
@@ -46,60 +47,6 @@ from autopilot.utilities import (
 
 _object_registry = {}
 _logger = logging.getLogger(__name__)
-
-
-class StateNotFoundError(RuntimeError):
-
-    """Raised when a piece of state information is not found.
-
-    This exception is commonly raised when the application has destroyed (or
-    not yet created) the object you are trying to access in autopilot. This
-    typically happens for a number of possible reasons:
-
-    * The UI widget you are trying to access with
-      :py:meth:`~DBusIntrospectionObject.select_single` or
-      :py:meth:`~DBusIntrospectionObject.wait_select_single` or
-      :py:meth:`~DBusIntrospectionObject.select_many` does not exist yet.
-
-    * The UI widget you are trying to access has been destroyed by the
-      application.
-
-    """
-
-    def __init__(self, class_name=None, **filters):
-        """Construct a StateNotFoundError.
-
-        :raises ValueError: if neither the class name not keyword arguments
-            are specified.
-
-        """
-        if class_name is None and not filters:
-            raise ValueError("Must specify either class name or filters.")
-
-        if class_name is None:
-            self._message = \
-                u"Object not found with properties {}.".format(
-                    repr(filters)
-                )
-        elif not filters:
-            self._message = u"Object not found with name '{}'.".format(
-                class_name
-            )
-        else:
-            self._message = \
-                u"Object not found with name '{}' and properties {}.".format(
-                    class_name,
-                    repr(filters)
-                )
-
-    def __str__(self):
-        if six.PY3:
-            return self._message
-        else:
-            return self._message.encode('utf8')
-
-    def __unicode__(self):
-        return self._message
 
 
 class IntrospectableObjectMetaclass(type):

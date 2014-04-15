@@ -140,7 +140,7 @@ class DBusIntrospectionObjectTests(TestCase):
     def test_can_access_path_attribute(self):
         fake_object = DBusIntrospectionObject(
             dict(id=[0, 123], path=[0, '/some/path']),
-            '/',
+            '/root',
             Mock()
         )
         with fake_object.no_automatic_refreshing():
@@ -155,11 +155,11 @@ class DBusIntrospectionObjectTests(TestCase):
         """
         fake_object = DBusIntrospectionObject(
             dict(id=[0, 123], path=[0, '/some/path']),
-            '/',
+            '/root',
             Mock()
         )
         fake_object._backend.introspection_iface.GetState.return_value = \
-            [('/path', {}) for i in range(16)]
+            [('/root/path', {}) for i in range(16)]
         fake_object.get_state_by_path('some_query')
 
         mock_logger.warning.assert_called_once_with(
@@ -178,11 +178,11 @@ class DBusIntrospectionObjectTests(TestCase):
         """
         fake_object = DBusIntrospectionObject(
             dict(id=[0, 123], path=[0, '/some/path']),
-            '/',
+            '/root',
             Mock()
         )
         fake_object._backend.introspection_iface.GetState.return_value = \
-            [('/path', {}) for i in range(15)]
+            [('/root/path', {}) for i in range(15)]
         fake_object.get_state_by_path('some_query')
 
         self.assertThat(mock_logger.warning.called, Equals(False))
@@ -191,7 +191,7 @@ class DBusIntrospectionObjectTests(TestCase):
         """wait_until_destroyed must return if no new state is found."""
         fake_object = DBusIntrospectionObject(
             dict(id=[0, 123]),
-            '/',
+            '/root',
             Mock()
         )
         fake_object._backend.introspection_iface.GetState.return_value = []
@@ -206,7 +206,7 @@ class DBusIntrospectionObjectTests(TestCase):
         fake_state = dict(id=[0, 123])
         fake_object = DBusIntrospectionObject(
             fake_state,
-            '/',
+            '/root',
             Mock()
         )
         fake_object._backend.introspection_iface.GetState.return_value = \
@@ -799,7 +799,7 @@ class MakeIntrospectionObjectTests(TestCase):
         gpoc.return_value = self.DefaultSelector
         fake_object = self.DefaultSelector(
             dict(id=[0, 123], path=[0, '/some/path']),
-            '/',
+            '/root',
             Mock()
         )
         new_fake = fake_object.make_introspection_object(('/Object', {}))

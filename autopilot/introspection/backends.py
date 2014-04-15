@@ -23,6 +23,8 @@ from __future__ import absolute_import
 
 from collections import namedtuple
 import dbus
+import logging
+
 from autopilot.dbus_handler import (
     get_session_bus,
     get_system_bus,
@@ -34,10 +36,14 @@ from autopilot.introspection.constants import (
     DBUS_INTROSPECTION_IFACE,
     QT_AUTOPILOT_IFACE,
 )
+from autopilot.utilities import Timer
 from autopilot.introspection.utilities import (
     _pid_is_running,
     _get_bus_connections_pid,
 )
+
+
+_logger = logging.getLogger(__name__)
 
 
 class WireProtocolVersionMismatch(RuntimeError):
@@ -188,3 +194,18 @@ class DBusAddress(object):
             name = "custom"
         return "<%s bus %s %s>" % (
             name, self._addr_tuple.connection, self._addr_tuple.object_path)
+
+
+def execute_query(query, backend):
+    """Execute 'query' on 'backend', returning new proxy objects."""
+    with Timer("GetState %r" % query):
+        data = backend.introspection_iface.GetState(query.server_query_bytes())
+        if len(data) > 15:
+            _logger.warning(
+                "Your query '%r' returned a lot of data (%d items). This "
+                "is likely to be slow. You may want to consider optimising"
+                " your query to return fewer items.",
+                query,
+                len(data)
+            )
+

@@ -36,6 +36,7 @@ from uuid import uuid4
 
 from autopilot.introspection.types import create_value_instance
 from autopilot.introspection.utilities import translate_state_keys
+from autopilot.introspection import _xpathselect as xpathselect
 from autopilot.utilities import (
     get_debug_logger,
     sleep,
@@ -158,12 +159,28 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
     """
 
     def __init__(self, state_dict, path, backend):
+        """Construct a new proxy instance.
+
+        :param state_dict: A dictionary of state data for the proxy object.
+        :param path: A bytestring describing the path to the object within the
+            introspection tree.
+        :param backend: The data source backend this proxy should use then
+            retrieving additional state data.
+
+        The state dictionary must contain an 'id' element, as this is used to
+        uniquely identify this object.
+
+        """
         self.__state = {}
         self.__refresh_on_attribute = True
         self._set_properties(state_dict)
         self._path = path
         self._poll_time = 10
         self._backend = backend
+        self._query = xpathselect.Query.new_from_path_and_id(
+            self._path,
+            self.id
+        )
 
     def _set_properties(self, state_dict):
         """Creates and set attributes of *self* based on contents of
@@ -173,12 +190,18 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
          becomes 'icon_type'.
 
         """
+        # don't store id in state dictionary -make it a proper instance
+        # attribute. If id is not present, raise a ValueError.
+        try:
+            self.id = int(state_dict.pop('id')[1])
+        except KeyError:
+            # raise ValueError(
+            #     "State dictionary does not contain required 'id' key."
+            # )
+            pass
+
         self.__state = {}
         for key, value in translate_state_keys(state_dict).items():
-            # don't store id in state dictionary -make it a proper instance
-            # attribute
-            if key == 'id':
-                self.id = int(value[1])
             try:
                 self.__state[key] = create_value_instance(value, self, key)
             except ValueError as e:
@@ -214,6 +237,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             Tutorial Section :ref:`custom_proxy_classes`
 
         """
+        new_query = self._query.select_child(desired_type, kwargs)
         #TODO: if kwargs has exactly one item in it we should specify the
         # restriction in the XPath query, so it gets processed in the Unity C++
         # code rather than in Python.

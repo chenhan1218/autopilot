@@ -773,7 +773,7 @@ class DBusIntrospectionObjectTests(TestCase):
 
         """
         DBusIntrospectionObject(
-            dict(foo=[0]),
+            dict(foo=[0], id=[0, 42]),
             '/some/dummy/path',
             Mock()
         )

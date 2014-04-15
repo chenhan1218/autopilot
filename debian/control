@@ -203,8 +203,8 @@ Package: autopilot-common
 Architecture: all
 Depends: ${misc:Depends},
          ${python:Depends},
-Description: The visualisation application for Autopilot.
- This package contains common data files needed by the Autopilot vis tool.
+Description: Common files for various autopilot tools.
+ This package contains common data files needed by various Autopilot tools.
 
 Package: python-autopilot-tests
 Architecture: all

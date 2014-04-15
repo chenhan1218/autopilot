@@ -802,7 +802,9 @@ class MakeIntrospectionObjectTests(TestCase):
             '/root',
             Mock()
         )
-        new_fake = fake_object.make_introspection_object(('/Object', {}))
+        new_fake = fake_object.make_introspection_object(
+            ('/Object', {'id': [0, 42]})
+        )
         self.assertThat(new_fake, IsInstance(self.DefaultSelector))
         gpoc.assert_called_once_with(
             _object_registry[fake_object._id],

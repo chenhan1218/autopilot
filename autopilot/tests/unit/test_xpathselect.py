@@ -220,6 +220,12 @@ class XPathSelectQueryTests(TestCase):
         q = xpathselect.Query.new_from_path_and_id(b'/root/child/leaf', 42)
         self.assertEqual(b'/root/child/leaf[id=42]', q.server_query_bytes())
 
+    def test_get_client_side_filters_returns_client_side_filters(self):
+        q = xpathselect.Query.root('app') \
+            .select_child('leaf', dict(name=u'\u2026'))
+        self.assertEqual(dict(name=u'\u2026'), q.get_client_side_filters())
+
+
 
 class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):
 

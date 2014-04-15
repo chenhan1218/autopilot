@@ -181,6 +181,9 @@ class Query(object):
             if self._parent else False
         )
 
+    def get_client_side_filters(self):
+        return self._client_filters
+
     def server_query_bytes(self):
         """Get a bytestring representing the entire query.
 

@@ -41,6 +41,7 @@ from autopilot.introspection.utilities import (
     _pid_is_running,
     _get_bus_connections_pid,
 )
+from autopilot.introspection._object_registry import _get_proxy_object_class
 
 
 _logger = logging.getLogger(__name__)
@@ -196,7 +197,7 @@ class DBusAddress(object):
             name, self._addr_tuple.connection, self._addr_tuple.object_path)
 
 
-def execute_query(query, backend):
+def execute_query(query, backend, id, proxy_type):
     """Execute 'query' on 'backend', returning new proxy objects."""
     with Timer("GetState %r" % query):
         data = backend.introspection_iface.GetState(query.server_query_bytes())
@@ -208,4 +209,20 @@ def execute_query(query, backend):
                 query,
                 len(data)
             )
+        return [make_introspection_object(t) for t in data]
 
+
+def make_introspection_object(dbus_tuple, backend, object_id, proxy_type):
+    """Make an introspection object given a DBus tuple of
+    (path, state_dict).
+
+    This only works for classes that derive from DBusIntrospectionObject.
+
+    :returns: A proxy object that derives from DBusIntrospectionObject
+    :raises ValueError: if more than one class is appropriate for this
+             dbus_tuple
+
+    """
+    path, state = dbus_tuple
+    class_object = _get_proxy_object_class(object_id, proxy_type, path, state)
+    return class_object(state, path, backend)

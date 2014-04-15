@@ -32,44 +32,25 @@ import sys
 import logging
 import re
 import six
-from uuid import uuid4
 
 from autopilot.exceptions import StateNotFoundError
+from autopilot.introspection.backends import execute_query
+from autopilot.introspection._object_registry import (
+    DBusIntrospectionObjectBase,
+)
 from autopilot.introspection.types import create_value_instance
 from autopilot.introspection.utilities import translate_state_keys
 from autopilot.introspection import _xpathselect as xpathselect
 from autopilot.utilities import (
-    get_debug_logger,
     sleep,
     Timer,
 )
 
 
-_object_registry = {}
 _logger = logging.getLogger(__name__)
 
 
-class IntrospectableObjectMetaclass(type):
-    """Metaclass to insert appropriate classes into the object registry."""
-
-    def __new__(cls, classname, bases, classdict):
-        """Add class name to type registry."""
-        class_object = type.__new__(cls, classname, bases, classdict)
-        if classname in (
-            'ApplicationProxyObject',
-            'CustomEmulatorBase',
-            'DBusIntrospectionObject',
-        ):
-            return class_object
-
-        if getattr(class_object, '_id', None) is not None:
-            if class_object._id in _object_registry:
-                _object_registry[class_object._id][classname] = class_object
-            else:
-                _object_registry[class_object._id] = {classname: class_object}
-        return class_object
-
-
+# TODO: de-deuplicate this!
 def get_classname_from_path(object_path):
     return object_path.split("/")[-1]
 
@@ -85,13 +66,6 @@ def _object_passes_filters(instance, **kwargs):
                 # list.
                 return False
     return True
-
-
-DBusIntrospectionObjectBase = IntrospectableObjectMetaclass(
-    'DBusIntrospectionObjectBase',
-    (object,),
-    {}
-)
 
 
 class DBusIntrospectionObject(DBusIntrospectionObjectBase):
@@ -184,6 +158,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         """
         new_query = self._query.select_child(desired_type, kwargs)
+
         #TODO: if kwargs has exactly one item in it we should specify the
         # restriction in the XPath query, so it gets processed in the Unity C++
         # code rather than in Python.
@@ -287,7 +262,14 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             Tutorial Section :ref:`custom_proxy_classes`
 
         """
-        instances = self.select_many(type_name, **kwargs)
+        new_query = self._query.select_descendant(type_name, kwargs)
+        instances = execute_query(
+            new_query,
+            self._backend,
+            self._id,
+            type(self)
+        )
+        # instances = self.select_many(type_name, **kwargs)
         if len(instances) > 1:
             raise ValueError("More than one item was returned for query")
         if not instances:
@@ -395,40 +377,11 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
                 type_name, DBusIntrospectionObject):
             type_name = type_name.__name__
 
-        if type_name == "*" and not kwargs:
-            raise TypeError("You must specify either a type name or a filter.")
-
+        new_query = self._query.select_descendant(type_name, kwargs)
         _logger.debug(
             "Selecting objects of %s with attributes: %r",
             'any type' if type_name == '*' else 'type ' + type_name, kwargs)
-
-        server_side_filters = []
-        client_side_filters = {}
-        for k, v in kwargs.items():
-            # LP Bug 1209029: The XPathSelect protocol does not allow all valid
-            # node names or values. We need to decide here whether the filter
-            # parameters are going to work on the backend or not. If not, we
-            # just do the processing client-side. See the
-            # _is_valid_server_side_filter_param function (below) for the
-            # specific requirements.
-            if _is_valid_server_side_filter_param(k, v):
-                server_side_filters.append(
-                    _get_filter_string_for_key_value_pair(k, v)
-                )
-            else:
-                client_side_filters[k] = v
-        filter_str = '[{}]'.format(','.join(server_side_filters)) \
-            if server_side_filters else ""
-        query_path = "%s//%s%s" % (
-            self.get_class_query_string(),
-            type_name,
-            filter_str
-        )
-
-        state_dicts = self.get_state_by_path(query_path)
-        instances = [self.make_introspection_object(i) for i in state_dicts]
-        return [i for i in instances
-                if _object_passes_filters(i, **client_side_filters)]
+        return execute_query(new_query, self._backend, self._id, type(self))
 
     def refresh_state(self):
         """Refreshes the object's state.
@@ -566,22 +519,6 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             return b"//" + self._path + filter_str.encode('utf-8')
         else:
             return self._path + filter_str.encode('utf-8')
-
-    def make_introspection_object(self, dbus_tuple):
-        """Make an introspection object given a DBus tuple of
-        (path, state_dict).
-
-        This only works for classes that derive from DBusIntrospectionObject.
-
-        :returns: A proxy object that derives from DBusIntrospectionObject
-        :raises ValueError: if more than one class is appropriate for this
-                 dbus_tuple
-
-        """
-        path, state = dbus_tuple
-        class_object = _get_proxy_object_class(
-            _object_registry[self._id], type(self), path, state)
-        return class_object(state, path, self._backend)
 
     def print_tree(self, output=None, maxdepth=None, _curdepth=0):
         """Print properties of the object and its children to a stream.
@@ -734,97 +671,3 @@ def _get_filter_string_for_key_value_pair(key, value):
         return "{}={}".format(key, repr(value))
     else:
         raise ValueError("Unsupported value type: {}".format(type(value)))
-
-
-def _get_proxy_object_class(proxy_class_dict, default_class, path, state):
-    """Return a custom proxy class, either from the list or the default.
-
-    Use helper functions to check the class list or return the default.
-    :param proxy_class_dict: dict of proxy classes to try
-    :param default_class: default class to use if nothing in dict matches
-    :param path: dbus path
-    :param state: dbus state
-    :returns: appropriate custom proxy class
-    :raises ValueError: if more than one class in the dict matches
-
-    """
-    class_type = _try_custom_proxy_classes(proxy_class_dict, path, state)
-    if class_type:
-        return class_type
-    return _get_default_proxy_class(default_class,
-                                    get_classname_from_path(path))
-
-
-def _try_custom_proxy_classes(proxy_class_dict, path, state):
-    """Identify which custom proxy class matches the dbus path and state.
-
-    If more than one class in proxy_class_dict matches, raise an exception.
-    :param proxy_class_dict: dict of proxy classes to try
-    :param path: dbus path
-    :param state: dbus state dict
-    :returns: matching custom proxy class
-    :raises ValueError: if more than one class matches
-
-    """
-    possible_classes = [c for c in proxy_class_dict.values() if
-                        c.validate_dbus_object(path, state)]
-    if len(possible_classes) > 1:
-        raise ValueError(
-            'More than one custom proxy class matches this object: '
-            'Matching classes are: %s. State is %s.  Path is %s.'
-            ','.join([repr(c) for c in possible_classes]),
-            repr(state),
-            path)
-    if len(possible_classes) == 1:
-        return possible_classes[0]
-    return None
-
-
-def _get_default_proxy_class(default_class, name):
-    """Return a custom proxy object class of the default or a base class.
-
-    We want the object to inherit from CustomEmulatorBase, not the object
-    class that is doing the selecting.
-    :param default_class: default class to use if no bases match
-    :param name: name of new class
-    :returns: custom proxy object class
-
-    """
-    get_debug_logger().warning(
-        "Generating introspection instance for type '%s' based on generic "
-        "class.", name)
-    for base in default_class.__bases__:
-        if issubclass(base, CustomEmulatorBase):
-            base_class = base
-            break
-    else:
-        base_class = default_class
-    return type(str(name), (base_class,), {})
-
-
-class _CustomEmulatorMeta(IntrospectableObjectMetaclass):
-
-    def __new__(cls, name, bases, d):
-        # only consider classes derived from CustomEmulatorBase
-        if name != 'CustomEmulatorBase':
-            # and only if they don't already have an Id set.
-            have_id = False
-            for base in bases:
-                if hasattr(base, '_id'):
-                    have_id = True
-                    break
-            if not have_id:
-                d['_id'] = uuid4()
-        return super(_CustomEmulatorMeta, cls).__new__(cls, name, bases, d)
-
-CustomEmulatorBase = _CustomEmulatorMeta('CustomEmulatorBase',
-                                         (DBusIntrospectionObject, ),
-                                         {})
-CustomEmulatorBase.__doc__ = \
-    """This class must be used as a base class for any custom emulators defined
-    within a test case.
-
-    .. seealso::
-        Tutorial Section :ref:`custom_proxy_classes`
-            Information on how to write custom emulators.
-    """

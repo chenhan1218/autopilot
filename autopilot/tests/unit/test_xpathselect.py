@@ -226,7 +226,6 @@ class XPathSelectQueryTests(TestCase):
         self.assertEqual(dict(name=u'\u2026'), q.get_client_side_filters())
 
 
-
 class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):
 
     scenarios = [

@@ -49,12 +49,12 @@ from autopilot.introspection.constants import (
 from autopilot.introspection.dbus import (
     CustomEmulatorBase,
     DBusIntrospectionObject,
-    get_classname_from_path,
 )
 from autopilot.introspection.utilities import (
     _get_bus_connections_pid,
     _pid_is_running,
 )
+from autopilot.introspection._xpathselect import get_classname_from_path
 from autopilot._timeout import Timeout
 
 

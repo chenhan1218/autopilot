@@ -47,17 +47,15 @@ from autopilot.introspection import (
     _get_application_name_from_dbus_address,
     _get_search_criteria_string_representation,
     _maybe_filter_connections_by_app_name,
-    get_classname_from_path,
+    CustomEmulatorBase,
     get_proxy_object_for_existing_process,
     ProcessSearchError,
 )
+from autopilot.introspection import backends
+from autopilot.introspection import _object_registry as object_registry
+from autopilot.introspection import _xpathselect as xpathselect
 from autopilot.introspection.dbus import (
-    _get_default_proxy_class,
-    _get_proxy_object_class,
     _object_passes_filters,
-    _object_registry,
-    _try_custom_proxy_classes,
-    CustomEmulatorBase,
     DBusIntrospectionObject,
 )
 from autopilot.introspection.qt import QtObjectProxyMixin
@@ -793,55 +791,60 @@ class MakeIntrospectionObjectTests(TestCase):
         """Verify that a class has a validation method by default."""
         self.assertTrue(callable(self.DefaultSelector.validate_dbus_object))
 
-    @patch('autopilot.introspection.dbus._get_proxy_object_class')
+    @patch.object(backends, '_get_proxy_object_class')
     def test_make_introspection_object(self, gpoc):
         """Verify that make_introspection_object makes the right call."""
         gpoc.return_value = self.DefaultSelector
-        fake_object = self.DefaultSelector(
-            dict(id=[0, 123], path=[0, '/some/path']),
-            b'/root',
-            Mock()
-        )
-        new_fake = fake_object.make_introspection_object(
-            (b'/Object', {'id': [0, 42]})
+        fake_id = Mock()
+        fake_proxy_type = Mock()
+        new_fake = backends.make_introspection_object(
+            (b'/Object', {'id': [0, 42]}),
+            None,
+            fake_id,
+            fake_proxy_type,
         )
         self.assertThat(new_fake, IsInstance(self.DefaultSelector))
         gpoc.assert_called_once_with(
-            _object_registry[fake_object._id],
-            self.DefaultSelector,
+            fake_id,
+            fake_proxy_type,
             b'/Object',
-            {}
+            {'id': [0, 42]}
         )
 
-    @patch('autopilot.introspection.dbus._try_custom_proxy_classes')
-    @patch('autopilot.introspection.dbus._get_default_proxy_class')
+    @patch.object(object_registry, '_try_custom_proxy_classes')
+    @patch.object(object_registry, '_get_default_proxy_class')
     def test_get_proxy_object_class_return_from_list(self, gdpc, tcpc):
         """_get_proxy_object_class should return the value of
         _try_custom_proxy_classes if there is one."""
         token = self.getUniqueString()
         tcpc.return_value = token
-        gpoc_return = _get_proxy_object_class(None, None, None, None)
+        gpoc_return = object_registry._get_proxy_object_class(
+            None,
+            None,
+            None,
+            None
+        )
 
         self.assertThat(gpoc_return, Equals(token))
         self.assertFalse(gdpc.called)
 
-    @patch('autopilot.introspection.dbus._try_custom_proxy_classes')
+    @patch.object(object_registry, '_try_custom_proxy_classes')
     def test_get_proxy_object_class_send_right_args(self, tcpc):
         """_get_proxy_object_class should send the right arguments to
         _try_custom_proxy_classes."""
         class_dict = {'DefaultSelector': self.DefaultSelector}
         path = '/path/to/DefaultSelector'
         state = {}
-        _get_proxy_object_class(class_dict, None, path, state)
+        object_registry._get_proxy_object_class(class_dict, None, path, state)
         tcpc.assert_called_once_with(class_dict, path, state)
 
-    @patch('autopilot.introspection.dbus._try_custom_proxy_classes')
+    @patch.object(object_registry, '_try_custom_proxy_classes')
     def test_get_proxy_object_class_not_handle_error(self, tcpc):
         """_get_proxy_object_class should not handle an exception raised by
         _try_custom_proxy_classes."""
         tcpc.side_effect = ValueError
         self.assertThat(
-            lambda: _get_proxy_object_class(
+            lambda: object_registry._get_proxy_object_class(
                 None,
                 None,
                 None,
@@ -849,54 +852,74 @@ class MakeIntrospectionObjectTests(TestCase):
             ),
             raises(ValueError))
 
-    @patch('autopilot.introspection.dbus._try_custom_proxy_classes')
-    @patch('autopilot.introspection.dbus._get_default_proxy_class')
-    @patch('autopilot.introspection.dbus.get_classname_from_path')
+    @patch.object(object_registry, '_try_custom_proxy_classes')
+    @patch.object(object_registry, '_get_default_proxy_class')
+    @patch.object(object_registry, 'get_classname_from_path')
     def test_get_proxy_object_class_call_default_call(self, gcfp, gdpc, tcpc):
         """_get_proxy_object_class should call _get_default_proxy_class if
         _try_custom_proxy_classes returns None."""
         tcpc.return_value = None
-        _get_proxy_object_class(None, None, None, None)
+        object_registry._get_proxy_object_class(None, None, None, None)
         self.assertTrue(gdpc.called)
 
-    @patch('autopilot.introspection.dbus._try_custom_proxy_classes')
-    @patch('autopilot.introspection.dbus._get_default_proxy_class')
+    @patch.object(object_registry, '_try_custom_proxy_classes')
+    @patch.object(object_registry, '_get_default_proxy_class')
     def test_get_proxy_object_class_default_args(self, gdpc, tcpc):
         """_get_proxy_object_class should pass the correct arguments to
         _get_default_proxy_class"""
         tcpc.return_value = None
         default = self.DefaultSelector
         path = '/path/to/DefaultSelector'
-        _get_proxy_object_class(None, default, path, None)
-        gdpc.assert_called_once_with(default, get_classname_from_path(path))
+        object_registry._get_proxy_object_class(None, default, path, None)
+        gdpc.assert_called_once_with(
+            default,
+            xpathselect.get_classname_from_path(path)
+        )
 
-    @patch('autopilot.introspection.dbus._try_custom_proxy_classes')
-    @patch('autopilot.introspection.dbus._get_default_proxy_class')
-    @patch('autopilot.introspection.dbus.get_classname_from_path')
+    @patch.object(object_registry, '_try_custom_proxy_classes')
+    @patch.object(object_registry, '_get_default_proxy_class')
+    @patch.object(object_registry, 'get_classname_from_path')
     def test_get_proxy_object_class_default(self, gcfp, gdpc, tcpc):
         """_get_proxy_object_class should return the value of
         _get_default_proxy_class if _try_custom_proxy_classes returns None."""
         token = self.getUniqueString()
         gdpc.return_value = token
         tcpc.return_value = None
-        gpoc_return = _get_proxy_object_class(None, None, None, None)
+        gpoc_return = object_registry._get_proxy_object_class(
+            None,
+            None,
+            None,
+            None
+        )
         self.assertThat(gpoc_return, Equals(token))
 
     def test_try_custom_proxy_classes_zero_results(self):
         """_try_custom_proxy_classes must return None if no classes match."""
         proxy_class_dict = {'NeverSelected': self.NeverSelected}
+        fake_id = self.getUniqueInteger()
         path = '/path/to/NeverSelected'
         state = {}
-        class_type = _try_custom_proxy_classes(proxy_class_dict, path, state)
+        with object_registry.patch_registry({fake_id: proxy_class_dict}):
+            class_type = object_registry._try_custom_proxy_classes(
+                fake_id,
+                path,
+                state
+            )
         self.assertThat(class_type, Equals(None))
 
     def test_try_custom_proxy_classes_one_result(self):
         """_try_custom_proxy_classes must return the matching class if there is
         exacly 1."""
         proxy_class_dict = {'DefaultSelector': self.DefaultSelector}
+        fake_id = self.getUniqueInteger()
         path = '/path/to/DefaultSelector'
         state = {}
-        class_type = _try_custom_proxy_classes(proxy_class_dict, path, state)
+        with object_registry.patch_registry({fake_id: proxy_class_dict}):
+            class_type = object_registry._try_custom_proxy_classes(
+                fake_id,
+                path,
+                state
+            )
         self.assertThat(class_type, Equals(self.DefaultSelector))
 
     def test_try_custom_proxy_classes_two_results(self):
@@ -906,19 +929,21 @@ class MakeIntrospectionObjectTests(TestCase):
                             'AlwaysSelected': self.AlwaysSelected}
         path = '/path/to/DefaultSelector'
         state = {}
-        self.assertThat(
-            lambda: _try_custom_proxy_classes(
-                proxy_class_dict,
-                path,
-                state
-            ),
-            raises(ValueError)
-        )
+        object_id = self.getUniqueInteger()
+        with object_registry.patch_registry({object_id: proxy_class_dict}):
+            self.assertThat(
+                lambda: object_registry._try_custom_proxy_classes(
+                    object_id,
+                    path,
+                    state
+                ),
+                raises(ValueError)
+            )
 
-    @patch('autopilot.introspection.dbus.get_debug_logger')
+    @patch('autopilot.introspection._object_registry.get_debug_logger')
     def test_get_default_proxy_class_logging(self, gdl):
         """_get_default_proxy_class should log a message."""
-        _get_default_proxy_class(self.DefaultSelector, None)
+        object_registry._get_default_proxy_class(self.DefaultSelector, None)
         gdl.assert_called_once_with()
 
     def test_get_default_proxy_class_base(self):
@@ -926,7 +951,7 @@ class MakeIntrospectionObjectTests(TestCase):
         class SubclassedProxy(self.DefaultSelector):
             pass
 
-        result = _get_default_proxy_class(SubclassedProxy, 'Object')
+        result = object_registry._get_default_proxy_class(SubclassedProxy, 'Object')
         self.assertTrue(result, Equals(self.DefaultSelector))
 
     def test_get_default_proxy_class_base_instead_of_self(self):
@@ -934,18 +959,27 @@ class MakeIntrospectionObjectTests(TestCase):
         class SubclassedProxy(self.DefaultSelector):
             pass
 
-        result = _get_default_proxy_class(SubclassedProxy, 'Object')
+        result = object_registry._get_default_proxy_class(
+            SubclassedProxy,
+            'Object'
+        )
         self.assertFalse(issubclass(result, SubclassedProxy))
 
     def test_get_default_proxy_class(self):
         """Must default to own class if no usable bases present."""
-        result = _get_default_proxy_class(self.DefaultSelector, 'Object')
+        result = object_registry._get_default_proxy_class(
+            self.DefaultSelector,
+            'Object'
+        )
         self.assertTrue(result, Equals(self.DefaultSelector))
 
     def test_get_default_proxy_name(self):
         """Must default to own class if no usable bases present."""
         token = self.getUniqueString()
-        result = _get_default_proxy_class(self.DefaultSelector, token)
+        result = object_registry._get_default_proxy_class(
+            self.DefaultSelector,
+            token
+        )
         self.assertThat(result.__name__, Equals(token))
 
     def test_validate_dbus_object_matches_on_class_name(self):

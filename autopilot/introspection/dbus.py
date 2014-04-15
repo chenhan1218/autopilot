@@ -50,11 +50,6 @@ from autopilot.utilities import (
 _logger = logging.getLogger(__name__)
 
 
-# TODO: de-deuplicate this!
-def get_classname_from_path(object_path):
-    return object_path.split("/")[-1]
-
-
 def _object_passes_filters(instance, **kwargs):
     """Return true if *instance* satisifies all the filters present in
     kwargs."""
@@ -76,6 +71,13 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
     under test. It handles transparently refreshing attribute values when
     needed, and contains many methods to select child objects in the
     introspection tree.
+
+    This class must be used as a base class for any custom emulators
+    defined within a test case.
+
+    .. seealso::
+        Tutorial Section :ref:`custom_proxy_classes`
+            Information on how to write custom emulators.
 
     """
 
@@ -114,7 +116,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         # don't store id in state dictionary -make it a proper instance
         # attribute. If id is not present, raise a ValueError.
         try:
-            self.id = int(state_dict.pop('id')[1])
+            self.id = int(state_dict['id'][1])
         except KeyError:
             raise ValueError(
                 "State dictionary does not contain required 'id' key."
@@ -122,6 +124,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         self.__state = {}
         for key, value in translate_state_keys(state_dict).items():
+            if key == 'id':
+                continue
             try:
                 self.__state[key] = create_value_instance(value, self, key)
             except ValueError as e:
@@ -607,8 +611,12 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         :returns: Whether this class is appropriate for the dbus object
 
         """
-        name = get_classname_from_path(path)
+        name = xpathselect.get_classname_from_path(path)
         return cls.__name__ == name
+
+
+# TODO - can we add a deprecation warning around this somehow?
+CustomEmulatorBase = DBusIntrospectionObject
 
 
 def _is_valid_server_side_filter_param(key, value):

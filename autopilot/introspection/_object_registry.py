@@ -30,7 +30,9 @@ autopilot creates.
 
 from uuid import uuid4
 
+from autopilot.introspection._xpathselect import get_classname_from_path
 from autopilot.utilities import get_debug_logger
+from contextlib import contextmanager
 
 _object_registry = {}
 
@@ -39,20 +41,41 @@ class IntrospectableObjectMetaclass(type):
     """Metaclass to insert appropriate classes into the object registry."""
 
     def __new__(cls, classname, bases, classdict):
-        """Add class name to type registry."""
-        class_object = type.__new__(cls, classname, bases, classdict)
-        if classname in (
+        """Create a new proxy class, possibly adding it to the object registry.
+
+        Test authors may derive a class from DBusIntrospectionObject or the
+        CustomEmulatorBase alias and use this as their 'emulator base'. This
+        class will be given a unique '_id' attribute. That attribute is the
+        first level index into the object registry. It's used so we can have
+        custom proxy classes for more than one process at the same time and
+        avoid clashes in the dictionary.
+        """
+
+        # ignore the classes at the top of the inheritance heirarchy (i.e.- the
+        # ones that we control.)
+        if classname not in (
             'ApplicationProxyObject',
             'CustomEmulatorBase',
             'DBusIntrospectionObject',
+            'DBusIntrospectionObjectBase',
         ):
-            return class_object
+            # also ignore classes that derive from a class that already has the
+            # _id attribute set.
+            have_id = any([hasattr(b, '_id') for b in bases])
+            if not have_id:
+                # Add the '_id' attribute as a class attr:
+                classdict['_id'] = uuid4()
 
+        # make the object. Nothing special here.
+        class_object = type.__new__(cls, classname, bases, classdict)
+
+        # If the newly made object has an id, add it to the object registry.
         if getattr(class_object, '_id', None) is not None:
             if class_object._id in _object_registry:
                 _object_registry[class_object._id][classname] = class_object
             else:
                 _object_registry[class_object._id] = {classname: class_object}
+        # in all cases, return the class unchanged.
         return class_object
 
 
@@ -63,32 +86,18 @@ DBusIntrospectionObjectBase = IntrospectableObjectMetaclass(
 )
 
 
-class _CustomEmulatorMeta(IntrospectableObjectMetaclass):
-
-    def __new__(cls, name, bases, d):
-        # only consider classes derived from CustomEmulatorBase
-        if name != 'CustomEmulatorBase':
-            # and only if they don't already have an Id set.
-            have_id = False
-            for base in bases:
-                if hasattr(base, '_id'):
-                    have_id = True
-                    break
-            if not have_id:
-                d['_id'] = uuid4()
-        return super(_CustomEmulatorMeta, cls).__new__(cls, name, bases, d)
-
-
-# TODO: de-duplicate this!
-def get_classname_from_path(object_path):
-    return object_path.split("/")[-1]
-
-
 def _get_proxy_object_class(object_id, default_class, path, state):
-    """Return a custom proxy class, either from the list or the default.
+    """Return a custom proxy class, from the object registry or the default.
 
-    Use helper functions to check the class list or return the default.
-    :param proxy_class_dict: dict of proxy classes to try
+    This function first inspects the object registry using the object_id passed
+    in. The object_id will be unique to all custom proxy classes for the same
+    application.
+
+    If that fails, we create a class on the fly based on the default class.
+
+    :param object_id: The _id attribute of the class doing the lookup. This is
+        used to index into the object registry to retrieve the dict of proxy
+        classes to try
     :param default_class: default class to use if nothing in dict matches
     :param path: dbus path
     :param state: dbus state
@@ -96,15 +105,14 @@ def _get_proxy_object_class(object_id, default_class, path, state):
     :raises ValueError: if more than one class in the dict matches
 
     """
-    proxy_class_dict = _object_registry[object_id]
-    class_type = _try_custom_proxy_classes(proxy_class_dict, path, state)
+    class_type = _try_custom_proxy_classes(object_id, path, state)
     if class_type:
         return class_type
     return _get_default_proxy_class(default_class,
                                     get_classname_from_path(path))
 
 
-def _try_custom_proxy_classes(proxy_class_dict, path, state):
+def _try_custom_proxy_classes(object_id, path, state):
     """Identify which custom proxy class matches the dbus path and state.
 
     If more than one class in proxy_class_dict matches, raise an exception.
@@ -115,6 +123,7 @@ def _try_custom_proxy_classes(proxy_class_dict, path, state):
     :raises ValueError: if more than one class matches
 
     """
+    proxy_class_dict = _object_registry[object_id]
     possible_classes = [c for c in proxy_class_dict.values() if
                         c.validate_dbus_object(path, state)]
     if len(possible_classes) > 1:
@@ -132,8 +141,10 @@ def _try_custom_proxy_classes(proxy_class_dict, path, state):
 def _get_default_proxy_class(default_class, name):
     """Return a custom proxy object class of the default or a base class.
 
-    We want the object to inherit from CustomEmulatorBase, not the object
-    class that is doing the selecting.
+    We want the object to inherit from the class that is set as the emulator
+    base class, not the class that is doing the selecting (which will be the
+    'default_class' parameter).
+
     :param default_class: default class to use if no bases match
     :param name: name of new class
     :returns: custom proxy object class
@@ -143,7 +154,7 @@ def _get_default_proxy_class(default_class, name):
         "Generating introspection instance for type '%s' based on generic "
         "class.", name)
     for base in default_class.__bases__:
-        if issubclass(base, CustomEmulatorBase):
+        if hasattr(base, '_id'):
             base_class = base
             break
     else:
@@ -151,27 +162,20 @@ def _get_default_proxy_class(default_class, name):
     return type(str(name), (base_class,), {})
 
 
-def _create_custom_proxy_object_base(proxy_base_class):
-    class_object = _CustomEmulatorMeta(
-        'CustomEmulatorBase',
-        (proxy_base_class, ),
-        {}
-    )
-    class_object.__doc__ = \
-        """This class must be used as a base class for any custom emulators
-        defined within a test case.
+@contextmanager
+def patch_registry(new_registry):
+    """A utility context manager that allows us to patch the object registry.
 
-        .. seealso::
-            Tutorial Section :ref:`custom_proxy_classes`
-                Information on how to write custom emulators.
-        """
-    return class_object
+    Within the scope of the context manager, the object registry will be set
+    to the 'new_registry' value passed in. When the scope exits, the old object
+    registry will be restored.
 
-
-# This doesn't work at the moment, simply because DBusIntrospectionObject isn't
-# availabel right now. However, once the DBusIntrospectionObject has been
-# cleaned up we should be able to reduce it to a pure interface that allows us
-# to import it (as it shouldn't depend on the object registry.)
-class DBusIntrospectionObject(object):  # make it build
-    pass
-CustomEmulatorBase = _create_custom_proxy_object_base(DBusIntrospectionObject)
+    """
+    global _object_registry
+    old_registry = _object_registry
+    _object_registry = new_registry
+    try:
+        yield
+    except Exception:
+        _object_registry = old_registry
+        raise

@@ -328,3 +328,8 @@ def _get_filter_string_for_key_value_pair(key, value):
         return "{}={}".format(key, repr(value)).encode('utf-8')
     else:
         raise ValueError("Unsupported value type: {}".format(type(value)))
+
+
+def get_classname_from_path(object_path):
+    """Given an object path, return the class name component."""
+    return object_path.split("/")[-1]

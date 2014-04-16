@@ -627,7 +627,7 @@ def _get_details_from_state_data(state_data):
     object_path, object_state = state_data
     return (
         get_classname_from_path(object_path),
-        object_path,
+        object_path.encode('utf-8'),
         object_state,
     )
 

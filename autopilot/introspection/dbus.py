@@ -91,6 +91,10 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             self.id
         )
 
+    def _execute_query(self, query):
+        """Execute query object 'query' and return the result."""
+        return execute_query(query, self._backend, self._id, type(self))
+
     def _set_properties(self, state_dict):
         """Creates and set attributes of *self* based on contents of
         *state_dict*.
@@ -152,7 +156,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             kwargs
         )
 
-        return execute_query(new_query)
+        return self._execute_query(new_query)
 
     def get_properties(self):
         """Returns a dictionary of all the properties on this class.
@@ -186,7 +190,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         # TODO - make wildcard searches use a constnat from xpathselect module?
         new_query = self._query.select_child('*')
-        return execute_query(new_query)
+        return self._execute_query(new_query)
 
     def get_parent(self):
         """Returns the parent of this object.
@@ -243,13 +247,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             get_type_name(type_name),
             kwargs
         )
-        instances = execute_query(
-            new_query,
-            self._backend,
-            self._id,
-            type(self)
-        )
-        # instances = self.select_many(type_name, **kwargs)
+        instances = self._execute_query(new_query)
         if len(instances) > 1:
             raise ValueError("More than one item was returned for query")
         if not instances:
@@ -364,7 +362,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         _logger.debug(
             "Selecting objects of %s with attributes: %r",
             'any type' if type_name == '*' else 'type ' + type_name, kwargs)
-        return execute_query(new_query, self._backend, self._id, type(self))
+        return self._execute_query(new_query)
 
     def refresh_state(self):
         """Refreshes the object's state.

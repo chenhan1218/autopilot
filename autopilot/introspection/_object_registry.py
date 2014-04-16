@@ -97,7 +97,7 @@ def _get_proxy_object_class(object_id, default_class, path, state):
 
     :param object_id: The _id attribute of the class doing the lookup. This is
         used to index into the object registry to retrieve the dict of proxy
-        classes to try
+        classes to try.
     :param default_class: default class to use if nothing in dict matches
     :param path: dbus path
     :param state: dbus state

@@ -17,11 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import absolute_import
+
 import sys
 import tempfile
 import shutil
 import os.path
 
+from dbus import String
 from mock import patch, Mock, MagicMock
 from textwrap import dedent
 from testtools import TestCase
@@ -632,7 +635,7 @@ class MakeProxyClassObjectTests(TestCase):
 
 class GetDetailsFromStateDataTests(TestCase):
 
-    fake_state_data = ('/some/path', dict(foo=123))
+    fake_state_data = (String('/some/path'), dict(foo=123))
 
     def test_returns_classname(self):
         class_name, _, _ = _i._get_details_from_state_data(
@@ -643,6 +646,10 @@ class GetDetailsFromStateDataTests(TestCase):
     def test_returns_path(self):
         _, path, _ = _i._get_details_from_state_data(self.fake_state_data)
         self.assertThat(path, Equals('/some/path'))
+
+    def test_returned_path_is_bytestring(self):
+        _, path, _ = _i._get_details_from_state_data(self.fake_state_data)
+        self.assertThat(path, IsInstance(type(b'')))
 
     def test_returns_state_dict(self):
         _, _, state = _i._get_details_from_state_data(self.fake_state_data)

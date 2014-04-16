@@ -30,7 +30,6 @@ from __future__ import absolute_import
 from contextlib import contextmanager
 import sys
 import logging
-import re
 import six
 
 from autopilot.exceptions import StateNotFoundError
@@ -148,26 +147,12 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             Tutorial Section :ref:`custom_proxy_classes`
 
         """
-        new_query = self._query.select_child(desired_type, kwargs)
+        new_query = self._query.select_child(
+            get_type_name(desired_type),
+            kwargs
+        )
 
-        #TODO: if kwargs has exactly one item in it we should specify the
-        # restriction in the XPath query, so it gets processed in the Unity C++
-        # code rather than in Python.
-        instances = self.get_children()
-
-        result = []
-        for instance in instances:
-            # Skip items that are not instances of the desired type:
-            if isinstance(desired_type, six.string_types):
-                if instance.__class__.__name__ != desired_type:
-                    continue
-            elif not isinstance(instance, desired_type):
-                continue
-
-            #skip instances that fail attribute check:
-            if _object_passes_filters(instance, **kwargs):
-                result.append(instance)
-        return result
+        return execute_query(new_query)
 
     def get_properties(self):
         """Returns a dictionary of all the properties on this class.
@@ -198,10 +183,10 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         # Thomi: 2014-03-20: There used to be a call to 'self.refresh_state()'
         # here. That's not needed, since the only thing we use is the proxy
         # path, which isn't affected by the current state.
-        query = self.get_class_query_string() + b"/*"
-        state_dicts = self.get_state_by_path(query)
-        children = [self.make_introspection_object(i) for i in state_dicts]
-        return children
+
+        # TODO - make wildcard searches use a constnat from xpathselect module?
+        new_query = self._query.select_child('*')
+        return execute_query(new_query)
 
     def get_parent(self):
         """Returns the parent of this object.
@@ -210,6 +195,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         tree). Then it returns itself.
 
         """
+        # TODO: make this use the query object. Make parent selector a constant
         query = self.get_class_query_string() + "/.."
         parent_state_dicts = self.get_state_by_path(query)
 
@@ -253,7 +239,10 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             Tutorial Section :ref:`custom_proxy_classes`
 
         """
-        new_query = self._query.select_descendant(type_name, kwargs)
+        new_query = self._query.select_descendant(
+            get_type_name(type_name),
+            kwargs
+        )
         instances = execute_query(
             new_query,
             self._backend,
@@ -368,7 +357,10 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
                 type_name, DBusIntrospectionObject):
             type_name = type_name.__name__
 
-        new_query = self._query.select_descendant(type_name, kwargs)
+        new_query = self._query.select_descendant(
+            get_type_name(type_name),
+            kwargs
+        )
         _logger.debug(
             "Selecting objects of %s with attributes: %r",
             'any type' if type_name == '*' else 'type ' + type_name, kwargs)
@@ -604,3 +596,15 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
 # TODO - can we add a deprecation warning around this somehow?
 CustomEmulatorBase = DBusIntrospectionObject
+
+
+def get_type_name(maybe_string_or_class):
+    """Get a type name from something that might be a class or a string.
+
+    This is a temporary funtion that will be removed once custom proxy classes
+    can specify the query to be used to select themselves.
+
+    """
+    if not isinstance(maybe_string_or_class, six.string_types):
+        return maybe_string_or_class.__name__
+    return maybe_string_or_class

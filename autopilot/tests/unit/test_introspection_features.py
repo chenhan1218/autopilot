@@ -54,9 +54,7 @@ from autopilot.introspection import (
 from autopilot.introspection import backends
 from autopilot.introspection import _object_registry as object_registry
 from autopilot.introspection import _xpathselect as xpathselect
-from autopilot.introspection.dbus import (
-    DBusIntrospectionObject,
-)
+from autopilot.introspection import dbus
 from autopilot.introspection.qt import QtObjectProxyMixin
 import autopilot.introspection as _i
 from autopilot.utilities import sleep
@@ -135,7 +133,7 @@ class ClientSideFilteringTests(TestCase):
 class DBusIntrospectionObjectTests(TestCase):
 
     def test_can_access_path_attribute(self):
-        fake_object = DBusIntrospectionObject(
+        fake_object = dbus.DBusIntrospectionObject(
             dict(id=[0, 123], path=[0, '/some/path']),
             b'/root',
             Mock()
@@ -150,7 +148,7 @@ class DBusIntrospectionObjectTests(TestCase):
         'large' is defined as more than 15.
 
         """
-        fake_object = DBusIntrospectionObject(
+        fake_object = dbus.DBusIntrospectionObject(
             dict(id=[0, 123], path=[0, '/some/path']),
             b'/root',
             Mock()
@@ -173,7 +171,7 @@ class DBusIntrospectionObjectTests(TestCase):
         'small' is defined as 15 or fewer.
 
         """
-        fake_object = DBusIntrospectionObject(
+        fake_object = dbus.DBusIntrospectionObject(
             dict(id=[0, 123], path=[0, '/some/path']),
             b'/root',
             Mock()
@@ -186,7 +184,7 @@ class DBusIntrospectionObjectTests(TestCase):
 
     def test_wait_until_destroyed_works(self):
         """wait_until_destroyed must return if no new state is found."""
-        fake_object = DBusIntrospectionObject(
+        fake_object = dbus.DBusIntrospectionObject(
             dict(id=[0, 123]),
             b'/root',
             Mock()
@@ -201,7 +199,7 @@ class DBusIntrospectionObjectTests(TestCase):
 
         """
         fake_state = dict(id=[0, 123])
-        fake_object = DBusIntrospectionObject(
+        fake_object = dbus.DBusIntrospectionObject(
             fake_state,
             b'/root',
             Mock()
@@ -220,7 +218,7 @@ class DBusIntrospectionObjectTests(TestCase):
     def _print_test_fake_object(self):
         """common fake object for print_tree tests"""
 
-        fake_object = DBusIntrospectionObject(
+        fake_object = dbus.DBusIntrospectionObject(
             dict(id=[0, 123], path=[0, '/some/path'], text=[0, 'Hello']),
             b'/some/path',
             Mock()
@@ -989,3 +987,17 @@ class MakeIntrospectionObjectTests(TestCase):
         selected = self.DefaultSelector.validate_dbus_object(
             '/DefaultSelector', {})
         self.assertTrue(selected)
+
+
+class GetTypeNameTests(TestCase):
+
+    """Tests for the autopilot.introspection.dbus.get_type_name function."""
+
+    def test_returns_string(self):
+        token = self.getUniqueString()
+        self.assertEqual(token, dbus.get_type_name(token))
+
+    def test_returns_class_name(self):
+        class FooBarBaz(object):
+            pass
+        self.assertEqual("FooBarBaz", dbus.get_type_name(FooBarBaz))

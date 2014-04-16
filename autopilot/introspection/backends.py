@@ -212,7 +212,10 @@ def execute_query(query, backend, id, proxy_type):
         objects = [make_introspection_object(t) for t in data]
         if query.needs_client_side_filtering():
             return filter(
-                lambda i: _object_passes_filters(i, **query.get_client_side_filters()),
+                lambda i: _object_passes_filters(
+                    i,
+                    **query.get_client_side_filters()
+                ),
                 objects
             )
         return objects

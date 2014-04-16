@@ -375,7 +375,11 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             has been destroyed.
 
         """
-        _, new_state = backends.execute_query_get_data(self._query)
+        states = backends.execute_query_get_data(
+            self._query,
+            self._backend
+        )
+        _, new_state = states[0]
         self._set_properties(new_state)
 
     def get_all_instances(self):

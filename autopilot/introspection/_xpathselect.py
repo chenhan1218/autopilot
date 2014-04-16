@@ -86,6 +86,8 @@ class Query(object):
         :raises ValueError: If the query is set to b'*' and 'filters' does not
             contain any server-side filters, and operation is set to
             Query.Operation.DESCENDANT.
+        :raises ValueError: When 'filters' are specified while trying to select
+            a parent node in the introspection tree.
 
         """
         if not isinstance(query, six.binary_type):
@@ -105,6 +107,12 @@ class Query(object):
             raise TypeError(
                 "'operation' parameter must be bytes, not '%s'"
                 % type(operation).__name__)
+        if query == Query.PARENT and filters:
+            raise ValueError("Cannot specify filters while selecting a parent")
+        if query == Query.PARENT and operation != Query.Operation.CHILD:
+            raise ValueError(
+                "Operation must be CHILD while selecting a parent"
+            )
         if operation not in Query.Operation.ALL:
             raise ValueError("Invalid operation '%s'." % operation.decode())
         self._parent = parent

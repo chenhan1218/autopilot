@@ -235,6 +235,24 @@ class XPathSelectQueryTests(TestCase):
         q2 = q.select_parent()
         self.assertEqual(b'/root/child[id=42]/..', q2.server_query_bytes())
 
+    def test_init_raises_ValueError_when_passing_filters_and_parent(self):
+        fn = lambda: xpathselect.Query(None, b'/', b'..', dict(foo=123))
+        self.assertThat(
+            fn,
+            raises(ValueError(
+                "Cannot specify filters while selecting a parent"
+            ))
+        )
+
+    def test_init_raises_ValueError_when_passing_bad_op_and_parent(self):
+        fn = lambda: xpathselect.Query(None, b'//', b'..')
+        self.assertThat(
+            fn,
+            raises(ValueError(
+                "Operation must be CHILD while selecting a parent"
+            ))
+        )
+
 
 class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):
 

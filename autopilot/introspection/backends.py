@@ -231,8 +231,8 @@ def make_introspection_object(dbus_tuple, backend, object_id, proxy_type):
     This only works for classes that derive from DBusIntrospectionObject.
 
     :param dbus_tuple: A two-item iterable containing a dbus.String object that
-        contains the object path, and a dbus.Dictionary object that contains the
-        objects state dictionary.
+        contains the object path, and a dbus.Dictionary object that contains
+        the objects state dictionary.
     :returns: A proxy object that derives from DBusIntrospectionObject
     :raises ValueError: if more than one class is appropriate for this
              dbus_tuple

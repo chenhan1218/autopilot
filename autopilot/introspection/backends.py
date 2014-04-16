@@ -197,8 +197,8 @@ class DBusAddress(object):
             name, self._addr_tuple.connection, self._addr_tuple.object_path)
 
 
-def execute_query(query, backend, id, proxy_type):
-    """Execute 'query' on 'backend', returning new proxy objects."""
+def execute_query_get_data(query, backend):
+    """Execute 'query' on 'backend', the raw dbus reply."""
     with Timer("GetState %r" % query):
         data = backend.introspection_iface.GetState(query.server_query_bytes())
         if len(data) > 15:
@@ -209,19 +209,25 @@ def execute_query(query, backend, id, proxy_type):
                 query,
                 len(data)
             )
-        objects = [
-            make_introspection_object(t, backend, id, proxy_type)
-            for t in data
-        ]
-        if query.needs_client_side_filtering():
-            return filter(
-                lambda i: _object_passes_filters(
-                    i,
-                    **query.get_client_side_filters()
-                ),
-                objects
-            )
-        return objects
+        return data
+
+
+def execute_query_get_proxy_instances(query, backend, id, proxy_type):
+    """Execute 'query' on 'backend', returning proxy instances."""
+    data = execute_query_get_data(query, backend)
+    objects = [
+        make_introspection_object(t, backend, id, proxy_type)
+        for t in data
+    ]
+    if query.needs_client_side_filtering():
+        return filter(
+            lambda i: _object_passes_filters(
+                i,
+                **query.get_client_side_filters()
+            ),
+            objects
+        )
+    return objects
 
 
 def make_introspection_object(dbus_tuple, backend, object_id, proxy_type):

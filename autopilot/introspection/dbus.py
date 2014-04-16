@@ -33,7 +33,7 @@ import logging
 import six
 
 from autopilot.exceptions import StateNotFoundError
-from autopilot.introspection.backends import execute_query
+from autopilot.introspection import backends
 from autopilot.introspection._object_registry import (
     DBusIntrospectionObjectBase,
 )
@@ -93,7 +93,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
     def _execute_query(self, query):
         """Execute query object 'query' and return the result."""
-        return execute_query(
+        return backends.execute_query_get_proxy_instances(
             query,
             self._backend,
             getattr(self, '_id', None),
@@ -375,7 +375,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             has been destroyed.
 
         """
-        _, new_state = self.get_new_state()
+        _, new_state = backends.execute_query_get_data(self._query)
         self._set_properties(new_state)
 
     def get_all_instances(self):

@@ -502,9 +502,11 @@ Loading tests from: %s
         """RecordMyDesktop should clean up its session files in tmp dir."""
         session_dir_pattern = '/tmp/rMD-session*'
         print('entered funtion')
+
         def remove_recording_session_dirs():
             for dir in glob.glob(session_dir_pattern):
                 shutil.rmtree(dir)
+
         print('defined inner funtion')
         self.addCleanup(remove_recording_session_dirs)
         print('added cleanup')

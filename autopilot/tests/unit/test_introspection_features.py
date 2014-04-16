@@ -803,7 +803,7 @@ class MakeIntrospectionObjectTests(TestCase):
         fake_id = Mock()
         fake_proxy_type = Mock()
         new_fake = backends.make_introspection_object(
-            (b'/Object', {'id': [0, 42]}),
+            (String('/Object'), {'id': [0, 42]}),
             None,
             fake_id,
             fake_proxy_type,

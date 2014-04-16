@@ -25,6 +25,9 @@ Not all our tests are automated at the moment. Specifically, the vis tool is lac
   - Make sure you can select window-mocker from the connection list.
   - Make sure the top-level tree node is 'window-mocker'
  - Run the vis tool with the '-testability' flag enabled. Run a second vis tool, and make sure that the second vis tool can introspect the first.
-
-
-
+ - Make sure that the component overlay feature highlights the selected item in the tree view, as long as it has a globalRect.
+ - Make sure that searching works:
+  - Searching narrows down tree view to just the nodes that match the search criteria.
+  - Searching turns off the current component overlay (if any).
+  - Resetting the search restores the tree view to the full tree.
+  - Resetting the search turns off the current component overlay (if any).

@@ -141,7 +141,7 @@ class DbusQueryTests(AutopilotTestCase):
     def test_select_single_no_name_no_parameter_raises_exception(self):
         app = self.start_fully_featured_app()
         fn = lambda: app.select_single()
-        self.assertThat(fn, raises(TypeError))
+        self.assertThat(fn, raises(ValueError))
 
     def test_select_single_no_match_raises_exception(self):
         app = self.start_fully_featured_app()
@@ -171,7 +171,7 @@ class DbusQueryTests(AutopilotTestCase):
     def test_select_many_no_name_no_parameter_raises_exception(self):
         app = self.start_fully_featured_app()
         fn = lambda: app.select_single()
-        self.assertThat(fn, raises(TypeError))
+        self.assertThat(fn, raises(ValueError))
 
     def test_select_many_only_using_parameters(self):
         app = self.start_fully_featured_app()

@@ -407,11 +407,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         introspection tree.
 
         """
-        instances = self.get_state_by_path("/")
-        if len(instances) != 1:
-            _logger.error("Could not retrieve root object.")
-            return None
-        return self.make_introspection_object(instances[0])
+        query = xpathselect.Query.pseudo_tree_root()
+        return self._execute_query(query)[0]
 
     def __getattr__(self, name):
         # avoid recursion if for some reason we have no state set (should never

@@ -93,7 +93,12 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
     def _execute_query(self, query):
         """Execute query object 'query' and return the result."""
-        return execute_query(query, self._backend, self._id, type(self))
+        return execute_query(
+            query,
+            self._backend,
+            getattr(self, '_id', None),
+            type(self)
+        )
 
     def _set_properties(self, state_dict):
         """Creates and set attributes of *self* based on contents of

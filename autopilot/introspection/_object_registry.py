@@ -105,11 +105,14 @@ def _get_proxy_object_class(object_id, default_class, path, state):
     :raises ValueError: if more than one class in the dict matches
 
     """
-    class_type = _try_custom_proxy_classes(object_id, path, state)
-    if class_type:
-        return class_type
-    return _get_default_proxy_class(default_class,
-                                    get_classname_from_path(path))
+    class_type = None
+    if object_id is not None:
+        class_type = _try_custom_proxy_classes(object_id, path, state)
+
+    return class_type or _get_default_proxy_class(
+        default_class,
+        get_classname_from_path(path)
+    )
 
 
 def _try_custom_proxy_classes(object_id, path, state):

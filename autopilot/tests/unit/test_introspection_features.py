@@ -230,6 +230,7 @@ class DBusIntrospectionObjectTests(TestCase):
         # no_automatic_refreshing()
         fake_object.refresh_state = lambda: None
         fake_object.get_state_by_path = lambda query: []
+        fake_object._execute_query = lambda q: []
         return fake_object
 
     def test_print_tree_stdout(self):
@@ -645,7 +646,7 @@ class GetDetailsFromStateDataTests(TestCase):
 
     def test_returns_path(self):
         _, path, _ = _i._get_details_from_state_data(self.fake_state_data)
-        self.assertThat(path, Equals('/some/path'))
+        self.assertThat(path, Equals(b'/some/path'))
 
     def test_returned_path_is_bytestring(self):
         _, path, _ = _i._get_details_from_state_data(self.fake_state_data)
@@ -823,7 +824,7 @@ class MakeIntrospectionObjectTests(TestCase):
         token = self.getUniqueString()
         tcpc.return_value = token
         gpoc_return = object_registry._get_proxy_object_class(
-            None,
+            "fake_id",  # cannot set to none.
             None,
             None,
             None
@@ -849,7 +850,7 @@ class MakeIntrospectionObjectTests(TestCase):
         tcpc.side_effect = ValueError
         self.assertThat(
             lambda: object_registry._get_proxy_object_class(
-                None,
+                "None",  # Cannot be set to None, but don't care about value
                 None,
                 None,
                 None

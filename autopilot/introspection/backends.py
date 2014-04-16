@@ -236,6 +236,7 @@ def make_introspection_object(dbus_tuple, backend, object_id, proxy_type):
 
     """
     path, state = dbus_tuple
+    path = path.encode('utf-8')
     class_object = _get_proxy_object_class(object_id, proxy_type, path, state)
     return class_object(state, path, backend)
 

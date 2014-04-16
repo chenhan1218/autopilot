@@ -254,6 +254,19 @@ class XPathSelectQueryTests(TestCase):
             ))
         )
 
+    def test_select_tree_root_returns_correct_query(self):
+        q = xpathselect.Query.pseudo_tree_root()
+        self.assertEqual(b'/', q.server_query_bytes())
+
+    def test_cannot_select_child_on_pseudo_tree_root(self):
+        fn = lambda: xpathselect.Query.pseudo_tree_root().select_child('foo')
+        self.assertThat(
+            fn,
+            raises(InvalidXPathQuery(
+                "Cannot select children from a pseudo-tree-root query."
+            ))
+        )
+
 
 class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):
 

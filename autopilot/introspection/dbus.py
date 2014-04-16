@@ -351,10 +351,6 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             Tutorial Section :ref:`custom_proxy_classes`
 
         """
-        if not isinstance(type_name, str) and issubclass(
-                type_name, DBusIntrospectionObject):
-            type_name = type_name.__name__
-
         new_query = self._query.select_descendant(
             get_type_name(type_name),
             kwargs

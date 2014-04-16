@@ -122,6 +122,10 @@ class Query(object):
             raise InvalidXPathQuery(
                 "Invalid operation '%s'." % operation.decode()
             )
+        if parent and parent.server_query_bytes() == b'/':
+            raise InvalidXPathQuery(
+                "Cannot select children from a pseudo-tree-root query."
+            )
         self._parent = parent
         self._operation = operation
         self._query = query
@@ -191,6 +195,23 @@ class Query(object):
                     query = query.select_child(n)
         return query
 
+    @staticmethod
+    def pseudo_tree_root():
+        """Return a Query instance that will select the root of the tree.
+
+        Unlike the 'root' method, this method does not need to know the name of
+        the tree root. However, the query returned by this method cannot be
+        used as the parent for any other query. In other words, calling any
+        of the 'select_child', 'select_parent', 'select_descendant' method will
+        raise a InvalidXPathQuery error.
+
+        If at all possible, it's better to use the 'root' method instead of
+        this one. The queries returned by this method are useful for getting
+        the root proxy object, and then discarding the query.
+
+        """
+        return Query(None, Query.Operation.CHILD, b'')
+
     def needs_client_side_filtering(self):
         """Return true if this query requires some filtering on the client-side
         """
@@ -200,6 +221,9 @@ class Query(object):
         )
 
     def get_client_side_filters(self):
+        """Return a dictionary of filters that must be processed on the client
+        rather than the server.
+        """
         return self._client_filters
 
     def server_query_bytes(self):

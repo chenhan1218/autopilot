@@ -43,6 +43,8 @@ the server side. Query instnaces are intelligent enough to know when they must
 invoke some client-side processing - in this case the
 'needs_client_side_filtering' method will return True.
 
+Queries are executed in the autopilot.introspection.backends module.
+
 """
 import re
 import six

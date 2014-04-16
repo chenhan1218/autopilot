@@ -53,10 +53,7 @@ class VisAcceptanceTests(AutopilotTestCase):
         return self.launch_test_application("window-mocker", app_type="qt")
 
     def launch_vis(self):
-        """Launch both vis and windowmocker.
-
-        Returns proxy objects for both windowmocker and vis.
-        """
+        """Launch the vis tool and return it's proxy object."""
         launcher = self.useFixture(
             VisToolLauncher(
                 self.addDetail,

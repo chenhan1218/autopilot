@@ -61,8 +61,8 @@ class Query(object):
 
         ALL = (ROOT, CHILD, DESCENDANT)
 
-    SELECT_PARENT = b'..'
-    SELECT_WILDCARD = b'*'
+    PARENT = b'..'
+    WILDCARD = b'*'
 
     def __init__(self, parent, operation, query, filters={}):
         """Create a new query object.
@@ -119,7 +119,7 @@ class Query(object):
         }
         if (
             operation == Query.Operation.DESCENDANT
-            and query == Query.SELECT_WILDCARD
+            and query == Query.WILDCARD
             and not self._server_filters
         ):
             raise ValueError(
@@ -256,6 +256,19 @@ class Query(object):
             ancestor_name,
             filters
         )
+
+    def select_parent(self):
+        """Return a query matching the parent node of the current node.
+
+        Calling this on the root node will return a query that looks like it
+        ought to select the parent of the root (something like: b'/root/..').
+        This is however perfectly safe, as the server-side will just return
+        the root node in this case.
+
+        :returns: A Query instance that will match the parent node.
+
+        """
+        return Query(self, Query.Operation.CHILD, Query.PARENT)
 
 
 def _try_encode_type_name(name):

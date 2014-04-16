@@ -225,6 +225,16 @@ class XPathSelectQueryTests(TestCase):
             .select_child('leaf', dict(name=u'\u2026'))
         self.assertEqual(dict(name=u'\u2026'), q.get_client_side_filters())
 
+    def test_get_parent_on_root_node_returns_the_same_query(self):
+        q = xpathselect.Query.root('app')
+        q2 = q.select_parent()
+        self.assertEqual(b'/app/..', q2.server_query_bytes())
+
+    def test_get_parent_on_node_returns_parent_query(self):
+        q = xpathselect.Query.new_from_path_and_id(b'/root/child', 42)
+        q2 = q.select_parent()
+        self.assertEqual(b'/root/child[id=42]/..', q2.server_query_bytes())
+
 
 class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):
 

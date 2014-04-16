@@ -61,6 +61,9 @@ class Query(object):
 
         ALL = (ROOT, CHILD, DESCENDANT)
 
+    SELECT_PARENT = b'..'
+    SELECT_WILDCARD = b'*'
+
     def __init__(self, parent, operation, query, filters={}):
         """Create a new query object.
 
@@ -116,7 +119,7 @@ class Query(object):
         }
         if (
             operation == Query.Operation.DESCENDANT
-            and query == b'*'
+            and query == Query.SELECT_WILDCARD
             and not self._server_filters
         ):
             raise ValueError(

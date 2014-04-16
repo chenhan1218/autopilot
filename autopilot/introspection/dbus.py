@@ -193,8 +193,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         # here. That's not needed, since the only thing we use is the proxy
         # path, which isn't affected by the current state.
 
-        # TODO - make wildcard searches use a constnat from xpathselect module?
-        new_query = self._query.select_child('*')
+        new_query = self._query.select_child(xpathselect.Query.WILDCARD)
         return self._execute_query(new_query)
 
     def get_parent(self):

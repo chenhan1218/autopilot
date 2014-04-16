@@ -203,12 +203,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         tree). Then it returns itself.
 
         """
-        # TODO: make this use the query object. Make parent selector a constant
-        query = self.get_class_query_string() + "/.."
-        parent_state_dicts = self.get_state_by_path(query)
-
-        parent = self.make_introspection_object(parent_state_dicts[0])
-        return parent
+        new_query = self._query.select_parent()
+        return self._execute_query(new_query)[0]
 
     def select_single(self, type_name='*', **kwargs):
         """Get a single node from the introspection tree, with type equal to

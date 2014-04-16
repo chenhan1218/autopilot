@@ -17,6 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""Autopilot Exceptions.
+
+This module contains exceptions that autopilot may raise in various conditions.
+Each exception is documented with when it is raised: a generic description in
+this module, as well as a detailed description in the function or method that
+raises it.
+
+"""
+
 import six
 
 
@@ -83,3 +92,9 @@ class StateNotFoundError(RuntimeError):
 
     def __unicode__(self):
         return self._message
+
+
+class InvalidXPathQuery(ValueError):
+
+    """Raised when an XPathselect query is invalid or unsupported."""
+

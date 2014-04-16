@@ -50,6 +50,7 @@ import re
 import six
 
 from autopilot.utilities import compatible_repr
+from autopilot.exceptions import InvalidXPathQuery
 
 
 class Query(object):
@@ -79,16 +80,16 @@ class Query(object):
         :param filters: A dictionary of filters to apply.
 
         :raises TypeError: If the 'query' parameter is not 'bytes'.
-        :raises ValueError: If parent is specified, and the parent query needs
+        :raises TypeError: If the operation parameter is not 'bytes'.
+        :raises InvalidXPathQuery: If parent is specified, and the parent query needs
             client side filter processing. Only the last query in the query
             chain can have filters that need to be executed on the client-side.
-        :raises TypeError: If the operation parameter is not 'bytes'.
-        :raises ValueError: If operation is not one of the members of the
+        :raises InvalidXPathQuery: If operation is not one of the members of the
             Query.Operation class.
-        :raises ValueError: If the query is set to b'*' and 'filters' does not
-            contain any server-side filters, and operation is set to
+        :raises InvalidXPathQuery: If the query is set to Query.WILDCARD and 'filters'
+            does not contain any server-side filters, and operation is set to
             Query.Operation.DESCENDANT.
-        :raises ValueError: When 'filters' are specified while trying to select
+        :raises InvalidXPathQuery: When 'filters' are specified while trying to select
             a parent node in the introspection tree.
 
         """
@@ -97,26 +98,30 @@ class Query(object):
                 "'query' parameter must be bytes, not %s"
                 % type(query).__name__
             )
-        if (
-            parent
-            and parent.needs_client_side_filtering()
-        ):
-            raise ValueError(
-                "Cannot create a new query from a parent that requires "
-                "client-side filter processing."
-            )
         if not isinstance(operation, six.binary_type):
             raise TypeError(
                 "'operation' parameter must be bytes, not '%s'"
                 % type(operation).__name__)
+        if (
+            parent
+            and parent.needs_client_side_filtering()
+        ):
+            raise InvalidXPathQuery(
+                "Cannot create a new query from a parent that requires "
+                "client-side filter processing."
+            )
         if query == Query.PARENT and filters:
-            raise ValueError("Cannot specify filters while selecting a parent")
+            raise InvalidXPathQuery(
+                "Cannot specify filters while selecting a parent"
+            )
         if query == Query.PARENT and operation != Query.Operation.CHILD:
-            raise ValueError(
+            raise InvalidXPathQuery(
                 "Operation must be CHILD while selecting a parent"
             )
         if operation not in Query.Operation.ALL:
-            raise ValueError("Invalid operation '%s'." % operation.decode())
+            raise InvalidXPathQuery(
+                "Invalid operation '%s'." % operation.decode()
+            )
         self._parent = parent
         self._operation = operation
         self._query = query
@@ -132,7 +137,7 @@ class Query(object):
             and query == Query.WILDCARD
             and not self._server_filters
         ):
-            raise ValueError(
+            raise InvalidXPathQuery(
                 "Must provide at least one server-side filter when searching "
                 "for descendants and using a wildcard node."
             )
@@ -173,7 +178,7 @@ class Query(object):
             )
         nodes = list(filter(None, path.split(b'/')))
         if not path.startswith(b'/') or not nodes:
-            raise ValueError("Invalid path '%s'." % path.decode())
+            raise InvalidXPathQuery("Invalid path '%s'." % path.decode())
 
         query = None
         for i, n in enumerate(nodes):
@@ -286,7 +291,7 @@ def _try_encode_type_name(name):
         try:
             name = name.encode('ascii')
         except UnicodeEncodeError:
-            raise ValueError(
+            raise InvalidXPathQuery(
                 "Type name '%s', must be ASCII encodable" % (name)
             )
     return name

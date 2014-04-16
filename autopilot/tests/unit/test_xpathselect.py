@@ -22,6 +22,7 @@ from testtools import TestCase
 from testtools.matchers import raises
 
 from autopilot.introspection import _xpathselect as xpathselect
+from autopilot.exceptions import InvalidXPathQuery
 
 
 class XPathSelectQueryTests(TestCase):
@@ -54,7 +55,7 @@ class XPathSelectQueryTests(TestCase):
         self.assertThat(
             lambda: xpathselect.Query.root(u"\u2026"),
             raises(
-                ValueError("Type name '%s', must be ASCII encodable"
+                InvalidXPathQuery("Type name '%s', must be ASCII encodable"
                            % (u'\u2026'))
                 )
         )
@@ -152,7 +153,7 @@ class XPathSelectQueryTests(TestCase):
         fn = lambda: q.select_child("Foo")
         self.assertThat(
             fn,
-            raises(ValueError(
+            raises(InvalidXPathQuery(
                 "Cannot create a new query from a parent that requires "
                 "client-side filter processing."
             ))
@@ -172,14 +173,14 @@ class XPathSelectQueryTests(TestCase):
         fn = lambda: xpathselect.Query(None, b'foo', b'sdf')
         self.assertThat(
             fn,
-            raises(ValueError("Invalid operation 'foo'."))
+            raises(InvalidXPathQuery("Invalid operation 'foo'."))
         )
 
     def test_init_raises_ValueError_on_invalid_descendant_search(self):
         fn = lambda: xpathselect.Query(None, b'//', b'*')
         self.assertThat(
             fn,
-            raises(ValueError(
+            raises(InvalidXPathQuery(
                 "Must provide at least one server-side filter when searching "
                 "for descendants and using a wildcard node."
             ))
@@ -198,14 +199,14 @@ class XPathSelectQueryTests(TestCase):
         fn = lambda: xpathselect.Query.new_from_path_and_id(b'bad_path', 42)
         self.assertThat(
             fn,
-            raises(ValueError("Invalid path 'bad_path'."))
+            raises(InvalidXPathQuery("Invalid path 'bad_path'."))
         )
 
     def test_new_from_path_and_id_raises_ValueError_on_invalid_path2(self):
         fn = lambda: xpathselect.Query.new_from_path_and_id(b'/', 42)
         self.assertThat(
             fn,
-            raises(ValueError("Invalid path '/'."))
+            raises(InvalidXPathQuery("Invalid path '/'."))
         )
 
     def test_new_from_path_and_id_works_for_root_node(self):
@@ -239,7 +240,7 @@ class XPathSelectQueryTests(TestCase):
         fn = lambda: xpathselect.Query(None, b'/', b'..', dict(foo=123))
         self.assertThat(
             fn,
-            raises(ValueError(
+            raises(InvalidXPathQuery(
                 "Cannot specify filters while selecting a parent"
             ))
         )
@@ -248,7 +249,7 @@ class XPathSelectQueryTests(TestCase):
         fn = lambda: xpathselect.Query(None, b'//', b'..')
         self.assertThat(
             fn,
-            raises(ValueError(
+            raises(InvalidXPathQuery(
                 "Operation must be CHILD while selecting a parent"
             ))
         )

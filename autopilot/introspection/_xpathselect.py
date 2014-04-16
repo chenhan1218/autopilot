@@ -212,6 +212,21 @@ class Query(object):
         """
         return Query(None, Query.Operation.CHILD, b'')
 
+    @staticmethod
+    def whole_tree_search(child_name, filters={}):
+        """Return a query capable of searching the entire introspection tree.
+
+        .. warning::
+            This method returns a query that can be extremely slow on larger
+            applications. The execution time can easily extend beyond the dbus
+            timeout period, which can result in tests that fail on some
+            machines but not others. Test authors are strongly encouraged to
+            use the 'Query.root' method and absolute queries instead.
+
+        """
+        child_name = _try_encode_type_name(child_name)
+        return Query(None, Query.Operation.DESCENDANT, child_name, filters)
+
     def needs_client_side_filtering(self):
         """Return true if this query requires some filtering on the client-side
         """

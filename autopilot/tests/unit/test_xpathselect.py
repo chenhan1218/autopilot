@@ -267,6 +267,14 @@ class XPathSelectQueryTests(TestCase):
             ))
         )
 
+    def test_whole_tree_search_returns_correct_query(self):
+        q = xpathselect.Query.whole_tree_search('Foo')
+        self.assertEqual(b'//Foo', q.server_query_bytes())
+
+    def test_whole_tree_search_with_filters_returns_correct_query(self):
+        q = xpathselect.Query.whole_tree_search('Foo', dict(foo='bar'))
+        self.assertEqual(b'//Foo[foo="bar"]', q.server_query_bytes())
+
 
 class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):
 

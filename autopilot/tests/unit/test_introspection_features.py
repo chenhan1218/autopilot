@@ -192,7 +192,7 @@ class DBusIntrospectionObjectTests(TestCase):
             b'/root',
             Mock()
         )
-        fake_object._backend.introspection_iface.GetState.return_value = []
+        fake_object._backend.execute_query_get_data.return_value = []
 
         fake_object.wait_until_destroyed()
         self.assertThat(fake_object.wait_until_destroyed, Not(Raises()))
@@ -208,7 +208,7 @@ class DBusIntrospectionObjectTests(TestCase):
             b'/root',
             Mock()
         )
-        fake_object._backend.introspection_iface.GetState.return_value = \
+        fake_object._backend.execute_query_get_data.return_value = \
             [fake_state]
 
         with sleep.mocked():

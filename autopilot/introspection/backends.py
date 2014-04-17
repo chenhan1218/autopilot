@@ -255,6 +255,27 @@ class Backend(object):
         return objects
 
 
+class FakeBackend(Backend):
+
+    """A backend that always returns fake data, useful for testing."""
+
+    def __init__(self, fake_ipc_return_data):
+        """Create a new FakeBackend instance.
+
+        If this backend creates any proxy objects, they will be created with
+        a FakeBackend with the same fake ipc return data.
+
+        :param fake_ipc_return_data: The data you want to pretend was returned
+            by the applicatoin under test. This must be in the correct protocol
+            format, or the results are undefined.
+        """
+        super(FakeBackend, self).__init__(fake_ipc_return_data)
+        self.fake_ipc_return_data = fake_ipc_return_data
+
+    def execute_query_get_data(self, query):
+        return self.fake_ipc_return_data
+
+
 def make_introspection_object(dbus_tuple, backend, object_id, proxy_type):
     """Make an introspection object given a DBus tuple of
     (path, state_dict).

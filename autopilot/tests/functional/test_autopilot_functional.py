@@ -497,7 +497,7 @@ Loading tests from: %s
 
     # TODO: fix this test and re-enable.  It runs fine locally on amd64,
     # but is failing in the CI job
-    # @skip("test hangs when run on CI")
+    #@skip("test hangs when run on CI")
     def test_no_video_session_dirs_saved_for_passed_test(self):
         """RecordMyDesktop should clean up its session files in tmp dir."""
         session_dir_pattern = '/tmp/rMD-session*'
@@ -508,8 +508,8 @@ Loading tests from: %s
                 shutil.rmtree(dir)
 
         print('defined inner funtion')
-        self.addCleanup(remove_recording_session_dirs)
-        print('added cleanup')
+        #self.addCleanup(remove_recording_session_dirs)
+        #print('added cleanup')
         self.create_test_file(
             "test_simple.py", dedent("""\
 

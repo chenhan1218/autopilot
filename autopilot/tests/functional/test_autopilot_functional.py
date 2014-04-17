@@ -24,7 +24,6 @@ import glob
 import os
 import os.path
 import re
-import shutil
 from tempfile import mktemp
 from testtools import skipIf
 from testtools.matchers import Contains, Equals, MatchesRegex, Not

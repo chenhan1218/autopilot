@@ -60,8 +60,11 @@ def make_fake_attribute_with_result(result, attribute_type='wait_for',
         def _execute_query(self, query):
             return self
 
-        def refresh_state(self):
+        def _get_new_state(self):
             return (dbus.String('/FakeObject'), self._fake_props)
+
+        def refresh_state(self):
+            pass
 
         @classmethod
         def get_state_by_path(cls, piece):

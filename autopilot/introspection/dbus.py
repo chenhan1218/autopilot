@@ -397,8 +397,9 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         """
         cls_name = type(self).__name__
-        instances = self.get_state_by_path("//%s" % (cls_name))
-        return [self.make_introspection_object(i) for i in instances]
+        return self._execute_query(
+            xpathselect.Query.whole_tree_search(cls_name)
+        )
 
     def get_root_instance(self):
         """Get the object at the root of this tree.
@@ -425,33 +426,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             "Class '%s' has no attribute '%s'." %
             (self.__class__.__name__, name))
 
-    def get_state_by_path(self, piece):
-        """Get state for a particular piece of the state tree.
-
-        You should probably never need to call this directly.
-
-        :param piece: an XPath-like query that specifies which bit of the tree
-            you want to look at.
-        :raises TypeError: on invalid *piece* parameter.
-
-        """
-        if not isinstance(piece, six.binary_type):
-            raise TypeError(
-                "XPath query must be a bytestring, not %r", type(piece))
-
-        with Timer("GetState %s" % piece):
-            data = self._backend.introspection_iface.GetState(piece)
-            if len(data) > 15:
-                _logger.warning(
-                    "Your query '%s' returned a lot of data (%d items). This "
-                    "is likely to be slow. You may want to consider optimising"
-                    " your query to return fewer items.",
-                    piece,
-                    len(data)
-                )
-            return data
-
-    def get_new_state(self):
+    def _get_new_state(self):
         """Retrieve a new state dictionary for this class instance.
 
         You should probably never need to call this directly.
@@ -460,7 +435,10 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         """
         try:
-            return self.get_state_by_path(self.get_class_query_string())[0]
+            return backends.execute_query_get_data(
+                self._query,
+                self._backend
+            )[0]
         except IndexError:
             raise StateNotFoundError(self.__class__.__name__, id=self.id)
 
@@ -478,7 +456,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         """
         for i in range(timeout):
             try:
-                self.get_new_state()
+                self._get_new_state()
                 sleep(1)
             except StateNotFoundError:
                 return
@@ -486,17 +464,6 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             raise RuntimeError(
                 "Object was not destroyed after %d seconds" % timeout
             )
-
-    # TODO: Marked for removal!
-    def get_class_query_string(self):
-        """Get the XPath query string required to refresh this class's
-        state."""
-        filter_str = "[id=%d]" % self.id
-
-        if not self._path.startswith(b'/'):
-            return b"//" + self._path + filter_str.encode('utf-8')
-        else:
-            return self._path + filter_str.encode('utf-8')
 
     def print_tree(self, output=None, maxdepth=None, _curdepth=0):
         """Print properties of the object and its children to a stream.

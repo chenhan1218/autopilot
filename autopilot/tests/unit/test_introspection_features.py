@@ -144,44 +144,44 @@ class DBusIntrospectionObjectTests(TestCase):
         with fake_object.no_automatic_refreshing():
             self.assertThat(fake_object.path, Equals('/some/path'))
 
-    @patch('autopilot.introspection.dbus._logger')
+    @patch('autopilot.introspection.backends._logger')
     def test_large_query_returns_log_warnings(self, mock_logger):
         """Queries that return large numbers of items must cause a log warning.
 
         'large' is defined as more than 15.
 
         """
-        fake_object = dbus.DBusIntrospectionObject(
-            dict(id=[0, 123], path=[0, '/some/path']),
-            b'/root',
-            Mock()
-        )
-        fake_object._backend.introspection_iface.GetState.return_value = \
+        query = xpathselect.Query.root('foo')
+        fake_backend = Mock()
+        fake_backend.introspection_iface.GetState.return_value = \
             [(b'/root/path', {}) for i in range(16)]
-        fake_object.get_state_by_path(b'some_query')
+        backends.execute_query_get_data(
+            query,
+            fake_backend
+        )
 
         mock_logger.warning.assert_called_once_with(
-            "Your query '%s' returned a lot of data (%d items). This "
+            "Your query '%r' returned a lot of data (%d items). This "
             "is likely to be slow. You may want to consider optimising"
             " your query to return fewer items.",
-            b"some_query",
+            query,
             16)
 
-    @patch('autopilot.introspection.dbus._logger')
+    @patch('autopilot.introspection.backends._logger')
     def test_small_query_returns_dont_log_warnings(self, mock_logger):
         """Queries that return small numbers of items must not log a warning.
 
         'small' is defined as 15 or fewer.
 
         """
-        fake_object = dbus.DBusIntrospectionObject(
-            dict(id=[0, 123], path=[0, '/some/path']),
-            b'/root',
-            Mock()
-        )
-        fake_object._backend.introspection_iface.GetState.return_value = \
+        query = xpathselect.Query.root('foo')
+        fake_backend = Mock()
+        fake_backend.introspection_iface.GetState.return_value = \
             [(b'/root/path', {}) for i in range(15)]
-        fake_object.get_state_by_path(b'some_query')
+        backends.execute_query_get_data(
+            query,
+            fake_backend
+        )
 
         self.assertThat(mock_logger.warning.called, Equals(False))
 

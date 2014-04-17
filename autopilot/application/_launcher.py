@@ -81,12 +81,14 @@ class UpstartApplicationLauncher(ApplicationLauncher):
 
         UpstartAppLaunch.observer_add_app_failed(self._on_failed, state)
         UpstartAppLaunch.observer_add_app_started(self._on_started, state)
+        UpstartAppLaunch.observer_add_app_focus(self._on_started, state)
         GLib.timeout_add_seconds(10.0, self._on_timeout, state)
 
         self._launch_app(app_id, app_uris)
         state['loop'].run()
         UpstartAppLaunch.observer_delete_app_failed(self._on_failed)
         UpstartAppLaunch.observer_delete_app_started(self._on_started)
+        UpstartAppLaunch.observer_delete_app_focus(self._on_started)
         self._maybe_add_application_cleanups(state)
         self._check_status_error(
             state.get('status', None),

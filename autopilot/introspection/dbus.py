@@ -40,10 +40,7 @@ from autopilot.introspection._object_registry import (
 from autopilot.introspection.types import create_value_instance
 from autopilot.introspection.utilities import translate_state_keys
 from autopilot.introspection import _xpathselect as xpathselect
-from autopilot.utilities import (
-    sleep,
-    Timer,
-)
+from autopilot.utilities import sleep
 
 
 _logger = logging.getLogger(__name__)
@@ -192,7 +189,6 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         # Thomi: 2014-03-20: There used to be a call to 'self.refresh_state()'
         # here. That's not needed, since the only thing we use is the proxy
         # path, which isn't affected by the current state.
-
         new_query = self._query.select_child(xpathselect.Query.WILDCARD)
         return self._execute_query(new_query)
 
@@ -371,11 +367,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             has been destroyed.
 
         """
-        states = backends.execute_query_get_data(
-            self._query,
-            self._backend
-        )
-        _, new_state = states[0]
+        _, new_state = self._get_new_state()
         self._set_properties(new_state)
 
     def get_all_instances(self):

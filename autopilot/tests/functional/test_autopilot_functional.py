@@ -495,9 +495,7 @@ Loading tests from: %s
         self.assertThat(code, Equals(0))
         self.assertThat(os.path.exists(video_file_path), Equals(False))
 
-    # TODO: fix this test and re-enable.  It runs fine locally on amd64,
-    # but is failing in the CI job
-    #@skip("test hangs when run on CI")
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_no_video_session_dirs_saved_for_passed_test(self):
         """RecordMyDesktop should clean up its session files in tmp dir."""
         session_dir_pattern = '/tmp/rMD-session*'

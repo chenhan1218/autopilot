@@ -501,8 +501,8 @@ Loading tests from: %s
         session_dir_pattern = '/tmp/rMD-session*'
 
         def remove_recording_session_dirs():
-            for dir in glob.glob(session_dir_pattern):
-                shutil.rmtree(dir)
+            for match in glob.glob(session_dir_pattern):
+                remove_if_exists(match)
         
         remove_recording_session_dirs()
         self.addCleanup(remove_recording_session_dirs)

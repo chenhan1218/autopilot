@@ -51,7 +51,7 @@ def make_fake_attribute_with_result(result, attribute_type='wait_for',
     class FakeObject(DBusIntrospectionObject):
         def __init__(self, props):
             super(FakeObject, self).__init__(
-                props.copy(),
+                props,
                 b"/FakeObject",
                 None
             )

@@ -55,9 +55,10 @@ class XPathSelectQueryTests(TestCase):
         self.assertThat(
             lambda: xpathselect.Query.root(u"\u2026"),
             raises(
-                InvalidXPathQuery("Type name '%s', must be ASCII encodable"
-                           % (u'\u2026'))
+                InvalidXPathQuery(
+                    "Type name '%s', must be ASCII encodable" % (u'\u2026')
                 )
+            )
         )
 
     def test_repr_with_path(self):

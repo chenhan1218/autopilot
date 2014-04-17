@@ -81,16 +81,17 @@ class Query(object):
 
         :raises TypeError: If the 'query' parameter is not 'bytes'.
         :raises TypeError: If the operation parameter is not 'bytes'.
-        :raises InvalidXPathQuery: If parent is specified, and the parent query needs
-            client side filter processing. Only the last query in the query
-            chain can have filters that need to be executed on the client-side.
-        :raises InvalidXPathQuery: If operation is not one of the members of the
-            Query.Operation class.
-        :raises InvalidXPathQuery: If the query is set to Query.WILDCARD and 'filters'
-            does not contain any server-side filters, and operation is set to
-            Query.Operation.DESCENDANT.
-        :raises InvalidXPathQuery: When 'filters' are specified while trying to select
-            a parent node in the introspection tree.
+        :raises InvalidXPathQuery: If parent is specified, and the parent
+            query needs client side filter processing. Only the last query in
+            the query chain can have filters that need to be executed on the
+            client-side.
+        :raises InvalidXPathQuery: If operation is not one of the members of
+            the Query.Operation class.
+        :raises InvalidXPathQuery: If the query is set to Query.WILDCARD and
+            'filters' does not contain any server-side filters, and operation
+            is set to Query.Operation.DESCENDANT.
+        :raises InvalidXPathQuery: When 'filters' are specified while trying
+            to select a parent node in the introspection tree.
 
         """
         if not isinstance(query, six.binary_type):

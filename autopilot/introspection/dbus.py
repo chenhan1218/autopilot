@@ -33,7 +33,6 @@ import logging
 import six
 
 from autopilot.exceptions import StateNotFoundError
-from autopilot.introspection import backends
 from autopilot.introspection._object_registry import (
     DBusIntrospectionObjectBase,
 )

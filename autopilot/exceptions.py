@@ -97,4 +97,3 @@ class StateNotFoundError(RuntimeError):
 class InvalidXPathQuery(ValueError):
 
     """Raised when an XPathselect query is invalid or unsupported."""
-

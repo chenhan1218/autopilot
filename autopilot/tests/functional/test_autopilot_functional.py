@@ -502,7 +502,7 @@ Loading tests from: %s
         def remove_recording_session_dirs():
             for match in glob.glob(session_dir_pattern):
                 remove_if_exists(match)
-        
+
         remove_recording_session_dirs()
         self.addCleanup(remove_recording_session_dirs)
         self.create_test_file(

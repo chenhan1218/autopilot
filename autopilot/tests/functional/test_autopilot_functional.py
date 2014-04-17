@@ -499,15 +499,13 @@ Loading tests from: %s
     def test_no_video_session_dirs_saved_for_passed_test(self):
         """RecordMyDesktop should clean up its session files in tmp dir."""
         session_dir_pattern = '/tmp/rMD-session*'
-        print('entered funtion')
 
         def remove_recording_session_dirs():
             for dir in glob.glob(session_dir_pattern):
                 shutil.rmtree(dir)
-
-        print('defined inner funtion')
-        #self.addCleanup(remove_recording_session_dirs)
-        #print('added cleanup')
+        
+        remove_recording_session_dirs()
+        self.addCleanup(remove_recording_session_dirs)
         self.create_test_file(
             "test_simple.py", dedent("""\
 
@@ -521,14 +519,9 @@ Loading tests from: %s
                     self.assertTrue(True)
             """)
         )
-        print('created test file')
         code, output, error = self.run_autopilot(["run", "-r", "tests"])
-        print('ran autopilot')
         self.assertThat(code, Equals(0))
-        print('asserted exit code')
         self.assertThat(glob.glob(session_dir_pattern), Equals([]))
-        print('assert glob for dir pattern in empty')
-        print('done')
 
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_no_video_for_nested_testcase_when_parent_and_child_fail(self):

@@ -19,7 +19,6 @@
 
 """Private Package for searching dbus for useful connections."""
 
-from autopilot.utilities import _raise_on_unknown_kwargs
 from collections import namedtuple
 
 

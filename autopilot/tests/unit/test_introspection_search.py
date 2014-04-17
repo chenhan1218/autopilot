@@ -104,6 +104,17 @@ class FilterRunnerTests(TestCase):
 
         self.assertFalse(runner.matches(dbus_connection, {}))
 
+    def test_runner_matches_passes_dbus_connection_to_filter(self):
+        DBusConnectionFilter = Mock()
+        runner = _s.FilterRunner([DBusConnectionFilter])
+
+        dbus_connection = ("bus", "connection_name")
+        runner.matches(dbus_connection, {})
+
+        DBusConnectionFilter.matches.assert_called_once_with(
+            dbus_connection, {}
+        )
+
 
 class FilterPrioritySorterTests(TestCase):
 

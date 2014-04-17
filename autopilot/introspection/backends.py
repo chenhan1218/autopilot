@@ -17,7 +17,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"Backend interface for autopilot."
+"""Backend IPC interface for autopilot.
+
+This module contains two primative classes that Autopilot uses for it's IPC
+routines.
+
+The first is the DBusAddress class. This contains knowledge of how to talk dbus
+to a particular application exposed over dbus. In the future, this interface
+could be provided by some alternative IPC mechanism.
+
+The second class is the Backend class. This holds a reference to a DBusAddress
+class, and contains code that turns a query object into proxy classes.
+
+"""
 
 from __future__ import absolute_import
 
@@ -197,6 +209,51 @@ class DBusAddress(object):
             name, self._addr_tuple.connection, self._addr_tuple.object_path)
 
 
+class Backend(object):
+
+    def __init__(self, ipc_address):
+        self.ipc_address = ipc_address
+
+    def execute_query_get_data(self, query):
+        """Execute 'query', return the raw dbus reply."""
+        with Timer("GetState %r" % query):
+            data = self.ipc_address.introspection_iface.GetState(
+                query.server_query_bytes()
+            )
+            if len(data) > 15:
+                _logger.warning(
+                    "Your query '%r' returned a lot of data (%d items). This "
+                    "is likely to be slow. You may want to consider optimising"
+                    " your query to return fewer items.",
+                    query,
+                    len(data)
+                )
+            return data
+
+    def execute_query_get_proxy_instances(self, query, id, proxy_type):
+        """Execute 'query', returning proxy instances."""
+        data = self.execute_query_get_data(query)
+        objects = [
+            make_introspection_object(
+                t,
+                type(self)(self.ipc_address),
+                id,
+                proxy_type
+            )
+            for t in data
+        ]
+        if query.needs_client_side_filtering():
+            return filter(
+                lambda i: _object_passes_filters(
+                    i,
+                    **query.get_client_side_filters()
+                ),
+                objects
+            )
+        return objects
+
+
+# todo - deprecate!
 def execute_query_get_data(query, backend):
     """Execute 'query' on 'backend', the raw dbus reply."""
     with Timer("GetState %r" % query):
@@ -212,6 +269,7 @@ def execute_query_get_data(query, backend):
         return data
 
 
+# todo - deprecate!
 def execute_query_get_proxy_instances(query, backend, id, proxy_type):
     """Execute 'query' on 'backend', returning proxy instances."""
     data = execute_query_get_data(query, backend)
@@ -239,6 +297,7 @@ def make_introspection_object(dbus_tuple, backend, object_id, proxy_type):
     :param dbus_tuple: A two-item iterable containing a dbus.String object that
         contains the object path, and a dbus.Dictionary object that contains
         the objects state dictionary.
+    :param backend: An instance of the Backend class.
     :returns: A proxy object that derives from DBusIntrospectionObject
     :raises ValueError: if more than one class is appropriate for this
              dbus_tuple

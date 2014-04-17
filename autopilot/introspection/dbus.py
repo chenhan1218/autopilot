@@ -90,9 +90,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
     def _execute_query(self, query):
         """Execute query object 'query' and return the result."""
-        return backends.execute_query_get_proxy_instances(
+        return self._backend.execute_query_get_proxy_instances(
             query,
-            self._backend,
             getattr(self, '_id', None),
             type(self)
         )
@@ -427,10 +426,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         """
         try:
-            return backends.execute_query_get_data(
-                self._query,
-                self._backend
-            )[0]
+            return self._backend.execute_query_get_data(self._query,)[0]
         except IndexError:
             raise StateNotFoundError(self.__class__.__name__, id=self.id)
 

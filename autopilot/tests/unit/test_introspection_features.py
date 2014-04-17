@@ -152,12 +152,12 @@ class DBusIntrospectionObjectTests(TestCase):
 
         """
         query = xpathselect.Query.root('foo')
-        fake_backend = Mock()
-        fake_backend.introspection_iface.GetState.return_value = \
+        fake_dbus_address = Mock()
+        fake_dbus_address.introspection_iface.GetState.return_value = \
             [(b'/root/path', {}) for i in range(16)]
-        backends.execute_query_get_data(
+        backend = backends.Backend(fake_dbus_address)
+        backend.execute_query_get_data(
             query,
-            fake_backend
         )
 
         mock_logger.warning.assert_called_once_with(
@@ -175,12 +175,12 @@ class DBusIntrospectionObjectTests(TestCase):
 
         """
         query = xpathselect.Query.root('foo')
-        fake_backend = Mock()
-        fake_backend.introspection_iface.GetState.return_value = \
+        fake_dbus_address = Mock()
+        fake_dbus_address.introspection_iface.GetState.return_value = \
             [(b'/root/path', {}) for i in range(15)]
-        backends.execute_query_get_data(
+        backend = backends.Backend(fake_dbus_address)
+        backend.execute_query_get_data(
             query,
-            fake_backend
         )
 
         self.assertThat(mock_logger.warning.called, Equals(False))
@@ -194,6 +194,7 @@ class DBusIntrospectionObjectTests(TestCase):
         )
         fake_object._backend.introspection_iface.GetState.return_value = []
 
+        fake_object.wait_until_destroyed()
         self.assertThat(fake_object.wait_until_destroyed, Not(Raises()))
 
     def test_wait_until_destroyed_raises_RuntimeError(self):

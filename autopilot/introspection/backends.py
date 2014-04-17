@@ -211,6 +211,8 @@ class DBusAddress(object):
 
 class Backend(object):
 
+    """A Backend object that works with an ipc address interface."""
+
     def __init__(self, ipc_address):
         self.ipc_address = ipc_address
 

@@ -253,41 +253,6 @@ class Backend(object):
         return objects
 
 
-# todo - deprecate!
-def execute_query_get_data(query, backend):
-    """Execute 'query' on 'backend', the raw dbus reply."""
-    with Timer("GetState %r" % query):
-        data = backend.introspection_iface.GetState(query.server_query_bytes())
-        if len(data) > 15:
-            _logger.warning(
-                "Your query '%r' returned a lot of data (%d items). This "
-                "is likely to be slow. You may want to consider optimising"
-                " your query to return fewer items.",
-                query,
-                len(data)
-            )
-        return data
-
-
-# todo - deprecate!
-def execute_query_get_proxy_instances(query, backend, id, proxy_type):
-    """Execute 'query' on 'backend', returning proxy instances."""
-    data = execute_query_get_data(query, backend)
-    objects = [
-        make_introspection_object(t, backend, id, proxy_type)
-        for t in data
-    ]
-    if query.needs_client_side_filtering():
-        return filter(
-            lambda i: _object_passes_filters(
-                i,
-                **query.get_client_side_filters()
-            ),
-            objects
-        )
-    return objects
-
-
 def make_introspection_object(dbus_tuple, backend, object_id, proxy_type):
     """Make an introspection object given a DBus tuple of
     (path, state_dict).

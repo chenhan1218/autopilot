@@ -521,7 +521,7 @@ Loading tests from: %s
             """)
         )
 
-        code, output, error = self.run_autopilot(["run", "-r", "tests"])
+        code, output, error = self.run_autopilot(['run', '-r', 'tests'])
 
         self.assertThat(code, Equals(0))
         self.assertThat(glob.glob(session_dir_pattern), Equals([]))

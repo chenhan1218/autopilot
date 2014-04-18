@@ -505,8 +505,8 @@ Loading tests from: %s
 
         _remove_recording_session_dirs()
 
-        self.addCleanup(remove_recording_session_dirs)
-
+        #self.addCleanup(remove_recording_session_dirs)
+        #
         self.create_test_file(
             "test_simple.py", dedent("""\
 
@@ -521,7 +521,7 @@ Loading tests from: %s
             """)
         )
 
-        code, output, error = self.run_autopilot(['run', '-r', 'tests'])
+        code, output, error = self.run_autopilot([["run", "-r", "tests"])
 
         self.assertThat(code, Equals(0))
         self.assertThat(glob.glob(session_dir_pattern), Equals([]))

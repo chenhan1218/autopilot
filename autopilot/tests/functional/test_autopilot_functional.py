@@ -498,7 +498,7 @@ Loading tests from: %s
     def test_no_video_session_dir_saved_for_passed_test(self):
         """RecordMyDesktop should clean up its session files in tmp dir."""
         session_dir_pattern = '/tmp/rMD-session*'
-        
+
         def _remove_recording_session_dirs():
             for match in glob.glob(session_dir_pattern):
                 remove_if_exists(match)

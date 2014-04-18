@@ -495,16 +495,18 @@ Loading tests from: %s
         self.assertThat(os.path.exists(video_file_path), Equals(False))
 
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
-    def test_no_video_session_dirs_saved_for_passed_test(self):
+    def test_no_video_session_dir_saved_for_passed_test(self):
         """RecordMyDesktop should clean up its session files in tmp dir."""
         session_dir_pattern = '/tmp/rMD-session*'
-
-        def remove_recording_session_dirs():
+        
+        def _remove_recording_session_dirs():
             for match in glob.glob(session_dir_pattern):
                 remove_if_exists(match)
 
-        remove_recording_session_dirs()
+        _remove_recording_session_dirs()
+
         self.addCleanup(remove_recording_session_dirs)
+
         self.create_test_file(
             "test_simple.py", dedent("""\
 
@@ -518,7 +520,9 @@ Loading tests from: %s
                     self.assertTrue(True)
             """)
         )
+
         code, output, error = self.run_autopilot(["run", "-r", "tests"])
+
         self.assertThat(code, Equals(0))
         self.assertThat(glob.glob(session_dir_pattern), Equals([]))
 

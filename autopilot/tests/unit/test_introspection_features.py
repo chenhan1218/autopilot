@@ -55,7 +55,6 @@ from autopilot.introspection import (
     ProcessSearchError,
 )
 from autopilot.introspection import backends
-from autopilot.introspection import _object_registry as object_registry
 from autopilot.introspection import _xpathselect as xpathselect
 from autopilot.introspection import dbus
 from autopilot.introspection.qt import QtObjectProxyMixin

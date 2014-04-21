@@ -277,7 +277,7 @@ class XPathSelectQueryTests(TestCase):
         self.assertEqual(b'//Foo[foo="bar"]', q.server_query_bytes())
 
 
-class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):
+class ParameterFilterStringScenariodTests(TestWithScenarios, TestCase):
 
     scenarios = [
         ('bool true', dict(k='visible', v=True, r=b"visible=True")),
@@ -308,6 +308,19 @@ class ServerSideParameterFilterStringTests(TestWithScenarios, TestCase):
         self.assertEqual(s, self.r)
 
 
+class ParameterFilterStringTests(TestWithScenarios, TestCase):
+
+    def test_raises_ValueError_on_unknown_type(self):
+        fn = lambda: xpathselect._get_filter_string_for_key_value_pair(
+            'k',
+            object()
+        )
+        self.assertThat(
+            fn,
+            raises(
+                ValueError("Unsupported value type: object")
+            )
+        )
 class ServerSideParamMatchingTests(TestWithScenarios, TestCase):
 
     """Tests for the server side matching decision function."""

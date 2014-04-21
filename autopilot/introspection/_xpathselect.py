@@ -396,7 +396,9 @@ def _get_filter_string_for_key_value_pair(key, value):
     elif isinstance(value, int) or isinstance(value, bool):
         return "{}={}".format(key, repr(value)).encode('utf-8')
     else:
-        raise ValueError("Unsupported value type: {}".format(type(value)))
+        raise ValueError(
+            "Unsupported value type: {}".format(type(value).__name__)
+        )
 
 
 def get_classname_from_path(object_path):

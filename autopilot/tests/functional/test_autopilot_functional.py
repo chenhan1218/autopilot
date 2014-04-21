@@ -497,16 +497,9 @@ Loading tests from: %s
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_no_video_session_dir_saved_for_passed_test(self):
         """RecordMyDesktop should clean up its session files in tmp dir."""
-        session_dir_pattern = '/tmp/rMD-session*'
+        dir_pattern = '/tmp/rMD-session*'
+        original_session_dirs = glob.glob(dir_pattern)
 
-        def _remove_recording_session_dirs():
-            for match in glob.glob(session_dir_pattern):
-                remove_if_exists(match)
-
-        _remove_recording_session_dirs()
-
-        #self.addCleanup(remove_recording_session_dirs)
-        #
         self.create_test_file(
             "test_simple.py", dedent("""\
 
@@ -521,10 +514,21 @@ Loading tests from: %s
             """)
         )
 
-        code, output, error = self.run_autopilot([["run", "-r", "tests"])
+        code, output, error = self.run_autopilot(["run", "-r", "tests"])
 
         self.assertThat(code, Equals(0))
-        self.assertThat(glob.glob(session_dir_pattern), Equals([]))
+
+        session_dirs = glob.glob(dir_pattern)
+        try:
+            new_session_dirs = \
+                list(set(session_dirs) - set(original_session_dirs))
+            leftover_session = new_session_dirs.pop()
+        except IndexError:
+            leftover_session = None
+
+        self.assertEqual(leftover_session, None)
+        if leftover_session is not None:
+            self.addCleanup(remove_if_exists, leftover_session)
 
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_no_video_for_nested_testcase_when_parent_and_child_fail(self):

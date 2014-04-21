@@ -229,3 +229,42 @@ class MakeIntrospectionObjectTests(TestCase):
             token
         )
         self.assertThat(result.__name__, Equals(token))
+
+
+class ObjectRegistryPatchTests(TestCase):
+
+    def test_patch_registry_sets_new_registry(self):
+        new_registry = dict(foo=123)
+        with object_registry.patch_registry(new_registry):
+            self.assertEqual(object_registry._object_registry, new_registry)
+
+    def test_patch_registry_undoes_patch(self):
+        old_registry = object_registry._object_registry.copy()
+        with object_registry.patch_registry({}):
+            pass
+        self.assertEqual(object_registry._object_registry, old_registry)
+
+    def test_patch_registry_undoes_patch_when_exception_raised(self):
+        def patch_reg():
+            with object_registry.patch_registry({}):
+                raise RuntimeError()
+
+        old_registry = object_registry._object_registry.copy()
+        try:
+            patch_reg()
+        except RuntimeError:
+            pass
+        self.assertEqual(object_registry._object_registry, old_registry)
+
+    def test_patch_registry_reraised_caught_exception(self):
+        def patch_reg():
+            with object_registry.patch_registry({}):
+                raise RuntimeError()
+
+        self.assertThat(patch_reg, raises(RuntimeError()))
+
+    def test_modifications_are_unwound(self):
+        token = self.getUniqueString()
+        with object_registry.patch_registry(dict()):
+            object_registry._object_registry[token] = token
+        self.assertFalse(token in object_registry._object_registry)

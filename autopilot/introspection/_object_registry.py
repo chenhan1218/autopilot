@@ -180,5 +180,6 @@ def patch_registry(new_registry):
     try:
         yield
     except Exception:
-        _object_registry = old_registry
         raise
+    finally:
+        _object_registry = old_registry

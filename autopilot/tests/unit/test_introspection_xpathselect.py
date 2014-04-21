@@ -339,3 +339,18 @@ class ServerSideParamMatchingTests(TestWithScenarios, TestCase):
             ),
             self.result
         )
+
+
+class GetClassnameFromPathTests(TestCase):
+
+    def test_single_element(self):
+        self.assertEqual("Foo", xpathselect.get_classname_from_path("Foo"))
+
+    def test_single_element_with_path(self):
+        self.assertEqual("Foo", xpathselect.get_classname_from_path("/Foo"))
+
+    def test_multiple_elements(self):
+        self.assertEqual(
+            "Baz",
+            xpathselect.get_classname_from_path("/Foo/Bar/Baz")
+        )

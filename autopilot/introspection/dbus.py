@@ -102,7 +102,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
          becomes 'icon_type'.
 
         """
-        # don't store id in state dictionary -make it a proper instance
+        # don't store id in state dictionary - make it a proper instance
         # attribute. If id is not present, raise a ValueError.
         try:
             self.id = int(state_dict['id'][1])

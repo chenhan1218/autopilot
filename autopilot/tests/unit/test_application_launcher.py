@@ -105,14 +105,20 @@ class NormalApplicationLauncherTests(TestCase):
         with patch.object(
             _l, '_kill_process', return_value=(u"stdout", u"stderr", 0)
         ):
-            app_launcher._kill_process_and_attach_logs(0)
+            app_launcher._kill_process_and_attach_logs(0, 'app')
 
             self.assertThat(
                 mock_addDetail.call_args_list,
                 MatchesListwise([
-                    Equals([('process-return-code', text_content('0')), {}]),
-                    Equals([('process-stdout', text_content('stdout')), {}]),
-                    Equals([('process-stderr', text_content('stderr')), {}]),
+                    Equals(
+                        [('process-return-code (app)', text_content('0')), {}]
+                    ),
+                    Equals(
+                        [('process-stdout (app)', text_content('stdout')), {}]
+                    ),
+                    Equals(
+                        [('process-stderr (app)', text_content('stderr')), {}]
+                    ),
                 ])
             )
 
@@ -585,7 +591,10 @@ class UpstartApplicationLauncherTests(TestCase):
 
                 self.assertEqual(1, case_addDetail.call_count)
                 content_name, content_obj = case_addDetail.call_args[0]
-                self.assertEqual("Application Log", content_name)
+                self.assertEqual(
+                    "Application Log (%s)" % app_id,
+                    content_name
+                )
                 self.assertThat(content_obj.as_text(), Contains(token))
 
     def test_stop_adds_app_stopped_observer(self):

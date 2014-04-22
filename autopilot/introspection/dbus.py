@@ -424,7 +424,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         """
         try:
-            return self._backend.execute_query_get_data(self._query,)[0]
+            return self._backend.execute_query_get_data(self._query)[0]
         except IndexError:
             raise StateNotFoundError(self.__class__.__name__, id=self.id)
 

@@ -22,7 +22,7 @@ import json
 import os
 import subprocess
 import signal
-from time import time
+from timeit import default_timer
 from tempfile import mktemp
 from testtools import skipIf
 from testtools.matchers import Equals, NotEquals, raises, LessThan, GreaterThan
@@ -185,18 +185,18 @@ class DbusQueryTests(AutopilotTestCase):
 
     def test_wait_select_single_succeeds_quickly(self):
         app = self.start_fully_featured_app()
-        start_time = time()
+        start_time = default_timer()
         main_window = app.wait_select_single('QMainWindow')
-        end_time = time()
+        end_time = default_timer()
         self.assertThat(main_window, NotEquals(None))
         self.assertThat(abs(end_time - start_time), LessThan(1))
 
     def test_wait_select_single_fails_slowly(self):
         app = self.start_fully_featured_app()
-        start_time = time()
+        start_time = default_timer()
         fn = lambda: app.wait_select_single('QMadeupType')
         self.assertThat(fn, raises(StateNotFoundError('QMadeupType')))
-        end_time = time()
+        end_time = default_timer()
         self.assertThat(abs(end_time - start_time), GreaterThan(9))
         self.assertThat(abs(end_time - start_time), LessThan(11))
 

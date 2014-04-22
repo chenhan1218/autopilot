@@ -21,8 +21,8 @@ from __future__ import absolute_import
 
 
 from contextlib import contextmanager
-from time import time
-from textwrap import dedent
+from timeit import time
+from textwrap import default_timer
 from testtools import skipIf
 from testtools.matchers import Equals
 
@@ -36,9 +36,9 @@ logger = logging.getLogger(__name__)
 
 @contextmanager
 def maximum_runtime(max_time):
-    start_time = time()
+    start_time = default_timer()
     yield
-    total_time = abs(time() - start_time)
+    total_time = abs(default_timer() - start_time)
     if total_time >= max_time:
         raise AssertionError(
             "Runtime of %f was not within defined "

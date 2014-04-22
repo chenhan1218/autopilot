@@ -31,6 +31,7 @@ from testtools.matchers import (
     Raises,
 )
 import time
+import timeit
 
 from autopilot.utilities import (
     _raise_on_unknown_kwargs,
@@ -46,7 +47,7 @@ class ElapsedTimeCounter(object):
     """A simple utility to count the amount of real time that passes."""
 
     def __enter__(self):
-        self._start_time = time.time()
+        self._start_time = timeit.default_timer()
         return self
 
     def __exit__(self, *args):
@@ -54,7 +55,7 @@ class ElapsedTimeCounter(object):
 
     @property
     def elapsed_time(self):
-        return time.time() - self._start_time
+        return timeit.default_timer() - self._start_time
 
 
 class MockableSleepTests(TestCase):

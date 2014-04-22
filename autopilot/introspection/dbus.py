@@ -538,8 +538,11 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         :returns: Whether this class is appropriate for the dbus object
 
         """
-        name = xpathselect.get_classname_from_path(path)
-        return cls.__name__ == name
+        state_name = xpathselect.get_classname_from_path(path)
+        if isinstance(state_name, six.text_type):
+            state_name = state_name.encode('utf-8')
+        class_name = cls.__name__.encode('utf-8')
+        return state_name == class_name
 
 
 # TODO - can we add a deprecation warning around this somehow?

@@ -321,6 +321,8 @@ class ParameterFilterStringTests(TestWithScenarios, TestCase):
                 ValueError("Unsupported value type: object")
             )
         )
+
+
 class ServerSideParamMatchingTests(TestWithScenarios, TestCase):
 
     """Tests for the server side matching decision function."""

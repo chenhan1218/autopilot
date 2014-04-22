@@ -280,8 +280,6 @@ def make_introspection_object(dbus_tuple, backend, object_id, proxy_type):
     """Make an introspection object given a DBus tuple of
     (path, state_dict).
 
-    This only works for classes that derive from DBusIntrospectionObject.
-
     :param dbus_tuple: A two-item iterable containing a dbus.String object that
         contains the object path, and a dbus.Dictionary object that contains
         the objects state dictionary.

@@ -18,9 +18,8 @@
 #
 
 from autopilot.introspection import _search as _s
-from dbus import DBusException
 
-from mock import patch, Mock
+from mock import Mock
 from testtools import TestCase
 from testtools.matchers import (
     Contains,
@@ -207,117 +206,3 @@ class FilterListGeneratorTests(TestCase):
         )
 
         self.assertThat(search_parameters.get('high', None), Not(Equals(None)))
-
-
-class IntrospectionFilterTests(TestCase):
-
-    def test_MatchesConnectionHasPath_raises_when_missing_path(self):
-        dbus_connection = ("bus", "name")
-        self.assertThat(
-            lambda: _s.MatchesConnectionHasPath.matches(dbus_connection, {}),
-            raises(ValueError("Filter was expecting 'path' parameter"))
-        )
-
-    @patch.object(_s.dbus, "Interface")
-    def test_MatchesConnectionHasPath_returns_True_on_success(self, Interface):
-        bus_obj = Mock()
-        connection_name = "name"
-        path = "path"
-        dbus_connection = (bus_obj, connection_name)
-
-        self.assertTrue(
-            _s.MatchesConnectionHasPath.matches(
-                dbus_connection,
-                dict(path=path)
-            )
-        )
-
-        bus_obj.get_object.assert_called_once_with("name", path)
-
-    @patch.object(_s.dbus, "Interface")
-    def test_MatchesConnectionHasPath_returns_False_on_exception(self, Interface):
-        bus_obj = Mock()
-        connection_name = "name"
-        path = "path"
-        dbus_connection = (bus_obj, connection_name)
-
-        Interface.side_effect = DBusException()
-
-        self.assertFalse(
-            _s.MatchesConnectionHasPath.matches(
-                dbus_connection,
-                dict(path=path)
-            )
-        )
-
-        bus_obj.get_object.assert_called_once_with("name", path)
-
-    def test_MatchesConnectionHasPid_raises_when_missing_param(self):
-        self.assertThat(
-            lambda: _s.MatchesConnectionHasPid.matches(None, {}),
-            raises(KeyError('pid'))
-        )
-
-    def test_MatchesConnectionHasPid_returns_False_when_should_ignore_pid(self):
-        dbus_connection = ("bus", "org.freedesktop.DBus")
-        params = dict(pid=None)
-        self.assertFalse(
-            _s.MatchesConnectionHasPid.matches(dbus_connection, params)
-        )
-
-    @patch.object(
-        _s.MatchesConnectionHasPid,
-        '_should_ignore_pid',
-        return_value=False
-    )
-    def test_MatchesConnectionHasPid_returns_True_when_bus_pid_matches(self, p):
-        connection_pid = self.getUniqueInteger()
-        dbus_connection = ("bus", "org.freedesktop.DBus")
-        params = dict(pid=connection_pid)
-        with patch.object(
-            _s,
-            '_get_bus_connections_pid',
-            return_value=connection_pid
-        ):
-            self.assertTrue(
-                _s.MatchesConnectionHasPid.matches(dbus_connection, params)
-            )
-
-    @patch.object(
-        _s.MatchesConnectionHasPid,
-        '_should_ignore_pid',
-        return_value=False
-    )
-    def test_MatchesConnectionHasPid_returns_False_with_DBusException(self, p):
-        connection_pid = self.getUniqueInteger()
-        dbus_connection = ("bus", "org.freedesktop.DBus")
-        params = dict(pid=connection_pid)
-        with patch.object(
-            _s,
-            '_get_bus_connections_pid',
-            side_effect=DBusException()
-        ):
-            self.assertFalse(
-                _s.MatchesConnectionHasPid.matches(dbus_connection, params)
-            )
-
-    def test_should_ignore_pid_returns_True_with_connection_name(self):
-        self.assertTrue(
-            _s.MatchesConnectionHasPid._should_ignore_pid(
-                None,
-                "org.freedesktop.DBus",
-                None
-            )
-        )
-
-    def test_should_ignore_pid_returns_True_when_pid_is_our_pid(self):
-        with patch.object(_s, '_bus_pid_is_our_pid', return_value=True):
-            self.assertTrue(
-                _s.MatchesConnectionHasPid._should_ignore_pid(None, None, None)
-            )
-
-    def test_should_ignore_pid_returns_False_when_pid_is_our_pid(self):
-        with patch.object(_s, '_bus_pid_is_our_pid', return_value=False):
-            self.assertFalse(
-                _s.MatchesConnectionHasPid._should_ignore_pid(None, None, None)
-            )

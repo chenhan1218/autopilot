@@ -403,4 +403,13 @@ def _get_filter_string_for_key_value_pair(key, value):
 
 def get_classname_from_path(object_path):
     """Given an object path, return the class name component."""
-    return object_path.split("/")[-1]
+    # TODO: Find places where paths are strings, and convert them to
+    # bytestrings. Figure out what to do with the whole string vs. bytestring
+    # mess.
+    is_string = isinstance(object_path, six.string_types)
+    if is_string:
+        object_path = object_path.encode('utf-8')
+    class_name = object_path.split(b"/")[-1]
+    if is_string:
+        class_name = class_name.decode('utf-8')
+    return class_name

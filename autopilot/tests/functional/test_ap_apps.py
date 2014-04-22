@@ -378,7 +378,10 @@ class QtTests(ApplicationTests, QmlTestMixin):
         app_proxy = self.launch_test_application(wrapper_path, app_type='qt')
         self.assertTrue(app_proxy is not None)
 
-    @skipIf(not locale_is_supported(), "Current locale is not supported")
+    @skipIf(
+        model() != "Desktop" or not locale_is_supported(),
+        "Current locale is not supported or not on desktop (Qt4)"
+    )
     def test_can_handle_non_unicode_stdout_and_stderr(self):
         path = self.write_script(dedent("""\
             #!%s

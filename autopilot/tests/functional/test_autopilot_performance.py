@@ -21,8 +21,8 @@ from __future__ import absolute_import
 
 
 from contextlib import contextmanager
-from timeit import time
-from textwrap import default_timer
+from timeit import default_timer
+from textwrap import dedent
 from testtools import skipIf
 from testtools.matchers import Equals
 

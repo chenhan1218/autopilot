@@ -30,7 +30,6 @@ from testtools.matchers import (
     raises,
     Raises,
 )
-import time
 import timeit
 
 from autopilot.utilities import (

@@ -22,7 +22,7 @@ import sys
 from subprocess import Popen, call
 from textwrap import dedent
 from threading import Thread
-from time import sleep, time
+from time import sleep
 from timeit import default_timer
 
 from testtools import skipIf

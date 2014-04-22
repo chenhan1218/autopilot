@@ -76,7 +76,6 @@ def _get_buses_unchecked_connection_names(dbus_bus, previous_connections=None):
     bus = _get_dbus_bus_from_string(dbus_bus)
     return _get_unchecked_connections(bus.list_name())
 
-# Filters
 
 # Need application name
 class MatchesConnectionHasAppName(object):

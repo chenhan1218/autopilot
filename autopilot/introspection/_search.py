@@ -59,13 +59,11 @@ def FilterPrioritySorter(filter_list, runner_class):
 
 def FilterListGenerator(search_parameters, parameter_filter_lookup):
     filter_list = []
-    search_param_copy = search_parameters.copy()
     try:
-        for search_key in search_param_copy.keys():
+        for search_key in search_parameters.keys():
             required_filter = parameter_filter_lookup[search_key]
             if required_filter not in filter_list:
                 filter_list.append(required_filter)
-            search_param_copy.pop(search_key)
     except KeyError:
         raise KeyError(
             "Search parameter %s doesn't have a corresponding filter in %r"

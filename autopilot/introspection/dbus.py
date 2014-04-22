@@ -54,12 +54,11 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
     needed, and contains many methods to select child objects in the
     introspection tree.
 
-    This class must be used as a base class for any custom emulators
-    defined within a test case.
+    This class must be used as a base class for any custom proxy classes.
 
     .. seealso::
         Tutorial Section :ref:`custom_proxy_classes`
-            Information on how to write custom emulators.
+            Information on how to write custom proxy classes.
 
     """
 

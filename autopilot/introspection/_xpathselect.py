@@ -167,7 +167,7 @@ class Query(object):
     def new_from_path_and_id(path, id):
         """Create a new Query object from a path and id.
 
-        :param path: THe full path to the node you want to construct the query
+        :param path: The full path to the node you want to construct the query
             for.
         :param id: The object id of the node you want to construct the query
             for.

@@ -23,6 +23,7 @@ from __future__ import absolute_import
 
 from collections import namedtuple
 import logging
+from operator import methodcaller
 
 
 logger = logging.getLogger(__name__)
@@ -53,7 +54,7 @@ class FilterRunner(object):
 
 def FilterPrioritySorter(filter_list, runner_class):
     return runner_class(
-        sorted(filter_list, cmp=lambda a, b: cmp(b.priority(), a.priority()))
+        sorted(filter_list, key=methodcaller('priority'), reverse=True)
     )
 
 

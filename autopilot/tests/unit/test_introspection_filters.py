@@ -20,9 +20,9 @@
 from dbus import DBusException
 from mock import patch, Mock
 from testtools import TestCase
-from testtools.matchers import raises
+from testtools.matchers import Contains, raises
 
-from autopilot.introspection import _filters as _f
+from autopilot.introspection import _filters as _f, _search as _s
 
 
 class MatchesConnectionHasPathWithAPInterfaceTests(TestCase):
@@ -162,4 +162,21 @@ class MatchesConnectionHasAppNameTests(TestCase):
         self.assertThat(
             lambda: _f.MatchesConnectionHasAppName.matches(None, {}),
             raises(KeyError('application_name'))
+        )
+
+
+class FilterHelpersTests(TestCase):
+
+    def test_param_to_filter_includes_all(self):
+        parameters = dict(application_name=True, pid=True, path=True)
+        filter_list = _s.FilterListGenerator(
+            parameters,
+            _f._param_to_filter_map
+        )
+
+        self.assertThat(filter_list, Contains(_f.MatchesConnectionHasAppName))
+        self.assertThat(filter_list, Contains(_f.MatchesConnectionHasPid))
+        self.assertThat(
+            filter_list,
+            Contains(_f.MatchesConnectionHasPathWithAPInterface)
         )

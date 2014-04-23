@@ -36,7 +36,6 @@ from autopilot.introspection.utilities import _get_bus_connections_pid
 
 logger = logging.getLogger(__name__)
 
-
 class _cached_get_child_pids(object):
     """Get a list of all child process Ids, for the given parent.
 
@@ -199,3 +198,9 @@ class MatchesConnectionHasPathWithAPInterface(object):
             raise ValueError("Filter was expecting 'path' parameter")
         except dbus.DBusException:
             return False
+
+_param_to_filter_map = dict(
+    application_name=MatchesConnectionHasAppName,
+    pid=MatchesConnectionHasPid,
+    path=MatchesConnectionHasPathWithAPInterface,
+)

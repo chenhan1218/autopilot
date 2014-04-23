@@ -63,6 +63,32 @@ logger = logging.getLogger(__name__)
 # Keep track of known connections during search
 connection_list = []
 
+class _cached_get_child_pids(object):
+    """Get a list of all child process Ids, for the given parent.
+
+    Since we call this often, and it's a very expensive call, we optimise this
+    such that the return value will be cached for each scan through the dbus
+    bus.
+
+    Calling reset_cache() at the end of each dbus scan will ensure that you get
+    fresh values on the next call.
+    """
+
+    def __init__(self):
+        self._cached_result = None
+
+    def __call__(self, pid):
+        if self._cached_result is None:
+            self._cached_result = [
+                p.pid for p in psutil.Process(pid).get_children(recursive=True)
+            ]
+        return self._cached_result
+
+    def reset_cache(self):
+        self._cached_result = None
+
+
+_get_child_pids = _cached_get_child_pids()
 
 class ProcessSearchError(RuntimeError):
     pass

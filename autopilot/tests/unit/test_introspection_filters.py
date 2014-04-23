@@ -135,13 +135,31 @@ class MatchesConnectionHasPidTests(TestCase):
         )
 
     def test_should_ignore_pid_returns_True_when_pid_is_our_pid(self):
-        with patch.object(_f, '_bus_pid_is_our_pid', return_value=True):
+        with patch.object(
+                _f.MatchesConnectionHasPid,
+                '_bus_pid_is_our_pid',
+                return_value=True
+        ):
             self.assertTrue(
                 _f.MatchesConnectionHasPid._should_ignore_pid(None, None, None)
             )
 
     def test_should_ignore_pid_returns_False_when_pid_is_our_pid(self):
-        with patch.object(_f, '_bus_pid_is_our_pid', return_value=False):
+        with patch.object(
+                _f.MatchesConnectionHasPid,
+                '_bus_pid_is_our_pid',
+                return_value=False
+        ):
             self.assertFalse(
                 _f.MatchesConnectionHasPid._should_ignore_pid(None, None, None)
             )
+
+
+class MatchesConnectionHasAppNameTests(TestCase):
+    """Tests specific to the MatchesConnectionHasPid filter."""
+
+    def test_raises_when_missing_app_name_param(self):
+        self.assertThat(
+            lambda: _f.MatchesConnectionHasAppName.matches(None, {}),
+            raises(KeyError('application_name'))
+        )

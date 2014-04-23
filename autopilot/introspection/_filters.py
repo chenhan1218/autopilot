@@ -29,6 +29,8 @@ import logging
 import os
 import psutil
 
+from autopilot.introspection.backends import DBusAddress
+from autopilot.introspection.dbus import get_classname_from_path
 from autopilot.introspection.utilities import _get_bus_connections_pid
 
 
@@ -60,24 +62,20 @@ class _cached_get_child_pids(object):
         self._cached_result = None
 
 
-_get_child_pids = _cached_get_child_pids()
+# def _get_buses_unchecked_connection_names(dbus_bus, previous_connections=None):
+#     """Return a list of connections found on dbus_bus.
+
+#     If previous_connections is supplied then those connections are removed from
+#     the returned list.
+
+#     """
+#     def _get_unchecked_connections(all_conns):
+#         return list(set(all_conns).difference(set(previous_connections or [])))
+
+#     bus = _get_dbus_bus_from_string(dbus_bus)
+#     return _get_unchecked_connections(bus.list_name())
 
 
-def _get_buses_unchecked_connection_names(dbus_bus, previous_connections=None):
-    """Return a list of connections found on dbus_bus.
-
-    If previous_connections is supplied then those connections are removed from
-    the returned list.
-
-    """
-    def _get_unchecked_connections(all_conns):
-        return list(set(all_conns).difference(set(previous_connections or [])))
-
-    bus = _get_dbus_bus_from_string(dbus_bus)
-    return _get_unchecked_connections(bus.list_name())
-
-
-# Need application name
 class MatchesConnectionHasAppName(object):
     @classmethod
     def priority(cls):
@@ -87,14 +85,25 @@ class MatchesConnectionHasAppName(object):
     def matches(cls, dbus_connection, params):
         """Returns True if dbus_connection has the required application name.
 
+        Can be provided an object_path but defaults to 'AUTOPILOT_PATH' if not
+        provided.
+
+        This filter should only activated if the application_name is provided
+        in the search criteria.
+
         :raises KeyError if the 'application_name' parameter isn't passed in
             params
 
         """
         requested_app_name = params['application_name']
+        object_path = params.get(object_path, AUTOPILOT_PATH)
         bus, connection_name = dbus_connection
 
-        dbus_object = cls._get_dbus_address_object(connection_namename, object_path, bus)
+        dbus_object = cls._get_dbus_address_object(
+            connection_name,
+            object_path,
+            bus
+        )
         app_name = cls._get_application_name_from_dbus_address(dbus_object)
         return app_name == requested_app_name
 
@@ -110,8 +119,9 @@ class MatchesConnectionHasAppName(object):
         )
 
 
-# needs pid
 class MatchesConnectionHasPid(object):
+
+    _get_child_pids = _cached_get_child_pids()
 
     @classmethod
     def priority(cls):
@@ -138,26 +148,29 @@ class MatchesConnectionHasPid(object):
                 (connection_name, e))
             return False
 
-        eligible_pids = [pid] + _get_child_pids(pid)
+        eligible_pids = [pid] + cls._get_child_pids(pid)
         return bus_pid in eligible_pids
 
     @classmethod
     def _should_ignore_pid(cls, bus, connection_name, pid):
         if (
             connection_name == 'org.freedesktop.DBus'
-            or _bus_pid_is_our_pid(bus, connection_name, pid)
+            or cls._bus_pid_is_our_pid(bus, connection_name, pid)
         ):
             return True
         return False
 
+    @classmethod
+    def _bus_pid_is_our_pid(cls, bus, connection_name, pid):
+        """Returns True if this processes pid is the same as the supplied bus
+        connections pid.
 
-def _bus_pid_is_our_pid(bus, connection_name, pid):
-    """Returns True if this scripts pid is the bus connections pid supplied."""
-    try:
-        bus_pid = _get_bus_connections_pid(bus, connection_name)
-        return bus_pid == os.getpid()
-    except dbus.DBusException:
-        return False
+        """
+        try:
+            bus_pid = _get_bus_connections_pid(bus, connection_name)
+            return bus_pid == os.getpid()
+        except dbus.DBusException:
+            return False
 
 
 class MatchesConnectionHasPathWithAPInterface(object):

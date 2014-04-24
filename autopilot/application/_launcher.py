@@ -133,7 +133,7 @@ class UpstartApplicationLauncher(ApplicationLauncher):
         log_path = UpstartAppLaunch.application_log_path(app_id)
         if log_path and os.path.exists(log_path):
             self.case_addDetail(
-                "Application Log",
+                "Application Log (%s)" % app_id,
                 content_from_file(log_path)
             )
 
@@ -228,22 +228,22 @@ class NormalApplicationLauncher(ApplicationLauncher):
             cwd=self.cwd,
         )
 
-        self.addCleanup(self._kill_process_and_attach_logs, process)
+        self.addCleanup(self._kill_process_and_attach_logs, process, app_path)
 
         return process
 
-    def _kill_process_and_attach_logs(self, process):
+    def _kill_process_and_attach_logs(self, process, app_path):
         stdout, stderr, return_code = _kill_process(process)
         self.case_addDetail(
-            'process-return-code',
+            'process-return-code (%s)' % app_path,
             text_content(str(return_code))
         )
         self.case_addDetail(
-            'process-stdout',
+            'process-stdout (%s)' % app_path,
             text_content(stdout)
         )
         self.case_addDetail(
-            'process-stderr',
+            'process-stderr (%s)' % app_path,
             text_content(stderr)
         )
 

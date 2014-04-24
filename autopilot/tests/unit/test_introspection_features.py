@@ -34,7 +34,7 @@ from testtools.matchers import (
     raises,
 )
 from testscenarios import TestWithScenarios
-from six import StringIO, u, PY3
+from six import StringIO, PY3
 from contextlib import contextmanager
 if PY3:
     from contextlib import ExitStack
@@ -48,11 +48,8 @@ from autopilot.introspection import (
     _maybe_filter_connections_by_app_name,
     get_proxy_object_for_existing_process,
 )
-from autopilot.introspection._proxy_object import (
-    _check_process_and_pid_details,
-    _get_search_criteria_string_representation,
-    get_classname_from_path,
-)
+
+import autopilot.introspection._proxy_object as _po
 from autopilot.introspection.dbus import (
     _get_filter_string_for_key_value_pair,
     _get_default_proxy_class,
@@ -61,6 +58,7 @@ from autopilot.introspection.dbus import (
     _object_passes_filters,
     _object_registry,
     _try_custom_proxy_classes,
+    get_classname_from_path,
     CustomEmulatorBase,
     DBusIntrospectionObject,
 )
@@ -348,136 +346,6 @@ class DBusIntrospectionObjectTests(TestCase):
             """))
 
 
-class ProcessSearchErrorStringRepTests(TestCase):
-
-    """Various tests for the _get_search_criteria_string_representation
-    function.
-
-    """
-
-    def test_get_string_rep_defaults_to_empty_string(self):
-        observed = _get_search_criteria_string_representation()
-        self.assertEqual("", observed)
-
-    def test_pid(self):
-        self.assertEqual(
-            u('pid = 123'),
-            _get_search_criteria_string_representation(pid=123)
-        )
-
-    def test_dbus_bus(self):
-        self.assertEqual(
-            u("dbus bus = 'foo'"),
-            _get_search_criteria_string_representation(dbus_bus='foo')
-        )
-
-    def test_connection_name(self):
-        self.assertEqual(
-            u("connection name = 'foo'"),
-            _get_search_criteria_string_representation(connection_name='foo')
-        )
-
-    def test_object_path(self):
-        self.assertEqual(
-            u("object path = 'foo'"),
-            _get_search_criteria_string_representation(object_path='foo')
-        )
-
-    def test_application_name(self):
-        self.assertEqual(
-            u("application name = 'foo'"),
-            _get_search_criteria_string_representation(application_name='foo')
-        )
-
-    def test_process_object(self):
-        class FakeProcess(object):
-
-            def __repr__(self):
-                return 'foo'
-        process = FakeProcess()
-        self.assertEqual(
-            u("process object = 'foo'"),
-            _get_search_criteria_string_representation(process=process)
-        )
-
-    def test_all_parameters_combined(self):
-        class FakeProcess(object):
-
-            def __repr__(self):
-                return 'foo'
-        process = FakeProcess()
-        observed = _get_search_criteria_string_representation(
-            pid=123,
-            dbus_bus='session_bus',
-            connection_name='com.Canonical.Unity',
-            object_path='/com/Canonical/Autopilot',
-            application_name='MyApp',
-            process=process
-        )
-        expected = "pid = 123, dbus bus = 'session_bus', " \
-            "connection name = 'com.Canonical.Unity', " \
-            "object path = '/com/Canonical/Autopilot', " \
-            "application name = 'MyApp', process object = 'foo'"
-        self.assertEqual(expected, observed)
-
-
-class ProcessAndPidErrorCheckingTests(TestCase):
-
-    def test_raises_ProcessSearchError_when_process_is_not_running(self):
-        with patch('autopilot.introspection._pid_is_running') as pir:
-            pir.return_value = False
-
-            self.assertThat(
-                lambda: _check_process_and_pid_details(pid=123),
-                raises(ProcessSearchError("PID 123 could not be found"))
-            )
-
-    def test_raises_RuntimeError_when_pid_and_process_disagree(self):
-        mock_process = Mock()
-        mock_process.pid = 1
-
-        self.assertThat(
-            lambda: _check_process_and_pid_details(mock_process, 2),
-            raises(RuntimeError("Supplied PID and process.pid do not match."))
-        )
-
-    def test_returns_pid_when_specified(self):
-        expected = self.getUniqueInteger()
-        with patch('autopilot.introspection._pid_is_running') as pir:
-            pir.return_value = True
-
-            observed = _check_process_and_pid_details(pid=expected)
-
-        self.assertEqual(expected, observed)
-
-    def test_returns_process_pid_attr_when_specified(self):
-        fake_process = Mock()
-        fake_process.pid = self.getUniqueInteger()
-
-        with patch('autopilot.introspection._pid_is_running') as pir:
-            pir.return_value = True
-            observed = _check_process_and_pid_details(fake_process)
-
-        self.assertEqual(fake_process.pid, observed)
-
-    def test_returns_None_when_neither_parameters_present(self):
-        self.assertEqual(
-            None,
-            _check_process_and_pid_details()
-        )
-
-    def test_returns_pid_when_both_specified(self):
-        fake_process = Mock()
-        fake_process.pid = self.getUniqueInteger()
-        with patch('autopilot.introspection._pid_is_running') as pir:
-            pir.return_value = True
-            observed = _check_process_and_pid_details(
-                fake_process,
-                fake_process.pid
-            )
-        self.assertEqual(fake_process.pid, observed)
-
-
 class ApplicationFilteringTests(TestCase):
 
     def get_mock_dbus_address_with_application_name(slf, app_name):
@@ -546,9 +414,7 @@ class ProxyObjectGenerationTests(TestCase):
         mock_dict = {}
         with ExitStack() as all_the_mocks:
             mock_dict['check_process'] = all_the_mocks.enter_context(
-                patch(
-                    'autopilot.introspection._check_process_and_pid_details'
-                )
+                patch.object(_po, '_check_process_and_pid_details')
             )
             mock_dict['get_addresses'] = all_the_mocks.enter_context(
                 patch(
@@ -563,9 +429,7 @@ class ProxyObjectGenerationTests(TestCase):
                 )
             )
             mock_dict['make_proxy_object'] = all_the_mocks.enter_context(
-                patch(
-                    'autopilot.introspection._make_proxy_object'
-                )
+                patch.object(_po, '_make_proxy_object')
             )
             yield mock_dict
 

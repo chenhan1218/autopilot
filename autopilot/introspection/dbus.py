@@ -44,7 +44,7 @@ from autopilot.utilities import (
 
 
 _object_registry = {}
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class StateNotFoundError(RuntimeError):
@@ -182,7 +182,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             try:
                 self.__state[key] = create_value_instance(value, self, key)
             except ValueError as e:
-                logger.warning(
+                _logger.warning(
                     "While constructing attribute '%s.%s': %s",
                     self.__class__.__name__,
                     key,
@@ -211,7 +211,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             custom emulators)
 
         .. seealso::
-            Tutorial Section :ref:`custom_emulators`
+            Tutorial Section :ref:`custom_proxy_classes`
 
         """
         #TODO: if kwargs has exactly one item in it we should specify the
@@ -314,7 +314,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         :raises StateNotFoundError: if the requested object was not found.
 
         .. seealso::
-            Tutorial Section :ref:`custom_emulators`
+            Tutorial Section :ref:`custom_proxy_classes`
 
         """
         instances = self.select_many(type_name, **kwargs)
@@ -367,7 +367,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         :raises StateNotFoundError: if the requested object was not found.
 
         .. seealso::
-            Tutorial Section :ref:`custom_emulators`
+            Tutorial Section :ref:`custom_proxy_classes`
 
         """
         for i in range(self._poll_time):
@@ -418,7 +418,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             provided.
 
         .. seealso::
-            Tutorial Section :ref:`custom_emulators`
+            Tutorial Section :ref:`custom_proxy_classes`
 
         """
         if not isinstance(type_name, str) and issubclass(
@@ -428,7 +428,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         if type_name == "*" and not kwargs:
             raise TypeError("You must specify either a type name or a filter.")
 
-        logger.debug(
+        _logger.debug(
             "Selecting objects of %s with attributes: %r",
             'any type' if type_name == '*' else 'type ' + type_name, kwargs)
 
@@ -505,7 +505,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         """
         instances = self.get_state_by_path("/")
         if len(instances) != 1:
-            logger.error("Could not retrieve root object.")
+            _logger.error("Could not retrieve root object.")
             return None
         return self.make_introspection_object(instances[0])
 
@@ -541,7 +541,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         with Timer("GetState %s" % piece):
             data = self._backend.introspection_iface.GetState(piece)
             if len(data) > 15:
-                logger.warning(
+                _logger.warning(
                     "Your query '%s' returned a lot of data (%d items). This "
                     "is likely to be slow. You may want to consider optimising"
                     " your query to return fewer items.",
@@ -652,12 +652,15 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         else:
             properties = self.get_properties()
         # print properties
-        for key in sorted(properties.keys()):
-            output.write("%s%s: %r\n" % (indent, key, properties[key]))
-        # print children
-        if maxdepth is None or _curdepth < maxdepth:
-            for c in self.get_children():
-                c.print_tree(output, maxdepth, _curdepth + 1)
+        try:
+            for key in sorted(properties.keys()):
+                output.write("%s%s: %r\n" % (indent, key, properties[key]))
+            # print children
+            if maxdepth is None or _curdepth < maxdepth:
+                for c in self.get_children():
+                    c.print_tree(output, maxdepth, _curdepth + 1)
+        except StateNotFoundError as error:
+            output.write("%sError: %s\n" % (indent, error))
 
     @contextmanager
     def no_automatic_refreshing(self):
@@ -849,6 +852,6 @@ CustomEmulatorBase.__doc__ = \
     within a test case.
 
     .. seealso::
-        Tutorial Section :ref:`custom_emulators`
+        Tutorial Section :ref:`custom_proxy_classes`
             Information on how to write custom emulators.
     """

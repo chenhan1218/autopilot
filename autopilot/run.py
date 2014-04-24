@@ -689,6 +689,9 @@ class TestProgram(object):
             self.args.suite
         )
 
+        if not test_suite.countTestCases():
+            raise RuntimeError('Did not find any tests')
+
         if self.args.random_order:
             shuffle(test_suite._tests)
             print("Running tests in random order")
@@ -754,8 +757,11 @@ class TestProgram(object):
 
 def main():
     test_app = TestProgram()
-    test_app.run()
-
+    try:
+        test_app.run()
+    except RuntimeError as e:
+        print(e)
+        exit(1)
 
 if __name__ == "__main__":
     main()

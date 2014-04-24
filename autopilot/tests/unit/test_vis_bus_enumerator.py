@@ -35,7 +35,7 @@ class BusEnumeratorXmlProcessorTest(TestCase):
 
         xml_processor(self._example_connection_name, "/", xml)
 
-    @patch('autopilot.vis.dbus_search.logger')
+    @patch('autopilot.vis.dbus_search._logger')
     def test_invalid_xml_logs_details(self, logger_meth):
         xml = "<invalid xml>"
         xml_processor = XmlProcessor()

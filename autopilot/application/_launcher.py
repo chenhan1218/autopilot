@@ -37,8 +37,7 @@ from autopilot.application._environment import (
     QtApplicationEnvironment,
 )
 
-
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class ApplicationLauncher(fixtures.Fixture):
@@ -63,6 +62,7 @@ class UpstartApplicationLauncher(ApplicationLauncher):
     Timeout = object()
     Failed = object()
     Started = object()
+    Stopped = object()
 
     def __init__(self, case_addDetail, **kwargs):
         super(UpstartApplicationLauncher, self).__init__(case_addDetail)
@@ -81,12 +81,14 @@ class UpstartApplicationLauncher(ApplicationLauncher):
 
         UpstartAppLaunch.observer_add_app_failed(self._on_failed, state)
         UpstartAppLaunch.observer_add_app_started(self._on_started, state)
+        UpstartAppLaunch.observer_add_app_focus(self._on_started, state)
         GLib.timeout_add_seconds(10.0, self._on_timeout, state)
 
         self._launch_app(app_id, app_uris)
         state['loop'].run()
         UpstartAppLaunch.observer_delete_app_failed(self._on_failed)
         UpstartAppLaunch.observer_delete_app_started(self._on_started)
+        UpstartAppLaunch.observer_delete_app_focus(self._on_started)
         self._maybe_add_application_cleanups(state)
         self._check_status_error(
             state.get('status', None),
@@ -111,6 +113,12 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             state['loop'].quit()
 
     @staticmethod
+    def _on_stopped(stopped_app_id, state):
+        if stopped_app_id == state['expected_app_id']:
+            state['status'] = UpstartApplicationLauncher.Stopped
+            state['loop'].quit()
+
+    @staticmethod
     def _on_timeout(state):
         state['status'] = UpstartApplicationLauncher.Timeout
         state['loop'].quit()
@@ -130,7 +138,22 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             )
 
     def _stop_application(self, app_id):
+        state = {}
+        state['loop'] = self._get_glib_loop()
+        state['expected_app_id'] = app_id
+
+        UpstartAppLaunch.observer_add_app_stop(self._on_stopped, state)
+        GLib.timeout_add_seconds(10.0, self._on_timeout, state)
+
         UpstartAppLaunch.stop_application(app_id)
+        state['loop'].run()
+        UpstartAppLaunch.observer_delete_app_stop(self._on_stopped)
+
+        if state.get('status', None) == UpstartApplicationLauncher.Timeout:
+            _logger.error(
+                "Timed out waiting for Application with app_id '%s' to stop.",
+                app_id
+            )
 
     @staticmethod
     def _get_glib_loop():
@@ -229,7 +252,7 @@ def launch_process(application, args, capture_output=False, **kwargs):
     """Launch an autopilot-enabled process and return the process object."""
     commandline = [application]
     commandline.extend(args)
-    logger.info("Launching process: %r", commandline)
+    _logger.info("Launching process: %r", commandline)
     cap_mode = None
     if capture_output:
         cap_mode = subprocess.PIPE
@@ -284,7 +307,7 @@ def _get_application_environment(app_type=None, app_path=None):
         else:
             return get_application_launcher_wrapper(app_path)
     except (RuntimeError, ValueError) as e:
-        logger.error(str(e))
+        _logger.error(str(e))
         raise RuntimeError(
             "Autopilot could not determine the correct introspection type "
             "to use. You can specify this by providing app_type."
@@ -342,7 +365,7 @@ def _kill_process(process):
     """Kill the process, and return the stdout, stderr and return code."""
     stdout_parts = []
     stderr_parts = []
-    logger.info("waiting for process to exit.")
+    _logger.info("waiting for process to exit.")
     _attempt_kill_pid(process.pid)
     for _ in Timeout.default():
         tmp_out, tmp_err = process.communicate()
@@ -355,7 +378,7 @@ def _kill_process(process):
         if not _is_process_running(process.pid):
             break
     else:
-        logger.info(
+        _logger.info(
             "Killing process group, since it hasn't exited after "
             "10 seconds."
         )
@@ -365,10 +388,10 @@ def _kill_process(process):
 
 def _attempt_kill_pid(pid, sig=signal.SIGTERM):
     try:
-        logger.info("Killing process %d", pid)
+        _logger.info("Killing process %d", pid)
         os.killpg(pid, sig)
     except OSError:
-        logger.info("Appears process has already exited.")
+        _logger.info("Appears process has already exited.")
 
 
 def _is_process_running(pid):

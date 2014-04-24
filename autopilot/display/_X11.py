@@ -18,12 +18,8 @@
 #
 
 
-import logging
-
 from autopilot.display import Display as DisplayBase
 from autopilot.utilities import Silence
-
-logger = logging.getLogger(__name__)
 
 
 class Display(DisplayBase):

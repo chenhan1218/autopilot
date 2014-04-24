@@ -141,6 +141,7 @@ class ProcessManagerApplicationNoCleanupTests(AutopilotTestCase):
         self.assertThat(ret_code, Equals(1), "Application is still running")
 
 
+@skipIf(model() != "Desktop", "Not suitable for device (X11)")
 class BAMFResizeWindowTestCase(AutopilotTestCase):
     """Tests for the BAMF window helpers."""
 

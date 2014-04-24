@@ -25,7 +25,7 @@ from shutil import rmtree
 import six
 import subprocess
 import tempfile
-from testtools import TestCase
+from testtools import TestCase, skipUnless
 from testtools.matchers import (
     Contains,
     DirExists,
@@ -43,7 +43,7 @@ if six.PY3:
 else:
     from contextlib2 import ExitStack
 
-from autopilot import run
+from autopilot import have_vis, run
 
 
 class RunUtilityFunctionTests(TestCase):
@@ -245,6 +245,7 @@ class TestRunLaunchApp(TestCase):
                     Contains("Error: Failure Message")
                 )
 
+    @skipUnless(have_vis(), "Requires vis module.")
     @patch('autopilot.vis.vis_main')
     def test_passes_testability_to_vis_main(self, patched_vis_main):
         args = Namespace(
@@ -257,6 +258,7 @@ class TestRunLaunchApp(TestCase):
 
         patched_vis_main.assert_called_once_with(['-testability'])
 
+    @skipUnless(have_vis(), "Requires vis module.")
     @patch('autopilot.vis.vis_main')
     def test_passes_empty_list_without_testability_set(self, patched_vis_main):
         args = Namespace(

@@ -72,33 +72,3 @@ def FilterListGenerator(search_parameters, parameter_filter_lookup):
         )
 
     return filter_list
-
-
-
-# create filter list based on arguments
-# create runner based on filter list
-
-# def find_matching_connections():
-#     connections = []
-
-#     # Timer loop here
-#     # populate connections based on the previous lot of connections
-#     for c in connections:
-#         if filter_runner(c, kwargs):
-#            blah.append(c)
-#     # valid_connections = [c for c in connections if filter_runner(c, kwargs)]
-#     # if len(valid_connections) >= 1:
-#     #     return valid_connections
-
-
-# def _raise_if_process_exited(process):
-#     """Raises ProcessSearchError if the non-None process is no longer running.
-
-#     """
-#     _get_child_pids.reset_cache()
-#     if process is not None and not _process_is_running(process):
-#         return_code = process.poll()
-#         raise ProcessSearchError(
-#             "Process exited with exit code: %d"
-#             % return_code
-#         )

@@ -27,34 +27,22 @@ introspection mechanism, and probably isn't useful to most test authors.
 
 from __future__ import absolute_import
 
+from autopilot.introspection._proxy_object import (
+    get_autopilot_proxy_object_for_process,
+    get_proxy_object_for_existing_process
+)
+
 from dbus import DBusException, Interface
 import logging
-import subprocess
 from functools import partial
 import os
 import psutil
 from six import u
 
-from autopilot.dbus_handler import (
-    get_session_bus,
-    get_system_bus,
-    get_custom_bus,
-)
 from autopilot.introspection.backends import DBusAddress
-from autopilot.introspection.constants import (
-    AUTOPILOT_PATH,
-    QT_AUTOPILOT_IFACE,
-    AP_INTROSPECTION_IFACE,
-)
-from autopilot.introspection.dbus import (
-    CustomEmulatorBase,
-    DBusIntrospectionObject,
-    get_classname_from_path,
-)
-from autopilot.introspection.utilities import (
-    _get_bus_connections_pid,
-    _pid_is_running,
-)
+
+
+
 from autopilot._timeout import Timeout
 
 
@@ -62,175 +50,6 @@ logger = logging.getLogger(__name__)
 
 # Keep track of known connections during search
 connection_list = []
-
-class _cached_get_child_pids(object):
-    """Get a list of all child process Ids, for the given parent.
-
-    Since we call this often, and it's a very expensive call, we optimise this
-    such that the return value will be cached for each scan through the dbus
-    bus.
-
-    Calling reset_cache() at the end of each dbus scan will ensure that you get
-    fresh values on the next call.
-    """
-
-    def __init__(self):
-        self._cached_result = None
-
-    def __call__(self, pid):
-        if self._cached_result is None:
-            self._cached_result = [
-                p.pid for p in psutil.Process(pid).get_children(recursive=True)
-            ]
-        return self._cached_result
-
-    def reset_cache(self):
-        self._cached_result = None
-
-
-_get_child_pids = _cached_get_child_pids()
-
-class ProcessSearchError(RuntimeError):
-    pass
-
-
-def get_autopilot_proxy_object_for_process(
-    process,
-    emulator_base,
-    dbus_bus='session'
-):
-    """Return the autopilot proxy object for the given *process*.
-
-    :raises: **RuntimeError** if no autopilot interface was found.
-
-    """
-    pid = process.pid
-    proxy_obj = get_proxy_object_for_existing_process(
-        pid,
-        process=process,
-        emulator_base=emulator_base,
-        dbus_bus=dbus_bus,
-    )
-    proxy_obj.set_process(process)
-
-    return proxy_obj
-
-
-def get_proxy_object_for_existing_process(
-        pid=None, dbus_bus='session', connection_name=None, process=None,
-        object_path=AUTOPILOT_PATH, application_name=None, emulator_base=None):
-    """Return a single proxy object for an application that is already running
-    (i.e. launched outside of Autopilot).
-
-    Searches on the given bus (supplied by **dbus_bus**) for an application
-    matching the search criteria, creating the proxy object using the supplied
-    custom emulator **emulator_base** (defaults to None).
-
-    For example for an application on the system bus where the applications
-    PID is known::
-
-        app_proxy = get_proxy_object_for_existing_process(pid=app_pid)
-
-    Multiple criteria are allowed, for instance you could search on **pid**
-    and **connection_name**::
-
-        app_proxy = get_proxy_object_for_existing_process(
-            pid=app_pid, connection_name='org.gnome.gedit')
-
-    If the application from the previous example was on the system bus::
-
-        app_proxy = get_proxy_object_for_existing_process(
-            dbus_bus='system', pid=app_pid, connection_name='org.gnome.gedit')
-
-    It is possible to search for the application given just the applications
-    name.
-    An example for an application running on a custom bus searching using the
-    applications name::
-
-        app_proxy = get_proxy_object_for_existing_process(
-            application_name='qmlscene',
-            dbus_bus='unix:abstract=/tmp/dbus-IgothuMHNk')
-
-    :param pid: The PID of the application to search for.
-    :param dbus_bus: A string containing either 'session', 'system' or the
-        custom buses name (i.e. 'unix:abstract=/tmp/dbus-IgothuMHNk').
-    :param connection_name: A string containing the DBus connection name to
-        use with the search criteria.
-    :param object_path: A string containing the object path to use as the
-        search criteria. Defaults to
-        :py:data:`autopilot.introspection.constants.AUTOPILOT_PATH`.
-    :param application_name: A string containing the applications name to
-        search for.
-    :param emulator_base: The custom emulator to create the resulting proxy
-        object with.
-
-    :raises ProcessSearchError: if no search criteria match.
-    :raises RuntimeError: if the search criteria results in many matches.
-    :raises RuntimeError: if both ``process`` and ``pid`` are supplied, but
-        ``process.pid != pid``.
-
-    """
-    pid = _check_process_and_pid_details(process, pid)
-
-    dbus_addresses = _get_dbus_addresses_from_search_parameters(
-        pid,
-        dbus_bus,
-        connection_name,
-        object_path,
-        process
-    )
-
-    dbus_addresses = _maybe_filter_connections_by_app_name(
-        application_name,
-        dbus_addresses
-    )
-
-    if dbus_addresses is None or len(dbus_addresses) == 0:
-        criteria_string = _get_search_criteria_string_representation(
-            pid,
-            dbus_bus,
-            connection_name,
-            process,
-            object_path,
-            application_name
-        )
-        message_string = "Search criteria (%s) returned no results" % \
-            (criteria_string)
-        raise ProcessSearchError(message_string)
-    if len(dbus_addresses) > 1:
-        criteria_string = _get_search_criteria_string_representation(
-            pid,
-            dbus_bus,
-            connection_name,
-            process,
-            object_path,
-            application_name
-        )
-        message_string = "Search criteria (%s) returned multiple results" % \
-            (criteria_string)
-        raise RuntimeError(message_string)
-
-    return _make_proxy_object(dbus_addresses[0], emulator_base)
-
-
-def _check_process_and_pid_details(process=None, pid=None):
-    """Do error checking on process and pid specification.
-
-    :raises RuntimeError: if both process and pid are specified, but the
-        process's 'pid' attribute is different to the pid attribute specified.
-    :raises ProcessSearchError: if the process specified is not running.
-    :returns: the pid to use in all search queries.
-
-    """
-    if process is not None:
-        if pid is None:
-            pid = process.pid
-        elif pid != process.pid:
-            raise RuntimeError("Supplied PID and process.pid do not match.")
-
-    if pid is not None and not _pid_is_running(pid):
-        raise ProcessSearchError("PID %d could not be found" % pid)
-    return pid
 
 
 def _maybe_filter_connections_by_app_name(application_name, dbus_addresses):
@@ -255,32 +74,6 @@ def _get_application_name_from_dbus_address(dbus_address):
     )
 
 
-def _get_search_criteria_string_representation(
-        pid=None, dbus_bus=None, connection_name=None, process=None,
-        object_path=None, application_name=None):
-    """Get a string representation of the search criteria.
-
-    Used to represent the search criteria to users in error messages.
-    """
-    description_parts = []
-    if pid is not None:
-        description_parts.append(u('pid = %d') % pid)
-    if dbus_bus is not None:
-        description_parts.append(u("dbus bus = '%s'") % dbus_bus)
-    if connection_name is not None:
-        description_parts.append(
-            u("connection name = '%s'") % connection_name
-        )
-    if object_path is not None:
-        description_parts.append(u("object path = '%s'") % object_path)
-    if application_name is not None:
-        description_parts.append(
-            u("application name = '%s'") % application_name
-        )
-    if process is not None:
-        description_parts.append(u("process object = '%r'") % process)
-
-    return ", ".join(description_parts)
 
 
 def _get_dbus_addresses_from_search_parameters(
@@ -338,10 +131,6 @@ def _search_for_valid_connections(pid, bus, connection_name, object_path):
     return valid_connections
 
 
-def _process_is_running(process):
-    return process.poll() is None
-
-
 def _get_valid_connections(connections, bus, pid, object_path):
     filter_fn = partial(_match_connection, bus, pid, object_path)
     valid_connections = filter(filter_fn, connections)
@@ -363,17 +152,7 @@ def _dedupe_connections_on_pid(valid_connections, bus):
     return deduped_connections
 
 
-def _get_dbus_address_object(connection_name, object_path, bus):
-    return DBusAddress(bus, connection_name, object_path)
 
-
-def _get_dbus_bus_from_string(dbus_string):
-    if dbus_string == 'session':
-        return get_session_bus()
-    elif dbus_string == 'system':
-        return get_system_bus()
-    else:
-        return get_custom_bus(dbus_string)
 
 
 def _get_possible_connections(bus, connection_name):
@@ -441,83 +220,3 @@ def _check_connection_has_ap_interface(bus, connection_name, path):
     obj = bus.get_object(connection_name, path)
     obj_iface = Interface(obj, 'com.canonical.Autopilot.Introspection')
     obj_iface.GetVersion()
-
-
-def _make_proxy_object(data_source, emulator_base):
-    """Returns a root proxy object given a DBus service name."""
-    proxy_bases = _get_proxy_object_base_classes(data_source)
-    if emulator_base is None:
-        emulator_base = type('DefaultEmulatorBase', (CustomEmulatorBase,), {})
-    proxy_bases = proxy_bases + (emulator_base, )
-    cls_name, cls_state = _get_proxy_object_class_name_and_state(data_source)
-
-    # Merge the object hierarchy.
-    clsobj = type(str("%sBase" % cls_name), proxy_bases, {})
-
-    proxy_class = type(str(cls_name), (clsobj,), {})
-
-    try:
-        dbus_tuple = data_source.introspection_iface.GetState("/")[0]
-        path, state = dbus_tuple
-        return proxy_class(state, path, data_source)
-    except IndexError:
-        raise RuntimeError("Unable to find root object of %r" % proxy_class)
-
-
-def _get_proxy_object_base_classes(backend):
-    """Return  tuple of the base classes to use when creating a proxy object
-    for the given service name & path.
-
-    :raises: **RuntimeError** if the autopilot interface cannot be found.
-
-    """
-
-    bases = [ApplicationProxyObject]
-
-    intro_xml = backend.dbus_introspection_iface.Introspect()
-    if AP_INTROSPECTION_IFACE not in intro_xml:
-        raise RuntimeError(
-            "Could not find Autopilot interface on DBus backend '%s'" %
-            backend)
-
-    if QT_AUTOPILOT_IFACE in intro_xml:
-        from autopilot.introspection.qt import QtObjectProxyMixin
-        bases.append(QtObjectProxyMixin)
-
-    return tuple(bases)
-
-
-def _get_proxy_object_class_name_and_state(backend):
-    """Return the class name and root state dictionary."""
-    object_path, object_state = backend.introspection_iface.GetState("/")[0]
-    return get_classname_from_path(object_path), object_state
-
-
-class ApplicationProxyObject(DBusIntrospectionObject):
-    """A class that better supports query data from an application."""
-
-    def __init__(self, state, path, backend):
-        super(ApplicationProxyObject, self).__init__(state, path, backend)
-        self._process = None
-
-    def set_process(self, process):
-        """Set the subprocess.Popen object of the process that this is a proxy
-        for.
-
-        You should never normally need to call this method.
-
-        """
-        self._process = process
-
-    @property
-    def pid(self):
-        return self._process.pid
-
-    @property
-    def process(self):
-        return self._process
-
-    def kill_application(self):
-        """Kill the running process that this is a proxy for using
-        'kill `pid`'."""
-        subprocess.call(["kill", "%d" % self._process.pid])

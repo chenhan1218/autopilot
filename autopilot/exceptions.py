@@ -27,3 +27,8 @@ class BackendException(RuntimeError):
             "Error while initialising backend. Original exception was: " +
             str(original_exception))
         self.original_exception = original_exception
+
+
+class ProcessSearchError(RuntimeError):
+    """Object introspection error occured."""
+    pass

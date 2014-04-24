@@ -36,6 +36,7 @@ from autopilot.introspection.utilities import _get_bus_connections_pid
 
 logger = logging.getLogger(__name__)
 
+
 class _cached_get_child_pids(object):
     """Get a list of all child process Ids, for the given parent.
 
@@ -61,18 +62,7 @@ class _cached_get_child_pids(object):
         self._cached_result = None
 
 
-# def _get_buses_unchecked_connection_names(dbus_bus, previous_connections=None):
-#     """Return a list of connections found on dbus_bus.
-
-#     If previous_connections is supplied then those connections are removed from
-#     the returned list.
-
-#     """
-#     def _get_unchecked_connections(all_conns):
-#         return list(set(all_conns).difference(set(previous_connections or [])))
-
-#     bus = _get_dbus_bus_from_string(dbus_bus)
-#     return _get_unchecked_connections(bus.list_name())
+_get_child_pids = _cached_get_child_pids()
 
 
 class MatchesConnectionHasAppName(object):
@@ -120,8 +110,6 @@ class MatchesConnectionHasAppName(object):
 
 class MatchesConnectionHasPid(object):
 
-    _get_child_pids = _cached_get_child_pids()
-
     @classmethod
     def priority(cls):
         return 0
@@ -147,7 +135,7 @@ class MatchesConnectionHasPid(object):
                 (connection_name, e))
             return False
 
-        eligible_pids = [pid] + cls._get_child_pids(pid)
+        eligible_pids = [pid] + _get_child_pids(pid)
         return bus_pid in eligible_pids
 
     @classmethod
@@ -198,6 +186,7 @@ class MatchesConnectionHasPathWithAPInterface(object):
             raise ValueError("Filter was expecting 'path' parameter")
         except dbus.DBusException:
             return False
+
 
 _param_to_filter_map = dict(
     application_name=MatchesConnectionHasAppName,

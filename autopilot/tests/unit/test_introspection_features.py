@@ -42,14 +42,16 @@ else:
     from contextlib2 import ExitStack
 
 
+from autopilot.exceptions import ProcessSearchError
 from autopilot.introspection import (
-    _check_process_and_pid_details,
     _get_application_name_from_dbus_address,
-    _get_search_criteria_string_representation,
     _maybe_filter_connections_by_app_name,
-    get_classname_from_path,
     get_proxy_object_for_existing_process,
-    ProcessSearchError,
+)
+from autopilot.introspection._proxy_object import (
+    _check_process_and_pid_details,
+    _get_search_criteria_string_representation,
+    get_classname_from_path,
 )
 from autopilot.introspection.dbus import (
     _get_filter_string_for_key_value_pair,

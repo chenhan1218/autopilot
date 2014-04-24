@@ -43,20 +43,38 @@ class _ArgparseSection(Directive):
         super(_ArgparseSection, self).__init__(*args, **kw)
         self.parser = PARSER
 
+    def format_text(self, text):
+        """Format arbitrary text."""
+        formatter = self.parser._get_formatter()
+        formatter.add_text(text)
+        return formatter.format_help()
+
 
 class ArgparseDescription(_ArgparseSection):
     def run(self):
-        return [nodes.Text(self.parser.format_description())]
+        description = self.format_text(self.parser.description)
+        return [nodes.Text(description)]
 
 
 class ArgparseEpilog(_ArgparseSection):
     def run(self):
-        return [nodes.Text(self.parser.format_epilog())]
+        epilog = self.format_text(self.parser.epilog)
+        return [nodes.Text(epilog)]
 
 
 class ArgparseOptions(_ArgparseSection):
     def run(self):
-        return [nodes.Text(self.parser.format_options())]
+        formatter = self.parser._get_formatter()
+
+        for action_group in self.parser._action_groups:
+            formatter.start_section(action_group.title)
+            formatter.add_text(action_group.description)
+            formatter.add_arguments(action_group._group_actions)
+            formatter.end_section()
+
+        options = formatter.format_help()
+
+        return [nodes.Text(options)]
 
 
 class ArgparseUsage(_ArgparseSection):

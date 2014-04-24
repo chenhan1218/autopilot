@@ -53,53 +53,16 @@ from autopilot.application._launcher import (
 )
 
 
-class ArgumentParserWithMan(ArgumentParser):
-
-    """Add functions to ArgumentParser to help with man page generation.
-
-    NOTE: This uses private methods of argparse.HelpFormatter, and may break
-    when those change.
-
-    """
-
-    def format_options(self):
-        """Format options for man page creation."""
-        formatter = self._get_formatter()
-
-        # positionals, optionals and user-defined groups
-        for action_group in self._action_groups:
-            formatter.start_section(action_group.title)
-            formatter.add_text(action_group.description)
-            formatter.add_arguments(action_group._group_actions)
-            formatter.end_section()
-
-        return formatter.format_help()
-
-    def _format_text(self, text):
-        """Format arbitrary text."""
-        formatter = self._get_formatter()
-        formatter.add_text(text)
-        return formatter.format_help()
-
-    def format_description(self):
-        """Format description for man page creation."""
-        return self._format_text(self.description)
-
-    def format_epilog(self):
-        """Format epilog for man page creation."""
-        return self._format_text(self.epilog)
-
-
 def _get_parser():
     """Return a parser object for handling command line arguments."""
-    common_arguments = ArgumentParserWithMan(add_help=False)
+    common_arguments = ArgumentParser(add_help=False)
     common_arguments.add_argument(
         '--enable-profile', required=False, default=False,
         action="store_true", help="Enable collection of profile data for "
         "autopilot itself. If enabled, profile data will be stored in "
         "'autopilot_<pid>.profile' in the current working directory."
     )
-    parser = ArgumentParserWithMan(
+    parser = ArgumentParser(
         description="Autopilot test tool.",
         epilog="Each command (run, list, launch etc.) has additional help that"
         " can be viewed by passing the '-h' flag to the command. For "

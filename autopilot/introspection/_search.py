@@ -22,6 +22,7 @@
 from __future__ import absolute_import
 
 from collections import namedtuple
+from functools import partial
 import logging
 from operator import methodcaller
 
@@ -37,28 +38,23 @@ class FilterResult(object):
     FAIL = object()
 
 
-class FilterRunner(object):
-
-    def __init__(self, filter_list):
-        if not filter_list:
-            raise ValueError("Filter list must not be empty")
-        self._filters = filter_list
-
-    def matches(self, dbus_connection, search_parameters):
-        for f in self._filters:
-            result = f.matches(dbus_connection, search_parameters)
-            if result == FilterResult.FAIL:
-                return False
-        return True
+def matches(filter_list, dbus_connection, search_parameters):
+    if not filter_list:
+        raise ValueError("Filter list must not be empty")
+    for f in filter_list:
+        result = f.matches(dbus_connection, search_parameters)
+        if result == FilterResult.FAIL:
+            return False
+    return True
 
 
-def FilterPrioritySorter(filter_list, runner_class):
-    return runner_class(
-        sorted(filter_list, key=methodcaller('priority'), reverse=True)
-    )
+def _filter_function_from_search_params(search_parameters, filter_lookup=None):
+    """Returns a callable filter function that will use a prioritised filter
+    list based on the search_parameters.
 
+    """
 
-def FilterListGenerator(search_parameters, parameter_filter_lookup):
+    parameter_filter_lookup = filter_lookup or _param_to_filter_map
     filter_list = []
     try:
         for search_key in search_parameters.keys():
@@ -71,4 +67,9 @@ def FilterListGenerator(search_parameters, parameter_filter_lookup):
             % (search_key, parameter_filter_lookup),
         )
 
-    return filter_list
+    sorted_filter_list = sorted(
+        filter_list,
+        key=methodcaller('priority'),
+        reverse=True
+    )
+    return partial(matches, sorted_filter_list)

@@ -75,9 +75,9 @@ def get_autopilot_proxy_object_for_process(
     return proxy_obj
 
 
-def get_proxy_object_for_existing_process(
-        pid=None, dbus_bus='session', connection_name=None, process=None,
-        object_path=AUTOPILOT_PATH, application_name=None, emulator_base=None):
+def get_proxy_object_for_existing_process(**kwargs):
+        # pid=None, dbus_bus='session', connection_name=None, process=None,
+        # object_path=AUTOPILOT_PATH, application_name=None, emulator_base=None):
     """Return a single proxy object for an application that is already running
     (i.e. launched outside of Autopilot).
 
@@ -129,32 +129,34 @@ def get_proxy_object_for_existing_process(
         ``process.pid != pid``.
 
     """
-    pid = _check_process_and_pid_details(process, pid)
+    # Pop off non-search stuff.
+    dbus_bus = kwargs.pop('dbus_bus', 'session')
+    process = kwargs.pop('process', None)
+    emulator_base = kwargs.pop('emulator_base', None)
 
-    search_params = dict(
-        pid=pid,
-        object_path=object_path,
-        application_name=application_name,
-    )
+    # pid=None
+    # connection_name=None,
+    # object_path=AUTOPILOT_PATH
+    # application_name=None
 
-    filter_runner = _get_filter_runner(search_params)
+    # Special handling of pid.
+    pid = _check_process_and_pid_details(process, kwargs.get('pid', None))
+    kwargs['pid'] = kwargs.get('pid', pid or None)
 
+    matcher_function = _filter_function_from_search_params(**kwargs)
+
+    # Perhaps move the arguments of matcher_function so we can use another
+    # partial here?
     connections = _find_matching_connections(
         dbus_bus,
         process,
-        lambda connection: filter_runner.matches(connection, search_params)
+        lambda connection: matcher_function(connection, **kwargs)
     )
 
-    # Check out come here.
-    criteria_string = _get_search_criteria_string_representation(
-        pid,
-        dbus_bus,
-        connection_name,
-        process,
-        object_path,
-        application_name
+    _raise_if_unusable_amount_of_results(
+        connections,
+        _get_search_criteria_string_representation(**kwargs)
     )
-    _raise_if_unusable_amount_of_results(connections, criteria_string)
 
     connection_name = connections[0][1]
     return _make_proxy_object(
@@ -206,8 +208,6 @@ def _raise_if_unusable_amount_of_results(connections, criteria_string):
         )
 
 
-# Potential todo: Do something with the process checking, i.e. a filter that
-# fails immediately if it's not runnning.
 def _find_matching_connections(dbus_bus, connection_matcher, process=None):
     """Returns a list of connection names that have passed the
     connection_matcher.
@@ -238,9 +238,8 @@ def _find_matching_connections(dbus_bus, connection_matcher, process=None):
             in connections
             if connection_matcher(c)
         ]
-        # if filter_runner.matches(c, search_params)
 
-        # If we haven't found anything we go round for another go.
+        # If nothing was found go round for another go.
         if len(valid_connections) >= 1:
             return valid_connections
 
@@ -338,32 +337,8 @@ def _get_dbus_address_object(connection_name, object_path, bus):
     return DBusAddress(bus, connection_name, object_path)
 
 
-def _get_search_criteria_string_representation(
-        pid=None, dbus_bus=None, connection_name=None, process=None,
-        object_path=None, application_name=None):
-    """Get a string representation of the search criteria.
-
-    Used to represent the search criteria to users in error messages.
-    """
-    description_parts = []
-    if pid is not None:
-        description_parts.append(u('pid = %d') % pid)
-    if dbus_bus is not None:
-        description_parts.append(u("dbus bus = '%s'") % dbus_bus)
-    if connection_name is not None:
-        description_parts.append(
-            u("connection name = '%s'") % connection_name
-        )
-    if object_path is not None:
-        description_parts.append(u("object path = '%s'") % object_path)
-    if application_name is not None:
-        description_parts.append(
-            u("application name = '%s'") % application_name
-        )
-    if process is not None:
-        description_parts.append(u("process object = '%r'") % process)
-
-    return ", ".join(description_parts)
+def _get_search_criteria_string_representation(**kwargs):
+    return ", ".join([u"%s = %r" % (k,v) for k,v in kwargs.iteritems()])
 
 
 class ApplicationProxyObject(DBusIntrospectionObject):

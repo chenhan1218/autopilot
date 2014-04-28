@@ -1,3 +1,9 @@
+autopilot (1.5.0-0ubuntu1) utopic; urgency=low
+
+  * Remove python2 dependencies, as they're now handled by the autopilot-legacy package (lp: #1308661)
+
+ -- Thomi Richards <thomi.richards@canonical.com>  Tue, 29 Apr 2014 11:11:32 +1200
+
 autopilot (1.4+14.04.20140416-0ubuntu1) trusty; urgency=low
 
   [ Francis Ginther ]

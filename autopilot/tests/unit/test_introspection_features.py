@@ -49,7 +49,6 @@ from autopilot.introspection import (
     get_proxy_object_for_existing_process,
 )
 
-import autopilot.introspection._proxy_object as _po
 from autopilot.introspection.dbus import (
     _get_filter_string_for_key_value_pair,
     _get_default_proxy_class,

@@ -34,20 +34,7 @@ from testtools.matchers import (
     raises,
 )
 from testscenarios import TestWithScenarios
-from six import StringIO, PY3
-from contextlib import contextmanager
-if PY3:
-    from contextlib import ExitStack
-else:
-    from contextlib2 import ExitStack
-
-
-from autopilot.exceptions import ProcessSearchError
-from autopilot.introspection import (
-    _get_application_name_from_dbus_address,
-    _maybe_filter_connections_by_app_name,
-    get_proxy_object_for_existing_process,
-)
+from six import StringIO
 
 from autopilot.introspection.dbus import (
     _get_filter_string_for_key_value_pair,

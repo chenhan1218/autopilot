@@ -17,9 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
-
-
 from dbus import DBusException
 from mock import patch, Mock
 from six import u
@@ -27,7 +24,6 @@ from testtools import TestCase
 from testtools.matchers import (
     Contains,
     Equals,
-    HasLength,
     MatchesAll,
     Not,
     raises,
@@ -371,7 +367,7 @@ class FindMatchingConnectionsTests(TestCase):
 
     """
 
-    def test_get_buses_unchecked_connection_names_returns_all_buses_initially(self):
+    def test_unchecked_connection_names_returns_all_buses_initially(self):
         mock_connection_list = ['conn1', 'conn2', 'conn3']
         dbus_bus = Mock()
         dbus_bus.list_name = Mock(return_value=mock_connection_list)
@@ -381,7 +377,7 @@ class FindMatchingConnectionsTests(TestCase):
             ListContainsAll(mock_connection_list)
         )
 
-    def test_get_buses_unchecked_connection_names_returns_only_unseen_connections(self):
+    def test_unchecked_connection_names_returns_only_unseen_connections(self):
         mock_connection_list = ['conn1', 'conn2', 'conn3']
         dbus_bus = Mock()
         dbus_bus.list_name = Mock(return_value=mock_connection_list)
@@ -391,7 +387,7 @@ class FindMatchingConnectionsTests(TestCase):
             ListContainsAll(['conn1', 'conn2'])
         )
 
-    def test_get_buses_unchecked_connection_names_returns_empty_list_when_all_seen(self):
+    def test_unchecked_connection_names_returns_empty_list_when_all_seen(self):
         mock_connection_list = ['conn1', 'conn2', 'conn3']
         dbus_bus = Mock()
         dbus_bus.list_name = Mock(return_value=mock_connection_list)
@@ -488,7 +484,9 @@ class ProcessSearchErrorStringRepTests(TestCase):
     def test_connection_name(self):
         self.assertEqual(
             u("connection name = 'foo'"),
-            _s._get_search_criteria_string_representation(connection_name='foo')
+            _s._get_search_criteria_string_representation(
+                connection_name='foo'
+            )
         )
 
     def test_object_path(self):
@@ -500,7 +498,9 @@ class ProcessSearchErrorStringRepTests(TestCase):
     def test_application_name(self):
         self.assertEqual(
             u("application name = 'foo'"),
-            _s._get_search_criteria_string_representation(application_name='foo')
+            _s._get_search_criteria_string_representation(
+                application_name='foo'
+            )
         )
 
     def test_process_object(self):

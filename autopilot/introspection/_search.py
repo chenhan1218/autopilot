@@ -180,6 +180,7 @@ class MatchesConnectionHasPid(object):
         :raises KeyError: if the pid parameter isn't passed in params.
 
         """
+
         pid = params['pid']
         bus, connection_name = dbus_connection
 
@@ -345,14 +346,14 @@ def get_proxy_object_for_existing_process(**kwargs):
     pid = _check_process_and_pid_details(process, kwargs.get('pid', None))
     kwargs['pid'] = kwargs.get('pid', pid or None)
 
-    matcher_function = _filter_function_from_search_params(**kwargs)
+    matcher_function = _filter_function_from_search_params(kwargs)
 
     # Perhaps move the arguments of matcher_function so we can use another
     # partial here?
     connections = _find_matching_connections(
         dbus_bus,
-        process,
-        lambda connection: matcher_function(connection, **kwargs)
+        lambda connection: matcher_function(connection, kwargs),
+        process
     )
 
     _raise_if_unusable_amount_of_results(
@@ -427,17 +428,31 @@ def _find_matching_connections(dbus_bus, connection_matcher, process=None):
             in _get_buses_unchecked_connection_names(bus, connections)
         ]
 
+        # Grab out only the connection names
         valid_connections = [
-            c for c
+            c[1] for c
             in connections
             if connection_matcher(c)
         ]
 
+
         # If nothing was found go round for another go.
         if len(valid_connections) >= 1:
-            return valid_connections
+            return _dedupe_connections_on_pid(valid_connections, bus)
 
     return []
+
+
+def _dedupe_connections_on_pid(valid_connections, bus):
+    seen_pids = []
+    deduped_connections = []
+
+    for connection in valid_connections:
+        pid = _get_bus_connections_pid(bus, connection)
+        if pid not in seen_pids:
+            seen_pids.append(pid)
+            deduped_connections.append(connection)
+    return deduped_connections
 
 
 def _get_dbus_bus_from_string(dbus_string):
@@ -451,8 +466,6 @@ def _get_dbus_bus_from_string(dbus_string):
 
 def _raise_if_process_has_exited(process):
     """Raises ProcessSearchError if process is no longer running."""
-    # I don't think I'm happy with this reliance of knowing that I need to do
-    # this :-\ It's decoupled from where it is actually used etc.
     _get_child_pids.reset_cache()
     if process is not None and not _process_is_running(process):
         return_code = process.poll()
@@ -473,7 +486,7 @@ def _get_buses_unchecked_connection_names(dbus_bus, previous_connections=None):
     the returned list.
 
     """
-    all_conns = dbus_bus.list_name()
+    all_conns = dbus_bus.list_names()
     return list(set(all_conns).difference(set(previous_connections or [])))
 
 

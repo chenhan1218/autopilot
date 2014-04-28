@@ -17,12 +17,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"Backend interface for autopilot."
+"""Backend IPC interface for autopilot.
+
+This module contains two primative classes that Autopilot uses for it's IPC
+routines.
+
+The first is the DBusAddress class. This contains knowledge of how to talk dbus
+to a particular application exposed over dbus. In the future, this interface
+could be provided by some alternative IPC mechanism.
+
+The second class is the Backend class. This holds a reference to a DBusAddress
+class, and contains code that turns a query object into proxy classes.
+
+"""
 
 from __future__ import absolute_import
 
 from collections import namedtuple
 import dbus
+import logging
+
 from autopilot.dbus_handler import (
     get_session_bus,
     get_system_bus,
@@ -34,10 +48,15 @@ from autopilot.introspection.constants import (
     DBUS_INTROSPECTION_IFACE,
     QT_AUTOPILOT_IFACE,
 )
+from autopilot.utilities import Timer
 from autopilot.introspection.utilities import (
     _pid_is_running,
     _get_bus_connections_pid,
 )
+from autopilot.introspection._object_registry import _get_proxy_object_class
+
+
+_logger = logging.getLogger(__name__)
 
 
 class WireProtocolVersionMismatch(RuntimeError):
@@ -188,3 +207,102 @@ class DBusAddress(object):
             name = "custom"
         return "<%s bus %s %s>" % (
             name, self._addr_tuple.connection, self._addr_tuple.object_path)
+
+
+class Backend(object):
+
+    """A Backend object that works with an ipc address interface."""
+
+    def __init__(self, ipc_address):
+        self.ipc_address = ipc_address
+
+    def execute_query_get_data(self, query):
+        """Execute 'query', return the raw dbus reply."""
+        with Timer("GetState %r" % query):
+            data = self.ipc_address.introspection_iface.GetState(
+                query.server_query_bytes()
+            )
+            if len(data) > 15:
+                _logger.warning(
+                    "Your query '%r' returned a lot of data (%d items). This "
+                    "is likely to be slow. You may want to consider optimising"
+                    " your query to return fewer items.",
+                    query,
+                    len(data)
+                )
+            return data
+
+    def execute_query_get_proxy_instances(self, query, id, proxy_type):
+        """Execute 'query', returning proxy instances."""
+        data = self.execute_query_get_data(query)
+        objects = [
+            make_introspection_object(
+                t,
+                type(self)(self.ipc_address),
+                id,
+                proxy_type
+            )
+            for t in data
+        ]
+        if query.needs_client_side_filtering():
+            return filter(
+                lambda i: _object_passes_filters(
+                    i,
+                    **query.get_client_side_filters()
+                ),
+                objects
+            )
+        return objects
+
+
+class FakeBackend(Backend):
+
+    """A backend that always returns fake data, useful for testing."""
+
+    def __init__(self, fake_ipc_return_data):
+        """Create a new FakeBackend instance.
+
+        If this backend creates any proxy objects, they will be created with
+        a FakeBackend with the same fake ipc return data.
+
+        :param fake_ipc_return_data: The data you want to pretend was returned
+            by the applicatoin under test. This must be in the correct protocol
+            format, or the results are undefined.
+        """
+        super(FakeBackend, self).__init__(fake_ipc_return_data)
+        self.fake_ipc_return_data = fake_ipc_return_data
+
+    def execute_query_get_data(self, query):
+        return self.fake_ipc_return_data
+
+
+def make_introspection_object(dbus_tuple, backend, object_id, proxy_type):
+    """Make an introspection object given a DBus tuple of
+    (path, state_dict).
+
+    :param dbus_tuple: A two-item iterable containing a dbus.String object that
+        contains the object path, and a dbus.Dictionary object that contains
+        the objects state dictionary.
+    :param backend: An instance of the Backend class.
+    :returns: A proxy object that derives from DBusIntrospectionObject
+    :raises ValueError: if more than one class is appropriate for this
+             dbus_tuple
+
+    """
+    path, state = dbus_tuple
+    path = path.encode('utf-8')
+    class_object = _get_proxy_object_class(object_id, proxy_type, path, state)
+    return class_object(state, path, backend)
+
+
+def _object_passes_filters(instance, **kwargs):
+    """Return true if *instance* satisifies all the filters present in
+    kwargs."""
+    with instance.no_automatic_refreshing():
+        for attr, val in kwargs.items():
+            if not hasattr(instance, attr) or getattr(instance, attr) != val:
+                # Either attribute is not present, or is present but with
+                # the wrong value - don't add this instance to the results
+                # list.
+                return False
+    return True

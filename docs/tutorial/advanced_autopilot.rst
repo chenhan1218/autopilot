@@ -368,7 +368,7 @@ However, sometimes you want to customize the class used to create these objects.
 
 1. First, you must define your own base class, to be used by all custom proxy objects in your test suite. This base class can be empty, but must derive from :class:`~autopilot.introspection.dbus.CustomEmulatorBase`. An example class might look like this::
 
-    from autopilot.introspection.dbus import CustomEmulatorBase
+    from autopilot.introspection import CustomEmulatorBase
 
 
     class CustomProxyObjectBase(CustomEmulatorBase):

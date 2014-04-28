@@ -128,10 +128,10 @@ class _cached_get_child_pids(object):
 _get_child_pids = _cached_get_child_pids()
 
 
-class MatchesConnectionHasAppName(object):
+class ConnectionHasAppName(object):
     @classmethod
     def priority(cls):
-        return 0  # LOW
+        return 0
 
     @classmethod
     def matches(cls, dbus_connection, params):
@@ -167,7 +167,7 @@ class MatchesConnectionHasAppName(object):
         )
 
 
-class MatchesConnectionHasPid(object):
+class ConnectionHasPid(object):
 
     @classmethod
     def priority(cls):
@@ -220,7 +220,7 @@ class MatchesConnectionHasPid(object):
             return False
 
 
-class MatchesConnectionHasPathWithAPInterface(object):
+class ConnectionHasPathWithAPInterface(object):
 
     @classmethod
     def priority(cls):
@@ -249,9 +249,9 @@ class MatchesConnectionHasPathWithAPInterface(object):
 
 
 _param_to_filter_map = dict(
-    application_name=MatchesConnectionHasAppName,
-    pid=MatchesConnectionHasPid,
-    path=MatchesConnectionHasPathWithAPInterface,
+    application_name=ConnectionHasAppName,
+    pid=ConnectionHasPid,
+    path=ConnectionHasPathWithAPInterface,
 )
 
 
@@ -333,7 +333,7 @@ def get_proxy_object_for_existing_process(**kwargs):
 
     """
     # Pop off non-search stuff.
-    dbus_bus = kwargs.pop('dbus_bus', 'session')
+    dbus_bus = _get_dbus_bus_from_string(kwargs.pop('dbus_bus', 'session'))
     process = kwargs.pop('process', None)
     emulator_base = kwargs.pop('emulator_base', None)
 
@@ -362,7 +362,7 @@ def get_proxy_object_for_existing_process(**kwargs):
     )
 
     object_path = kwargs.get('object_path', AUTOPILOT_PATH)
-    connection_name = connections[0][1]
+    connection_name = connections[0]
     return _make_proxy_object(
         _get_dbus_address_object(connection_name, object_path, dbus_bus),
         emulator_base
@@ -403,7 +403,7 @@ def _raise_if_unusable_amount_of_results(connections, criteria_string):
         )
 
 
-def _find_matching_connections(dbus_bus, connection_matcher, process=None):
+def _find_matching_connections(bus, connection_matcher, process=None):
     """Returns a list of connection names that have passed the
     connection_matcher.
 
@@ -416,8 +416,6 @@ def _find_matching_connections(dbus_bus, connection_matcher, process=None):
 
     """
     connections = []
-
-    bus = _get_dbus_bus_from_string(dbus_bus)
 
     for _ in Timeout.default():
         _raise_if_process_has_exited(process)
@@ -434,7 +432,6 @@ def _find_matching_connections(dbus_bus, connection_matcher, process=None):
             in connections
             if connection_matcher(c)
         ]
-
 
         # If nothing was found go round for another go.
         if len(valid_connections) >= 1:

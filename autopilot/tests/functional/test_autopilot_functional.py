@@ -20,6 +20,7 @@
 
 from __future__ import absolute_import
 
+import glob
 import os
 import os.path
 import re
@@ -492,6 +493,42 @@ Loading tests from: %s
 
         self.assertThat(code, Equals(0))
         self.assertThat(os.path.exists(video_file_path), Equals(False))
+
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
+    def test_no_video_session_dir_saved_for_passed_test(self):
+        """RecordMyDesktop should clean up its session files in tmp dir."""
+        dir_pattern = '/tmp/rMD-session*'
+        original_session_dirs = glob.glob(dir_pattern)
+
+        self.create_test_file(
+            "test_simple.py", dedent("""\
+
+            from autopilot.testcase import AutopilotTestCase
+            from time import sleep
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    sleep(1)
+                    self.assertTrue(True)
+            """)
+        )
+
+        code, output, error = self.run_autopilot(["run", "-r", "tests"])
+
+        self.assertThat(code, Equals(0))
+
+        session_dirs = glob.glob(dir_pattern)
+        try:
+            new_session_dirs = \
+                list(set(session_dirs) - set(original_session_dirs))
+            leftover_session = new_session_dirs.pop()
+        except IndexError:
+            leftover_session = None
+
+        self.assertEqual(leftover_session, None)
+        if leftover_session is not None:
+            self.addCleanup(remove_if_exists, leftover_session)
 
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_no_video_for_nested_testcase_when_parent_and_child_fail(self):

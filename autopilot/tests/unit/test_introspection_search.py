@@ -380,7 +380,7 @@ class FindMatchingConnectionsTests(TestCase):
     def test_unchecked_connection_names_returns_all_buses_initially(self):
         mock_connection_list = ['conn1', 'conn2', 'conn3']
         dbus_bus = Mock()
-        dbus_bus.list_name = Mock(return_value=mock_connection_list)
+        dbus_bus.list_names = Mock(return_value=mock_connection_list)
 
         self.assertThat(
             _s._get_buses_unchecked_connection_names(dbus_bus),
@@ -390,7 +390,7 @@ class FindMatchingConnectionsTests(TestCase):
     def test_unchecked_connection_names_returns_only_unseen_connections(self):
         mock_connection_list = ['conn1', 'conn2', 'conn3']
         dbus_bus = Mock()
-        dbus_bus.list_name = Mock(return_value=mock_connection_list)
+        dbus_bus.list_names = Mock(return_value=mock_connection_list)
 
         self.assertThat(
             _s._get_buses_unchecked_connection_names(dbus_bus, ['conn3']),
@@ -400,7 +400,7 @@ class FindMatchingConnectionsTests(TestCase):
     def test_unchecked_connection_names_returns_empty_list_when_all_seen(self):
         mock_connection_list = ['conn1', 'conn2', 'conn3']
         dbus_bus = Mock()
-        dbus_bus.list_name = Mock(return_value=mock_connection_list)
+        dbus_bus.list_names = Mock(return_value=mock_connection_list)
 
         self.assertThat(
             _s._get_buses_unchecked_connection_names(

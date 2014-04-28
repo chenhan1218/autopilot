@@ -59,8 +59,8 @@ logger = logging.getLogger(__name__)
 
 
 class FilterResult(object):
-    PASS = object()
-    FAIL = object()
+    PASS = True
+    FAIL = False
 
 
 def matches(filter_list, dbus_connection, search_parameters):

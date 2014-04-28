@@ -104,6 +104,16 @@ class MatcherCallableTests(TestCase):
             _s.matches([FailingFilter, FailingFilter], None, None)
         )
 
+    def test_filter_returning_False_results_in_failure(self):
+        class FalseFilter(object):
+            @classmethod
+            def matches(cls, dbus_connection, params):
+                return False
+
+        self.assertFalse(
+            _s.matches([FalseFilter], None, None)
+        )
+
     def test_runner_matches_passes_dbus_connection_to_filter(self):
         DBusConnectionFilter = Mock()
         dbus_connection = ("bus", "connection_name")

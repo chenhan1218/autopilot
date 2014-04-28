@@ -388,15 +388,6 @@ def _check_process_and_pid_details(process=None, pid=None):
     return pid
 
 
-def _get_filter_runner(search_params):
-    """Given a list of filters returns a FilterRunner with priority sorted
-    filters.
-
-    """
-    filter_list = FilterListGenerator(search_params, _param_to_filter_map)
-    return FilterPrioritySorter(filter_list, FilterRunner)
-
-
 def _raise_if_unusable_amount_of_results(connections, criteria_string):
     if connections is None or len(connections) == 0:
         raise ProcessSearchError(

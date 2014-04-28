@@ -27,7 +27,7 @@ introspection mechanism, and probably isn't useful to most test authors.
 
 from __future__ import absolute_import
 
-from autopilot.introspection._proxy_object import (
+from autopilot.introspection._search import (
     get_autopilot_proxy_object_for_process,
     get_proxy_object_for_existing_process
 )
@@ -39,11 +39,8 @@ import os
 import psutil
 from six import u
 
-from autopilot.introspection.backends import DBusAddress
-
-
-
 from autopilot._timeout import Timeout
+from autopilot.introspection.backends import DBusAddress
 
 
 logger = logging.getLogger(__name__)

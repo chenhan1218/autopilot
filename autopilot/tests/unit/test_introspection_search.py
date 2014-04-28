@@ -57,152 +57,138 @@ class HighPriorityFilter(object):
         return 10
 
 
-class FilterRunnerTests(TestCase):
+class MatcherCallableTests(TestCase):
 
-    def test_can_provide_list_of_filters_to_FilterRunner(self):
-        _s.FilterRunner([PassingFilter])
+    def test_can_provide_list_of_filters(self):
+        _s.matches([PassingFilter], None, None)
 
     def test_passing_empty_filter_list_raises(self):
         self.assertThat(
-            lambda: _s.FilterRunner([]),
+            lambda: _s.matches([], None, None),
             raises(ValueError("Filter list must not be empty"))
         )
 
     def test_matches_returns_True_with_PassingFilter(self):
-        runner = _s.FilterRunner([PassingFilter])
-        dbus_connection = self.getUniqueString()
-
-        self.assertTrue(runner.matches(dbus_connection, {}))
+        self.assertTrue(_s.matches([PassingFilter], None, None))
 
     def test_matches_returns_False_with_FailingFilter(self):
-        runner = _s.FilterRunner([FailingFilter])
-        dbus_connection = self.getUniqueString()
-
-        self.assertFalse(runner.matches(dbus_connection, {}))
+        self.assertFalse(_s.matches([FailingFilter], None, None))
 
     def test_fails_when_first_filter_fails(self):
-        runner = _s.FilterRunner([FailingFilter, PassingFilter])
-        dbus_connection = self.getUniqueString()
-
-        self.assertFalse(runner.matches(dbus_connection, {}))
+        self.assertFalse(
+            _s.matches([FailingFilter, PassingFilter], None, None)
+        )
 
     def test_fails_when_second_filter_fails(self):
-        runner = _s.FilterRunner([PassingFilter, FailingFilter])
-        dbus_connection = self.getUniqueString()
-
-        self.assertFalse(runner.matches(dbus_connection, {}))
+        self.assertFalse(
+            _s.matches([PassingFilter, FailingFilter], None, None)
+        )
 
     def test_passes_when_two_filters_pass(self):
-        runner = _s.FilterRunner([PassingFilter, PassingFilter])
-        dbus_connection = self.getUniqueString()
-
-        self.assertTrue(runner.matches(dbus_connection, {}))
+        self.assertTrue(
+            _s.matches([PassingFilter, PassingFilter], None, None)
+        )
 
     def test_fails_when_two_filters_fail(self):
-        runner = _s.FilterRunner([FailingFilter, FailingFilter])
-        dbus_connection = self.getUniqueString()
-
-        self.assertFalse(runner.matches(dbus_connection, {}))
+        self.assertFalse(
+            _s.matches([FailingFilter, FailingFilter], None, None)
+        )
 
     def test_runner_matches_passes_dbus_connection_to_filter(self):
         DBusConnectionFilter = Mock()
-        runner = _s.FilterRunner([DBusConnectionFilter])
-
         dbus_connection = ("bus", "connection_name")
-        runner.matches(dbus_connection, {})
+
+        _s.matches([DBusConnectionFilter], dbus_connection, {})
 
         DBusConnectionFilter.matches.assert_called_once_with(
             dbus_connection, {}
         )
 
 
-class FilterPrioritySorterTests(TestCase):
+class FilterFunctionGeneratorTests(TestCase):
 
-    def test_FilterPrioritySorter_uses_sorted_filter_list(self):
-        runner_class = Mock()
+    """Tests to ensure the correctness of the
+    _filter_function_from_search_params function.
 
-        _s.FilterPrioritySorter(
-            [LowPriorityFilter, HighPriorityFilter],
-            runner_class
+    """
+
+    def test_uses_sorted_filter_list(self):
+        test_search_parameters = dict(low=True, high=True)
+        test_filter_lookup = dict(
+            low=LowPriorityFilter,
+            high=HighPriorityFilter,
         )
 
-        runner_class.assert_called_once_with(
-            [HighPriorityFilter, LowPriorityFilter]
+        matcher = _s._filter_function_from_search_params(
+            test_search_parameters,
+            test_filter_lookup
         )
-
-    def test_FilterPrioritySorter_returns_runner_instance(self):
-        runner_class = Mock()
-        runner = _s.FilterPrioritySorter(
-            [LowPriorityFilter, HighPriorityFilter],
-            runner_class
-        )
-
-        self.assertThat(runner, Equals(runner_class.return_value))
-
-
-class FilterListGeneratorTests(TestCase):
-
-    def test_FilterListGenerator_raises_with_unknown_search_parameter(self):
-        search_parameters = dict(unexpected_key=True)
 
         self.assertThat(
-            lambda: _s.FilterListGenerator(search_parameters, {}),
+            matcher.args[0], Equals([HighPriorityFilter, LowPriorityFilter])
+        )
+
+    def test_returns_a_callable(self):
+        self.assertTrue(
+            callable(_s._filter_function_from_search_params({}))
+        )
+
+    def test_raises_with_unknown_search_parameter(self):
+        search_parameters = dict(unexpected_key=True)
+        placeholder_lookup = dict(noop_lookup=True)
+
+        self.assertThat(
+            lambda: _s._filter_function_from_search_params(
+                search_parameters,
+                placeholder_lookup
+            ),
             raises(
                 KeyError(
                     "Search parameter unexpected_key doesn't have a "
-                    "corresponding filter in %r" % {}
+                    "corresponding filter in %r"
+                    % placeholder_lookup
                 )
             )
         )
 
-    def test_FilterListGenerator_returns_filter(self):
-        search_parameters = dict(high=True)
-        filter_parameter_requirements = dict(
-            high=HighPriorityFilter,
-        )
-        filter_list = _s.FilterListGenerator(
-            search_parameters,
-            filter_parameter_requirements
-        )
-
-        self.assertThat(filter_list, Equals([HighPriorityFilter]))
-
-    def test_FilterListGenerator_returns_only_required_filters(self):
-        search_parameters = dict(high=True, passing=True)
-        filter_parameter_requirements = dict(
+    def test_returns_only_required_filters(self):
+        search_parameters = dict(high=True, low=True)
+        filter_lookup = dict(
             high=HighPriorityFilter,
             low=LowPriorityFilter,
             passing=PassingFilter,
         )
-        filter_list = _s.FilterListGenerator(
+
+        matcher = _s._filter_function_from_search_params(
             search_parameters,
-            filter_parameter_requirements
+            filter_lookup
         )
 
-        self.assertThat(filter_list, Contains(HighPriorityFilter))
-        self.assertThat(filter_list, Contains(PassingFilter))
+        self.assertThat(
+            matcher.args[0], Equals([HighPriorityFilter, LowPriorityFilter])
+        )
 
-    def test_FilterListGenerator_creates_unique_list_of_filters(self):
+    def test_creates_unique_list_of_filters(self):
         search_parameters = dict(pid=True, process=True)
-        filter_parameter_requirements = dict(
-            pid=PassingFilter,
-            process=PassingFilter
+        filter_lookup = dict(
+            pid=HighPriorityFilter,
+            process=HighPriorityFilter
         )
-
-        filter_list = _s.FilterListGenerator(
+        matcher = _s._filter_function_from_search_params(
             search_parameters,
-            filter_parameter_requirements
+            filter_lookup
+        )
+        self.assertThat(
+            matcher.args[0], Equals([HighPriorityFilter])
         )
 
-        self.assertEquals(len(filter_list), 1)
-
-    def test_FilterListGenerator_doesnt_modify_search_parameters(self):
+    def test_doesnt_modify_search_parameters(self):
         search_parameters = dict(high=True)
-        filter_parameter_requirements = dict(high=HighPriorityFilter)
+        filter_lookup = dict(high=HighPriorityFilter)
 
-        _s.FilterListGenerator(
+        _s._filter_function_from_search_params(
             search_parameters,
-            filter_parameter_requirements
+            filter_lookup
         )
 
         self.assertThat(search_parameters.get('high', None), Not(Equals(None)))

@@ -22,7 +22,8 @@ import sys
 from subprocess import Popen, call
 from textwrap import dedent
 from threading import Thread
-from time import sleep, time
+from time import sleep
+from timeit import default_timer
 
 from testtools import skipIf
 from testtools.matchers import Equals, NotEquals, LessThan
@@ -54,12 +55,12 @@ class ProcessEmulatorTests(AutopilotTestCase):
             Popen(['gedit'])
 
         self.addCleanup(self.ensure_gedit_not_running)
-        start = time()
+        start = default_timer()
         t = Thread(target=start_gedit())
         t.start()
         ret = self.process_manager.wait_until_application_is_running(
             'gedit.desktop', 10)
-        end = time()
+        end = default_timer()
         t.join()
 
         self.assertThat(ret, Equals(True))
@@ -70,10 +71,10 @@ class ProcessEmulatorTests(AutopilotTestCase):
         started."""
         self.ensure_gedit_not_running()
 
-        start = time()
+        start = default_timer()
         ret = self.process_manager.wait_until_application_is_running(
             'gedit.desktop', 5)
-        end = time()
+        end = default_timer()
 
         self.assertThat(abs(end - start - 5.0), LessThan(1))
         self.assertThat(ret, Equals(False))

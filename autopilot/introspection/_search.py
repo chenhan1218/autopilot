@@ -532,7 +532,11 @@ def _get_dbus_address_object(connection_name, object_path, bus):
 
 
 def _get_search_criteria_string_representation(**kwargs):
-    return ", ".join([u("%s = %r") % (k, v) for k, v in kwargs.iteritems()])
+    return ", ".join([
+        u("%s = %r") % (k.replace("_", " "), v)
+        for k, v
+        in kwargs.iteritems()
+    ])
 
 
 class ApplicationProxyObject(DBusIntrospectionObject):

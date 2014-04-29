@@ -74,8 +74,11 @@ def matches(filter_list, dbus_connection, search_parameters):
 
 
 def _filter_function_from_search_params(search_parameters, filter_lookup=None):
-    """Returns a callable filter function that will use a prioritised filter
-    list based on the search_parameters.
+    """Returns a callable filter function that will take the arguments
+    (dbus_connection, search_parameters).
+
+    The returned filter function will be bound to use a prioritised filter list
+    that itself is based off the passed **search_parameters**.
 
     """
 
@@ -155,7 +158,7 @@ class ConnectionHasAppName(object):
         return app_name == requested_app_name
 
     @classmethod
-    def _get_application_name(cls, bus, connection, object_path):
+    def _get_application_name(cls, bus, connection_name, object_path):
         dbus_object = _get_dbus_address_object(
             connection_name,
             object_path,
@@ -175,7 +178,7 @@ class ConnectionHasPid(object):
 
     @classmethod
     def priority(cls):
-        return 0
+        return 9
 
     @classmethod
     def matches(cls, dbus_connection, params):
@@ -221,7 +224,7 @@ class ConnectionIsNotOrgFreedesktopDBus(object):
 
     @classmethod
     def priority(cls):
-        return 0 # high!
+        return 10
 
     @classmethod
     def matches(cls, dbus_connection, params):
@@ -233,13 +236,13 @@ class ConnectionHasPathWithAPInterface(object):
 
     @classmethod
     def priority(cls):
-        return 0
+        return 8
 
     @classmethod
     def matches(cls, dbus_connection, params):
         """Ensure the connection has the path that we expect to be there.
 
-        :raises ValueError: if the path parameter isn't included in params.
+        :raises KeyError: if the path parameter isn't included in params.
 
         """
         try:
@@ -251,8 +254,6 @@ class ConnectionHasPathWithAPInterface(object):
                 'com.canonical.Autopilot.Introspection'
             ).GetVersion()
             return True
-        except KeyError:
-            raise ValueError("Filter was expecting 'path' parameter")
         except dbus.DBusException:
             return False
 
@@ -288,18 +289,59 @@ def get_autopilot_proxy_object_for_process(
 
 
 def get_proxy_object_for_existing_process(**kwargs):
-        # pid=None, dbus_bus='session', connection_name=None, process=None,
-        # object_path=AUTOPILOT_PATH, application_name=None,
-        # emulator_base=None):
     """Return a single proxy object for an application that is already running
     (i.e. launched outside of Autopilot).
 
-    Searches on the given bus (supplied by **dbus_bus**) for an application
-    matching the search criteria, creating the proxy object using the supplied
-    custom emulator **emulator_base** (defaults to None).
+    Searches the given bus (supplied by the kwarg **dbus_bus**) for an
+    application matching the search criteria (also supplied in **kwargs, see
+    further down for explaination on what these can be.)
+    Returns a proxy object created using the supplied custom emulator
+    **emulator_base** (which defaults to None).
 
-    For example for an application on the system bus where the applications
-    PID is known::
+    This function take **kwargs arguments containing search parameter values to
+    use when searching for the target application.
+
+    **Possible search criteria**:
+    *(unless specified otherwise these parameters default to None)*
+
+    :param pid: The PID of the application to search for.
+    :param process: The process of the application to search for.
+        If provided only the pid of the process is used in the search, but if
+        the process exits before the search is complete it is used to supply
+        details provided by the process object.
+    :param connection_name: A string containing the DBus connection name to
+        use with the search criteria.
+    :param application_name: A string containing the applications name to
+        search for.
+    :param object_path: A string containing the object path to use as the
+        search criteria.
+        Note: This parameter is only valid to use when an **application_name**
+        has been provided.
+        Defaults to:
+        :py:data:`autopilot.introspection.constants.AUTOPILOT_PATH`.
+
+    **Non-search parameters:**
+
+    :param dbus_bus: The DBus bus to search for the application.
+        Must be a string containing either 'session', 'system' or the
+        custom buses name (i.e. 'unix:abstract=/tmp/dbus-IgothuMHNk').
+        Defaults to 'session'
+    :param emulator_base: The custom emulator to use when creating the
+        resulting proxy object.
+        Defaults to None
+
+    **Exceptions possibly thrown by this function:**
+
+    :raises ProcessSearchError: If no search criteria match.
+    :raises RuntimeError: If the search criteria results in many matches.
+    :raises RuntimeError: If both ``process`` and ``pid`` are supplied, but
+        ``process.pid != pid``.
+
+
+    **Examples:**
+
+    Retrieving an application on the system bus where the applications PID is
+    known::
 
         app_proxy = get_proxy_object_for_existing_process(pid=app_pid)
 
@@ -307,12 +349,17 @@ def get_proxy_object_for_existing_process(**kwargs):
     and **connection_name**::
 
         app_proxy = get_proxy_object_for_existing_process(
-            pid=app_pid, connection_name='org.gnome.gedit')
+            pid=app_pid,
+            connection_name='org.gnome.gedit'
+        )
 
     If the application from the previous example was on the system bus::
 
         app_proxy = get_proxy_object_for_existing_process(
-            dbus_bus='system', pid=app_pid, connection_name='org.gnome.gedit')
+            dbus_bus='system',
+            pid=app_pid,
+            connection_name='org.gnome.gedit'
+        )
 
     It is possible to search for the application given just the applications
     name.
@@ -321,25 +368,8 @@ def get_proxy_object_for_existing_process(**kwargs):
 
         app_proxy = get_proxy_object_for_existing_process(
             application_name='qmlscene',
-            dbus_bus='unix:abstract=/tmp/dbus-IgothuMHNk')
-
-    :param pid: The PID of the application to search for.
-    :param dbus_bus: A string containing either 'session', 'system' or the
-        custom buses name (i.e. 'unix:abstract=/tmp/dbus-IgothuMHNk').
-    :param connection_name: A string containing the DBus connection name to
-        use with the search criteria.
-    :param object_path: A string containing the object path to use as the
-        search criteria. Defaults to
-        :py:data:`autopilot.introspection.constants.AUTOPILOT_PATH`.
-    :param application_name: A string containing the applications name to
-        search for.
-    :param emulator_base: The custom emulator to create the resulting proxy
-        object with.
-
-    :raises ProcessSearchError: if no search criteria match.
-    :raises RuntimeError: if the search criteria results in many matches.
-    :raises RuntimeError: if both ``process`` and ``pid`` are supplied, but
-        ``process.pid != pid``.
+            dbus_bus='unix:abstract=/tmp/dbus-IgothuMHNk'
+        )
 
     """
     # Pop off non-search stuff.
@@ -347,22 +377,17 @@ def get_proxy_object_for_existing_process(**kwargs):
     process = kwargs.pop('process', None)
     emulator_base = kwargs.pop('emulator_base', None)
 
-    # pid=None
-    # connection_name=None,
-    # object_path=AUTOPILOT_PATH
-    # application_name=None
-
-    # Special handling of pid.
-    pid = _check_process_and_pid_details(process, kwargs.get('pid', None))
-    kwargs['pid'] = kwargs.get('pid', pid or None)
-
     # Add the 'always on' filter.
     kwargs['force_connection_name_check'] = True
 
+    # Special handling of pid.
+    kwargs['pid'] = _check_process_and_pid_details(
+        process,
+        kwargs.get('pid', None)
+    )
+
     matcher_function = _filter_function_from_search_params(kwargs)
 
-    # Perhaps move the arguments of matcher_function so we can use another
-    # partial here?
     connections = _find_matching_connections(
         dbus_bus,
         lambda connection: matcher_function(connection, kwargs),
@@ -420,11 +445,13 @@ def _find_matching_connections(bus, connection_matcher, process=None):
     """Returns a list of connection names that have passed the
     connection_matcher.
 
-    :param dbus_bus: String naming which dbus bus to search
+    :param dbus_bus: A DBus bus object to search
+        (i.e. SessionBus, SystemBus or BusConnection)
     :param connection_matcher: Callable that takes a connection name and
-        returns True if it is what we're looking for.
-    :param process: A process object that we're looking for it's dbus
-        connection. Used to ensure that the process is in fact still running
+        returns True if it is what we're looking for, False otherwise.
+    :param process: (optional) A process object that we're looking for it's
+        dbus connection.
+        Used to ensure that the process is in fact still running
         while we're searching for it.
 
     """
@@ -555,6 +582,10 @@ def _get_dbus_address_object(connection_name, object_path, bus):
 
 
 def _get_search_criteria_string_representation(**kwargs):
+    # Some slight re-naming for process objects
+    if kwargs.get('process') is not None:
+        kwargs['process_object'] = "%r" % kwargs.pop('process')
+
     return ", ".join([
         u("%s = %r") % (k.replace("_", " "), v)
         for k, v

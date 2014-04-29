@@ -124,7 +124,7 @@ def _get_parser():
         default='normal',
         help="Alter the timeout values Autopilot uses. Selecting 'long' will "
         "make autopilot use longer timeouts for various polling loops. This "
-        "useful if autopilot is running on very slow hardware"
+        "can be useful if autopilot is running on very slow hardware"
     )
     parser_run.add_argument("suite", nargs="+",
                             help="Specify test suite(s) to run.")

@@ -11,7 +11,7 @@ PY3DEFAULT := $(shell py3versions -d)
 PYTHON3 := $(filter-out $(PY3DEFAULT),$(PY3REQUESTED)) python3
 
 # Uncomment this to turn on verbose mode.
-export DH_VERBOSE=1
+# export DH_VERBOSE=1
 
 %:
 	dh $@ --with python3

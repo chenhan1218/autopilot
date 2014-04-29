@@ -31,7 +31,6 @@ Build-Depends: debhelper (>= 9.0.0),
 Standards-Version: 3.9.5
 Homepage: https://launchpad.net/autopilot
 Vcs-bzr: https://code.launchpad.net/+branch/ubuntu/autopilot
-X-Python-Version: >= 2.7
 X-Python3-Version: >= 3.3
 
 Package: python3-autopilot

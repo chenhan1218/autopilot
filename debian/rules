@@ -24,11 +24,10 @@ override_dh_auto_clean:
 	rm -rf build
 
 override_dh_auto_build:
-	# Build for each Python 3 version
+	sphinx-build -b html -W  docs/ docs/_build/html/
 	set -ex; for python in $(PYTHON3); do \
 		$$python setup.py build; \
 	done
-	sphinx-build -b html -W  docs/ docs/_build/html/
 
 override_dh_auto_test:
 ifeq (, $(findstring nocheck, $(DEB_BUILD_OPTIONS)))
@@ -36,9 +35,7 @@ ifeq (, $(findstring nocheck, $(DEB_BUILD_OPTIONS)))
 endif
 
 override_dh_auto_install:
-	# The same for install; note the --install-layout=deb option
 	set -ex; for python in $(PYTHON3); do \
 		$$python setup.py install --install-layout=deb --root=debian/tmp; \
 	done
-	# dh_install -X.pyc --fail-missing
 

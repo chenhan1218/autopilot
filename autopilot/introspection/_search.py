@@ -131,6 +131,23 @@ class _cached_get_child_pids(object):
 _get_child_pids = _cached_get_child_pids()
 
 
+class ConnectionHasName(object):
+    @classmethod
+    def priority(cls):
+        return 11
+
+    @classmethod
+    def matches(cls, dbus_connection, params):
+        """Returns true if the connection name in dbus_connection is the name in
+        the search criteria params.
+
+        """
+        requested_connection_name = params['connection_name']
+        bus, connection_name = dbus_connection
+
+        return connection_name == requested_connection_name
+
+
 class ConnectionHasAppName(object):
     @classmethod
     def priority(cls):
@@ -260,6 +277,7 @@ class ConnectionHasPathWithAPInterface(object):
 
 _param_to_filter_map = dict(
     force_connection_name_check=ConnectionIsNotOrgFreedesktopDBus,
+    connection_name=ConnectionHasName,
     application_name=ConnectionHasAppName,
     pid=ConnectionHasPid,
     path=ConnectionHasPathWithAPInterface,

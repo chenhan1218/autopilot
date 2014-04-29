@@ -216,7 +216,34 @@ class FilterFunctionGeneratorTests(TestCase):
         self.assertThat(search_parameters.get('high', None), Not(Equals(None)))
 
 
+class ConnectionHasNameTests(TestCase):
+
+    """Tests specific to the ConnectionHasName filter."""
+
+    def test_raises_KeyError_when_missing_connection_name_param(self):
+        dbus_connection = ("bus", "name")
+        self.assertThat(
+            lambda: _s.ConnectionHasName.matches(dbus_connection, {}),
+            raises(KeyError('connection_name'))
+        )
+
+    def test_returns_True_when_connection_name_matches(self):
+        dbus_connection = ("bus", "connection_name")
+        search_params = dict(connection_name="connection_name")
+        self.assertTrue(
+            _s.ConnectionHasName.matches(dbus_connection, search_params)
+        )
+
+    def test_returns_False_when_connection_name_matches(self):
+        dbus_connection = ("bus", "connection_name")
+        search_params = dict(connection_name="not_connection_name")
+        self.assertFalse(
+            _s.ConnectionHasName.matches(dbus_connection, search_params)
+        )
+
+
 class ConnectionHasPathWithAPInterfaceTests(TestCase):
+
     """Tests specific to the ConnectionHasPathWithAPInterface filter."""
 
     def test_raises_KeyError_when_missing_path_param(self):
@@ -392,19 +419,16 @@ class FilterHelpersTests(TestCase):
     """Tests for helpers around the Filters themselves."""
 
     def test_param_to_filter_includes_all(self):
-        search_parameters = dict(application_name=True, pid=True, path=True)
-        # Specifically add 'always' check.
-        search_parameters['force_connection_name_check'] = True
+        search_parameters = {
+            f : True
+            for f
+            in _s._param_to_filter_map.keys()
+        }
         matchers = _s._filter_function_from_search_params(search_parameters)
 
         self.assertThat(
             matchers.args[0],
-            ListContainsAll([
-                _s.ConnectionHasAppName,
-                _s.ConnectionHasPid,
-                _s.ConnectionHasPathWithAPInterface,
-                _s.ConnectionIsNotOrgFreedesktopDBus,
-            ])
+            ListContainsAll(_s._param_to_filter_map.values())
         )
 
 

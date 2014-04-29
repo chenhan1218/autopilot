@@ -31,7 +31,7 @@ General Options
             List tests in the order they will be run in, rather than alphabet‐
             ically (which is the default).
 
-   run [options]suite [suite...]
+   run [options] suite [suite...]
        Run one or more test suites.
 
        -o FILE, --output FILE
@@ -41,7 +41,7 @@ General Options
 
        -f FORMAT, --format FORMAT
             Specify the format for the log. Valid options are 'xml' and 'text'
-            for JUnit XML and text format, respectively.
+            'subunit' for JUnit XML, plain text, and subunit, respectively.
 
        -r, --record
             Record failed tests. Using this option requires the 'recordmydesk‐
@@ -55,3 +55,17 @@ General Options
        -v, --verbose
             Causes autopilot to print the test log to stdout while the test is
             running.
+
+   launch [options] application
+       Launch an application with introspection enabled.
+
+       -i INTERFACE, --interface INTERFACE
+           Specify which introspection interace to load.  The default ('Auto')
+           uses ldd to try and detect which interface to load.  Options are 
+           Gtk and Qt.
+
+   vis [options]
+       Open the autopilot visualizer tool.
+
+       -testability
+           Start the vis tool in testability mode. Used for self-tests only.

@@ -35,38 +35,40 @@ def setup(app):
     app.add_directive('argparse_usage', ArgparseUsage)
 
 
-class _ArgparseSection(Directive):
-
-    has_content = True
-
-    def __init__(self, *args, **kw):
-        super(_ArgparseSection, self).__init__(*args, **kw)
-        self.parser = PARSER
-
-    def format_text(self, text):
-        """Format arbitrary text."""
-        formatter = self.parser._get_formatter()
-        formatter.add_text(text)
-        return formatter.format_help()
+def format_text(text):
+    """Format arbitrary text."""
+    global PARSER
+    formatter = PARSER._get_formatter()
+    formatter.add_text(text)
+    return formatter.format_help()
 
 
-class ArgparseDescription(_ArgparseSection):
+class ArgparseDescription(Directive):
+
+    have_content = True
+
     def run(self):
-        description = self.format_text(self.parser.description)
+        description = format_text(PARSER.description)
         return [nodes.Text(description)]
 
 
-class ArgparseEpilog(_ArgparseSection):
+class ArgparseEpilog(Directive):
+
+    have_content = True
+
     def run(self):
-        epilog = self.format_text(self.parser.epilog)
+        epilog = format_text(PARSER.epilog)
         return [nodes.Text(epilog)]
 
 
-class ArgparseOptions(_ArgparseSection):
-    def run(self):
-        formatter = self.parser._get_formatter()
+class ArgparseOptions(Directive):
 
-        for action_group in self.parser._action_groups:
+    have_content = True
+
+    def run(self):
+        formatter = PARSER._get_formatter()
+
+        for action_group in PARSER._action_groups:
             formatter.start_section(action_group.title)
             formatter.add_text(action_group.description)
             formatter.add_arguments(action_group._group_actions)
@@ -77,11 +79,15 @@ class ArgparseOptions(_ArgparseSection):
         return [nodes.Text(options)]
 
 
-class ArgparseUsage(_ArgparseSection):
+class ArgparseUsage(Directive):
+
+    have_content = True
+
     def run(self):
-        usage_nodes = [nodes.Text(self.format_text('autopilot [-h]') +
-                                  '.br\n')]
-        for action in self.parser._subparsers._actions:
+        usage_nodes = [
+            nodes.Text(format_text('autopilot [-h]') + '.br\n')
+        ]
+        for action in PARSER._subparsers._actions:
             if type(action) == argparse._SubParsersAction:
                 choices = action.choices
                 break

@@ -85,7 +85,8 @@ class ArgparseUsage(Directive):
 
     def run(self):
         usage_nodes = [
-            nodes.Text(format_text('autopilot [-h]') + '.br\n')
+            nodes.Text(format_text('autopilot [-h]') + '.br\n'),
+            nodes.Text(format_text('autopilot [-v]') + '.br\n'),
         ]
         for action in PARSER._subparsers._actions:
             if type(action) == argparse._SubParsersAction:

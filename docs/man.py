@@ -79,7 +79,8 @@ class ArgparseOptions(_ArgparseSection):
 
 class ArgparseUsage(_ArgparseSection):
     def run(self):
-        usage_nodes = []
+        usage_nodes = [nodes.Text(self.format_text('autopilot [-h]') +
+                                  '.br\n')]
         for action in self.parser._subparsers._actions:
             if type(action) == argparse._SubParsersAction:
                 choices = action.choices

@@ -178,6 +178,6 @@ from pkg_resources import load_entry_point
 
 if __name__ == '__main__':
     sys.exit(
-        load_entry_point('autopilot==1.5.0', 'console_scripts', 'autopilot')()
+        load_entry_point('autopilot==1.5.0', 'console_scripts', 'autopilot3')()
     )
 """

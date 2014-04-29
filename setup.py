@@ -18,6 +18,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import sys
+assert sys.version_info >= (3,), 'Python 3 is required'
 
 from setuptools import find_packages, setup, Extension
 

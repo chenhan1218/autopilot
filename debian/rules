@@ -1,41 +1,24 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
 
-# These commands build the list of supported Python 3 versions
-# The last version should be just “python3” so that the scripts
-# get a correct shebang.
-# Use just “PYTHON3 := $(shell py3versions -r)” if your package
-# doesn’t contain scripts
-PY3REQUESTED := $(shell py3versions -r)
-PY3DEFAULT := $(shell py3versions -d)
-PYTHON3 := $(filter-out $(PY3DEFAULT),$(PY3REQUESTED)) python3
-
 # Uncomment this to turn on verbose mode.
 # export DH_VERBOSE=1
 
 %:
-	dh $@ --with python3
+	dh $@ --with python3 --buildsystem=pybuild
 
-override_dh_auto_clean:
-	set -ex; for python in $(PYTHON3); do \
-		$$python setup.py clean || true; \
-	done
-	dh_auto_clean
-	rm -rf build
-
-override_dh_auto_build:
+override_dh_installdocs:
 	sphinx-build -b html -W  docs/ docs/_build/html/
-	set -ex; for python in $(PYTHON3); do \
-		$$python setup.py build; \
-	done
+	dh_installdocs docs/_build/html
+	rm -f debian/python3-autopilot/usr/share/doc/python3-autopilot/html/_static/jquery.js
+	ln -s /usr/share/javascript/jquery/jquery.js \
+	      debian/python3-autopilot/usr/share/doc/python3-autopilot/html/_static/jquery.js
+	rm -f debian/python3-autopilot/usr/share/doc/python3-autopilot/html/_static/underscore.js
+	ln -s /usr/share/javascript/underscore/underscore.js \
+	      debian/python3-autopilot/usr/share/doc/python3-autopilot/html/_static/underscore.js
 
 override_dh_auto_test:
 ifeq (, $(findstring nocheck, $(DEB_BUILD_OPTIONS)))
+	HOME=`mktemp -d --tmpdir=debian` \
 	python3 -m testtools.run discover autopilot.tests.unit
 endif
-
-override_dh_auto_install:
-	set -ex; for python in $(PYTHON3); do \
-		$$python setup.py install --install-layout=deb --root=debian/tmp; \
-	done
-

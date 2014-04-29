@@ -23,6 +23,7 @@ Build-Depends: debhelper (>= 9.0.0),
                python3-psutil,
                python3-setuptools,
                python3-six,
+               python3-sphinx,
                python3-subunit,
                python3-testscenarios,
                python3-testtools,
@@ -38,11 +39,12 @@ Package: python3-autopilot
 Architecture: all
 Depends: ${misc:Depends},
          ${python3:Depends},
-         python3-gi,
          gir1.2-upstart-app-launch-2,
+         libjs-underscore, libjs-jquery,
          python3-dbus,
          python3-decorator,
          python3-fixtures,
+         python3-gi,
          python3-junitxml,
          python3-psutil,
          python3-six,
@@ -114,7 +116,7 @@ Depends: ${misc:Depends},
          python3-dbus,
          python3-pyqt4,
          python3-dbus.mainloop.qt,
-Description: The visualisation application for Autopilot (Python 3)
+Description: visualisation application for Autopilot (Python 3)
  The Autopilot vis tool allows you to inspect an application introspection
  tree. It is a useful tool for test authors, but not required to run autopilot
  tests.

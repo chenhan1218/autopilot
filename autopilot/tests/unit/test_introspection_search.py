@@ -218,14 +218,14 @@ class FilterFunctionGeneratorTests(TestCase):
 class ConnectionHasPathWithAPInterfaceTests(TestCase):
     """Tests specific to the ConnectionHasPathWithAPInterface filter."""
 
-    def test_raises_ValueError_when_missing_path_param(self):
+    def test_raises_KeyError_when_missing_path_param(self):
         dbus_connection = ("bus", "name")
         self.assertThat(
             lambda: _s.ConnectionHasPathWithAPInterface.matches(
                 dbus_connection,
                 {}
             ),
-            raises(ValueError("Filter was expecting 'path' parameter"))
+            raises(KeyError('path'))
         )
 
     @patch.object(_s.dbus, "Interface")
@@ -316,7 +316,11 @@ class ConnectionHasPidTests(TestCase):
             _s.ConnectionHasPid._bus_pid_is_our_pid(None, None)
         )
 
-    @patch.object(_s.ConnectionHasPid, '_bus_pid_is_our_pid', return_value=True)
+    @patch.object(
+        _s.ConnectionHasPid,
+        '_bus_pid_is_our_pid',
+        return_value=True
+    )
     def test_returns_False_if_buses_pid_is_self_pid(self, _bus_pid):
         dbus_connection = ("bus", "connection_name")
         search_params = dict(pid=0)
@@ -382,8 +386,9 @@ class ConnectionHasAppNameTests(TestCase):
         )
 
 
-
 class FilterHelpersTests(TestCase):
+
+    """Tests for helpers around the Filters themselves."""
 
     def test_param_to_filter_includes_all(self):
         search_parameters = dict(application_name=True, pid=True, path=True)
@@ -570,8 +575,16 @@ class ProcessSearchErrorStringRepTests(TestCase):
             application_name='MyApp',
             process=process
         )
-        expected = "pid = 123, dbus bus = 'session_bus', " \
-            "connection name = 'com.Canonical.Unity', " \
-            "object path = '/com/Canonical/Autopilot', " \
-            "application name = 'MyApp', process object = 'foo'"
-        self.assertEqual(expected, observed)
+
+        expected_strings = [
+            "pid = 123",
+            "dbus bus = 'session_bus'",
+            "connection name = 'com.Canonical.Unity'",
+            "object path = '/com/Canonical/Autopilot'",
+            "application name = 'MyApp'",
+            "process object = 'foo'",
+        ]
+        self.assertThat(
+            observed,
+            MatchesAll(*map(Contains, expected_strings))
+        )

@@ -7,4 +7,4 @@ Autopilot Documentation Front Page
 	faq/faq
 	porting/porting
 	appendix/appendix
-        man
+	man

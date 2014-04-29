@@ -151,13 +151,17 @@ class ConnectionHasAppName(object):
         object_path = params.get('object_path', AUTOPILOT_PATH)
         bus, connection_name = dbus_connection
 
+        app_name = cls._get_application_name(bus, connection_name, object_path)
+        return app_name == requested_app_name
+
+    @classmethod
+    def _get_application_name(cls, bus, connection, object_path):
         dbus_object = _get_dbus_address_object(
             connection_name,
             object_path,
             bus
         )
-        app_name = cls._get_application_name_from_dbus_address(dbus_object)
-        return app_name == requested_app_name
+        return cls._get_application_name_from_dbus_address(dbus_object)
 
     @classmethod
     def _get_application_name_from_dbus_address(cls, dbus_address):
@@ -184,7 +188,7 @@ class ConnectionHasPid(object):
         pid = params['pid']
         bus, connection_name = dbus_connection
 
-        if cls._should_ignore_pid(bus, connection_name, pid):
+        if cls._bus_pid_is_our_pid(bus, connection_name):
             return False
 
         try:
@@ -199,16 +203,7 @@ class ConnectionHasPid(object):
         return bus_pid in eligible_pids
 
     @classmethod
-    def _should_ignore_pid(cls, bus, connection_name, pid):
-        if (
-            connection_name == 'org.freedesktop.DBus'
-            or cls._bus_pid_is_our_pid(bus, connection_name, pid)
-        ):
-            return True
-        return False
-
-    @classmethod
-    def _bus_pid_is_our_pid(cls, bus, connection_name, pid):
+    def _bus_pid_is_our_pid(cls, bus, connection_name):
         """Returns True if this processes pid is the same as the supplied bus
         connections pid.
 
@@ -218,6 +213,20 @@ class ConnectionHasPid(object):
             return bus_pid == os.getpid()
         except dbus.DBusException:
             return False
+
+
+class ConnectionIsNotOrgFreedesktopDBus(object):
+
+    """Not interested in any connections with names 'org.freedesktop.DBus'."""
+
+    @classmethod
+    def priority(cls):
+        return 0 # high!
+
+    @classmethod
+    def matches(cls, dbus_connection, params):
+        bus, connection_name = dbus_connection
+        return connection_name != 'org.freedesktop.DBus'
 
 
 class ConnectionHasPathWithAPInterface(object):
@@ -249,6 +258,7 @@ class ConnectionHasPathWithAPInterface(object):
 
 
 _param_to_filter_map = dict(
+    force_connection_name_check=ConnectionIsNotOrgFreedesktopDBus,
     application_name=ConnectionHasAppName,
     pid=ConnectionHasPid,
     path=ConnectionHasPathWithAPInterface,
@@ -345,6 +355,9 @@ def get_proxy_object_for_existing_process(**kwargs):
     # Special handling of pid.
     pid = _check_process_and_pid_details(process, kwargs.get('pid', None))
     kwargs['pid'] = kwargs.get('pid', pid or None)
+
+    # Add the 'always on' filter.
+    kwargs['force_connection_name_check'] = True
 
     matcher_function = _filter_function_from_search_params(kwargs)
 

@@ -18,6 +18,7 @@
 #
 
 from dbus import DBusException
+import os
 from mock import patch, Mock
 from six import u
 from testtools import TestCase
@@ -30,8 +31,8 @@ from testtools.matchers import (
 )
 
 from autopilot.exceptions import ProcessSearchError
-import autopilot.introspection.utilities as _u
-from autopilot.introspection import _search as _s
+from autopilot.introspection import _search as _s,  utilities as _u
+from autopilot.introspection.constants import AUTOPILOT_PATH
 
 
 def ListContainsAll(value_list):
@@ -215,7 +216,7 @@ class FilterFunctionGeneratorTests(TestCase):
 
 
 class ConnectionHasPathWithAPInterfaceTests(TestCase):
-    """Tests specific to the ConnectionHasPid filter."""
+    """Tests specific to the ConnectionHasPathWithAPInterface filter."""
 
     def test_raises_ValueError_when_missing_path_param(self):
         dbus_connection = ("bus", "name")
@@ -271,19 +272,7 @@ class ConnectionHasPidTests(TestCase):
             raises(KeyError('pid'))
         )
 
-    def test_returns_False_when_should_ignore_pid(self):
-        dbus_connection = ("bus", "org.freedesktop.DBus")
-        params = dict(pid=None)
-        self.assertFalse(
-            _s.ConnectionHasPid.matches(dbus_connection, params)
-        )
-
-    @patch.object(
-        _s.ConnectionHasPid,
-        '_should_ignore_pid',
-        return_value=False
-    )
-    def test_returns_True_when_bus_pid_matches(self, p):
+    def test_returns_True_when_bus_pid_matches(self):
         connection_pid = self.getUniqueInteger()
         dbus_connection = ("bus", "org.freedesktop.DBus")
         params = dict(pid=connection_pid)
@@ -296,12 +285,7 @@ class ConnectionHasPidTests(TestCase):
                 _s.ConnectionHasPid.matches(dbus_connection, params)
             )
 
-    @patch.object(
-        _s.ConnectionHasPid,
-        '_should_ignore_pid',
-        return_value=False
-    )
-    def test_returns_False_with_DBusException(self, p):
+    def test_returns_False_with_DBusException(self):
         connection_pid = self.getUniqueInteger()
         dbus_connection = ("bus", "org.freedesktop.DBus")
         params = dict(pid=connection_pid)
@@ -314,38 +298,54 @@ class ConnectionHasPidTests(TestCase):
                 _s.ConnectionHasPid.matches(dbus_connection, params)
             )
 
-    def test_should_ignore_pid_returns_True_with_connection_name(self):
-        self.assertTrue(
-            _s.ConnectionHasPid._should_ignore_pid(
-                None,
-                "org.freedesktop.DBus",
-                None
-            )
+    @patch.object(_s, '_get_bus_connections_pid', side_effect=DBusException())
+    def test_bus_pid_is_our_pid_returns_False_on_DBusException(self, _bus_pid):
+        self.assertFalse(
+            _s.ConnectionHasPid._bus_pid_is_our_pid(None, None)
         )
 
-    def test_should_ignore_pid_returns_True_when_pid_is_our_pid(self):
-        with patch.object(
-                _s.ConnectionHasPid,
-                '_bus_pid_is_our_pid',
-                return_value=True
-        ):
-            self.assertTrue(
-                _s.ConnectionHasPid._should_ignore_pid(None, None, None)
-            )
+    @patch.object(_s, '_get_bus_connections_pid', return_value=0)
+    def test_bus_pid_is_our_pid_returns_False_with_no_match(self, _bus_pid):
+        self.assertFalse(
+            _s.ConnectionHasPid._bus_pid_is_our_pid(None, None)
+        )
 
-    def test_should_ignore_pid_returns_False_when_pid_is_our_pid(self):
-        with patch.object(
-                _s.ConnectionHasPid,
-                '_bus_pid_is_our_pid',
-                return_value=False
-        ):
-            self.assertFalse(
-                _s.ConnectionHasPid._should_ignore_pid(None, None, None)
-            )
+    @patch.object(_s, '_get_bus_connections_pid', return_value=os.getpid())
+    def test_bus_pid_is_our_pid_returns_True_with_match(self, _bus_pid):
+        self.assertTrue(
+            _s.ConnectionHasPid._bus_pid_is_our_pid(None, None)
+        )
+
+    @patch.object(_s.ConnectionHasPid, '_bus_pid_is_our_pid', return_value=True)
+    def test_returns_False_if_buses_pid_is_self_pid(self, _bus_pid):
+        dbus_connection = ("bus", "connection_name")
+        search_params = dict(pid=0)
+        _s.ConnectionHasPid.matches(dbus_connection, search_params)
+        self.assertFalse(
+            _s.ConnectionHasPid.matches(dbus_connection, search_params)
+        )
+
+
+class ConnectionIsNotOrgFreedesktopDBusTests(TestCase):
+
+    """Tests specific to the ConnectionIsNotOrgFreedesktopDBus filter."""
+
+    def test_returns_True_when_connection_name_isnt_DBus(self):
+        dbus_connection = ("bus", "connection.name")
+        self.assertTrue(
+            _s.ConnectionIsNotOrgFreedesktopDBus.matches(dbus_connection, {})
+        )
+
+    def test_returns_False_when_connection_name_is_DBus(self):
+        dbus_connection = ("bus", "org.freedesktop.DBus")
+        self.assertFalse(
+            _s.ConnectionIsNotOrgFreedesktopDBus.matches(dbus_connection, {})
+        )
 
 
 class ConnectionHasAppNameTests(TestCase):
-    """Tests specific to the ConnectionHasPid filter."""
+
+    """Tests specific to the ConnectionHasAppName filter."""
 
     def test_raises_when_missing_app_name_param(self):
         self.assertThat(
@@ -353,11 +353,42 @@ class ConnectionHasAppNameTests(TestCase):
             raises(KeyError('application_name'))
         )
 
+    @patch.object(_s.ConnectionHasAppName, '_get_application_name')
+    def test_uses_default_object_name_when_not_provided(self, app_name):
+        dbus_connection = ("bus", "connection_name")
+        search_params = dict(application_name="application_name")
+        _s.ConnectionHasAppName.matches(dbus_connection, search_params)
+
+        app_name.assert_called_once_with(
+            "bus",
+            "connection_name",
+            AUTOPILOT_PATH
+        )
+
+    @patch.object(_s.ConnectionHasAppName, '_get_application_name')
+    def test_uses_provided_object_name(self, app_name):
+        object_name = self.getUniqueString()
+        dbus_connection = ("bus", "connection_name")
+        search_params = dict(
+            application_name="application_name",
+            object_path=object_name
+        )
+        _s.ConnectionHasAppName.matches(dbus_connection, search_params)
+
+        app_name.assert_called_once_with(
+            "bus",
+            "connection_name",
+            object_name
+        )
+
+
 
 class FilterHelpersTests(TestCase):
 
     def test_param_to_filter_includes_all(self):
         search_parameters = dict(application_name=True, pid=True, path=True)
+        # Specifically add 'always' check.
+        search_parameters['force_connection_name_check'] = True
         matchers = _s._filter_function_from_search_params(search_parameters)
 
         self.assertThat(
@@ -366,6 +397,7 @@ class FilterHelpersTests(TestCase):
                 _s.ConnectionHasAppName,
                 _s.ConnectionHasPid,
                 _s.ConnectionHasPathWithAPInterface,
+                _s.ConnectionIsNotOrgFreedesktopDBus,
             ])
         )
 

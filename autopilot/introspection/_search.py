@@ -605,7 +605,7 @@ def _get_search_criteria_string_representation(**kwargs):
     return ", ".join([
         u("%s = %r") % (k.replace("_", " "), v)
         for k, v
-        in kwargs.iteritems()
+        in kwargs.items()
     ])
 
 

@@ -12,6 +12,7 @@ autopilot is a tool for writing functional test suites for graphical application
 OPTIONS
 -------
 .. argparse_options::
+
 General Options
        -h, --help
             Get help from autopilot. This command can also be present after  a

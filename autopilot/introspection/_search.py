@@ -37,7 +37,10 @@ from autopilot.dbus_handler import (
     get_custom_bus,
 )
 from autopilot.exceptions import ProcessSearchError
-from autopilot.introspection.backends import DBusAddress
+from autopilot.introspection.backends import (
+    DBusAddress,
+    WireProtocolVersionMismatch
+)
 
 from autopilot.introspection.constants import (
     AUTOPILOT_PATH,
@@ -171,8 +174,15 @@ class ConnectionHasAppName(object):
         object_path = params.get('object_path', AUTOPILOT_PATH)
         bus, connection_name = dbus_connection
 
-        app_name = cls._get_application_name(bus, connection_name, object_path)
-        return app_name == requested_app_name
+        try:
+            app_name = cls._get_application_name(
+                bus,
+                connection_name,
+                object_path
+            )
+            return app_name == requested_app_name
+        except WireProtocolVersionMismatch:
+            return False
 
     @classmethod
     def _get_application_name(cls, bus, connection_name, object_path):
@@ -208,9 +218,6 @@ class ConnectionHasPid(object):
         pid = params['pid']
         bus, connection_name = dbus_connection
 
-        if cls._bus_pid_is_our_pid(bus, connection_name):
-            return False
-
         try:
             bus_pid = _get_bus_connections_pid(bus, connection_name)
         except dbus.DBusException as e:
@@ -221,18 +228,6 @@ class ConnectionHasPid(object):
 
         eligible_pids = [pid] + _get_child_pids(pid)
         return bus_pid in eligible_pids
-
-    @classmethod
-    def _bus_pid_is_our_pid(cls, bus, connection_name):
-        """Returns True if this processes pid is the same as the supplied bus
-        connections pid.
-
-        """
-        try:
-            bus_pid = _get_bus_connections_pid(bus, connection_name)
-            return bus_pid == os.getpid()
-        except dbus.DBusException:
-            return False
 
 
 class ConnectionIsNotOrgFreedesktopDBus(object):
@@ -249,6 +244,23 @@ class ConnectionIsNotOrgFreedesktopDBus(object):
         return connection_name != 'org.freedesktop.DBus'
 
 
+class ConnectionIsNotOurConnection(object):
+
+    """Ensure we're not inspecting our own bus connection."""
+
+    @classmethod
+    def priority(cls):
+        return 10
+
+    @classmethod
+    def matches(cls, dbus_connection, params):
+        try:
+            bus_pid = _get_bus_connections_pid(bus, connection_name)
+            return bus_pid == os.getpid()
+        except dbus.DBusException:
+            return False
+
+
 class ConnectionHasPathWithAPInterface(object):
 
     @classmethod
@@ -263,8 +275,9 @@ class ConnectionHasPathWithAPInterface(object):
 
         """
         try:
+            print(">>> Checking AP Interface")
             bus, connection_name = dbus_connection
-            path = params['path']
+            path = params['object_path']
             obj = bus.get_object(connection_name, path)
             dbus.Interface(
                 obj,
@@ -276,13 +289,12 @@ class ConnectionHasPathWithAPInterface(object):
 
 
 _param_to_filter_map = dict(
-    force_connection_name_check=ConnectionIsNotOrgFreedesktopDBus,
     connection_name=ConnectionHasName,
     application_name=ConnectionHasAppName,
     # object_name is optional to application_name
-    object_path=ConnectionHasAppName,
+    object_path=ConnectionHasPathWithAPInterface,
     pid=ConnectionHasPid,
-    path=ConnectionHasPathWithAPInterface,
+    # path=ConnectionHasPathWithAPInterface,
 )
 
 
@@ -401,6 +413,9 @@ def get_proxy_object_for_existing_process(**kwargs):
     # Add the 'always on' filter.
     kwargs['force_connection_name_check'] = True
 
+    # Force default object_path
+    kwargs['object_path'] = kwargs.get('object_path', AUTOPILOT_PATH)
+
     # Special handling of pid.
     pid = _check_process_and_pid_details(process, kwargs.get('pid', None))
     if pid is not None:
@@ -419,7 +434,8 @@ def get_proxy_object_for_existing_process(**kwargs):
         _get_search_criteria_string_representation(**kwargs)
     )
 
-    object_path = kwargs.get('object_path', AUTOPILOT_PATH)
+    # object_path = kwargs.get('object_path', AUTOPILOT_PATH)
+    object_path = kwargs['object_path']
     connection_name = connections[0]
     return _make_proxy_object(
         _get_dbus_address_object(connection_name, object_path, dbus_bus),

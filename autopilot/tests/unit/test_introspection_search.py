@@ -246,14 +246,14 @@ class ConnectionHasPathWithAPInterfaceTests(TestCase):
 
     """Tests specific to the ConnectionHasPathWithAPInterface filter."""
 
-    def test_raises_KeyError_when_missing_path_param(self):
+    def test_raises_KeyError_when_missing_object_path_param(self):
         dbus_connection = ("bus", "name")
         self.assertThat(
             lambda: _s.ConnectionHasPathWithAPInterface.matches(
                 dbus_connection,
                 {}
             ),
-            raises(KeyError('path'))
+            raises(KeyError('object_path'))
         )
 
     @patch.object(_s.dbus, "Interface")
@@ -266,7 +266,7 @@ class ConnectionHasPathWithAPInterfaceTests(TestCase):
         self.assertTrue(
             _s.ConnectionHasPathWithAPInterface.matches(
                 dbus_connection,
-                dict(path=path)
+                dict(object_path=path)
             )
         )
 
@@ -284,7 +284,7 @@ class ConnectionHasPathWithAPInterfaceTests(TestCase):
         self.assertFalse(
             _s.ConnectionHasPathWithAPInterface.matches(
                 dbus_connection,
-                dict(path=path)
+                dict(object_path=path)
             )
         )
 

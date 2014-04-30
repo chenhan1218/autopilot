@@ -419,8 +419,9 @@ class FilterHelpersTests(TestCase):
     """Tests for helpers around the Filters themselves."""
 
     def test_param_to_filter_includes_all(self):
+        """Ensure all filters are used in the matcher when requested."""
         search_parameters = {
-            f : True
+            f: True
             for f
             in _s._param_to_filter_map.keys()
         }
@@ -614,6 +615,7 @@ class ProcessSearchErrorStringRepTests(TestCase):
             MatchesAll(*map(Contains, expected_strings))
         )
 
+
 class ProxyObjectTests(TestCase):
 
     def test_raise_if_unusable_amount_of_results_raises_on_0_connections(self):
@@ -631,7 +633,7 @@ class ProxyObjectTests(TestCase):
             )
         )
 
-    def test_raise_if_unusable_amount_of_results_raises_on_many_connections(self):
+    def test_raise_if_unusable_amount_of_results_raises_on_many_connections(self):  # NOQA
         criteria_string = self.getUniqueString()
         self.assertThat(
             lambda: _s._raise_if_unusable_amount_of_results(
@@ -647,36 +649,35 @@ class ProxyObjectTests(TestCase):
         )
 
     def test_raise_if_unusable_amount_of_results_doesnt_raise_with_single_result(self):  # NOQA
-        criteria_string = self.getUniqueString()
         _s._raise_if_unusable_amount_of_results([1], "")
 
     @patch.object(_s, '_get_buses_unchecked_connection_names')
     def test_find_matching_connections_calls_connection_matcher(self, gbycn):
-         gbycn.return_value=["conn1"]
-         connection_matcher = Mock(return_value=False)
+        gbycn.return_value = ["conn1"]
+        connection_matcher = Mock(return_value=False)
 
-         with sleep.mocked():
-             _s._find_matching_connections("bus", connection_matcher)
+        with sleep.mocked():
+            _s._find_matching_connections("bus", connection_matcher)
 
-         connection_matcher.assert_called_with(("bus", "conn1"))
+        connection_matcher.assert_called_with(("bus", "conn1"))
 
     @patch.object(_s, '_get_buses_unchecked_connection_names')
     def test_find_matching_connections_attempts_multiple_times(self, gbycn):
-         gbycn.return_value=["conn1"]
-         connection_matcher = Mock(return_value=False)
+        gbycn.return_value = ["conn1"]
+        connection_matcher = Mock(return_value=False)
 
-         with sleep.mocked():
-             _s._find_matching_connections("bus", connection_matcher)
+        with sleep.mocked():
+            _s._find_matching_connections("bus", connection_matcher)
 
-         connection_matcher.assert_called_with(("bus", "conn1"))
-         self.assertEqual(connection_matcher.call_count, 11)
+        connection_matcher.assert_called_with(("bus", "conn1"))
+        self.assertEqual(connection_matcher.call_count, 11)
 
     @patch.object(_s, '_get_buses_unchecked_connection_names')
     def test_find_matching_connections_dedupes_results_on_pid(self, gbycn):
-         gbycn.return_value=["conn1"]
+        gbycn.return_value = ["conn1"]
 
-         with patch.object(_s, '_dedupe_connections_on_pid') as dedupe:
-             with sleep.mocked():
-                 _s._find_matching_connections("bus", lambda *args: True)
+        with patch.object(_s, '_dedupe_connections_on_pid') as dedupe:
+            with sleep.mocked():
+                _s._find_matching_connections("bus", lambda *args: True)
 
-                 dedupe.assert_called_once_with(["conn1"], "bus")
+                dedupe.assert_called_once_with(["conn1"], "bus")

@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Private Package for searching dbus for useful connections."""
+"""Private package for searching dbus for useful connections."""
 
 from __future__ import absolute_import
 
@@ -138,8 +138,8 @@ class ConnectionHasName(object):
 
     @classmethod
     def matches(cls, dbus_connection, params):
-        """Returns true if the connection name in dbus_connection is the name in
-        the search criteria params.
+        """Returns true if the connection name in dbus_connection is the name
+        in the search criteria params.
 
         """
         requested_connection_name = params['connection_name']

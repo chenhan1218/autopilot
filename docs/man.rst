@@ -19,11 +19,6 @@ General Options
             mand.  Further options are restricted to particular autopilot com‐
             mands.
 
-       suite
-            Suites  are listed as a python dotted package name. Autopilot will
-            do a recursive import in order to find all tests within  a  python
-            package.
-
        -v, --version
            Display autopilot version and exit.
 
@@ -35,6 +30,9 @@ General Options
    list [options] suite [suite...]
        List the autopilot tests found in the given test suite.
 
+       suite
+            See `SPECIFYING SUITES`_
+
        -ro, --run-order
             List tests in the order they will be run in, rather than alphabet‐
             ically (which is the default).
@@ -44,6 +42,9 @@ General Options
 
    run [options] suite [suite...]
        Run one or more test suites.
+
+       suite
+            See `SPECIFYING SUITES`_
 
        -o FILE, --output FILE
             Specify where the test log should be written. Defaults to  stdout.
@@ -107,3 +108,8 @@ General Options
 
        -testability
             Start the vis tool in testability mode. Used for self-tests only.
+
+SPECIFYING SUITES
+-----------------
+        Suites are listed as a python dotted package name. Autopilot will do a
+        recursive import in order to find all tests within a python package.

@@ -773,8 +773,8 @@ class DBusIntrospectionObjectTests(TestCase):
 
         """
         DBusIntrospectionObject(
-            dict(foo=[0]),
-            '/some/dummy/path',
+            dict(foo=[0], id=[0, 42]),
+            b'/some/dummy/path',
             Mock()
         )
         error_logger.assert_called_once_with(

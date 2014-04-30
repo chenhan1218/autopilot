@@ -40,7 +40,7 @@ from autopilot.dbus_handler import (
     get_system_bus,
     get_custom_bus,
 )
-from autopilot.introspection.backends import DBusAddress
+from autopilot.introspection import backends
 from autopilot.introspection.constants import (
     AUTOPILOT_PATH,
     QT_AUTOPILOT_IFACE,
@@ -49,12 +49,12 @@ from autopilot.introspection.constants import (
 from autopilot.introspection.dbus import (
     CustomEmulatorBase,
     DBusIntrospectionObject,
-    get_classname_from_path,
 )
 from autopilot.introspection.utilities import (
     _get_bus_connections_pid,
     _pid_is_running,
 )
+from autopilot.introspection._xpathselect import get_classname_from_path
 from autopilot._timeout import Timeout
 
 
@@ -338,7 +338,7 @@ def _dedupe_connections_on_pid(valid_connections, bus):
 
 
 def _get_dbus_address_object(connection_name, object_path, bus):
-    return DBusAddress(bus, connection_name, object_path)
+    return backends.DBusAddress(bus, connection_name, object_path)
 
 
 def _get_dbus_bus_from_string(dbus_string):
@@ -471,7 +471,7 @@ def _make_proxy_object(data_source, emulator_base):
     )
     proxy_class = _make_proxy_class_object(cls_name, proxy_bases)
 
-    return proxy_class(cls_state, path, data_source)
+    return proxy_class(cls_state, path, backends.Backend(data_source))
 
 
 def _make_proxy_object_async(
@@ -500,7 +500,9 @@ def _make_proxy_object_async(
             emulator_base
         )
         proxy_class = _make_proxy_class_object(cls_name, proxy_bases)
-        reply_handler(proxy_class(cls_state, path, data_source))
+        reply_handler(
+            proxy_class(cls_state, path, backends.Backend(data_source))
+        )
 
     # Phase 2: We recieve the introspection string, and make an asynchronous
     # dbus call to get the state information for the root of this applicaiton.
@@ -627,7 +629,7 @@ def _get_details_from_state_data(state_data):
     object_path, object_state = state_data
     return (
         get_classname_from_path(object_path),
-        object_path,
+        object_path.encode('utf-8'),
         object_state,
     )
 

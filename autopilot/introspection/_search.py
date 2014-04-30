@@ -368,7 +368,7 @@ def get_proxy_object_for_existing_process(**kwargs):
 
         app_proxy = get_proxy_object_for_existing_process(
             pid=app_pid,
-            connection_name='org.gnome.gedit'
+            connection_name='org.gnome.Gedit'
         )
 
     If the application from the previous example was on the system bus::
@@ -376,7 +376,7 @@ def get_proxy_object_for_existing_process(**kwargs):
         app_proxy = get_proxy_object_for_existing_process(
             dbus_bus='system',
             pid=app_pid,
-            connection_name='org.gnome.gedit'
+            connection_name='org.gnome.Gedit'
         )
 
     It is possible to search for the application given just the applications
@@ -399,10 +399,9 @@ def get_proxy_object_for_existing_process(**kwargs):
     kwargs['force_connection_name_check'] = True
 
     # Special handling of pid.
-    kwargs['pid'] = _check_process_and_pid_details(
-        process,
-        kwargs.get('pid', None)
-    )
+    pid = _check_process_and_pid_details(process, kwargs.get('pid', None))
+    if pid is not None:
+        kwargs['pid'] = pid
 
     matcher_function = _filter_function_from_search_params(kwargs)
 
@@ -473,22 +472,21 @@ def _find_matching_connections(bus, connection_matcher, process=None):
         while we're searching for it.
 
     """
-    connections = []
+    seen_connections = []
 
     for _ in Timeout.default():
         _raise_if_process_has_exited(process)
 
-        connections = [
-            (bus, connection)
-            for connection
-            in _get_buses_unchecked_connection_names(bus, connections)
-        ]
+        connections = _get_buses_unchecked_connection_names(
+            bus,
+            seen_connections
+        )
+        seen_connections.extend(connections)
 
-        # Grab out only the connection names
         valid_connections = [
-            c[1] for c
+            c for c
             in connections
-            if connection_matcher(c)
+            if connection_matcher((bus, c))
         ]
 
         # If nothing was found go round for another go.

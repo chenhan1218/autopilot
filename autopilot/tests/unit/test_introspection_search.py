@@ -674,11 +674,9 @@ class ProxyObjectTests(TestCase):
     @patch.object(_s, '_get_buses_unchecked_connection_names')
     def test_find_matching_connections_dedupes_results_on_pid(self, gbycn):
          gbycn.return_value=["conn1"]
-         connection_matcher = Mock(return_value=True)
 
          with patch.object(_s, '_dedupe_connections_on_pid') as dedupe:
              with sleep.mocked():
-                 _s._find_matching_connections("bus", connection_matcher)
+                 _s._find_matching_connections("bus", lambda *args: True)
 
                  dedupe.assert_called_once_with(["conn1"], "bus")
-                 self.assertEqual(connection_matcher.call_count, 1)

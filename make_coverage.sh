@@ -26,7 +26,7 @@ TEST_SUITE_TO_RUN="autopilot.tests.unit"
 usage() {
 	echo "usage: $0 [-h] [-n] [-t] [-s suite]"
 	echo
-	echo "Runs unit tests under both python2 and python 3, gathering coverage data."
+	echo "Runs unit tests under python 3, gathering coverage data."
     echo
 	echo "By default, will open HTML coverage report in the default browser. If -n"
 	echo "is specified, will re-generate coverage data, but won't open the browser."
@@ -60,7 +60,6 @@ if [ -d htmlcov ]; then
 fi
 
 python -m coverage erase
-python -m coverage run --branch --include "autopilot/*" -m autopilot.run run $TEST_SUITE_TO_RUN
 python3 -m coverage run --append --branch --include "autopilot/*" -m autopilot.run run $TEST_SUITE_TO_RUN
 
 if [ "$INCLUDE_TEST_FILES" = "yes" ]; then

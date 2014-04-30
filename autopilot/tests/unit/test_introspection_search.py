@@ -413,6 +413,13 @@ class ConnectionHasAppNameTests(TestCase):
             object_name
         )
 
+    def test_filter_function_from_search_params_handles_optional_object_name(self):  # NOQA
+        search_params = dict(
+            application_name="application_name",
+            object_path="object_name"
+        )
+        _s._filter_function_from_search_params(search_params)
+
 
 class FilterHelpersTests(TestCase):
 

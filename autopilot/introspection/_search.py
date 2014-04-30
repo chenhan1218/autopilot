@@ -157,8 +157,8 @@ class ConnectionHasAppName(object):
     def matches(cls, dbus_connection, params):
         """Returns True if dbus_connection has the required application name.
 
-        Can be provided an object_path but defaults to 'AUTOPILOT_PATH' if not
-        provided.
+        Can be provided an optional object_path parameter. This defaults to
+        'AUTOPILOT_PATH' if not provided.
 
         This filter should only activated if the application_name is provided
         in the search criteria.
@@ -279,6 +279,8 @@ _param_to_filter_map = dict(
     force_connection_name_check=ConnectionIsNotOrgFreedesktopDBus,
     connection_name=ConnectionHasName,
     application_name=ConnectionHasAppName,
+    # object_name is optional to application_name
+    object_path=ConnectionHasAppName,
     pid=ConnectionHasPid,
     path=ConnectionHasPathWithAPInterface,
 )
@@ -334,7 +336,8 @@ def get_proxy_object_for_existing_process(**kwargs):
     :param object_path: A string containing the object path to use as the
         search criteria.
         Note: This parameter is only valid to use when an **application_name**
-        has been provided.
+        has been provided. A KeyError exception will be raised if provided
+        without the supporting application_name parameter.
         Defaults to:
         :py:data:`autopilot.introspection.constants.AUTOPILOT_PATH`.
 

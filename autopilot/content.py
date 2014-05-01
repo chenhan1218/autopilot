@@ -26,7 +26,7 @@ import io
 import logging
 from testtools.content import ContentType, content_from_stream, text_content
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 def follow_file(path, test_case, content_name=None):
@@ -43,7 +43,7 @@ def follow_file(path, test_case, content_name=None):
     try:
         file_obj = io.open(path, mode='rb')
     except IOError as e:
-        logger.error(
+        _logger.error(
             "Could not add content object '%s' due to IO Error: %s",
             content_name,
             str(e)

@@ -27,12 +27,14 @@ introspection mechanism, and probably isn't useful to most test authors.
 
 from __future__ import absolute_import
 
+from autopilot.introspection.dbus import CustomEmulatorBase
 from autopilot.introspection._search import (
     get_autopilot_proxy_object_for_process,
     get_proxy_object_for_existing_process
 )
 
 __all__ = [
+    'CustomEmulatorBase'
     'get_autopilot_proxy_object_for_process',
     'get_proxy_object_for_existing_process'
 ]

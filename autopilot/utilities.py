@@ -25,14 +25,19 @@ from __future__ import absolute_import
 
 from contextlib import contextmanager
 from decorator import decorator
+import functools
 import inspect
 import logging
 import os
 import six
 import time
+import timeit
 from functools import wraps
 
 from autopilot.exceptions import BackendException
+
+
+logger = logging.getLogger(__name__)
 
 
 def _pick_backend(backends, preferred_backend):
@@ -151,13 +156,13 @@ class Timer(object):
         self.logger = get_debug_logger()
 
     def __enter__(self):
-        self.start = time.time()
+        self.start = timeit.default_timer()
 
     def __exit__(self, *args):
-        self.end = time.time()
+        self.end = timeit.default_timer()
+        elapsed = self.end - self.start
         self.logger.log(
-            self.log_level, "'%s' took %.3fS", self.code_name,
-            self.end - self.start)
+            self.log_level, "'%s' took %.3fS", self.code_name, elapsed)
 
 
 class StagnantStateDetector(object):
@@ -246,20 +251,20 @@ class DebugLogFilter(object):
 
 
 def deprecated(alternative):
-    """Write a deprecation warning directly to stderr."""
+    """Write a deprecation warning to the logging framework."""
+
     def fdec(fn):
         @wraps(fn)
         def wrapped(*args, **kwargs):
-            import sys
             outerframe_details = inspect.getouterframes(
                 inspect.currentframe())[1]
             filename, line_number, function_name = outerframe_details[1:4]
-            sys.stderr.write(
-                "WARNING: in file \"{0}\", line {1} in {2}\n".format(
-                    filename, line_number, function_name))
-            sys.stderr.write(
-                "This function is deprecated. Please use '%s' instead.\n" %
-                alternative)
+
+            logger.warning(
+                "WARNING: in file \"{0}\", line {1} in {2}\n"
+                "This function is deprecated. Please use '{3}' instead.\n"
+                .format(filename, line_number, function_name, alternative)
+            )
             return fn(*args, **kwargs)
         return wrapped
     return fdec
@@ -444,3 +449,33 @@ def _raise_on_unknown_kwargs(kwargs):
         raise ValueError(
             "Unknown keyword arguments: %s." % (', '.join(arglist))
         )
+
+
+class cached_result(object):
+
+    """A simple caching decorator.
+
+    This class is deliberately simple. It does not handle unhashable types,
+    keyword arguments, and has no built-in size control.
+
+    """
+
+    def __init__(self, f):
+        functools.update_wrapper(self, f)
+        self.f = f
+        self._cache = {}
+
+    def __call__(self, *args):
+        try:
+            return self._cache[args]
+        except KeyError:
+            result = self.f(*args)
+            self._cache[args] = result
+            return result
+        except TypeError:
+            raise TypeError(
+                "The '%r' function can only be called with hashable arguments."
+            )
+
+    def reset_cache(self):
+        self._cache.clear()

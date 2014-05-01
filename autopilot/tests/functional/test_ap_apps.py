@@ -194,9 +194,9 @@ class ApplicationLaunchTests(ApplicationTests):
         self.assertThat(difference.total_seconds(), LessThan(5))
 
     @skipIf(model() != "Desktop", "Not suitable for device (Qt4)")
-    def test_closing_app_produces_good_error_from_get_state_by_path(self):
+    def test_closing_app_produces_good_error(self):
         """Testing an application that closes before the test ends must
-        produce a good error message when calling get_state_by_path on the
+        produce a good error message when calling refresh_state() on the
         application proxy object.
 
         """
@@ -218,7 +218,7 @@ class ApplicationLaunchTests(ApplicationTests):
 
         def crashing_fn():
             for i in range(10):
-                logger.debug("%d %r", i, app_proxy.get_state_by_path("/"))
+                logger.debug("%d %r", i, app_proxy.refresh_state())
                 sleep(1)
 
         self.assertThat(
@@ -294,7 +294,12 @@ class QtTests(ApplicationTests, QmlTestMixin):
 
     def test_can_launch_normal_app(self):
         path = self.get_qml_viewer_app_path()
-        app_proxy = self.launch_test_application(path, app_type='qt')
+        fixture = self.useFixture(TempDesktopFile(exec_=path,))
+        app_proxy = self.launch_test_application(
+            path,
+            '--desktop_file_hint=%s' % fixture.get_desktop_file_path(),
+            app_type='qt'
+        )
         self.assertTrue(app_proxy is not None)
 
     def test_can_launch_upstart_app(self):
@@ -373,7 +378,10 @@ class QtTests(ApplicationTests, QmlTestMixin):
         app_proxy = self.launch_test_application(wrapper_path, app_type='qt')
         self.assertTrue(app_proxy is not None)
 
-    @skipIf(not locale_is_supported(), "Current locale is not supported")
+    @skipIf(
+        model() != "Desktop" or not locale_is_supported(),
+        "Current locale is not supported or not on desktop (Qt4)"
+    )
     def test_can_handle_non_unicode_stdout_and_stderr(self):
         path = self.write_script(dedent("""\
             #!%s
@@ -399,6 +407,7 @@ class QtTests(ApplicationTests, QmlTestMixin):
             )
 
 
+@skipIf(model() != "Desktop", "Only suitable on Desktop (Gtk)")
 class GtkTests(ApplicationTests):
 
     def _get_mahjongg_path(self):

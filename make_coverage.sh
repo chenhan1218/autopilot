@@ -16,25 +16,37 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+set -e
+
 SHOW_IN_BROWSER="yes"
 INCLUDE_TEST_FILES="no"
+TEST_SUITE_TO_RUN="autopilot.tests.unit"
 
 usage() {
-	echo "usage: $0 [-h] [-n] [-t]"
+	echo "usage: $0 [-h] [-n] [-t] [-s suite]"
 	echo
-	echo "Runs unit tests under both python2 and python 3, gathering coverage data."
+	echo "Runs unit tests under python 3, gathering coverage data."
+    echo
 	echo "By default, will open HTML coverage report in the default browser. If -n"
 	echo "is specified, will re-generate coverage data, but won't open the browser."
+    echo
     echo "If -t is specified the HTML coverage report will include the test files."
+    echo
+    echo "If -s is specified, the next argument must be a test id to run. If not"
+    echo "specified, the default is '$TEST_SUITE_TO_RUN'."
 }
 
-while getopts ":hnt" o; do
+while getopts ":hnts:" o; do
     case "${o}" in
         n)
             SHOW_IN_BROWSER="no"
             ;;
         t)
             INCLUDE_TEST_FILES="yes"
+            ;;
+        s)
+            TEST_SUITE_TO_RUN=$OPTARG
             ;;
         *)
             usage
@@ -48,8 +60,7 @@ if [ -d htmlcov ]; then
 fi
 
 python -m coverage erase
-python -m coverage run --branch --include "autopilot/*" -m autopilot.run run autopilot.tests.unit
-python3 -m coverage run --append --branch --include "autopilot/*" -m autopilot.run run autopilot.tests.unit
+python3 -m coverage run --append --branch --include "autopilot/*" -m autopilot.run run $TEST_SUITE_TO_RUN
 
 if [ "$INCLUDE_TEST_FILES" = "yes" ]; then
     python -m coverage html

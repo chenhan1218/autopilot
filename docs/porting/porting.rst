@@ -47,7 +47,7 @@ This makes the authors intent harder to discern. To improve this situation, two 
 
 1. :meth:`~autopilot.introspection.dbus.DBusIntrospectionObject.select_single` raises a :class:`~autopilot.introspection.dbus.StateNotFoundError` exception if the search terms returned no values, rather than returning ``None``.
 
-2. If the object being searched for is likely to not exist, there is a new method: :meth:`~autopilot.introspection.dbus.DBusIntrospectionObject.wait_select_single` will try to retrieve an object for 10 seconds. If the object does not exist after that timeout, a :class:`~autopilot.introspection.dbus.StateNotFoundError` exception is raised. This means that the above code example should now be written as::
+2. If the object being searched for is likely to not exist, there is a new method: :meth:`~autopilot.introspection.dbus.DBusIntrospectionObject.wait_select_single` will try to retrieve an object for 10 seconds. If the object does not exist after that timeout, a :class:`~autopilot.exceptions.StateNotFoundError` exception is raised. This means that the above code example should now be written as::
 
 	my_obj = self.app.wait_select_single("MyObject")
 
@@ -68,11 +68,11 @@ These affected methods are:
 
 For example, if your old code is something along the lines of::
 
-    all_keys = KeyCustomEmulator.get_all_instances()
+    all_keys = KeyCustomProxy.get_all_instances()
 
 You will instead need to have something like this instead::
 
-    all_keys = app_proxy.select_many(KeyCustomEmulator)
+    all_keys = app_proxy.select_many(KeyCustomProxy)
 
 
 Python 3

@@ -25,17 +25,17 @@ import logging
 from PyQt4 import QtGui, QtCore
 import six
 
+from autopilot.exceptions import StateNotFoundError
 from autopilot.introspection import (
     _get_dbus_address_object,
-    _make_proxy_object
+    _make_proxy_object_async
 )
 from autopilot.introspection.constants import AP_INTROSPECTION_IFACE
-from autopilot.introspection.dbus import StateNotFoundError
 from autopilot.introspection.qt import QtObjectProxyMixin
 from autopilot.vis.objectproperties import TreeNodeDetailWidget
 from autopilot.vis.resources import get_qt_icon
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -64,6 +64,7 @@ class MainWindow(QtGui.QMainWindow):
         self.statusBar().showMessage('Waiting for first valid dbus connection')
 
         self.splitter = QtGui.QSplitter(self)
+        self.splitter.setChildrenCollapsible(False)
         self.tree_view = QtGui.QTreeView(self.splitter)
         self.detail_widget = TreeNodeDetailWidget(self.splitter)
 
@@ -86,17 +87,27 @@ class MainWindow(QtGui.QMainWindow):
             try:
                 dbus_address_instance = _get_dbus_address_object(
                     str(conn), str(obj), self._dbus_bus)
-                proxy_object = _make_proxy_object(dbus_address_instance, None)
-                cls_name = proxy_object.__class__.__name__
-                if not cls_name in self.selectable_interfaces:
-                    self.selectable_interfaces[cls_name] = proxy_object
-                    self.update_selectable_interfaces()
-                self.statusBar().clearMessage()
+                _make_proxy_object_async(
+                    dbus_address_instance,
+                    None,
+                    self.on_proxy_object_built,
+                    self.on_dbus_error
+                )
             except (dbus.DBusException, RuntimeError) as e:
-                logger.warning("Invalid introspection interface: %s" % str(e))
+                _logger.warning("Invalid introspection interface: %s" % str(e))
 
             if self.connection_list.count() == 0:
                 self.statusBar().showMessage('No valid connections exist.')
+
+    def on_proxy_object_built(self, proxy_object):
+        cls_name = proxy_object.__class__.__name__
+        if not cls_name in self.selectable_interfaces:
+            self.selectable_interfaces[cls_name] = proxy_object
+            self.update_selectable_interfaces()
+        self.statusBar().clearMessage()
+
+    def on_dbus_error(*args):
+        print(args)
 
     def update_selectable_interfaces(self):
         selected_text = self.connection_list.currentText()

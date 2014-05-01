@@ -20,7 +20,6 @@
 import testscenarios
 from evdev import ecodes, uinput
 from mock import ANY, call, Mock, patch
-from six import StringIO
 from testtools import TestCase
 from testtools.matchers import Contains, raises
 
@@ -90,7 +89,7 @@ class InputCenterPointTests(TestCase):
             raises(expected_exception)
         )
 
-    @patch('autopilot.input._common.logger')
+    @patch('autopilot.input._common._logger')
     def test_get_center_point_logs_with_globalRect(self, mock_logger):
         obj = make_fake_object(globalRect=True)
         x, y = get_center_point(obj)
@@ -106,7 +105,7 @@ class InputCenterPointTests(TestCase):
         self.assertEqual(123, x)
         self.assertEqual(345, y)
 
-    @patch('autopilot.input._common.logger')
+    @patch('autopilot.input._common._logger')
     def test_get_center_point_logs_with_center_points(self, mock_logger):
         obj = make_fake_object(center=True)
         x, y = get_center_point(obj)
@@ -122,7 +121,7 @@ class InputCenterPointTests(TestCase):
         self.assertEqual(110, x)
         self.assertEqual(120, y)
 
-    @patch('autopilot.input._common.logger')
+    @patch('autopilot.input._common._logger')
     def test_get_center_point_logs_with_xywh(self, mock_logger):
         obj = make_fake_object(xywh=True)
         x, y = get_center_point(obj)
@@ -163,11 +162,11 @@ class UInputTestCase(TestCase):
     """Tests for the global methods of the uinput module."""
 
     def test_create_touch_device_must_print_deprecation_message(self):
-        with patch('sys.stderr', new=StringIO()) as stderr:
+        with patch('autopilot.utilities.logger') as patched_log:
             with patch('autopilot.input._uinput.UInput'):
                 _uinput.create_touch_device('dummy', 'dummy')
         self.assertThat(
-            stderr.getvalue(),
+            patched_log.warning.call_args[0][0],
             Contains(
                 "This function is deprecated. Please use 'the Touch class to "
                 "instantiate a device object' instead."

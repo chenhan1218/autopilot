@@ -17,6 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from six import PY3
+if PY3:
+    from contextlib import ExitStack
+else:
+    from contextlib2 import ExitStack
 from gi.repository import GLib
 import signal
 import subprocess
@@ -100,14 +105,20 @@ class NormalApplicationLauncherTests(TestCase):
         with patch.object(
             _l, '_kill_process', return_value=(u"stdout", u"stderr", 0)
         ):
-            app_launcher._kill_process_and_attach_logs(0)
+            app_launcher._kill_process_and_attach_logs(0, 'app')
 
             self.assertThat(
                 mock_addDetail.call_args_list,
                 MatchesListwise([
-                    Equals([('process-return-code', text_content('0')), {}]),
-                    Equals([('process-stdout', text_content('stdout')), {}]),
-                    Equals([('process-stderr', text_content('stderr')), {}]),
+                    Equals(
+                        [('process-return-code (app)', text_content('0')), {}]
+                    ),
+                    Equals(
+                        [('process-stdout (app)', text_content('stdout')), {}]
+                    ),
+                    Equals(
+                        [('process-stderr (app)', text_content('stderr')), {}]
+                    ),
                 ])
             )
 
@@ -357,7 +368,8 @@ class UpstartApplicationLauncherTests(TestCase):
 
         if observer == UpstartApplicationLauncher._on_failed:
             observer(expected_app_id, None, state)
-        elif observer == UpstartApplicationLauncher._on_started:
+        elif observer == UpstartApplicationLauncher._on_started or \
+                observer == UpstartApplicationLauncher._on_stopped:
             observer(expected_app_id, state)
         else:
             observer(state)
@@ -394,6 +406,20 @@ class UpstartApplicationLauncherTests(TestCase):
         UpstartApplicationLauncher._on_started('some_game', state)
 
         self.assertThat(state, Not(Contains('status')))
+
+    def test_on_stopped_only_sets_status_on_correct_app_id(self):
+        state = {
+            'expected_app_id': 'gedit',
+        }
+
+        UpstartApplicationLauncher._on_stopped('some_game', state)
+        self.assertThat(state, Not(Contains('status')))
+
+    def test_on_stopped_sets_status_and_exits_loop(self):
+        self.assertFunctionSetsCorrectStateAndQuits(
+            UpstartApplicationLauncher._on_stopped,
+            UpstartApplicationLauncher.Stopped
+        )
 
     def test_get_pid_calls_upstart_module(self):
         expected_return = self.getUniqueInteger()
@@ -565,15 +591,87 @@ class UpstartApplicationLauncherTests(TestCase):
 
                 self.assertEqual(1, case_addDetail.call_count)
                 content_name, content_obj = case_addDetail.call_args[0]
-                self.assertEqual("Application Log", content_name)
+                self.assertEqual(
+                    "Application Log (%s)" % app_id,
+                    content_name
+                )
                 self.assertThat(content_obj.as_text(), Contains(token))
 
-    def test_stop_applications_calls_UAL_stop_application(self):
+    def test_stop_adds_app_stopped_observer(self):
+        mock_add_detail = Mock()
+        mock_glib_loop = Mock()
+        patch_get_loop = patch.object(
+            UpstartApplicationLauncher,
+            '_get_glib_loop',
+            new=mock_glib_loop,
+        )
+        mock_UAL = Mock()
+        patch_UAL = patch.object(_l, 'UpstartAppLaunch', new=mock_UAL)
+        launcher = UpstartApplicationLauncher(mock_add_detail)
         app_id = self.getUniqueString()
-        launcher = UpstartApplicationLauncher(Mock())
-        with patch.object(_l.UpstartAppLaunch, 'stop_application') as p_stop:
+        with ExitStack() as patches:
+            patches.enter_context(patch_get_loop)
+            patches.enter_context(patch_UAL)
+
             launcher._stop_application(app_id)
-            p_stop.assert_called_once_with(app_id)
+            call_args = mock_UAL.observer_add_app_stop.call_args[0]
+            self.assertThat(
+                call_args[0],
+                Equals(UpstartApplicationLauncher._on_stopped)
+            )
+            self.assertThat(call_args[1]['expected_app_id'], Equals(app_id))
+
+    def test_stop_calls_libUAL_stop_function(self):
+        mock_add_detail = Mock()
+        mock_glib_loop = Mock()
+        patch_get_loop = patch.object(
+            UpstartApplicationLauncher,
+            '_get_glib_loop',
+            new=mock_glib_loop,
+        )
+        mock_UAL = Mock()
+        patch_UAL = patch.object(_l, 'UpstartAppLaunch', new=mock_UAL)
+        launcher = UpstartApplicationLauncher(mock_add_detail)
+        app_id = self.getUniqueString()
+        with ExitStack() as patches:
+            patches.enter_context(patch_get_loop)
+            patches.enter_context(patch_UAL)
+
+            launcher._stop_application(app_id)
+            mock_UAL.stop_application.assert_called_once_with(app_id)
+
+    def test_stop_logs_error_on_timeout(self):
+        mock_add_detail = Mock()
+        mock_glib_loop = Mock()
+        patch_get_loop = patch.object(
+            UpstartApplicationLauncher,
+            '_get_glib_loop',
+            new=mock_glib_loop,
+        )
+        mock_UAL = Mock()
+
+        # we replace the add_observer function with one that can set the
+        # tiemout state, so we can ibject the timeout condition within the
+        # glib loop. This is ugly, but necessary.
+        def fake_add_observer(fn, state):
+            state['status'] = UpstartApplicationLauncher.Timeout
+        mock_UAL.observer_add_app_stop = fake_add_observer
+        patch_UAL = patch.object(_l, 'UpstartAppLaunch', new=mock_UAL)
+        launcher = UpstartApplicationLauncher(mock_add_detail)
+        app_id = self.getUniqueString()
+        mock_logger = Mock()
+        patch_logger = patch.object(_l, '_logger', new=mock_logger)
+        with ExitStack() as patches:
+            patches.enter_context(patch_get_loop)
+            patches.enter_context(patch_UAL)
+            patches.enter_context(patch_logger)
+
+            launcher._stop_application(app_id)
+
+            mock_logger.error.assert_called_once_with(
+                "Timed out waiting for Application with app_id '%s' to stop.",
+                app_id
+            )
 
 
 class ApplicationLauncherInternalTests(TestCase):
@@ -653,7 +751,7 @@ class ApplicationLauncherInternalTests(TestCase):
     def test_attempt_kill_pid_logs_if_process_already_exited(self, killpg):
         killpg.side_effect = OSError()
 
-        with patch.object(_l, 'logger') as patched_log:
+        with patch.object(_l, '_logger') as patched_log:
             _attempt_kill_pid(0)
             patched_log.info.assert_called_with(
                 "Appears process has already exited."

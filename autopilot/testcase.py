@@ -79,8 +79,7 @@ try:
 except ImportError:
     HAVE_TRACEPOINT = False
 
-
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 try:
@@ -113,7 +112,7 @@ def _lttng_trace_test_started(test_id):
     if HAVE_TRACEPOINT:
         tp.emit_test_started(test_id)
     else:
-        logger.warning(
+        _logger.warning(
             "No tracing available - install the python-autopilot-trace "
             "package!")
 
@@ -137,7 +136,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
     def setUp(self):
         super(AutopilotTestCase, self).setUp()
         on_test_started(self)
-        self.useFixture(get_debug_profile_fixture()(self.addDetail))
+        self.useFixture(get_debug_profile_fixture()(self.addDetailUniqueName))
 
         _lttng_trace_test_started(self.id())
         self.addCleanup(_lttng_trace_test_ended, self.id())
@@ -147,11 +146,14 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         self._kb = None
         self._display = None
 
+        # Work around for bug lp:1297592.
+        _ensure_uinput_device_created()
+
         try:
             self._app_snapshot = _get_process_snapshot()
             self.addCleanup(self._compare_system_with_app_snapshot)
         except RuntimeError:
-            logger.warning(
+            _logger.warning(
                 "Process manager backend unavailable, application snapshot "
                 "support disabled.")
 
@@ -249,14 +251,14 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
          data is retrievable via this object.
 
         """
-        logger.info(
+        _logger.info(
             "Attempting to launch application '%s' with arguments '%s' as a "
             "normal process",
             application,
             ' '.join(arguments)
         )
         launcher = self.useFixture(
-            NormalApplicationLauncher(self.addDetail, **kwargs)
+            NormalApplicationLauncher(self.addDetailUniqueName, **kwargs)
         )
 
         return self._launch_test_application(launcher, application, *arguments)
@@ -297,7 +299,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         """
         if isinstance(app_uris, (six.text_type, six.binary_type)):
             app_uris = [app_uris]
-        logger.info(
+        _logger.info(
             "Attempting to launch click application '%s' from click package "
             " '%s' and URIs '%s'",
             app_name if app_name is not None else "(default)",
@@ -305,7 +307,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             ','.join(app_uris)
         )
         launcher = self.useFixture(
-            ClickApplicationLauncher(self.addDetail, **kwargs)
+            ClickApplicationLauncher(self.addDetailUniqueName, **kwargs)
         )
         return self._launch_test_application(launcher, package_id, app_name,
                                              app_uris)
@@ -330,14 +332,14 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         """
         if isinstance(uris, (six.text_type, six.binary_type)):
             uris = [uris]
-        logger.info(
+        _logger.info(
             "Attempting to launch application '%s' with URIs '%s' via "
             "upstart-app-launch",
             application_name,
             ','.join(uris)
         )
         launcher = self.useFixture(
-            UpstartApplicationLauncher(self.addDetail, **kwargs)
+            UpstartApplicationLauncher(self.addDetailUniqueName, **kwargs)
         )
         return self._launch_test_application(launcher, application_name, uris)
 
@@ -409,7 +411,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         """
         if key in os.environ:
             def _undo_patch(key, old_value):
-                logger.info(
+                _logger.info(
                     "Resetting environment variable '%s' to '%s'",
                     key,
                     old_value
@@ -420,20 +422,20 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         else:
             def _remove_patch(key):
                 try:
-                    logger.info(
+                    _logger.info(
                         "Deleting previously-created environment "
                         "variable '%s'",
                         key
                     )
                     del os.environ[key]
                 except KeyError:
-                    logger.warning(
+                    _logger.warning(
                         "Attempted to delete environment key '%s' that doesn't"
                         "exist in the environment",
                         key
                     )
             self.addCleanup(_remove_patch, key)
-        logger.info(
+        _logger.info(
             "Setting environment variable '%s' to '%s'",
             key,
             value
@@ -554,3 +556,17 @@ def _compare_system_with_process_snapshot(snapshot_fn, old_snapshot):
     raise AssertionError(
         "The following apps were started during the test and not closed: "
         "%r" % new_apps)
+
+
+def _ensure_uinput_device_created():
+    # This exists for a work around for bug lp:1297592. Need to create
+    # an input device before an application launch.
+    try:
+        from autopilot.input._uinput import Touch, _UInputTouchDevice
+        if _UInputTouchDevice._device is None:
+            Touch.create()
+    except Exception as e:
+        _logger.warning(
+            "Failed to create Touch device for bug lp:1297595 workaround: "
+            "%s" % str(e)
+        )

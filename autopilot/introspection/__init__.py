@@ -34,7 +34,7 @@ from autopilot.introspection._search import (
 )
 
 __all__ = [
-    'CustomEmulatorBase'
+    'CustomEmulatorBase',
     'get_autopilot_proxy_object_for_process',
     'get_proxy_object_for_existing_process'
 ]

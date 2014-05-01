@@ -34,7 +34,7 @@ from testtools.matchers import (
 
 from autopilot.exceptions import ProcessSearchError
 from autopilot.utilities import sleep
-from autopilot.introspection import _search as _s,  utilities as _u
+from autopilot.introspection import _search as _s
 from autopilot.introspection.constants import AUTOPILOT_PATH
 
 
@@ -548,7 +548,7 @@ class FindMatchingConnectionsTests(TestCase):
 class ProcessAndPidErrorCheckingTests(TestCase):
 
     def test_raises_ProcessSearchError_when_process_is_not_running(self):
-        with patch.object(_u, '_pid_is_running') as pir:
+        with patch.object(_s, '_pid_is_running') as pir:
             pir.return_value = False
 
             self.assertThat(
@@ -567,7 +567,7 @@ class ProcessAndPidErrorCheckingTests(TestCase):
 
     def test_returns_pid_when_specified(self):
         expected = self.getUniqueInteger()
-        with patch.object(_u, '_pid_is_running') as pir:
+        with patch.object(_s, '_pid_is_running') as pir:
             pir.return_value = True
 
             observed = _s._check_process_and_pid_details(pid=expected)
@@ -578,7 +578,7 @@ class ProcessAndPidErrorCheckingTests(TestCase):
         fake_process = Mock()
         fake_process.pid = self.getUniqueInteger()
 
-        with patch.object(_u, '_pid_is_running') as pir:
+        with patch.object(_s, '_pid_is_running') as pir:
             pir.return_value = True
             observed = _s._check_process_and_pid_details(fake_process)
 
@@ -593,7 +593,7 @@ class ProcessAndPidErrorCheckingTests(TestCase):
     def test_returns_pid_when_both_specified(self):
         fake_process = Mock()
         fake_process.pid = self.getUniqueInteger()
-        with patch.object(_u, '_pid_is_running') as pir:
+        with patch.object(_s, '_pid_is_running') as pir:
             pir.return_value = True
             observed = _s._check_process_and_pid_details(
                 fake_process,

@@ -8,8 +8,9 @@
 	dh $@ --with python3 --buildsystem=pybuild
 
 override_dh_installdocs:
-	sphinx-build -b html -W  docs/ docs/_build/html/
-	dh_installdocs docs/_build/html
+	python3 setup.py build_sphinx -b html
+	python3 setup.py build_sphinx -b man
+	dh_installdocs
 	rm -f debian/python3-autopilot/usr/share/doc/python3-autopilot/html/_static/jquery.js
 	ln -s /usr/share/javascript/jquery/jquery.js \
 	      debian/python3-autopilot/usr/share/doc/python3-autopilot/html/_static/jquery.js

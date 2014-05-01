@@ -37,7 +37,10 @@ from textwrap import dedent
 
 from autopilot.process import ProcessManager
 from autopilot.platform import model
-from autopilot.testcase import AutopilotTestCase
+from autopilot.testcase import (
+    AutopilotTestCase,
+    EnvironmentPatch,
+)
 from autopilot.tests.functional.fixtures import (
     ExecutableScript,
     TempDesktopFile,
@@ -252,14 +255,14 @@ class QmlTestMixin(object):
             if path:
                 not_found = False
                 self.qml_viewer_app_path = path
-                self.patch_environment("QT_SELECT", "qt4")
+                EnvironmentPatch("QT_SELECT", "qt4")
 
         if 'qt5' in qtversions:
             path = check_func('qt5', 'qmlscene')
             if path:
                 not_found = False
                 self.qml_viewer_app_path = path
-                self.patch_environment("QT_SELECT", "qt5")
+                EnvironmentPatch("QT_SELECT", "qt5")
 
         if not_found:
             self.skip("Neither qmlviewer nor qmlscene is installed")

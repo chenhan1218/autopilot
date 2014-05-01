@@ -217,6 +217,35 @@ class BackendTests(TestCase):
 
         self.assertThat(mock_logger.warning.called, Equals(False))
 
+    @patch.object(backends, 'make_introspection_object', return_value=None)
+    def test_proxy_instances_returns_list(self, mio):
+        query = xpathselect.Query.root('foo')
+        fake_dbus_address = Mock()
+        fake_dbus_address.introspection_iface.GetState.return_value = [
+            (b'/root/path', {}) for i in range(1)
+        ]
+        backend = backends.Backend(fake_dbus_address)
+
+        self.assertThat(
+            backend.execute_query_get_proxy_instances(query, 0, self),
+            Equals([None])
+        )
+
+    @patch.object(backends, 'make_introspection_object', return_value=None)
+    def test_proxy_instances_with_clientside_filtering_returns_list(self, mio):
+        query = xpathselect.Query.root('foo')
+        query.needs_client_side_filtering = Mock(return_value=True)
+        fake_dbus_address = Mock()
+        fake_dbus_address.introspection_iface.GetState.return_value = [
+            (b'/root/path', {}) for i in range(1)
+        ]
+        backend = backends.Backend(fake_dbus_address)
+
+        self.assertThat(
+            backend.execute_query_get_proxy_instances(query, 0, self),
+            Equals([None])
+        )
+
 
 class MakeIntrospectionObjectTests(TestCase):
 

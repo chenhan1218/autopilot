@@ -241,10 +241,12 @@ class BackendTests(TestCase):
         ]
         backend = backends.Backend(fake_dbus_address)
 
-        self.assertThat(
-            backend.execute_query_get_proxy_instances(query, 0, self),
-            Equals([None])
-        )
+        with patch.object(
+                backends, '_object_passes_filters', return_value=True):
+            self.assertThat(
+                backend.execute_query_get_proxy_instances(query, 0, self),
+                Equals([None])
+            )
 
 
 class MakeIntrospectionObjectTests(TestCase):

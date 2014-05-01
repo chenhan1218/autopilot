@@ -26,6 +26,7 @@ from testtools.matchers import (
     Contains,
     Equals,
     MatchesAll,
+    MatchesSetwise,
     Not,
     raises,
 )
@@ -35,6 +36,10 @@ from autopilot.utilities import sleep
 from autopilot.introspection import _search as _s,  utilities as _u
 from autopilot.introspection.constants import AUTOPILOT_PATH
 
+
+def ListContainsOnly(value_list):
+    """Returns a MatchesAll matcher for comparing a list."""
+    return MatchesSetwise(*map(Equals, value_list))
 
 def ListContainsAll(value_list):
     """Returns a MatchesAll matcher for comparing a list."""
@@ -134,33 +139,23 @@ class FilterFunctionGeneratorTests(TestCase):
 
     """
 
-    def test_uses_sorted_filter_list(self):
-        test_search_parameters = dict(low=True, high=True)
-        test_filter_lookup = dict(
-            low=LowPriorityFilter,
-            high=HighPriorityFilter,
-        )
-
-        matcher = _s._filter_function_from_search_params(
-            test_search_parameters,
-            test_filter_lookup
-        )
-
+    def test_uses_priority_sorted_filter_list(self):
+        unsorted_filters = [LowPriorityFilter, HighPriorityFilter]
+        matcher = _s._filter_function_from_filters(unsorted_filters)
         self.assertThat(
-            matcher.args[0], Equals([HighPriorityFilter, LowPriorityFilter])
+            matcher.args[0],
+            Equals([HighPriorityFilter, LowPriorityFilter])
         )
 
-    def test_returns_a_callable(self):
-        self.assertTrue(
-            callable(_s._filter_function_from_search_params({}))
-        )
+
+class FiltersFromSearchParametersTests(TestCase):
 
     def test_raises_with_unknown_search_parameter(self):
         search_parameters = dict(unexpected_key=True)
         placeholder_lookup = dict(noop_lookup=True)
 
         self.assertThat(
-            lambda: _s._filter_function_from_search_params(
+            lambda: _s._filters_from_search_parameters(
                 search_parameters,
                 placeholder_lookup
             ),
@@ -181,13 +176,12 @@ class FilterFunctionGeneratorTests(TestCase):
             passing=PassingFilter,
         )
 
-        matcher = _s._filter_function_from_search_params(
-            search_parameters,
-            filter_lookup
-        )
-
         self.assertThat(
-            matcher.args[0], Equals([HighPriorityFilter, LowPriorityFilter])
+            _s._filters_from_search_parameters(
+                search_parameters,
+                filter_lookup
+            ),
+            ListContainsOnly([HighPriorityFilter, LowPriorityFilter])
         )
 
     def test_creates_unique_list_of_filters(self):
@@ -196,24 +190,72 @@ class FilterFunctionGeneratorTests(TestCase):
             pid=HighPriorityFilter,
             process=HighPriorityFilter
         )
-        matcher = _s._filter_function_from_search_params(
-            search_parameters,
-            filter_lookup
-        )
         self.assertThat(
-            matcher.args[0], Equals([HighPriorityFilter])
+            _s._filters_from_search_parameters(
+                search_parameters,
+                filter_lookup
+            ),
+            ListContainsOnly([HighPriorityFilter])
         )
 
     def test_doesnt_modify_search_parameters(self):
         search_parameters = dict(high=True)
         filter_lookup = dict(high=HighPriorityFilter)
 
-        _s._filter_function_from_search_params(
+        _s._filters_from_search_parameters(
             search_parameters,
             filter_lookup
         )
 
         self.assertThat(search_parameters.get('high', None), Not(Equals(None)))
+
+
+class MandatoryFiltersTests(TestCase):
+
+    def test_returns_list_containing_mandatory_filters(self):
+        self.assertThat(
+            _s._mandatory_filters(),
+            ListContainsOnly([
+                _s.ConnectionIsNotOurConnection,
+                _s.ConnectionIsNotOrgFreedesktopDBus
+            ])
+        )
+
+
+class PrioritySortFiltersTests(TestCase):
+
+    def test_sorts_filters_based_on_priority(self):
+        self.assertThat(
+            _s._priority_sort_filters(
+                [LowPriorityFilter, HighPriorityFilter]
+            ),
+            Equals([HighPriorityFilter, LowPriorityFilter])
+        )
+
+    def test_sorts_single_filter_based_on_priority(self):
+        self.assertThat(
+            _s._priority_sort_filters(
+                [LowPriorityFilter]
+            ),
+            Equals([LowPriorityFilter])
+        )
+
+
+class FilterFunctionFromFiltersTests(TestCase):
+
+    def test_returns_a_callable(self):
+        self.assertTrue(
+            callable(_s._filter_function_from_filters({}))
+        )
+
+    def test_uses_sorted_filter_list(self):
+        matcher = _s._filter_function_from_filters(
+            [HighPriorityFilter, LowPriorityFilter]
+        )
+
+        self.assertThat(
+            matcher.args[0], Equals([HighPriorityFilter, LowPriorityFilter])
+        )
 
 
 class ConnectionHasNameTests(TestCase):
@@ -239,6 +281,34 @@ class ConnectionHasNameTests(TestCase):
         search_params = dict(connection_name="not_connection_name")
         self.assertFalse(
             _s.ConnectionHasName.matches(dbus_connection, search_params)
+        )
+
+
+class ConnectionIsNotOurConnectionTests(TestCase):
+
+    @patch.object(_s, '_get_bus_connections_pid')
+    def test_doesnt_raise_exception_with_no_parameters(self, get_bus_pid):
+        dbus_connection = ("bus", "name")
+        _s.ConnectionIsNotOurConnection.matches(dbus_connection, {})
+
+    @patch.object(_s, '_get_bus_connections_pid', return_value=0)
+    def test_returns_True_when_pid_isnt_our_connection(self, get_bus_pid):
+        dbus_connection = ("bus", "name")
+        self.assertTrue(
+            _s.ConnectionIsNotOurConnection.matches(
+                dbus_connection,
+                {}
+            )
+        )
+
+    @patch.object(_s, '_get_bus_connections_pid', return_value=os.getpid())
+    def test_returns_False_when_pid_is_our_connection(self, get_bus_pid):
+        dbus_connection = ("bus", "name")
+        self.assertFalse(
+            _s.ConnectionIsNotOurConnection.matches(
+                dbus_connection,
+                {}
+            )
         )
 
 
@@ -326,37 +396,6 @@ class ConnectionHasPidTests(TestCase):
                 _s.ConnectionHasPid.matches(dbus_connection, params)
             )
 
-    @patch.object(_s, '_get_bus_connections_pid', side_effect=DBusException())
-    def test_bus_pid_is_our_pid_returns_False_on_DBusException(self, _bus_pid):
-        self.assertFalse(
-            _s.ConnectionHasPid._bus_pid_is_our_pid(None, None)
-        )
-
-    @patch.object(_s, '_get_bus_connections_pid', return_value=0)
-    def test_bus_pid_is_our_pid_returns_False_with_no_match(self, _bus_pid):
-        self.assertFalse(
-            _s.ConnectionHasPid._bus_pid_is_our_pid(None, None)
-        )
-
-    @patch.object(_s, '_get_bus_connections_pid', return_value=os.getpid())
-    def test_bus_pid_is_our_pid_returns_True_with_match(self, _bus_pid):
-        self.assertTrue(
-            _s.ConnectionHasPid._bus_pid_is_our_pid(None, None)
-        )
-
-    @patch.object(
-        _s.ConnectionHasPid,
-        '_bus_pid_is_our_pid',
-        return_value=True
-    )
-    def test_returns_False_if_buses_pid_is_self_pid(self, _bus_pid):
-        dbus_connection = ("bus", "connection_name")
-        search_params = dict(pid=0)
-        _s.ConnectionHasPid.matches(dbus_connection, search_params)
-        self.assertFalse(
-            _s.ConnectionHasPid.matches(dbus_connection, search_params)
-        )
-
 
 class ConnectionIsNotOrgFreedesktopDBusTests(TestCase):
 
@@ -413,13 +452,6 @@ class ConnectionHasAppNameTests(TestCase):
             object_name
         )
 
-    def test_filter_function_from_search_params_handles_optional_object_name(self):  # NOQA
-        search_params = dict(
-            application_name="application_name",
-            object_path="object_name"
-        )
-        _s._filter_function_from_search_params(search_params)
-
 
 class FilterHelpersTests(TestCase):
 
@@ -432,11 +464,9 @@ class FilterHelpersTests(TestCase):
             for f
             in _s._param_to_filter_map.keys()
         }
-        matchers = _s._filter_function_from_search_params(search_parameters)
-
         self.assertThat(
-            matchers.args[0],
-            ListContainsAll(_s._param_to_filter_map.values())
+            _s._filters_from_search_parameters(search_parameters),
+            ListContainsOnly(_s._param_to_filter_map.values())
         )
 
 

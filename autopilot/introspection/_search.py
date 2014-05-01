@@ -76,34 +76,56 @@ def matches(filter_list, dbus_connection, search_parameters):
     return True
 
 
-def _filter_function_from_search_params(search_parameters, filter_lookup=None):
-    """Returns a callable filter function that will take the arguments
-    (dbus_connection, search_parameters).
-
-    The returned filter function will be bound to use a prioritised filter list
-    that itself is based off the passed **search_parameters**.
-
-    """
-
+def _filters_from_search_parameters(parameters, filter_lookup=None):
     parameter_filter_lookup = filter_lookup or _param_to_filter_map
     filter_list = []
     try:
-        for search_key in search_parameters.keys():
-            required_filter = parameter_filter_lookup[search_key]
-            if required_filter not in filter_list:
-                filter_list.append(required_filter)
+        for search_key in parameters.keys():
+            _filter = parameter_filter_lookup[search_key]
+            if _filter not in filter_list:
+                filter_list.append(_filter)
     except KeyError:
         raise KeyError(
             "Search parameter %s doesn't have a corresponding filter in %r"
             % (search_key, parameter_filter_lookup),
         )
 
-    sorted_filter_list = sorted(
-        filter_list,
-        key=methodcaller('priority'),
-        reverse=True
-    )
+    return filter_list
+
+
+def _mandatory_filters():
+    """Returns a list of Filters that are considered mandatory regardless of
+    the search parameters supplied by the user.
+
+    """
+    return [
+        ConnectionIsNotOurConnection,
+        ConnectionIsNotOrgFreedesktopDBus
+    ]
+
+
+def _filter_function_from_filters(filters):
+    """Returns a callable filter function that will take the arguments
+    (dbus_connection, search_parameters).
+
+    The returned filter function will be bound to use a prioritised filter list
+
+    """
+
+    sorted_filter_list = _priority_sort_filters(filters)
     return partial(matches, sorted_filter_list)
+
+
+def _priority_sort_filters(filter_list):
+    return sorted(filter_list, key=methodcaller('priority'), reverse=True)
+
+
+def _filter_function_from_search_params(params, filter_lookup=None):
+    filters = _mandatory_filters() + _filters_from_search_parameters(
+        params,
+        filter_lookup
+    )
+    return _filter_function_from_filters(filters)
 
 
 class _cached_get_child_pids(object):
@@ -255,8 +277,9 @@ class ConnectionIsNotOurConnection(object):
     @classmethod
     def matches(cls, dbus_connection, params):
         try:
+            bus, connection_name = dbus_connection
             bus_pid = _get_bus_connections_pid(bus, connection_name)
-            return bus_pid == os.getpid()
+            return bus_pid != os.getpid()
         except dbus.DBusException:
             return False
 
@@ -271,11 +294,11 @@ class ConnectionHasPathWithAPInterface(object):
     def matches(cls, dbus_connection, params):
         """Ensure the connection has the path that we expect to be there.
 
-        :raises KeyError: if the path parameter isn't included in params.
+        :raises KeyError: if the object_path parameter isn't included in
+        params.
 
         """
         try:
-            print(">>> Checking AP Interface")
             bus, connection_name = dbus_connection
             path = params['object_path']
             obj = bus.get_object(connection_name, path)
@@ -291,10 +314,8 @@ class ConnectionHasPathWithAPInterface(object):
 _param_to_filter_map = dict(
     connection_name=ConnectionHasName,
     application_name=ConnectionHasAppName,
-    # object_name is optional to application_name
     object_path=ConnectionHasPathWithAPInterface,
     pid=ConnectionHasPid,
-    # path=ConnectionHasPathWithAPInterface,
 )
 
 
@@ -347,9 +368,6 @@ def get_proxy_object_for_existing_process(**kwargs):
         search for.
     :param object_path: A string containing the object path to use as the
         search criteria.
-        Note: This parameter is only valid to use when an **application_name**
-        has been provided. A KeyError exception will be raised if provided
-        without the supporting application_name parameter.
         Defaults to:
         :py:data:`autopilot.introspection.constants.AUTOPILOT_PATH`.
 
@@ -410,12 +428,8 @@ def get_proxy_object_for_existing_process(**kwargs):
     process = kwargs.pop('process', None)
     emulator_base = kwargs.pop('emulator_base', None)
 
-    # Add the 'always on' filter.
-    kwargs['force_connection_name_check'] = True
-
     # Force default object_path
     kwargs['object_path'] = kwargs.get('object_path', AUTOPILOT_PATH)
-
     # Special handling of pid.
     pid = _check_process_and_pid_details(process, kwargs.get('pid', None))
     if pid is not None:

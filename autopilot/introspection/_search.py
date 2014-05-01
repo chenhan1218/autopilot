@@ -19,8 +19,6 @@
 
 """Private package for searching dbus for useful connections."""
 
-from __future__ import absolute_import
-
 import dbus
 import logging
 import os

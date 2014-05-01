@@ -29,7 +29,10 @@ from testtools.matchers import Contains, Equals, MatchesRegex, Not
 from textwrap import dedent
 
 from autopilot import platform
-from autopilot.testcase import AutopilotTestCase
+from autopilot.testcase import (
+    AutopilotTestCase,
+    EnvironmentPatch,
+)
 from autopilot.tests.functional import AutopilotRunTestBase, remove_if_exists
 
 
@@ -709,48 +712,37 @@ SyntaxError: invalid syntax
         self.assertThat(output, Not(Contains('Running tests in random order')))
 
 
-class AutopilotPatchEnvironmentTests(AutopilotTestCase):
+class AutopilotEnvironmentPatchTests(AutopilotTestCase):
 
-    def test_patch_environment_new_patch_is_unset_to_none(self):
-        """patch_environment must unset the environment variable if previously
+    def test_EnvironmentPatch_new_patch_is_unset_to_none(self):
+        """EnvironmentPatch must unset the environment variable if previously
         was unset.
 
         """
-
-        class PatchEnvironmentSubTests(AutopilotTestCase):
-
-            def test_patch_env_sets_var(self):
-                """Setting the environment variable must make it available."""
-                self.patch_environment("APABC321", "Foo")
-                self.assertThat(os.getenv("APABC321"), Equals("Foo"))
-
         self.assertThat(os.getenv('APABC321'), Equals(None))
 
-        result = PatchEnvironmentSubTests("test_patch_env_sets_var").run()
+        fixture = EnvironmentPatch('APABC321', 'Foo')
+        fixture.setUp()
+        self.assertThat(os.getenv('APABC321'), Equals('Foo'))
 
-        self.assertThat(result.wasSuccessful(), Equals(True))
+        fixture.cleanUp()
         self.assertThat(os.getenv('APABC321'), Equals(None))
 
-    def test_patch_environment_existing_patch_is_reset(self):
+    def test_EnvironmentPatch_existing_patch_is_reset(self):
         """patch_environment must reset the environment back to it's previous
         value.
 
         """
+        outer_fixture = EnvironmentPatch('APABC987', 'OuterTest')
+        outer_fixture.setUp()
+        self.assertThat(os.getenv('APABC987'), Equals('OuterTest'))
 
-        class PatchEnvironmentSubTests(AutopilotTestCase):
+        inner_fixture = EnvironmentPatch('APABC987', 'Foo')
+        inner_fixture.setUp()
+        self.assertThat(os.getenv('APABC987'), Equals('Foo'))
 
-            def test_patch_env_sets_var(self):
-                """Setting the environment variable must make it available."""
-                self.patch_environment("APABC987", "InnerTest")
-                self.assertThat(os.getenv("APABC987"), Equals("InnerTest"))
-
-        self.patch_environment('APABC987', "OuterTest")
-        self.assertThat(os.getenv('APABC987'), Equals("OuterTest"))
-
-        result = PatchEnvironmentSubTests("test_patch_env_sets_var").run()
-
-        self.assertThat(result.wasSuccessful(), Equals(True))
-        self.assertThat(os.getenv('APABC987'), Equals("OuterTest"))
+        inner_fixture.cleanUp()
+        self.assertThat(os.getenv('APABC987'), Equals('OuterTest'))
 
 
 class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):

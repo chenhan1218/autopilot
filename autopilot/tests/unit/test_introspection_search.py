@@ -42,10 +42,6 @@ def ListContainsOnly(value_list):
     """Returns a MatchesAll matcher for comparing a list."""
     return MatchesSetwise(*map(Equals, value_list))
 
-def ListContainsAll(value_list):
-    """Returns a MatchesAll matcher for comparing a list."""
-    return MatchesAll(*map(Contains, value_list))
-
 
 class PassingFilter(object):
 
@@ -322,6 +318,7 @@ class ConnectionIsNotOurConnectionTests(TestCase):
             )
         )
 
+
 class ConnectionHasPathWithAPInterfaceTests(TestCase):
 
     """Tests specific to the ConnectionHasPathWithAPInterface filter."""
@@ -521,7 +518,7 @@ class FindMatchingConnectionsTests(TestCase):
 
         self.assertThat(
             _s._get_buses_unchecked_connection_names(dbus_bus),
-            ListContainsAll(mock_connection_list)
+            ListContainsOnly(mock_connection_list)
         )
 
     def test_unchecked_connection_names_returns_only_unseen_connections(self):
@@ -531,7 +528,7 @@ class FindMatchingConnectionsTests(TestCase):
 
         self.assertThat(
             _s._get_buses_unchecked_connection_names(dbus_bus, ['conn3']),
-            ListContainsAll(['conn1', 'conn2'])
+            ListContainsOnly(['conn1', 'conn2'])
         )
 
     def test_unchecked_connection_names_returns_empty_list_when_all_seen(self):

@@ -26,6 +26,7 @@ from testtools.matchers import (
     Contains,
     Equals,
     MatchesAll,
+    MatchesListwise,
     MatchesSetwise,
     Not,
     raises,
@@ -311,6 +312,15 @@ class ConnectionIsNotOurConnectionTests(TestCase):
             )
         )
 
+    @patch.object(_s, '_get_bus_connections_pid', side_effect=DBusException())
+    def test_returns_False_exception_raised(self, get_bus_pid):
+        dbus_connection = ("bus", "name")
+        self.assertFalse(
+            _s.ConnectionIsNotOurConnection.matches(
+                dbus_connection,
+                {}
+            )
+        )
 
 class ConnectionHasPathWithAPInterfaceTests(TestCase):
 
@@ -467,6 +477,33 @@ class FilterHelpersTests(TestCase):
         self.assertThat(
             _s._filters_from_search_parameters(search_parameters),
             ListContainsOnly(_s._param_to_filter_map.values())
+        )
+
+    def test_filter_priority_order_is_correct(self):
+        """Ensure all filters are used in the matcher when requested."""
+        search_parameters = {
+            f: True
+            for f
+            in _s._param_to_filter_map.keys()
+        }
+        search_filters = _s._filters_from_search_parameters(search_parameters)
+        mandatory_filters = _s._mandatory_filters()
+        sorted_filters = _s._priority_sort_filters(
+            search_filters + mandatory_filters
+        )
+
+        expected_filter_order = [
+            _s.ConnectionIsNotOrgFreedesktopDBus,
+            _s.ConnectionIsNotOurConnection,
+            _s.ConnectionHasName,
+            _s.ConnectionHasPid,
+            _s.ConnectionHasPathWithAPInterface,
+            _s.ConnectionHasAppName,
+        ]
+
+        self.assertThat(
+            sorted_filters,
+            MatchesListwise(list(map(Equals, expected_filter_order)))
         )
 
 

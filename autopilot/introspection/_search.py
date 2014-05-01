@@ -258,7 +258,7 @@ class ConnectionIsNotOrgFreedesktopDBus(object):
 
     @classmethod
     def priority(cls):
-        return 10
+        return 13
 
     @classmethod
     def matches(cls, dbus_connection, params):
@@ -272,7 +272,7 @@ class ConnectionIsNotOurConnection(object):
 
     @classmethod
     def priority(cls):
-        return 10
+        return 12
 
     @classmethod
     def matches(cls, dbus_connection, params):

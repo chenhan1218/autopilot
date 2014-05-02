@@ -1,4 +1,4 @@
-autopilot (1.5.0-0ubuntu1) utopic; urgency=low
+autopilot (1.5.0-0ubuntu5) utopic; urgency=low
 
   * Remove python2 packages and dependencies, as they're now handled by the
     autopilot-legacy source package. (lp: #1308661)

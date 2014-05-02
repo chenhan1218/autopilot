@@ -350,7 +350,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         dbus_bus = launcher_instance.dbus_bus
         if dbus_bus != 'session':
-            EnvironmentPatch("DBUS_SESSION_BUS_ADDRESS", dbus_bus)
+            self.useFixture(
+                EnvironmentPatch("DBUS_SESSION_BUS_ADDRESS", dbus_bus))
 
         pid = launcher_instance.launch(application, *args)
         process = getattr(launcher_instance, 'process', None)
@@ -385,6 +386,14 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             )
         finally:
             self._app_snapshot = None
+
+    def patch_environment(self, key, value):
+        """Patch environment using fixture.
+
+        This function is deprecated and planned for removal in autopilot 1.6
+
+        """
+        self.useFixture(EnvironmentPatch(key, value))
 
     def assertVisibleWindowStack(self, stack_start):
         """Check that the visible window stack starts with the windows passed

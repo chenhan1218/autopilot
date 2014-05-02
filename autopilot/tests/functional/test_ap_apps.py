@@ -255,14 +255,14 @@ class QmlTestMixin(object):
             if path:
                 not_found = False
                 self.qml_viewer_app_path = path
-                EnvironmentPatch("QT_SELECT", "qt4")
+                self.useFixture(EnvironmentPatch("QT_SELECT", "qt4"))
 
         if 'qt5' in qtversions:
             path = check_func('qt5', 'qmlscene')
             if path:
                 not_found = False
                 self.qml_viewer_app_path = path
-                EnvironmentPatch("QT_SELECT", "qt5")
+                self.useFixture(EnvironmentPatch("QT_SELECT", "qt5"))
 
         if not_found:
             self.skip("Neither qmlviewer nor qmlscene is installed")

@@ -668,6 +668,7 @@ class ConnectionIsNotOrgFreedesktopDBus(object):
 
     @classmethod
     def priority(cls):
+        """A connection with this name will never be valid."""
         return 13
 
     @classmethod
@@ -682,6 +683,7 @@ class ConnectionIsNotOurConnection(object):
 
     @classmethod
     def priority(cls):
+        """The connection from this process will never be valid."""
         return 12
 
     @classmethod
@@ -695,8 +697,15 @@ class ConnectionIsNotOurConnection(object):
 
 
 class ConnectionHasName(object):
+
+    """Ensure connection_name within dbus_tuple is the name we want."""
+
     @classmethod
     def priority(cls):
+        """Connection name is easy to check for and if not valid, nothing else
+        will be.
+
+        """
         return 11
 
     @classmethod
@@ -712,6 +721,8 @@ class ConnectionHasName(object):
 
 
 class ConnectionHasPid(object):
+
+    """Match a connection based on the connections pid."""
 
     @classmethod
     def priority(cls):
@@ -742,6 +753,8 @@ class ConnectionHasPid(object):
 
 class ConnectionHasPathWithAPInterface(object):
 
+    """Ensure that the connection exposes the Autopilot interface."""
+
     @classmethod
     def priority(cls):
         return 8
@@ -768,6 +781,9 @@ class ConnectionHasPathWithAPInterface(object):
 
 
 class ConnectionHasAppName(object):
+
+    """Ensure the connection has the requested Application name."""
+
     @classmethod
     def priority(cls):
         return 0

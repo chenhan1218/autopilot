@@ -46,14 +46,14 @@ def ListContainsOnly(value_list):
 class PassingFilter(object):
 
     @classmethod
-    def matches(cls, dbus_connection, params):
+    def matches(cls, dbus_tuple, params):
         return True
 
 
 class FailingFilter(object):
 
     @classmethod
-    def matches(cls, dbus_connection, params):
+    def matches(cls, dbus_tuple, params):
         return False
 
 
@@ -111,7 +111,7 @@ class MatcherCallableTests(TestCase):
     def test_filter_returning_False_results_in_failure(self):
         class FalseFilter(object):
             @classmethod
-            def matches(cls, dbus_connection, params):
+            def matches(cls, dbus_tuple, params):
                 return False
 
         _s._filter_runner([FalseFilter], None, None)
@@ -119,14 +119,14 @@ class MatcherCallableTests(TestCase):
             _s._filter_runner([FalseFilter], None, None)
         )
 
-    def test_runner_matches_passes_dbus_connection_to_filter(self):
+    def test_runner_matches_passes_dbus_tuple_to_filter(self):
         DBusConnectionFilter = Mock()
-        dbus_connection = ("bus", "connection_name")
+        dbus_tuple = ("bus", "connection_name")
 
-        _s._filter_runner([DBusConnectionFilter], dbus_connection, {})
+        _s._filter_runner([DBusConnectionFilter], dbus_tuple, {})
 
         DBusConnectionFilter.matches.assert_called_once_with(
-            dbus_connection, {}
+            dbus_tuple, {}
         )
 
 
@@ -261,24 +261,24 @@ class ConnectionHasNameTests(TestCase):
     """Tests specific to the ConnectionHasName filter."""
 
     def test_raises_KeyError_when_missing_connection_name_param(self):
-        dbus_connection = ("bus", "name")
+        dbus_tuple = ("bus", "name")
         self.assertThat(
-            lambda: _s.ConnectionHasName.matches(dbus_connection, {}),
+            lambda: _s.ConnectionHasName.matches(dbus_tuple, {}),
             raises(KeyError('connection_name'))
         )
 
     def test_returns_True_when_connection_name_matches(self):
-        dbus_connection = ("bus", "connection_name")
+        dbus_tuple = ("bus", "connection_name")
         search_params = dict(connection_name="connection_name")
         self.assertTrue(
-            _s.ConnectionHasName.matches(dbus_connection, search_params)
+            _s.ConnectionHasName.matches(dbus_tuple, search_params)
         )
 
     def test_returns_False_when_connection_name_matches(self):
-        dbus_connection = ("bus", "connection_name")
+        dbus_tuple = ("bus", "connection_name")
         search_params = dict(connection_name="not_connection_name")
         self.assertFalse(
-            _s.ConnectionHasName.matches(dbus_connection, search_params)
+            _s.ConnectionHasName.matches(dbus_tuple, search_params)
         )
 
 
@@ -286,35 +286,35 @@ class ConnectionIsNotOurConnectionTests(TestCase):
 
     @patch.object(_s, '_get_bus_connections_pid')
     def test_doesnt_raise_exception_with_no_parameters(self, get_bus_pid):
-        dbus_connection = ("bus", "name")
-        _s.ConnectionIsNotOurConnection.matches(dbus_connection, {})
+        dbus_tuple = ("bus", "name")
+        _s.ConnectionIsNotOurConnection.matches(dbus_tuple, {})
 
     @patch.object(_s, '_get_bus_connections_pid', return_value=0)
     def test_returns_True_when_pid_isnt_our_connection(self, get_bus_pid):
-        dbus_connection = ("bus", "name")
+        dbus_tuple = ("bus", "name")
         self.assertTrue(
             _s.ConnectionIsNotOurConnection.matches(
-                dbus_connection,
+                dbus_tuple,
                 {}
             )
         )
 
     @patch.object(_s, '_get_bus_connections_pid', return_value=os.getpid())
     def test_returns_False_when_pid_is_our_connection(self, get_bus_pid):
-        dbus_connection = ("bus", "name")
+        dbus_tuple = ("bus", "name")
         self.assertFalse(
             _s.ConnectionIsNotOurConnection.matches(
-                dbus_connection,
+                dbus_tuple,
                 {}
             )
         )
 
     @patch.object(_s, '_get_bus_connections_pid', side_effect=DBusException())
     def test_returns_False_exception_raised(self, get_bus_pid):
-        dbus_connection = ("bus", "name")
+        dbus_tuple = ("bus", "name")
         self.assertFalse(
             _s.ConnectionIsNotOurConnection.matches(
-                dbus_connection,
+                dbus_tuple,
                 {}
             )
         )
@@ -325,10 +325,10 @@ class ConnectionHasPathWithAPInterfaceTests(TestCase):
     """Tests specific to the ConnectionHasPathWithAPInterface filter."""
 
     def test_raises_KeyError_when_missing_object_path_param(self):
-        dbus_connection = ("bus", "name")
+        dbus_tuple = ("bus", "name")
         self.assertThat(
             lambda: _s.ConnectionHasPathWithAPInterface.matches(
-                dbus_connection,
+                dbus_tuple,
                 {}
             ),
             raises(KeyError('object_path'))
@@ -339,11 +339,11 @@ class ConnectionHasPathWithAPInterfaceTests(TestCase):
         bus_obj = Mock()
         connection_name = "name"
         path = "path"
-        dbus_connection = (bus_obj, connection_name)
+        dbus_tuple = (bus_obj, connection_name)
 
         self.assertTrue(
             _s.ConnectionHasPathWithAPInterface.matches(
-                dbus_connection,
+                dbus_tuple,
                 dict(object_path=path)
             )
         )
@@ -355,13 +355,13 @@ class ConnectionHasPathWithAPInterfaceTests(TestCase):
         bus_obj = Mock()
         connection_name = "name"
         path = "path"
-        dbus_connection = (bus_obj, connection_name)
+        dbus_tuple = (bus_obj, connection_name)
 
         Interface.side_effect = DBusException()
 
         self.assertFalse(
             _s.ConnectionHasPathWithAPInterface.matches(
-                dbus_connection,
+                dbus_tuple,
                 dict(object_path=path)
             )
         )
@@ -380,7 +380,7 @@ class ConnectionHasPidTests(TestCase):
 
     def test_returns_True_when_bus_pid_matches(self):
         connection_pid = self.getUniqueInteger()
-        dbus_connection = ("bus", "org.freedesktop.DBus")
+        dbus_tuple = ("bus", "org.freedesktop.DBus")
         params = dict(pid=connection_pid)
         with patch.object(
             _s,
@@ -388,12 +388,12 @@ class ConnectionHasPidTests(TestCase):
             return_value=connection_pid
         ):
             self.assertTrue(
-                _s.ConnectionHasPid.matches(dbus_connection, params)
+                _s.ConnectionHasPid.matches(dbus_tuple, params)
             )
 
     def test_returns_False_with_DBusException(self):
         connection_pid = self.getUniqueInteger()
-        dbus_connection = ("bus", "org.freedesktop.DBus")
+        dbus_tuple = ("bus", "org.freedesktop.DBus")
         params = dict(pid=connection_pid)
         with patch.object(
             _s,
@@ -401,7 +401,7 @@ class ConnectionHasPidTests(TestCase):
             side_effect=DBusException()
         ):
             self.assertFalse(
-                _s.ConnectionHasPid.matches(dbus_connection, params)
+                _s.ConnectionHasPid.matches(dbus_tuple, params)
             )
 
 
@@ -410,15 +410,15 @@ class ConnectionIsNotOrgFreedesktopDBusTests(TestCase):
     """Tests specific to the ConnectionIsNotOrgFreedesktopDBus filter."""
 
     def test_returns_True_when_connection_name_isnt_DBus(self):
-        dbus_connection = ("bus", "connection.name")
+        dbus_tuple = ("bus", "connection.name")
         self.assertTrue(
-            _s.ConnectionIsNotOrgFreedesktopDBus.matches(dbus_connection, {})
+            _s.ConnectionIsNotOrgFreedesktopDBus.matches(dbus_tuple, {})
         )
 
     def test_returns_False_when_connection_name_is_DBus(self):
-        dbus_connection = ("bus", "org.freedesktop.DBus")
+        dbus_tuple = ("bus", "org.freedesktop.DBus")
         self.assertFalse(
-            _s.ConnectionIsNotOrgFreedesktopDBus.matches(dbus_connection, {})
+            _s.ConnectionIsNotOrgFreedesktopDBus.matches(dbus_tuple, {})
         )
 
 
@@ -434,9 +434,9 @@ class ConnectionHasAppNameTests(TestCase):
 
     @patch.object(_s.ConnectionHasAppName, '_get_application_name')
     def test_uses_default_object_name_when_not_provided(self, app_name):
-        dbus_connection = ("bus", "connection_name")
+        dbus_tuple = ("bus", "connection_name")
         search_params = dict(application_name="application_name")
-        _s.ConnectionHasAppName.matches(dbus_connection, search_params)
+        _s.ConnectionHasAppName.matches(dbus_tuple, search_params)
 
         app_name.assert_called_once_with(
             "bus",
@@ -447,12 +447,12 @@ class ConnectionHasAppNameTests(TestCase):
     @patch.object(_s.ConnectionHasAppName, '_get_application_name')
     def test_uses_provided_object_name(self, app_name):
         object_name = self.getUniqueString()
-        dbus_connection = ("bus", "connection_name")
+        dbus_tuple = ("bus", "connection_name")
         search_params = dict(
             application_name="application_name",
             object_path=object_name
         )
-        _s.ConnectionHasAppName.matches(dbus_connection, search_params)
+        _s.ConnectionHasAppName.matches(dbus_tuple, search_params)
 
         app_name.assert_called_once_with(
             "bus",

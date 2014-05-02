@@ -57,14 +57,24 @@ from autopilot.introspection.utilities import (
 logger = logging.getLogger(__name__)
 
 
-def _filter_runner(filter_list, dbus_connection, search_parameters):
+def _filter_runner(filter_list, dbus_tuple, search_parameters):
+    """Helper function to run filters over dbus connections.
+
+    :param filter_list: List of filters to call matches on passing the provided
+      dbus details and search parameters.
+    :param dbus_tuple: 2 length tuple containing (bus, connection_name) where
+      bus is a SessionBus, SystemBus or BusConnection object and
+      connection_name is a string.
+    :param search_parameters: Dictionary of search parameters that the filters
+      will consume to make their decisions.
+
+    """
     if not filter_list:
         raise ValueError("Filter list must not be empty")
-    for f in filter_list:
-        result = f.matches(dbus_connection, search_parameters)
-        if result is False:
-            return False
-    return True
+    return all(
+        f.matches(dbus_tuple, search_parameters)
+        for f in filter_list
+    )
 
 
 def _filters_from_search_parameters(parameters, filter_lookup=None):
@@ -97,7 +107,7 @@ def _mandatory_filters():
 
 def _filter_function_from_filters(filters):
     """Returns a callable filter function that will take the arguments
-    (dbus_connection, search_parameters).
+    (dbus_tuple, search_parameters).
 
     The returned filter function will be bound to use a prioritised filter list
 
@@ -153,13 +163,13 @@ class ConnectionHasName(object):
         return 11
 
     @classmethod
-    def matches(cls, dbus_connection, params):
-        """Returns true if the connection name in dbus_connection is the name
+    def matches(cls, dbus_tuple, params):
+        """Returns true if the connection name in dbus_tuple is the name
         in the search criteria params.
 
         """
         requested_connection_name = params['connection_name']
-        bus, connection_name = dbus_connection
+        bus, connection_name = dbus_tuple
 
         return connection_name == requested_connection_name
 
@@ -170,8 +180,8 @@ class ConnectionHasAppName(object):
         return 0
 
     @classmethod
-    def matches(cls, dbus_connection, params):
-        """Returns True if dbus_connection has the required application name.
+    def matches(cls, dbus_tuple, params):
+        """Returns True if dbus_tuple has the required application name.
 
         Can be provided an optional object_path parameter. This defaults to
         'AUTOPILOT_PATH' if not provided.
@@ -185,7 +195,7 @@ class ConnectionHasAppName(object):
         """
         requested_app_name = params['application_name']
         object_path = params.get('object_path', AUTOPILOT_PATH)
-        bus, connection_name = dbus_connection
+        bus, connection_name = dbus_tuple
 
         try:
             app_name = cls._get_application_name(
@@ -221,7 +231,7 @@ class ConnectionHasPid(object):
         return 9
 
     @classmethod
-    def matches(cls, dbus_connection, params):
+    def matches(cls, dbus_tuple, params):
         """Match a connection based on the connections pid.
 
         :raises KeyError: if the pid parameter isn't passed in params.
@@ -229,7 +239,7 @@ class ConnectionHasPid(object):
         """
 
         pid = params['pid']
-        bus, connection_name = dbus_connection
+        bus, connection_name = dbus_tuple
 
         try:
             bus_pid = _get_bus_connections_pid(bus, connection_name)
@@ -252,8 +262,8 @@ class ConnectionIsNotOrgFreedesktopDBus(object):
         return 13
 
     @classmethod
-    def matches(cls, dbus_connection, params):
-        bus, connection_name = dbus_connection
+    def matches(cls, dbus_tuple, params):
+        bus, connection_name = dbus_tuple
         return connection_name != 'org.freedesktop.DBus'
 
 
@@ -266,9 +276,9 @@ class ConnectionIsNotOurConnection(object):
         return 12
 
     @classmethod
-    def matches(cls, dbus_connection, params):
+    def matches(cls, dbus_tuple, params):
         try:
-            bus, connection_name = dbus_connection
+            bus, connection_name = dbus_tuple
             bus_pid = _get_bus_connections_pid(bus, connection_name)
             return bus_pid != os.getpid()
         except dbus.DBusException:
@@ -282,7 +292,7 @@ class ConnectionHasPathWithAPInterface(object):
         return 8
 
     @classmethod
-    def matches(cls, dbus_connection, params):
+    def matches(cls, dbus_tuple, params):
         """Ensure the connection has the path that we expect to be there.
 
         :raises KeyError: if the object_path parameter isn't included in
@@ -290,7 +300,7 @@ class ConnectionHasPathWithAPInterface(object):
 
         """
         try:
-            bus, connection_name = dbus_connection
+            bus, connection_name = dbus_tuple
             path = params['object_path']
             obj = bus.get_object(connection_name, path)
             dbus.Interface(

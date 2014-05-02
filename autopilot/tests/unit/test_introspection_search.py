@@ -74,38 +74,38 @@ class HighPriorityFilter(object):
 class MatcherCallableTests(TestCase):
 
     def test_can_provide_list_of_filters(self):
-        _s.matches([PassingFilter], None, None)
+        _s._filter_runner([PassingFilter], None, None)
 
     def test_passing_empty_filter_list_raises(self):
         self.assertThat(
-            lambda: _s.matches([], None, None),
+            lambda: _s._filter_runner([], None, None),
             raises(ValueError("Filter list must not be empty"))
         )
 
     def test_matches_returns_True_with_PassingFilter(self):
-        self.assertTrue(_s.matches([PassingFilter], None, None))
+        self.assertTrue(_s._filter_runner([PassingFilter], None, None))
 
     def test_matches_returns_False_with_FailingFilter(self):
-        self.assertFalse(_s.matches([FailingFilter], None, None))
+        self.assertFalse(_s._filter_runner([FailingFilter], None, None))
 
     def test_fails_when_first_filter_fails(self):
         self.assertFalse(
-            _s.matches([FailingFilter, PassingFilter], None, None)
+            _s._filter_runner([FailingFilter, PassingFilter], None, None)
         )
 
     def test_fails_when_second_filter_fails(self):
         self.assertFalse(
-            _s.matches([PassingFilter, FailingFilter], None, None)
+            _s._filter_runner([PassingFilter, FailingFilter], None, None)
         )
 
     def test_passes_when_two_filters_pass(self):
         self.assertTrue(
-            _s.matches([PassingFilter, PassingFilter], None, None)
+            _s._filter_runner([PassingFilter, PassingFilter], None, None)
         )
 
     def test_fails_when_two_filters_fail(self):
         self.assertFalse(
-            _s.matches([FailingFilter, FailingFilter], None, None)
+            _s._filter_runner([FailingFilter, FailingFilter], None, None)
         )
 
     def test_filter_returning_False_results_in_failure(self):
@@ -114,16 +114,16 @@ class MatcherCallableTests(TestCase):
             def matches(cls, dbus_connection, params):
                 return False
 
-        _s.matches([FalseFilter], None, None)
+        _s._filter_runner([FalseFilter], None, None)
         self.assertFalse(
-            _s.matches([FalseFilter], None, None)
+            _s._filter_runner([FalseFilter], None, None)
         )
 
     def test_runner_matches_passes_dbus_connection_to_filter(self):
         DBusConnectionFilter = Mock()
         dbus_connection = ("bus", "connection_name")
 
-        _s.matches([DBusConnectionFilter], dbus_connection, {})
+        _s._filter_runner([DBusConnectionFilter], dbus_connection, {})
 
         DBusConnectionFilter.matches.assert_called_once_with(
             dbus_connection, {}

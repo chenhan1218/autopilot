@@ -57,7 +57,7 @@ from autopilot.introspection.utilities import (
 logger = logging.getLogger(__name__)
 
 
-def matches(filter_list, dbus_connection, search_parameters):
+def _filter_runner(filter_list, dbus_connection, search_parameters):
     if not filter_list:
         raise ValueError("Filter list must not be empty")
     for f in filter_list:
@@ -104,7 +104,7 @@ def _filter_function_from_filters(filters):
     """
 
     sorted_filter_list = _priority_sort_filters(filters)
-    return partial(matches, sorted_filter_list)
+    return partial(_filter_runner, sorted_filter_list)
 
 
 def _priority_sort_filters(filter_list):

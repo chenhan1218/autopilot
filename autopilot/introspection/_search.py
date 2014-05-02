@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Private package for searching dbus for useful connections."""
+"""Private module for searching dbus for useful connections."""
 
 import dbus
 import logging
@@ -184,7 +184,7 @@ class ConnectionHasAppName(object):
         This filter should only activated if the application_name is provided
         in the search criteria.
 
-        :raises KeyError if the 'application_name' parameter isn't passed in
+        :raises KeyError: if the 'application_name' parameter isn't passed in
             params
 
         """
@@ -322,7 +322,7 @@ def get_autopilot_proxy_object_for_process(
 ):
     """Return the autopilot proxy object for the given *process*.
 
-    :raises: **RuntimeError** if no autopilot interface was found.
+    :raises RuntimeError: if no autopilot interface was found.
 
     """
     pid = process.pid
@@ -342,12 +342,12 @@ def get_proxy_object_for_existing_process(**kwargs):
     (i.e. launched outside of Autopilot).
 
     Searches the given bus (supplied by the kwarg **dbus_bus**) for an
-    application matching the search criteria (also supplied in **kwargs, see
+    application matching the search criteria (also supplied in kwargs, see
     further down for explaination on what these can be.)
     Returns a proxy object created using the supplied custom emulator
     **emulator_base** (which defaults to None).
 
-    This function take **kwargs arguments containing search parameter values to
+    This function take kwargs arguments containing search parameter values to
     use when searching for the target application.
 
     **Possible search criteria**:
@@ -518,7 +518,6 @@ def _find_matching_connections(bus, connection_matcher, process=None):
             if connection_matcher((bus, c))
         ]
 
-        # If nothing was found go round for another go.
         if len(valid_connections) >= 1:
             return _dedupe_connections_on_pid(valid_connections, bus)
 
@@ -685,7 +684,7 @@ def _get_proxy_bases_from_introspection_xml(introspection_xml):
         the backend, and therefore which base classes should be used to create
         the proxy object.
 
-    :raises: **RuntimeError** if the autopilot interface cannot be found.
+    :raises RuntimeError: if the autopilot interface cannot be found.
 
     """
 

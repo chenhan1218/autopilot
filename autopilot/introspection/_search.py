@@ -186,7 +186,6 @@ def get_proxy_object_for_existing_process(**kwargs):
         _get_search_criteria_string_representation(**kwargs)
     )
 
-    # object_path = kwargs.get('object_path', AUTOPILOT_PATH)
     object_path = kwargs['object_path']
     connection_name = connections[0]
     return _make_proxy_object(

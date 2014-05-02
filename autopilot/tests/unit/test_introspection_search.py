@@ -690,10 +690,10 @@ class ProcessSearchErrorStringRepTests(TestCase):
 
 class ProxyObjectTests(TestCase):
 
-    def test_raise_if_unusable_amount_of_results_raises_on_0_connections(self):
+    def test_raise_if_not_single_result_raises_on_0_connections(self):
         criteria_string = self.getUniqueString()
         self.assertThat(
-            lambda: _s._raise_if_unusable_amount_of_results(
+            lambda: _s._raise_if_not_single_result(
                 [],
                 criteria_string
             ),
@@ -705,10 +705,10 @@ class ProxyObjectTests(TestCase):
             )
         )
 
-    def test_raise_if_unusable_amount_of_results_raises_on_many_connections(self):  # NOQA
+    def test_raise_if_not_single_result_raises_on_many_connections(self):
         criteria_string = self.getUniqueString()
         self.assertThat(
-            lambda: _s._raise_if_unusable_amount_of_results(
+            lambda: _s._raise_if_not_single_result(
                 [1, 2, 3, 4, 5],
                 criteria_string
             ),
@@ -720,8 +720,8 @@ class ProxyObjectTests(TestCase):
             )
         )
 
-    def test_raise_if_unusable_amount_of_results_doesnt_raise_with_single_result(self):  # NOQA
-        _s._raise_if_unusable_amount_of_results([1], "")
+    def test_raise_if_not_single_result_doesnt_raise_with_single_result(self):
+        _s._raise_if_not_single_result([1], "")
 
     @patch.object(_s, '_get_buses_unchecked_connection_names')
     def test_find_matching_connections_calls_connection_matcher(self, gbycn):

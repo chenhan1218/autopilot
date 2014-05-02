@@ -32,7 +32,7 @@ methods:
 Both take search criteria and return a proxy object that can be queried.
 
 For creating your own Custom Proxy Classes thers is:
-- :class:`autopilot.introspection.dbus.CustomEmulatorBase`
+- :class:`autopilot.introspection.CustomEmulatorBase`
 
 .. seealso::
     The tutorial section :ref:`custom_proxy_classes` for further details on

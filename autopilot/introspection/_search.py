@@ -79,19 +79,18 @@ def _filter_runner(filter_list, dbus_tuple, search_parameters):
 
 def _filters_from_search_parameters(parameters, filter_lookup=None):
     parameter_filter_lookup = filter_lookup or _param_to_filter_map
-    filter_list = []
     try:
-        for search_key in parameters.keys():
-            _filter = parameter_filter_lookup[search_key]
-            if _filter not in filter_list:
-                filter_list.append(_filter)
-    except KeyError:
+        filter_list = list({
+            parameter_filter_lookup[key]
+            for key in parameters.keys()
+        })
+        return filter_list
+    except KeyError as e:
         raise KeyError(
             "Search parameter %s doesn't have a corresponding filter in %r"
-            % (search_key, parameter_filter_lookup),
+            % (e, parameter_filter_lookup),
         )
 
-    return filter_list
 
 
 def _mandatory_filters():

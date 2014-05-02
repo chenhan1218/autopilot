@@ -159,7 +159,7 @@ class FiltersFromSearchParametersTests(TestCase):
             ),
             raises(
                 KeyError(
-                    "Search parameter unexpected_key doesn't have a "
+                    "Search parameter 'unexpected_key' doesn't have a "
                     "corresponding filter in %r"
                     % placeholder_lookup
                 )

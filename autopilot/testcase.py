@@ -49,10 +49,8 @@ root of the application introspection tree.
 from __future__ import absolute_import
 
 import logging
-import os
 import six
 
-from fixtures import Fixture
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import Equals
@@ -64,6 +62,7 @@ from autopilot.application import (
     UpstartApplicationLauncher,
 )
 from autopilot.display import Display
+from autopilot.fixtures import EnvironmentPatch
 from autopilot.globals import get_debug_profile_fixture
 from autopilot.input import Keyboard, Mouse
 from autopilot.introspection import (
@@ -523,69 +522,3 @@ def _ensure_uinput_device_created():
             "Failed to create Touch device for bug lp:1297595 workaround: "
             "%s" % str(e)
         )
-
-
-class EnvironmentPatch(Fixture):
-
-    """Patch the process environment, setting *key* with value *value*.
-
-    This patches os.environ for the duration of the test only. After
-    calling this method, the following should be True::
-
-        os.environ[key] == value
-
-    After the test, the patch will be undone (including deleting the key if
-    if didn't exist before this method was called).
-
-    .. note:: Be aware that patching the environment in this way only
-     affects the current autopilot process, and any processes spawned by
-     autopilot. If you are planing on starting an application from within
-     autopilot and you want this new application to read the patched
-     environment variable, you must patch the environment *before*
-     launching the new process.
-
-    :param string key: The name of the key you wish to set. If the key
-     does not already exist in the process environment it will be created
-     (and then deleted when the test ends).
-    :param string value: The value you wish to set.
-
-    """
-
-    def __init__(self, key, value):
-        self.key = key
-        self.value = value
-
-    def setUp(self):
-        super(EnvironmentPatch, self).setUp()
-        if self.key in os.environ:
-            def _undo_patch(key, old_value):
-                _logger.info(
-                    "Resetting environment variable '%s' to '%s'",
-                    self.key,
-                    old_value
-                )
-                os.environ[self.key] = old_value
-            old_value = os.environ[self.key]
-            self.addCleanup(_undo_patch, self.key, old_value)
-        else:
-            def _remove_patch(key):
-                try:
-                    _logger.info(
-                        "Deleting previously-created environment "
-                        "variable '%s'",
-                        self.key
-                    )
-                    del os.environ[self.key]
-                except KeyError:
-                    _logger.warning(
-                        "Attempted to delete environment key '%s' that doesn't"
-                        "exist in the environment",
-                        self.key
-                    )
-            self.addCleanup(_remove_patch, self.key)
-        _logger.info(
-            "Setting environment variable '%s' to '%s'",
-            self.key,
-            self.value
-        )
-        os.environ[self.key] = self.value

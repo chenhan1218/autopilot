@@ -31,6 +31,7 @@ import logging
 import os
 import six
 import time
+import timeit
 from functools import wraps
 
 from autopilot.exceptions import BackendException
@@ -155,13 +156,13 @@ class Timer(object):
         self.logger = get_debug_logger()
 
     def __enter__(self):
-        self.start = time.time()
+        self.start = timeit.default_timer()
 
     def __exit__(self, *args):
-        self.end = time.time()
+        self.end = timeit.default_timer()
+        elapsed = self.end - self.start
         self.logger.log(
-            self.log_level, "'%s' took %.3fS", self.code_name,
-            self.end - self.start)
+            self.log_level, "'%s' took %.3fS", self.code_name, elapsed)
 
 
 class StagnantStateDetector(object):

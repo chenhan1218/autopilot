@@ -19,12 +19,15 @@
 
 
 from mock import patch, Mock
-from testtools import TestCase
+from testtools import TestCase, skipUnless
 from textwrap import dedent
 
-from autopilot.vis.dbus_search import XmlProcessor
+from autopilot import have_vis
+if have_vis():
+    from autopilot.vis.dbus_search import XmlProcessor
 
 
+@skipUnless(have_vis(), "Tests require vis module to be installed")
 class BusEnumeratorXmlProcessorTest(TestCase):
 
     _example_connection_name = "com.autopilot.test"

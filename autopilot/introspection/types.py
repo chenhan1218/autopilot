@@ -155,7 +155,7 @@ class TypeBase(object):
         while True:
             # TODO: These next three lines are duplicated from the parent...
             # can we just have this code once somewhere?
-            _, new_state = self.parent.get_new_state()
+            _, new_state = self.parent._get_new_state()
             new_state = translate_state_keys(new_state)
             new_value = new_state[self.name][1:]
             if len(new_value) == 1:

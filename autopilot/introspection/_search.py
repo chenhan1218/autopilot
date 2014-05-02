@@ -57,268 +57,6 @@ from autopilot.introspection.utilities import (
 logger = logging.getLogger(__name__)
 
 
-def _filter_runner(filter_list, dbus_tuple, search_parameters):
-    """Helper function to run filters over dbus connections.
-
-    :param filter_list: List of filters to call matches on passing the provided
-      dbus details and search parameters.
-    :param dbus_tuple: 2 length tuple containing (bus, connection_name) where
-      bus is a SessionBus, SystemBus or BusConnection object and
-      connection_name is a string.
-    :param search_parameters: Dictionary of search parameters that the filters
-      will consume to make their decisions.
-
-    """
-    if not filter_list:
-        raise ValueError("Filter list must not be empty")
-    return all(
-        f.matches(dbus_tuple, search_parameters)
-        for f in filter_list
-    )
-
-
-def _filters_from_search_parameters(parameters, filter_lookup=None):
-    parameter_filter_lookup = filter_lookup or _param_to_filter_map
-    try:
-        filter_list = list({
-            parameter_filter_lookup[key]
-            for key in parameters.keys()
-        })
-        return filter_list
-    except KeyError as e:
-        raise KeyError(
-            "Search parameter %s doesn't have a corresponding filter in %r"
-            % (e, parameter_filter_lookup),
-        )
-
-
-
-def _mandatory_filters():
-    """Returns a list of Filters that are considered mandatory regardless of
-    the search parameters supplied by the user.
-
-    """
-    return [
-        ConnectionIsNotOurConnection,
-        ConnectionIsNotOrgFreedesktopDBus
-    ]
-
-
-def _filter_function_from_filters(filters):
-    """Returns a callable filter function that will take the arguments
-    (dbus_tuple, search_parameters).
-
-    The returned filter function will be bound to use a prioritised filter list
-
-    """
-
-    sorted_filter_list = _priority_sort_filters(filters)
-    return partial(_filter_runner, sorted_filter_list)
-
-
-def _priority_sort_filters(filter_list):
-    return sorted(filter_list, key=methodcaller('priority'), reverse=True)
-
-
-def _filter_function_from_search_params(params, filter_lookup=None):
-    filters = _mandatory_filters() + _filters_from_search_parameters(
-        params,
-        filter_lookup
-    )
-    return _filter_function_from_filters(filters)
-
-
-class _cached_get_child_pids(object):
-    """Get a list of all child process Ids, for the given parent.
-
-    Since we call this often, and it's a very expensive call, we optimise this
-    such that the return value will be cached for each scan through the dbus
-    bus.
-
-    Calling reset_cache() at the end of each dbus scan will ensure that you get
-    fresh values on the next call.
-    """
-
-    def __init__(self):
-        self._cached_result = None
-
-    def __call__(self, pid):
-        if self._cached_result is None:
-            self._cached_result = [
-                p.pid for p in psutil.Process(pid).get_children(recursive=True)
-            ]
-        return self._cached_result
-
-    def reset_cache(self):
-        self._cached_result = None
-
-
-_get_child_pids = _cached_get_child_pids()
-
-
-class ConnectionHasName(object):
-    @classmethod
-    def priority(cls):
-        return 11
-
-    @classmethod
-    def matches(cls, dbus_tuple, params):
-        """Returns true if the connection name in dbus_tuple is the name
-        in the search criteria params.
-
-        """
-        requested_connection_name = params['connection_name']
-        bus, connection_name = dbus_tuple
-
-        return connection_name == requested_connection_name
-
-
-class ConnectionHasAppName(object):
-    @classmethod
-    def priority(cls):
-        return 0
-
-    @classmethod
-    def matches(cls, dbus_tuple, params):
-        """Returns True if dbus_tuple has the required application name.
-
-        Can be provided an optional object_path parameter. This defaults to
-        'AUTOPILOT_PATH' if not provided.
-
-        This filter should only activated if the application_name is provided
-        in the search criteria.
-
-        :raises KeyError: if the 'application_name' parameter isn't passed in
-            params
-
-        """
-        requested_app_name = params['application_name']
-        object_path = params.get('object_path', AUTOPILOT_PATH)
-        bus, connection_name = dbus_tuple
-
-        try:
-            app_name = cls._get_application_name(
-                bus,
-                connection_name,
-                object_path
-            )
-            return app_name == requested_app_name
-        except WireProtocolVersionMismatch:
-            return False
-
-    @classmethod
-    def _get_application_name(cls, bus, connection_name, object_path):
-        dbus_object = _get_dbus_address_object(
-            connection_name,
-            object_path,
-            bus
-        )
-        return cls._get_application_name_from_dbus_address(dbus_object)
-
-    @classmethod
-    def _get_application_name_from_dbus_address(cls, dbus_address):
-        """Return the application name from a dbus_address object."""
-        return get_classname_from_path(
-            dbus_address.introspection_iface.GetState('/')[0][0]
-        )
-
-
-class ConnectionHasPid(object):
-
-    @classmethod
-    def priority(cls):
-        return 9
-
-    @classmethod
-    def matches(cls, dbus_tuple, params):
-        """Match a connection based on the connections pid.
-
-        :raises KeyError: if the pid parameter isn't passed in params.
-
-        """
-
-        pid = params['pid']
-        bus, connection_name = dbus_tuple
-
-        try:
-            bus_pid = _get_bus_connections_pid(bus, connection_name)
-        except dbus.DBusException as e:
-            logger.info(
-                "dbus.DBusException while attempting to get PID for %s: %r" %
-                (connection_name, e))
-            return False
-
-        eligible_pids = [pid] + _get_child_pids(pid)
-        return bus_pid in eligible_pids
-
-
-class ConnectionIsNotOrgFreedesktopDBus(object):
-
-    """Not interested in any connections with names 'org.freedesktop.DBus'."""
-
-    @classmethod
-    def priority(cls):
-        return 13
-
-    @classmethod
-    def matches(cls, dbus_tuple, params):
-        bus, connection_name = dbus_tuple
-        return connection_name != 'org.freedesktop.DBus'
-
-
-class ConnectionIsNotOurConnection(object):
-
-    """Ensure we're not inspecting our own bus connection."""
-
-    @classmethod
-    def priority(cls):
-        return 12
-
-    @classmethod
-    def matches(cls, dbus_tuple, params):
-        try:
-            bus, connection_name = dbus_tuple
-            bus_pid = _get_bus_connections_pid(bus, connection_name)
-            return bus_pid != os.getpid()
-        except dbus.DBusException:
-            return False
-
-
-class ConnectionHasPathWithAPInterface(object):
-
-    @classmethod
-    def priority(cls):
-        return 8
-
-    @classmethod
-    def matches(cls, dbus_tuple, params):
-        """Ensure the connection has the path that we expect to be there.
-
-        :raises KeyError: if the object_path parameter isn't included in
-        params.
-
-        """
-        try:
-            bus, connection_name = dbus_tuple
-            path = params['object_path']
-            obj = bus.get_object(connection_name, path)
-            dbus.Interface(
-                obj,
-                'com.canonical.Autopilot.Introspection'
-            ).GetVersion()
-            return True
-        except dbus.DBusException:
-            return False
-
-
-_param_to_filter_map = dict(
-    connection_name=ConnectionHasName,
-    application_name=ConnectionHasAppName,
-    object_path=ConnectionHasPathWithAPInterface,
-    pid=ConnectionHasPid,
-)
-
-
 def get_autopilot_proxy_object_for_process(
     process,
     emulator_base,
@@ -457,6 +195,15 @@ def get_proxy_object_for_existing_process(**kwargs):
     )
 
 
+def _get_dbus_bus_from_string(dbus_string):
+    if dbus_string == 'session':
+        return get_session_bus()
+    elif dbus_string == 'system':
+        return get_system_bus()
+    else:
+        return get_custom_bus(dbus_string)
+
+
 def _check_process_and_pid_details(process=None, pid=None):
     """Do error checking on process and pid specification.
 
@@ -477,18 +224,74 @@ def _check_process_and_pid_details(process=None, pid=None):
     return pid
 
 
-def _raise_if_unusable_amount_of_results(connections, criteria_string):
-    if connections is None or len(connections) == 0:
-        raise ProcessSearchError(
-            "Search criteria (%s) returned no results" %
-            (criteria_string)
+def _filter_function_from_search_params(params, filter_lookup=None):
+    filters = _mandatory_filters() + _filters_from_search_parameters(
+        params,
+        filter_lookup
+    )
+    return _filter_function_from_filters(filters)
+
+
+def _mandatory_filters():
+    """Returns a list of Filters that are considered mandatory regardless of
+    the search parameters supplied by the user.
+
+    """
+    return [
+        ConnectionIsNotOurConnection,
+        ConnectionIsNotOrgFreedesktopDBus
+    ]
+
+
+def _filters_from_search_parameters(parameters, filter_lookup=None):
+    parameter_filter_lookup = filter_lookup or _param_to_filter_map
+    try:
+        filter_list = list({
+            parameter_filter_lookup[key]
+            for key in parameters.keys()
+        })
+        return filter_list
+    except KeyError as e:
+        raise KeyError(
+            "Search parameter %s doesn't have a corresponding filter in %r"
+            % (e, parameter_filter_lookup),
         )
 
-    if len(connections) > 1:
-        raise RuntimeError(
-            "Search criteria (%s) returned multiple results"
-            % (criteria_string)
-        )
+
+def _filter_function_from_filters(filters):
+    """Returns a callable filter function that will take the arguments
+    (dbus_tuple, search_parameters).
+
+    The returned filter function will be bound to use a prioritised filter list
+
+    """
+
+    sorted_filter_list = _priority_sort_filters(filters)
+    return partial(_filter_runner, sorted_filter_list)
+
+
+def _priority_sort_filters(filter_list):
+    return sorted(filter_list, key=methodcaller('priority'), reverse=True)
+
+
+def _filter_runner(filter_list, dbus_tuple, search_parameters):
+    """Helper function to run filters over dbus connections.
+
+    :param filter_list: List of filters to call matches on passing the provided
+      dbus details and search parameters.
+    :param dbus_tuple: 2 length tuple containing (bus, connection_name) where
+      bus is a SessionBus, SystemBus or BusConnection object and
+      connection_name is a string.
+    :param search_parameters: Dictionary of search parameters that the filters
+      will consume to make their decisions.
+
+    """
+    if not filter_list:
+        raise ValueError("Filter list must not be empty")
+    return all(
+        f.matches(dbus_tuple, search_parameters)
+        for f in filter_list
+    )
 
 
 def _find_matching_connections(bus, connection_matcher, process=None):
@@ -528,27 +331,6 @@ def _find_matching_connections(bus, connection_matcher, process=None):
     return []
 
 
-def _dedupe_connections_on_pid(valid_connections, bus):
-    seen_pids = []
-    deduped_connections = []
-
-    for connection in valid_connections:
-        pid = _get_bus_connections_pid(bus, connection)
-        if pid not in seen_pids:
-            seen_pids.append(pid)
-            deduped_connections.append(connection)
-    return deduped_connections
-
-
-def _get_dbus_bus_from_string(dbus_string):
-    if dbus_string == 'session':
-        return get_session_bus()
-    elif dbus_string == 'system':
-        return get_system_bus()
-    else:
-        return get_custom_bus(dbus_string)
-
-
 def _raise_if_process_has_exited(process):
     """Raises ProcessSearchError if process is no longer running."""
     _get_child_pids.reset_cache()
@@ -573,6 +355,44 @@ def _get_buses_unchecked_connection_names(dbus_bus, previous_connections=None):
     """
     all_conns = dbus_bus.list_names()
     return list(set(all_conns).difference(set(previous_connections or [])))
+
+
+def _dedupe_connections_on_pid(valid_connections, bus):
+    seen_pids = []
+    deduped_connections = []
+
+    for connection in valid_connections:
+        pid = _get_bus_connections_pid(bus, connection)
+        if pid not in seen_pids:
+            seen_pids.append(pid)
+            deduped_connections.append(connection)
+    return deduped_connections
+
+
+def _raise_if_unusable_amount_of_results(connections, criteria_string):
+    if connections is None or len(connections) == 0:
+        raise ProcessSearchError(
+            "Search criteria (%s) returned no results" %
+            (criteria_string)
+        )
+
+    if len(connections) > 1:
+        raise RuntimeError(
+            "Search criteria (%s) returned multiple results"
+            % (criteria_string)
+        )
+
+
+def _get_search_criteria_string_representation(**kwargs):
+    # Some slight re-naming for process objects
+    if kwargs.get('process') is not None:
+        kwargs['process_object'] = "%r" % kwargs.pop('process')
+
+    return ", ".join([
+        u("%s = %r") % (k.replace("_", " "), v)
+        for k, v
+        in kwargs.items()
+    ])
 
 
 def _make_proxy_object(data_source, emulator_base):
@@ -677,55 +497,6 @@ def _get_introspection_xml_from_backend(
         return backend.dbus_introspection_iface.Introspect()
 
 
-def _get_proxy_bases_from_introspection_xml(introspection_xml):
-    """Return  tuple of the base classes to use when creating a proxy object.
-
-    Currently this works by looking for certain interface names in the XML. In
-    the future we may want to parse the XML and perform more rigerous checks.
-
-    :param introspection_xml: An xml string that describes the exported object
-        on the dbus backend. This determines which capabilities are present in
-        the backend, and therefore which base classes should be used to create
-        the proxy object.
-
-    :raises RuntimeError: if the autopilot interface cannot be found.
-
-    """
-
-    bases = [ApplicationProxyObject]
-
-    if AP_INTROSPECTION_IFACE not in introspection_xml:
-        raise RuntimeError("Could not find Autopilot interface.")
-
-    if QT_AUTOPILOT_IFACE in introspection_xml:
-        from autopilot.introspection.qt import QtObjectProxyMixin
-        bases.append(QtObjectProxyMixin)
-
-    return tuple(bases)
-
-
-def _get_dbus_address_object(connection_name, object_path, bus):
-    return backends.DBusAddress(bus, connection_name, object_path)
-
-
-def _get_search_criteria_string_representation(**kwargs):
-    # Some slight re-naming for process objects
-    if kwargs.get('process') is not None:
-        kwargs['process_object'] = "%r" % kwargs.pop('process')
-
-    return ", ".join([
-        u("%s = %r") % (k.replace("_", " "), v)
-        for k, v
-        in kwargs.items()
-    ])
-
-
-def _extend_proxy_bases_with_emulator_base(proxy_bases, emulator_base):
-    if emulator_base is None:
-        emulator_base = type('DefaultEmulatorBase', (CustomEmulatorBase,), {})
-    return proxy_bases + (emulator_base, )
-
-
 def _get_proxy_object_class_name_and_state(
         backend, reply_handler=None, error_handler=None):
     """Get details about this autopilot backend via a dbus GetState call.
@@ -780,18 +551,31 @@ def _get_details_from_state_data(state_data):
     )
 
 
-def _make_proxy_class_object(cls_name, proxy_bases):
-    """Return a class object for a proxy.
+def _get_proxy_bases_from_introspection_xml(introspection_xml):
+    """Return  tuple of the base classes to use when creating a proxy object.
 
-    :param cls_name: The name of the class to be created. This is usually the
-        type as returned over the wire from an autopilot backend.
-    :param proxy_bases: A list of base classes this proxy class should derive
-        from. This determines the specific abilities of the new proxy.
+    Currently this works by looking for certain interface names in the XML. In
+    the future we may want to parse the XML and perform more rigerous checks.
+
+    :param introspection_xml: An xml string that describes the exported object
+        on the dbus backend. This determines which capabilities are present in
+        the backend, and therefore which base classes should be used to create
+        the proxy object.
+
+    :raises RuntimeError: if the autopilot interface cannot be found.
 
     """
-    clsobj = type(str("%sBase" % cls_name), proxy_bases, {})
-    proxy_class = type(str(cls_name), (clsobj,), {})
-    return proxy_class
+
+    bases = [ApplicationProxyObject]
+
+    if AP_INTROSPECTION_IFACE not in introspection_xml:
+        raise RuntimeError("Could not find Autopilot interface.")
+
+    if QT_AUTOPILOT_IFACE in introspection_xml:
+        from autopilot.introspection.qt import QtObjectProxyMixin
+        bases.append(QtObjectProxyMixin)
+
+    return tuple(bases)
 
 
 class ApplicationProxyObject(DBusIntrospectionObject):
@@ -822,3 +606,220 @@ class ApplicationProxyObject(DBusIntrospectionObject):
         """Kill the running process that this is a proxy for using
         'kill `pid`'."""
         subprocess.call(["kill", "%d" % self._process.pid])
+
+
+def _extend_proxy_bases_with_emulator_base(proxy_bases, emulator_base):
+    if emulator_base is None:
+        emulator_base = type('DefaultEmulatorBase', (CustomEmulatorBase,), {})
+    return proxy_bases + (emulator_base, )
+
+
+def _make_proxy_class_object(cls_name, proxy_bases):
+    """Return a class object for a proxy.
+
+    :param cls_name: The name of the class to be created. This is usually the
+        type as returned over the wire from an autopilot backend.
+    :param proxy_bases: A list of base classes this proxy class should derive
+        from. This determines the specific abilities of the new proxy.
+
+    """
+    clsobj = type(str("%sBase" % cls_name), proxy_bases, {})
+    proxy_class = type(str(cls_name), (clsobj,), {})
+    return proxy_class
+
+
+def _get_dbus_address_object(connection_name, object_path, bus):
+    return backends.DBusAddress(bus, connection_name, object_path)
+
+
+class _cached_get_child_pids(object):
+    """Get a list of all child process Ids, for the given parent.
+
+    Since we call this often, and it's a very expensive call, we optimise this
+    such that the return value will be cached for each scan through the dbus
+    bus.
+
+    Calling reset_cache() at the end of each dbus scan will ensure that you get
+    fresh values on the next call.
+    """
+
+    def __init__(self):
+        self._cached_result = None
+
+    def __call__(self, pid):
+        if self._cached_result is None:
+            self._cached_result = [
+                p.pid for p in psutil.Process(pid).get_children(recursive=True)
+            ]
+        return self._cached_result
+
+    def reset_cache(self):
+        self._cached_result = None
+
+
+_get_child_pids = _cached_get_child_pids()
+
+
+# Filters
+
+class ConnectionIsNotOrgFreedesktopDBus(object):
+
+    """Not interested in any connections with names 'org.freedesktop.DBus'."""
+
+    @classmethod
+    def priority(cls):
+        return 13
+
+    @classmethod
+    def matches(cls, dbus_tuple, params):
+        bus, connection_name = dbus_tuple
+        return connection_name != 'org.freedesktop.DBus'
+
+
+class ConnectionIsNotOurConnection(object):
+
+    """Ensure we're not inspecting our own bus connection."""
+
+    @classmethod
+    def priority(cls):
+        return 12
+
+    @classmethod
+    def matches(cls, dbus_tuple, params):
+        try:
+            bus, connection_name = dbus_tuple
+            bus_pid = _get_bus_connections_pid(bus, connection_name)
+            return bus_pid != os.getpid()
+        except dbus.DBusException:
+            return False
+
+
+class ConnectionHasName(object):
+    @classmethod
+    def priority(cls):
+        return 11
+
+    @classmethod
+    def matches(cls, dbus_tuple, params):
+        """Returns true if the connection name in dbus_tuple is the name
+        in the search criteria params.
+
+        """
+        requested_connection_name = params['connection_name']
+        bus, connection_name = dbus_tuple
+
+        return connection_name == requested_connection_name
+
+
+class ConnectionHasPid(object):
+
+    @classmethod
+    def priority(cls):
+        return 9
+
+    @classmethod
+    def matches(cls, dbus_tuple, params):
+        """Match a connection based on the connections pid.
+
+        :raises KeyError: if the pid parameter isn't passed in params.
+
+        """
+
+        pid = params['pid']
+        bus, connection_name = dbus_tuple
+
+        try:
+            bus_pid = _get_bus_connections_pid(bus, connection_name)
+        except dbus.DBusException as e:
+            logger.info(
+                "dbus.DBusException while attempting to get PID for %s: %r" %
+                (connection_name, e))
+            return False
+
+        eligible_pids = [pid] + _get_child_pids(pid)
+        return bus_pid in eligible_pids
+
+
+class ConnectionHasPathWithAPInterface(object):
+
+    @classmethod
+    def priority(cls):
+        return 8
+
+    @classmethod
+    def matches(cls, dbus_tuple, params):
+        """Ensure the connection has the path that we expect to be there.
+
+        :raises KeyError: if the object_path parameter isn't included in
+        params.
+
+        """
+        try:
+            bus, connection_name = dbus_tuple
+            path = params['object_path']
+            obj = bus.get_object(connection_name, path)
+            dbus.Interface(
+                obj,
+                'com.canonical.Autopilot.Introspection'
+            ).GetVersion()
+            return True
+        except dbus.DBusException:
+            return False
+
+
+class ConnectionHasAppName(object):
+    @classmethod
+    def priority(cls):
+        return 0
+
+    @classmethod
+    def matches(cls, dbus_tuple, params):
+        """Returns True if dbus_tuple has the required application name.
+
+        Can be provided an optional object_path parameter. This defaults to
+        'AUTOPILOT_PATH' if not provided.
+
+        This filter should only activated if the application_name is provided
+        in the search criteria.
+
+        :raises KeyError: if the 'application_name' parameter isn't passed in
+            params
+
+        """
+        requested_app_name = params['application_name']
+        object_path = params.get('object_path', AUTOPILOT_PATH)
+        bus, connection_name = dbus_tuple
+
+        try:
+            app_name = cls._get_application_name(
+                bus,
+                connection_name,
+                object_path
+            )
+            return app_name == requested_app_name
+        except WireProtocolVersionMismatch:
+            return False
+
+    @classmethod
+    def _get_application_name(cls, bus, connection_name, object_path):
+        dbus_object = _get_dbus_address_object(
+            connection_name,
+            object_path,
+            bus
+        )
+        return cls._get_application_name_from_dbus_address(dbus_object)
+
+    @classmethod
+    def _get_application_name_from_dbus_address(cls, dbus_address):
+        """Return the application name from a dbus_address object."""
+        return get_classname_from_path(
+            dbus_address.introspection_iface.GetState('/')[0][0]
+        )
+
+
+_param_to_filter_map = dict(
+    connection_name=ConnectionHasName,
+    application_name=ConnectionHasAppName,
+    object_path=ConnectionHasPathWithAPInterface,
+    pid=ConnectionHasPid,
+)

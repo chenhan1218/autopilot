@@ -145,7 +145,7 @@ For more information on the various logging levels, see the `python documentatio
 Environment Patching
 ====================
 
-Sometimes you need to change the value of an environment variable for the duration of a single test. It is important that the variable is changed back to it's original value when the test has ended, so future tests are run in a pristine environment. The :module:`~autopilot.fixtures` module includes a :class:`~autopilot.fixtures.EnvironmentPatch` fixture which takes care of this for you. For example, to set the ``FOO`` environment variable to ``"Hello World"`` for the duration of a single test, the code would look something like this::
+Sometimes you need to change the value of an environment variable for the duration of a single test. It is important that the variable is changed back to it's original value when the test has ended, so future tests are run in a pristine environment. The :mod:`~autopilot.fixtures` module includes a :class:`~autopilot.fixtures.EnvironmentPatch` fixture which takes care of this for you. For example, to set the ``FOO`` environment variable to ``"Hello World"`` for the duration of a single test, the code would look something like this::
 
     from autopilot.fixtures import EnvironmentPatch
     from autopilot.testcase import AutopilotTestCase

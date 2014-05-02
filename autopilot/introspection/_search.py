@@ -57,17 +57,12 @@ from autopilot.introspection.utilities import (
 logger = logging.getLogger(__name__)
 
 
-class FilterResult(object):
-    PASS = True
-    FAIL = False
-
-
 def matches(filter_list, dbus_connection, search_parameters):
     if not filter_list:
         raise ValueError("Filter list must not be empty")
     for f in filter_list:
         result = f.matches(dbus_connection, search_parameters)
-        if result == FilterResult.FAIL:
+        if result is False:
             return False
     return True
 

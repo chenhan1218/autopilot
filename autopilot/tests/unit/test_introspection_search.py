@@ -47,14 +47,14 @@ class PassingFilter(object):
 
     @classmethod
     def matches(cls, dbus_connection, params):
-        return _s.FilterResult.PASS
+        return True
 
 
 class FailingFilter(object):
 
     @classmethod
     def matches(cls, dbus_connection, params):
-        return _s.FilterResult.FAIL
+        return False
 
 
 class LowPriorityFilter(object):
@@ -114,6 +114,7 @@ class MatcherCallableTests(TestCase):
             def matches(cls, dbus_connection, params):
                 return False
 
+        _s.matches([FalseFilter], None, None)
         self.assertFalse(
             _s.matches([FalseFilter], None, None)
         )

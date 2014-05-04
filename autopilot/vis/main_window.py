@@ -25,12 +25,12 @@ import logging
 from PyQt4 import QtGui, QtCore
 import six
 
+from autopilot.exceptions import StateNotFoundError
 from autopilot.introspection import (
     _get_dbus_address_object,
     _make_proxy_object_async
 )
 from autopilot.introspection.constants import AP_INTROSPECTION_IFACE
-from autopilot.introspection.dbus import StateNotFoundError
 from autopilot.introspection.qt import QtObjectProxyMixin
 from autopilot.vis.objectproperties import TreeNodeDetailWidget
 from autopilot.vis.resources import (

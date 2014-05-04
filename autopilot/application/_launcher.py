@@ -81,12 +81,14 @@ class UpstartApplicationLauncher(ApplicationLauncher):
 
         UpstartAppLaunch.observer_add_app_failed(self._on_failed, state)
         UpstartAppLaunch.observer_add_app_started(self._on_started, state)
+        UpstartAppLaunch.observer_add_app_focus(self._on_started, state)
         GLib.timeout_add_seconds(10.0, self._on_timeout, state)
 
         self._launch_app(app_id, app_uris)
         state['loop'].run()
         UpstartAppLaunch.observer_delete_app_failed(self._on_failed)
         UpstartAppLaunch.observer_delete_app_started(self._on_started)
+        UpstartAppLaunch.observer_delete_app_focus(self._on_started)
         self._maybe_add_application_cleanups(state)
         self._check_status_error(
             state.get('status', None),
@@ -129,9 +131,9 @@ class UpstartApplicationLauncher(ApplicationLauncher):
 
     def _attach_application_log(self, app_id):
         log_path = UpstartAppLaunch.application_log_path(app_id)
-        if log_path:
+        if log_path and os.path.exists(log_path):
             self.case_addDetail(
-                "Application Log",
+                "Application Log (%s)" % app_id,
                 content_from_file(log_path)
             )
 
@@ -226,22 +228,22 @@ class NormalApplicationLauncher(ApplicationLauncher):
             cwd=self.cwd,
         )
 
-        self.addCleanup(self._kill_process_and_attach_logs, process)
+        self.addCleanup(self._kill_process_and_attach_logs, process, app_path)
 
         return process
 
-    def _kill_process_and_attach_logs(self, process):
+    def _kill_process_and_attach_logs(self, process, app_path):
         stdout, stderr, return_code = _kill_process(process)
         self.case_addDetail(
-            'process-return-code',
+            'process-return-code (%s)' % app_path,
             text_content(str(return_code))
         )
         self.case_addDetail(
-            'process-stdout',
+            'process-stdout (%s)' % app_path,
             text_content(stdout)
         )
         self.case_addDetail(
-            'process-stderr',
+            'process-stderr (%s)' % app_path,
             text_content(stderr)
         )
 

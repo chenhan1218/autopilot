@@ -34,6 +34,7 @@ from testtools.matchers import (
     raises,
 )
 
+from autopilot.introspection import backends
 from autopilot.introspection.dbus import DBusIntrospectionObject
 from autopilot.introspection.types import Color, ValueType
 from autopilot.matchers import Eventually
@@ -50,12 +51,13 @@ def make_fake_attribute_with_result(result, attribute_type='wait_for',
     """
     class FakeObject(DBusIntrospectionObject):
         def __init__(self, props):
-            super(FakeObject, self).__init__(props, "/FakeObject", None)
-            FakeObject._fake_props = props
-
-        @classmethod
-        def get_state_by_path(cls, piece):
-            return [('/FakeObject', cls._fake_props)]
+            super(FakeObject, self).__init__(
+                props,
+                b"/FakeObject",
+                backends.FakeBackend(
+                    [(dbus.String('/FakeObject'), props)]
+                )
+            )
 
     if attribute_type == 'callable':
         return lambda: result

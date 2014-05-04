@@ -30,120 +30,19 @@ from __future__ import absolute_import
 from contextlib import contextmanager
 import sys
 import logging
-import re
 import six
-from uuid import uuid4
 
+from autopilot.exceptions import StateNotFoundError
+from autopilot.introspection._object_registry import (
+    DBusIntrospectionObjectBase,
+)
 from autopilot.introspection.types import create_value_instance
 from autopilot.introspection.utilities import translate_state_keys
-from autopilot.utilities import (
-    get_debug_logger,
-    sleep,
-    Timer,
-)
+from autopilot.introspection import _xpathselect as xpathselect
+from autopilot.utilities import sleep
 
 
-_object_registry = {}
 _logger = logging.getLogger(__name__)
-
-
-class StateNotFoundError(RuntimeError):
-
-    """Raised when a piece of state information is not found.
-
-    This exception is commonly raised when the application has destroyed (or
-    not yet created) the object you are trying to access in autopilot. This
-    typically happens for a number of possible reasons:
-
-    * The UI widget you are trying to access with
-      :py:meth:`~DBusIntrospectionObject.select_single` or
-      :py:meth:`~DBusIntrospectionObject.wait_select_single` or
-      :py:meth:`~DBusIntrospectionObject.select_many` does not exist yet.
-
-    * The UI widget you are trying to access has been destroyed by the
-      application.
-
-    """
-
-    def __init__(self, class_name=None, **filters):
-        """Construct a StateNotFoundError.
-
-        :raises ValueError: if neither the class name not keyword arguments
-            are specified.
-
-        """
-        if class_name is None and not filters:
-            raise ValueError("Must specify either class name or filters.")
-
-        if class_name is None:
-            self._message = \
-                u"Object not found with properties {}.".format(
-                    repr(filters)
-                )
-        elif not filters:
-            self._message = u"Object not found with name '{}'.".format(
-                class_name
-            )
-        else:
-            self._message = \
-                u"Object not found with name '{}' and properties {}.".format(
-                    class_name,
-                    repr(filters)
-                )
-
-    def __str__(self):
-        if six.PY3:
-            return self._message
-        else:
-            return self._message.encode('utf8')
-
-    def __unicode__(self):
-        return self._message
-
-
-class IntrospectableObjectMetaclass(type):
-    """Metaclass to insert appropriate classes into the object registry."""
-
-    def __new__(cls, classname, bases, classdict):
-        """Add class name to type registry."""
-        class_object = type.__new__(cls, classname, bases, classdict)
-        if classname in (
-            'ApplicationProxyObject',
-            'CustomEmulatorBase',
-            'DBusIntrospectionObject',
-        ):
-            return class_object
-
-        if getattr(class_object, '_id', None) is not None:
-            if class_object._id in _object_registry:
-                _object_registry[class_object._id][classname] = class_object
-            else:
-                _object_registry[class_object._id] = {classname: class_object}
-        return class_object
-
-
-def get_classname_from_path(object_path):
-    return object_path.split("/")[-1]
-
-
-def _object_passes_filters(instance, **kwargs):
-    """Return true if *instance* satisifies all the filters present in
-    kwargs."""
-    with instance.no_automatic_refreshing():
-        for attr, val in kwargs.items():
-            if not hasattr(instance, attr) or getattr(instance, attr) != val:
-                # Either attribute is not present, or is present but with
-                # the wrong value - don't add this instance to the results
-                # list.
-                return False
-    return True
-
-
-DBusIntrospectionObjectBase = IntrospectableObjectMetaclass(
-    'DBusIntrospectionObjectBase',
-    (object,),
-    {}
-)
 
 
 class DBusIntrospectionObject(DBusIntrospectionObjectBase):
@@ -155,15 +54,45 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
     needed, and contains many methods to select child objects in the
     introspection tree.
 
+    This class must be used as a base class for any custom proxy classes.
+
+    .. seealso::
+        Tutorial Section :ref:`custom_proxy_classes`
+            Information on how to write custom proxy classes.
+
     """
 
     def __init__(self, state_dict, path, backend):
+        """Construct a new proxy instance.
+
+        :param state_dict: A dictionary of state data for the proxy object.
+        :param path: A bytestring describing the path to the object within the
+            introspection tree.
+        :param backend: The data source backend this proxy should use then
+            retrieving additional state data.
+
+        The state dictionary must contain an 'id' element, as this is used to
+        uniquely identify this object.
+
+        """
         self.__state = {}
         self.__refresh_on_attribute = True
         self._set_properties(state_dict)
         self._path = path
         self._poll_time = 10
         self._backend = backend
+        self._query = xpathselect.Query.new_from_path_and_id(
+            self._path,
+            self.id
+        )
+
+    def _execute_query(self, query):
+        """Execute query object 'query' and return the result."""
+        return self._backend.execute_query_get_proxy_instances(
+            query,
+            getattr(self, '_id', None),
+            type(self)
+        )
 
     def _set_properties(self, state_dict):
         """Creates and set attributes of *self* based on contents of
@@ -173,12 +102,19 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
          becomes 'icon_type'.
 
         """
+        # don't store id in state dictionary - make it a proper instance
+        # attribute. If id is not present, raise a ValueError.
+        try:
+            self.id = int(state_dict['id'][1])
+        except KeyError:
+            raise ValueError(
+                "State dictionary does not contain required 'id' key."
+            )
+
         self.__state = {}
         for key, value in translate_state_keys(state_dict).items():
-            # don't store id in state dictionary -make it a proper instance
-            # attribute
             if key == 'id':
-                self.id = int(value[1])
+                continue
             try:
                 self.__state[key] = create_value_instance(value, self, key)
             except ValueError as e:
@@ -214,24 +150,12 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             Tutorial Section :ref:`custom_proxy_classes`
 
         """
-        #TODO: if kwargs has exactly one item in it we should specify the
-        # restriction in the XPath query, so it gets processed in the Unity C++
-        # code rather than in Python.
-        instances = self.get_children()
+        new_query = self._query.select_child(
+            get_type_name(desired_type),
+            kwargs
+        )
 
-        result = []
-        for instance in instances:
-            # Skip items that are not instances of the desired type:
-            if isinstance(desired_type, six.string_types):
-                if instance.__class__.__name__ != desired_type:
-                    continue
-            elif not isinstance(instance, desired_type):
-                continue
-
-            #skip instances that fail attribute check:
-            if _object_passes_filters(instance, **kwargs):
-                result.append(instance)
-        return result
+        return self._execute_query(new_query)
 
     def get_properties(self):
         """Returns a dictionary of all the properties on this class.
@@ -262,10 +186,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         # Thomi: 2014-03-20: There used to be a call to 'self.refresh_state()'
         # here. That's not needed, since the only thing we use is the proxy
         # path, which isn't affected by the current state.
-        query = self.get_class_query_string() + "/*"
-        state_dicts = self.get_state_by_path(query)
-        children = [self.make_introspection_object(i) for i in state_dicts]
-        return children
+        new_query = self._query.select_child(xpathselect.Query.WILDCARD)
+        return self._execute_query(new_query)
 
     def get_parent(self):
         """Returns the parent of this object.
@@ -274,11 +196,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         tree). Then it returns itself.
 
         """
-        query = self.get_class_query_string() + "/.."
-        parent_state_dicts = self.get_state_by_path(query)
-
-        parent = self.make_introspection_object(parent_state_dicts[0])
-        return parent
+        new_query = self._query.select_parent()
+        return self._execute_query(new_query)[0]
 
     def select_single(self, type_name='*', **kwargs):
         """Get a single node from the introspection tree, with type equal to
@@ -308,7 +227,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         :raises ValueError: if the query returns more than one item. *If
             you want more than one item, use select_many instead*.
 
-        :raises TypeError: if neither *type_name* or keyword filters are
+        :raises ValueError: if neither *type_name* or keyword filters are
             provided.
 
         :raises StateNotFoundError: if the requested object was not found.
@@ -317,7 +236,11 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             Tutorial Section :ref:`custom_proxy_classes`
 
         """
-        instances = self.select_many(type_name, **kwargs)
+        new_query = self._query.select_descendant(
+            get_type_name(type_name),
+            kwargs
+        )
+        instances = self._execute_query(new_query)
         if len(instances) > 1:
             raise ValueError("More than one item was returned for query")
         if not instances:
@@ -361,7 +284,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         :raises ValueError: if the query returns more than one item. *If
             you want more than one item, use select_many instead*.
 
-        :raises TypeError: if neither *type_name* or keyword filters are
+        :raises ValueError: if neither *type_name* or keyword filters are
             provided.
 
         :raises StateNotFoundError: if the requested object was not found.
@@ -414,51 +337,21 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             of the appropriate type (the latter case is for overridden emulator
             classes).
 
-        :raises TypeError: if neither *type_name* or keyword filters are
+        :raises ValueError: if neither *type_name* or keyword filters are
             provided.
 
         .. seealso::
             Tutorial Section :ref:`custom_proxy_classes`
 
         """
-        if not isinstance(type_name, str) and issubclass(
-                type_name, DBusIntrospectionObject):
-            type_name = type_name.__name__
-
-        if type_name == "*" and not kwargs:
-            raise TypeError("You must specify either a type name or a filter.")
-
+        new_query = self._query.select_descendant(
+            get_type_name(type_name),
+            kwargs
+        )
         _logger.debug(
             "Selecting objects of %s with attributes: %r",
             'any type' if type_name == '*' else 'type ' + type_name, kwargs)
-
-        server_side_filters = []
-        client_side_filters = {}
-        for k, v in kwargs.items():
-            # LP Bug 1209029: The XPathSelect protocol does not allow all valid
-            # node names or values. We need to decide here whether the filter
-            # parameters are going to work on the backend or not. If not, we
-            # just do the processing client-side. See the
-            # _is_valid_server_side_filter_param function (below) for the
-            # specific requirements.
-            if _is_valid_server_side_filter_param(k, v):
-                server_side_filters.append(
-                    _get_filter_string_for_key_value_pair(k, v)
-                )
-            else:
-                client_side_filters[k] = v
-        filter_str = '[{}]'.format(','.join(server_side_filters)) \
-            if server_side_filters else ""
-        query_path = "%s//%s%s" % (
-            self.get_class_query_string(),
-            type_name,
-            filter_str
-        )
-
-        state_dicts = self.get_state_by_path(query_path)
-        instances = [self.make_introspection_object(i) for i in state_dicts]
-        return [i for i in instances
-                if _object_passes_filters(i, **client_side_filters)]
+        return self._execute_query(new_query)
 
     def refresh_state(self):
         """Refreshes the object's state.
@@ -471,7 +364,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             has been destroyed.
 
         """
-        _, new_state = self.get_new_state()
+        _, new_state = self._get_new_state()
         self._set_properties(new_state)
 
     def get_all_instances(self):
@@ -493,8 +386,9 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         """
         cls_name = type(self).__name__
-        instances = self.get_state_by_path("//%s" % (cls_name))
-        return [self.make_introspection_object(i) for i in instances]
+        return self._execute_query(
+            xpathselect.Query.whole_tree_search(cls_name)
+        )
 
     def get_root_instance(self):
         """Get the object at the root of this tree.
@@ -503,11 +397,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         introspection tree.
 
         """
-        instances = self.get_state_by_path("/")
-        if len(instances) != 1:
-            _logger.error("Could not retrieve root object.")
-            return None
-        return self.make_introspection_object(instances[0])
+        query = xpathselect.Query.pseudo_tree_root()
+        return self._execute_query(query)[0]
 
     def __getattr__(self, name):
         # avoid recursion if for some reason we have no state set (should never
@@ -524,33 +415,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             "Class '%s' has no attribute '%s'." %
             (self.__class__.__name__, name))
 
-    def get_state_by_path(self, piece):
-        """Get state for a particular piece of the state tree.
-
-        You should probably never need to call this directly.
-
-        :param piece: an XPath-like query that specifies which bit of the tree
-            you want to look at.
-        :raises TypeError: on invalid *piece* parameter.
-
-        """
-        if not isinstance(piece, six.string_types):
-            raise TypeError(
-                "XPath query must be a string, not %r", type(piece))
-
-        with Timer("GetState %s" % piece):
-            data = self._backend.introspection_iface.GetState(piece)
-            if len(data) > 15:
-                _logger.warning(
-                    "Your query '%s' returned a lot of data (%d items). This "
-                    "is likely to be slow. You may want to consider optimising"
-                    " your query to return fewer items.",
-                    piece,
-                    len(data)
-                )
-            return data
-
-    def get_new_state(self):
+    def _get_new_state(self):
         """Retrieve a new state dictionary for this class instance.
 
         You should probably never need to call this directly.
@@ -559,7 +424,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         """
         try:
-            return self.get_state_by_path(self.get_class_query_string())[0]
+            return self._backend.execute_query_get_data(self._query)[0]
         except IndexError:
             raise StateNotFoundError(self.__class__.__name__, id=self.id)
 
@@ -577,7 +442,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         """
         for i in range(timeout):
             try:
-                self.get_new_state()
+                self._get_new_state()
                 sleep(1)
             except StateNotFoundError:
                 return
@@ -585,30 +450,6 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             raise RuntimeError(
                 "Object was not destroyed after %d seconds" % timeout
             )
-
-    def get_class_query_string(self):
-        """Get the XPath query string required to refresh this class's
-        state."""
-        if not self._path.startswith('/'):
-            return "//" + self._path + "[id=%d]" % self.id
-        else:
-            return self._path + "[id=%d]" % self.id
-
-    def make_introspection_object(self, dbus_tuple):
-        """Make an introspection object given a DBus tuple of
-        (path, state_dict).
-
-        This only works for classes that derive from DBusIntrospectionObject.
-
-        :returns: A proxy object that derives from DBusIntrospectionObject
-        :raises ValueError: if more than one class is appropriate for this
-                 dbus_tuple
-
-        """
-        path, state = dbus_tuple
-        class_object = _get_proxy_object_class(
-            _object_registry[self._id], type(self), path, state)
-        return class_object(state, path, self._backend)
 
     def print_tree(self, output=None, maxdepth=None, _curdepth=0):
         """Print properties of the object and its children to a stream.
@@ -641,7 +482,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         # print path
         if _curdepth > 0:
             output.write("\n")
-        output.write("%s== %s ==\n" % (indent, self._path))
+        output.write("%s== %s ==\n" % (indent, self._path.decode('utf-8')))
         # Thomi 2014-03-20: For all levels other than the top level, we can
         # avoid an entire dbus round trip if we grab the underlying property
         # dictionary directly. We can do this since the print_tree function
@@ -697,161 +538,24 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         :returns: Whether this class is appropriate for the dbus object
 
         """
-        name = get_classname_from_path(path)
-        return cls.__name__ == name
+        state_name = xpathselect.get_classname_from_path(path)
+        if isinstance(state_name, six.text_type):
+            state_name = state_name.encode('utf-8')
+        class_name = cls.__name__.encode('utf-8')
+        return state_name == class_name
 
 
-def _is_valid_server_side_filter_param(key, value):
-    """Return True if the key and value parameters are valid for server-side
-    processing.
-
-    """
-    key_is_valid = re.match(
-        r'^[a-zA-Z0-9_\-]+( [a-zA-Z0-9_\-])*$',
-        key
-    ) is not None
-
-    if type(value) == int:
-        return key_is_valid and (-2**31 <= value <= 2**31 - 1)
-
-    elif type(value) == bool:
-        return key_is_valid
-
-    elif type(value) == six.binary_type:
-        return key_is_valid
-
-    elif type(value) == six.text_type:
-        try:
-            value.encode('ascii')
-            return key_is_valid
-        except UnicodeEncodeError:
-            pass
-    return False
+# TODO - can we add a deprecation warning around this somehow?
+CustomEmulatorBase = DBusIntrospectionObject
 
 
-def _get_filter_string_for_key_value_pair(key, value):
-    """Return a string representing the filter query for this key/value pair.
+def get_type_name(maybe_string_or_class):
+    """Get a type name from something that might be a class or a string.
 
-    The value must be suitable for server-side filtering. Raises ValueError if
-    this is not the case.
+    This is a temporary funtion that will be removed once custom proxy classes
+    can specify the query to be used to select themselves.
 
     """
-    if isinstance(value, six.text_type):
-        if six.PY3:
-            escaped_value = value.encode("unicode_escape")\
-                .decode('ASCII')\
-                .replace("'", "\\'")
-        else:
-            escaped_value = value.encode('utf-8').encode("string_escape")
-            # note: string_escape codec escapes "'" but not '"'...
-            escaped_value = escaped_value.replace('"', r'\"')
-        return '{}="{}"'.format(key, escaped_value)
-    elif isinstance(value, six.binary_type):
-        if six.PY3:
-            escaped_value = value.decode('utf-8')\
-                .encode("unicode_escape")\
-                .decode('ASCII')\
-                .replace("'", "\\'")
-        else:
-            escaped_value = value.encode("string_escape")
-            # note: string_escape codec escapes "'" but not '"'...
-            escaped_value = escaped_value.replace('"', r'\"')
-        return '{}="{}"'.format(key, escaped_value)
-    elif isinstance(value, int) or isinstance(value, bool):
-        return "{}={}".format(key, repr(value))
-    else:
-        raise ValueError("Unsupported value type: {}".format(type(value)))
-
-
-def _get_proxy_object_class(proxy_class_dict, default_class, path, state):
-    """Return a custom proxy class, either from the list or the default.
-
-    Use helper functions to check the class list or return the default.
-    :param proxy_class_dict: dict of proxy classes to try
-    :param default_class: default class to use if nothing in dict matches
-    :param path: dbus path
-    :param state: dbus state
-    :returns: appropriate custom proxy class
-    :raises ValueError: if more than one class in the dict matches
-
-    """
-    class_type = _try_custom_proxy_classes(proxy_class_dict, path, state)
-    if class_type:
-        return class_type
-    return _get_default_proxy_class(default_class,
-                                    get_classname_from_path(path))
-
-
-def _try_custom_proxy_classes(proxy_class_dict, path, state):
-    """Identify which custom proxy class matches the dbus path and state.
-
-    If more than one class in proxy_class_dict matches, raise an exception.
-    :param proxy_class_dict: dict of proxy classes to try
-    :param path: dbus path
-    :param state: dbus state dict
-    :returns: matching custom proxy class
-    :raises ValueError: if more than one class matches
-
-    """
-    possible_classes = [c for c in proxy_class_dict.values() if
-                        c.validate_dbus_object(path, state)]
-    if len(possible_classes) > 1:
-        raise ValueError(
-            'More than one custom proxy class matches this object: '
-            'Matching classes are: %s. State is %s.  Path is %s.'
-            ','.join([repr(c) for c in possible_classes]),
-            repr(state),
-            path)
-    if len(possible_classes) == 1:
-        return possible_classes[0]
-    return None
-
-
-def _get_default_proxy_class(default_class, name):
-    """Return a custom proxy object class of the default or a base class.
-
-    We want the object to inherit from CustomEmulatorBase, not the object
-    class that is doing the selecting.
-    :param default_class: default class to use if no bases match
-    :param name: name of new class
-    :returns: custom proxy object class
-
-    """
-    get_debug_logger().warning(
-        "Generating introspection instance for type '%s' based on generic "
-        "class.", name)
-    for base in default_class.__bases__:
-        if issubclass(base, CustomEmulatorBase):
-            base_class = base
-            break
-    else:
-        base_class = default_class
-    return type(str(name), (base_class,), {})
-
-
-class _CustomEmulatorMeta(IntrospectableObjectMetaclass):
-
-    def __new__(cls, name, bases, d):
-        # only consider classes derived from CustomEmulatorBase
-        if name != 'CustomEmulatorBase':
-            # and only if they don't already have an Id set.
-            have_id = False
-            for base in bases:
-                if hasattr(base, '_id'):
-                    have_id = True
-                    break
-            if not have_id:
-                d['_id'] = uuid4()
-        return super(_CustomEmulatorMeta, cls).__new__(cls, name, bases, d)
-
-CustomEmulatorBase = _CustomEmulatorMeta('CustomEmulatorBase',
-                                         (DBusIntrospectionObject, ),
-                                         {})
-CustomEmulatorBase.__doc__ = \
-    """This class must be used as a base class for any custom emulators defined
-    within a test case.
-
-    .. seealso::
-        Tutorial Section :ref:`custom_proxy_classes`
-            Information on how to write custom emulators.
-    """
+    if not isinstance(maybe_string_or_class, six.string_types):
+        return maybe_string_or_class.__name__
+    return maybe_string_or_class

@@ -1,3 +1,33 @@
+autopilot (1.5.0-0ubuntu1) utopic; urgency=low
+
+  * Remove python2 packages and dependencies, as they're now handled by the
+    autopilot-legacy source package. (lp: #1308661)
+
+ -- Thomi Richards <thomi.richards@canonical.com>  Tue, 29 Apr 2014 11:11:32 +1200
+
+autopilot (1.4+14.04.20140416-0ubuntu1) trusty; urgency=low
+
+  [ Francis Ginther ]
+  * Revert r480 to restore python2 packages as autopilot-touch
+    dependencies as not all tests have been updated. (LP: #1308661)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 16 Apr 2014 19:55:48 +0000
+
+autopilot (1.4+14.04.20140415-0ubuntu1) trusty; urgency=low
+
+  [ Michael Terry ]
+  * Treat an upstart 'app focus' event like a successful app launch.
+    (LP: #1307489)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 15 Apr 2014 00:12:05 +0000
+
+autopilot (1.4+14.04.20140410-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Remove python2 from the autopilot-touch metapackage.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 10 Apr 2014 20:51:07 +0000
+
 autopilot (1.4+14.04.20140409-0ubuntu1) trusty; urgency=low
 
   [ Thomi Richards ]

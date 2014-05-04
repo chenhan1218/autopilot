@@ -44,7 +44,7 @@ from autopilot import platform
 from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional.fixtures import TempDesktopFile
-from autopilot.introspection.dbus import CustomEmulatorBase
+from autopilot.introspection import CustomEmulatorBase
 from autopilot.introspection import _connection_matches_pid
 from autopilot.display import Display
 

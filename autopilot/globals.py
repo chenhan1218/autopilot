@@ -30,6 +30,7 @@ except ImportError:
 from autopilot._debug import DebugProfile
 from autopilot.utilities import LogFormatter, CleanupRegistered
 from testtools.content import text_content
+import signal
 import subprocess
 import os.path
 import logging
@@ -167,9 +168,9 @@ class _VideoLogger(CleanupRegistered):
         file."""
 
         if self._test_passed:
-            # We use kill here because we don't want the recording app to start
-            # encoding the video file (since we're removing it anyway.)
-            self._capture_process.kill()
+            # SIGABRT terminates the program and removes
+            # the specified output file.
+            self._capture_process.send_signal(signal.SIGABRT)
             self._capture_process.wait()
         else:
             self._capture_process.terminate()

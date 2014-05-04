@@ -164,7 +164,7 @@ def get_proxy_object_for_existing_process(**kwargs):
 
     connections = _find_matching_connections(
         dbus_bus,
-        lambda connection: matcher_function(connection, kwargs),
+        matcher_function,
         process
     )
 
@@ -215,7 +215,7 @@ def _filter_function_from_search_params(search_params, filter_lookup=None):
         search_params,
         filter_lookup
     )
-    return _filter_function_from_filters(filters)
+    return _filter_function_with_sorted_filters(filters, search_params)
 
 
 def _mandatory_filters():
@@ -244,23 +244,24 @@ def _filters_from_search_parameters(parameters, filter_lookup=None):
         )
 
 
-def _filter_function_from_filters(filters):
-    """Returns a callable filter function that will take the arguments
-    (dbus_tuple, search_parameters).
+def _filter_function_with_sorted_filters(filters, search_params):
+    """Returns a callable filter function that will take the argument
+    (dbus_tuple).
 
     The returned filter function will be bound to use a prioritised filter list
+    and the supplied search parameters dictionary.
 
     """
 
     sorted_filter_list = _priority_sort_filters(filters)
-    return partial(_filter_runner, sorted_filter_list)
+    return partial(_filter_runner, sorted_filter_list, search_params)
 
 
 def _priority_sort_filters(filter_list):
     return sorted(filter_list, key=methodcaller('priority'), reverse=True)
 
 
-def _filter_runner(filter_list, dbus_tuple, search_parameters):
+def _filter_runner(filter_list, search_parameters, dbus_tuple):
     """Helper function to run filters over dbus connections.
 
     :param filter_list: List of filters to call matches on passing the provided

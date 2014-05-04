@@ -123,7 +123,7 @@ class MatcherCallableTests(TestCase):
         DBusConnectionFilter = Mock()
         dbus_tuple = ("bus", "connection_name")
 
-        _s._filter_runner([DBusConnectionFilter], dbus_tuple, {})
+        _s._filter_runner([DBusConnectionFilter], {}, dbus_tuple)
 
         DBusConnectionFilter.matches.assert_called_once_with(
             dbus_tuple, {}
@@ -139,7 +139,7 @@ class FilterFunctionGeneratorTests(TestCase):
 
     def test_uses_priority_sorted_filter_list(self):
         unsorted_filters = [LowPriorityFilter, HighPriorityFilter]
-        matcher = _s._filter_function_from_filters(unsorted_filters)
+        matcher = _s._filter_function_with_sorted_filters(unsorted_filters, {})
         self.assertThat(
             matcher.args[0],
             Equals([HighPriorityFilter, LowPriorityFilter])
@@ -243,12 +243,13 @@ class FilterFunctionFromFiltersTests(TestCase):
 
     def test_returns_a_callable(self):
         self.assertTrue(
-            callable(_s._filter_function_from_filters({}))
+            callable(_s._filter_function_with_sorted_filters([], {}))
         )
 
     def test_uses_sorted_filter_list(self):
-        matcher = _s._filter_function_from_filters(
-            [HighPriorityFilter, LowPriorityFilter]
+        matcher = _s._filter_function_with_sorted_filters(
+            [HighPriorityFilter, LowPriorityFilter],
+            {}
         )
 
         self.assertThat(

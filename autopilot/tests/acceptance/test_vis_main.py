@@ -74,6 +74,7 @@ class VisAcceptanceTests(AutopilotTestCase):
         wm = self.launch_windowmocker()
         vis = self.launch_vis()
         connection_list = vis.select_single('ConnectionList')
+        import pudb; pudb.set_trace()
         connection_list.slots.trySetSelectedItem(wm.applicationName)
         self.assertThat(
             connection_list.currentText,

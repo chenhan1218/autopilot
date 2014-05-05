@@ -162,7 +162,9 @@ def _get_default_proxy_class(default_class, name):
             break
     else:
         base_class = default_class
-    return type(str(name), (base_class,), {})
+    if isinstance(name, bytes):
+        name = name.decode('utf-8')
+    return type(name, (base_class,), {})
 
 
 @contextmanager

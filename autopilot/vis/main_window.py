@@ -300,7 +300,7 @@ class ProxyObjectTreeView(QtGui.QTreeView):
         # enough.
         visual_rect = self.visualRect(index)
         fm = self.fontMetrics()
-        text_width = fm.width(index.data().toString())
+        text_width = fm.width(index.data())
         visual_rect.setRight(visual_rect.left() + text_width)
 
         # horizontal scrolling is done per-pixel, with the scrollbar value

@@ -46,10 +46,10 @@ class EnvironmentPatch(Fixture):
      environment variable, you must patch the environment *before*
      launching the new process.
 
-    :param string key: The name of the key you wish to set. If the key
+    :param key: The strime name of the key you wish to set. If the key
      does not already exist in the process environment it will be created
      (and then deleted when the test ends).
-    :param string value: The value you wish to set.
+    :param value: The string value you wish to set.
 
     """
 

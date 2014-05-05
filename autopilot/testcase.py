@@ -386,10 +386,20 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         finally:
             self._app_snapshot = None
 
+    @deprecated
     def patch_environment(self, key, value):
         """Patch environment using fixture.
 
-        This function is deprecated and planned for removal in autopilot 1.6
+        This function is deprecated and planned for removal in autopilot 1.6.
+        New implementations should use EnvironmenPatch from autopilot.fixtures:
+            from autopilot import fixtures
+
+            def my_test(AutopilotTestCase):
+                my_patch = fixtures.EnvironmentPatch('key', 'value')
+                self.useFixture(my_patch)
+
+        'key' will be set to 'value'.  During tearDown, it will be reset to a
+        previous value, if one is found, or unset if not.
 
         """
         self.useFixture(EnvironmentPatch(key, value))

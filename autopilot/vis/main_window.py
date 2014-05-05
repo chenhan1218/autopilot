@@ -59,9 +59,14 @@ class MainWindow(QtGui.QMainWindow):
         window_state = settings.value("windowState")
         if window_state is not None:
             self.restoreState(window_state.data())
-        self.toggle_overlay_action.setChecked(
-            settings.value("overlayChecked", type="bool")
-        )
+        try:
+            self.toggle_overlay_action.setChecked(
+                settings.value("overlayChecked", type="bool")
+            )
+        except TypeError:
+            pass
+            # raised when returned QVariant is invalid - probably on
+            # first boot
 
     def closeEvent(self, event):
         settings = QtCore.QSettings()

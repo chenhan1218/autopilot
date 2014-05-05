@@ -45,6 +45,7 @@ from autopilot.utilities import deprecated
 logger = logging.getLogger(__name__)
 
 
+@deprecated('get_proxy_object_for_existing_process')
 def get_autopilot_proxy_object_for_process(
     process,
     emulator_base,

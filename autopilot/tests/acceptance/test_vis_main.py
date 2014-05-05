@@ -21,12 +21,14 @@
 
 import sys
 
+from testtools import skipIf
 from testtools.matchers import Equals
 
-from autopilot.testcase import AutopilotTestCase
-from autopilot.introspection.dbus import CustomEmulatorBase
 from autopilot.application import NormalApplicationLauncher
+from autopilot.introspection.dbus import CustomEmulatorBase
 from autopilot.matchers import Eventually
+from autopilot.platform import model
+from autopilot.testcase import AutopilotTestCase
 
 
 class VisToolEmulatorBase(CustomEmulatorBase):
@@ -70,6 +72,7 @@ class VisAcceptanceTests(AutopilotTestCase):
         )
         return vis_proxy
 
+    @skipIf(model() != "Desktop", "Vis not usable on device.")
     def test_can_select_windowmocker(self):
         wm = self.launch_windowmocker()
         vis = self.launch_vis()

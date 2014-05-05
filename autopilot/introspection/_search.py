@@ -29,8 +29,8 @@ from operator import methodcaller
 
 from autopilot import dbus_handler
 from autopilot._timeout import Timeout
-from autopilot.introspection import backends
 from autopilot.exceptions import ProcessSearchError
+from autopilot.introspection import backends
 from autopilot.introspection import constants
 from autopilot.introspection import dbus as ap_dbus
 from autopilot.introspection._xpathselect import get_classname_from_path
@@ -39,6 +39,7 @@ from autopilot.introspection.utilities import (
     _get_bus_connections_pid,
     _pid_is_running,
 )
+from autopilot.utilities import deprecated
 
 
 logger = logging.getLogger(__name__)
@@ -589,6 +590,10 @@ class ApplicationProxyObject(ap_dbus.DBusIntrospectionObject):
     def process(self):
         return self._process
 
+    @deprecated(
+        "the AutopilotTestCase launch_test_application method to handle"
+        " cleanup of launched applications."
+    )
     def kill_application(self):
         """Kill the running process that this is a proxy for using
         'kill `pid`'."""

@@ -721,11 +721,9 @@ class AutopilotEnvironmentPatchTests(AutopilotTestCase):
         """
         self.assertThat(os.getenv('APABC321'), Equals(None))
 
-        fixture = fixtures.EnvironmentPatch('APABC321', 'Foo')
-        fixture.setUp()
-        self.assertThat(os.getenv('APABC321'), Equals('Foo'))
+        with fixtures.EnvironmentPatch('APABC321', 'Foo'):
+            self.assertThat(os.getenv('APABC321'), Equals('Foo'))
 
-        fixture.cleanUp()
         self.assertThat(os.getenv('APABC321'), Equals(None))
 
     def test_EnvironmentPatch_existing_patch_is_reset(self):
@@ -733,15 +731,12 @@ class AutopilotEnvironmentPatchTests(AutopilotTestCase):
         value.
 
         """
-        outer_fixture = fixtures.EnvironmentPatch('APABC987', 'OuterTest')
-        outer_fixture.setUp()
-        self.assertThat(os.getenv('APABC987'), Equals('OuterTest'))
+        with fixtures.EnvironmentPatch('APABC987', 'OuterTest'):
+            self.assertThat(os.getenv('APABC987'), Equals('OuterTest'))
 
-        inner_fixture = fixtures.EnvironmentPatch('APABC987', 'Foo')
-        inner_fixture.setUp()
-        self.assertThat(os.getenv('APABC987'), Equals('Foo'))
+            with fixtures.EnvironmentPatch('APABC987', 'Foo'):
+                self.assertThat(os.getenv('APABC987'), Equals('Foo'))
 
-        inner_fixture.cleanUp()
         self.assertThat(os.getenv('APABC987'), Equals('OuterTest'))
 
 

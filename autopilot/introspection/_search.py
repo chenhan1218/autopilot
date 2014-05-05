@@ -230,8 +230,17 @@ def _mandatory_filters():
     ]
 
 
+def _filter_lookup_map():
+    return dict(
+        connection_name=ConnectionHasName,
+        application_name=ConnectionHasAppName,
+        object_path=ConnectionHasPathWithAPInterface,
+        pid=ConnectionHasPid,
+    )
+
+
 def _filters_from_search_parameters(parameters, filter_lookup=None):
-    parameter_filter_lookup = filter_lookup or _param_to_filter_map
+    parameter_filter_lookup = filter_lookup or _filter_lookup_map()
     try:
         filter_list = list({
             parameter_filter_lookup[key]
@@ -828,11 +837,3 @@ class ConnectionHasAppName(object):
         return get_classname_from_path(
             dbus_address.introspection_iface.GetState('/')[0][0]
         )
-
-
-_param_to_filter_map = dict(
-    connection_name=ConnectionHasName,
-    application_name=ConnectionHasAppName,
-    object_path=ConnectionHasPathWithAPInterface,
-    pid=ConnectionHasPid,
-)

@@ -471,11 +471,11 @@ class FilterHelpersTests(TestCase):
         search_parameters = {
             f: True
             for f
-            in _s._param_to_filter_map.keys()
+            in _s._filter_lookup_map().keys()
         }
         self.assertThat(
             _s._filters_from_search_parameters(search_parameters),
-            ListContainsOnly(_s._param_to_filter_map.values())
+            ListContainsOnly(_s._filter_lookup_map().values())
         )
 
     def test_filter_priority_order_is_correct(self):
@@ -483,7 +483,7 @@ class FilterHelpersTests(TestCase):
         search_parameters = {
             f: True
             for f
-            in _s._param_to_filter_map.keys()
+            in _s._filter_lookup_map().keys()
         }
         search_filters = _s._filters_from_search_parameters(search_parameters)
         mandatory_filters = _s._mandatory_filters()

@@ -23,16 +23,13 @@
 This package contains the methods and classes that are of use for accessing
 dbus proxy objects and creating Custom Proxy Object classes.
 
-For retrieving proxy objects for already existing processes there are two
-methods:
+For retrieving proxy objects for already existing processes use
+:meth:`~autopilot.introspection.get_proxy_object_for_existing_process`
+This takes search criteria and return a proxy object that can be queried and
+introspected.
 
-- :meth:`~autopilot.introspection.get_proxy_object_for_existing_process`
-- :meth:`~autopilot.introspection.get_autopilot_proxy_object_for_process`
-
-Both take search criteria and return a proxy object that can be queried.
-
-For creating your own Custom Proxy Classes thers is:
-- :class:`autopilot.introspection.CustomEmulatorBase`
+For creating your own Custom Proxy Classes use
+:class:`autopilot.introspection.CustomEmulatorBase`
 
 .. seealso::
     The tutorial section :ref:`custom_proxy_classes` for further details on

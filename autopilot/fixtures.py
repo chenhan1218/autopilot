@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Provide test fixtures for public use."""
+"""The fixtures module provides public fixtures for use by test authors."""
 
 import logging
 

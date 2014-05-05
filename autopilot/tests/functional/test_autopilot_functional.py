@@ -28,11 +28,11 @@ from testtools import skipIf
 from testtools.matchers import Contains, Equals, MatchesRegex, Not
 from textwrap import dedent
 
-from autopilot import platform
-from autopilot.testcase import (
-    AutopilotTestCase,
-    EnvironmentPatch,
+from autopilot import (
+    fixtures,
+    platform,
 )
+from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional import AutopilotRunTestBase, remove_if_exists
 
 
@@ -721,7 +721,7 @@ class AutopilotEnvironmentPatchTests(AutopilotTestCase):
         """
         self.assertThat(os.getenv('APABC321'), Equals(None))
 
-        fixture = EnvironmentPatch('APABC321', 'Foo')
+        fixture = fixtures.EnvironmentPatch('APABC321', 'Foo')
         fixture.setUp()
         self.assertThat(os.getenv('APABC321'), Equals('Foo'))
 
@@ -733,11 +733,11 @@ class AutopilotEnvironmentPatchTests(AutopilotTestCase):
         value.
 
         """
-        outer_fixture = EnvironmentPatch('APABC987', 'OuterTest')
+        outer_fixture = fixtures.EnvironmentPatch('APABC987', 'OuterTest')
         outer_fixture.setUp()
         self.assertThat(os.getenv('APABC987'), Equals('OuterTest'))
 
-        inner_fixture = EnvironmentPatch('APABC987', 'Foo')
+        inner_fixture = fixtures.EnvironmentPatch('APABC987', 'Foo')
         inner_fixture.setUp()
         self.assertThat(os.getenv('APABC987'), Equals('Foo'))
 

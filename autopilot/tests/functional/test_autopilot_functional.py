@@ -774,7 +774,7 @@ class AutopilotEnvironmentPatchTests(AutopilotTestCase):
             with fixtures.EnvironmentPatch('APABC987', 'Foo'):
                 self.assertThat(os.getenv('APABC987'), Equals('Foo'))
 
-        self.assertThat(os.getenv('APABC987'), Equals('OuterTest'))
+            self.assertThat(os.getenv('APABC987'), Equals('OuterTest'))
 
 
 class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):

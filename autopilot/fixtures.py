@@ -24,6 +24,11 @@ import logging
 from fixtures import Fixture
 from os import environ
 
+__all__ = [
+    'EnvironmentPatch',
+
+]
+
 _logger = logging.getLogger(__name__)
 
 

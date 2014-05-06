@@ -136,7 +136,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
     def setUp(self):
         super(AutopilotTestCase, self).setUp()
         on_test_started(self)
-        self.useFixture(get_debug_profile_fixture()(self.addDetail))
+        self.useFixture(get_debug_profile_fixture()(self.addDetailUniqueName))
 
         _lttng_trace_test_started(self.id())
         self.addCleanup(_lttng_trace_test_ended, self.id())
@@ -258,7 +258,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             ' '.join(arguments)
         )
         launcher = self.useFixture(
-            NormalApplicationLauncher(self.addDetail, **kwargs)
+            NormalApplicationLauncher(self.addDetailUniqueName, **kwargs)
         )
 
         return self._launch_test_application(launcher, application, *arguments)
@@ -307,7 +307,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             ','.join(app_uris)
         )
         launcher = self.useFixture(
-            ClickApplicationLauncher(self.addDetail, **kwargs)
+            ClickApplicationLauncher(self.addDetailUniqueName, **kwargs)
         )
         return self._launch_test_application(launcher, package_id, app_name,
                                              app_uris)
@@ -339,7 +339,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             ','.join(uris)
         )
         launcher = self.useFixture(
-            UpstartApplicationLauncher(self.addDetail, **kwargs)
+            UpstartApplicationLauncher(self.addDetailUniqueName, **kwargs)
         )
         return self._launch_test_application(launcher, application_name, uris)
 

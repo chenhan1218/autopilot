@@ -19,22 +19,27 @@
 
 from gi.repository import GLib
 from mock import Mock, patch
-from testtools import TestCase
+from testtools import TestCase, skipIf
 from testtools.matchers import (
     Not,
     Raises,
 )
 
-import autopilot.process._bamf as _b
-from autopilot.process._bamf import _launch_application
+from autopilot.platform import model
+if model() == "Desktop":
+    import autopilot.process._bamf as _b
+    from autopilot.process._bamf import _launch_application
 
 
+@skipIf(model() != "Desktop", "Requires BAMF framework")
 class ProcessBamfTests(TestCase):
+
     def test_launch_application_attempts_launch_uris_as_manager_first(self):
         """_launch_application must attempt to use launch_uris_as_manager
         before trying to use launch_uris.
 
         """
+
         with patch.object(_b.Gio.DesktopAppInfo, 'new') as process:
             process.launch_uris_as_manager.called_once_with(
                 [],

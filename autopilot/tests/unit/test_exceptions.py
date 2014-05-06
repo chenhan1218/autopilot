@@ -21,7 +21,7 @@ import six
 from testtools import TestCase
 from testtools.matchers import raises, Equals
 
-from autopilot.introspection.dbus import StateNotFoundError
+from autopilot.exceptions import StateNotFoundError
 
 
 class StateNotFoundTests(TestCase):

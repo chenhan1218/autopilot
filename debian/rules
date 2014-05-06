@@ -5,41 +5,19 @@
 # export DH_VERBOSE=1
 
 %:
-	dh $@ --with python2,python3
+	dh $@ --with python3,sphinxdoc --buildsystem=pybuild
 
-override_dh_auto_clean:
-	set -ex; for python in $(shell py3versions -r); do \
-	    $$python setup.py clean || true; \
-	done
-	dh_auto_clean
-	rm -rf build
+override_dh_sphinxdoc:
+	# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=745690
+	-dh_sphinxdoc
 
 override_dh_auto_build:
-	sphinx-build -b html -W  docs/ docs/_build/html/
-	set -ex; for python in $(shell py3versions -r); do \
-	    $$python setup.py build; \
-	done
 	dh_auto_build
+	sphinx-build -b html docs build/sphinx/html
+	sphinx-build -b man docs build/sphinx/man
 
 override_dh_auto_test:
 ifeq (, $(findstring nocheck, $(DEB_BUILD_OPTIONS)))
-	python -m testtools.run discover autopilot.tests.unit
+	HOME=`mktemp -d --tmpdir=debian` \
 	python3 -m testtools.run discover autopilot.tests.unit
 endif
-
-override_dh_auto_install:
-	set -ex; for python in $(shell py3versions -r); do \
-	    $$python setup.py install --root=$(CURDIR)/debian/tmp --install-layout=deb; \
-	done
-	dh_auto_install
-
-override_dh_install:
-	dh_install -X.pyc --fail-missing
-	# provide python3-ized runner and avoid file conflicts
-	set -e; if [ -d debian/python3-autopilot ]; then \
-	    cd debian/python3-autopilot; \
-	    mv usr/bin/autopilot usr/bin/autopilot3; \
-	    ln -s autopilot3 usr/bin/autopilot-py3; \
-	    sed -i '1 s/python$$/python3/' usr/bin/autopilot3; \
-	    mv lib/udev/rules.d/61-autopilot-uinput.rules lib/udev/rules.d/61-autopilot-py3-uinput.rules; \
-	fi

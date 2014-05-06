@@ -39,12 +39,10 @@ For creating your own Custom Proxy Classes use
 
 from autopilot.introspection.dbus import CustomEmulatorBase
 from autopilot.introspection._search import (
-    get_autopilot_proxy_object_for_process,
     get_proxy_object_for_existing_process
 )
 
 __all__ = [
     'CustomEmulatorBase',
-    'get_autopilot_proxy_object_for_process',
     'get_proxy_object_for_existing_process'
 ]

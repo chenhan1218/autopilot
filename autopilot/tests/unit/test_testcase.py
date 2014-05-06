@@ -104,7 +104,8 @@ class AutopilotTestCaseClassTests(TestCase):
             def test_patch_environment(self):
                 self.patch_environment('foo', 'bar')
 
-        EnvironmentPatchingTestCase('test_patch_environment').run()
+        result = EnvironmentPatchingTestCase('test_patch_environment').run()
+        self.assertTrue(result.wasSuccessful())
         ep.assert_called_once_with('foo', 'bar')
         self.assertIn(call().setUp(), ep.mock_calls)
         self.assertIn(call().cleanUp(), ep.mock_calls)

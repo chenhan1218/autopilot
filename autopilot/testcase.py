@@ -386,7 +386,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         finally:
             self._app_snapshot = None
 
-    @deprecated
+    @deprecated('autopilot.fixtures.EnvironmentPatch')
     def patch_environment(self, key, value):
         """Patch environment using fixture.
 

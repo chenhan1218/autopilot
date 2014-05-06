@@ -20,7 +20,7 @@
 
 import os
 
-from autopilot.introspection import ApplicationLauncher
+from autopilot.application._launcher import ApplicationLauncher
 
 
 class GtkApplicationLauncher(ApplicationLauncher):

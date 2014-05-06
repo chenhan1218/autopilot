@@ -26,7 +26,7 @@ from PyQt4 import QtGui, QtCore
 import six
 
 from autopilot.exceptions import StateNotFoundError
-from autopilot.introspection import (
+from autopilot.introspection._search import (
     _get_dbus_address_object,
     _make_proxy_object_async
 )

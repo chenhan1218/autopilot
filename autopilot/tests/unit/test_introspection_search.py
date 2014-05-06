@@ -461,6 +461,22 @@ class ConnectionHasAppNameTests(TestCase):
             object_name
         )
 
+    def get_mock_dbus_address_with_app_name(slf, app_name):
+        mock_dbus_address = Mock()
+        mock_dbus_address.introspection_iface.GetState.return_value = (
+            ('/' + app_name, {}),
+        )
+        return mock_dbus_address
+
+    def test_get_application_name_returns_application_name(self):
+        with patch.object(_s, '_get_dbus_address_object') as gdbao:
+            gdbao.return_value = self.get_mock_dbus_address_with_app_name(
+                "SomeAppName"
+            )
+            self.assertEqual(
+                _s.ConnectionHasAppName._get_application_name("", "", ""),
+                "SomeAppName"
+            )
 
 class FilterHelpersTests(TestCase):
 

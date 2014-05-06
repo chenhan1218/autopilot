@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2013 Canonical
+# Copyright (C) 2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -188,7 +188,7 @@ class MakeIntrospectionObjectTests(TestCase):
     @patch('autopilot.introspection._object_registry.get_debug_logger')
     def test_get_default_proxy_class_logging(self, gdl):
         """_get_default_proxy_class should log a message."""
-        object_registry._get_default_proxy_class(self.DefaultSelector, None)
+        object_registry._get_default_proxy_class(self.DefaultSelector, "None")
         gdl.assert_called_once_with()
 
     def test_get_default_proxy_class_base(self):

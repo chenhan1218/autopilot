@@ -75,11 +75,12 @@ class ProcessSnapshotTests(TestCase):
     def test_using_pick_app_launcher_produces_deprecation_message(self):
         class InnerTest(AutopilotTestCase):
             def test_foo(self):
-                self.pick_app_launcher()
+                self.pick_app_launcher('some_path')
 
         with patch('autopilot.testcase.get_application_launcher_wrapper'):
             with patch('autopilot.utilities.logger') as patched_log:
-                InnerTest('test_foo').run()
+                result = InnerTest('test_foo').run()
+                self.assertTrue(result.wasSuccessful())
 
                 self.assertThat(
                     patched_log.warning.call_args[0][0],

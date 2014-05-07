@@ -45,7 +45,6 @@ from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional.fixtures import TempDesktopFile
 from autopilot.introspection import CustomEmulatorBase
-from autopilot.introspection import _connection_matches_pid
 from autopilot.display import Display
 
 
@@ -319,15 +318,3 @@ class QMLCustomEmulatorTestCase(AutopilotTestCase):
                 [e[1] for e in result2.decorated.errors]
             )
         )
-
-
-class IntrospectionFunctionTests(AutopilotTestCase):
-
-    @patch('autopilot.introspection._connection_matches_pid')
-    @patch('autopilot.introspection._bus_pid_is_our_pid')
-    def test_connection_matches_pid_ignores_dbus_daemon(
-            self, bus_pid_is_our_pid, conn_matches_pid_fn):
-        _connection_matches_pid(SessionBus(), 'org.freedesktop.DBus', 123)
-
-        self.assertThat(bus_pid_is_our_pid.called, Equals(False))
-        self.assertThat(conn_matches_pid_fn.called, Equals(False))

@@ -27,14 +27,15 @@ except ImportError:
     # Python 3
     from io import StringIO
 
-from autopilot._debug import DebugProfile
-from autopilot.utilities import LogFormatter, CleanupRegistered
-from testtools.content import text_content
+import logging
+import os.path
 import signal
 import subprocess
-import os.path
-import logging
 
+from autopilot._debug import DebugProfile
+from autopilot.utilities import LogFormatter, CleanupRegistered
+from autopilot._video import VideoLogger
+from testtools.content import text_content
 
 logger = logging.getLogger(__name__)
 
@@ -99,110 +100,7 @@ def set_log_verbose(verbose):
     _test_logger.log_verbose(verbose)
 
 
-class _VideoLogger(CleanupRegistered):
-
-    """Video capture autopilot tests, saving the results if the test failed."""
-
-    _recording_app = '/usr/bin/recordmydesktop'
-    _recording_opts = ['--no-sound', '--no-frame', '-o']
-
-    def __init__(self):
-        self._enable_recording = False
-        self._currently_recording_description = None
-
-    def __call__(self, test_instance):
-        if not self._have_recording_app():
-            logger.warning(
-                "Disabling video capture since '%s' is not present",
-                self._recording_app)
-
-        if self._currently_recording_description is not None:
-            logger.warning(
-                "Video capture already in progress for %s",
-                self._currently_recording_description)
-            return
-
-        self._currently_recording_description = \
-            test_instance.shortDescription()
-        self._test_passed = True
-        test_instance.addOnException(self._on_test_failed)
-        test_instance.addCleanup(self._stop_video_capture, test_instance)
-        self._start_video_capture(test_instance.shortDescription())
-
-    @classmethod
-    def on_test_start(cls, test_instance):
-        if _video_logger._enable_recording:
-            _video_logger(test_instance)
-
-    def enable_recording(self, enable_recording):
-        self._enable_recording = enable_recording
-
-    def set_recording_dir(self, directory):
-        self.recording_directory = directory
-
-    def set_recording_opts(self, opts):
-        if opts is None:
-            return
-        self._recording_opts = opts.split(',') + self._recording_opts
-
-    def _have_recording_app(self):
-        return os.path.exists(self._recording_app)
-
-    def _start_video_capture(self, test_id):
-        args = self._get_capture_command_line()
-        self._capture_file = os.path.join(
-            self.recording_directory,
-            '%s.ogv' % (test_id)
-        )
-        self._ensure_directory_exists_but_not_file(self._capture_file)
-        args.append(self._capture_file)
-        logger.debug("Starting: %r", args)
-        self._capture_process = subprocess.Popen(
-            args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT
-        )
-
-    def _stop_video_capture(self, test_instance):
-        """Stop the video capture. If the test failed, save the resulting
-        file."""
-
-        if self._test_passed:
-            # SIGABRT terminates the program and removes
-            # the specified output file.
-            self._capture_process.send_signal(signal.SIGABRT)
-            self._capture_process.wait()
-        else:
-            self._capture_process.terminate()
-            self._capture_process.wait()
-            if self._capture_process.returncode != 0:
-                test_instance.addDetail(
-                    'video capture log',
-                    text_content(self._capture_process.stdout.read()))
-        self._capture_process = None
-        self._currently_recording_description = None
-
-    def _get_capture_command_line(self):
-        return [self._recording_app] + self._recording_opts
-
-    def _ensure_directory_exists_but_not_file(self, file_path):
-        dirpath = os.path.dirname(file_path)
-        if not os.path.exists(dirpath):
-            os.makedirs(dirpath)
-        elif os.path.exists(file_path):
-            logger.warning(
-                "Video capture file '%s' already exists, deleting.", file_path)
-            os.remove(file_path)
-
-    def _on_test_failed(self, ex_info):
-        """Called when a test fails."""
-        from unittest.case import SkipTest
-        failure_class_type = ex_info[0]
-        if failure_class_type is not SkipTest:
-            self._test_passed = False
-
-
-_video_logger = _VideoLogger()
+_video_logger = VideoLogger()
 
 
 def configure_video_recording(enable_recording, record_dir, record_opts=None):

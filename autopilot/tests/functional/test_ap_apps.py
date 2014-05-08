@@ -24,7 +24,6 @@ import subprocess
 import logging
 import sys
 import six
-from mock import patch
 from testtools import skipIf
 from testtools.matchers import (
     Equals,

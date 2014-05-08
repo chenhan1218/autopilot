@@ -344,13 +344,16 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             Tutorial Section :ref:`custom_proxy_classes`
 
         """
+        type_name_str = get_type_name(type_name)
         new_query = self._query.select_descendant(
-            get_type_name(type_name),
+            type_name_str,
             kwargs
         )
         _logger.debug(
             "Selecting objects of %s with attributes: %r",
-            'any type' if type_name == '*' else 'type ' + type_name, kwargs)
+            'any type'
+            if type_name_str == '*' else 'type ' + type_name_str, kwargs
+        )
         return self._execute_query(new_query)
 
     def refresh_state(self):

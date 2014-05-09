@@ -11,26 +11,9 @@ Build-Depends: debhelper (>= 9.0.0),
                gir1.2-ibus-1.0,
                gir1.2-upstart-app-launch-2,
                graphviz,
+               libjs-jquery,
+               libjs-underscore, 
                liblttng-ust-dev,
-               python-all-dev (>= 2.6),
-               python-contextlib2,
-               python-dbus,
-               python-debian,
-               python-decorator,
-               python-dev,
-               python-evdev,
-               python-fixtures,
-               python-gi,
-               python-junitxml,
-               python-mock,
-               python-psutil,
-               python-setuptools,
-               python-six,
-               python-sphinx,
-               python-subunit,
-               python-testscenarios,
-               python-testtools,
-               python-xlib,
                python3-all-dev (>= 3.3),
                python3-dbus,
                python3-decorator,
@@ -42,56 +25,29 @@ Build-Depends: debhelper (>= 9.0.0),
                python3-psutil,
                python3-setuptools,
                python3-six,
+               python3-sphinx,
                python3-subunit,
                python3-testscenarios,
                python3-testtools,
                python3-xlib,
+               sphinx-common,
                texlive-latex-extra,
-Standards-Version: 3.9.4
+Standards-Version: 3.9.5
 Homepage: https://launchpad.net/autopilot
 Vcs-bzr: https://code.launchpad.net/+branch/ubuntu/autopilot
 X-Python-Version: >= 2.7
 X-Python3-Version: >= 3.3
 
-Package: python-autopilot
-Architecture: all
-Depends: ${misc:Depends},
-         ${python:Depends},
-         python-gi,
-         gir1.2-upstart-app-launch-2,
-         python-contextlib2,
-         python-dbus,
-         python-decorator,
-         python-fixtures,
-         python-junitxml,
-         python-psutil,
-         python-six,
-         python-subunit,
-         python-testscenarios,
-         python-testtools,
-         udev,
-Recommends: autopilot-desktop | autopilot-touch,
-            libautopilot-gtk (>= 1.4),
-            libautopilot-qt (>= 1.4),
-            python-autopilot-trace,
-            recordmydesktop,
-Breaks: libautopilot-gtk (<< 1.4),
-	libautopilot-qt (<< 1.4),
-Description: Utility to write and run integration tests easily
- The autopilot engine enables to ease the writing of python tests
- for your application manipulating your inputs like the mouse and
- keyboard. It also provides a lot of utilities linked to the X server
- and detecting applications.
-
 Package: python3-autopilot
 Architecture: all
 Depends: ${misc:Depends},
          ${python3:Depends},
-         python3-gi,
          gir1.2-upstart-app-launch-2,
+         libjs-underscore, libjs-jquery,
          python3-dbus,
          python3-decorator,
          python3-fixtures,
+         python3-gi,
          python3-junitxml,
          python3-psutil,
          python3-six,
@@ -117,16 +73,6 @@ Description: Utility to write and run integration tests easily (Python 3)
  keyboard. It also provides a lot of utilities linked to the X server
  and detecting applications.
 
-Package: python-autopilot-trace
-Architecture: any
-Depends: ${misc:Depends},
-         ${shlibs:Depends},
-         python-autopilot,
-Description: Support for tracing in autopilot
- This package contains the binary lttng trace point for tracing
- autopilot tests. This is useful when using autopilot to exercise
- an instrumented application.
-
 Package: python3-autopilot-trace
 Architecture: any
 Depends: ${misc:Depends},
@@ -144,8 +90,6 @@ Depends: ${misc:Depends},
          libautopilot-qt (>= 1.4),
          python3-autopilot,
          python3-evdev,
-         python-autopilot,
-         python-evdev,
          fbset,
 Description: Autopilot support for the ubuntu Touch platform
  This metapackage exists to depend on the packages needed to install and use
@@ -158,59 +102,30 @@ Depends: ${misc:Depends},
          gir1.2-gconf-2.0,
          gir1.2-glib-2.0,
          gir1.2-gtk-3.0,
-         python-autopilot,
-         python-xlib,
+         python3-autopilot,
+         python3-xlib,
          bamfdaemon,
-Recommends: python-autopilot-vis,
-            python-evdev,
+Recommends: python3-autopilot-vis,
+            python3-evdev,
 Description: Autopilot support for the ubuntu Desktop platform
  This metapackage exists to depend on the packages needed to install and use
  autopilot on the Ubuntu Desktop platform.
-
-Package: python-autopilot-vis
-Architecture: all
-Depends: ${misc:Depends},
-         ${python:Depends},
-         python-autopilot,
-         python-dbus,
-         python-qt4,
-         python-qt4-dbus,
-Description: The visualisation application for Autopilot.
- The Autopilot vis tool allows you to inspect an application introspection
- tree. It is a useful tool for test authors, but not required to run autopilot
- tests.
 
 Package: python3-autopilot-vis
 Architecture: all
 Depends: ${misc:Depends},
          ${python3:Depends},
+         gnome-icon-theme,
          python3-autopilot,
          python3-dbus,
-         python3-pyqt4,
          python3-dbus.mainloop.qt,
-Description: The visualisation application for Autopilot (Python 3)
+         python3-pyqt4,
+Recommends: python3-lxml,
+            python3-dbus.mainloop.qt,
+Description: visualisation application for Autopilot (Python 3)
  The Autopilot vis tool allows you to inspect an application introspection
  tree. It is a useful tool for test authors, but not required to run autopilot
  tests.
-
-Package: python-autopilot-tests
-Architecture: all
-Depends: ${misc:Depends},
-         ${python:Depends},
-         dpkg-dev,
-         libautopilot-gtk (>= 1.4),
-         libautopilot-qt (>= 1.4),
-         python-autopilot,
-         python-evdev,
-         python-mock,
-         python-windowmocker,
-         qmlscene,
-         recordmydesktop,
-Description: Tests for the autopilot functional test tool.
- This package contains tests for the python-autopilot package.
- You can use this package to verify that autopilot is functioning
- correctly, or to copy the techniques used in the autopilot tests
- themselves.
 
 Package: python3-autopilot-tests
 Architecture: all
@@ -221,6 +136,7 @@ Depends: ${misc:Depends},
          python3-autopilot,
          python3-evdev,
          python3-mock,
+         python3-pyqt4,
          python-windowmocker,
          qmlscene,
          recordmydesktop,

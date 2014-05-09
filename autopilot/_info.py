@@ -28,7 +28,7 @@ __all__ = [
     'version',
 ]
 
-version = '1.4.0'
+version = '1.5.0'
 
 
 def have_vis():
@@ -82,7 +82,7 @@ def _get_package_installed_version():
                 "--showformat",
                 "${Version}",
                 "--show",
-                "python-autopilot",
+                "python3-autopilot",
             ],
             universal_newlines=True
         ).strip()

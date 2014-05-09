@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2012-2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,6 +49,7 @@ extensions = [
     'sphinx.ext.pngmath',
     'sphinx.ext.viewcode',
     'otto',
+    'man',
 ]
 
 autodoc_member_order = 'bysource'
@@ -67,7 +68,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Autopilot'
-copyright = u'2012-2013, Canonical'
+copyright = u'2012-2014, Canonical'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -253,7 +254,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'autopilot', u'Autopilot Documentation',
+    ('man', 'autopilot3', u'Automated acceptance test tool',
      [u'Thomi Richards'], 1)
 ]
 

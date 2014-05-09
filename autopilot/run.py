@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2012-2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,10 +53,8 @@ from autopilot.application._launcher import (
 )
 
 
-def _parse_arguments(argv=None):
-    """Parse command-line arguments, and return an argparse arguments
-    object.
-    """
+def _get_parser():
+    """Return a parser object for handling command line arguments."""
     common_arguments = ArgumentParser(add_help=False)
     common_arguments.add_argument(
         '--enable-profile', required=False, default=False,
@@ -126,7 +124,7 @@ def _parse_arguments(argv=None):
         default='normal',
         help="Alter the timeout values Autopilot uses. Selecting 'long' will "
         "make autopilot use longer timeouts for various polling loops. This "
-        "useful if autopilot is running on very slow hardware"
+        "can be useful if autopilot is running on very slow hardware"
     )
     parser_run.add_argument("suite", nargs="+",
                             help="Specify test suite(s) to run.")
@@ -179,6 +177,14 @@ def _parse_arguments(argv=None):
         help="The application to launch. Can be a full path, or just an "
         "application name (in which case Autopilot will search for it in "
         "$PATH).")
+    return parser
+
+
+def _parse_arguments(argv=None):
+    """Parse command-line arguments, and return an argparse arguments
+    object.
+    """
+    parser = _get_parser()
     args = parser.parse_args(args=argv)
 
     # TR - 2013-11-27 - a bug in python3.3 means argparse doesn't fail

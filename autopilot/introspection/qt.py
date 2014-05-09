@@ -72,7 +72,7 @@ class QtObjectProxyMixin(object):
 
         """
 
-        return self._backend.qt_introspection_iface
+        return self._backend.ipc_address.qt_introspection_iface
 
     @property
     def slots(self):

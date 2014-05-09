@@ -1,3 +1,22 @@
+autopilot (1.5.0-0ubuntu5) UNRELEASED; urgency=low
+
+  * Remove python2 packages and dependencies, as they're now handled by the
+    autopilot-legacy source package. (lp: #1308661)
+  * Autopilot vis tool can now search the introspection tree. (lp: #1097392)
+  * Autopilot vis tool can now draw a transparent overlay over the selected 
+    widget.
+  * Autopilot vis tool now shows the root of the introspection tree (lp: #1298600)
+  * Autopilot vis tool can now be launched from the unity dash.
+  * Autopilot test runner now has a man page installed.
+  * Autopilot introspection package now has a cleaner API.
+  * Don't leak temporary files when recording tests on the desktop (lp: #1187856)
+  * Use a more accurate timer within autopilot.
+  * Autopilot uses server-side parameter matching when selecting children (lp :#1214246)
+  * Test result artifacts are no longer overwritten when more than one artifact with
+    the same name is added to a test result (lp: #1214246)
+
+ -- Thomi Richards <thomi.richards@canonical.com>  Tue, 29 Apr 2014 11:11:32 +1200
+
 autopilot (1.4+14.04.20140416-0ubuntu1) trusty; urgency=low
 
   [ Francis Ginther ]

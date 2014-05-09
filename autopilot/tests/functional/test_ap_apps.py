@@ -24,7 +24,6 @@ import subprocess
 import logging
 import sys
 import six
-from mock import patch
 from testtools import skipIf
 from testtools.matchers import (
     Equals,
@@ -35,6 +34,7 @@ from testtools.matchers import (
 )
 from textwrap import dedent
 
+from autopilot.exceptions import ProcessSearchError
 from autopilot.process import ProcessManager
 from autopilot.platform import model
 from autopilot.testcase import AutopilotTestCase
@@ -42,11 +42,8 @@ from autopilot.tests.functional.fixtures import (
     ExecutableScript,
     TempDesktopFile,
 )
-from autopilot.introspection import (
-    get_proxy_object_for_existing_process,
-    ProcessSearchError,
-    _pid_is_running,
-)
+from autopilot.introspection import get_proxy_object_for_existing_process
+from autopilot.introspection.utilities import _pid_is_running
 from autopilot.utilities import sleep
 
 
@@ -161,10 +158,6 @@ class ApplicationLaunchTests(ApplicationTests):
             raises(ProcessSearchError(expected_error))
         )
 
-    @patch(
-        'autopilot.introspection._search_for_valid_connections',
-        new=lambda *args: []
-    )
     def test_creating_proxy_for_segfaulted_app_fails_quicker(self):
         """Searching for a process that has died since launching, the search
         must fail before the 10 second timeout.
@@ -194,9 +187,9 @@ class ApplicationLaunchTests(ApplicationTests):
         self.assertThat(difference.total_seconds(), LessThan(5))
 
     @skipIf(model() != "Desktop", "Not suitable for device (Qt4)")
-    def test_closing_app_produces_good_error_from_get_state_by_path(self):
+    def test_closing_app_produces_good_error(self):
         """Testing an application that closes before the test ends must
-        produce a good error message when calling get_state_by_path on the
+        produce a good error message when calling refresh_state() on the
         application proxy object.
 
         """
@@ -218,7 +211,7 @@ class ApplicationLaunchTests(ApplicationTests):
 
         def crashing_fn():
             for i in range(10):
-                logger.debug("%d %r", i, app_proxy.get_state_by_path("/"))
+                logger.debug("%d %r", i, app_proxy.refresh_state())
                 sleep(1)
 
         self.assertThat(
@@ -378,7 +371,10 @@ class QtTests(ApplicationTests, QmlTestMixin):
         app_proxy = self.launch_test_application(wrapper_path, app_type='qt')
         self.assertTrue(app_proxy is not None)
 
-    @skipIf(not locale_is_supported(), "Current locale is not supported")
+    @skipIf(
+        model() != "Desktop" or not locale_is_supported(),
+        "Current locale is not supported or not on desktop (Qt4)"
+    )
     def test_can_handle_non_unicode_stdout_and_stderr(self):
         path = self.write_script(dedent("""\
             #!%s

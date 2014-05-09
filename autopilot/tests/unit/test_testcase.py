@@ -95,16 +95,16 @@ class AutopilotTestCaseClassTests(TestCase):
 
     """Test functions of the AutopilotTestCase class."""
 
-    @patch('autopilot.testcase.EnvironmentPatch')
+    @patch('autopilot.testcase.EnvironmentVariable')
     def test_patch_environment(self, ep):
-        class EnvironmentPatchingTestCase(AutopilotTestCase):
+        class EnvironmentVariableTestCase(AutopilotTestCase):
 
             """Patch the enrivonment."""
 
             def test_patch_environment(self):
                 self.patch_environment('foo', 'bar')
 
-        EnvironmentPatchingTestCase('test_patch_environment').run()
+        EnvironmentVariableTestCase('test_patch_environment').run()
         ep.assert_called_once_with('foo', 'bar')
         self.assertIn(call().setUp(), ep.mock_calls)
         self.assertIn(call().cleanUp(), ep.mock_calls)

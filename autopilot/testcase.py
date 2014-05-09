@@ -51,6 +51,7 @@ from __future__ import absolute_import
 import logging
 import six
 
+from fixtures import EnvironmentVariable
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import Equals
@@ -62,7 +63,6 @@ from autopilot.application import (
     UpstartApplicationLauncher,
 )
 from autopilot.display import Display
-from autopilot.fixtures import EnvironmentPatch
 from autopilot.globals import get_debug_profile_fixture
 from autopilot.input import Keyboard, Mouse
 from autopilot.introspection import (
@@ -350,7 +350,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         dbus_bus = launcher_instance.dbus_bus
         if dbus_bus != 'session':
             self.useFixture(
-                EnvironmentPatch("DBUS_SESSION_BUS_ADDRESS", dbus_bus))
+                EnvironmentVariable("DBUS_SESSION_BUS_ADDRESS", dbus_bus))
 
         pid = launcher_instance.launch(application, *args)
         process = getattr(launcher_instance, 'process', None)
@@ -392,7 +392,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         This function is deprecated and planned for removal in autopilot 1.6
 
         """
-        self.useFixture(EnvironmentPatch(key, value))
+        self.useFixture(EnvironmentVariable(key, value))
 
     def assertVisibleWindowStack(self, stack_start):
         """Check that the visible window stack starts with the windows passed

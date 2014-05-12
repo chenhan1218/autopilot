@@ -1,1 +1,4 @@
 usr/lib/python3*/*/autopilot/vis/*.py
+debian/autopilot3-vis.desktop /usr/share/applications
+icons/autopilot-toggle-overlay.svg /usr/share/icons/hicolor/scalable/actions/
+icons/autopilot.svg /usr/share/icons/hicolor/scalable/apps/

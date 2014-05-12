@@ -24,7 +24,6 @@ import subprocess
 import logging
 import sys
 import six
-from mock import patch
 from testtools import skipIf
 from testtools.matchers import (
     Equals,
@@ -37,6 +36,7 @@ from textwrap import dedent
 
 from fixtures import EnvironmentVariable
 
+from autopilot.exceptions import ProcessSearchError
 from autopilot.process import ProcessManager
 from autopilot.platform import model
 from autopilot.testcase import AutopilotTestCase
@@ -44,11 +44,8 @@ from autopilot.tests.functional.fixtures import (
     ExecutableScript,
     TempDesktopFile,
 )
-from autopilot.introspection import (
-    get_proxy_object_for_existing_process,
-    ProcessSearchError,
-    _pid_is_running,
-)
+from autopilot.introspection import get_proxy_object_for_existing_process
+from autopilot.introspection.utilities import _pid_is_running
 from autopilot.utilities import sleep
 
 
@@ -163,10 +160,6 @@ class ApplicationLaunchTests(ApplicationTests):
             raises(ProcessSearchError(expected_error))
         )
 
-    @patch(
-        'autopilot.introspection._search_for_valid_connections',
-        new=lambda *args: []
-    )
     def test_creating_proxy_for_segfaulted_app_fails_quicker(self):
         """Searching for a process that has died since launching, the search
         must fail before the 10 second timeout.

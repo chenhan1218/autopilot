@@ -353,20 +353,24 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                 EnvironmentVariable("DBUS_SESSION_BUS_ADDRESS", dbus_bus))
 
         pid = launcher_instance.launch(application, *args)
-        process = getattr(launcher_instance, 'process', None)
         application_name = getattr(
             launcher_instance,
             'dbus_application_name',
             None
         )
+        process = getattr(launcher_instance, 'process', None)
 
-        proxy_obj = get_proxy_object_for_existing_process(
+        search_params = dict(
             pid=pid,
-            process=process,
             dbus_bus=dbus_bus,
-            emulator_base=launcher_instance.emulator_base,
-            application_name=application_name,
+            emulator_base=launcher_instance.emulator_base
         )
+        if application_name is not None:
+            search_params['application_name'] = application_name
+        if process is not None:
+            search_params['process'] = process
+
+        proxy_obj = get_proxy_object_for_existing_process(**search_params)
         proxy_obj.set_process(process)
 
         return proxy_obj
@@ -386,10 +390,20 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         finally:
             self._app_snapshot = None
 
+    @deprecated('autopilot.fixtures.EnvironmentPatch')
     def patch_environment(self, key, value):
         """Patch environment using fixture.
 
-        This function is deprecated and planned for removal in autopilot 1.6
+        This function is deprecated and planned for removal in autopilot 1.6.
+        New implementations should use EnvironmenPatch from autopilot.fixtures:
+            from autopilot import fixtures
+
+            def my_test(AutopilotTestCase):
+                my_patch = fixtures.EnvironmentPatch('key', 'value')
+                self.useFixture(my_patch)
+
+        'key' will be set to 'value'.  During tearDown, it will be reset to a
+        previous value, if one is found, or unset if not.
 
         """
         self.useFixture(EnvironmentVariable(key, value))

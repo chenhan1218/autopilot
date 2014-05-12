@@ -145,19 +145,19 @@ For more information on the various logging levels, see the `python documentatio
 Environment Patching
 ====================
 
-Sometimes you need to change the value of an environment variable for the duration of a single test. It is important that the variable is changed back to it's original value when the test has ended, so future tests are run in a pristine environment. The :mod:`~autopilot.fixtures` module includes a :class:`~autopilot.fixtures.EnvironmentPatch` fixture which takes care of this for you. For example, to set the ``FOO`` environment variable to ``"Hello World"`` for the duration of a single test, the code would look something like this::
+Sometimes you need to change the value of an environment variable for the duration of a single test. It is important that the variable is changed back to it's original value when the test has ended, so future tests are run in a pristine environment. The :mod:`fixtures` module includes a :class:`fixtures.EnvironmentVariable` fixture which takes care of this for you. For example, to set the ``FOO`` environment variable to ``"Hello World"`` for the duration of a single test, the code would look something like this::
 
-    from autopilot.fixtures import EnvironmentPatch
+    from fixtures import EnvironmentVariable
     from autopilot.testcase import AutopilotTestCase
 
 
     class MyTests(AutopilotTestCase):
 
         def test_that_needs_custom_environment(self):
-            self.useFixture(EnvironmentPatch("FOO", "Hello World"))
+            self.useFixture(EnvironmentVariable("FOO", "Hello World"))
             # Test code goes here.
 
-The :class:`~autopilot.fixtures.EnvironmentPatch` fixture will revert the value of the environment variable to it's initial value, or will delete it altogether if the environment variable did not exist when :class:`~autopilot.fixtures.EnvironmentPatch` was instantiated. This happens in the cleanup phase of the test execution.
+The :class:`fixtures.EnvironmentVariable` fixture will revert the value of the environment variable to it's initial value, or will delete it altogether if the environment variable did not exist when :class:`fixtures.EnvironmentVariable` was instantiated. This happens in the cleanup phase of the test execution.
 
 Custom Assertions
 =================

@@ -478,6 +478,7 @@ class ConnectionHasAppNameTests(TestCase):
                 "SomeAppName"
             )
 
+
 class FilterHelpersTests(TestCase):
 
     """Tests for helpers around the Filters themselves."""

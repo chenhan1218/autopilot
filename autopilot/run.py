@@ -26,6 +26,7 @@ from collections import OrderedDict
 import cProfile
 from datetime import datetime
 from imp import find_module
+import fixtures
 import logging
 import os
 import os.path
@@ -97,7 +98,8 @@ def _get_parser():
                             default=False, required=False,
                             help="Record failing tests. Required \
                             'recordmydesktop' app to be installed.\
-                            Videos are stored in /tmp/autopilot.")
+                            Videos are stored in /tmp/autopilot if not \
+                            used with -rd option.")
     parser_run.add_argument("-rd", "--record-directory", required=False,
                             type=str, help="Directory to put recorded tests")
     parser_run.add_argument("--record-options", required=False,
@@ -485,6 +487,13 @@ def _configure_timeout_profile(args):
 
 
 def _configure_video_recording(args):
+    """Configure video recording.
+
+    """
+    autopilot.globals.set_video_recording_fixture(args.record_directory)
+
+
+def _get_video_fixture(args):
     """Configure video recording based on contents of ``args``.
 
     :raises RuntimeError: If the user asked for video recording, but the
@@ -494,7 +503,10 @@ def _configure_video_recording(args):
     if args.record_directory:
         args.record = True
 
-    if args.record:
+    if not args.record:
+        # blank fixture when recording is not enabled
+        return fixtures.Fixture()
+    else:
         if not args.record_directory:
             args.record_directory = '/tmp/autopilot'
 
@@ -503,11 +515,10 @@ def _configure_video_recording(args):
                 "The application 'recordmydesktop' needs to be installed to "
                 "record failing jobs."
             )
-        autopilot.globals.configure_video_recording(
-            True,
-            args.record_directory,
-            args.record_options
-        )
+
+        return get_video_fixture(args)
+    #set_video_recording_fixture(args)
+
 
 
 def _have_video_recording_facilities():
@@ -698,11 +709,7 @@ class TestProgram(object):
 
         _configure_debug_profile(self.args)
         _configure_timeout_profile(self.args)
-        try:
-            _configure_video_recording(self.args)
-        except RuntimeError as e:
-            print("Error: %s" % str(e))
-            exit(1)
+        _configure_video_recording(self.args)
 
         if self.args.verbose:
             autopilot.globals.set_log_verbose(True)

@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2012-2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -63,7 +63,10 @@ from autopilot.application import (
     UpstartApplicationLauncher,
 )
 from autopilot.display import Display
-from autopilot.globals import get_debug_profile_fixture
+from autopilot.globals import (
+    get_debug_profile_fixture,
+    get_video_recording_fixture,
+)
 from autopilot.input import Keyboard, Mouse
 from autopilot.introspection import (
     get_proxy_object_for_existing_process,
@@ -137,7 +140,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         super(AutopilotTestCase, self).setUp()
         on_test_started(self)
         self.useFixture(get_debug_profile_fixture()(self.addDetailUniqueName))
-
+        self.useFixture(get_video_recording_fixture()())
         _lttng_trace_test_started(self.id())
         self.addCleanup(_lttng_trace_test_ended, self.id())
 

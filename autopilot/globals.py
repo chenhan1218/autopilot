@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2012-2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,7 +34,8 @@ import subprocess
 
 from autopilot._debug import DebugProfile
 from autopilot.utilities import LogFormatter, CleanupRegistered
-from autopilot._video import VideoLogger
+from autopilot._video import RMDVideoLogFixture
+
 from testtools.content import text_content
 
 logger = logging.getLogger(__name__)
@@ -100,26 +101,6 @@ def set_log_verbose(verbose):
     _test_logger.log_verbose(verbose)
 
 
-_video_logger = VideoLogger()
-
-
-def configure_video_recording(enable_recording, record_dir, record_opts=None):
-    """Configure video logging.
-
-    enable_recording is a boolean, and enables or disables recording globally.
-    record_dir is a string that specifies where videos will be stored.
-
-    """
-    if type(enable_recording) is not bool:
-        raise TypeError("enable_recording must be a boolean.")
-    if not isinstance(record_dir, str):
-        raise TypeError("record_dir must be a string.")
-
-    _video_logger.enable_recording(enable_recording)
-    _video_logger.set_recording_dir(record_dir)
-    _video_logger.set_recording_opts(record_opts)
-
-
 _debug_profile_fixture = DebugProfile
 
 
@@ -157,3 +138,16 @@ def set_long_timeout_period(new_timeout):
 def get_long_timeout_period():
     global _long_timeout_value
     return _long_timeout_value
+
+
+_video_recording_fixture = RMDVideoLogFixture
+
+
+def set_video_recording_fixture(fixture_class):
+    global _video_recording_fixture
+    _video_recording_fixture = fixture_class
+
+
+def get_video_recording_fixture():
+    global _video_recording_fixture
+    return _video_recording_fixture

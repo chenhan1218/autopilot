@@ -53,3 +53,4 @@ __all__ = [
 ]
 
 ProxyBase = CustomEmulatorBase
+ProxyBase.__name__ = 'ProxyBase'

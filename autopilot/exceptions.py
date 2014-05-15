@@ -54,9 +54,9 @@ class StateNotFoundError(RuntimeError):
     typically happens for a number of possible reasons:
 
     * The UI widget you are trying to access with
-      :py:meth:`~DBusIntrospectionObject.select_single` or
-      :py:meth:`~DBusIntrospectionObject.wait_select_single` or
-      :py:meth:`~DBusIntrospectionObject.select_many` does not exist yet.
+      :py:meth:`~autopilot.introspection.ProxyBase.select_single` or
+      :py:meth:`~autopilot.introspection.ProxyBase.wait_select_single` or
+      :py:meth:`~autopilot.introspection.ProxyBase.select_many` does not exist yet.
 
     * The UI widget you are trying to access has been destroyed by the
       application.

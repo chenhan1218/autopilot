@@ -10,14 +10,11 @@ Your autopilot test suite will grow to several files, possibly spread across sev
 
 	autopilot/
 	autopilot/<projectname>/
-	autopilot/<projectname>/emulators/
 	autopilot/<projectname>/tests/
 
-The ``autopilot`` folder can be anywhere within your project's source tree. It will likely contain a `setup.py <http://docs.python.org/2/distutils/setupscript.html>`_ file.
+The ``autopilot`` folder can be anywhere within your project's source tree. It will likely contain a `setup.py <http://docs.python.org/3/distutils/setupscript.html>`_ file.
 
-The ``autopilot/<projectname>/`` folder is the base package for your autopilot tests. This folder, and all child folders, are python packages, and so must contain an `__init__.py file <http://docs.python.org/2/tutorial/modules.html#packages>`_.
-
-The ``autopilot/<projectname>/emulators/``  directory is optional, and will only be used if you write custom proxy classes. This is an advanced topic, and is covered here: :ref:`custom_proxy_classes`
+The ``autopilot/<projectname>/`` folder is the base package for your autopilot tests. This folder, and all child folders, are python packages, and so must contain an `__init__.py file <http://docs.python.org/3/tutorial/modules.html#packages>`_. If you ever find yourself writing custom proxy classes (This is an advanced topic, and is covered here: :ref:`custom_proxy_classes`), they should be imported from this top-level package.
 
 Each test file should be named ``test_<component>.py``, where *<component>* is the logical component you are testing in that file. Test files must be written in the ``autopilot/<projectname>/tests/`` folder.
 

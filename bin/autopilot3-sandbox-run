@@ -172,6 +172,5 @@ export DISPLAY=:${SERVERNUM}.0
 export XAUTHORITY=/dev/null
 wait_for_x $SERVERNUM
 echo "I: Starting autopilot"
-dbus-launch --exit-with-session python3 -m autopilot.run run $AP_OPT $TESTLIST
+dbus-launch --exit-with-session python3 -m autopilot.run run $AP_OPT $TESTLIST || RC=$?
 echo "I: autopilot tests done"
-RC=$?

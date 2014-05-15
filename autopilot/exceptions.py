@@ -40,6 +40,11 @@ class BackendException(RuntimeError):
         self.original_exception = original_exception
 
 
+class ProcessSearchError(RuntimeError):
+    """Object introspection error occured."""
+    pass
+
+
 class StateNotFoundError(RuntimeError):
 
     """Raised when a piece of state information is not found.

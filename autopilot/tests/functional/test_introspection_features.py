@@ -17,10 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dbus import SessionBus
 import json
 import logging
-from mock import patch
 import os
 import re
 import subprocess

@@ -30,6 +30,7 @@ Build-Depends: debhelper (>= 9.0.0),
                python3-testscenarios,
                python3-testtools,
                python3-xlib,
+               sphinx-common,
                texlive-latex-extra,
 Standards-Version: 3.9.5
 Homepage: https://launchpad.net/autopilot
@@ -114,10 +115,13 @@ Package: python3-autopilot-vis
 Architecture: all
 Depends: ${misc:Depends},
          ${python3:Depends},
+         gnome-icon-theme,
          python3-autopilot,
          python3-dbus,
-         python3-pyqt4,
          python3-dbus.mainloop.qt,
+         python3-pyqt4,
+Recommends: python3-lxml,
+            python3-dbus.mainloop.qt,
 Description: visualisation application for Autopilot (Python 3)
  The Autopilot vis tool allows you to inspect an application introspection
  tree. It is a useful tool for test authors, but not required to run autopilot
@@ -132,6 +136,7 @@ Depends: ${misc:Depends},
          python3-autopilot,
          python3-evdev,
          python3-mock,
+         python3-pyqt4,
          python-windowmocker,
          qmlscene,
          recordmydesktop,

@@ -34,7 +34,6 @@ XEPHYR_OPT="-ac -br -noreset"
 XVFB_CMD="$(which Xvfb||true)"
 XVFB_OPT=""
 
-AP_CMD="$(which autopilot)"
 AP_OPT=""
 
 SERVERNUM=5
@@ -173,6 +172,6 @@ export DISPLAY=:${SERVERNUM}.0
 export XAUTHORITY=/dev/null
 wait_for_x $SERVERNUM
 echo "I: Starting autopilot"
-dbus-launch --exit-with-session autopilot run $AP_OPT $TESTLIST
+dbus-launch --exit-with-session python3 -m autopilot.run run $AP_OPT $TESTLIST
 echo "I: autopilot tests done"
 RC=$?

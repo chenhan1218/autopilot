@@ -99,6 +99,7 @@ Package: autopilot-desktop
 Architecture: all
 Section: metapackages
 Depends: ${misc:Depends},
+         at-spi2-core,
          gir1.2-gconf-2.0,
          gir1.2-glib-2.0,
          gir1.2-gtk-3.0,

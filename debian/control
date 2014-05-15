@@ -121,7 +121,6 @@ Depends: ${misc:Depends},
          python3-dbus.mainloop.qt,
          python3-pyqt4,
 Recommends: python3-lxml,
-            python3-dbus.mainloop.qt,
 Description: visualisation application for Autopilot (Python 3)
  The Autopilot vis tool allows you to inspect an application introspection
  tree. It is a useful tool for test authors, but not required to run autopilot

@@ -502,7 +502,6 @@ Loading tests from: %s
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_no_video_session_dir_saved_for_passed_test(self):
         """RecordMyDesktop should clean up its session files in tmp dir."""
-        # import pudb; pudb.set_trace()
 
         logger = _VideoLogger()
         logger.enable_recording(True)

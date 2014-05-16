@@ -30,7 +30,6 @@ from tempfile import mktemp
 from testtools import skipIf
 from testtools.matchers import Contains, Equals, MatchesRegex, Not, NotEquals
 from textwrap import dedent
-from time import sleep
 
 from autopilot import platform
 from autopilot.matchers import Eventually

@@ -10,14 +10,11 @@ Your autopilot test suite will grow to several files, possibly spread across sev
 
 	autopilot/
 	autopilot/<projectname>/
-	autopilot/<projectname>/emulators/
 	autopilot/<projectname>/tests/
 
-The ``autopilot`` folder can be anywhere within your project's source tree. It will likely contain a `setup.py <http://docs.python.org/2/distutils/setupscript.html>`_ file.
+The ``autopilot`` folder can be anywhere within your project's source tree. It will likely contain a `setup.py <http://docs.python.org/3/distutils/setupscript.html>`_ file.
 
-The ``autopilot/<projectname>/`` folder is the base package for your autopilot tests. This folder, and all child folders, are python packages, and so must contain an `__init__.py file <http://docs.python.org/2/tutorial/modules.html#packages>`_.
-
-The ``autopilot/<projectname>/emulators/``  directory is optional, and will only be used if you write custom proxy classes. This is an advanced topic, and is covered here: :ref:`custom_proxy_classes`
+The ``autopilot/<projectname>/`` folder is the base package for your autopilot tests. This folder, and all child folders, are python packages, and so must contain an `__init__.py file <http://docs.python.org/3/tutorial/modules.html#packages>`_. If you ever find yourself writing custom proxy classes (This is an advanced topic, and is covered here: :ref:`custom_proxy_classes`), they should be imported from this top-level package.
 
 Each test file should be named ``test_<component>.py``, where *<component>* is the logical component you are testing in that file. Test files must be written in the ``autopilot/<projectname>/tests/`` folder.
 
@@ -85,7 +82,7 @@ The return value from :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_a
 
 .. otto:: **What is a Proxy Object?**
 
-	Whenever you launch an application, autopilot gives you a "proxy object". These are instances of the :class:`~autopilot.introspection.dbus.DBusIntrospectionObject` class, with all the data from your application mirrored in the proxy object instances. For example, if you have a proxy object for a push button class (say, ``QPushButton``, for example), the proxy object will have attribute to match every attribute in the class within your application. Autopilot automatically keeps the data in these instances up to date, so you can use them in your test assertions.
+	Whenever you launch an application, autopilot gives you a "proxy object". These are instances of the :class:`~autopilot.introspection.ProxyBase` class, with all the data from your application mirrored in the proxy object instances. For example, if you have a proxy object for a push button class (say, ``QPushButton``, for example), the proxy object will have attribute to match every attribute in the class within your application. Autopilot automatically keeps the data in these instances up to date, so you can use them in your test assertions.
 
 	User interfaces are made up of a tree of widgets, and autopilot represents these widgets as a tree of proxy objects. Proxy objects have a number of methods on them for selecting child objects in the introspection tree, so test authors can easily inspect the parts of the UI tree they care about.
 

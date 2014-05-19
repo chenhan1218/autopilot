@@ -64,14 +64,8 @@ class UpstartApplicationLauncher(ApplicationLauncher):
     Started = object()
     Stopped = object()
 
-    def __init__(self, case_addDetail, **kwargs):
+    def __init__(self, case_addDetail):
         super(UpstartApplicationLauncher, self).__init__(case_addDetail)
-
-        self.emulator_base = kwargs.pop('emulator_base', None)
-        self.dbus_bus = kwargs.pop('dbus_bus', 'session')
-        self.dbus_application_name = kwargs.pop('application_name', None)
-
-        _raise_on_unknown_kwargs(kwargs)
 
     def launch(self, app_id, app_uris=[]):
         state = {}
@@ -193,14 +187,11 @@ class ClickApplicationLauncher(UpstartApplicationLauncher):
 
 
 class NormalApplicationLauncher(ApplicationLauncher):
-    def __init__(self, case_addDetail, **kwargs):
+    def __init__(self, case_addDetail, app_type=None, launch_dir=None, capture_output=None):
         super(NormalApplicationLauncher, self).__init__(case_addDetail)
-        self.app_type = kwargs.pop('app_type', None)
-        self.cwd = kwargs.pop('launch_dir', None)
-        self.capture_output = kwargs.pop('capture_output', True)
-
-        self.dbus_bus = kwargs.pop('dbus_bus', 'session')
-        self.emulator_base = kwargs.pop('emulator_base', None)
+        self.app_type = app_type
+        self.cwd = launch_dir
+        self.capture_output = capture_output
 
         _raise_on_unknown_kwargs(kwargs)
 

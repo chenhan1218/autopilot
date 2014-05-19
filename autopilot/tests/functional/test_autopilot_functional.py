@@ -30,6 +30,8 @@ from testtools.matchers import Contains, Equals, MatchesRegex, Not
 from textwrap import dedent
 
 from autopilot import platform
+from autopilot.matchers import Eventually
+from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional import AutopilotRunTestBase, remove_if_exists
 
 

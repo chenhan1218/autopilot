@@ -363,16 +363,16 @@ Writing Custom Proxy Classes
 ============================
 
 By default, autopilot will generate an object for every introspectable item in your application under test. These are generated on the fly, and derive from
-:class:`~autopilot.introspection.dbus.DBusIntrospectionObject`. This gives you the usual methods of selecting other nodes in the object tree, as well the the means to inspect all the properties in that class.
+:class:`~autopilot.introspection.ProxyBase`. This gives you the usual methods of selecting other nodes in the object tree, as well the the means to inspect all the properties in that class.
 
 However, sometimes you want to customize the class used to create these objects. The most common reason to want to do this is to provide methods that make it easier to inspect these objects. Autopilot allows test authors to provide their own custom classes, through a couple of simple steps:
 
-1. First, you must define your own base class, to be used by all custom proxy objects in your test suite. This base class can be empty, but must derive from :class:`~autopilot.introspection.dbus.CustomEmulatorBase`. An example class might look like this::
+1. First, you must define your own base class, to be used by all custom proxy objects in your test suite. This base class can be empty, but must derive from :class:`~autopilot.introspection.ProxyBase`. An example class might look like this::
 
-    from autopilot.introspection import CustomEmulatorBase
+    from autopilot.introspection import ProxyBase
 
 
-    class CustomProxyObjectBase(CustomEmulatorBase):
+    class CustomProxyObjectBase(ProxyBase):
         """A base class for all custom proxy objects within this test suite."""
 
 2. Define the classes you want autopilot to use, instead of the default. The simplest method is to give the class the same name as the type you wish to override. For example, if you want to define your own custom class to be used every time autopilot generates an instance of a 'QLabel' object, the class definition would look like this::
@@ -405,7 +405,7 @@ This method should return True if the object matches this custom proxy class, an
                 '/path/to/the/application',
                 emulator_base=CustomProxyObjectBase)
 
-4. You can pass the custom proxy class to methods like :meth:`~autopilot.introspection.dbus.DBusIntrospectionObject.select_single` instead of a string. So, for example, the following is a valid way of selecting the QLabel instances in an application::
+4. You can pass the custom proxy class to methods like :meth:`~autopilot.introspection.ProxyBase.select_single` instead of a string. So, for example, the following is a valid way of selecting the QLabel instances in an application::
 
     # Get all QLabels in the applicaton:
     labels = self.app.select_many(QLabel)

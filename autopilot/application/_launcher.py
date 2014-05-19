@@ -84,7 +84,9 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             state.get('status', None),
             state.get('message', '')
         )
-        return self._get_pid_for_launched_app(app_id)
+        pid = self._get_pid_for_launched_app(app_id)
+        self.process_search_criteria = {'pid': pid}
+        return pid
 
     @staticmethod
     def _on_failed(launched_app_id, failure_type, state):
@@ -194,6 +196,10 @@ class NormalApplicationLauncher(ApplicationLauncher):
         app_path = _get_application_path(application)
         app_path, arguments = self._setup_environment(app_path, *arguments)
         self.process = self._launch_application_process(app_path, *arguments)
+        self.process_search_criteria = {
+            'process': self.process,
+            'pid': self.process.pid
+        }
 
         return self.process.pid
 

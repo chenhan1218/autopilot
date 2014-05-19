@@ -610,11 +610,12 @@ class ApplicationLauncher(Fixture):
                 )
             )
 
-        pid = self.launcher_instance.launch(
-            *self.launch_args
-        )
+        self.launcher_instance.launch(*self.launch_args)
+#        pid = self.launcher_instance.launch(
+#            *self.launch_args
+#        )
         self.proxy_object = get_proxy_object_for_existing_process(
-            pid=pid,
             dbus_bus=self.dbus_bus,
             emulator_base=self.emulator_base,
+            **self.launcher_instance.process_search_criteria
         )

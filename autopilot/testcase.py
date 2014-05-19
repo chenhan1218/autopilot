@@ -269,14 +269,15 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             NormalApplicationLauncher(
                 self.addDetailUniqueName,
                 kwargs.pop('app_type', None),
+                kwargs.pop('launch_dir', None),
             )
         )
 
         application_launcher = self.useFixture(
             ApplicationLauncher(
                 launcher,
-                (application,) + arguments,
-                application=application,
+                application,
+                *arguments,
                 **kwargs
             )
         )
@@ -328,8 +329,15 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         launcher = self.useFixture(
             ClickApplicationLauncher(self.addDetailUniqueName, **kwargs)
         )
-        return self._launch_test_application(launcher, package_id, app_name,
-                                             app_uris)
+        application_launcher = self.useFixture(
+            ApplicationLauncher(
+                launcher,
+                package_id,
+                app_name,
+                app_uris,
+            )
+        )
+        return application_launcher.proxy_object
 
     def launch_upstart_application(self, application, uris=[], **kwargs):
         """Launch an application with upstart.
@@ -364,8 +372,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         application_launcher = self.useFixture(
             ApplicationLauncher(
                 launcher,
-                [application, uris],
-                application=application,
+                application,
+                uris,
                 **kwargs
             )
         )
@@ -592,12 +600,11 @@ def _ensure_uinput_device_created():
 
 class ApplicationLauncher(Fixture):
 
-    def __init__(self, launcher_instance, launch_args, **kwargs):
+    def __init__(self, launcher_instance, *arguments, **kwargs):
         self.launcher_instance = launcher_instance
-        self.launch_args = launch_args
+        self.arguments = arguments
         self.emulator_base = kwargs.pop('emulator_base', None)
         self.dbus_bus = kwargs.pop('dbus_bus', 'session')
-        self.application = kwargs.pop('application', None)
         _raise_on_unknown_kwargs(kwargs)
 
     def setUp(self):
@@ -610,7 +617,7 @@ class ApplicationLauncher(Fixture):
                 )
             )
 
-        self.launcher_instance.launch(*self.launch_args)
+        self.launcher_instance.launch(*self.arguments)
         self.proxy_object = get_proxy_object_for_existing_process(
             dbus_bus=self.dbus_bus,
             emulator_base=self.emulator_base,

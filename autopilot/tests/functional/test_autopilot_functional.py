@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2012-2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,7 +36,6 @@ from autopilot import platform
 from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional import AutopilotRunTestBase, remove_if_exists
-#from autopilot.globals import _VideoLogger
 from autopilot._video import RMDVideoLogFixture
 
 
@@ -332,6 +331,7 @@ Loading tests from: %s
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_record_flag_works(self):
         """Must be able to record videos when the -r flag is present."""
+
         mock_test_case = Mock()
         mock_test_case.shortDescription.return_value = "Dummy_Description"
         video_logger = RMDVideoLogFixture('/tmp/autopilot', mock_test_case)
@@ -490,21 +490,17 @@ Loading tests from: %s
     def test_no_video_session_dir_saved_for_passed_test(self):
         """RecordMyDesktop should clean up its session files in tmp dir."""
 
-        logger = _VideoLogger()
-        logger.enable_recording(True)
-        logger.set_recording_dir('/tmp')
-
         with TempDir() as tmp_dir_fixture:
             dir_pattern = os.path.join(tmp_dir_fixture.path, 'rMD-session*')
             original_session_dirs = set(glob.glob(dir_pattern))
             get_new_sessions = lambda: \
                 set(glob.glob(dir_pattern)) - original_session_dirs
-
-            logger._recording_opts = ['--workdir', tmp_dir_fixture.path] \
-                + logger._recording_opts
             mock_test_case = Mock()
             mock_test_case.shortDescription.return_value = "Dummy_Description"
-            logger(mock_test_case)
+            logger = RMDVideoLogFixture('/tmp', mock_test_case)
+            logger.set_recording_dir('/tmp')
+            logger._recording_opts = ['--workdir', tmp_dir_fixture.path] \
+                + logger._recording_opts
             self.assertThat(get_new_sessions, Eventually(NotEquals(set())))
             logger._stop_video_capture(mock_test_case)
         self.assertThat(get_new_sessions, Eventually(Equals(set())))

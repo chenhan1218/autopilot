@@ -38,7 +38,6 @@ class RMDVideoLogFixture(fixtures.Fixture):
 
     _recording_app = '/usr/bin/recordmydesktop'
     _recording_opts = ['--no-sound', '--no-frame', '-o']
-    #_record_directory = '/tmp/autopilot'
 
     def __init__(self, recording_directory, test_instance):
         self.recording_directory = recording_directory
@@ -53,8 +52,8 @@ class RMDVideoLogFixture(fixtures.Fixture):
                 self._recording_app)
 
         self._test_passed = False
-        #TODO - re-add
-        #self.addOnException(self._on_test_failed)
+
+        self.test_instance.addOnException(self._on_test_failed)
         self.addCleanup(self._stop_video_capture, self.test_instance)
         self._start_video_capture(self.test_instance.shortDescription())
 
@@ -114,6 +113,8 @@ class RMDVideoLogFixture(fixtures.Fixture):
     def get_capture_command_line(self):
         return [self._recording_app] + self._recording_opts
 
+    def set_recording_dir(self, dir):
+        self.recording_directory = dir
 
 
 def _have_video_recording_facilities():

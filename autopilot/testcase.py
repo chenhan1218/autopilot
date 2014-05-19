@@ -353,38 +353,33 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         launcher = self.useFixture(
             UpstartApplicationLauncher(self.addDetailUniqueName, **kwargs)
         )
-        return self._launch_test_application(launcher, application_name, uris)
 
-    # Wrapper function tying the newer ApplicationLauncher behaviour with the
-    # previous (to be depreciated) behaviour
-    def _launch_test_application(self, launcher_instance, application, *args):
-
-        dbus_bus = launcher_instance.dbus_bus
-        if dbus_bus != 'session':
-            self.patch_environment("DBUS_SESSION_BUS_ADDRESS", dbus_bus)
-
-        pid = launcher_instance.launch(application, *args)
-        application_name = getattr(
-            launcher_instance,
-            'dbus_application_name',
-            None
+        pid = launcher.launch(application_name, uris)
+        application_launcher = self.useFixture(
+            ApplicationLauncher(
+                self.addDetailUniqueName,
+                pid,
+                kwargs,
+            )
         )
-        process = getattr(launcher_instance, 'process', None)
+        return application_launcher.proxy_object
 
-        search_params = dict(
-            pid=pid,
-            dbus_bus=dbus_bus,
-            emulator_base=launcher_instance.emulator_base
-        )
-        if application_name is not None:
-            search_params['application_name'] = application_name
-        if process is not None:
-            search_params['process'] = process
-
-        proxy_obj = get_proxy_object_for_existing_process(**search_params)
-        proxy_obj.set_process(process)
-
-        return proxy_obj
+# Maybe the diff eliminates all of this?  Not sure!
+#        process = getattr(launcher_instance, 'process', None)
+#        search_params = dict(
+#            pid=pid,
+#            dbus_bus=dbus_bus,
+#            emulator_base=launcher_instance.emulator_base
+#        )
+#        if application_name is not None:
+#            search_params['application_name'] = application_name
+#        if process is not None:
+#            search_params['process'] = process
+#
+#        proxy_obj = get_proxy_object_for_existing_process(**search_params)
+#        proxy_obj.set_process(process)
+#
+#        return proxy_obj
 
     def _compare_system_with_app_snapshot(self):
         """Compare the currently running application with the last snapshot.

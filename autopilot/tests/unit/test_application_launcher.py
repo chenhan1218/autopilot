@@ -84,8 +84,6 @@ class NormalApplicationLauncherTests(TestCase):
             app_type=True,
             launch_dir=True,
             capture_output=True,
-            dbus_bus=True,
-            emulator_base=True
         )
         self.assertThat(
             lambda: NormalApplicationLauncher(self.addDetail, **test_kwargs),
@@ -95,7 +93,8 @@ class NormalApplicationLauncherTests(TestCase):
     def test_raises_value_error_on_unknown_kwargs(self):
         self.assertThat(
             lambda: NormalApplicationLauncher(self.addDetail, unknown=True),
-            raises(ValueError("Unknown keyword arguments: 'unknown'."))
+            raises(TypeError("__init__() got an unexpected keyword argument "
+                             "'unknown'"))
         )
 
     def test_kill_process_and_attach_logs(self):
@@ -182,18 +181,8 @@ class ClickApplicationLauncherTests(TestCase):
     def test_raises_exception_on_unknown_kwargs(self):
         self.assertThat(
             lambda: ClickApplicationLauncher(self.addDetail, unknown=True),
-            raises(ValueError("Unknown keyword arguments: 'unknown'."))
-        )
-
-    def test_application_name_kwarg_stored(self):
-        app_name = self.getUniqueString()
-        launcher = ClickApplicationLauncher(
-            self.addDetail,
-            application_name=app_name
-        )
-
-        self.assertThat(
-            launcher.dbus_application_name, Equals(app_name)
+            raises(TypeError("__init__() got an unexpected keyword argument "
+                             "'unknown'"))
         )
 
     def test_click_launch_calls_upstart_launch(self):
@@ -316,32 +305,11 @@ class UpstartApplicationLauncherTests(TestCase):
     def test_can_construct_UpstartApplicationLauncher(self):
         UpstartApplicationLauncher(self.addDetail)
 
-    def test_default_values_are_set(self):
-        launcher = UpstartApplicationLauncher(self.addDetail)
-        self.assertThat(launcher.emulator_base, Equals(None))
-        self.assertThat(launcher.dbus_bus, Equals('session'))
-
-    def test_can_set_emulator_base(self):
-        mock_emulator_base = Mock()
-        launcher = UpstartApplicationLauncher(
-            self.addDetail,
-            emulator_base=mock_emulator_base
-        )
-
-        self.assertThat(launcher.emulator_base, Equals(mock_emulator_base))
-
-    def test_can_set_dbus_bus(self):
-        launcher = UpstartApplicationLauncher(
-            self.addDetail,
-            dbus_bus='system'
-        )
-
-        self.assertThat(launcher.dbus_bus, Equals('system'))
-
     def test_raises_exception_on_unknown_kwargs(self):
         self.assertThat(
             lambda: UpstartApplicationLauncher(self.addDetail, unknown=True),
-            raises(ValueError("Unknown keyword arguments: 'unknown'."))
+            raises(TypeError("__init__() got an unexpected keyword argument "
+                             "'unknown'"))
         )
 
     def test_on_failed_only_sets_status_on_correct_app_id(self):

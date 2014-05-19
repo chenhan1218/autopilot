@@ -30,12 +30,14 @@ from tempfile import mktemp
 from testtools import skipIf
 from testtools.matchers import Contains, Equals, MatchesRegex, Not, NotEquals
 from textwrap import dedent
+from time import sleep
 
 from autopilot import platform
 from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional import AutopilotRunTestBase, remove_if_exists
 #from autopilot.globals import _VideoLogger
+from autopilot._video import RMDVideoLogFixture
 
 
 class AutopilotFunctionalTestsBase(AutopilotRunTestBase):
@@ -330,40 +332,26 @@ Loading tests from: %s
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_record_flag_works(self):
         """Must be able to record videos when the -r flag is present."""
-
+        mock_test_case = Mock()
+        mock_test_case.shortDescription.return_value = "Dummy_Description"
+        video_logger = RMDVideoLogFixture('/tmp/autopilot', mock_test_case)
+        video_logger.setUp()
         # The sleep is to avoid the case where recordmydesktop does not create
         # a file because it gets stopped before it's even started capturing
         # anything.
-        self.create_test_file(
-            "test_simple.py", dedent("""\
-
-            from autopilot.testcase import AutopilotTestCase
-            from time import sleep
-
-            class SimpleTest(AutopilotTestCase):
-
-                def test_simple(self):
-                    sleep(1)
-                    self.fail()
-            """)
-        )
-
+        sleep(1)
+        video_logger._stop_video_capture(mock_test_case)
         should_delete = not os.path.exists('/tmp/autopilot')
         if should_delete:
             self.addCleanup(remove_if_exists, "/tmp/autopilot")
         else:
             self.addCleanup(
                 remove_if_exists,
-                '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv')
-
-        code, output, error = self.run_autopilot(["run", "-r", "tests"])
-
-        self.assertThat(code, Equals(1))
+                '/tmp/autopilot/Dummy_Description.ogv'
+            )
         self.assertTrue(os.path.exists('/tmp/autopilot'))
-        self.assertTrue(os.path.exists(
-            '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv'))
-        if should_delete:
-            self.addCleanup(remove_if_exists, "/tmp/autopilot")
+        self.assertTrue(os.path.exists('/tmp/autopilot/Dummy_Description.ogv'))
+
 
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_record_dir_option_and_record_works(self):

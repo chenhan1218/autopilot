@@ -26,6 +26,8 @@ import os
 import signal
 import subprocess
 
+from testtools.content import text_content
+
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +52,7 @@ class RMDVideoLogFixture(fixtures.Fixture):
                 "Disabling video capture since '%s' is not present",
                 self._recording_app)
 
-        self._test_passed = True
+        self._test_passed = False
         #TODO - re-add
         #self.addOnException(self._on_test_failed)
         self.addCleanup(self._stop_video_capture, self.test_instance)

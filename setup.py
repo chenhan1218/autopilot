@@ -44,7 +44,7 @@ setup(
     license='GPLv3',
     packages=find_packages(),
     test_suite='autopilot.tests',
-    scripts=['bin/autopilot-sandbox-run'],
+    scripts=['bin/autopilot3-sandbox-run'],
     ext_modules=[autopilot_tracepoint],
     entry_points={
         'console_scripts': ['autopilot3 = autopilot.run:main']

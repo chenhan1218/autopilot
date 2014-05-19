@@ -580,4 +580,34 @@ def _ensure_uinput_device_created():
         _logger.warning(
             "Failed to create Touch device for bug lp:1297595 workaround: "
             "%s" % str(e)
+
+class _`(Fixture):
+
+    def __init__(self, launcher_instance, launch_args, **kwargs):
+        self.launcher_instance = launcher_instance
+        self.application = application
+        self.launch_args = launch_args
+        self.emulator_base = kwargs.pop('emulator_base', None)
+        self.dbus_bus = kwargs.pop('dbus_bus', 'session')
+        self.dbus_application_name = kwargs.pop('application_name', None)
+        _raise_on_unknown_kwargs(kwargs)
+
+    def setUp(self):
+        super().setUp()
+        if self.dbus_bus != 'session':
+            self.useFixture(
+                EnvironmentPatch(
+                    "DBUS_SESSION_BUS_ADDRESS",
+                    self.dbus_bus
+                )
+            )
+
+        pid = self.launcher_instance.launcher_instance.launch(
+            *self.launch_args
+        )
+        self.proxy_object = get_proxy_object_for_existing_process(
+            pid=pid,
+            dbus_bus=dbus_bus,
+            emulator_base=launcher_instance.emulator_base,
+            application_name=self.dbus_application_name,
         )

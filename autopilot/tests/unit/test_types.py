@@ -779,7 +779,7 @@ class DBusIntrospectionObjectTests(TestCase):
         )
         error_logger.assert_called_once_with(
             "While constructing attribute '%s.%s': %s",
-            "DBusIntrospectionObject",
+            "ProxyBase",
             "foo",
             "Cannot create attribute, no data supplied"
         )

@@ -510,7 +510,7 @@ Scenarios can be useful, but we must be careful not to abuse them. It is far bet
 Do Not Depend on Object Ordering
 ++++++++++++++++++++++++++++++++
 
-Calls such as :meth:`~autopilot.introspection.dbus.DBusIntrospectionObject.select_many` return several objects at once. These objects are explicitly unordered, and test authors must take care not to make assumptions about their order.
+Calls such as :meth:`~autopilot.introspection.ProxyBase.select_many` return several objects at once. These objects are explicitly unordered, and test authors must take care not to make assumptions about their order.
 
 **Bad Example:**
 

@@ -236,15 +236,16 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             Tutorial Section :ref:`custom_proxy_classes`
 
         """
+        type_name_str = get_type_name(type_name)
         new_query = self._query.select_descendant(
-            get_type_name(type_name),
+            type_name_str,
             kwargs
         )
         instances = self._execute_query(new_query)
         if len(instances) > 1:
             raise ValueError("More than one item was returned for query")
         if not instances:
-            raise StateNotFoundError(type_name, **kwargs)
+            raise StateNotFoundError(type_name_str, **kwargs)
         return instances[0]
 
     def wait_select_single(self, type_name='*', **kwargs):

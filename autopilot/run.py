@@ -198,6 +198,7 @@ def _parse_arguments(argv=None):
     if 'suite' in args:
         args.suite = [suite.rstrip('/') for suite in args.suite]
 
+    autopilot.globals.set_args(args)
     return args
 
 
@@ -485,49 +486,8 @@ def _configure_timeout_profile(args):
         autopilot.globals.set_default_timeout_period(20.0)
         autopilot.globals.set_long_timeout_period(30.0)
 
-
-def _configure_video_recording(args):
-    """Configure video recording.
-
-    """
-    autopilot.globals.set_video_recording_fixture(args.record_directory)
-
-
-def _get_video_fixture(args):
-    """Configure video recording based on contents of ``args``.
-
-    :raises RuntimeError: If the user asked for video recording, but the
-        system does not support video recording.
-
-    """
-    if args.record_directory:
-        args.record = True
-
-    if not args.record:
-        # blank fixture when recording is not enabled
-        return fixtures.Fixture()
-    else:
-        if not args.record_directory:
-            args.record_directory = '/tmp/autopilot'
-
-        if not _have_video_recording_facilities():
-            raise RuntimeError(
-                "The application 'recordmydesktop' needs to be installed to "
-                "record failing jobs."
-            )
-
-        return get_video_fixture(args)
-    #set_video_recording_fixture(args)
-
-
-
-def _have_video_recording_facilities():
-    call_ret_code = subprocess.call(
-        ['which', 'recordmydesktop'],
-        stdout=subprocess.PIPE
-    )
-    return call_ret_code == 0
-
+def _set_global_args(args):
+    autopilot.globals.set_args(args)
 
 def _prepare_application_for_launch(application, interface):
     app_path, app_arguments = _get_application_path_and_arguments(application)
@@ -709,7 +669,6 @@ class TestProgram(object):
 
         _configure_debug_profile(self.args)
         _configure_timeout_profile(self.args)
-        _configure_video_recording(self.args)
 
         if self.args.verbose:
             autopilot.globals.set_log_verbose(True)

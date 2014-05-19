@@ -34,7 +34,7 @@ import subprocess
 
 from autopilot._debug import DebugProfile
 from autopilot.utilities import LogFormatter, CleanupRegistered
-from autopilot._video import RMDVideoLogFixture
+#from autopilot._video import RMDVideoLogFixture
 
 from testtools.content import text_content
 
@@ -140,14 +140,14 @@ def get_long_timeout_period():
     return _long_timeout_value
 
 
-_video_recording_fixture = RMDVideoLogFixture
+_args = None
 
 
-def set_video_recording_fixture(fixture_class):
-    global _video_recording_fixture
-    _video_recording_fixture = fixture_class
+def set_args(args):
+    global _args
+    _args = args
 
 
-def get_video_recording_fixture():
-    global _video_recording_fixture
-    return _video_recording_fixture
+def get_args():
+    global _args
+    return _args

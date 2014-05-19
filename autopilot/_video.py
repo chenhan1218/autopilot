@@ -23,6 +23,8 @@ from __future__ import absolute_import
 import fixtures
 import logging
 import os
+import signal
+import subprocess
 
 
 logger = logging.getLogger(__name__)
@@ -34,10 +36,11 @@ class RMDVideoLogFixture(fixtures.Fixture):
 
     _recording_app = '/usr/bin/recordmydesktop'
     _recording_opts = ['--no-sound', '--no-frame', '-o']
-    _record_directory = '/tmp/autopilot'
+    #_record_directory = '/tmp/autopilot'
 
-    def __init__(self, recording_directory):
+    def __init__(self, recording_directory, test_instance):
         self.recording_directory = recording_directory
+        self.test_instance = test_instance
 
     def setUp(self):
         super(RMDVideoLogFixture, self).setUp()
@@ -47,11 +50,11 @@ class RMDVideoLogFixture(fixtures.Fixture):
                 "Disabling video capture since '%s' is not present",
                 self._recording_app)
 
-    def __call__(self, test_instance):
         self._test_passed = True
-        self.addOnException(self._on_test_failed)
-        self.addCleanup(self._stop_video_capture, test_instance)
-        self._start_video_capture(test_instance.shortDescription())
+        #TODO - re-add
+        #self.addOnException(self._on_test_failed)
+        self.addCleanup(self._stop_video_capture, self.test_instance)
+        self._start_video_capture(self.test_instance.shortDescription())
 
     def _have_recording_app(self):
         return os.path.exists(self._recording_app)
@@ -108,3 +111,40 @@ class RMDVideoLogFixture(fixtures.Fixture):
 
     def get_capture_command_line(self):
         return [self._recording_app] + self._recording_opts
+
+
+
+def _have_video_recording_facilities():
+    call_ret_code = subprocess.call(
+        ['which', 'recordmydesktop'],
+        stdout=subprocess.PIPE
+    )
+    return call_ret_code == 0
+
+
+def configure_video_recording(args, test_instance):
+    """Configure video recording based on contents of ``args``.
+
+    :raises RuntimeError: If the user asked for video recording, but the
+        system does not support video recording.
+
+    """
+    if args.record_directory:
+        args.record = True
+
+    if not args.record:
+        # blank fixture when recording is not enabled
+        #TODO create real blank fixture
+        return fixtures.Fixture()
+    else:
+        if not args.record_directory:
+            args.record_directory = '/tmp/autopilot'
+
+        if not _have_video_recording_facilities():
+            raise RuntimeError(
+                "The application 'recordmydesktop' needs to be installed to "
+                "record failing jobs."
+            )
+
+        return RMDVideoLogFixture(args.record_directory, test_instance)
+

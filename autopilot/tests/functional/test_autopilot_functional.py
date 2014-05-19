@@ -35,7 +35,7 @@ from autopilot import platform
 from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional import AutopilotRunTestBase, remove_if_exists
-from autopilot.globals import _VideoLogger
+#from autopilot.globals import _VideoLogger
 
 
 class AutopilotFunctionalTestsBase(AutopilotRunTestBase):

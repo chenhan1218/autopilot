@@ -20,15 +20,13 @@
 
 from __future__ import absolute_import
 
-from fixtures import TempDir
 import glob
 import os
 import os.path
 import re
-from mock import Mock
 from tempfile import mktemp
 from testtools import skipIf
-from testtools.matchers import Contains, Equals, MatchesRegex, Not, NotEquals
+from testtools.matchers import Contains, Equals, MatchesRegex, Not
 from textwrap import dedent
 from time import sleep
 
@@ -489,7 +487,6 @@ Loading tests from: %s
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_no_video_session_dir_saved_for_passed_test(self):
         """RecordMyDesktop should clean up its session files in tmp dir."""
-
         with TempDir() as tmp_dir_fixture:
             dir_pattern = os.path.join(tmp_dir_fixture.path, 'rMD-session*')
             original_session_dirs = set(glob.glob(dir_pattern))
@@ -503,7 +500,7 @@ Loading tests from: %s
                 + logger._recording_opts
             self.assertThat(get_new_sessions, Eventually(NotEquals(set())))
             logger._stop_video_capture(mock_test_case)
-        self.assertThat(get_new_sessions, Eventually(Equals(set())))
+
 
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_no_video_for_nested_testcase_when_parent_and_child_fail(self):
@@ -719,50 +716,6 @@ SyntaxError: invalid syntax
 
         self.assertThat(code, Equals(0))
         self.assertThat(output, Not(Contains('Running tests in random order')))
-
-
-class AutopilotPatchEnvironmentTests(AutopilotTestCase):
-
-    def test_patch_environment_new_patch_is_unset_to_none(self):
-        """patch_environment must unset the environment variable if previously
-        was unset.
-
-        """
-
-        class PatchEnvironmentSubTests(AutopilotTestCase):
-
-            def test_patch_env_sets_var(self):
-                """Setting the environment variable must make it available."""
-                self.patch_environment("APABC321", "Foo")
-                self.assertThat(os.getenv("APABC321"), Equals("Foo"))
-
-        self.assertThat(os.getenv('APABC321'), Equals(None))
-
-        result = PatchEnvironmentSubTests("test_patch_env_sets_var").run()
-
-        self.assertThat(result.wasSuccessful(), Equals(True))
-        self.assertThat(os.getenv('APABC321'), Equals(None))
-
-    def test_patch_environment_existing_patch_is_reset(self):
-        """patch_environment must reset the environment back to it's previous
-        value.
-
-        """
-
-        class PatchEnvironmentSubTests(AutopilotTestCase):
-
-            def test_patch_env_sets_var(self):
-                """Setting the environment variable must make it available."""
-                self.patch_environment("APABC987", "InnerTest")
-                self.assertThat(os.getenv("APABC987"), Equals("InnerTest"))
-
-        self.patch_environment('APABC987', "OuterTest")
-        self.assertThat(os.getenv('APABC987'), Equals("OuterTest"))
-
-        result = PatchEnvironmentSubTests("test_patch_env_sets_var").run()
-
-        self.assertThat(result.wasSuccessful(), Equals(True))
-        self.assertThat(os.getenv('APABC987'), Equals("OuterTest"))
 
 
 class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):

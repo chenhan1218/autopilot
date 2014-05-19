@@ -52,6 +52,10 @@ import logging
 import os
 import six
 
+from fixtures import (
+    EnvironmentVariable,
+    Fixture,
+)
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import Equals
@@ -71,7 +75,11 @@ from autopilot.introspection import (
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
 from autopilot.process import ProcessManager
-from autopilot.utilities import deprecated, on_test_started
+from autopilot.utilities import (
+    deprecated,
+    on_test_started,
+    _raise_on_unknown_kwargs,
+)
 from autopilot._timeout import Timeout
 try:
     from autopilot import tracepoint as tp
@@ -266,11 +274,10 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         application_launcher = self.useFixture(
             ApplicationLauncher(
-                self.addDetailUniqueName,
                 launcher,
-                application_name,
-                uris,
-                kwargs,
+                arguments,
+                application,
+                **kwargs
             )
         )
         return application_launcher.proxy_object
@@ -354,12 +361,11 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             UpstartApplicationLauncher(self.addDetailUniqueName, **kwargs)
         )
 
-        pid = launcher.launch(application_name, uris)
         application_launcher = self.useFixture(
             ApplicationLauncher(
-                self.addDetailUniqueName,
-                pid,
-                kwargs,
+                launcher,
+                application=application_name,
+                **kwargs
             )
         )
         return application_launcher.proxy_object
@@ -580,10 +586,12 @@ def _ensure_uinput_device_created():
         _logger.warning(
             "Failed to create Touch device for bug lp:1297595 workaround: "
             "%s" % str(e)
+        )
 
-class _`(Fixture):
 
-    def __init__(self, launcher_instance, launch_args, **kwargs):
+class ApplicationLauncher(Fixture):
+
+    def __init__(self, launcher_instance, application, launch_args, **kwargs):
         self.launcher_instance = launcher_instance
         self.application = application
         self.launch_args = launch_args
@@ -596,7 +604,7 @@ class _`(Fixture):
         super().setUp()
         if self.dbus_bus != 'session':
             self.useFixture(
-                EnvironmentPatch(
+                EnvironmentVariable(
                     "DBUS_SESSION_BUS_ADDRESS",
                     self.dbus_bus
                 )
@@ -607,7 +615,7 @@ class _`(Fixture):
         )
         self.proxy_object = get_proxy_object_for_existing_process(
             pid=pid,
-            dbus_bus=dbus_bus,
-            emulator_base=launcher_instance.emulator_base,
+            dbus_bus=self.dbus_bus,
+            emulator_base=self.emulator_base,
             application_name=self.dbus_application_name,
         )

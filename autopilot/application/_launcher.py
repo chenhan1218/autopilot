@@ -31,7 +31,6 @@ import signal
 from testtools.content import content_from_file, text_content
 
 from autopilot._timeout import Timeout
-from autopilot.utilities import _raise_on_unknown_kwargs
 from autopilot.application._environment import (
     GtkApplicationEnvironment,
     QtApplicationEnvironment,
@@ -63,9 +62,6 @@ class UpstartApplicationLauncher(ApplicationLauncher):
     Failed = object()
     Started = object()
     Stopped = object()
-
-    def __init__(self, case_addDetail):
-        super(UpstartApplicationLauncher, self).__init__(case_addDetail)
 
     def launch(self, app_id, app_uris=[]):
         state = {}
@@ -187,13 +183,12 @@ class ClickApplicationLauncher(UpstartApplicationLauncher):
 
 
 class NormalApplicationLauncher(ApplicationLauncher):
-    def __init__(self, case_addDetail, app_type=None, launch_dir=None, capture_output=None):
+    def __init__(self, case_addDetail, app_type=None, launch_dir=None,
+                 capture_output=None):
         super(NormalApplicationLauncher, self).__init__(case_addDetail)
         self.app_type = app_type
         self.cwd = launch_dir
         self.capture_output = capture_output
-
-        _raise_on_unknown_kwargs(kwargs)
 
     def launch(self, application, *arguments):
         app_path = _get_application_path(application)

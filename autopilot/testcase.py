@@ -379,23 +379,6 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         )
         return application_launcher.proxy_object
 
-# Maybe the diff eliminates all of this?  Not sure!
-#        process = getattr(launcher_instance, 'process', None)
-#        search_params = dict(
-#            pid=pid,
-#            dbus_bus=dbus_bus,
-#            emulator_base=launcher_instance.emulator_base
-#        )
-#        if application_name is not None:
-#            search_params['application_name'] = application_name
-#        if process is not None:
-#            search_params['process'] = process
-#
-#        proxy_obj = get_proxy_object_for_existing_process(**search_params)
-#        proxy_obj.set_process(process)
-#
-#        return proxy_obj
-
     def _compare_system_with_app_snapshot(self):
         """Compare the currently running application with the last snapshot.
 

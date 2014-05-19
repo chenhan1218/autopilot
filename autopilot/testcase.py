@@ -268,15 +268,15 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         launcher = self.useFixture(
             NormalApplicationLauncher(
                 self.addDetailUniqueName,
-                kwargs.pop('', None),
+                kwargs.pop('app_type', None),
             )
         )
 
         application_launcher = self.useFixture(
             ApplicationLauncher(
                 launcher,
-                arguments,
-                application,
+                (application,) + arguments,
+                application=application,
                 **kwargs
             )
         )
@@ -331,7 +331,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         return self._launch_test_application(launcher, package_id, app_name,
                                              app_uris)
 
-    def launch_upstart_application(self, application_name, uris=[], **kwargs):
+    def launch_upstart_application(self, application, uris=[], **kwargs):
         """Launch an application with upstart.
 
         This method launched an application via the ``upstart-app-launch``
@@ -342,7 +342,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
             app_proxy = self.launch_upstart_application("gallery-app")
 
-        :param application_name: The name of the application to launch.
+        :param application: The name of the application to launch.
         :keyword emulator_base: If set, specifies the base class to be used for
             all emulators for this loaded application.
 
@@ -354,7 +354,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         _logger.info(
             "Attempting to launch application '%s' with URIs '%s' via "
             "upstart-app-launch",
-            application_name,
+            application,
             ','.join(uris)
         )
         launcher = self.useFixture(
@@ -364,7 +364,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         application_launcher = self.useFixture(
             ApplicationLauncher(
                 launcher,
-                application=application_name,
+                {'app_id': application, 'app_uris': uris},
+                application=application,
                 **kwargs
             )
         )
@@ -591,13 +592,12 @@ def _ensure_uinput_device_created():
 
 class ApplicationLauncher(Fixture):
 
-    def __init__(self, launcher_instance, application, launch_args, **kwargs):
+    def __init__(self, launcher_instance, launch_args, **kwargs):
         self.launcher_instance = launcher_instance
-        self.application = application
         self.launch_args = launch_args
         self.emulator_base = kwargs.pop('emulator_base', None)
         self.dbus_bus = kwargs.pop('dbus_bus', 'session')
-        self.dbus_application_name = kwargs.pop('application_name', None)
+        self.application = kwargs.pop('application', None)
         _raise_on_unknown_kwargs(kwargs)
 
     def setUp(self):
@@ -610,12 +610,12 @@ class ApplicationLauncher(Fixture):
                 )
             )
 
-        pid = self.launcher_instance.launcher_instance.launch(
+        pid = self.launcher_instance.launch(
             *self.launch_args
         )
         self.proxy_object = get_proxy_object_for_existing_process(
             pid=pid,
             dbus_bus=self.dbus_bus,
             emulator_base=self.emulator_base,
-            application_name=self.dbus_application_name,
+            application_name=self.application,
         )

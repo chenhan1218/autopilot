@@ -617,5 +617,4 @@ class ApplicationLauncher(Fixture):
             pid=pid,
             dbus_bus=self.dbus_bus,
             emulator_base=self.emulator_base,
-            application_name=self.application,
         )

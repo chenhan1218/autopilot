@@ -184,7 +184,7 @@ class ClickApplicationLauncher(UpstartApplicationLauncher):
 
 class NormalApplicationLauncher(ApplicationLauncher):
     def __init__(self, case_addDetail, app_type=None, launch_dir=None,
-                 capture_output=None):
+                 capture_output=True):
         super(NormalApplicationLauncher, self).__init__(case_addDetail)
         self.app_type = app_type
         self.cwd = launch_dir

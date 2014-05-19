@@ -49,6 +49,10 @@ from autopilot.introspection._search import (
 __all__ = [
     'CustomEmulatorBase',
     'get_classname_from_path',
-    'get_proxy_object_for_existing_process',
+    'ProxyBase',
     'ProcessSearchError',
+    'get_proxy_object_for_existing_process',
 ]
+
+ProxyBase = CustomEmulatorBase
+ProxyBase.__name__ = 'ProxyBase'

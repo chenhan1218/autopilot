@@ -364,7 +364,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         application_launcher = self.useFixture(
             ApplicationLauncher(
                 launcher,
-                {'app_id': application, 'app_uris': uris},
+                [application, uris],
                 application=application,
                 **kwargs
             )
@@ -611,9 +611,6 @@ class ApplicationLauncher(Fixture):
             )
 
         self.launcher_instance.launch(*self.launch_args)
-#        pid = self.launcher_instance.launch(
-#            *self.launch_args
-#        )
         self.proxy_object = get_proxy_object_for_existing_process(
             dbus_bus=self.dbus_bus,
             emulator_base=self.emulator_base,

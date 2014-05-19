@@ -258,10 +258,22 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             ' '.join(arguments)
         )
         launcher = self.useFixture(
-            NormalApplicationLauncher(self.addDetailUniqueName, **kwargs)
+            NormalApplicationLauncher(
+                self.addDetailUniqueName,
+                kwargs.pop('', None),
+            )
         )
 
-        return self._launch_test_application(launcher, application, *arguments)
+        application_launcher = self.useFixture(
+            ApplicationLauncher(
+                self.addDetailUniqueName,
+                launcher,
+                application_name,
+                uris,
+                kwargs,
+            )
+        )
+        return application_launcher.proxy_object
 
     def launch_click_package(self, package_id, app_name=None, app_uris=[],
                              **kwargs):

@@ -34,14 +34,18 @@ Q. Why is my test failing? It works some of the time. What cause "flakyness?"
 #. Waiting for a item that is destroyed to be not visible, sometimes the objects is destroyed before it returns false:
         problem::
 
-            self.assertThat(dialogButton.visible, Eventually(Equals(False))) or self._get_activity_indicator().running.wait_for(False)
+            self.assertThat(dialogButton.visible, Eventually(Equals(False))) 
+        or::
 
-         solution::
+            self._get_activity_indicator().running.wait_for(False)
 
-                dialogButton.wait_for_destroyed() 
-         or::
+        solution::
 
-                self._get_activity_indicator().running.wait_for_destroyed()
+            dialogButton.wait_for_destroyed()
+
+        or::
+
+            self._get_activity_indicator().running.wait_for_destroyed()
 
 #. Trying to use select_many like a list
     problem::

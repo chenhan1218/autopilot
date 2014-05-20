@@ -768,7 +768,6 @@ SyntaxError: invalid syntax
         self.assertIn("This is a test", output)
 
 
-
 class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
 
     """Scenarioed functional tests for autopilot's verbose logging."""
@@ -1021,4 +1020,3 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
         self.assertThat(code, Equals(1))
         self.assertIn("Ran 1 test", output)
         self.assertIn("FAILED (failures=1)", output)
-

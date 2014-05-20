@@ -35,6 +35,10 @@ from autopilot.application._environment import (
     GtkApplicationEnvironment,
     QtApplicationEnvironment,
 )
+from autopilot.introspection import (
+    get_proxy_object_for_existing_process,
+)
+from autopilot.utilities import _raise_on_unknown_kwargs
 
 _logger = logging.getLogger(__name__)
 
@@ -46,9 +50,30 @@ class ApplicationLauncher(fixtures.Fixture):
 
     """
 
-    def __init__(self, case_addDetail):
-        self.case_addDetail = case_addDetail
+    def __init__(self, case_addDetail=lambda: True, **kwargs):
         super(ApplicationLauncher, self).__init__()
+        self.case_addDetail = case_addDetail
+        self.arguments = kwargs.pop('arguments', [])
+        self.emulator_base = kwargs.pop('emulator_base', None)
+        self.dbus_bus = kwargs.pop('dbus_bus', 'session')
+        _raise_on_unknown_kwargs(kwargs)
+
+    def setUp(self):
+        super().setUp()
+        if self.dbus_bus != 'session':
+            self.useFixture(
+                fixtures.EnvironmentVariable(
+                    "DBUS_SESSION_BUS_ADDRESS",
+                    self.dbus_bus
+                )
+            )
+
+        process_search_criteria = self.launch(*self.arguments)
+        self.proxy_object = get_proxy_object_for_existing_process(
+            dbus_bus=self.dbus_bus,
+            emulator_base=self.emulator_base,
+            **process_search_criteria
+        )
 
     def launch(self, *arguments):
         raise NotImplementedError("Sub-classes must implement this method.")
@@ -64,6 +89,14 @@ class UpstartApplicationLauncher(ApplicationLauncher):
     Stopped = object()
 
     def launch(self, app_id, app_uris=[]):
+        if isinstance(app_uris, (six.text_type, six.binary_type)):
+            app_uris = [app_uris]
+        _logger.info(
+            "Attempting to launch application '%s' with URIs '%s' via "
+            "upstart-app-launch",
+            app_id,
+            ','.join(app_uris)
+        )
         state = {}
         state['loop'] = self._get_glib_loop()
         state['expected_app_id'] = app_id
@@ -85,8 +118,8 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             state.get('message', '')
         )
         pid = self._get_pid_for_launched_app(app_id)
-        self.process_search_criteria = {'pid': pid}
-        return pid
+        process_search_criteria = {'pid': pid}
+        return process_search_criteria
 
     @staticmethod
     def _on_failed(launched_app_id, failure_type, state):
@@ -166,7 +199,6 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             message_parts.append(
                 "Timed out while waiting for application to launch"
             )
-        elif status == UpstartApplicationLauncher.Failed:
             message_parts.append("Application Launch Failed")
         if message_parts and extra_message:
             message_parts.append(extra_message)
@@ -177,6 +209,15 @@ class UpstartApplicationLauncher(ApplicationLauncher):
 class ClickApplicationLauncher(UpstartApplicationLauncher):
 
     def launch(self, package_id, app_name, app_uris):
+        if isinstance(app_uris, (six.text_type, six.binary_type)):
+            app_uris = [app_uris]
+        _logger.info(
+            "Attempting to launch click application '%s' from click package "
+            " '%s' and URIs '%s'",
+            app_name if app_name is not None else "(default)",
+            package_id,
+            ','.join(app_uris)
+        )
         app_id = _get_click_app_id(package_id, app_name)
         return self._do_upstart_launch(app_id, app_uris)
 
@@ -185,23 +226,28 @@ class ClickApplicationLauncher(UpstartApplicationLauncher):
 
 
 class NormalApplicationLauncher(ApplicationLauncher):
-    def __init__(self, case_addDetail, app_type=None, launch_dir=None,
-                 capture_output=True):
-        super(NormalApplicationLauncher, self).__init__(case_addDetail)
-        self.app_type = app_type
-        self.cwd = launch_dir
-        self.capture_output = capture_output
+    def __init__(self, **kwargs):
+        self.app_type = kwargs.pop('app_type', None)
+        self.cwd = kwargs.pop('launch_dir', None)
+        self.capture_output = kwargs.pop('capture_output', True)
+        super(NormalApplicationLauncher, self).__init__(**kwargs)
 
     def launch(self, application, *arguments):
+        _logger.info(
+            "Attempting to launch application '%s' with arguments '%s' as a "
+            "normal process",
+            application,
+            ' '.join(arguments)
+        )
         app_path = _get_application_path(application)
         app_path, arguments = self._setup_environment(app_path, *arguments)
         self.process = self._launch_application_process(app_path, *arguments)
-        self.process_search_criteria = {
+        process_search_criteria = {
             'process': self.process,
             'pid': self.process.pid
         }
 
-        return self.process.pid
+        return process_search_criteria
 
     def _setup_environment(self, app_path, *arguments):
         app_env = self.useFixture(

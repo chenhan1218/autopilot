@@ -49,12 +49,8 @@ root of the application introspection tree.
 from __future__ import absolute_import
 
 import logging
-import six
 
-from fixtures import (
-    EnvironmentVariable,
-    Fixture,
-)
+from fixtures import EnvironmentVariable
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import Equals
@@ -68,16 +64,12 @@ from autopilot.application import (
 from autopilot.display import Display
 from autopilot.globals import get_debug_profile_fixture
 from autopilot.input import Keyboard, Mouse
-from autopilot.introspection import (
-    get_proxy_object_for_existing_process,
-)
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
 from autopilot.process import ProcessManager
 from autopilot.utilities import (
     deprecated,
     on_test_started,
-    _raise_on_unknown_kwargs,
 )
 from autopilot._timeout import Timeout
 try:
@@ -188,7 +180,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             self._display = Display.create()
         return self._display
 
-    def launch_test_application(self, application, *arguments, **kwargs):
+    def launch_test_application(self, *arguments, **kwargs):
         """Launch ``application`` and return a proxy object for the
         application.
 
@@ -258,32 +250,16 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
          data is retrievable via this object.
 
         """
-        _logger.info(
-            "Attempting to launch application '%s' with arguments '%s' as a "
-            "normal process",
-            application,
-            ' '.join(arguments)
-        )
         launcher = self.useFixture(
             NormalApplicationLauncher(
-                self.addDetailUniqueName,
-                kwargs.pop('app_type', None),
-                kwargs.pop('launch_dir', None),
-            )
-        )
-
-        application_launcher = self.useFixture(
-            ApplicationLauncher(
-                launcher,
-                application,
-                *arguments,
+                case_addDetail=self.addDetailUniqueName,
+                arguments=arguments,
                 **kwargs
             )
         )
-        return application_launcher.proxy_object
+        return launcher.proxy_object
 
-    def launch_click_package(self, package_id, app_name=None, app_uris=[],
-                             **kwargs):
+    def launch_click_package(self, *arguments, **kwargs):
         """Launch a click package application with introspection enabled.
 
         This method takes care of launching a click package with introspection
@@ -316,29 +292,16 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :returns: proxy object for the launched package application
 
         """
-        if isinstance(app_uris, (six.text_type, six.binary_type)):
-            app_uris = [app_uris]
-        _logger.info(
-            "Attempting to launch click application '%s' from click package "
-            " '%s' and URIs '%s'",
-            app_name if app_name is not None else "(default)",
-            package_id,
-            ','.join(app_uris)
-        )
         launcher = self.useFixture(
-            ClickApplicationLauncher(self.addDetailUniqueName, **kwargs)
-        )
-        application_launcher = self.useFixture(
-            ApplicationLauncher(
-                launcher,
-                package_id,
-                app_name,
-                app_uris,
+            ClickApplicationLauncher(
+                arguments=arguments,
+                case_addDetail=self.addDetailUniqueName,
+                **kwargs
             )
         )
-        return application_launcher.proxy_object
+        return launcher.proxy_object
 
-    def launch_upstart_application(self, application, uris=[], **kwargs):
+    def launch_upstart_application(self, *arguments, **kwargs):
         """Launch an application with upstart.
 
         This method launched an application via the ``upstart-app-launch``
@@ -356,27 +319,15 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :raises RuntimeError: If the specified application cannot be launched.
         :raises ValueError: If unknown keyword arguments are specified.
         """
-        if isinstance(uris, (six.text_type, six.binary_type)):
-            uris = [uris]
-        _logger.info(
-            "Attempting to launch application '%s' with URIs '%s' via "
-            "upstart-app-launch",
-            application,
-            ','.join(uris)
-        )
         launcher = self.useFixture(
-            UpstartApplicationLauncher(self.addDetailUniqueName, **kwargs)
-        )
-
-        application_launcher = self.useFixture(
-            ApplicationLauncher(
-                launcher,
-                application,
-                uris,
+            UpstartApplicationLauncher(
+                case_addDetail=self.addDetailUniqueName,
+                arguments=arguments,
                 **kwargs
             )
         )
-        return application_launcher.proxy_object
+
+        return launcher.proxy_object
 
     def _compare_system_with_app_snapshot(self):
         """Compare the currently running application with the last snapshot.
@@ -539,31 +490,4 @@ def _ensure_uinput_device_created():
         _logger.warning(
             "Failed to create Touch device for bug lp:1297595 workaround: "
             "%s" % str(e)
-        )
-
-
-class ApplicationLauncher(Fixture):
-
-    def __init__(self, launcher_instance, *arguments, **kwargs):
-        self.launcher_instance = launcher_instance
-        self.arguments = arguments
-        self.emulator_base = kwargs.pop('emulator_base', None)
-        self.dbus_bus = kwargs.pop('dbus_bus', 'session')
-        _raise_on_unknown_kwargs(kwargs)
-
-    def setUp(self):
-        super().setUp()
-        if self.dbus_bus != 'session':
-            self.useFixture(
-                EnvironmentVariable(
-                    "DBUS_SESSION_BUS_ADDRESS",
-                    self.dbus_bus
-                )
-            )
-
-        self.launcher_instance.launch(*self.arguments)
-        self.proxy_object = get_proxy_object_for_existing_process(
-            dbus_bus=self.dbus_bus,
-            emulator_base=self.emulator_base,
-            **self.launcher_instance.process_search_criteria
         )

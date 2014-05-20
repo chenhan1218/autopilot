@@ -253,7 +253,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         launcher = self.useFixture(
             NormalApplicationLauncher(
                 application,
-                arguments=arguments,
+                *arguments,
                 case_addDetail=self.addDetailUniqueName,
                 **kwargs
             )
@@ -297,7 +297,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         launcher = self.useFixture(
             ClickApplicationLauncher(
                 package_id,
-                arguments=[app_name, app_uris],
+                app_name,
+                app_uris,
                 case_addDetail=self.addDetailUniqueName,
                 **kwargs
             )
@@ -325,7 +326,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         launcher = self.useFixture(
             UpstartApplicationLauncher(
                 application_name,
-                arguments=[uris],
+                uris,
                 case_addDetail=self.addDetailUniqueName,
                 **kwargs
             )

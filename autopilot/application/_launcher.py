@@ -38,7 +38,6 @@ from autopilot.application._environment import (
 from autopilot.introspection import (
     get_proxy_object_for_existing_process,
 )
-from autopilot.utilities import _raise_on_unknown_kwargs
 
 _logger = logging.getLogger(__name__)
 
@@ -50,14 +49,13 @@ class ApplicationLauncher(fixtures.Fixture):
 
     """
 
-    def __init__(self, application, case_addDetail=lambda: True, **kwargs):
+    def __init__(self, application, case_addDetail=lambda: True,
+                 emulator_base=None, dbus_bus='session'):
         super(ApplicationLauncher, self).__init__()
         self.application = application
         self.case_addDetail = case_addDetail
-        self.arguments = kwargs.pop('arguments', [])
-        self.emulator_base = kwargs.pop('emulator_base', None)
-        self.dbus_bus = kwargs.pop('dbus_bus', 'session')
-        _raise_on_unknown_kwargs(kwargs)
+        self.emulator_base = emulator_base
+        self.dbus_bus = dbus_bus
 
     def setUp(self):
         super().setUp()
@@ -69,7 +67,7 @@ class ApplicationLauncher(fixtures.Fixture):
                 )
             )
 
-        process_search_criteria = self.launch(*self.arguments)
+        process_search_criteria = self.launch()
         self.proxy_object = get_proxy_object_for_existing_process(
             dbus_bus=self.dbus_bus,
             emulator_base=self.emulator_base,
@@ -89,9 +87,15 @@ class UpstartApplicationLauncher(ApplicationLauncher):
     Started = object()
     Stopped = object()
 
-    def launch(self, app_uris=[]):
-        if isinstance(app_uris, (six.text_type, six.binary_type)):
-            app_uris = [app_uris]
+    def __init__(self, application, app_uris=[], **kwargs):
+        self.app_uris = app_uris
+        super().__init__(application, **kwargs)
+
+    def launch(self):
+        if isinstance(self.app_uris, (six.text_type, six.binary_type)):
+            app_uris = [self.app_uris]
+        else:
+            app_uris = self.app_uris
         _logger.info(
             "Attempting to launch application '%s' with URIs '%s' via "
             "upstart-app-launch",
@@ -209,17 +213,24 @@ class UpstartApplicationLauncher(ApplicationLauncher):
 
 class ClickApplicationLauncher(UpstartApplicationLauncher):
 
-    def launch(self, app_name, app_uris):
-        if isinstance(app_uris, (six.text_type, six.binary_type)):
-            app_uris = [app_uris]
+    def __init__(self, application, app_name=None, app_uris=[], **kwargs):
+        self.app_name = app_name
+        self.app_uris = app_uris
+        super().__init__(application, **kwargs)
+
+    def launch(self):
+        if isinstance(self.app_uris, (six.text_type, six.binary_type)):
+            app_uris = [self.app_uris]
+        else:
+            app_uris = self.app_uris
         _logger.info(
             "Attempting to launch click application '%s' from click package "
             " '%s' and URIs '%s'",
-            app_name if app_name is not None else "(default)",
+            self.app_name if self.app_name is not None else "(default)",
             self.application,
             ','.join(app_uris)
         )
-        app_id = _get_click_app_id(self.application, app_name)
+        app_id = _get_click_app_id(self.application, self.app_name)
         return self._do_upstart_launch(app_id, app_uris)
 
     def _do_upstart_launch(self, app_id, app_uris):
@@ -227,21 +238,23 @@ class ClickApplicationLauncher(UpstartApplicationLauncher):
 
 
 class NormalApplicationLauncher(ApplicationLauncher):
-    def __init__(self, **kwargs):
+    def __init__(self, application, *arguments, **kwargs):
+        self.arguments = arguments
         self.app_type = kwargs.pop('app_type', None)
         self.cwd = kwargs.pop('launch_dir', None)
         self.capture_output = kwargs.pop('capture_output', True)
-        super(NormalApplicationLauncher, self).__init__(**kwargs)
+        super(NormalApplicationLauncher, self).__init__(application, **kwargs)
 
-    def launch(self, *arguments):
+    def launch(self):
         _logger.info(
             "Attempting to launch application '%s' with arguments '%s' as a "
             "normal process",
             self.application,
-            ' '.join(arguments)
+            ' '.join(self.arguments)
         )
         app_path = _get_application_path(self.application)
-        app_path, arguments = self._setup_environment(app_path, *arguments)
+        app_path, arguments = self._setup_environment(app_path,
+                                                      *self.arguments)
         self.process = self._launch_application_process(app_path, *arguments)
         process_search_criteria = {
             'process': self.process,

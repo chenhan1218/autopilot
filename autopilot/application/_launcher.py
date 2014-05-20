@@ -51,7 +51,7 @@ class ApplicationLauncher(fixtures.Fixture):
 
     def __init__(self, application, case_addDetail=lambda: True,
                  emulator_base=None, dbus_bus='session'):
-        super(ApplicationLauncher, self).__init__()
+        super().__init__()
         self.application = application
         self.case_addDetail = case_addDetail
         self.emulator_base = emulator_base
@@ -234,7 +234,7 @@ class ClickApplicationLauncher(UpstartApplicationLauncher):
         return self._do_upstart_launch(app_id, app_uris)
 
     def _do_upstart_launch(self, app_id, app_uris):
-        return super(ClickApplicationLauncher, self).launch(app_id, app_uris)
+        return super().launch(app_id, app_uris)
 
 
 class NormalApplicationLauncher(ApplicationLauncher):
@@ -243,7 +243,7 @@ class NormalApplicationLauncher(ApplicationLauncher):
         self.app_type = kwargs.pop('app_type', None)
         self.cwd = kwargs.pop('launch_dir', None)
         self.capture_output = kwargs.pop('capture_output', True)
-        super(NormalApplicationLauncher, self).__init__(application, **kwargs)
+        super().__init__(application, **kwargs)
 
     def launch(self):
         _logger.info(

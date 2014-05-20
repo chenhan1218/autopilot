@@ -11,6 +11,10 @@ Failing Tests
 Q. Why is my test failing? It works some of the time. What cause "flakyness?"
 =============================================================================
 
+StateNotFoundError
+++++++++++++++++++++++
+
+.. _state_not_found:
 
 #. Not waiting for an animation to finish before looking for an object
          * problem::

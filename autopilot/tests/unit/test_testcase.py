@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from mock import Mock, patch
+from mock import call, Mock, patch
 from testtools import TestCase
 from testtools.matchers import Contains, raises
 
@@ -90,3 +90,23 @@ class ProcessSnapshotTests(TestCase):
                         "launch_test_application method' instead."
                     )
                 )
+
+
+class AutopilotTestCaseClassTests(TestCase):
+
+    """Test functions of the AutopilotTestCase class."""
+
+    @patch('autopilot.testcase.EnvironmentVariable')
+    def test_patch_environment(self, ep):
+        class EnvironmentVariableTestCase(AutopilotTestCase):
+
+            """Patch the enrivonment."""
+
+            def test_patch_environment(self):
+                self.patch_environment('foo', 'bar')
+
+        result = EnvironmentVariableTestCase('test_patch_environment').run()
+        self.assertTrue(result.wasSuccessful())
+        ep.assert_called_once_with('foo', 'bar')
+        self.assertIn(call().setUp(), ep.mock_calls)
+        self.assertIn(call().cleanUp(), ep.mock_calls)

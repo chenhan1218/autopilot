@@ -448,7 +448,9 @@ def _make_proxy_object_async(
             emulator_base
         )
         proxy_class = _make_proxy_class_object(cls_name, proxy_bases)
-        reply_handler(proxy_class(cls_state, path, data_source))
+        reply_handler(
+            proxy_class(cls_state, path, backends.Backend(data_source))
+        )
 
     # Phase 2: We recieve the introspection string, and make an asynchronous
     # dbus call to get the state information for the root of this applicaiton.

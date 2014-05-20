@@ -49,7 +49,6 @@ root of the application introspection tree.
 from __future__ import absolute_import
 
 import logging
-import os
 import six
 
 from fixtures import (
@@ -394,62 +393,24 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         finally:
             self._app_snapshot = None
 
+    @deprecated('fixtures.EnvironmentVariable')
     def patch_environment(self, key, value):
-        """Patch the process environment, setting *key* with value *value*.
+        """Patch environment using fixture.
 
-        This patches os.environ for the duration of the test only. After
-        calling this method, the following should be True::
+        This function is deprecated and planned for removal in autopilot 1.6.
+        New implementations should use EnvironmenVariable from the fixtures
+        module:
+            from fixtures import EnvironmentVariable
 
-            os.environ[key] == value
+            def my_test(AutopilotTestCase):
+                my_patch = EnvironmentVariable('key', 'value')
+                self.useFixture(my_patch)
 
-        After the test, the patch will be undone (including deleting the key if
-        if didn't exist before this method was called).
-
-        .. note:: Be aware that patching the environment in this way only
-         affects the current autopilot process, and any processes spawned by
-         autopilot. If you are planing on starting an application from within
-         autopilot and you want this new application to read the patched
-         environment variable, you must patch the environment *before*
-         launching the new process.
-
-        :param string key: The name of the key you wish to set. If the key
-         does not already exist in the process environment it will be created
-         (and then deleted when the test ends).
-        :param string value: The value you wish to set.
+        'key' will be set to 'value'.  During tearDown, it will be reset to a
+        previous value, if one is found, or unset if not.
 
         """
-        if key in os.environ:
-            def _undo_patch(key, old_value):
-                _logger.info(
-                    "Resetting environment variable '%s' to '%s'",
-                    key,
-                    old_value
-                )
-                os.environ[key] = old_value
-            old_value = os.environ[key]
-            self.addCleanup(_undo_patch, key, old_value)
-        else:
-            def _remove_patch(key):
-                try:
-                    _logger.info(
-                        "Deleting previously-created environment "
-                        "variable '%s'",
-                        key
-                    )
-                    del os.environ[key]
-                except KeyError:
-                    _logger.warning(
-                        "Attempted to delete environment key '%s' that doesn't"
-                        "exist in the environment",
-                        key
-                    )
-            self.addCleanup(_remove_patch, key)
-        _logger.info(
-            "Setting environment variable '%s' to '%s'",
-            key,
-            value
-        )
-        os.environ[key] = value
+        self.useFixture(EnvironmentVariable(key, value))
 
     def assertVisibleWindowStack(self, stack_start):
         """Check that the visible window stack starts with the windows passed

@@ -368,6 +368,18 @@ class CommandLineArgsTests(TestCase):
         args = parse_args('run foo/ bar/')
         self.assertThat(args.suite, Equals(["foo", "bar"]))
 
+    def test_accepts_config_string(self):
+        args = parse_args('run --config foo test_id')
+        self.assertThat(args.test_config, Equals('foo'))
+
+    def test_accepts_long_config_string(self):
+        args = parse_args('run --config bar=foo,baz test_id')
+        self.assertThat(args.test_config, Equals('bar=foo,baz'))
+
+    def test_default_config_string(self):
+        args = parse_args('run foo')
+        self.assertThat(args.test_config, Equals(""))
+
 
 class GlobalProfileOptionTests(WithScenarios, TestCase):
 

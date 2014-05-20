@@ -25,7 +25,7 @@ from autopilot.tests.functional.fixtures import (
 import os
 import os.path
 import stat
-from mock import patch
+from unittest.mock import patch
 from shutil import rmtree
 import tempfile
 from testtools import TestCase

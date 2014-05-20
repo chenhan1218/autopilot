@@ -24,7 +24,7 @@ import string
 from testtools import TestCase
 from testtools.matchers import Not, Raises
 from contextlib import contextmanager
-from mock import patch
+from unittest.mock import patch
 import shutil
 import tempfile
 

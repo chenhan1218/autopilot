@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 import re
 import six
 from testtools import skipIf, TestCase

@@ -18,7 +18,7 @@
 #
 
 import codecs
-from mock import Mock
+from unittest.mock import Mock
 import os
 import tempfile
 from testtools import TestCase, PlaceHolder

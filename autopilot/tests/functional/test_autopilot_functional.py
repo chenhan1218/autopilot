@@ -30,6 +30,8 @@ from testtools.matchers import Contains, Equals, MatchesRegex, Not
 from textwrap import dedent
 from time import sleep
 
+from mock import Mock
+
 from autopilot import platform
 from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase

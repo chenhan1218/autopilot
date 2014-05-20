@@ -180,7 +180,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             self._display = Display.create()
         return self._display
 
-    def launch_test_application(self, *arguments, **kwargs):
+    def launch_test_application(self, application, *arguments, **kwargs):
         """Launch ``application`` and return a proxy object for the
         application.
 
@@ -252,14 +252,16 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         """
         launcher = self.useFixture(
             NormalApplicationLauncher(
-                case_addDetail=self.addDetailUniqueName,
+                application,
                 arguments=arguments,
+                case_addDetail=self.addDetailUniqueName,
                 **kwargs
             )
         )
         return launcher.proxy_object
 
-    def launch_click_package(self, *arguments, **kwargs):
+    def launch_click_package(self, package_id, app_name=None, app_uris=[],
+                             **kwargs):
         """Launch a click package application with introspection enabled.
 
         This method takes care of launching a click package with introspection
@@ -294,14 +296,15 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         """
         launcher = self.useFixture(
             ClickApplicationLauncher(
-                arguments=arguments,
+                package_id,
+                arguments=[app_name, app_uris],
                 case_addDetail=self.addDetailUniqueName,
                 **kwargs
             )
         )
         return launcher.proxy_object
 
-    def launch_upstart_application(self, *arguments, **kwargs):
+    def launch_upstart_application(self, application_name, uris=[], **kwargs):
         """Launch an application with upstart.
 
         This method launched an application via the ``upstart-app-launch``
@@ -321,8 +324,9 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         """
         launcher = self.useFixture(
             UpstartApplicationLauncher(
+                application_name,
+                arguments=[uris],
                 case_addDetail=self.addDetailUniqueName,
-                arguments=arguments,
                 **kwargs
             )
         )

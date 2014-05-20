@@ -50,8 +50,9 @@ class ApplicationLauncher(fixtures.Fixture):
 
     """
 
-    def __init__(self, case_addDetail=lambda: True, **kwargs):
+    def __init__(self, application, case_addDetail=lambda: True, **kwargs):
         super(ApplicationLauncher, self).__init__()
+        self.application = application
         self.case_addDetail = case_addDetail
         self.arguments = kwargs.pop('arguments', [])
         self.emulator_base = kwargs.pop('emulator_base', None)
@@ -88,18 +89,18 @@ class UpstartApplicationLauncher(ApplicationLauncher):
     Started = object()
     Stopped = object()
 
-    def launch(self, app_id, app_uris=[]):
+    def launch(self, app_uris=[]):
         if isinstance(app_uris, (six.text_type, six.binary_type)):
             app_uris = [app_uris]
         _logger.info(
             "Attempting to launch application '%s' with URIs '%s' via "
             "upstart-app-launch",
-            app_id,
+            self.application,
             ','.join(app_uris)
         )
         state = {}
         state['loop'] = self._get_glib_loop()
-        state['expected_app_id'] = app_id
+        state['expected_app_id'] = self.application
         state['message'] = ''
 
         UpstartAppLaunch.observer_add_app_failed(self._on_failed, state)
@@ -107,7 +108,7 @@ class UpstartApplicationLauncher(ApplicationLauncher):
         UpstartAppLaunch.observer_add_app_focus(self._on_started, state)
         GLib.timeout_add_seconds(10.0, self._on_timeout, state)
 
-        self._launch_app(app_id, app_uris)
+        self._launch_app(self.application, app_uris)
         state['loop'].run()
         UpstartAppLaunch.observer_delete_app_failed(self._on_failed)
         UpstartAppLaunch.observer_delete_app_started(self._on_started)
@@ -117,7 +118,7 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             state.get('status', None),
             state.get('message', '')
         )
-        pid = self._get_pid_for_launched_app(app_id)
+        pid = self._get_pid_for_launched_app(self.application)
         process_search_criteria = {'pid': pid}
         return process_search_criteria
 
@@ -208,17 +209,17 @@ class UpstartApplicationLauncher(ApplicationLauncher):
 
 class ClickApplicationLauncher(UpstartApplicationLauncher):
 
-    def launch(self, package_id, app_name, app_uris):
+    def launch(self, app_name, app_uris):
         if isinstance(app_uris, (six.text_type, six.binary_type)):
             app_uris = [app_uris]
         _logger.info(
             "Attempting to launch click application '%s' from click package "
             " '%s' and URIs '%s'",
             app_name if app_name is not None else "(default)",
-            package_id,
+            self.application,
             ','.join(app_uris)
         )
-        app_id = _get_click_app_id(package_id, app_name)
+        app_id = _get_click_app_id(self.application, app_name)
         return self._do_upstart_launch(app_id, app_uris)
 
     def _do_upstart_launch(self, app_id, app_uris):
@@ -232,14 +233,14 @@ class NormalApplicationLauncher(ApplicationLauncher):
         self.capture_output = kwargs.pop('capture_output', True)
         super(NormalApplicationLauncher, self).__init__(**kwargs)
 
-    def launch(self, application, *arguments):
+    def launch(self, *arguments):
         _logger.info(
             "Attempting to launch application '%s' with arguments '%s' as a "
             "normal process",
-            application,
+            self.application,
             ' '.join(arguments)
         )
-        app_path = _get_application_path(application)
+        app_path = _get_application_path(self.application)
         app_path, arguments = self._setup_environment(app_path, *arguments)
         self.process = self._launch_application_process(app_path, *arguments)
         process_search_criteria = {

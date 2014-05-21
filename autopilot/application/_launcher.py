@@ -49,11 +49,11 @@ class ApplicationLauncher(fixtures.Fixture):
 
     """
 
-    def __init__(self, application, case_addDetail=lambda: True,
-                 emulator_base=None, dbus_bus='session'):
+    def __init__(self, application, case_addDetail=None, emulator_base=None,
+                 dbus_bus='session'):
         super().__init__()
         self.application = application
-        self.case_addDetail = case_addDetail
+        self.case_addDetail = case_addDetail or self.addDetail
         self.emulator_base = emulator_base
         self.dbus_bus = dbus_bus
 
@@ -204,6 +204,7 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             message_parts.append(
                 "Timed out while waiting for application to launch"
             )
+        elif status == UpstartApplicationLauncher.Failed:
             message_parts.append("Application Launch Failed")
         if message_parts and extra_message:
             message_parts.append(extra_message)
@@ -243,7 +244,10 @@ class NormalApplicationLauncher(ApplicationLauncher):
         self.app_type = kwargs.pop('app_type', None)
         self.cwd = kwargs.pop('launch_dir', None)
         self.capture_output = kwargs.pop('capture_output', True)
-        super().__init__(application, **kwargs)
+        try:
+            super().__init__(application, **kwargs)
+        except Exception as err:
+            raise err
 
     def launch(self):
         _logger.info(
@@ -281,7 +285,6 @@ class NormalApplicationLauncher(ApplicationLauncher):
         )
 
         self.addCleanup(self._kill_process_and_attach_logs, process, app_path)
-
         return process
 
     def _kill_process_and_attach_logs(self, process, app_path):

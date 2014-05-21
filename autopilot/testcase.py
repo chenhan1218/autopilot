@@ -250,15 +250,17 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
          data is retrievable via this object.
 
         """
+        launch_args = {}
+        launch_args['app_type'] = kwargs.pop('app_type', None)
+        launch_args['launch_dir'] = kwargs.pop('launch_dir', None)
+        launch_args['capture_output'] = kwargs.pop('capture_output', True)
         launcher = self.useFixture(
             NormalApplicationLauncher(
-                application,
-                *arguments,
                 case_addDetail=self.addDetailUniqueName,
                 **kwargs
             )
         )
-        return launcher.proxy_object
+        return launcher.launch(application, *arguments, **launch_args)
 
     def launch_click_package(self, package_id, app_name=None, app_uris=[],
                              **kwargs):
@@ -287,7 +289,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             all emulators for this loaded application.
 
         :raises RuntimeError: If the specified package_id cannot be found in
-            the click package manifest.
+            _the click package manifest.
         :raises RuntimeError: If the specified app_name cannot be found within
             the specified click package.
 
@@ -296,14 +298,11 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         """
         launcher = self.useFixture(
             ClickApplicationLauncher(
-                package_id,
-                app_name,
-                app_uris,
                 case_addDetail=self.addDetailUniqueName,
                 **kwargs
             )
         )
-        return launcher.proxy_object
+        return launcher.launch(package_id, app_name, app_uris)
 
     def launch_upstart_application(self, application_name, uris=[], **kwargs):
         """Launch an application with upstart.
@@ -325,14 +324,11 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         """
         launcher = self.useFixture(
             UpstartApplicationLauncher(
-                application_name,
-                uris,
                 case_addDetail=self.addDetailUniqueName,
                 **kwargs
             )
         )
-
-        return launcher.proxy_object
+        return launcher.launch(application_name, uris)
 
     def _compare_system_with_app_snapshot(self):
         """Compare the currently running application with the last snapshot.

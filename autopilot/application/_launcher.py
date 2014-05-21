@@ -38,6 +38,7 @@ from autopilot.application._environment import (
 from autopilot.introspection import (
     get_proxy_object_for_existing_process,
 )
+from autopilot.utilities import _raise_on_unknown_kwargs
 
 _logger = logging.getLogger(__name__)
 
@@ -49,10 +50,9 @@ class ApplicationLauncher(fixtures.Fixture):
 
     """
 
-    def __init__(self, application, case_addDetail=None, emulator_base=None,
+    def __init__(self, case_addDetail=None, emulator_base=None,
                  dbus_bus='session'):
         super().__init__()
-        self.application = application
         self.case_addDetail = case_addDetail or self.addDetail
         self.emulator_base = emulator_base
         self.dbus_bus = dbus_bus
@@ -67,13 +67,6 @@ class ApplicationLauncher(fixtures.Fixture):
                 )
             )
 
-        process_search_criteria = self.launch()
-        self.proxy_object = get_proxy_object_for_existing_process(
-            dbus_bus=self.dbus_bus,
-            emulator_base=self.emulator_base,
-            **process_search_criteria
-        )
-
     def launch(self, *arguments):
         raise NotImplementedError("Sub-classes must implement this method.")
 
@@ -87,24 +80,18 @@ class UpstartApplicationLauncher(ApplicationLauncher):
     Started = object()
     Stopped = object()
 
-    def __init__(self, application, app_uris=[], **kwargs):
-        self.app_uris = app_uris
-        super().__init__(application, **kwargs)
-
-    def launch(self):
-        if isinstance(self.app_uris, (six.text_type, six.binary_type)):
-            app_uris = [self.app_uris]
-        else:
-            app_uris = self.app_uris
+    def launch(self, app_id, app_uris=[]):
+        if isinstance(app_uris, (six.text_type, six.binary_type)):
+            app_uris = [app_uris]
         _logger.info(
             "Attempting to launch application '%s' with URIs '%s' via "
             "upstart-app-launch",
-            self.application,
+            app_id,
             ','.join(app_uris)
         )
         state = {}
         state['loop'] = self._get_glib_loop()
-        state['expected_app_id'] = self.application
+        state['expected_app_id'] = app_id
         state['message'] = ''
 
         UpstartAppLaunch.observer_add_app_failed(self._on_failed, state)
@@ -112,7 +99,7 @@ class UpstartApplicationLauncher(ApplicationLauncher):
         UpstartAppLaunch.observer_add_app_focus(self._on_started, state)
         GLib.timeout_add_seconds(10.0, self._on_timeout, state)
 
-        self._launch_app(self.application, app_uris)
+        self._launch_app(app_id, app_uris)
         state['loop'].run()
         UpstartAppLaunch.observer_delete_app_failed(self._on_failed)
         UpstartAppLaunch.observer_delete_app_started(self._on_started)
@@ -122,9 +109,13 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             state.get('status', None),
             state.get('message', '')
         )
-        pid = self._get_pid_for_launched_app(self.application)
-        process_search_criteria = {'pid': pid}
-        return process_search_criteria
+        pid = self._get_pid_for_launched_app(app_id)
+        proxy_object = get_proxy_object_for_existing_process(
+            dbus_bus=self.dbus_bus,
+            emulator_base=self.emulator_base,
+            pid=pid
+        )
+        return proxy_object
 
     @staticmethod
     def _on_failed(launched_app_id, failure_type, state):
@@ -214,24 +205,17 @@ class UpstartApplicationLauncher(ApplicationLauncher):
 
 class ClickApplicationLauncher(UpstartApplicationLauncher):
 
-    def __init__(self, application, app_name=None, app_uris=[], **kwargs):
-        self.app_name = app_name
-        self.app_uris = app_uris
-        super().__init__(application, **kwargs)
-
-    def launch(self):
-        if isinstance(self.app_uris, (six.text_type, six.binary_type)):
-            app_uris = [self.app_uris]
-        else:
-            app_uris = self.app_uris
+    def launch(self, package_id, app_name=None, app_uris=[]):
+        if isinstance(app_uris, (six.text_type, six.binary_type)):
+            app_uris = [app_uris]
         _logger.info(
             "Attempting to launch click application '%s' from click package "
             " '%s' and URIs '%s'",
-            self.app_name if self.app_name is not None else "(default)",
-            self.application,
+            app_name if app_name is not None else "(default)",
+            package_id,
             ','.join(app_uris)
         )
-        app_id = _get_click_app_id(self.application, self.app_name)
+        app_id = _get_click_app_id(package_id, app_name)
         return self._do_upstart_launch(app_id, app_uris)
 
     def _do_upstart_launch(self, app_id, app_uris):
@@ -239,49 +223,46 @@ class ClickApplicationLauncher(UpstartApplicationLauncher):
 
 
 class NormalApplicationLauncher(ApplicationLauncher):
-    def __init__(self, application, *arguments, **kwargs):
-        self.arguments = arguments
-        self.app_type = kwargs.pop('app_type', None)
-        self.cwd = kwargs.pop('launch_dir', None)
-        self.capture_output = kwargs.pop('capture_output', True)
-        try:
-            super().__init__(application, **kwargs)
-        except Exception as err:
-            raise err
-
-    def launch(self):
+    def launch(self, application, *arguments, **kwargs):
+        app_type = kwargs.pop('app_type', None)
+        cwd = kwargs.pop('launch_dir', None)
+        capture_output = kwargs.pop('capture_output', True)
+        _raise_on_unknown_kwargs(kwargs)
         _logger.info(
             "Attempting to launch application '%s' with arguments '%s' as a "
             "normal process",
-            self.application,
-            ' '.join(self.arguments)
+            application,
+            ' '.join(arguments)
         )
-        app_path = _get_application_path(self.application)
-        app_path, arguments = self._setup_environment(app_path,
-                                                      *self.arguments)
-        self.process = self._launch_application_process(app_path, *arguments)
-        process_search_criteria = {
-            'process': self.process,
-            'pid': self.process.pid
-        }
+        app_path = _get_application_path(application)
+        app_path, arguments = self._setup_environment(
+            app_path, app_type, *arguments)
+        self.process = self._launch_application_process(
+            app_path, capture_output, cwd, *arguments)
+        proxy_object = get_proxy_object_for_existing_process(
+            dbus_bus=self.dbus_bus,
+            emulator_base=self.emulator_base,
+            process=self.process,
+            pid=self.process.pid
+        )
+        return proxy_object
 
-        return process_search_criteria
-
-    def _setup_environment(self, app_path, *arguments):
+    def _setup_environment(self, app_path, app_type, *arguments):
         app_env = self.useFixture(
-            _get_application_environment(self.app_type, app_path)
+            _get_application_environment(app_type, app_path)
         )
         return app_env.prepare_environment(
             app_path,
             list(arguments),
         )
 
-    def _launch_application_process(self, app_path, *arguments):
+    def _launch_application_process(self, app_path, capture_output, cwd,
+                                    *arguments):
         process = launch_process(
             app_path,
             arguments,
-            self.capture_output,
-            cwd=self.cwd,
+            capture_output,
+            cwd=cwd,
         )
 
         self.addCleanup(self._kill_process_and_attach_logs, process, app_path)

@@ -67,10 +67,7 @@ from autopilot.input import Keyboard, Mouse
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
 from autopilot.process import ProcessManager
-from autopilot.utilities import (
-    deprecated,
-    on_test_started,
-)
+from autopilot.utilities import deprecated, on_test_started
 from autopilot._timeout import Timeout
 try:
     from autopilot import tracepoint as tp

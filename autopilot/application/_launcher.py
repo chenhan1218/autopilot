@@ -71,7 +71,7 @@ class ApplicationLauncher(fixtures.Fixture):
 
 class UpstartApplicationLauncher(ApplicationLauncher):
 
-    """A launcher class that launched applicaitons with UpstartAppLaunch."""
+    """A launcher class that launches applications with UpstartAppLaunch."""
 
     Timeout = object()
     Failed = object()
@@ -79,6 +79,28 @@ class UpstartApplicationLauncher(ApplicationLauncher):
     Stopped = object()
 
     def launch(self, app_id, app_uris=[]):
+        """Launch an application with upstart.
+
+        This method launches an application via the ``upstart-app-launch``
+        library, on platforms that support it.
+
+        Usage is similar to the
+        :py:meth:`NormalApplicationLauncher.launch`::
+
+            from autopilot.application import ClickApplicationLauncher
+            launcher = ClickApplicationLauncher()
+            launcher.setUp()
+            app_proxy = launcher.launch('gallery-app')
+
+        :param application_name: The name of the application to launch.
+        :keyword emulator_base: If set, specifies the base class to be used for
+            all emulators for this loaded application.
+
+        :raises RuntimeError: If the specified application cannot be launched.
+
+        :returns: proxy object for the launched package application
+
+        """
         if isinstance(app_uris, (str, bytes)):
             app_uris = [app_uris]
         _logger.info(

@@ -245,7 +245,6 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :keyword emulator_base: If set, specifies the base class to be used for
             all emulators for this loaded application.
 
-        :raises ValueError: if unknown keyword arguments are passed.
         :return: A proxy object that represents the application. Introspection
          data is retrievable via this object.
 
@@ -290,7 +289,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             all emulators for this loaded application.
 
         :raises RuntimeError: If the specified package_id cannot be found in
-            _the click package manifest.
+            the click package manifest.
         :raises RuntimeError: If the specified app_name cannot be found within
             the specified click package.
 
@@ -316,12 +315,11 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
             app_proxy = self.launch_upstart_application("gallery-app")
 
-        :param application: The name of the application to launch.
+        :param application_name: The name of the application to launch.
         :keyword emulator_base: If set, specifies the base class to be used for
             all emulators for this loaded application.
 
         :raises RuntimeError: If the specified application cannot be launched.
-        :raises ValueError: If unknown keyword arguments are specified.
         """
         launcher = self.useFixture(
             UpstartApplicationLauncher(

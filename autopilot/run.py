@@ -40,6 +40,7 @@ from testtools import iterate_tests
 
 from autopilot import get_version_string, have_vis
 import autopilot.globals
+from autopilot import _config as test_config
 from autopilot._debug import (
     get_all_debug_profiles,
     get_default_debug_profile,
@@ -125,6 +126,12 @@ def _get_parser():
         help="Alter the timeout values Autopilot uses. Selecting 'long' will "
         "make autopilot use longer timeouts for various polling loops. This "
         "can be useful if autopilot is running on very slow hardware"
+    )
+    parser_run.add_argument(
+        "-c", "--config", default="", help="If set, specifies configuration "
+        "for the test suite being run. Value should be a comma-separated list "
+        "of values, where each value is either of the form 'key', or "
+        "'key=value'.", dest="test_config"
     )
     parser_run.add_argument("suite", nargs="+",
                             help="Specify test suite(s) to run.")
@@ -698,6 +705,7 @@ class TestProgram(object):
 
         _configure_debug_profile(self.args)
         _configure_timeout_profile(self.args)
+        test_config.set_configuration_string(self.args.test_config)
         try:
             _configure_video_recording(self.args)
         except RuntimeError as e:

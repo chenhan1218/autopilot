@@ -962,6 +962,7 @@ def create_default_run_args(**kwargs):
         verbose=False,
         mode='run',
         suite='foo',
+        test_config='',
     )
     defaults.update(kwargs)
     return Namespace(**defaults)

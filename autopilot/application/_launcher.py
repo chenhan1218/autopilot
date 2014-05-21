@@ -25,7 +25,6 @@ import json
 import logging
 import os
 import psutil
-import six
 import subprocess
 import signal
 from testtools.content import content_from_file, text_content
@@ -80,7 +79,7 @@ class UpstartApplicationLauncher(ApplicationLauncher):
     Stopped = object()
 
     def launch(self, app_id, app_uris=[]):
-        if isinstance(app_uris, (six.text_type, six.binary_type)):
+        if isinstance(app_uris, (str, bytes)):
             app_uris = [app_uris]
         _logger.info(
             "Attempting to launch application '%s' with URIs '%s' via "
@@ -205,7 +204,7 @@ class UpstartApplicationLauncher(ApplicationLauncher):
 class ClickApplicationLauncher(UpstartApplicationLauncher):
 
     def launch(self, package_id, app_name=None, app_uris=[]):
-        if isinstance(app_uris, (six.text_type, six.binary_type)):
+        if isinstance(app_uris, (str, bytes)):
             app_uris = [app_uris]
         _logger.info(
             "Attempting to launch click application '%s' from click package "
@@ -401,9 +400,9 @@ def _kill_process(process):
     _attempt_kill_pid(process.pid)
     for _ in Timeout.default():
         tmp_out, tmp_err = process.communicate()
-        if isinstance(tmp_out, six.binary_type):
+        if isinstance(tmp_out, bytes):
             tmp_out = tmp_out.decode('utf-8', errors='replace')
-        if isinstance(tmp_err, six.binary_type):
+        if isinstance(tmp_err, bytes):
             tmp_err = tmp_err.decode('utf-8', errors='replace')
         stdout_parts.append(tmp_out)
         stderr_parts.append(tmp_err)

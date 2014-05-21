@@ -11,7 +11,7 @@ Failing Tests
 .. _failing_tests:
 
 Q. Why is my test failing? It works some of the time. What causes "flakyness?"
-=============================================================================
+==============================================================================
 
 Sometimes a tests fails because the application under tests has issues, but what happens when the failing test can't be reproduced manually? It means the test itself has an issue.
 
@@ -80,7 +80,9 @@ StateNotFoundError Exception
                 This object can be clicked to enable the photo to be selected. 
                 """
                 photo_element = self.grid_view().wait_select_single(
-                    'QQuickImage', source=photo_name)
+                    'QQuickImage',
+                    source=photo_name
+                )
                 return photo_element.get_parent()
 
             def select_named_photo(self, photo_name):

@@ -35,7 +35,7 @@ StateNotFoundError Exception
 
 #. Not waiting for an object to become visible before trying to select it. Is your app slower than it used to be for some reason? Does its properties have null values? Do you see errors in stdout/stderr while using your app, if you run it from the commandline?
 
-Python code is executed in series which takes milliseconds, whereas the actions (clicking a button etc.) will take longer as well as the dbus query time. This is why wait_select_* is useful i.e. click a button and wait for that click to happen (including the dbus query times taken).
+ Python code is executed in series which takes milliseconds, whereas the actions (clicking a button etc.) will take longer as well as the dbus query time. This is why wait_select_* is useful i.e. click a button and wait for that click to happen (including the dbus query times taken).
 
          * problem::
 

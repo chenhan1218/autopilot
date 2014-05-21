@@ -22,7 +22,7 @@ StateNotFoundError Exception
 
 .. _state_not_found:
 
-#. Not waiting for an animation to finish before looking for an object. Did you add animations to your app recently?
+1. Not waiting for an animation to finish before looking for an object. Did you add animations to your app recently?
 
          * problem::
 
@@ -33,7 +33,7 @@ StateNotFoundError Exception
             page.animationRunning.wait_for(False) 
             self.main_view.select_single('Button', text='click_this')
 
-#. Not waiting for an object to become visible before trying to select it. Is your app slower than it used to be for some reason? Does its properties have null values? Do you see errors in stdout/stderr while using your app, if you run it from the commandline?
+2. Not waiting for an object to become visible before trying to select it. Is your app slower than it used to be for some reason? Does its properties have null values? Do you see errors in stdout/stderr while using your app, if you run it from the commandline?
 
  Python code is executed in series which takes milliseconds, whereas the actions (clicking a button etc.) will take longer as well as the dbus query time. This is why wait_select_* is useful i.e. click a button and wait for that click to happen (including the dbus query times taken).
 
@@ -45,7 +45,7 @@ StateNotFoundError Exception
 
             self.main_view.wait_select_single('QPushButton', objectName='clickme')
 
-#. Waiting for an item that is destroyed to be not visible, sometimes the objects is destroyed before it returns false:
+3. Waiting for an item that is destroyed to be not visible, sometimes the objects is destroyed before it returns false:
         * problem::
 
             self.assertThat(dialogButton.visible, Eventually(Equals(False)))
@@ -63,7 +63,7 @@ StateNotFoundError Exception
 
             self._get_activity_indicator().running.wait_for_destroyed()
 
-#. Trying to use select_many like a list. The order in which the objects are returned are non-deterministic.
+4. Trying to use select_many like a list. The order in which the objects are returned are non-deterministic.
         * problem::
 
             def get_first_photo(self):

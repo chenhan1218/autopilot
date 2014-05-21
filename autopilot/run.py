@@ -486,8 +486,6 @@ def _configure_timeout_profile(args):
         autopilot.globals.set_default_timeout_period(20.0)
         autopilot.globals.set_long_timeout_period(30.0)
 
-def _set_global_args(args):
-    autopilot.globals.set_args(args)
 
 def _prepare_application_for_launch(application, interface):
     app_path, app_arguments = _get_application_path_and_arguments(application)

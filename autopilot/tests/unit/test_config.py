@@ -71,7 +71,7 @@ class TestConfigurationTests(TestCase):
 
     def test_strips_leading_whitespace_for_simple_keys(self):
         d = config.ConfigDict(' foo, bar')
-        self.assertEqual(d.keys(), {'foo', 'bar'})
+        self.assertEqual(set(d.keys()), {'foo', 'bar'})
 
     def test_complex_key_single(self):
         d = config.ConfigDict('foo=bar')
@@ -85,7 +85,7 @@ class TestConfigurationTests(TestCase):
 
     def test_complex_keys_strip_leading_whitespace(self):
         d = config.ConfigDict(' foo=bar, bar=baz')
-        self.assertEqual(d.keys(), {'foo', 'bar'})
+        self.assertEqual(set(d.keys()), {'foo', 'bar'})
 
     def test_raises_ValueError_on_invalid_string(self):
         self.assertRaises(ValueError, lambda: config.ConfigDict('f=b=c'))

@@ -76,9 +76,9 @@ class ConfigDict(collections.abc.Mapping):
                 continue
             parts = item.split('=')
             if len(parts) == 1:
-                self._data[parts[0]] = '1'
+                self._data[parts[0].lstrip()] = '1'
             elif len(parts) == 2:
-                self._data[parts[0]] = parts[1]
+                self._data[parts[0].lstrip()] = parts[1]
             else:
                 raise ValueError(
                     "Invalid configuration string '{}'".format(config_string)

@@ -38,7 +38,6 @@ from autopilot.application._environment import (
 from autopilot.introspection import (
     get_proxy_object_for_existing_process,
 )
-from autopilot.utilities import _raise_on_unknown_kwargs
 
 _logger = logging.getLogger(__name__)
 
@@ -223,11 +222,8 @@ class ClickApplicationLauncher(UpstartApplicationLauncher):
 
 
 class NormalApplicationLauncher(ApplicationLauncher):
-    def launch(self, application, *arguments, **kwargs):
-        app_type = kwargs.pop('app_type', None)
-        cwd = kwargs.pop('launch_dir', None)
-        capture_output = kwargs.pop('capture_output', True)
-        _raise_on_unknown_kwargs(kwargs)
+    def launch(self, application, arguments=[], app_type=None, cwd=None,
+               capture_output=True):
         _logger.info(
             "Attempting to launch application '%s' with arguments '%s' as a "
             "normal process",

@@ -251,16 +251,17 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         """
         launch_args = {}
-        launch_args['app_type'] = kwargs.pop('app_type', None)
-        launch_args['launch_dir'] = kwargs.pop('launch_dir', None)
-        launch_args['capture_output'] = kwargs.pop('capture_output', True)
+        launch_arg_list = ['app_type', 'launch_dir', 'capture_output']
+        for arg in launch_arg_list:
+            if arg in kwargs:
+                launch_args[arg] = kwargs.pop(arg)
         launcher = self.useFixture(
             NormalApplicationLauncher(
                 case_addDetail=self.addDetailUniqueName,
                 **kwargs
             )
         )
-        return launcher.launch(application, *arguments, **launch_args)
+        return launcher.launch(application, arguments, **launch_args)
 
     def launch_click_package(self, package_id, app_name=None, app_uris=[],
                              **kwargs):

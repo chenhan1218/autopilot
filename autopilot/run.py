@@ -128,11 +128,10 @@ def _get_parser():
         "can be useful if autopilot is running on very slow hardware"
     )
     parser_run.add_argument(
-        "-c", "--config", default="", help="If set, "
-        "specifies configuration for the test suite being run. Value should be"
-        " a comma-separated list of values, where each value is either of the "
-        "form 'key', or 'key=value'.",
-        dest="test_config"
+        "-c", "--config", default="", help="If set, specifies configuration "
+        "for the test suite being run. Value should be a comma-separated list "
+        "of values, where each value is either of the form 'key', or "
+        "'key=value'.", dest="test_config"
     )
     parser_run.add_argument("suite", nargs="+",
                             help="Specify test suite(s) to run.")

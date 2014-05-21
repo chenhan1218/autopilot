@@ -41,6 +41,7 @@ from testtools import iterate_tests
 
 from autopilot import get_version_string, have_vis
 import autopilot.globals
+from autopilot import _config as test_config
 from autopilot._debug import (
     get_all_debug_profiles,
     get_default_debug_profile,

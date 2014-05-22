@@ -101,8 +101,10 @@ class UpstartApplicationLauncher(ApplicationLauncher):
         :returns: proxy object for the launched package application
 
         """
-        if isinstance(app_uris, (str, bytes)):
+        if isinstance(app_uris, str):
             app_uris = [app_uris]
+        if isinstance(app_uris, bytes):
+            app_uris = [app_uris.decode()]
         _logger.info(
             "Attempting to launch application '%s' with URIs '%s' via "
             "upstart-app-launch",
@@ -258,8 +260,10 @@ class ClickApplicationLauncher(UpstartApplicationLauncher):
         :returns: proxy object for the launched package application
 
         """
-        if isinstance(app_uris, (str, bytes)):
+        if isinstance(app_uris, str):
             app_uris = [app_uris]
+        if isinstance(app_uris, bytes):
+            app_uris = [app_uris.decode()]
         _logger.info(
             "Attempting to launch click application '%s' from click package "
             " '%s' and URIs '%s'",

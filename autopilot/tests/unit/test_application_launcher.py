@@ -139,7 +139,7 @@ class NormalApplicationLauncherTests(TestCase):
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')
     @patch('autopilot.application._launcher._get_application_path')
-    def test_call_get_application_path(self, gap, _):
+    def test_launch_call_to_get_application_path(self, gap, _):
         """Test that NormalApplicationLauncher.launch calls
         _get_application_path with the arguments it was passed,"""
         launcher = NormalApplicationLauncher()
@@ -153,7 +153,10 @@ class NormalApplicationLauncherTests(TestCase):
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')
     @patch('autopilot.application._launcher._get_application_path')
-    def test_call_setup_environment(self, gap, _):
+    def test_launch_call_to_setup_environment(self, gap, _):
+        """Test the NornmalApplicationLauncher.launch calls
+        self._setup_environment with the correct application path from
+        _get_application_path and the arguments passed to it."""
         launcher = NormalApplicationLauncher()
         with patch.object(launcher, '_launch_application_process'):
             with patch.object(launcher, '_setup_environment') as se:
@@ -171,7 +174,10 @@ class NormalApplicationLauncherTests(TestCase):
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')
     @patch('autopilot.application._launcher._get_application_path')
-    def test_launch_application_environment(self, _, __):
+    def test_launch_call_to_launch_application_process(self, _, __):
+        """Test that NormalApplicationLauncher.launch calls
+        launch_application_process with the return values of
+        setup_environment."""
         launcher = NormalApplicationLauncher()
         with patch.object(launcher, '_launch_application_process') as lap:
             with patch.object(launcher, '_setup_environment') as se:
@@ -190,7 +196,10 @@ class NormalApplicationLauncherTests(TestCase):
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')
     @patch('autopilot.application._launcher._get_application_path')
-    def test_gets_correct_proxy_object(self, _, gpofep):
+    def test_launch_gets_correct_proxy_object(self, _, gpofep):
+        """Test that NormalApplicationLauncher.launch calls
+        get_proxy_object_for_existing_process with the correct return values of
+        other functions."""
         launcher = NormalApplicationLauncher()
         with patch.object(launcher, '_launch_application_process') as lap:
             with patch.object(launcher, '_setup_environment') as se:
@@ -204,7 +213,9 @@ class NormalApplicationLauncherTests(TestCase):
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')
     @patch('autopilot.application._launcher._get_application_path')
-    def test_returns_proxy_object(self, _, gpofep):
+    def test_launch_returns_proxy_object(self, _, gpofep):
+        """Test that NormalApplicationLauncher.launch returns the proxy object
+        returned by get_proxy_object_for_existing_process."""
         launcher = NormalApplicationLauncher()
         with patch.object(launcher, '_launch_application_process'):
             with patch.object(launcher, '_setup_environment') as se:

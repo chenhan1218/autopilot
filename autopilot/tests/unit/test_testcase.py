@@ -122,10 +122,9 @@ class AutopilotTestCaseClassTests(TestCase):
 
         test_case = LauncherTest('test_anything')
         with patch.object(test_case, 'useFixture') as uf:
-            result = test_case.launch_test_application('')
+            result = test_case.launch_test_application('a', 'b', 'c')
             uf.assert_called_once_with(nal.return_value)
-            self.assertEqual([call.launch('', ())],
-                             uf.return_value.mock_calls)
+            uf.return_value.launch.assert_called_once_with('a', ('b', 'c'))
             self.assertEqual(result, uf.return_value.launch.return_value)
 
     @patch('autopilot.testcase.ClickApplicationLauncher')
@@ -139,10 +138,11 @@ class AutopilotTestCaseClassTests(TestCase):
 
         test_case = LauncherTest('test_anything')
         with patch.object(test_case, 'useFixture') as uf:
-            result = test_case.launch_click_package('')
+            result = test_case.launch_click_package('a', 'b', ['c', 'd'])
             uf.assert_called_once_with(cal.return_value)
-            self.assertEqual([call.launch('', None, [])],
-                             uf.return_value.mock_calls)
+            uf.return_value.launch.assert_called_once_with(
+                'a', 'b', ['c', 'd']
+            )
             self.assertEqual(result, uf.return_value.launch.return_value)
 
     @patch('autopilot.testcase.UpstartApplicationLauncher')
@@ -156,8 +156,7 @@ class AutopilotTestCaseClassTests(TestCase):
 
         test_case = LauncherTest('test_anything')
         with patch.object(test_case, 'useFixture') as uf:
-            result = test_case.launch_upstart_application('')
+            result = test_case.launch_upstart_application('a', ['b'])
             uf.assert_called_once_with(ual.return_value)
-            self.assertEqual([call.launch('', [])],
-                             uf.return_value.mock_calls)
+            uf.return_value.launch.assert_called_once_with('a', ['b'])
             self.assertEqual(result, uf.return_value.launch.return_value)

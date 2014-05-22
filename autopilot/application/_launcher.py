@@ -87,8 +87,8 @@ class UpstartApplicationLauncher(ApplicationLauncher):
         Usage is similar to the
         :py:meth:`NormalApplicationLauncher.launch`::
 
-            from autopilot.application import ClickApplicationLauncher
-            launcher = ClickApplicationLauncher()
+            from autopilot.application import UpstartApplicationLauncher
+            launcher = UpstartApplicationLauncher()
             launcher.setUp()
             app_proxy = launcher.launch('gallery-app')
 
@@ -284,11 +284,11 @@ class NormalApplicationLauncher(ApplicationLauncher):
         """Launch an application and return a proxy object.
 
         Use this method to launch an application and start testing it. The
-        list of arguments passed in ``application`` are used as arguments to
-        the application to launch. Additional keyword arguments are used to
-        control the manner in which the application is launched.
+        arguments passed in ``arguments`` are used as arguments to the
+        application to launch. Additional keyword arguments are used to control
+        the manner in which the application is launched.
 
-        This method is designed to be flexible enough to launch all supported
+        This fixture is designed to be flexible enough to launch all supported
         types of applications. Autopilot can automatically determine how to
         enable introspection support for dynamically linked binary
         applications. For example, to launch a binary Gtk application, a test
@@ -301,6 +301,7 @@ class NormalApplicationLauncher(ApplicationLauncher):
 
         For use within a testcase, use useFixture:
 
+            from autopilot.application import NormalApplicationLauncher
             launcher = self.useFixture(NormalApplicationLauncher())
             app_proxy = launcher.launch('gedit')
 
@@ -364,9 +365,9 @@ class NormalApplicationLauncher(ApplicationLauncher):
         )
         app_path = _get_application_path(application)
         app_path, arguments = self._setup_environment(
-            app_path, app_type, *arguments)
+            app_path, app_type, arguments)
         self.process = self._launch_application_process(
-            app_path, capture_output, cwd, *arguments)
+            app_path, capture_output, cwd, arguments)
         proxy_object = get_proxy_object_for_existing_process(
             dbus_bus=self.dbus_bus,
             emulator_base=self.emulator_base,
@@ -375,7 +376,7 @@ class NormalApplicationLauncher(ApplicationLauncher):
         )
         return proxy_object
 
-    def _setup_environment(self, app_path, app_type, *arguments):
+    def _setup_environment(self, app_path, app_type, arguments):
         app_env = self.useFixture(
             _get_application_environment(app_type, app_path)
         )
@@ -385,7 +386,7 @@ class NormalApplicationLauncher(ApplicationLauncher):
         )
 
     def _launch_application_process(self, app_path, capture_output, cwd,
-                                    *arguments):
+                                    arguments):
         process = launch_process(
             app_path,
             arguments,
@@ -394,6 +395,7 @@ class NormalApplicationLauncher(ApplicationLauncher):
         )
 
         self.addCleanup(self._kill_process_and_attach_logs, process, app_path)
+
         return process
 
     def _kill_process_and_attach_logs(self, process, app_path):

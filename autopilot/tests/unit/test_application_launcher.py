@@ -121,19 +121,12 @@ class NormalApplicationLauncherTests(TestCase):
             )
 
     def test_setup_environment_returns_prepare_environment_return_value(self):
-        token = self.getUniqueString()
-        fake_env = Mock()
-        fake_env.prepare_environment.return_value = token
-
-        app_launcher = NormalApplicationLauncher(self.addDetail)
-        app_launcher.setUp()
-
-        with patch.object(
-            _l, '_get_application_environment', return_value=fake_env
-        ):
+        app_launcher = self.useFixture(NormalApplicationLauncher())
+        with patch.object(_l, '_get_application_environment') as gae:
             self.assertThat(
-                app_launcher._setup_environment(self.getUniqueString(), None),
-                Equals(token)
+                app_launcher._setup_environment(
+                    self.getUniqueString(), None, []),
+                Equals(gae.return_value.prepare_environment.return_value)
             )
 
     @patch('autopilot.application._launcher.'
@@ -142,8 +135,8 @@ class NormalApplicationLauncherTests(TestCase):
     def test_call_get_application_path(self, gap, _):
         launcher = NormalApplicationLauncher()
         with patch.object(launcher, '_launch_application_process'):
-            with patch.object(launcher, '_setup_environment') as so:
-                so.return_value = ('', [])
+            with patch.object(launcher, '_setup_environment') as se:
+                se.return_value = ('', [])
                 launcher.launch('a')
                 gap.assert_called_once_with('a')
 
@@ -153,10 +146,10 @@ class NormalApplicationLauncherTests(TestCase):
     def test_call_setup_environment(self, gap, _):
         launcher = NormalApplicationLauncher()
         with patch.object(launcher, '_launch_application_process'):
-            with patch.object(launcher, '_setup_environment') as so:
-                so.return_value = ('', [])
+            with patch.object(launcher, '_setup_environment') as se:
+                se.return_value = ('', [])
                 launcher.launch('', arguments=['a', 'b'])
-                so.assert_called_once_with(gap.return_value, None, 'a', 'b')
+                se.assert_called_once_with(gap.return_value, None, ['a', 'b'])
 
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')
@@ -164,10 +157,10 @@ class NormalApplicationLauncherTests(TestCase):
     def test_launch_application_environment(self, _, __):
         launcher = NormalApplicationLauncher()
         with patch.object(launcher, '_launch_application_process') as lap:
-            with patch.object(launcher, '_setup_environment') as so:
-                so.return_value = ('a', ['b', 'c'])
+            with patch.object(launcher, '_setup_environment') as se:
+                se.return_value = ('a', ['b', 'c'])
                 launcher.launch('', arguments=['', ''])
-                lap.assert_called_once_with('a', True, None, 'b', 'c')
+                lap.assert_called_once_with('a', True, None, ['b', 'c'])
 
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')
@@ -175,8 +168,8 @@ class NormalApplicationLauncherTests(TestCase):
     def test_gets_correct_proxy_object(self, _, gpofep):
         launcher = NormalApplicationLauncher()
         with patch.object(launcher, '_launch_application_process') as lap:
-            with patch.object(launcher, '_setup_environment') as so:
-                so.return_value = ('', [])
+            with patch.object(launcher, '_setup_environment') as se:
+                se.return_value = ('', [])
                 launcher.launch('')
                 gpofep.assert_called_once_with(process=lap.return_value,
                                                pid=lap.return_value.pid,
@@ -189,8 +182,8 @@ class NormalApplicationLauncherTests(TestCase):
     def test_returns_proxy_object(self, _, gpofep):
         launcher = NormalApplicationLauncher()
         with patch.object(launcher, '_launch_application_process'):
-            with patch.object(launcher, '_setup_environment') as so:
-                so.return_value = ('', [])
+            with patch.object(launcher, '_setup_environment') as se:
+                se.return_value = ('', [])
                 result = launcher.launch('')
                 self.assertEqual(result, gpofep.return_value)
 
@@ -208,7 +201,7 @@ class NormalApplicationLauncherTests(TestCase):
             _l, 'launch_process', return_value=expected_process_return
         ) as patched_launch_process:
             process = launcher._launch_application_process(
-                "/foo/bar", False, None)
+                "/foo/bar", False, None, [])
 
             self.assertThat(process, Equals(expected_process_return))
             self.assertThat(
@@ -217,7 +210,7 @@ class NormalApplicationLauncherTests(TestCase):
             )
             patched_launch_process.assert_called_with(
                 "/foo/bar",
-                (),
+                [],
                 False,
                 cwd=None
             )
@@ -422,6 +415,7 @@ class ClickFunctionTests(TestCase):
                     'hooks': {'bar': {}}, 'version': '1.0'
                 }
             ]
+
             self.assertThat(
                 _get_click_app_id("com.autopilot.testing"),
                 Equals("com.autopilot.testing_bar_1.0")

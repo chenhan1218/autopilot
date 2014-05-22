@@ -92,43 +92,45 @@ class RunUtilityFunctionTests(TestCase):
 
     @patch('autopilot._video')
     def test_configure_video_recording_not_called(self, patched_video):
-        args = Namespace(record_directory='', record=False, record_options='')
-        _video.configure_video_recording(args, Mock())
+        args = Namespace(record_directory='', record=False)
+        _video.configure_video_recording(args)
 
         self.assertFalse(patched_video.configure_video_recording.called)
 
     @patch.object(_video, '_have_video_recording_facilities', new=lambda: True)
-    def test_configure_video_recording_called_with_record_set(self):
-        args = Namespace(record_directory='', record=True, record_options='')
-        with patch('autopilot._video.RMDVideoLogFixture') as patched_video:
-            mock_test_instance = Mock()
-            _video.configure_video_recording(args, mock_test_instance)
-            patched_video.assert_called_once_with(
-                '/tmp/autopilot',
-                mock_test_instance
-            )
+    def test_configure_video_recording_sets_default_dir(self):
+        args = Namespace(record_directory='', record=True)
+        _video.configure_video_recording(args)
+        PartialFixture = _video.get_video_recording_fixture()
+        partial_fixture = PartialFixture(None)
+        self.assertEqual(partial_fixture.recording_directory, '/tmp/autopilot')
 
     @patch.object(_video, '_have_video_recording_facilities', new=lambda: True)
     def test_configure_video_record_directory_implies_record(self):
         token = self.getUniqueString()
-        args = Namespace(
-            record_directory=token,
-            record=False,
-            record_options=''
-        )
-        with patch('autopilot._video.RMDVideoLogFixture') as patched_video:
-            mock_test_instance = Mock()
-            _video.configure_video_recording(args, mock_test_instance)
-            patched_video.assert_called_once_with(
-                token,
-                mock_test_instance
-            )
+        args = Namespace(record_directory=token, record=True)
+        FixtureClass = _video.get_video_recording_fixture()
+        #with patch('autopilot._video.RMDVideoLogFixture') as patched_video:
+        #    _video.configure_video_recording(args)
+        #    PartialFixture = _video.get_video_recording_fixture()
+        #    partial_fixture = PartialFixture(token)
+        #    patched_video.assert_called_once_with(token)
+
+        #_video.configure_video_recording(args)
+
+        #print(_video.get_video_recording_fixture())
+        #partial_fixture = PartialFixture(token)
+        #self.assertEqual(partial_fixture.recording_directory, '/tmp/autopilot')
+
+#with patch('autopilot._video.RMDVideoLogFixture') as patched_video:
+#            _video.configure_video_recording(args)
+#            patched_video.assert_called_once_with(args)
 
     @patch.object(_video, '_have_video_recording_facilities', new=lambda: False)
     def test_configure_video_recording_raises_RuntimeError(self):
         args = Namespace(record_directory='', record=True, record_options='')
         self.assertThat(
-            lambda: _video.configure_video_recording(args, Mock()),
+            lambda: _video.configure_video_recording(args),
             raises(
                 RuntimeError(
                     "The application 'recordmydesktop' needs to be installed "

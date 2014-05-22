@@ -46,6 +46,7 @@ from autopilot._debug import (
     get_all_debug_profiles,
     get_default_debug_profile,
 )
+from autopilot import _video as video
 from autopilot.testresult import get_default_format, get_output_formats
 from autopilot.utilities import DebugLogFilter, LogFormatter
 from autopilot.application._launcher import (
@@ -205,7 +206,6 @@ def _parse_arguments(argv=None):
     if 'suite' in args:
         args.suite = [suite.rstrip('/') for suite in args.suite]
 
-    autopilot.globals.set_args(args)
     return args
 
 
@@ -674,6 +674,7 @@ class TestProgram(object):
 
         _configure_debug_profile(self.args)
         _configure_timeout_profile(self.args)
+        video.configure_video_recording(self.args)
         test_config.set_configuration_string(self.args.test_config)
 
         if self.args.verbose:

@@ -63,7 +63,7 @@ from autopilot.application import (
     UpstartApplicationLauncher,
 )
 from autopilot.display import Display
-from autopilot.globals import get_args, get_debug_profile_fixture
+from autopilot.globals import get_debug_profile_fixture
 from autopilot.input import Keyboard, Mouse
 from autopilot.introspection import (
     get_proxy_object_for_existing_process,
@@ -73,7 +73,7 @@ from autopilot.matchers import Eventually
 from autopilot.process import ProcessManager
 from autopilot.utilities import deprecated, on_test_started
 from autopilot._timeout import Timeout
-from autopilot._video import configure_video_recording
+from autopilot._video import get_video_recording_fixture
 try:
     from autopilot import tracepoint as tp
     HAVE_TRACEPOINT = True
@@ -138,8 +138,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         super(AutopilotTestCase, self).setUp()
         on_test_started(self)
         self.useFixture(get_debug_profile_fixture()(self.addDetailUniqueName))
-        args = get_args()
-        self.useFixture(configure_video_recording(args, self))
+        self.useFixture(get_video_recording_fixture()())
         _lttng_trace_test_started(self.id())
         self.addCleanup(_lttng_trace_test_ended, self.id())
 

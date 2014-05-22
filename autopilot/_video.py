@@ -21,6 +21,7 @@
 from __future__ import absolute_import
 
 import fixtures
+from functools import partial
 import logging
 import os
 import signal
@@ -125,7 +126,7 @@ def _have_video_recording_facilities():
     return call_ret_code == 0
 
 
-def configure_video_recording(args, test_instance):
+def configure_video_recording(args):
     """Configure video recording based on contents of ``args``.
 
     :raises RuntimeError: If the user asked for video recording, but the
@@ -138,7 +139,8 @@ def configure_video_recording(args, test_instance):
     if not args.record:
         # blank fixture when recording is not enabled
         #TODO create real blank fixture
-        return fixtures.Fixture()
+        global VideoLogFixture
+        VideoLogFixture = fixtures.Fixture
     else:
         if not args.record_directory:
             args.record_directory = '/tmp/autopilot'
@@ -149,5 +151,10 @@ def configure_video_recording(args, test_instance):
                 "record failing jobs."
             )
 
-        return RMDVideoLogFixture(args.record_directory, test_instance)
+        global VideoLogFixture
+        VideoLogFixture = partial(RMDVideoLogFixture, args.record_directory)
 
+
+def get_video_recording_fixture():
+    global VideoLogFixture
+    return VideoLogFixture

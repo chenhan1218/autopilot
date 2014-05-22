@@ -138,16 +138,3 @@ def set_long_timeout_period(new_timeout):
 def get_long_timeout_period():
     global _long_timeout_value
     return _long_timeout_value
-
-
-_args = None
-
-
-def set_args(args):
-    global _args
-    _args = args
-
-
-def get_args():
-    global _args
-    return _args

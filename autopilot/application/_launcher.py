@@ -54,11 +54,11 @@ class ApplicationLauncher(fixtures.Fixture):
 
     """
 
-    def __init__(self, case_addDetail=None, proxy_base=None,
+    def __init__(self, case_addDetail=None, emulator_base=None,
                  dbus_bus='session'):
         super().__init__()
         self.case_addDetail = case_addDetail or self.addDetail
-        self.proxy_base = proxy_base
+        self.proxy_base = emulator_base
         self.dbus_bus = dbus_bus
 
     def setUp(self):

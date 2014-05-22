@@ -47,7 +47,7 @@ class ApplicationLauncher(fixtures.Fixture):
     introspection enabled.
 
     :keyword case_addDetail: addDetail method to use (self.addDetail if not
-        specified
+        specified)
     :keyword proxy_base: custom proxy base class to use, defaults to None
     :keyword dbus_bus: dbus bus to use, if set to something other than the
         default ('session') the environment will be patched

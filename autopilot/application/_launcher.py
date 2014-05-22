@@ -91,8 +91,7 @@ class UpstartApplicationLauncher(ApplicationLauncher):
         This method launches an application via the ``upstart-app-launch``
         library, on platforms that support it.
 
-        Usage is similar to the
-        :py:meth:`NormalApplicationLauncher.launch`::
+        Usage is similar to NormalApplicationLauncher::
 
             from autopilot.application import UpstartApplicationLauncher
             launcher = UpstartApplicationLauncher()
@@ -242,8 +241,7 @@ class ClickApplicationLauncher(UpstartApplicationLauncher):
         exabled. You probably want to use this method if your application is
         packaged in a click application, or is started via upstart.
 
-        Usage is similar to the
-        :py:meth:`NormalApplicationLauncher.launch`::
+        Usage is similar to NormalApplicationLauncher.launch::
 
             from autopilot.application import ClickApplicationLauncher
             launcher = ClickApplicationLauncher()

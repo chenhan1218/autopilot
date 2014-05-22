@@ -36,6 +36,10 @@ from textwrap import dedent
 
 from fixtures import EnvironmentVariable
 
+from autopilot.application import (
+    NormalApplicationLauncher,
+    UpstartApplicationLauncher,
+)
 from autopilot.exceptions import ProcessSearchError
 from autopilot.process import ProcessManager
 from autopilot.platform import model
@@ -290,9 +294,10 @@ class QtTests(ApplicationTests, QmlTestMixin):
     def test_can_launch_normal_app(self):
         path = self.get_qml_viewer_app_path()
         fixture = self.useFixture(TempDesktopFile(exec_=path,))
-        app_proxy = self.launch_test_application(
+        launcher = self.useFixture(NormalApplicationLauncher())
+        app_proxy = launcher.launch(
             path,
-            '--desktop_file_hint=%s' % fixture.get_desktop_file_path(),
+            ['--desktop_file_hint=%s' % fixture.get_desktop_file_path()],
             app_type='qt'
         )
         self.assertTrue(app_proxy is not None)
@@ -300,7 +305,8 @@ class QtTests(ApplicationTests, QmlTestMixin):
     def test_can_launch_upstart_app(self):
         path = self.get_qml_viewer_app_path()
         fixture = self.useFixture(TempDesktopFile(exec_=path,))
-        self.launch_upstart_application(fixture.get_desktop_file_id())
+        launcher = self.useFixture(UpstartApplicationLauncher())
+        launcher.launch(fixture.get_desktop_file_id())
 
     @skipIf(model() != "Desktop", "Only suitable on Desktop (Qt4)")
     def test_can_launch_normal_qt_script(self):

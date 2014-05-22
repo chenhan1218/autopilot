@@ -109,8 +109,8 @@ class RunUtilityFunctionTests(TestCase):
     def test_configure_video_record_directory_implies_record(self):
         token = self.getUniqueString()
         args = Namespace(record_directory=token, record=True)
-        FixtureClass = _video.get_video_recording_fixture()
-        #with patch('autopilot._video.RMDVideoLogFixture') as patched_video:
+        #FixtureClass = _video.get_video_recording_fixture()
+        #with patch('autopilot._video.get_video_recording_fixture') as patched_video:
         #    _video.configure_video_recording(args)
         #    PartialFixture = _video.get_video_recording_fixture()
         #    partial_fixture = PartialFixture(token)

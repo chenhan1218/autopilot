@@ -126,6 +126,12 @@ def _have_video_recording_facilities():
     return call_ret_code == 0
 
 
+
+class DoNothingFixture(fixtures.Fixture):
+    def __init__(self, arg):
+        pass
+
+
 def configure_video_recording(args):
     """Configure video recording based on contents of ``args``.
 
@@ -133,14 +139,14 @@ def configure_video_recording(args):
         system does not support video recording.
 
     """
+    global VideoLogFixture
+
     if args.record_directory:
         args.record = True
 
     if not args.record:
         # blank fixture when recording is not enabled
-        #TODO create real blank fixture
-        global VideoLogFixture
-        VideoLogFixture = fixtures.Fixture
+        VideoLogFixture = DoNothingFixture
     else:
         if not args.record_directory:
             args.record_directory = '/tmp/autopilot'
@@ -151,7 +157,6 @@ def configure_video_recording(args):
                 "record failing jobs."
             )
 
-        global VideoLogFixture
         VideoLogFixture = partial(RMDVideoLogFixture, args.record_directory)
 
 

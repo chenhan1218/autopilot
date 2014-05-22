@@ -138,7 +138,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         super(AutopilotTestCase, self).setUp()
         on_test_started(self)
         self.useFixture(get_debug_profile_fixture()(self.addDetailUniqueName))
-        self.useFixture(get_video_recording_fixture()())
+        self.useFixture(get_video_recording_fixture()(self))
         _lttng_trace_test_started(self.id())
         self.addCleanup(_lttng_trace_test_ended, self.id())
 

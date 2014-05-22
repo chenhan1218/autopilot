@@ -46,19 +46,16 @@ class ApplicationLauncher(fixtures.Fixture):
     """A class that knows how to launch an application with a certain type of
     introspection enabled.
 
+    :keyword case_addDetail: addDetail method to use (self.addDetail if not
+        specified
+    :keyword proxy_base: custom proxy base class to use, defaults to None
+    :keyword dbus_bus: dbus bus to use, if set to something other than the
+        default ('session') the environment will be patched
+
     """
 
     def __init__(self, case_addDetail=None, proxy_base=None,
                  dbus_bus='session'):
-        """Set the details common to all ApplicationLauncher fixtures.
-
-        :keyword case_addDetail: addDetail method to use (self.addDetail if not
-            specified
-        :keyword proxy_base: custom proxy base class to use, defaults to None
-        :keyword dbus_bus: dbus bus to use, if set to something other than the
-            default ('session') the environment will be patched
-
-        """
         super().__init__()
         self.case_addDetail = case_addDetail or self.addDetail
         self.proxy_base = proxy_base
@@ -81,6 +78,7 @@ class ApplicationLauncher(fixtures.Fixture):
 class UpstartApplicationLauncher(ApplicationLauncher):
 
     """A launcher class that launches applications with UpstartAppLaunch."""
+    __doc__ += ApplicationLauncher.__doc__
 
     Timeout = object()
     Failed = object()
@@ -235,6 +233,7 @@ class UpstartApplicationLauncher(ApplicationLauncher):
 class ClickApplicationLauncher(UpstartApplicationLauncher):
 
     """Fixture to manage launching a Click application."""
+    __doc__ += ApplicationLauncher.__doc__
 
     def launch(self, package_id, app_name=None, app_uris=[]):
         """Launch a click package application with introspection enabled.
@@ -285,6 +284,7 @@ class ClickApplicationLauncher(UpstartApplicationLauncher):
 class NormalApplicationLauncher(ApplicationLauncher):
 
     """Fixture to manage launching an application."""
+    __doc__ += ApplicationLauncher.__doc__
 
     def launch(self, application, arguments=[], app_type=None, cwd=None,
                capture_output=True):

@@ -81,7 +81,6 @@ class ProcessSnapshotTests(TestCase):
             with patch('autopilot.utilities.logger') as patched_log:
                 result = InnerTest('test_foo').run()
                 self.assertTrue(result.wasSuccessful())
-
                 self.assertThat(
                     patched_log.warning.call_args[0][0],
                     Contains(

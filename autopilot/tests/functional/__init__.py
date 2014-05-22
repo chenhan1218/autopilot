@@ -27,9 +27,12 @@ import sys
 import logging
 from shutil import rmtree
 import subprocess
-from tempfile import mkdtemp
+from tempfile import mkdtemp, mktemp
 from testtools.content import text_content
 
+
+from autopilot import platform
+from autopilot.tests.functional.fixtures import TempDesktopFile
 from autopilot.testcase import AutopilotTestCase
 
 
@@ -181,3 +184,32 @@ if __name__ == '__main__':
         load_entry_point('autopilot==1.5.0', 'console_scripts', 'autopilot3')()
     )
 """
+
+
+class QmlScriptRunnerMixin(object):
+
+    """A Mixin class that knows how to get a proxy object for a qml script."""
+
+    def start_qml_script(self, script_contents):
+        """Launch a qml script."""
+        qml_path = mktemp(suffix='.qml')
+        open(qml_path, 'w').write(script_contents)
+        self.addCleanup(os.remove, qml_path)
+
+        extra_args = ''
+        if platform.model() != "Desktop":
+            # We need to add the desktop-file-hint
+            desktop_file = self.useFixture(
+                TempDesktopFile()
+            ).get_desktop_file_path()
+            extra_args = '--desktop_file_hint={hint_file}'.format(
+                hint_file=desktop_file
+            )
+
+        return self.launch_test_application(
+            "qmlscene",
+            "-qt=qt5",
+            qml_path,
+            extra_args,
+            app_type='qt',
+        )

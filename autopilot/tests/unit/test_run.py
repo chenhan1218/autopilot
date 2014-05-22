@@ -128,7 +128,7 @@ class RunUtilityFunctionTests(TestCase):
 
     @patch.object(_video, '_have_video_recording_facilities', new=lambda: False)
     def test_configure_video_recording_raises_RuntimeError(self):
-        args = Namespace(record_directory='', record=True, record_options='')
+        args = Namespace(record_directory='', record=True)
         self.assertThat(
             lambda: _video.configure_video_recording(args),
             raises(

@@ -78,15 +78,22 @@ class ApplicationLauncherTests(TestCase):
     def test_init_uses_default_values(self):
         launcher = ApplicationLauncher()
         self.assertEqual(launcher.case_addDetail, launcher.addDetail)
-        self.assertEqual(launcher.emulator_base, None)
+        self.assertEqual(launcher.proxy_base, None)
         self.assertEqual(launcher.dbus_bus, 'session')
 
     def test_init_uses_passed_values(self):
+        case_addDetail = self.getUniqueString()
+        proxy_base = self.getUniqueString()
+        dbus_bus = self.getUniqueString()
+
         launcher = ApplicationLauncher(
-            case_addDetail='a', emulator_base='', dbus_bus='')
-        self.assertEqual(launcher.case_addDetail, 'a')
-        self.assertEqual(launcher.emulator_base, '')
-        self.assertEqual(launcher.dbus_bus, '')
+            case_addDetail=case_addDetail,
+            proxy_base=proxy_base,
+            dbus_bus=dbus_bus,
+        )
+        self.assertEqual(launcher.case_addDetail, case_addDetail)
+        self.assertEqual(launcher.proxy_base, proxy_base)
+        self.assertEqual(launcher.dbus_bus, dbus_bus)
 
     @patch('autopilot.application._launcher.fixtures.EnvironmentVariable')
     def test_setUp_patches_environment(self, ev):
@@ -133,12 +140,15 @@ class NormalApplicationLauncherTests(TestCase):
            'get_proxy_object_for_existing_process')
     @patch('autopilot.application._launcher._get_application_path')
     def test_call_get_application_path(self, gap, _):
+        """Test that NormalApplicationLauncher.launch calls
+        _get_application_path with the arguments it was passed,"""
         launcher = NormalApplicationLauncher()
         with patch.object(launcher, '_launch_application_process'):
             with patch.object(launcher, '_setup_environment') as se:
                 se.return_value = ('', [])
-                launcher.launch('a')
-                gap.assert_called_once_with('a')
+                token = self.getUniqueString()
+                launcher.launch(token)
+                gap.assert_called_once_with(token)
 
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')
@@ -148,8 +158,15 @@ class NormalApplicationLauncherTests(TestCase):
         with patch.object(launcher, '_launch_application_process'):
             with patch.object(launcher, '_setup_environment') as se:
                 se.return_value = ('', [])
-                launcher.launch('', arguments=['a', 'b'])
-                se.assert_called_once_with(gap.return_value, None, ['a', 'b'])
+                token_a = self.getUniqueString()
+                token_b = self.getUniqueString()
+                token_c = self.getUniqueString()
+                launcher.launch(token_a, arguments=[token_b, token_c])
+                se.assert_called_once_with(
+                    gap.return_value,
+                    None,
+                    [token_b, token_c],
+                )
 
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')
@@ -158,9 +175,17 @@ class NormalApplicationLauncherTests(TestCase):
         launcher = NormalApplicationLauncher()
         with patch.object(launcher, '_launch_application_process') as lap:
             with patch.object(launcher, '_setup_environment') as se:
-                se.return_value = ('a', ['b', 'c'])
+                token_a = self.getUniqueString()
+                token_b = self.getUniqueString()
+                token_c = self.getUniqueString()
+                se.return_value = (token_a, [token_b, token_c])
                 launcher.launch('', arguments=['', ''])
-                lap.assert_called_once_with('a', True, None, ['b', 'c'])
+                lap.assert_called_once_with(
+                    token_a,
+                    True,
+                    None,
+                    [token_b, token_c],
+                )
 
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')
@@ -238,15 +263,16 @@ class ClickApplicationLauncherTests(TestCase):
             '__bases__',
             (FakeUpstartBase,)
         )
+        token = self.getUniqueString()
         with patcher:
             # Prevent mock from trying to delete __bases__
             patcher.is_local = True
             launcher = self.useFixture(
                 _l.ClickApplicationLauncher())
-            launcher.launch('', '', 'a')
+            launcher.launch('', '', token)
         self.assertEqual(
             FakeUpstartBase.launch_call_args,
-            [gcai.return_value, ['a']])
+            [gcai.return_value, [token]])
 
     @patch('autopilot.application._launcher._get_click_app_id')
     def test_handle_bytes(self, gcai):
@@ -261,15 +287,16 @@ class ClickApplicationLauncherTests(TestCase):
             '__bases__',
             (FakeUpstartBase,)
         )
+        token = self.getUniqueString()
         with patcher:
             # Prevent mock from trying to delete __bases__
             patcher.is_local = True
             launcher = self.useFixture(
                 _l.ClickApplicationLauncher())
-            launcher.launch('', '', 'a'.encode())
+            launcher.launch('', '', token.encode())
         self.assertEqual(
             FakeUpstartBase.launch_call_args,
-            [gcai.return_value, ['a']])
+            [gcai.return_value, [token]])
 
     @patch('autopilot.application._launcher._get_click_app_id')
     def test_handle_list(self, gcai):
@@ -284,15 +311,16 @@ class ClickApplicationLauncherTests(TestCase):
             '__bases__',
             (FakeUpstartBase,)
         )
+        token = self.getUniqueString()
         with patcher:
             # Prevent mock from trying to delete __bases__
             patcher.is_local = True
             launcher = self.useFixture(
                 _l.ClickApplicationLauncher())
-            launcher.launch('', '', ['a'])
+            launcher.launch('', '', [token])
         self.assertEqual(
             FakeUpstartBase.launch_call_args,
-            [gcai.return_value, ['a']])
+            [gcai.return_value, [token]])
 
     @patch('autopilot.application._launcher._get_click_app_id')
     def test_call_get_click_app_id(self, gcai):
@@ -307,13 +335,15 @@ class ClickApplicationLauncherTests(TestCase):
             '__bases__',
             (FakeUpstartBase,)
         )
+        token_a = self.getUniqueString()
+        token_b = self.getUniqueString()
         with patcher:
             # Prevent mock from trying to delete __bases__
             patcher.is_local = True
             launcher = self.useFixture(
                 _l.ClickApplicationLauncher())
-            launcher.launch('a', 'b')
-        gcai.assert_called_once_with('a', 'b')
+            launcher.launch(token_a, token_b)
+        gcai.assert_called_once_with(token_a, token_b)
 
     @patch('autopilot.application._launcher._get_click_app_id')
     def test_call_upstart_launch(self, gcai):
@@ -585,41 +615,48 @@ class UpstartApplicationLauncherTests(TestCase):
            'get_proxy_object_for_existing_process')
     def test_handle_string(self, _):
         launcher = UpstartApplicationLauncher()
+        token_a = self.getUniqueString()
+        token_b = self.getUniqueString()
         with patch.object(launcher, '_launch_app') as la:
             with patch.object(launcher, '_get_pid_for_launched_app'):
                 with patch.object(launcher, '_get_glib_loop'):
-                    launcher.launch('', 'a')
-                    la.assert_called_once_with('', ['a'])
+                    launcher.launch(token_a, token_b)
+                    la.assert_called_once_with(token_a, [token_b])
 
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')
     def test_handle_bytes(self, _):
         launcher = UpstartApplicationLauncher()
+        token_a = self.getUniqueString()
+        token_b = self.getUniqueString()
         with patch.object(launcher, '_launch_app') as la:
             with patch.object(launcher, '_get_pid_for_launched_app'):
                 with patch.object(launcher, '_get_glib_loop'):
-                    launcher.launch('', 'a'.encode())
-                    la.assert_called_once_with('', ['a'])
+                    launcher.launch(token_a, token_b.encode())
+                    la.assert_called_once_with(token_a, [token_b])
 
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')
     def test_handle_list(self, _):
         launcher = UpstartApplicationLauncher()
+        token_a = self.getUniqueString()
+        token_b = self.getUniqueString()
         with patch.object(launcher, '_launch_app') as la:
             with patch.object(launcher, '_get_pid_for_launched_app'):
                 with patch.object(launcher, '_get_glib_loop'):
-                    launcher.launch('', ['a'])
-                    la.assert_called_once_with('', ['a'])
+                    launcher.launch(token_a, [token_b])
+                    la.assert_called_once_with(token_a, [token_b])
 
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')
     def test_calls_get_pid(self, _):
         launcher = UpstartApplicationLauncher()
+        token = self.getUniqueString()
         with patch.object(launcher, '_launch_app'):
             with patch.object(launcher, '_get_pid_for_launched_app') as gp:
                 with patch.object(launcher, '_get_glib_loop'):
-                    launcher.launch('a')
-                    gp.assert_called_once_with('a')
+                    launcher.launch(token)
+                    gp.assert_called_once_with(token)
 
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')

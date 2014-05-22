@@ -371,13 +371,13 @@ class NormalApplicationLauncher(ApplicationLauncher):
         app_path = _get_application_path(application)
         app_path, arguments = self._setup_environment(
             app_path, app_type, arguments)
-        self.process = self._launch_application_process(
+        process = self._launch_application_process(
             app_path, capture_output, cwd, arguments)
         proxy_object = get_proxy_object_for_existing_process(
             dbus_bus=self.dbus_bus,
             emulator_base=self.proxy_base,
-            process=self.process,
-            pid=self.process.pid
+            process=process,
+            pid=process.pid
         )
         return proxy_object
 

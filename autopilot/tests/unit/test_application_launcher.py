@@ -75,6 +75,24 @@ class ApplicationLauncherTests(TestCase):
             )
         )
 
+    def test_init_uses_default_values(self):
+        launcher = ApplicationLauncher()
+        self.assertEqual(launcher.case_addDetail, launcher.addDetail)
+        self.assertEqual(launcher.emulator_base, None)
+        self.assertEqual(launcher.dbus_bus, 'session')
+
+    def test_init_uses_passed_values(self):
+        launcher = ApplicationLauncher(
+            case_addDetail='a', emulator_base='', dbus_bus='')
+        self.assertEqual(launcher.case_addDetail, 'a')
+        self.assertEqual(launcher.emulator_base, '')
+        self.assertEqual(launcher.dbus_bus, '')
+
+    @patch('autopilot.application._launcher.fixtures.EnvironmentVariable')
+    def test_setUp_patches_environment(self, ev):
+        self.useFixture(ApplicationLauncher(dbus_bus=''))
+        ev.assert_called_with('DBUS_SESSION_BUS_ADDRESS', '')
+
 
 class NormalApplicationLauncherTests(TestCase):
 
@@ -118,33 +136,63 @@ class NormalApplicationLauncherTests(TestCase):
                 Equals(token)
             )
 
-    """way borked
-    def test_launch_gets_pid(self):
-        app_launcher = NormalApplicationLauncher(self.addDetail)
+    @patch('autopilot.application._launcher.'
+           'get_proxy_object_for_existing_process')
+    @patch('autopilot.application._launcher._get_application_path')
+    def test_call_get_application_path(self, gap, _):
+        launcher = NormalApplicationLauncher()
+        with patch.object(launcher, '_launch_application_process'):
+            with patch.object(launcher, '_setup_environment') as so:
+                so.return_value = ('', [])
+                launcher.launch('a')
+                gap.assert_called_once_with('a')
 
-        with patch.object(_l, '_get_application_path', return_value=""):
-            app_launcher._setup_environment = Mock(return_value=("", "",))
-            app_launcher._launch_application_process = Mock(
-                return_value=Mock(pid=123)
-            )
-            with patch('autopilot.application._launcher.'
-                       'get_proxy_object_for_existing_process') as gpofep:
-                gpofep.return_value = ''
-                app_launcher.launch("")
-                gpofep.assert_called_once_with
-            self.assertThat(app_launcher.launch(""), Equals(123))
+    @patch('autopilot.application._launcher.'
+           'get_proxy_object_for_existing_process')
+    @patch('autopilot.application._launcher._get_application_path')
+    def test_call_setup_environment(self, gap, _):
+        launcher = NormalApplicationLauncher()
+        with patch.object(launcher, '_launch_application_process'):
+            with patch.object(launcher, '_setup_environment') as so:
+                so.return_value = ('', [])
+                launcher.launch('', arguments=['a', 'b'])
+                so.assert_called_once_with(gap.return_value, None, 'a', 'b')
 
-    def test_launch_returns_proxy_object(self):
-        app_launcher = NormalApplicationLauncher(self.addDetail)
+    @patch('autopilot.application._launcher.'
+           'get_proxy_object_for_existing_process')
+    @patch('autopilot.application._launcher._get_application_path')
+    def test_launch_application_environment(self, _, __):
+        launcher = NormalApplicationLauncher()
+        with patch.object(launcher, '_launch_application_process') as lap:
+            with patch.object(launcher, '_setup_environment') as so:
+                so.return_value = ('a', ['b', 'c'])
+                launcher.launch('', arguments=['', ''])
+                lap.assert_called_once_with('a', True, None, 'b', 'c')
 
-        with patch.object(_l, '_get_application_path', return_value=""):
-            app_launcher._setup_environment = Mock(return_value=("", "",))
-            app_launcher._launch_application_process = Mock(
-                return_value=Mock(pid=123)
-            )
+    @patch('autopilot.application._launcher.'
+           'get_proxy_object_for_existing_process')
+    @patch('autopilot.application._launcher._get_application_path')
+    def test_gets_correct_proxy_object(self, _, gpofep):
+        launcher = NormalApplicationLauncher()
+        with patch.object(launcher, '_launch_application_process') as lap:
+            with patch.object(launcher, '_setup_environment') as so:
+                so.return_value = ('', [])
+                launcher.launch('')
+                gpofep.assert_called_once_with(process=lap.return_value,
+                                               pid=lap.return_value.pid,
+                                               emulator_base=None,
+                                               dbus_bus='session')
 
-            self.assertThat(app_launcher.launch(""), Equals(123))
-    """
+    @patch('autopilot.application._launcher.'
+           'get_proxy_object_for_existing_process')
+    @patch('autopilot.application._launcher._get_application_path')
+    def test_returns_proxy_object(self, _, gpofep):
+        launcher = NormalApplicationLauncher()
+        with patch.object(launcher, '_launch_application_process'):
+            with patch.object(launcher, '_setup_environment') as so:
+                so.return_value = ('', [])
+                result = launcher.launch('')
+                self.assertEqual(result, gpofep.return_value)
 
     def test_launch_application_process(self):
         """The _launch_application_process method must return the process
@@ -184,15 +232,8 @@ class ClickApplicationLauncherTests(TestCase):
                              "'unknown'"))
         )
 
-    """just a little borked
-    def test_click_launch_calls_upstart_launch(self):
-        launcher = ClickApplicationLauncher(self.addDetail)
-        token = self.getUniqueString()
-        with patch.object(_l, '_get_click_app_id') as p_gcai:
-            p_gcai.return_value = token
-            launcher.launch('some_app_id', 'some_app_name', [])
-
-    def test_upcalls_to_upstart(self):
+    @patch('autopilot.application._launcher._get_click_app_id')
+    def test_handle_string(self, gcai):
         class FakeUpstartBase(_l.ApplicationLauncher):
             launch_call_args = []
 
@@ -208,12 +249,100 @@ class ClickApplicationLauncherTests(TestCase):
             # Prevent mock from trying to delete __bases__
             patcher.is_local = True
             launcher = self.useFixture(
-                ClickApplicationLauncher(self.addDetail))
-            launcher.launch('app_id', [])
+                _l.ClickApplicationLauncher())
+            launcher.launch('', '', 'a')
         self.assertEqual(
             FakeUpstartBase.launch_call_args,
-            ['app_id', []])
-    """
+            [gcai.return_value, ['a']])
+
+    @patch('autopilot.application._launcher._get_click_app_id')
+    def test_handle_bytes(self, gcai):
+        class FakeUpstartBase(_l.ApplicationLauncher):
+            launch_call_args = []
+
+            def launch(self, *args):
+                FakeUpstartBase.launch_call_args = list(args)
+
+        patcher = patch.object(
+            _l.ClickApplicationLauncher,
+            '__bases__',
+            (FakeUpstartBase,)
+        )
+        with patcher:
+            # Prevent mock from trying to delete __bases__
+            patcher.is_local = True
+            launcher = self.useFixture(
+                _l.ClickApplicationLauncher())
+            launcher.launch('', '', 'a'.encode())
+        self.assertEqual(
+            FakeUpstartBase.launch_call_args,
+            [gcai.return_value, ['a']])
+
+    @patch('autopilot.application._launcher._get_click_app_id')
+    def test_handle_list(self, gcai):
+        class FakeUpstartBase(_l.ApplicationLauncher):
+            launch_call_args = []
+
+            def launch(self, *args):
+                FakeUpstartBase.launch_call_args = list(args)
+
+        patcher = patch.object(
+            _l.ClickApplicationLauncher,
+            '__bases__',
+            (FakeUpstartBase,)
+        )
+        with patcher:
+            # Prevent mock from trying to delete __bases__
+            patcher.is_local = True
+            launcher = self.useFixture(
+                _l.ClickApplicationLauncher())
+            launcher.launch('', '', ['a'])
+        self.assertEqual(
+            FakeUpstartBase.launch_call_args,
+            [gcai.return_value, ['a']])
+
+    @patch('autopilot.application._launcher._get_click_app_id')
+    def test_call_get_click_app_id(self, gcai):
+        class FakeUpstartBase(_l.ApplicationLauncher):
+            launch_call_args = []
+
+            def launch(self, *args):
+                FakeUpstartBase.launch_call_args = list(args)
+
+        patcher = patch.object(
+            _l.ClickApplicationLauncher,
+            '__bases__',
+            (FakeUpstartBase,)
+        )
+        with patcher:
+            # Prevent mock from trying to delete __bases__
+            patcher.is_local = True
+            launcher = self.useFixture(
+                _l.ClickApplicationLauncher())
+            launcher.launch('a', 'b')
+        gcai.assert_called_once_with('a', 'b')
+
+    @patch('autopilot.application._launcher._get_click_app_id')
+    def test_call_upstart_launch(self, gcai):
+        class FakeUpstartBase(_l.ApplicationLauncher):
+            launch_call_args = []
+
+            def launch(self, *args):
+                FakeUpstartBase.launch_call_args = list(args)
+
+        patcher = patch.object(
+            _l.ClickApplicationLauncher,
+            '__bases__',
+            (FakeUpstartBase,)
+        )
+        with patcher:
+            # Prevent mock from trying to delete __bases__
+            patcher.is_local = True
+            launcher = self.useFixture(
+                _l.ClickApplicationLauncher())
+            launcher.launch('', '')
+            self.assertEqual(launcher.launch_call_args,
+                             [gcai.return_value, []])
 
 
 class ClickFunctionTests(TestCase):
@@ -458,15 +587,77 @@ class UpstartApplicationLauncherTests(TestCase):
         loop = UpstartApplicationLauncher._get_glib_loop()
         self.assertThat(loop, IsInstance(GLib.MainLoop))
 
-    """moderately borked
-    def test_launch(self):
-        launcher = UpstartApplicationLauncher(self.addDetail)
-        with patch.object(launcher, '_launch_app') as patched_launch:
-            with patch.object(launcher, '_get_glib_loop'):
-                launcher.launch('gedit')
-get_proxy_object_for_existing_process
-                patched_launch.assert_called_once_with('gedit', [])
-    """
+    @patch('autopilot.application._launcher.'
+           'get_proxy_object_for_existing_process')
+    def test_handle_string(self, _):
+        launcher = UpstartApplicationLauncher()
+        with patch.object(launcher, '_launch_app') as la:
+            with patch.object(launcher, '_get_pid_for_launched_app'):
+                with patch.object(launcher, '_get_glib_loop'):
+                    launcher.launch('', 'a')
+                    la.assert_called_once_with('', ['a'])
+
+    @patch('autopilot.application._launcher.'
+           'get_proxy_object_for_existing_process')
+    def test_handle_bytes(self, _):
+        launcher = UpstartApplicationLauncher()
+        with patch.object(launcher, '_launch_app') as la:
+            with patch.object(launcher, '_get_pid_for_launched_app'):
+                with patch.object(launcher, '_get_glib_loop'):
+                    launcher.launch('', 'a'.encode())
+                    la.assert_called_once_with('', ['a'])
+
+    @patch('autopilot.application._launcher.'
+           'get_proxy_object_for_existing_process')
+    def test_handle_list(self, _):
+        launcher = UpstartApplicationLauncher()
+        with patch.object(launcher, '_launch_app') as la:
+            with patch.object(launcher, '_get_pid_for_launched_app'):
+                with patch.object(launcher, '_get_glib_loop'):
+                    launcher.launch('', ['a'])
+                    la.assert_called_once_with('', ['a'])
+
+    @patch('autopilot.application._launcher.'
+           'get_proxy_object_for_existing_process')
+    def test_calls_get_pid(self, _):
+        launcher = UpstartApplicationLauncher()
+        with patch.object(launcher, '_launch_app'):
+            with patch.object(launcher, '_get_pid_for_launched_app') as gp:
+                with patch.object(launcher, '_get_glib_loop'):
+                    launcher.launch('a')
+                    gp.assert_called_once_with('a')
+
+    @patch('autopilot.application._launcher.'
+           'get_proxy_object_for_existing_process')
+    def test_gets_correct_proxy_object(self, gpofep):
+        launcher = UpstartApplicationLauncher()
+        with patch.object(launcher, '_launch_app'):
+            with patch.object(launcher, '_get_pid_for_launched_app') as gp:
+                with patch.object(launcher, '_get_glib_loop'):
+                    launcher.launch('')
+                    gpofep.assert_called_once_with(pid=gp.return_value,
+                                                   emulator_base=None,
+                                                   dbus_bus='session')
+
+    @patch('autopilot.application._launcher.'
+           'get_proxy_object_for_existing_process')
+    def test_returns_proxy_object(self, gpofep):
+        launcher = UpstartApplicationLauncher()
+        with patch.object(launcher, '_launch_app'):
+            with patch.object(launcher, '_get_pid_for_launched_app'):
+                with patch.object(launcher, '_get_glib_loop'):
+                    result = launcher.launch('')
+                    self.assertEqual(result, gpofep.return_value)
+
+    @patch('autopilot.application._launcher.'
+           'get_proxy_object_for_existing_process')
+    def test_calls_get_glib_loop(self, gpofep):
+        launcher = UpstartApplicationLauncher()
+        with patch.object(launcher, '_launch_app'):
+            with patch.object(launcher, '_get_pid_for_launched_app'):
+                with patch.object(launcher, '_get_glib_loop') as ggl:
+                    launcher.launch('')
+                    ggl.assert_called_once_with()
 
     def assertFailedObserverSetsExtraMessage(self, fail_type, expected_msg):
         """Assert that the on_failed observer must set the expected message

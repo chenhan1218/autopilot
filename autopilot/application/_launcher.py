@@ -48,11 +48,20 @@ class ApplicationLauncher(fixtures.Fixture):
 
     """
 
-    def __init__(self, case_addDetail=None, emulator_base=None,
+    def __init__(self, case_addDetail=None, proxy_base=None,
                  dbus_bus='session'):
+        """Set the details common to all ApplicationLauncher fixtures.
+
+        :keyword case_addDetail: addDetail method to use (self.addDetail if not
+            specified
+        :keyword proxy_base: custom proxy base class to use, defaults to None
+        :keyword dbus_bus: dbus bus to use, if set to something other than the
+            default ('session') the environment will be patched
+
+        """
         super().__init__()
         self.case_addDetail = case_addDetail or self.addDetail
-        self.emulator_base = emulator_base
+        self.proxy_base = proxy_base
         self.dbus_bus = dbus_bus
 
     def setUp(self):
@@ -92,10 +101,8 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             launcher.setUp()
             app_proxy = launcher.launch('gallery-app')
 
-        :param application_name: The name of the application to launch.
-        :keyword emulator_base: If set, specifies the base class to be used for
-            all emulators for this loaded application.
-
+        :param app_id: name of the application to launch
+        :param app_uris: list of separate application uris to launch
         :raises RuntimeError: If the specified application cannot be launched.
 
         :returns: proxy object for the launched package application
@@ -134,7 +141,7 @@ class UpstartApplicationLauncher(ApplicationLauncher):
         pid = self._get_pid_for_launched_app(app_id)
         proxy_object = get_proxy_object_for_existing_process(
             dbus_bus=self.dbus_bus,
-            emulator_base=self.emulator_base,
+            emulator_base=self.proxy_base,
             pid=pid
         )
         return proxy_object
@@ -370,7 +377,7 @@ class NormalApplicationLauncher(ApplicationLauncher):
             app_path, capture_output, cwd, arguments)
         proxy_object = get_proxy_object_for_existing_process(
             dbus_bus=self.dbus_bus,
-            emulator_base=self.emulator_base,
+            emulator_base=self.proxy_base,
             process=self.process,
             pid=self.process.pid
         )

@@ -347,7 +347,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         This function is deprecated and planned for removal in autopilot 1.6.
         New implementations should use EnvironmenVariable from the fixtures
-        module:
+        module::
+
             from fixtures import EnvironmentVariable
 
             def my_test(AutopilotTestCase):

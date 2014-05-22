@@ -110,3 +110,54 @@ class AutopilotTestCaseClassTests(TestCase):
         ep.assert_called_once_with('foo', 'bar')
         self.assertIn(call().setUp(), ep.mock_calls)
         self.assertIn(call().cleanUp(), ep.mock_calls)
+
+    @patch('autopilot.testcase.NormalApplicationLauncher')
+    def test_launch_test_application(self, nal):
+        class LauncherTest(AutopilotTestCase):
+
+            """Test launchers."""
+
+            def test_anything(self):
+                pass
+
+        test_case = LauncherTest('test_anything')
+        with patch.object(test_case, 'useFixture') as uf:
+            result = test_case.launch_test_application('')
+            uf.assert_called_once_with(nal.return_value)
+            self.assertEqual([call.launch('', ())],
+                             uf.return_value.mock_calls)
+            self.assertEqual(result, uf.return_value.launch.return_value)
+
+    @patch('autopilot.testcase.ClickApplicationLauncher')
+    def test_launch_click_package(self, cal):
+        class LauncherTest(AutopilotTestCase):
+
+            """Test launchers."""
+
+            def test_anything(self):
+                pass
+
+        test_case = LauncherTest('test_anything')
+        with patch.object(test_case, 'useFixture') as uf:
+            result = test_case.launch_click_package('')
+            uf.assert_called_once_with(cal.return_value)
+            self.assertEqual([call.launch('', None, [])],
+                             uf.return_value.mock_calls)
+            self.assertEqual(result, uf.return_value.launch.return_value)
+
+    @patch('autopilot.testcase.UpstartApplicationLauncher')
+    def test_launch_upstart_application(self, ual):
+        class LauncherTest(AutopilotTestCase):
+
+            """Test launchers."""
+
+            def test_anything(self):
+                pass
+
+        test_case = LauncherTest('test_anything')
+        with patch.object(test_case, 'useFixture') as uf:
+            result = test_case.launch_upstart_application('')
+            uf.assert_called_once_with(ual.return_value)
+            self.assertEqual([call.launch('', [])],
+                             uf.return_value.mock_calls)
+            self.assertEqual(result, uf.return_value.launch.return_value)

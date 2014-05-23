@@ -36,6 +36,7 @@ from autopilot.input._common import get_center_point
 from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase, multiply_scenarios
 from autopilot.tests.functional.fixtures import TempDesktopFile
+from autopilot.tests.functional import QmlScriptRunnerMixin
 from autopilot.utilities import on_test_started
 
 
@@ -225,7 +226,7 @@ def osk_backend_available():
         return False
 
 
-class OSKBackendTests(AutopilotTestCase):
+class OSKBackendTests(AutopilotTestCase, QmlScriptRunnerMixin):
     """Testing the Onscreen Keyboard (Ubuntu Keyboard) backend specifically.
 
     There are limitations (i.e. on device only, window-mocker doesn't work on
@@ -247,24 +248,6 @@ class OSKBackendTests(AutopilotTestCase):
         text_area = self.app.select_single("QQuickTextInput")
 
         return text_area
-
-    def _start_qml_script(self, script_contents):
-        """Launch a qml script."""
-        qml_path = mktemp(suffix='.qml')
-        open(qml_path, 'w').write(script_contents)
-        self.addCleanup(os.remove, qml_path)
-
-        desktop_file = self.useFixture(
-            TempDesktopFile()
-        ).get_desktop_file_path()
-
-        return self.launch_test_application(
-            "qmlscene",
-            "-qt=qt5",
-            qml_path,
-            '--desktop_file_hint=%s' % desktop_file,
-            app_type='qt',
-        )
 
     def _launch_simple_input(self):
         simple_script = dedent("""
@@ -302,7 +285,7 @@ class OSKBackendTests(AutopilotTestCase):
 
         """)
 
-        return self._start_qml_script(simple_script)
+        return self.start_qml_script(simple_script)
 
     @skipIf(platform.model() == 'Desktop', "Only suitable on a device")
     @skipIf(not osk_backend_available(), "Test requires OSK Backend installed")
@@ -416,30 +399,7 @@ class TouchTests(AutopilotTestCase):
             self.button_status.text, Eventually(Equals("Touch Release")))
 
 
-class TouchGesturesTests(AutopilotTestCase):
-    def _start_qml_script(self, script_contents):
-        """Launch a qml script."""
-        qml_path = mktemp(suffix='.qml')
-        open(qml_path, 'w').write(script_contents)
-        self.addCleanup(os.remove, qml_path)
-
-        extra_args = ''
-        if platform.model() != "Desktop":
-            # We need to add the desktop-file-hint
-            desktop_file = self.useFixture(
-                TempDesktopFile()
-            ).get_desktop_file_path()
-            extra_args = '--desktop_file_hint={hint_file}'.format(
-                hint_file=desktop_file
-            )
-
-        return self.launch_test_application(
-            "qmlscene",
-            "-qt=qt5",
-            qml_path,
-            extra_args,
-            app_type='qt',
-        )
+class TouchGesturesTests(AutopilotTestCase, QmlScriptRunnerMixin):
 
     def test_pinch_gesture(self):
         """Ensure that the pinch gesture pinches as expected."""
@@ -466,7 +426,7 @@ class TouchGesturesTests(AutopilotTestCase):
         start_green_bg = [0, 255, 0, 255]
         end_blue_bg = [0, 0, 255, 255]
 
-        app = self._start_qml_script(test_qml)
+        app = self.start_qml_script(test_qml)
         pinch_widget = app.select_single("QQuickRectangle")
         widget_bg_colour = lambda: pinch_widget.color
 

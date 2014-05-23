@@ -30,8 +30,6 @@ from testtools.matchers import Contains, Equals, MatchesRegex, Not
 from textwrap import dedent
 
 from autopilot import platform
-from autopilot.matchers import Eventually
-from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional import AutopilotRunTestBase, remove_if_exists
 
 
@@ -90,6 +88,9 @@ class AutopilotFunctionalTestsBase(AutopilotRunTestBase):
             Equals(sorted(observed_test_list))
         )
         self.assertThat(expected_footer, Equals(observed_footer))
+
+
+class FunctionalTestMain(AutopilotFunctionalTestsBase):
 
     def test_can_list_empty_test_dir(self):
         """Autopilot list must report 0 tests found with an empty test
@@ -745,6 +746,26 @@ SyntaxError: invalid syntax
 
         self.assertThat(code, Equals(0))
         self.assertThat(output, Not(Contains('Running tests in random order')))
+
+    def test_get_test_configuration_from_command_line(self):
+        self.create_test_file(
+            'test_config.py', dedent("""\
+
+                from autopilot import get_test_configuration
+                from autopilot.testcase import AutopilotTestCase
+
+                class Tests(AutopilotTestCase):
+
+                    def test_foo(self):
+                        c = get_test_configuration()
+                        print(c['foo'])
+            """)
+        )
+        code, output, error = self.run_autopilot(
+            ["run", "--config", "foo=This is a test", "tests"]
+        )
+        self.assertThat(code, Equals(0))
+        self.assertIn("This is a test", output)
 
 
 class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):

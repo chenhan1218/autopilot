@@ -57,7 +57,7 @@ class ApplicationLauncher(fixtures.Fixture):
 
 class UpstartApplicationLauncher(ApplicationLauncher):
 
-    """A launcher class that launched applicaitons with UpstartAppLaunch."""
+    """A launcher class that launched applications with UpstartAppLaunch."""
 
     Timeout = object()
     Failed = object()

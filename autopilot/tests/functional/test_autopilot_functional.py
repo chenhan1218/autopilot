@@ -333,26 +333,31 @@ Loading tests from: %s
         """Must be able to record videos when the -r flag is present."""
 
         mock_test_case = Mock()
-        mock_test_case.shortDescription.return_value = "Dummy_Description"
+        mock_test_case.shortDescription.return_value = 'Dummy_Description'
         video_logger = RMDVideoLogFixture('/tmp/autopilot', mock_test_case)
         video_logger.setUp()
+        video_logger._test_passed = False
         # The sleep is to avoid the case where recordmydesktop does not create
         # a file because it gets stopped before it's even started capturing
         # anything.
         sleep(1)
-        video_logger._test_passed = False
         video_logger._stop_video_capture(mock_test_case)
         should_delete = not os.path.exists('/tmp/autopilot')
         if should_delete:
-            self.addCleanup(remove_if_exists, "/tmp/autopilot")
+            self.addCleanup(remove_if_exists, '/tmp/autopilot')
         else:
             self.addCleanup(
                 remove_if_exists,
                 '/tmp/autopilot/Dummy_Description.ogv'
             )
-        self.assertTrue(os.path.exists('/tmp/autopilot'))
-        self.assertTrue(os.path.exists('/tmp/autopilot/Dummy_Description.ogv'))
-
+        self.assertThat(
+            lambda: os.path.exists('/tmp/autopilot'),
+            Eventually(Equals(True))
+        )
+        self.assertThat(
+            lambda: os.path.exists('/tmp/autopilot/Dummy_Description.ogv'),
+            Eventually(Equals(True))
+        )
 
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_record_dir_option_and_record_works(self):
@@ -505,7 +510,6 @@ Loading tests from: %s
             self.assertThat(get_new_sessions, Eventually(NotEquals(set())))
             logger._stop_video_capture(mock_test_case)
         self.assertThat(get_new_sessions, Eventually(Equals(set())))
-
 
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_no_video_for_nested_testcase_when_parent_and_child_fail(self):

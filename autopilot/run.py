@@ -46,7 +46,7 @@ from autopilot._debug import (
     get_all_debug_profiles,
     get_default_debug_profile,
 )
-from autopilot import _video as video
+from autopilot import _video
 from autopilot.testresult import get_default_format, get_output_formats
 from autopilot.utilities import DebugLogFilter, LogFormatter
 from autopilot.application._launcher import (
@@ -101,7 +101,7 @@ def _get_parser():
                             help="Record failing tests. Required \
                             'recordmydesktop' app to be installed.\
                             Videos are stored in /tmp/autopilot if not \
-                            used with -rd option.")
+                            specified with -rd option.")
     parser_run.add_argument("-rd", "--record-directory", required=False,
                             type=str, help="Directory to put recorded tests")
     parser_run.add_argument("--record-options", required=False,
@@ -674,7 +674,12 @@ class TestProgram(object):
 
         _configure_debug_profile(self.args)
         _configure_timeout_profile(self.args)
-        video.configure_video_recording(self.args)
+        try:
+            _video.configure_video_recording(self.args)
+        except RuntimeError as e:
+            print("Error: %s" % str(e))
+            exit(1)
+
         test_config.set_configuration_string(self.args.test_config)
 
         if self.args.verbose:

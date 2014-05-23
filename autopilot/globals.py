@@ -18,8 +18,6 @@
 #
 
 
-from __future__ import absolute_import
-
 try:
     # Python 2
     from StringIO import StringIO
@@ -34,7 +32,6 @@ import subprocess
 
 from autopilot._debug import DebugProfile
 from autopilot.utilities import LogFormatter, CleanupRegistered
-#from autopilot._video import RMDVideoLogFixture
 
 from testtools.content import text_content
 

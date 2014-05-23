@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2014 Canonical
+# Copyright (C) 2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,8 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
-from __future__ import absolute_import
 
 import fixtures
 from functools import partial
@@ -41,11 +39,12 @@ class RMDVideoLogFixture(fixtures.Fixture):
     _recording_opts = ['--no-sound', '--no-frame', '-o']
 
     def __init__(self, recording_directory, test_instance):
+        super().__init__()
         self.recording_directory = recording_directory
         self.test_instance = test_instance
 
     def setUp(self):
-        super(RMDVideoLogFixture, self).setUp()
+        super().setUp()
         self._test_passed = True
 
         if not self._have_recording_app():

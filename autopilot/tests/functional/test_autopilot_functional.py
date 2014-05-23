@@ -18,21 +18,20 @@
 #
 
 
-from __future__ import absolute_import
-
+from fixtures import TempDir
 import glob
 import os
 import os.path
 import re
 from tempfile import mktemp
 from testtools import skipIf
-from testtools.matchers import Contains, Equals, MatchesRegex, Not
+from testtools.matchers import Contains, Equals, MatchesRegex, Not, NotEquals
 from textwrap import dedent
 from time import sleep
-
-from mock import Mock
+from unittest.mock import Mock
 
 from autopilot import platform
+from autopilot.matchers import Eventually
 from autopilot.tests.functional import AutopilotRunTestBase, remove_if_exists
 from autopilot._video import RMDVideoLogFixture
 
@@ -341,6 +340,7 @@ Loading tests from: %s
         # a file because it gets stopped before it's even started capturing
         # anything.
         sleep(1)
+        video_logger._test_passed = False
         video_logger._stop_video_capture(mock_test_case)
         should_delete = not os.path.exists('/tmp/autopilot')
         if should_delete:
@@ -497,12 +497,14 @@ Loading tests from: %s
                 set(glob.glob(dir_pattern)) - original_session_dirs
             mock_test_case = Mock()
             mock_test_case.shortDescription.return_value = "Dummy_Description"
-            logger = RMDVideoLogFixture('/tmp', mock_test_case)
-            logger.set_recording_dir('/tmp')
+            logger = RMDVideoLogFixture(tmp_dir_fixture.path, mock_test_case)
+            logger.set_recording_dir(tmp_dir_fixture.path)
             logger._recording_opts = ['--workdir', tmp_dir_fixture.path] \
                 + logger._recording_opts
+            logger.setUp()
             self.assertThat(get_new_sessions, Eventually(NotEquals(set())))
             logger._stop_video_capture(mock_test_case)
+        self.assertThat(get_new_sessions, Eventually(Equals(set())))
 
 
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")

@@ -46,16 +46,15 @@ class RMDVideoLogFixture(fixtures.Fixture):
 
     def setUp(self):
         super(RMDVideoLogFixture, self).setUp()
+        self._test_passed = True
 
         if not self._have_recording_app():
             logger.warning(
                 "Disabling video capture since '%s' is not present",
                 self._recording_app)
 
-        self._test_passed = False
-
         self.test_instance.addOnException(self._on_test_failed)
-        self.addCleanup(self._stop_video_capture, self.test_instance)
+        self.test_instance.addCleanup(self._stop_video_capture, self.test_instance)
         self._start_video_capture(self.test_instance.shortDescription())
 
     def _have_recording_app(self):

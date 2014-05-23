@@ -49,7 +49,6 @@ root of the application introspection tree.
 from __future__ import absolute_import
 
 import logging
-import six
 
 from fixtures import EnvironmentVariable
 from testscenarios import TestWithScenarios
@@ -65,9 +64,6 @@ from autopilot.application import (
 from autopilot.display import Display
 from autopilot.globals import get_debug_profile_fixture
 from autopilot.input import Keyboard, Mouse
-from autopilot.introspection import (
-    get_proxy_object_for_existing_process,
-)
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
 from autopilot.process import ProcessManager
@@ -246,22 +242,22 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :keyword emulator_base: If set, specifies the base class to be used for
             all emulators for this loaded application.
 
-        :raises ValueError: if unknown keyword arguments are passed.
         :return: A proxy object that represents the application. Introspection
          data is retrievable via this object.
 
         """
-        _logger.info(
-            "Attempting to launch application '%s' with arguments '%s' as a "
-            "normal process",
-            application,
-            ' '.join(arguments)
-        )
+        launch_args = {}
+        launch_arg_list = ['app_type', 'launch_dir', 'capture_output']
+        for arg in launch_arg_list:
+            if arg in kwargs:
+                launch_args[arg] = kwargs.pop(arg)
         launcher = self.useFixture(
-            NormalApplicationLauncher(self.addDetailUniqueName, **kwargs)
+            NormalApplicationLauncher(
+                case_addDetail=self.addDetailUniqueName,
+                **kwargs
+            )
         )
-
-        return self._launch_test_application(launcher, application, *arguments)
+        return launcher.launch(application, arguments, **launch_args)
 
     def launch_click_package(self, package_id, app_name=None, app_uris=[],
                              **kwargs):
@@ -297,20 +293,13 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :returns: proxy object for the launched package application
 
         """
-        if isinstance(app_uris, (six.text_type, six.binary_type)):
-            app_uris = [app_uris]
-        _logger.info(
-            "Attempting to launch click application '%s' from click package "
-            " '%s' and URIs '%s'",
-            app_name if app_name is not None else "(default)",
-            package_id,
-            ','.join(app_uris)
-        )
         launcher = self.useFixture(
-            ClickApplicationLauncher(self.addDetailUniqueName, **kwargs)
+            ClickApplicationLauncher(
+                case_addDetail=self.addDetailUniqueName,
+                **kwargs
+            )
         )
-        return self._launch_test_application(launcher, package_id, app_name,
-                                             app_uris)
+        return launcher.launch(package_id, app_name, app_uris)
 
     def launch_upstart_application(self, application_name, uris=[], **kwargs):
         """Launch an application with upstart.
@@ -328,52 +317,14 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             all emulators for this loaded application.
 
         :raises RuntimeError: If the specified application cannot be launched.
-        :raises ValueError: If unknown keyword arguments are specified.
         """
-        if isinstance(uris, (six.text_type, six.binary_type)):
-            uris = [uris]
-        _logger.info(
-            "Attempting to launch application '%s' with URIs '%s' via "
-            "upstart-app-launch",
-            application_name,
-            ','.join(uris)
-        )
         launcher = self.useFixture(
-            UpstartApplicationLauncher(self.addDetailUniqueName, **kwargs)
+            UpstartApplicationLauncher(
+                case_addDetail=self.addDetailUniqueName,
+                **kwargs
+            )
         )
-        return self._launch_test_application(launcher, application_name, uris)
-
-    # Wrapper function tying the newer ApplicationLauncher behaviour with the
-    # previous (to be depreciated) behaviour
-    def _launch_test_application(self, launcher_instance, application, *args):
-
-        dbus_bus = launcher_instance.dbus_bus
-        if dbus_bus != 'session':
-            self.useFixture(
-                EnvironmentVariable("DBUS_SESSION_BUS_ADDRESS", dbus_bus))
-
-        pid = launcher_instance.launch(application, *args)
-        application_name = getattr(
-            launcher_instance,
-            'dbus_application_name',
-            None
-        )
-        process = getattr(launcher_instance, 'process', None)
-
-        search_params = dict(
-            pid=pid,
-            dbus_bus=dbus_bus,
-            emulator_base=launcher_instance.emulator_base
-        )
-        if application_name is not None:
-            search_params['application_name'] = application_name
-        if process is not None:
-            search_params['process'] = process
-
-        proxy_obj = get_proxy_object_for_existing_process(**search_params)
-        proxy_obj.set_process(process)
-
-        return proxy_obj
+        return launcher.launch(application_name, uris)
 
     def _compare_system_with_app_snapshot(self):
         """Compare the currently running application with the last snapshot.
@@ -396,7 +347,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         This function is deprecated and planned for removal in autopilot 1.6.
         New implementations should use EnvironmenVariable from the fixtures
-        module:
+        module::
+
             from fixtures import EnvironmentVariable
 
             def my_test(AutopilotTestCase):

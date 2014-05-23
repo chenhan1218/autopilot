@@ -392,7 +392,7 @@ If you wish to implement more specific selection criteria, your class can overri
             return False
 
 This method should return True if the object matches this custom proxy class, and False otherwise.  If more than one custom proxy class matches an object, a :exc:`ValueError` will be raised at runtime. 
-_
+
 3. Pass the custom proxy class as an argument to the launch_test_application method on your test class. Something like this::
 
     from autopilot.testcase import AutopilotTestCase

@@ -31,8 +31,6 @@ class, and contains code that turns a query object into proxy classes.
 
 """
 
-from __future__ import absolute_import
-
 from collections import namedtuple
 import dbus
 import logging

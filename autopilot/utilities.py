@@ -21,15 +21,12 @@
 
 """Various utility classes and functions that are useful when running tests."""
 
-from __future__ import absolute_import
-
 from contextlib import contextmanager
 from decorator import decorator
 import functools
 import inspect
 import logging
 import os
-import six
 import time
 import timeit
 from functools import wraps
@@ -417,9 +414,7 @@ sleep = MockableSleep()
 @decorator
 def compatible_repr(f, *args, **kwargs):
     result = f(*args, **kwargs)
-    if not six.PY3 and isinstance(result, six.text_type):
-        return result.encode('utf-8')
-    if six.PY3 and not isinstance(result, six.text_type):
+    if not isinstance(result, str):
         return result.decode('utf-8')
     return result
 

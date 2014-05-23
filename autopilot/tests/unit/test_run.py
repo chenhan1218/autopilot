@@ -90,12 +90,33 @@ class RunUtilityFunctionTests(TestCase):
         self.assertFalse(patched_globals.set_default_timeout_period.called)
         self.assertFalse(patched_globals.set_long_timeout_period.called)
 
-    @patch('autopilot._video')
-    def test_configure_video_recording_not_called(self, patched_video):
+    @patch.object(_video, '_have_video_recording_facilities', new=lambda: True)
+    def test_correct_video_record_fixture_is_called_with_record_on(self):
+        args = Namespace(record_directory='', record=True)
+        _video.configure_video_recording(args)
+        FixtureClass = _video.get_video_recording_fixture()
+        fixture = FixtureClass(args)
+
+        self.assertEqual(fixture.__class__.__name__, 'RMDVideoLogFixture')
+
+    @patch.object(_video, '_have_video_recording_facilities', new=lambda: True)
+    def test_correct_video_record_fixture_is_called_with_record_off(self):
         args = Namespace(record_directory='', record=False)
         _video.configure_video_recording(args)
+        FixtureClass = _video.get_video_recording_fixture()
+        fixture = FixtureClass(args)
 
-        self.assertFalse(patched_video.configure_video_recording.called)
+        self.assertEqual(fixture.__class__.__name__, 'DoNothingFixture')
+
+    @patch.object(_video, '_have_video_recording_facilities', new=lambda: True)
+    def test_configure_video_record_directory_implies_record(self):
+        token = self.getUniqueString()
+        args = Namespace(record_directory=token, record=False)
+        _video.configure_video_recording(args)
+        FixtureClass = _video.get_video_recording_fixture()
+        fixture = FixtureClass(args)
+
+        self.assertEqual(fixture.__class__.__name__, 'RMDVideoLogFixture')
 
     @patch.object(_video, '_have_video_recording_facilities', new=lambda: True)
     def test_configure_video_recording_sets_default_dir(self):
@@ -103,28 +124,8 @@ class RunUtilityFunctionTests(TestCase):
         _video.configure_video_recording(args)
         PartialFixture = _video.get_video_recording_fixture()
         partial_fixture = PartialFixture(None)
+
         self.assertEqual(partial_fixture.recording_directory, '/tmp/autopilot')
-
-    @patch.object(_video, '_have_video_recording_facilities', new=lambda: True)
-    def test_configure_video_record_directory_implies_record(self):
-        token = self.getUniqueString()
-        args = Namespace(record_directory=token, record=True)
-        #FixtureClass = _video.get_video_recording_fixture()
-        #with patch('autopilot._video.get_video_recording_fixture') as patched_video:
-        #    _video.configure_video_recording(args)
-        #    PartialFixture = _video.get_video_recording_fixture()
-        #    partial_fixture = PartialFixture(token)
-        #    patched_video.assert_called_once_with(token)
-
-        #_video.configure_video_recording(args)
-
-        #print(_video.get_video_recording_fixture())
-        #partial_fixture = PartialFixture(token)
-        #self.assertEqual(partial_fixture.recording_directory, '/tmp/autopilot')
-
-#with patch('autopilot._video.RMDVideoLogFixture') as patched_video:
-#            _video.configure_video_recording(args)
-#            patched_video.assert_called_once_with(args)
 
     @patch.object(_video, '_have_video_recording_facilities', new=lambda: False)
     def test_configure_video_recording_raises_RuntimeError(self):

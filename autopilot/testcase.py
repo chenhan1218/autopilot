@@ -46,8 +46,6 @@ root of the application introspection tree.
 
 """
 
-from __future__ import absolute_import
-
 import logging
 import six
 

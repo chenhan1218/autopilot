@@ -18,8 +18,9 @@
 #
 
 from autopilot._info import get_version_string, have_vis, version
-
+from autopilot._config import get_test_configuration
 __all__ = [
+    'get_test_configuration',
     'get_version_string',
     'have_vis',
     'version',

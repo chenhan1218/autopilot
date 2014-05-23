@@ -11,4 +11,5 @@ Global Contents
     porting/porting
     faq/faq
     faq/contribute
+    faq/troubleshooting
     appendix/appendix

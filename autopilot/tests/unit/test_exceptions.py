@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import six
 from testtools import TestCase
 from testtools.matchers import raises, Equals
 
@@ -43,11 +42,6 @@ class StateNotFoundTests(TestCase):
             str(err),
             Equals("Object not found with name 'MyClass'.")
         )
-        if not six.PY3:
-            self.assertThat(
-                unicode(err),
-                Equals(u"Object not found with name 'MyClass'.")
-            )
 
     def test_can_be_constructed_with_filters_only(self):
         """Must be able to construct exception with filters only."""
@@ -56,11 +50,6 @@ class StateNotFoundTests(TestCase):
             str(err),
             Equals("Object not found with properties {'foo': 'bar'}.")
         )
-        if not six.PY3:
-            self.assertThat(
-                unicode(err),
-                Equals(u"Object not found with properties {'foo': 'bar'}.")
-            )
 
     def test_can_be_constructed_with_class_name_and_filters(self):
         """Must be able to construct with both class name and filters."""
@@ -70,9 +59,3 @@ class StateNotFoundTests(TestCase):
             Equals("Object not found with name 'MyClass'"
                    " and properties {'foo': 'bar'}.")
         )
-        if not six.PY3:
-            self.assertThat(
-                unicode(err),
-                Equals(u"Object not found with name 'MyClass'"
-                       " and properties {'foo': 'bar'}.")
-            )

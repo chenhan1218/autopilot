@@ -7,6 +7,6 @@ dbus (receive, send)
   owner @{HOME}/autopilot/fakeenv/*/.config/@{APP_PKGNAME}/ rw, # subdir of XDG_CONFIG_HOME
   owner @{HOME}/autopilot/fakeenv/*/.config/@{APP_PKGNAME}/** mrwkl,
   owner @{HOME}/autopilot/fakeenv/*/.local/share/@{APP_PKGNAME}/ rw, # subdir of XDG_DATA_HOME
-  owner @{HOME}/autopilot/fakeenv/*/.local/share/@{APP_PKGNAME}/** mrwklix,
+  owner @{HOMEDIRS}/autopilot/fakeenv/*/.local/share/@{APP_PKGNAME}/** mrwklix,
   owner @{HOME}/autopilot/fakeenv/*/confined/@{APP_PKGNAME}/ rw, # subdir of XDG_RUNTIME_DIR
   owner @{HOME}/autopilot/fakeenv/*/confined/@{APP_PKGNAME}/** mrwkl,

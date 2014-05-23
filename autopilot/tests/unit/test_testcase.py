@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from mock import call, Mock, patch
+from unittest.mock import call, Mock, patch
 from testtools import TestCase
 from testtools.matchers import Contains, raises
 

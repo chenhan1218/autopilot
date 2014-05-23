@@ -26,7 +26,7 @@ from testtools.matchers import IsInstance, Equals, raises
 from textwrap import dedent
 from time import sleep
 from unittest import SkipTest
-from mock import patch
+from unittest.mock import patch
 
 from autopilot.display import Display
 from autopilot import platform

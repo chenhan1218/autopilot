@@ -39,7 +39,7 @@ from testtools.matchers import (
 )
 from testtools.content import text_content
 import tempfile
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 
 from autopilot.application import (
     ClickApplicationLauncher,

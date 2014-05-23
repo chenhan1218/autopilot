@@ -28,7 +28,7 @@ except ImportError:
     # Python 3
     from io import StringIO
 
-from mock import patch
+from unittest.mock import patch
 from testtools import TestCase
 from testtools.matchers import Equals
 from tempfile import NamedTemporaryFile

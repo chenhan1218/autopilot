@@ -20,7 +20,7 @@
 from __future__ import absolute_import
 
 from datetime import datetime, time
-from mock import patch, Mock
+from unittest.mock import patch, Mock
 import six
 from testscenarios import TestWithScenarios
 from testtools import TestCase

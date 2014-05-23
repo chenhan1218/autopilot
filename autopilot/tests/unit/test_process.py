@@ -18,7 +18,7 @@
 #
 
 from gi.repository import GLib
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 from testtools import TestCase, skipIf
 from testtools.matchers import (
     Not,

@@ -23,7 +23,7 @@ import shutil
 import os.path
 
 from mock import patch, Mock
-from six import StringIO
+from io import StringIO
 from textwrap import dedent
 from testtools import TestCase
 from testtools.matchers import (

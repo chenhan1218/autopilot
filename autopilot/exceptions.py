@@ -26,8 +26,6 @@ raises it.
 
 """
 
-import six
-
 
 class BackendException(RuntimeError):
 
@@ -76,27 +74,21 @@ class StateNotFoundError(RuntimeError):
 
         if class_name is None:
             self._message = \
-                u"Object not found with properties {}.".format(
+                "Object not found with properties {}.".format(
                     repr(filters)
                 )
         elif not filters:
-            self._message = u"Object not found with name '{}'.".format(
+            self._message = "Object not found with name '{}'.".format(
                 class_name
             )
         else:
             self._message = \
-                u"Object not found with name '{}' and properties {}.".format(
+                "Object not found with name '{}' and properties {}.".format(
                     class_name,
                     repr(filters)
                 )
 
     def __str__(self):
-        if six.PY3:
-            return self._message
-        else:
-            return self._message.encode('utf8')
-
-    def __unicode__(self):
         return self._message
 
 

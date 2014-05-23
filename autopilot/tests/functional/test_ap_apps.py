@@ -23,7 +23,6 @@ import os
 import subprocess
 import logging
 import sys
-import six
 from testtools import skipIf
 from testtools.matchers import (
     Equals,
@@ -48,11 +47,6 @@ from autopilot.introspection import get_proxy_object_for_existing_process
 from autopilot.introspection.utilities import _pid_is_running
 from autopilot.utilities import sleep
 
-
-# backwards compatible alias for Python 3
-if six.PY3:
-    xrange = range
-
 logger = logging.getLogger(__name__)
 
 
@@ -60,7 +54,7 @@ def locale_is_supported():
     """Check if our currently set locale supports writing unicode to stdout."""
     try:
         encoding = sys.stdout.encoding or sys.getfilesystemencoding()
-        u'\u2026'.encode(encoding)
+        '\u2026'.encode(encoding)
         return True
     except UnicodeEncodeError:
         return False
@@ -72,7 +66,7 @@ def _get_unused_pid():
     :raises: **RuntimeError** if unable to produce a number that doesn't
      correspond to a currently running process.
     """
-    for i in xrange(10000, 20000):
+    for i in range(10000, 20000):
         if not _pid_is_running(i):
             return i
     raise RuntimeError("Unable to find test PID.")

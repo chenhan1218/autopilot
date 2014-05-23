@@ -37,13 +37,10 @@ objects.
 
 """
 
-from __future__ import absolute_import
-
 from datetime import datetime, time
 import dbus
 import logging
 from testtools.matchers import Equals
-import six
 
 from autopilot.introspection.utilities import translate_state_keys
 from autopilot.utilities import sleep, compatible_repr
@@ -236,8 +233,6 @@ def _get_repr_callable_for_value_class(cls):
         dbus.Struct: _tuple_repr,
         dbus.Array: _list_repr,
     }
-    if not six.PY3:
-        repr_map[dbus.UTF8String] = _bytes_repr
     return repr_map.get(cls, None)
 
 
@@ -251,14 +246,14 @@ def _get_str_callable_for_value_class(cls):
 
 @compatible_repr
 def _integer_repr(self):
-    return six.text_type(int(self))
+    return str(int(self))
 
 
 def _create_generic_repr(target_type):
     return compatible_repr(lambda self: repr(target_type(self)))
 
-_bytes_repr = _create_generic_repr(six.binary_type)
-_text_repr = _create_generic_repr(six.text_type)
+_bytes_repr = _create_generic_repr(bytes)
+_text_repr = _create_generic_repr(str)
 _dict_repr = _create_generic_repr(dict)
 _list_repr = _create_generic_repr(list)
 _tuple_repr = _create_generic_repr(tuple)
@@ -395,8 +390,8 @@ class Rectangle(_array_packed_type(4)):
 
     @compatible_repr
     def __repr__(self):
-        coords = u', '.join((str(c) for c in self))
-        return u'Rectangle(%s)' % (coords)
+        coords = ', '.join((str(c) for c in self))
+        return 'Rectangle(%s)' % (coords)
 
 
 class Point(_array_packed_type(2)):
@@ -437,7 +432,7 @@ class Point(_array_packed_type(2)):
 
     @compatible_repr
     def __repr__(self):
-        return u'Point(%d, %d)' % (self.x, self.y)
+        return 'Point(%d, %d)' % (self.x, self.y)
 
 
 class Size(_array_packed_type(2)):
@@ -486,7 +481,7 @@ class Size(_array_packed_type(2)):
 
     @compatible_repr
     def __repr__(self):
-        return u'Size(%d, %d)' % (self.w, self.h)
+        return 'Size(%d, %d)' % (self.w, self.h)
 
 
 class Color(_array_packed_type(4)):
@@ -539,7 +534,7 @@ class Color(_array_packed_type(4)):
 
     @compatible_repr
     def __repr__(self):
-        return u'Color(%d, %d, %d, %d)' % (
+        return 'Color(%d, %d, %d, %d)' % (
             self.red,
             self.green,
             self.blue,
@@ -645,7 +640,7 @@ class DateTime(_array_packed_type(1)):
 
     @compatible_repr
     def __repr__(self):
-        return u'DateTime(%d-%02d-%02d %02d:%02d:%02d)' % (
+        return 'DateTime(%d-%02d-%02d %02d:%02d:%02d)' % (
             self.year,
             self.month,
             self.day,
@@ -736,7 +731,7 @@ class Time(_array_packed_type(4)):
 
     @compatible_repr
     def __repr__(self):
-        return u'Time(%02d:%02d:%02d.%03d)' % (
+        return 'Time(%02d:%02d:%02d.%03d)' % (
             self.hour,
             self.minute,
             self.second,
@@ -788,7 +783,7 @@ class Point3D(_array_packed_type(3)):
 
     @compatible_repr
     def __repr__(self):
-        return u'Point3D(%d, %d, %d)' % (
+        return 'Point3D(%d, %d, %d)' % (
             self.x,
             self.y,
             self.z,

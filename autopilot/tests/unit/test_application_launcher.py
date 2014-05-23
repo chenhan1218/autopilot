@@ -83,16 +83,16 @@ class ApplicationLauncherTests(TestCase):
 
     def test_init_uses_passed_values(self):
         case_addDetail = self.getUniqueString()
-        proxy_base = self.getUniqueString()
+        emulator_base = self.getUniqueString()
         dbus_bus = self.getUniqueString()
 
         launcher = ApplicationLauncher(
             case_addDetail=case_addDetail,
-            proxy_base=proxy_base,
+            emulator_base=emulator_base,
             dbus_bus=dbus_bus,
         )
         self.assertEqual(launcher.case_addDetail, case_addDetail)
-        self.assertEqual(launcher.proxy_base, proxy_base)
+        self.assertEqual(launcher.proxy_base, emulator_base)
         self.assertEqual(launcher.dbus_bus, dbus_bus)
 
     @patch('autopilot.application._launcher.fixtures.EnvironmentVariable')

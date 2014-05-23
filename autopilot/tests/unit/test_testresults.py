@@ -195,7 +195,7 @@ class TestResultOutputStreamTests(WithScenarios, TestCase):
 
             def test_fails_unicode(self):
                 self.fail(
-                    u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH'
+                    '\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH'
                 )
         test_result, output_path = self.run_test_with_result(
             FailingTests('test_fails_unicode')
@@ -211,7 +211,7 @@ class TestResultOutputStreamTests(WithScenarios, TestCase):
         self.assertFalse(test_result.wasSuccessful())
         self.assertThat(
             log_contents,
-            Contains(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH')
+            Contains('\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH')
         )
 
     def test_result_object_supports_many_tests(self):

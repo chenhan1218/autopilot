@@ -33,11 +33,8 @@ Keybindings come from two different places:
  2) Elsewhere. Right now we're hard-coding these in a separate dictionary.
 """
 
-from __future__ import absolute_import
-
 import logging
 import re
-import six
 
 from autopilot.input import Keyboard
 from autopilot.utilities import Silence
@@ -143,12 +140,12 @@ def get(binding_name):
     :returns: string for keybinding
 
     """
-    if not isinstance(binding_name, six.string_types):
+    if not isinstance(binding_name, str):
         raise TypeError("binding_name must be a string.")
     if binding_name not in _keys:
         raise ValueError("Unknown binding name '%s'." % (binding_name))
     v = _keys[binding_name]
-    if isinstance(v, six.string_types):
+    if isinstance(v, str):
         return v
     else:
         return _get_compiz_keybinding(v)
@@ -231,7 +228,7 @@ def _translate_compiz_keystroke_string(keystroke_string):
     :param string keystroke_string: A compizconfig-style keystroke string.
 
     """
-    if not isinstance(keystroke_string, six.string_types):
+    if not isinstance(keystroke_string, str):
         raise TypeError("keystroke string must be a string.")
 
     translations = {

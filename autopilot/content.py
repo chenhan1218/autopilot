@@ -19,8 +19,6 @@
 
 """Content objects and helpers for autopilot tests."""
 
-from __future__ import absolute_import
-
 import io
 
 import logging
@@ -48,7 +46,7 @@ def follow_file(path, test_case, content_name=None):
             content_name,
             str(e)
         )
-        return text_content(u'')
+        return text_content('')
     else:
         file_obj.seek(0, io.SEEK_END)
         return follow_stream(

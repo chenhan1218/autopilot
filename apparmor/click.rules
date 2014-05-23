@@ -2,15 +2,15 @@ dbus (receive, send)
      bus=session
      path=/com/canonical/Autopilot/**,
 # Allow writes to various (application-specific) XDG directories
-  owner /run/user/[0-9]*/autopilot/*/.cache/@{APP_PKGNAME}/ rw, # subdir of XDG_
+  owner @{HOME}/autopilot/fakeenv/*/.cache/@{APP_PKGNAME}/ rw, # subdir of XDG_
 CACHE_HOME
-  owner /run/user/[0-9]*/autopilot/*/.cache/@{APP_PKGNAME}/** mrwkl,
-  owner /run/user/[0-9]*/autopilot/*/.config/@{APP_PKGNAME}/ rw, # subdir of XDG
+  owner @{HOME}/autopilot/fakeenv/*/.cache/@{APP_PKGNAME}/** mrwkl,
+  owner @{HOME}/autopilot/fakeenv/*/.config/@{APP_PKGNAME}/ rw, # subdir of XDG
 _CONFIG_HOME
-  owner /run/user/[0-9]*/autopilot/*/.config/@{APP_PKGNAME}/** mrwkl,
-  owner /run/user/[0-9]*/autopilot/*/.local/share/@{APP_PKGNAME}/ rw, # subdir o
+  owner @{HOME}/autopilot/fakeenv/*/.config/@{APP_PKGNAME}/** mrwkl,
+  owner @{HOME}/autopilot/fakeenv/*/.local/share/@{APP_PKGNAME}/ rw, # subdir o
 f XDG_DATA_HOME
-  owner /run/user/[0-9]*/autopilot/*/.local/share/@{APP_PKGNAME}/** mrwklix,
-  owner /run/user/[0-9]*/autopilot/*/confined/@{APP_PKGNAME}/ rw, # subdir of XD
+  owner @{HOME}/autopilot/fakeenv/*/.local/share/@{APP_PKGNAME}/** mrwklix,
+  owner @{HOME}/autopilot/fakeenv/*/confined/@{APP_PKGNAME}/ rw, # subdir of XD
 G_RUNTIME_DIR
-  owner /run/user/[0-9]*/autopilot/*/confined/@{APP_PKGNAME}/** mrwkl,
+  owner @{HOME}/autopilot/fakeenv/*/confined/@{APP_PKGNAME}/** mrwkl,

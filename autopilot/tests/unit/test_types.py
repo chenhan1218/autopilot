@@ -20,7 +20,7 @@
 from __future__ import absolute_import
 
 from datetime import datetime, time
-from mock import patch, Mock
+from unittest.mock import patch, Mock
 import six
 from testscenarios import TestWithScenarios
 from testtools import TestCase
@@ -779,7 +779,7 @@ class DBusIntrospectionObjectTests(TestCase):
         )
         error_logger.assert_called_once_with(
             "While constructing attribute '%s.%s': %s",
-            "DBusIntrospectionObject",
+            "ProxyBase",
             "foo",
             "Cannot create attribute, no data supplied"
         )

@@ -44,25 +44,3 @@ class ApplicationSupportTests(AutopilotTestCase):
             lambda: self.launch_test_application([]), raises(TypeError))
         self.assertThat(
             lambda: self.launch_test_application((None,)), raises(TypeError))
-
-    def test_launch_raises_ValueError_on_unknown_kwargs(self):
-        """launch_test_application must raise ValueError when given unknown
-        keyword arguments.
-
-        """
-        fn = lambda: self.launch_test_application(
-            'gedit', arg1=123, arg2='asd')
-        self.assertThat(
-            fn,
-            raises(ValueError("Unknown keyword arguments: 'arg1', 'arg2'.")))
-
-    def test_launch_raises_ValueError_on_unknown_kwargs_with_known(self):
-        """launch_test_application must raise ValueError when given unknown
-        keyword arguments.
-
-        """
-        fn = lambda: self.launch_test_application(
-            'gedit', arg1=123, arg2='asd', launch_dir='/')
-        self.assertThat(
-            fn,
-            raises(ValueError("Unknown keyword arguments: 'arg1', 'arg2'.")))

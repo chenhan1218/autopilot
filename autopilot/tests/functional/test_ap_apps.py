@@ -34,6 +34,12 @@ from testtools.matchers import (
 )
 from textwrap import dedent
 
+from fixtures import EnvironmentVariable
+
+from autopilot.application import (
+    NormalApplicationLauncher,
+    UpstartApplicationLauncher,
+)
 from autopilot.exceptions import ProcessSearchError
 from autopilot.process import ProcessManager
 from autopilot.platform import model
@@ -245,14 +251,14 @@ class QmlTestMixin(object):
             if path:
                 not_found = False
                 self.qml_viewer_app_path = path
-                self.patch_environment("QT_SELECT", "qt4")
+                self.useFixture(EnvironmentVariable("QT_SELECT", "qt4"))
 
         if 'qt5' in qtversions:
             path = check_func('qt5', 'qmlscene')
             if path:
                 not_found = False
                 self.qml_viewer_app_path = path
-                self.patch_environment("QT_SELECT", "qt5")
+                self.useFixture(EnvironmentVariable("QT_SELECT", "qt5"))
 
         if not_found:
             self.skip("Neither qmlviewer nor qmlscene is installed")
@@ -288,9 +294,10 @@ class QtTests(ApplicationTests, QmlTestMixin):
     def test_can_launch_normal_app(self):
         path = self.get_qml_viewer_app_path()
         fixture = self.useFixture(TempDesktopFile(exec_=path,))
-        app_proxy = self.launch_test_application(
+        launcher = self.useFixture(NormalApplicationLauncher())
+        app_proxy = launcher.launch(
             path,
-            '--desktop_file_hint=%s' % fixture.get_desktop_file_path(),
+            ['--desktop_file_hint=%s' % fixture.get_desktop_file_path()],
             app_type='qt'
         )
         self.assertTrue(app_proxy is not None)
@@ -298,7 +305,8 @@ class QtTests(ApplicationTests, QmlTestMixin):
     def test_can_launch_upstart_app(self):
         path = self.get_qml_viewer_app_path()
         fixture = self.useFixture(TempDesktopFile(exec_=path,))
-        self.launch_upstart_application(fixture.get_desktop_file_id())
+        launcher = self.useFixture(UpstartApplicationLauncher())
+        launcher.launch(fixture.get_desktop_file_id())
 
     @skipIf(model() != "Desktop", "Only suitable on Desktop (Qt4)")
     def test_can_launch_normal_qt_script(self):

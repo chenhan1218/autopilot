@@ -19,7 +19,7 @@
 
 from testtools import skipIf, TestCase
 from testtools.matchers import Equals
-from mock import patch
+from unittest.mock import patch
 
 from autopilot import platform
 from autopilot.input import Pointer, Mouse

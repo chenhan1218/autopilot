@@ -18,7 +18,7 @@
 #
 
 from argparse import Namespace
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 import logging
 import os.path
 from shutil import rmtree
@@ -962,6 +962,7 @@ def create_default_run_args(**kwargs):
         verbose=False,
         mode='run',
         suite='foo',
+        test_config='',
     )
     defaults.update(kwargs)
     return Namespace(**defaults)

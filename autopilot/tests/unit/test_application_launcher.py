@@ -423,7 +423,7 @@ class UpstartApplicationLauncherTests(TestCase):
 
     def test_get_pid_calls_upstart_module(self):
         expected_return = self.getUniqueInteger()
-        with patch.object(_l, 'UpstartAppLaunch') as mock_ual:
+        with patch.object(_l, 'UbuntuAppLaunch') as mock_ual:
             mock_ual.get_primary_pid.return_value = expected_return
             observed = UpstartApplicationLauncher._get_pid_for_launched_app(
                 'gedit'
@@ -433,7 +433,7 @@ class UpstartApplicationLauncherTests(TestCase):
             self.assertThat(expected_return, Equals(observed))
 
     def test_launch_app_calls_upstart_module(self):
-        with patch.object(_l, 'UpstartAppLaunch') as mock_ual:
+        with patch.object(_l, 'UbuntuAppLaunch') as mock_ual:
             UpstartApplicationLauncher._launch_app(
                 'gedit',
                 ['some', 'uris']
@@ -516,13 +516,13 @@ class UpstartApplicationLauncherTests(TestCase):
 
     def test_on_failed_sets_message_for_app_crash(self):
         self.assertFailedObserverSetsExtraMessage(
-            _l.UpstartAppLaunch.AppFailed.CRASH,
+            _l.UbuntuAppLaunch.AppFailed.CRASH,
             'Application crashed.'
         )
 
     def test_on_failed_sets_message_for_app_start_failure(self):
         self.assertFailedObserverSetsExtraMessage(
-            _l.UpstartAppLaunch.AppFailed.START_FAILURE,
+            _l.UbuntuAppLaunch.AppFailed.START_FAILURE,
             'Application failed to start.'
         )
 
@@ -570,7 +570,7 @@ class UpstartApplicationLauncherTests(TestCase):
         app_id = self.getUniqueString()
         case_addDetail = Mock()
         launcher = UpstartApplicationLauncher(case_addDetail)
-        with patch.object(_l.UpstartAppLaunch, 'application_log_path') as p:
+        with patch.object(_l.UbuntuAppLaunch, 'application_log_path') as p:
             p.return_value = None
             launcher._attach_application_log(app_id)
 
@@ -585,7 +585,7 @@ class UpstartApplicationLauncherTests(TestCase):
         with tempfile.NamedTemporaryFile(mode='w') as f:
             f.write(token)
             f.flush()
-            with patch.object(_l.UpstartAppLaunch, 'application_log_path',
+            with patch.object(_l.UbuntuAppLaunch, 'application_log_path',
                               return_value=f.name):
                 launcher._attach_application_log(app_id)
 
@@ -606,7 +606,7 @@ class UpstartApplicationLauncherTests(TestCase):
             new=mock_glib_loop,
         )
         mock_UAL = Mock()
-        patch_UAL = patch.object(_l, 'UpstartAppLaunch', new=mock_UAL)
+        patch_UAL = patch.object(_l, 'UbuntuAppLaunch', new=mock_UAL)
         launcher = UpstartApplicationLauncher(mock_add_detail)
         app_id = self.getUniqueString()
         with ExitStack() as patches:
@@ -630,7 +630,7 @@ class UpstartApplicationLauncherTests(TestCase):
             new=mock_glib_loop,
         )
         mock_UAL = Mock()
-        patch_UAL = patch.object(_l, 'UpstartAppLaunch', new=mock_UAL)
+        patch_UAL = patch.object(_l, 'UbuntuAppLaunch', new=mock_UAL)
         launcher = UpstartApplicationLauncher(mock_add_detail)
         app_id = self.getUniqueString()
         with ExitStack() as patches:
@@ -656,7 +656,7 @@ class UpstartApplicationLauncherTests(TestCase):
         def fake_add_observer(fn, state):
             state['status'] = UpstartApplicationLauncher.Timeout
         mock_UAL.observer_add_app_stop = fake_add_observer
-        patch_UAL = patch.object(_l, 'UpstartAppLaunch', new=mock_UAL)
+        patch_UAL = patch.object(_l, 'UbuntuAppLaunch', new=mock_UAL)
         launcher = UpstartApplicationLauncher(mock_add_detail)
         app_id = self.getUniqueString()
         mock_logger = Mock()

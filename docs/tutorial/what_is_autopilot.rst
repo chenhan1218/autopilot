@@ -29,6 +29,9 @@ Autopilot is built on top of several other python test frameworks, including:
 
 * `Python Test Scenarios <https://launchpad.net/testscenarios>`_ - :class:`~autopilot.testcase.AutopilotTestCase` contains the necessary plumbing in order to allow test authors to use test scenarios out of the box. This is extremely useful when you want to test several different modes of operation.
 
+* `Python Test Fixtures <https://pypi.python.org/pypi/fixtures/0.3.14>`_ - Several parts of autopilot are built as fixtures. While this is rarely exposed to the test author, it can be useful to know that this functionality is always present whenever autopilot is installed.
+
+
 What do Autopilot Tests Contain?
 ################################
 
@@ -38,7 +41,7 @@ A typical autopilot test has three distinct stages:
 
 **The Setup Stage**
 
-There are several concerns that must be addressed in the setup Phase. The most important step is to launch the application to be tested. Most autopilot test suites launch the application under test anew for each test. This ensures that the test starts with the application under test in a known, clean state.
+There are several concerns that must be addressed in the setup Phase. The most important step is to launch the application to be tested. Most autopilot test suites launch the application under test anew for each test. This ensures that the test starts with the application under test in a known, clean state. Autopilot can launch normal applications, launch applications via upstart, or launch apps contained within a click package.
 
 Tests may also wish to take other actions in the setup stage, including:
 

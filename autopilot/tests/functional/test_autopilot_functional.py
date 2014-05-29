@@ -30,7 +30,6 @@ from testtools.matchers import Contains, Equals, MatchesRegex, Not
 from textwrap import dedent
 
 from autopilot import platform
-from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional import AutopilotRunTestBase, remove_if_exists
 
 
@@ -89,6 +88,9 @@ class AutopilotFunctionalTestsBase(AutopilotRunTestBase):
             Equals(sorted(observed_test_list))
         )
         self.assertThat(expected_footer, Equals(observed_footer))
+
+
+class FunctionalTestMain(AutopilotFunctionalTestsBase):
 
     def test_can_list_empty_test_dir(self):
         """Autopilot list must report 0 tests found with an empty test
@@ -745,49 +747,25 @@ SyntaxError: invalid syntax
         self.assertThat(code, Equals(0))
         self.assertThat(output, Not(Contains('Running tests in random order')))
 
+    def test_get_test_configuration_from_command_line(self):
+        self.create_test_file(
+            'test_config.py', dedent("""\
 
-class AutopilotPatchEnvironmentTests(AutopilotTestCase):
+                from autopilot import get_test_configuration
+                from autopilot.testcase import AutopilotTestCase
 
-    def test_patch_environment_new_patch_is_unset_to_none(self):
-        """patch_environment must unset the environment variable if previously
-        was unset.
+                class Tests(AutopilotTestCase):
 
-        """
-
-        class PatchEnvironmentSubTests(AutopilotTestCase):
-
-            def test_patch_env_sets_var(self):
-                """Setting the environment variable must make it available."""
-                self.patch_environment("APABC321", "Foo")
-                self.assertThat(os.getenv("APABC321"), Equals("Foo"))
-
-        self.assertThat(os.getenv('APABC321'), Equals(None))
-
-        result = PatchEnvironmentSubTests("test_patch_env_sets_var").run()
-
-        self.assertThat(result.wasSuccessful(), Equals(True))
-        self.assertThat(os.getenv('APABC321'), Equals(None))
-
-    def test_patch_environment_existing_patch_is_reset(self):
-        """patch_environment must reset the environment back to it's previous
-        value.
-
-        """
-
-        class PatchEnvironmentSubTests(AutopilotTestCase):
-
-            def test_patch_env_sets_var(self):
-                """Setting the environment variable must make it available."""
-                self.patch_environment("APABC987", "InnerTest")
-                self.assertThat(os.getenv("APABC987"), Equals("InnerTest"))
-
-        self.patch_environment('APABC987', "OuterTest")
-        self.assertThat(os.getenv('APABC987'), Equals("OuterTest"))
-
-        result = PatchEnvironmentSubTests("test_patch_env_sets_var").run()
-
-        self.assertThat(result.wasSuccessful(), Equals(True))
-        self.assertThat(os.getenv('APABC987'), Equals("OuterTest"))
+                    def test_foo(self):
+                        c = get_test_configuration()
+                        print(c['foo'])
+            """)
+        )
+        code, output, error = self.run_autopilot(
+            ["run", "--config", "foo=This is a test", "tests"]
+        )
+        self.assertThat(code, Equals(0))
+        self.assertIn("This is a test", output)
 
 
 class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):

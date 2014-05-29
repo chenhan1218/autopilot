@@ -19,7 +19,7 @@
 
 from dbus import DBusException
 import os
-from mock import patch, Mock
+from unittest.mock import patch, Mock
 from six import u
 from testtools import TestCase
 from testtools.matchers import (

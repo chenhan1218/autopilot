@@ -25,16 +25,17 @@ import json
 import logging
 import os
 import psutil
-import six
 import subprocess
 import signal
 from testtools.content import content_from_file, text_content
 
 from autopilot._timeout import Timeout
-from autopilot.utilities import _raise_on_unknown_kwargs
 from autopilot.application._environment import (
     GtkApplicationEnvironment,
     QtApplicationEnvironment,
+)
+from autopilot.introspection import (
+    get_proxy_object_for_existing_process,
 )
 
 _logger = logging.getLogger(__name__)
@@ -45,11 +46,30 @@ class ApplicationLauncher(fixtures.Fixture):
     """A class that knows how to launch an application with a certain type of
     introspection enabled.
 
+    :keyword case_addDetail: addDetail method to use (self.addDetail if not
+        specified)
+    :keyword proxy_base: custom proxy base class to use, defaults to None
+    :keyword dbus_bus: dbus bus to use, if set to something other than the
+        default ('session') the environment will be patched
+
     """
 
-    def __init__(self, case_addDetail):
-        self.case_addDetail = case_addDetail
-        super(ApplicationLauncher, self).__init__()
+    def __init__(self, case_addDetail=None, emulator_base=None,
+                 dbus_bus='session'):
+        super().__init__()
+        self.case_addDetail = case_addDetail or self.addDetail
+        self.proxy_base = emulator_base
+        self.dbus_bus = dbus_bus
+
+    def setUp(self):
+        super().setUp()
+        if self.dbus_bus != 'session':
+            self.useFixture(
+                fixtures.EnvironmentVariable(
+                    "DBUS_SESSION_BUS_ADDRESS",
+                    self.dbus_bus
+                )
+            )
 
     def launch(self, *arguments):
         raise NotImplementedError("Sub-classes must implement this method.")
@@ -57,23 +77,44 @@ class ApplicationLauncher(fixtures.Fixture):
 
 class UpstartApplicationLauncher(ApplicationLauncher):
 
-    """A launcher class that launched applicaitons with UpstartAppLaunch."""
+    """A launcher class that launches applications with UpstartAppLaunch."""
+    __doc__ += ApplicationLauncher.__doc__
 
     Timeout = object()
     Failed = object()
     Started = object()
     Stopped = object()
 
-    def __init__(self, case_addDetail, **kwargs):
-        super(UpstartApplicationLauncher, self).__init__(case_addDetail)
-
-        self.emulator_base = kwargs.pop('emulator_base', None)
-        self.dbus_bus = kwargs.pop('dbus_bus', 'session')
-        self.dbus_application_name = kwargs.pop('application_name', None)
-
-        _raise_on_unknown_kwargs(kwargs)
-
     def launch(self, app_id, app_uris=[]):
+        """Launch an application with upstart.
+
+        This method launches an application via the ``upstart-app-launch``
+        library, on platforms that support it.
+
+        Usage is similar to NormalApplicationLauncher::
+
+            from autopilot.application import UpstartApplicationLauncher
+            launcher = UpstartApplicationLauncher()
+            launcher.setUp()
+            app_proxy = launcher.launch('gallery-app')
+
+        :param app_id: name of the application to launch
+        :param app_uris: list of separate application uris to launch
+        :raises RuntimeError: If the specified application cannot be launched.
+
+        :returns: proxy object for the launched package application
+
+        """
+        if isinstance(app_uris, str):
+            app_uris = [app_uris]
+        if isinstance(app_uris, bytes):
+            app_uris = [app_uris.decode()]
+        _logger.info(
+            "Attempting to launch application '%s' with URIs '%s' via "
+            "upstart-app-launch",
+            app_id,
+            ','.join(app_uris)
+        )
         state = {}
         state['loop'] = self._get_glib_loop()
         state['expected_app_id'] = app_id
@@ -94,7 +135,13 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             state.get('status', None),
             state.get('message', '')
         )
-        return self._get_pid_for_launched_app(app_id)
+        pid = self._get_pid_for_launched_app(app_id)
+        proxy_object = get_proxy_object_for_existing_process(
+            dbus_bus=self.dbus_bus,
+            emulator_base=self.proxy_base,
+            pid=pid
+        )
+        return proxy_object
 
     @staticmethod
     def _on_failed(launched_app_id, failure_type, state):
@@ -184,48 +231,172 @@ class UpstartApplicationLauncher(ApplicationLauncher):
 
 class ClickApplicationLauncher(UpstartApplicationLauncher):
 
-    def launch(self, package_id, app_name, app_uris):
-        app_id = _get_click_app_id(package_id, app_name)
-        return self._do_upstart_launch(app_id, app_uris)
+    """Fixture to manage launching a Click application."""
+    __doc__ += ApplicationLauncher.__doc__
 
-    def _do_upstart_launch(self, app_id, app_uris):
-        return super(ClickApplicationLauncher, self).launch(app_id, app_uris)
+    def launch(self, package_id, app_name=None, app_uris=[]):
+        """Launch a click package application with introspection enabled.
+
+        This method takes care of launching a click package with introspection
+        exabled. You probably want to use this method if your application is
+        packaged in a click application, or is started via upstart.
+
+        Usage is similar to NormalApplicationLauncher.launch::
+
+            from autopilot.application import ClickApplicationLauncher
+            launcher = ClickApplicationLauncher()
+            launcher.setUp()
+            app_proxy = launcher.launch('com.ubuntu.dropping-letters')
+
+        :param package_id: The Click package name you want to launch. For
+            example: ``com.ubuntu.dropping-letters``
+        :param app_name: Currently, only one application can be packaged in a
+            click package, and this parameter can be left at None. If
+            specified, it should be the application name you wish to launch.
+        :param app_uris: Parameters used to launch the click package. This
+            parameter will be left empty if not used.
+
+        :raises RuntimeError: If the specified package_id cannot be found in
+            the click package manifest.
+        :raises RuntimeError: If the specified app_name cannot be found within
+            the specified click package.
+
+        :returns: proxy object for the launched package application
+
+        """
+        if isinstance(app_uris, str):
+            app_uris = [app_uris]
+        if isinstance(app_uris, bytes):
+            app_uris = [app_uris.decode()]
+        _logger.info(
+            "Attempting to launch click application '%s' from click package "
+            " '%s' and URIs '%s'",
+            app_name if app_name is not None else "(default)",
+            package_id,
+            ','.join(app_uris)
+        )
+        app_id = _get_click_app_id(package_id, app_name)
+        return super().launch(app_id, app_uris)
 
 
 class NormalApplicationLauncher(ApplicationLauncher):
-    def __init__(self, case_addDetail, **kwargs):
-        super(NormalApplicationLauncher, self).__init__(case_addDetail)
-        self.app_type = kwargs.pop('app_type', None)
-        self.cwd = kwargs.pop('launch_dir', None)
-        self.capture_output = kwargs.pop('capture_output', True)
 
-        self.dbus_bus = kwargs.pop('dbus_bus', 'session')
-        self.emulator_base = kwargs.pop('emulator_base', None)
+    """Fixture to manage launching an application."""
+    __doc__ += ApplicationLauncher.__doc__
 
-        _raise_on_unknown_kwargs(kwargs)
+    def launch(self, application, arguments=[], app_type=None, cwd=None,
+               capture_output=True):
+        """Launch an application and return a proxy object.
 
-    def launch(self, application, *arguments):
+        Use this method to launch an application and start testing it. The
+        arguments passed in ``arguments`` are used as arguments to the
+        application to launch. Additional keyword arguments are used to control
+        the manner in which the application is launched.
+
+        This fixture is designed to be flexible enough to launch all supported
+        types of applications. Autopilot can automatically determine how to
+        enable introspection support for dynamically linked binary
+        applications. For example, to launch a binary Gtk application, a test
+        might start with::
+
+            from autopilot.application import NormalApplicationLauncher
+            launcher = NormalApplicationLauncher()
+            launcher.setUp()
+            app_proxy = launcher.launch('gedit')
+
+        For use within a testcase, use useFixture:
+
+            from autopilot.application import NormalApplicationLauncher
+            launcher = self.useFixture(NormalApplicationLauncher())
+            app_proxy = launcher.launch('gedit')
+
+        Applications can be given command line arguments by supplying an
+        ``arguments`` argument to this method. For example, if we want to
+        launch ``gedit`` with a certain document loaded, we might do this::
+
+            app_proxy = launcher.launch(
+                'gedit', arguments=['/tmp/test-document.txt'])
+
+        ... a Qt5 Qml application is launched in a similar fashion::
+
+            app_proxy = launcher.launch(
+                'qmlscene', arguments=['my_scene.qml'])
+
+        If you wish to launch an application that is not a dynamically linked
+        binary, you must specify the application type. For example, a Qt4
+        python application might be launched like this::
+
+            app_proxy = launcher.launch(
+                'my_qt_app.py', app_type='qt')
+
+        Similarly, a python/Gtk application is launched like so::
+
+            app_proxy = launcher.launch(
+                'my_gtk_app.py', app_type='gtk')
+
+        :param application: The application to launch. The application can be
+            specified as:
+
+             * A full, absolute path to an executable file.
+               (``/usr/bin/gedit``)
+             * A relative path to an executable file.
+               (``./build/my_app``)
+             * An app name, which will be searched for in $PATH (``my_app``)
+
+        :keyword arguments: If set, the list of arguments is passed to the
+            launched app.
+
+        :keyword app_type: If set, provides a hint to autopilot as to which
+            kind of introspection to enable. This is needed when the
+            application you wish to launch is *not* a dynamically linked
+            binary. Valid values are 'gtk' or 'qt'. These strings are case
+            insensitive.
+
+        :keyword launch_dir: If set to a directory that exists the process
+            will be launched from that directory.
+
+        :keyword capture_output: If set to True (the default), the process
+            output will be captured and attached to the test as test detail.
+
+        :return: A proxy object that represents the application. Introspection
+         data is retrievable via this object.
+
+        """
+        _logger.info(
+            "Attempting to launch application '%s' with arguments '%s' as a "
+            "normal process",
+            application,
+            ' '.join(arguments)
+        )
         app_path = _get_application_path(application)
-        app_path, arguments = self._setup_environment(app_path, *arguments)
-        self.process = self._launch_application_process(app_path, *arguments)
+        app_path, arguments = self._setup_environment(
+            app_path, app_type, arguments)
+        process = self._launch_application_process(
+            app_path, capture_output, cwd, arguments)
+        proxy_object = get_proxy_object_for_existing_process(
+            dbus_bus=self.dbus_bus,
+            emulator_base=self.proxy_base,
+            process=process,
+            pid=process.pid
+        )
+        return proxy_object
 
-        return self.process.pid
-
-    def _setup_environment(self, app_path, *arguments):
+    def _setup_environment(self, app_path, app_type, arguments):
         app_env = self.useFixture(
-            _get_application_environment(self.app_type, app_path)
+            _get_application_environment(app_type, app_path)
         )
         return app_env.prepare_environment(
             app_path,
             list(arguments),
         )
 
-    def _launch_application_process(self, app_path, *arguments):
+    def _launch_application_process(self, app_path, capture_output, cwd,
+                                    arguments):
         process = launch_process(
             app_path,
             arguments,
-            self.capture_output,
-            cwd=self.cwd,
+            capture_output,
+            cwd=cwd,
         )
 
         self.addCleanup(self._kill_process_and_attach_logs, process, app_path)
@@ -369,9 +540,9 @@ def _kill_process(process):
     _attempt_kill_pid(process.pid)
     for _ in Timeout.default():
         tmp_out, tmp_err = process.communicate()
-        if isinstance(tmp_out, six.binary_type):
+        if isinstance(tmp_out, bytes):
             tmp_out = tmp_out.decode('utf-8', errors='replace')
-        if isinstance(tmp_err, six.binary_type):
+        if isinstance(tmp_err, bytes):
             tmp_err = tmp_err.decode('utf-8', errors='replace')
         stdout_parts.append(tmp_out)
         stderr_parts.append(tmp_err)

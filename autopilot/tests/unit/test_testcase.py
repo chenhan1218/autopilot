@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from mock import Mock, patch
+from unittest.mock import call, Mock, patch
 from testtools import TestCase
 from testtools.matchers import Contains, raises
 
@@ -90,3 +90,73 @@ class ProcessSnapshotTests(TestCase):
                         "launch_test_application method' instead."
                     )
                 )
+
+
+class AutopilotTestCaseClassTests(TestCase):
+
+    """Test functions of the AutopilotTestCase class."""
+
+    @patch('autopilot.testcase.EnvironmentVariable')
+    def test_patch_environment(self, ep):
+        class EnvironmentVariableTestCase(AutopilotTestCase):
+
+            """Patch the enrivonment."""
+
+            def test_patch_environment(self):
+                self.patch_environment('foo', 'bar')
+
+        result = EnvironmentVariableTestCase('test_patch_environment').run()
+        self.assertTrue(result.wasSuccessful())
+        ep.assert_called_once_with('foo', 'bar')
+        self.assertIn(call().setUp(), ep.mock_calls)
+        self.assertIn(call().cleanUp(), ep.mock_calls)
+
+    @patch('autopilot.testcase.NormalApplicationLauncher')
+    def test_launch_test_application(self, nal):
+        class LauncherTest(AutopilotTestCase):
+
+            """Test launchers."""
+
+            def test_anything(self):
+                pass
+
+        test_case = LauncherTest('test_anything')
+        with patch.object(test_case, 'useFixture') as uf:
+            result = test_case.launch_test_application('a', 'b', 'c')
+            uf.assert_called_once_with(nal.return_value)
+            uf.return_value.launch.assert_called_once_with('a', ('b', 'c'))
+            self.assertEqual(result, uf.return_value.launch.return_value)
+
+    @patch('autopilot.testcase.ClickApplicationLauncher')
+    def test_launch_click_package(self, cal):
+        class LauncherTest(AutopilotTestCase):
+
+            """Test launchers."""
+
+            def test_anything(self):
+                pass
+
+        test_case = LauncherTest('test_anything')
+        with patch.object(test_case, 'useFixture') as uf:
+            result = test_case.launch_click_package('a', 'b', ['c', 'd'])
+            uf.assert_called_once_with(cal.return_value)
+            uf.return_value.launch.assert_called_once_with(
+                'a', 'b', ['c', 'd']
+            )
+            self.assertEqual(result, uf.return_value.launch.return_value)
+
+    @patch('autopilot.testcase.UpstartApplicationLauncher')
+    def test_launch_upstart_application(self, ual):
+        class LauncherTest(AutopilotTestCase):
+
+            """Test launchers."""
+
+            def test_anything(self):
+                pass
+
+        test_case = LauncherTest('test_anything')
+        with patch.object(test_case, 'useFixture') as uf:
+            result = test_case.launch_upstart_application('a', ['b'])
+            uf.assert_called_once_with(ual.return_value)
+            uf.return_value.launch.assert_called_once_with('a', ['b'])
+            self.assertEqual(result, uf.return_value.launch.return_value)

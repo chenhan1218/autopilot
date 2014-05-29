@@ -18,7 +18,7 @@
 #
 
 from dbus import String
-from mock import Mock
+from unittest.mock import Mock
 from testtools import TestCase
 from testtools.matchers import (
     Equals,

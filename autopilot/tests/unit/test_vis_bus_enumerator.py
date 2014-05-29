@@ -18,7 +18,7 @@
 #
 
 
-from mock import patch, Mock
+from unittest.mock import patch, Mock
 from testtools import TestCase, skipUnless
 from textwrap import dedent
 

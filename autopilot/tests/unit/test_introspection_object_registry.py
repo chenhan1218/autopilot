@@ -19,7 +19,7 @@
 
 from __future__ import absolute_import
 
-from mock import patch
+from unittest.mock import patch
 from testtools import TestCase
 from testtools.matchers import (
     Equals,

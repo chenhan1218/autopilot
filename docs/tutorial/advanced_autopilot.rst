@@ -145,18 +145,19 @@ For more information on the various logging levels, see the `python documentatio
 Environment Patching
 ====================
 
-Sometimes you need to change the value of an environment variable for the duration of a single test. It is important that the variable is changed back to it's original value when the test has ended, so future tests are run in a pristine environment. The :class:`~autopilot.testcase.AutopilotTestCase` class includes a :meth:`~autopilot.testcase.AutopilotTestCase.patch_environment` method which takes care of this for you. For example, to set the ``FOO`` environment variable to ``"Hello World"`` for the duration of a single test, the code would look something like this::
+Sometimes you need to change the value of an environment variable for the duration of a single test. It is important that the variable is changed back to it's original value when the test has ended, so future tests are run in a pristine environment. The :mod:`fixtures` module includes a :class:`fixtures.EnvironmentVariable` fixture which takes care of this for you. For example, to set the ``FOO`` environment variable to ``"Hello World"`` for the duration of a single test, the code would look something like this::
 
+    from fixtures import EnvironmentVariable
     from autopilot.testcase import AutopilotTestCase
 
 
     class MyTests(AutopilotTestCase):
 
         def test_that_needs_custom_environment(self):
-            self.patch_environment("FOO", "Hello World")
+            self.useFixture(EnvironmentVariable("FOO", "Hello World"))
             # Test code goes here.
 
-The :meth:`~autopilot.testcase.AutopilotTestCase.patch_environment` method will revert the value of the environment variable to it's initial value, or will delete it altogether if the environment variable did not exist when :meth:`~autopilot.testcase.AutopilotTestCase.patch_environment` was called. This happens in the cleanup phase of the test execution.
+The :class:`fixtures.EnvironmentVariable` fixture will revert the value of the environment variable to it's initial value, or will delete it altogether if the environment variable did not exist when :class:`fixtures.EnvironmentVariable` was instantiated. This happens in the cleanup phase of the test execution.
 
 Custom Assertions
 =================
@@ -362,16 +363,16 @@ Writing Custom Proxy Classes
 ============================
 
 By default, autopilot will generate an object for every introspectable item in your application under test. These are generated on the fly, and derive from
-:class:`~autopilot.introspection.dbus.DBusIntrospectionObject`. This gives you the usual methods of selecting other nodes in the object tree, as well the the means to inspect all the properties in that class.
+:class:`~autopilot.introspection.ProxyBase`. This gives you the usual methods of selecting other nodes in the object tree, as well the the means to inspect all the properties in that class.
 
 However, sometimes you want to customize the class used to create these objects. The most common reason to want to do this is to provide methods that make it easier to inspect these objects. Autopilot allows test authors to provide their own custom classes, through a couple of simple steps:
 
-1. First, you must define your own base class, to be used by all custom proxy objects in your test suite. This base class can be empty, but must derive from :class:`~autopilot.introspection.dbus.CustomEmulatorBase`. An example class might look like this::
+1. First, you must define your own base class, to be used by all custom proxy objects in your test suite. This base class can be empty, but must derive from :class:`~autopilot.introspection.ProxyBase`. An example class might look like this::
 
-    from autopilot.introspection import CustomEmulatorBase
+    from autopilot.introspection import ProxyBase
 
 
-    class CustomProxyObjectBase(CustomEmulatorBase):
+    class CustomProxyObjectBase(ProxyBase):
         """A base class for all custom proxy objects within this test suite."""
 
 2. Define the classes you want autopilot to use, instead of the default. The simplest method is to give the class the same name as the type you wish to override. For example, if you want to define your own custom class to be used every time autopilot generates an instance of a 'QLabel' object, the class definition would look like this::
@@ -404,7 +405,35 @@ This method should return True if the object matches this custom proxy class, an
                 '/path/to/the/application',
                 emulator_base=CustomProxyObjectBase)
 
-4. You can pass the custom proxy class to methods like :meth:`~autopilot.introspection.dbus.DBusIntrospectionObject.select_single` instead of a string. So, for example, the following is a valid way of selecting the QLabel instances in an application::
+4. You can pass the custom proxy class to methods like :meth:`~autopilot.introspection.ProxyBase.select_single` instead of a string. So, for example, the following is a valid way of selecting the QLabel instances in an application::
 
     # Get all QLabels in the applicaton:
     labels = self.app.select_many(QLabel)
+
+.. launching_applications:
+
+Launching Applications
+======================
+
+Applications can be launched inside of a testcase using :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application`,  :meth:`~autopilot.testcase.AutopilotTestCase.launch_upstart_application`, and  :meth:`~autopilot.testcase.AutopilotTestCase.launch_click_application`.
+
+Outside of testcase classes, the :class:`~autopilot.application.NormalApplicationLauncher`, :class:`~autopilot.application.UpstartApplicationLauncher`, and :class:`~autopilot.application.ClickApplicationLauncher` fixtures can be used, i.e.::
+
+        from autopilot.application import NormalApplicationLauncher
+
+        with NormalApplicationLauncher() as launcher:
+            launcher.launch('gedit')
+
+Within a fixture or a testcase, ``self.useFixture``can be used::
+
+        launcher = self.useFixture(NormalApplicationLauncher())
+        launcher.launch('gedit', ['--new-window', '/path/to/file'])
+
+Additional options can also be specified to set a custom addDetail method, a custom proxy base, or a custom dbus bus with which to patch the environment::
+
+        
+        launcher = self.useFixture(NormalApplicationLauncher(
+            case_addDetail=self.addDetail,
+            dbus_bus='some_other_bus',
+            proxy_base=my_proxy_class,
+        ))

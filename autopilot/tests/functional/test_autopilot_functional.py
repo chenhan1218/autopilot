@@ -27,7 +27,6 @@ from tempfile import mktemp
 from testtools import skipIf
 from testtools.matchers import Contains, Equals, MatchesRegex, Not, NotEquals
 from textwrap import dedent
-from time import sleep
 from unittest.mock import Mock
 
 from autopilot import platform
@@ -331,33 +330,43 @@ Loading tests from: %s
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_record_flag_works(self):
         """Must be able to record videos when the -r flag is present."""
+        video_dir = mktemp()
+        ap_dir = '/tmp/autopilot'
+        video_session_pattern = '/tmp/rMD-session*'
+        self.addCleanup(remove_if_exists, video_dir)
 
-        mock_test_case = Mock()
-        mock_test_case.shortDescription.return_value = 'Dummy_Description'
-        video_logger = RMDVideoLogFixture('/tmp/autopilot', mock_test_case)
-        video_logger.setUp()
-        video_logger._test_passed = False
-        # The sleep is to avoid the case where recordmydesktop does not create
-        # a file because it gets stopped before it's even started capturing
-        # anything.
-        sleep(1)
-        video_logger._stop_video_capture(mock_test_case)
-        should_delete = not os.path.exists('/tmp/autopilot')
+        should_delete = not os.path.exists(ap_dir)
         if should_delete:
-            self.addCleanup(remove_if_exists, '/tmp/autopilot')
+            self.addCleanup(remove_if_exists, ap_dir)
         else:
             self.addCleanup(
                 remove_if_exists,
-                '/tmp/autopilot/Dummy_Description.ogv'
-            )
+                '%s/Dummy_Description.ogv' % (ap_dir))
+
+        mock_test_case = Mock()
+        mock_test_case.shortDescription.return_value = 'Dummy_Description'
+        orig_sessions = glob.glob(video_session_pattern)
+
+        video_logger = RMDVideoLogFixture(video_dir, mock_test_case)
+        video_logger.setUp()
+        video_logger._test_passed = False
+
+        # We use Eventually() to avoid the case where recordmydesktop does not
+        # create a file because it gets stopped before it's even started
+        # capturing anything.
         self.assertThat(
-            lambda: os.path.exists('/tmp/autopilot'),
-            Eventually(Equals(True))
+            lambda: glob.glob(video_session_pattern),
+            Eventually(NotEquals(orig_sessions))
         )
-        self.assertThat(
-            lambda: os.path.exists('/tmp/autopilot/Dummy_Description.ogv'),
-            Eventually(Equals(True))
-        )
+
+        video_logger._stop_video_capture(mock_test_case)
+
+        self.assertTrue(os.path.exists(video_dir))
+        self.assertTrue(os.path.exists(
+            '%s/Dummy_Description.ogv' % (video_dir)))
+        self.assertFalse(os.path.exists(
+            '%s/Dummy_Description.ogv' % (ap_dir)))
+
 
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_record_dir_option_and_record_works(self):

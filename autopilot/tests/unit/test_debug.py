@@ -19,7 +19,7 @@
 
 from autopilot import _debug as d
 
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 from tempfile import NamedTemporaryFile
 from testtools import TestCase
 from testtools.matchers import (

@@ -19,7 +19,7 @@
 
 import testscenarios
 from evdev import ecodes, uinput
-from mock import ANY, call, Mock, patch
+from unittest.mock import ANY, call, Mock, patch
 from testtools import TestCase
 from testtools.matchers import Contains, raises
 

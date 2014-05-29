@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from mock import patch
+from unittest.mock import patch
 from testtools import TestCase
 from testtools.matchers import (
     Equals,

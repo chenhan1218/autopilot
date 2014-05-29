@@ -20,7 +20,7 @@
 
 from testtools import TestCase
 from testtools.matchers import Equals, Contains
-from mock import patch, Mock
+from unittest.mock import patch, Mock
 
 from autopilot.utilities import (
     CleanupRegistered,

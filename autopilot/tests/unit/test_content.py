@@ -19,7 +19,7 @@
 
 from tempfile import NamedTemporaryFile
 
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 import os
 from testtools import TestCase
 from testtools.matchers import Contains, Equals, Not, Raises

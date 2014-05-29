@@ -18,7 +18,7 @@
 #
 
 from datetime import datetime, time
-from mock import patch, Mock
+from unittest.mock import patch, Mock
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import Equals, IsInstance, NotEquals, raises

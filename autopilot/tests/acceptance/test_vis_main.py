@@ -24,7 +24,6 @@ import sys
 from testtools import skipIf
 from testtools.matchers import Equals
 
-from autopilot.application import NormalApplicationLauncher
 from autopilot.introspection.dbus import CustomEmulatorBase
 from autopilot.matchers import Eventually
 from autopilot.platform import model
@@ -35,47 +34,19 @@ class VisToolEmulatorBase(CustomEmulatorBase):
     pass
 
 
-class VisToolLauncher(NormalApplicationLauncher):
-
-    """Override code that prepares application environment.
-
-    The vis tool does not accept the '-testability' argument as the first
-    argument, so we override _setup_environment to put the argument in the
-    correct place.
-
-    """
-
-    def _setup_environment(self, app_path, *arguments):
-        return app_path, arguments + ('-testability',)
-
-
 class VisAcceptanceTests(AutopilotTestCase):
 
     def launch_windowmocker(self):
         return self.launch_test_application("window-mocker", app_type="qt")
 
-    def launch_vis(self):
-        """Launch the vis tool and return it's proxy object."""
-        launcher = self.useFixture(
-            VisToolLauncher(
-                self.addDetail,
-                app_type="qt",
-                emulator_base=VisToolEmulatorBase
-            )
-        )
-        vis_proxy = self._launch_test_application(
-            launcher,
-            sys.executable,
-            "-m"
-            "autopilot.run",
-            "vis",
-        )
-        return vis_proxy
-
     @skipIf(model() != "Desktop", "Vis not usable on device.")
     def test_can_select_windowmocker(self):
         wm = self.launch_windowmocker()
-        vis = self.launch_vis()
+        vis = self.launch_test_application(
+            sys.executable,
+            '-m', 'autopilot.run', 'vis', '-testability',
+            app_type='qt',
+        )
         connection_list = vis.select_single('ConnectionList')
         connection_list.slots.trySetSelectedItem(wm.applicationName)
         self.assertThat(

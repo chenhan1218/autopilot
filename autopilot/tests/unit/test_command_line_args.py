@@ -22,7 +22,7 @@
 "Unit tests for the command line parser in autopilot."
 
 
-from mock import patch
+from unittest.mock import patch
 
 from io import StringIO
 

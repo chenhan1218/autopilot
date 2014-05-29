@@ -18,7 +18,7 @@
 #
 
 from argparse import Namespace
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 import logging
 import os.path
 from shutil import rmtree

@@ -18,7 +18,7 @@
 #
 
 from dbus import String
-from mock import patch, MagicMock, Mock
+from unittest.mock import patch, MagicMock, Mock
 from testtools import TestCase
 from testtools.matchers import Equals, Not, NotEquals, IsInstance
 

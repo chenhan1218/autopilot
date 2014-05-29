@@ -22,7 +22,7 @@ import tempfile
 import shutil
 import os.path
 
-from mock import patch, Mock
+from unittest.mock import patch, Mock
 from io import StringIO
 from textwrap import dedent
 from testtools import TestCase

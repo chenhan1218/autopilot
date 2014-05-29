@@ -367,7 +367,6 @@ Loading tests from: %s
         self.assertFalse(os.path.exists(
             '%s/Dummy_Description.ogv' % (ap_dir)))
 
-
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_record_dir_option_and_record_works(self):
         """Must be able to specify record directory flag and record."""

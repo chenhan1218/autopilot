@@ -53,7 +53,10 @@ class RMDVideoLogFixture(fixtures.Fixture):
                 self._recording_app)
 
         self.test_instance.addOnException(self._on_test_failed)
-        self.test_instance.addCleanup(self._stop_video_capture, self.test_instance)
+        self.test_instance.addCleanup(
+            self._stop_video_capture,
+            self.test_instance
+        )
         self._start_video_capture(self.test_instance.shortDescription())
 
     def _have_recording_app(self):
@@ -124,10 +127,12 @@ def _have_video_recording_facilities():
     return call_ret_code == 0
 
 
-
 class DoNothingFixture(fixtures.Fixture):
     def __init__(self, arg):
         pass
+
+
+VideoLogFixture = None
 
 
 def configure_video_recording(args):
@@ -159,5 +164,4 @@ def configure_video_recording(args):
 
 
 def get_video_recording_fixture():
-    global VideoLogFixture
     return VideoLogFixture

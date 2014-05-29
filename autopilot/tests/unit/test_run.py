@@ -127,7 +127,11 @@ class RunUtilityFunctionTests(TestCase):
 
         self.assertEqual(partial_fixture.recording_directory, '/tmp/autopilot')
 
-    @patch.object(_video, '_have_video_recording_facilities', new=lambda: False)
+    @patch.object(
+        _video,
+        '_have_video_recording_facilities',
+        new=lambda: False
+    )
     def test_configure_video_recording_raises_RuntimeError(self):
         args = Namespace(record_directory='', record=True)
         self.assertThat(

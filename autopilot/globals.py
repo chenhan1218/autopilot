@@ -26,9 +26,6 @@ except ImportError:
     from io import StringIO
 
 import logging
-import os.path
-import signal
-import subprocess
 
 from autopilot._debug import DebugProfile
 from autopilot.utilities import LogFormatter, CleanupRegistered

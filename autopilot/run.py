@@ -26,7 +26,6 @@ from collections import OrderedDict
 import cProfile
 from datetime import datetime
 from imp import find_module
-import fixtures
 import logging
 import os
 import os.path

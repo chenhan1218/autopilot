@@ -26,8 +26,6 @@ raises it.
 
 """
 
-import six
-
 
 class BackendException(RuntimeError):
 
@@ -57,13 +55,12 @@ class StateNotFoundError(RuntimeError):
       :py:meth:`~autopilot.introspection.ProxyBase.select_single` or
       :py:meth:`~autopilot.introspection.ProxyBase.wait_select_single` or
       :py:meth:`~autopilot.introspection.ProxyBase.select_many` does not exist
-      yet.
+      yet
 
     * The UI widget you are trying to access has been destroyed by the
       application.
 
     """
-
     def __init__(self, class_name=None, **filters):
         """Construct a StateNotFoundError.
 
@@ -71,13 +68,14 @@ class StateNotFoundError(RuntimeError):
             are specified.
 
         """
+
         if class_name is None and not filters:
             raise ValueError("Must specify either class name or filters.")
 
         if class_name is None:
             self._message = \
                 u"Object not found with properties {}.".format(
-                    repr(filters)
+                    repr(filters),
                 )
         elif not filters:
             self._message = u"Object not found with name '{}'.".format(
@@ -90,14 +88,16 @@ class StateNotFoundError(RuntimeError):
                     repr(filters)
                 )
 
-    def __str__(self):
-        if six.PY3:
-            return self._message
-        else:
-            return self._message.encode('utf8')
+    def _url_message_link(self):
+        return(
+            'An online troubleshooting guide to help you fix your broken test '
+            'is available here: '
+            'http://developer.ubuntu.com/api/devel/ubuntu-14.10/python/'
+            'autopilot/faq/troubleshooting.html'
+        )
 
-    def __unicode__(self):
-        return self._message
+    def __str__(self):
+        return '{}\n{}'.format(self._message, self._url_message_link)
 
 
 class InvalidXPathQuery(ValueError):

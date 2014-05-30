@@ -55,7 +55,7 @@ class StateNotFoundError(RuntimeError):
       :py:meth:`~autopilot.introspection.ProxyBase.select_single` or
       :py:meth:`~autopilot.introspection.ProxyBase.wait_select_single` or
       :py:meth:`~autopilot.introspection.ProxyBase.select_many` does not exist
-      yet
+      yet.
 
     * The UI widget you are trying to access has been destroyed by the
       application.

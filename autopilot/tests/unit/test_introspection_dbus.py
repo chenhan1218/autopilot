@@ -160,6 +160,12 @@ class ProxyObjectPrintTreeTests(TestCase):
         fake_object = self._print_test_fake_object()
         child = Mock()
         child.print_tree.side_effect = StateNotFoundError('child')
+        url_message = (
+            'An online troubleshooting guide to help you fix your broken test '
+            'is available here: '
+            'http://developer.ubuntu.com/api/devel/ubuntu-14.10/python/'
+            'autopilot/faq/troubleshooting.html'
+        )
 
         with patch.object(fake_object, 'get_children', return_value=[child]):
             out = StringIO()
@@ -171,7 +177,9 @@ class ProxyObjectPrintTreeTests(TestCase):
             path: '/some/path'
             text: 'Hello'
             Error: Object not found with name 'child'.
-            """))
+
+            {}
+            """.format(url_message)))
 
     def test_print_tree_fileobj(self):
         """print_tree with file object output"""

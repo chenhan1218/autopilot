@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import six
 from testtools import TestCase
 from testtools.matchers import raises, Equals
 
@@ -25,6 +24,15 @@ from autopilot.exceptions import StateNotFoundError
 
 
 class StateNotFoundTests(TestCase):
+
+    def setUp(self):
+        super(StateNotFoundTests, self).setUp()
+        self._url_message = (
+            'An online troubleshooting guide to help you fix your broken test '
+            'is available here: '
+            'http://developer.ubuntu.com/api/devel/ubuntu-14.10/python/'
+            'autopilot/faq/troubleshooting.html'
+        )
 
     def test_requires_class_name_to_construct(self):
         """You must pass a class name in to the StateNotFoundError exception
@@ -41,26 +49,23 @@ class StateNotFoundTests(TestCase):
         err = StateNotFoundError("MyClass")
         self.assertThat(
             str(err),
-            Equals("Object not found with name 'MyClass'.")
+            Equals("Object not found with name 'MyClass'.\n\n{}".format(
+                self._url_message
+            ))
         )
-        if not six.PY3:
-            self.assertThat(
-                unicode(err),
-                Equals(u"Object not found with name 'MyClass'.")
-            )
 
     def test_can_be_constructed_with_filters_only(self):
         """Must be able to construct exception with filters only."""
         err = StateNotFoundError(foo="bar")
         self.assertThat(
             str(err),
-            Equals("Object not found with properties {'foo': 'bar'}.")
+            Equals(
+                "Object not found with properties {}."
+                "\n\n{}".format(
+                    "{'foo': 'bar'}",
+                    self._url_message
+                ))
         )
-        if not six.PY3:
-            self.assertThat(
-                unicode(err),
-                Equals(u"Object not found with properties {'foo': 'bar'}.")
-            )
 
     def test_can_be_constructed_with_class_name_and_filters(self):
         """Must be able to construct with both class name and filters."""
@@ -68,11 +73,8 @@ class StateNotFoundTests(TestCase):
         self.assertThat(
             str(err),
             Equals("Object not found with name 'MyClass'"
-                   " and properties {'foo': 'bar'}.")
+                   " and properties {}.\n\n{}".format(
+                       "{'foo': 'bar'}",
+                       self._url_message
+                   ))
         )
-        if not six.PY3:
-            self.assertThat(
-                unicode(err),
-                Equals(u"Object not found with name 'MyClass'"
-                       " and properties {'foo': 'bar'}.")
-            )

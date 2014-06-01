@@ -20,7 +20,7 @@
 """Base module for application launchers."""
 
 import fixtures
-from gi.repository import GLib, UpstartAppLaunch
+from gi.repository import GLib, UbuntuAppLaunch
 import json
 import logging
 import os
@@ -120,16 +120,16 @@ class UpstartApplicationLauncher(ApplicationLauncher):
         state['expected_app_id'] = app_id
         state['message'] = ''
 
-        UpstartAppLaunch.observer_add_app_failed(self._on_failed, state)
-        UpstartAppLaunch.observer_add_app_started(self._on_started, state)
-        UpstartAppLaunch.observer_add_app_focus(self._on_started, state)
+        UbuntuAppLaunch.observer_add_app_failed(self._on_failed, state)
+        UbuntuAppLaunch.observer_add_app_started(self._on_started, state)
+        UbuntuAppLaunch.observer_add_app_focus(self._on_started, state)
         GLib.timeout_add_seconds(10.0, self._on_timeout, state)
 
         self._launch_app(app_id, app_uris)
         state['loop'].run()
-        UpstartAppLaunch.observer_delete_app_failed(self._on_failed)
-        UpstartAppLaunch.observer_delete_app_started(self._on_started)
-        UpstartAppLaunch.observer_delete_app_focus(self._on_started)
+        UbuntuAppLaunch.observer_delete_app_failed(self._on_failed)
+        UbuntuAppLaunch.observer_delete_app_started(self._on_started)
+        UbuntuAppLaunch.observer_delete_app_focus(self._on_started)
         self._maybe_add_application_cleanups(state)
         self._check_status_error(
             state.get('status', None),
@@ -146,9 +146,9 @@ class UpstartApplicationLauncher(ApplicationLauncher):
     @staticmethod
     def _on_failed(launched_app_id, failure_type, state):
         if launched_app_id == state['expected_app_id']:
-            if failure_type == UpstartAppLaunch.AppFailed.CRASH:
+            if failure_type == UbuntuAppLaunch.AppFailed.CRASH:
                 state['message'] = 'Application crashed.'
-            elif failure_type == UpstartAppLaunch.AppFailed.START_FAILURE:
+            elif failure_type == UbuntuAppLaunch.AppFailed.START_FAILURE:
                 state['message'] = 'Application failed to start.'
             state['status'] = UpstartApplicationLauncher.Failed
             state['loop'].quit()
@@ -177,7 +177,7 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             self.addCleanup(self._attach_application_log, app_id)
 
     def _attach_application_log(self, app_id):
-        log_path = UpstartAppLaunch.application_log_path(app_id)
+        log_path = UbuntuAppLaunch.application_log_path(app_id)
         if log_path and os.path.exists(log_path):
             self.case_addDetail(
                 "Application Log (%s)" % app_id,
@@ -189,12 +189,12 @@ class UpstartApplicationLauncher(ApplicationLauncher):
         state['loop'] = self._get_glib_loop()
         state['expected_app_id'] = app_id
 
-        UpstartAppLaunch.observer_add_app_stop(self._on_stopped, state)
+        UbuntuAppLaunch.observer_add_app_stop(self._on_stopped, state)
         GLib.timeout_add_seconds(10.0, self._on_timeout, state)
 
-        UpstartAppLaunch.stop_application(app_id)
+        UbuntuAppLaunch.stop_application(app_id)
         state['loop'].run()
-        UpstartAppLaunch.observer_delete_app_stop(self._on_stopped)
+        UbuntuAppLaunch.observer_delete_app_stop(self._on_stopped)
 
         if state.get('status', None) == UpstartApplicationLauncher.Timeout:
             _logger.error(
@@ -208,11 +208,11 @@ class UpstartApplicationLauncher(ApplicationLauncher):
 
     @staticmethod
     def _get_pid_for_launched_app(app_id):
-        return UpstartAppLaunch.get_primary_pid(app_id)
+        return UbuntuAppLaunch.get_primary_pid(app_id)
 
     @staticmethod
     def _launch_app(app_name, app_uris):
-        UpstartAppLaunch.start_application_test(app_name, app_uris)
+        UbuntuAppLaunch.start_application_test(app_name, app_uris)
 
     @staticmethod
     def _check_status_error(status, extra_message=''):

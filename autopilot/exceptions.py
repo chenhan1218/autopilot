@@ -27,6 +27,14 @@ raises it.
 """
 
 
+_StateNotFoundError_url_message_link = (
+    'An online troubleshooting guide to help you fix your broken test '
+    'is available here: '
+    'http://developer.ubuntu.com/api/devel/ubuntu-14.10/python/'
+    'autopilot/faq/troubleshooting.html'
+)
+
+
 class BackendException(RuntimeError):
 
     """An error occured while trying to initialise an autopilot backend."""
@@ -68,12 +76,7 @@ class StateNotFoundError(RuntimeError):
             are specified.
 
         """
-        self._url_message_link = (
-            'An online troubleshooting guide to help you fix your broken test '
-            'is available here: '
-            'http://developer.ubuntu.com/api/devel/ubuntu-14.10/python/'
-            'autopilot/faq/troubleshooting.html'
-        )
+        self._url_message_link = _StateNotFoundError_url_message_link
 
         if class_name is None and not filters:
             raise ValueError("Must specify either class name or filters.")
@@ -93,9 +96,13 @@ class StateNotFoundError(RuntimeError):
                     class_name,
                     repr(filters)
                 )
+        #print(self._url_message_link)
 
     def __str__(self):
-        return '{}\n\n{}'.format(self._message, self._url_message_link)
+        return '{}\n\n{}'.format(
+            self._message,
+            self._url_message_link
+        )
 
 
 class InvalidXPathQuery(ValueError):

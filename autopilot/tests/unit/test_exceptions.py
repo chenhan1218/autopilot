@@ -18,21 +18,13 @@
 #
 
 from testtools import TestCase
-from testtools.matchers import raises, Equals
+from testtools.matchers import raises, EndsWith, Equals
 
+from autopilot import exceptions
 from autopilot.exceptions import StateNotFoundError
 
 
 class StateNotFoundTests(TestCase):
-
-    def setUp(self):
-        super(StateNotFoundTests, self).setUp()
-        self._url_message = (
-            'An online troubleshooting guide to help you fix your broken test '
-            'is available here: '
-            'http://developer.ubuntu.com/api/devel/ubuntu-14.10/python/'
-            'autopilot/faq/troubleshooting.html'
-        )
 
     def test_requires_class_name_to_construct(self):
         """You must pass a class name in to the StateNotFoundError exception
@@ -50,7 +42,7 @@ class StateNotFoundTests(TestCase):
         self.assertThat(
             str(err),
             Equals("Object not found with name 'MyClass'.\n\n{}".format(
-                self._url_message
+                exceptions._StateNotFoundError_url_message_link
             ))
         )
 
@@ -63,7 +55,7 @@ class StateNotFoundTests(TestCase):
                 "Object not found with properties {}."
                 "\n\n{}".format(
                     "{'foo': 'bar'}",
-                    self._url_message
+                    exceptions._StateNotFoundError_url_message_link
                 ))
         )
 
@@ -75,6 +67,19 @@ class StateNotFoundTests(TestCase):
             Equals("Object not found with name 'MyClass'"
                    " and properties {}.\n\n{}".format(
                        "{'foo': 'bar'}",
-                       self._url_message
+                       exceptions._StateNotFoundError_url_message_link
                    ))
+        )
+
+    def test_ends_StateNotFoundError_url_message_link(self):
+        """The assertion raised must end with a link to troubleshooting url."""
+        err = StateNotFoundError('MyClass', foo="bar")
+        self.assertThat(
+            str(err),
+            EndsWith(
+                'An online troubleshooting guide to help you fix your broken '
+                'test is available here: '
+                'http://developer.ubuntu.com/api/devel/ubuntu-14.10/python/'
+                'autopilot/faq/troubleshooting.html'
+            )
         )

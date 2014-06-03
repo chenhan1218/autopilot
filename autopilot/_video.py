@@ -19,6 +19,7 @@
 
 
 import fixtures
+import glob
 from functools import partial
 import logging
 import os
@@ -26,6 +27,8 @@ import signal
 import subprocess
 
 from testtools.content import text_content
+
+from autopilot.matchers import Eventually
 
 
 logger = logging.getLogger(__name__)
@@ -68,13 +71,20 @@ class RMDVideoLogFixture(fixtures.Fixture):
             self.recording_directory,
             '%s.ogv' % (test_id)
         )
-        self._ensure_directory_exists_but_not_file(self._capture_file)
+        _ensure_directory_exists_but_not_file(self._capture_file)
         args.append(self._capture_file)
+        video_session_pattern = '/tmp/rMD-session*'
+        orig_sessions = glob.glob(video_session_pattern)
         logger.debug("Starting: %r", args)
         self._capture_process = subprocess.Popen(
             args,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT
+        )
+        # wait until rmd session directory is created
+        self.assertThat(
+            lambda: glob.glob(video_session_pattern),
+            Eventually(NotEquals(orig_sessions))
         )
 
     def _stop_video_capture(self, test_instance):
@@ -96,15 +106,6 @@ class RMDVideoLogFixture(fixtures.Fixture):
         self._capture_process = None
         self._currently_recording_description = None
 
-    def _ensure_directory_exists_but_not_file(self, file_path):
-        dirpath = os.path.dirname(file_path)
-        if not os.path.exists(dirpath):
-            os.makedirs(dirpath)
-        elif os.path.exists(file_path):
-            logger.warning(
-                "Video capture file '%s' already exists, deleting.", file_path)
-            os.remove(file_path)
-
     def _on_test_failed(self, ex_info):
         """Called when a test fails."""
         from unittest.case import SkipTest
@@ -125,6 +126,16 @@ def _have_video_recording_facilities():
         stdout=subprocess.PIPE
     )
     return call_ret_code == 0
+
+
+def _ensure_directory_exists_but_not_file(file_path):
+    dirpath = os.path.dirname(file_path)
+    if not os.path.exists(dirpath):
+        os.makedirs(dirpath)
+    elif os.path.exists(file_path):
+        logger.warning(
+            "Video capture file '%s' already exists, deleting.", file_path)
+        os.remove(file_path)
 
 
 class DoNothingFixture(fixtures.Fixture):

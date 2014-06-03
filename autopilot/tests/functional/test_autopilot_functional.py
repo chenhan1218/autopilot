@@ -334,14 +334,10 @@ Loading tests from: %s
         ap_dir = '/tmp/autopilot'
         video_session_pattern = '/tmp/rMD-session*'
         self.addCleanup(remove_if_exists, video_dir)
-
-        should_delete = not os.path.exists(ap_dir)
-        if should_delete:
-            self.addCleanup(remove_if_exists, ap_dir)
-        else:
-            self.addCleanup(
+        self.addCleanup(
                 remove_if_exists,
                 '%s/Dummy_Description.ogv' % (ap_dir))
+        self.addCleanup(remove_if_exists, ap_dir)
 
         mock_test_case = Mock()
         mock_test_case.shortDescription.return_value = 'Dummy_Description'

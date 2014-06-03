@@ -76,7 +76,6 @@ class StateNotFoundError(RuntimeError):
             are specified.
 
         """
-        self._url_message_link = _StateNotFoundError_url_message_link
 
         if class_name is None and not filters:
             raise ValueError("Must specify either class name or filters.")
@@ -101,7 +100,7 @@ class StateNotFoundError(RuntimeError):
     def __str__(self):
         return '{}\n\n{}'.format(
             self._message,
-            self._url_message_link
+            self._StateNotFoundError_url_message_link
         )
 
 

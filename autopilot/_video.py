@@ -27,8 +27,9 @@ import signal
 import subprocess
 
 from testtools.content import text_content
+from testtools.matchers import NotEquals
 
-from autopilot.matchers import Eventually, NotEquals
+from autopilot.matchers import Eventually
 
 
 logger = logging.getLogger(__name__)

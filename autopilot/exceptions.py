@@ -99,7 +99,7 @@ class StateNotFoundError(RuntimeError):
     def __str__(self):
         return '{}\n\n{}'.format(
             self._message,
-            self._StateNotFoundError_url_message_link
+            _StateNotFoundError_url_message_link
         )
 
 

@@ -21,7 +21,7 @@ from testtools import TestCase
 from testtools.matchers import raises
 from testscenarios import WithScenarios
 from textwrap import dedent
-from mock import patch
+from unittest.mock import patch
 
 from autopilot.display import _upa as upa
 

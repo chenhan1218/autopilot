@@ -335,8 +335,9 @@ Loading tests from: %s
         video_session_pattern = '/tmp/rMD-session*'
         self.addCleanup(remove_if_exists, video_dir)
         self.addCleanup(
-                remove_if_exists,
-                '%s/Dummy_Description.ogv' % (ap_dir))
+            remove_if_exists,
+            '%s/Dummy_Description.ogv' % (ap_dir)
+        )
         self.addCleanup(remove_if_exists, ap_dir)
 
         mock_test_case = Mock()

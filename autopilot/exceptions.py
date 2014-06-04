@@ -27,16 +27,7 @@ raises it.
 """
 
 
-_StateNotFoundError_url_message_link = (
-    'An online troubleshooting guide to help you fix your broken test '
-    'is available here: '
-    'http://developer.ubuntu.com/api/devel/ubuntu-14.10/python/'
-    'autopilot/faq/troubleshooting.html'
-)
-
-
 class BackendException(RuntimeError):
-
     """An error occured while trying to initialise an autopilot backend."""
 
     def __init__(self, original_exception):
@@ -96,10 +87,17 @@ class StateNotFoundError(RuntimeError):
                     repr(filters)
                 )
 
+    _troubleshoot_url_message = (
+        'Tips on minimizing the occurrence of this failure'
+        'are available here: '
+        'http://developer.ubuntu.com/api/devel/ubuntu-14.10/python/'
+        'autopilot/faq/troubleshooting.html'
+    )
+
     def __str__(self):
         return '{}\n\n{}'.format(
             self._message,
-            _StateNotFoundError_url_message_link
+            self._troubleshoot_url_message
         )
 
 

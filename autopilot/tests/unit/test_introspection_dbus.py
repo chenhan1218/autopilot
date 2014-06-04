@@ -34,7 +34,6 @@ from testtools.matchers import (
     raises,
 )
 
-from autopilot import exceptions
 from autopilot.exceptions import StateNotFoundError
 from autopilot.introspection import CustomEmulatorBase
 from autopilot.introspection import dbus
@@ -174,7 +173,7 @@ class ProxyObjectPrintTreeTests(TestCase):
             Error: Object not found with name 'child'.
 
             {}
-            """.format(exceptions._StateNotFoundError_url_message_link)))
+            """.format(StateNotFoundError._troubleshoot_url_message)))
 
     def test_print_tree_fileobj(self):
         """print_tree with file object output"""

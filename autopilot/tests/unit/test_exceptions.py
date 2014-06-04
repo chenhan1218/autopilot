@@ -20,7 +20,6 @@
 from testtools import TestCase
 from testtools.matchers import raises, EndsWith, Equals
 
-from autopilot import exceptions
 from autopilot.exceptions import StateNotFoundError
 
 
@@ -42,7 +41,7 @@ class StateNotFoundTests(TestCase):
         self.assertThat(
             str(err),
             Equals("Object not found with name 'MyClass'.\n\n{}".format(
-                exceptions._StateNotFoundError_url_message_link
+                StateNotFoundError._troubleshoot_url_message
             ))
         )
 
@@ -55,7 +54,7 @@ class StateNotFoundTests(TestCase):
                 "Object not found with properties {}."
                 "\n\n{}".format(
                     "{'foo': 'bar'}",
-                    exceptions._StateNotFoundError_url_message_link
+                    StateNotFoundError._troubleshoot_url_message
                 ))
         )
 
@@ -67,18 +66,18 @@ class StateNotFoundTests(TestCase):
             Equals("Object not found with name 'MyClass'"
                    " and properties {}.\n\n{}".format(
                        "{'foo': 'bar'}",
-                       exceptions._StateNotFoundError_url_message_link
+                       StateNotFoundError._troubleshoot_url_message
                    ))
         )
 
-    def test_ends_StateNotFoundError_url_message_link(self):
+    def test_StateNotFoundError_endswith_troubleshoot_url_message_text(self):
         """The assertion raised must end with a link to troubleshooting url."""
         err = StateNotFoundError('MyClass', foo="bar")
         self.assertThat(
             str(err),
             EndsWith(
-                'An online troubleshooting guide to help you fix your broken '
-                'test is available here: '
+                'Tips on minimizing the occurrence of this failure'
+                'are available here: '
                 'http://developer.ubuntu.com/api/devel/ubuntu-14.10/python/'
                 'autopilot/faq/troubleshooting.html'
             )

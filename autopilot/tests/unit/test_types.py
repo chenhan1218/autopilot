@@ -51,6 +51,7 @@ from autopilot.introspection.types import (
     _integer_str,
 )
 from autopilot.introspection.dbus import DBusIntrospectionObject
+from autopilot.testcase import AutopilotTestCase
 from autopilot.utilities import compatible_repr
 
 
@@ -293,7 +294,7 @@ class ColorTypeTests(TestCase):
         self.assertEqual(repr(c), str(c))
 
 
-class DateTimeTests(TestCase):
+class DateTimeTests(AutopilotTestCase):
 
     def test_can_construct_datetime(self):
         dt = DateTime(1377209927)
@@ -305,6 +306,8 @@ class DateTimeTests(TestCase):
         self.assertThat(dt[0], Equals(1377209927))
 
     def test_datetime_has_properties(self):
+        # DateTime no longer assumes UTC and uses local TZ.
+        self.patch_environment('TZ', 'UTC')
         dt = DateTime(1377209927)
 
         self.assertThat(dt.timestamp, Equals(1377209927))
@@ -328,6 +331,8 @@ class DateTimeTests(TestCase):
         self.assertThat(dt1, Equals(dt2))
 
     def test_equality_with_datetime_timestamp(self):
+    # DateTime no longer assumes UTC and uses local TZ.
+        self.patch_environment('TZ', 'UTC')
         dt1 = DateTime(1377209927)
         dt2 = datetime.utcfromtimestamp(1377209927)
         dt3 = datetime.utcfromtimestamp(1377209928)
@@ -341,6 +346,8 @@ class DateTimeTests(TestCase):
         self.assertThat(dt1.datetime, IsInstance(datetime))
 
     def test_repr(self):
+        # DateTime no longer assumes UTC and uses local TZ.
+        self.patch_environment('TZ', 'UTC')
         dt = DateTime(1377209927)
         expected = repr_type('DateTime(2013-08-22 22:18:47)')
         observed = repr(dt)

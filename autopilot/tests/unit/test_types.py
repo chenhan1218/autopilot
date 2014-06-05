@@ -305,16 +305,13 @@ class DateTimeTests(TestCase):
         self.assertThat(dt[0], Equals(1377209927))
 
     def test_datetime_has_properties(self):
-        # Because DateTime now uses local TZ info the day/hour details can be
-        # different here depending on your TZ info.
         dt = DateTime(1377209927)
-        dt_with_tz = datetime.fromtimestamp(1377209927)
 
         self.assertThat(dt.timestamp, Equals(1377209927))
-        self.assertThat(dt.year, Equals(dt_with_tz.year))
-        self.assertThat(dt.month, Equals(dt_with_tz.month))
-        self.assertThat(dt.day, Equals(dt_with_tz.day))
-        self.assertThat(dt.hour, Equals(dt_with_tz.hour))
+        self.assertThat(dt.year, Equals(2013))
+        self.assertThat(dt.month, Equals(8))
+        self.assertThat(dt.day, Equals(22))
+        self.assertThat(dt.hour, Equals(22))
         self.assertThat(dt.minute, Equals(18))
         self.assertThat(dt.second, Equals(47))
 
@@ -332,8 +329,8 @@ class DateTimeTests(TestCase):
 
     def test_equality_with_datetime_timestamp(self):
         dt1 = DateTime(1377209927)
-        dt2 = datetime.fromtimestamp(1377209927)
-        dt3 = datetime.fromtimestamp(1377209928)
+        dt2 = datetime.utcfromtimestamp(1377209927)
+        dt3 = datetime.utcfromtimestamp(1377209928)
 
         self.assertThat(dt1, Equals(dt2))
         self.assertThat(dt1, NotEquals(dt3))
@@ -345,14 +342,8 @@ class DateTimeTests(TestCase):
 
     def test_repr(self):
         dt = DateTime(1377209927)
-
-        expected = repr_type(
-            u"DateTime({:%Y-%m-%d %H}:18:47)".format(
-                datetime.fromtimestamp(1377209927)
-            )
-        )
+        expected = repr_type('DateTime(2013-08-22 22:18:47)')
         observed = repr(dt)
-
         self.assertEqual(expected, observed)
 
     def test_repr_equals_str(self):

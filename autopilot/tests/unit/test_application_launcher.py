@@ -213,6 +213,20 @@ class NormalApplicationLauncherTests(TestCase):
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')
     @patch('autopilot.application._launcher._get_application_path')
+    def test_launch_sets_process_of_proxy_object(self, _, gpofep):
+        """Test that NormalApplicationLauncher.launch returns the proxy object
+        returned by get_proxy_object_for_existing_process."""
+        launcher = NormalApplicationLauncher()
+        with patch.object(launcher, '_launch_application_process') as lap:
+            with patch.object(launcher, '_setup_environment') as se:
+                se.return_value = ('', [])
+                launcher.launch('')
+                set_process = gpofep.return_value.set_process
+                set_process.assert_called_once_with(lap.return_value)
+
+    @patch('autopilot.application._launcher.'
+           'get_proxy_object_for_existing_process')
+    @patch('autopilot.application._launcher._get_application_path')
     def test_launch_returns_proxy_object(self, _, gpofep):
         """Test that NormalApplicationLauncher.launch returns the proxy object
         returned by get_proxy_object_for_existing_process."""

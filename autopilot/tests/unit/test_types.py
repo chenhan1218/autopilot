@@ -20,6 +20,7 @@
 from __future__ import absolute_import
 
 from datetime import datetime, time
+import fixtures
 from unittest.mock import patch, Mock
 import six
 from testscenarios import TestWithScenarios
@@ -307,7 +308,7 @@ class DateTimeTests(AutopilotTestCase):
 
     def test_datetime_has_properties(self):
         # DateTime no longer assumes UTC and uses local TZ.
-        self.patch_environment('TZ', 'UTC')
+        self.useFixture(fixtures.EnvironmentVariable('TZ', 'UTC'))
         dt = DateTime(1377209927)
 
         self.assertThat(dt.timestamp, Equals(1377209927))
@@ -331,8 +332,8 @@ class DateTimeTests(AutopilotTestCase):
         self.assertThat(dt1, Equals(dt2))
 
     def test_equality_with_datetime_timestamp(self):
-    # DateTime no longer assumes UTC and uses local TZ.
-        self.patch_environment('TZ', 'UTC')
+        # DateTime no longer assumes UTC and uses local TZ.
+        self.useFixture(fixtures.EnvironmentVariable('TZ', 'UTC'))
         dt1 = DateTime(1377209927)
         dt2 = datetime.utcfromtimestamp(1377209927)
         dt3 = datetime.utcfromtimestamp(1377209928)
@@ -347,7 +348,7 @@ class DateTimeTests(AutopilotTestCase):
 
     def test_repr(self):
         # DateTime no longer assumes UTC and uses local TZ.
-        self.patch_environment('TZ', 'UTC')
+        self.useFixture(fixtures.EnvironmentVariable('TZ', 'UTC'))
         dt = DateTime(1377209927)
         expected = repr_type('DateTime(2013-08-22 22:18:47)')
         observed = repr(dt)

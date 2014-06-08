@@ -53,7 +53,6 @@ from autopilot.introspection.types import (
     _integer_str,
 )
 from autopilot.introspection.dbus import DBusIntrospectionObject
-from autopilot.testcase import AutopilotTestCase
 from autopilot.utilities import compatible_repr
 
 
@@ -296,7 +295,7 @@ class ColorTypeTests(TestCase):
         self.assertEqual(repr(c), str(c))
 
 
-class DateTimeTests(AutopilotTestCase):
+class DateTimeTests(TestCase):
 
     def test_can_construct_datetime(self):
         dt = DateTime(1377209927)

@@ -19,14 +19,15 @@
 
 from __future__ import absolute_import
 
+import dbus
+import six
+
 from datetime import datetime, time
 import fixtures
-from unittest.mock import patch, Mock
-import six
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import Equals, IsInstance, NotEquals, raises
-import dbus
+from unittest.mock import patch, Mock
 
 from autopilot.introspection.types import (
     Color,

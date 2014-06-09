@@ -304,7 +304,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
     def launch_upstart_application(self, application_name, uris=[], **kwargs):
         """Launch an application with upstart.
 
-        This method launched an application via the ``upstart-app-launch``
+        This method launched an application via the ``ubuntu-app-launch``
         library, on platforms that support it.
 
         Usage is similar to the

@@ -23,7 +23,6 @@ import dbus
 import six
 
 from datetime import datetime, time
-import fixtures
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import Equals, IsInstance, NotEquals, raises
@@ -307,17 +306,27 @@ class DateTimeTests(TestCase):
         self.assertThat(dt[0], Equals(1377209927))
 
     def test_datetime_has_properties(self):
-        # DateTime no longer assumes UTC and uses local TZ.
-        self.useFixture(fixtures.EnvironmentVariable('TZ', 'UTC'))
         dt = DateTime(1377209927)
 
-        self.assertThat(dt.timestamp, Equals(1377209927))
-        self.assertThat(dt.year, Equals(2013))
-        self.assertThat(dt.month, Equals(8))
-        self.assertThat(dt.day, Equals(22))
-        self.assertThat(dt.hour, Equals(22))
-        self.assertThat(dt.minute, Equals(18))
-        self.assertThat(dt.second, Equals(47))
+        self.assertTrue(hasattr(dt, 'timestamp'))
+        self.assertTrue(hasattr(dt, 'year'))
+        self.assertTrue(hasattr(dt, 'month'))
+        self.assertTrue(hasattr(dt, 'day'))
+        self.assertTrue(hasattr(dt, 'hour'))
+        self.assertTrue(hasattr(dt, 'minute'))
+        self.assertTrue(hasattr(dt, 'second'))
+
+    def test_datetime_properties_have_correct_values(self):
+        dt = DateTime(1377209927)
+        dt_with_tz = datetime.fromtimestamp(1377209927)
+
+        self.assertThat(dt.timestamp, Equals(dt_with_tz.timestamp()))
+        self.assertThat(dt.year, Equals(dt_with_tz.year))
+        self.assertThat(dt.month, Equals(dt_with_tz.month))
+        self.assertThat(dt.day, Equals(dt_with_tz.day))
+        self.assertThat(dt.hour, Equals(dt_with_tz.hour))
+        self.assertThat(dt.minute, Equals(dt_with_tz.minute))
+        self.assertThat(dt.second, Equals(dt_with_tz.second))
 
     def test_equality_with_datetime(self):
         dt1 = DateTime(1377209927)
@@ -333,10 +342,9 @@ class DateTimeTests(TestCase):
 
     def test_equality_with_datetime_timestamp(self):
         # DateTime no longer assumes UTC and uses local TZ.
-        self.useFixture(fixtures.EnvironmentVariable('TZ', 'UTC'))
         dt1 = DateTime(1377209927)
-        dt2 = datetime.utcfromtimestamp(1377209927)
-        dt3 = datetime.utcfromtimestamp(1377209928)
+        dt2 = datetime.fromtimestamp(1377209927)
+        dt3 = datetime.fromtimestamp(1377209928)
 
         self.assertThat(dt1, Equals(dt2))
         self.assertThat(dt1, NotEquals(dt3))
@@ -347,10 +355,12 @@ class DateTimeTests(TestCase):
         self.assertThat(dt1.datetime, IsInstance(datetime))
 
     def test_repr(self):
-        # DateTime no longer assumes UTC and uses local TZ.
-        self.useFixture(fixtures.EnvironmentVariable('TZ', 'UTC'))
+        expected = repr_type(
+            u"DateTime({:%Y-%m-%d %H:%M:%S})".format(
+                datetime.fromtimestamp(1377209927)
+            )
+        )
         dt = DateTime(1377209927)
-        expected = repr_type('DateTime(2013-08-22 22:18:47)')
         observed = repr(dt)
         self.assertEqual(expected, observed)
 

@@ -379,6 +379,7 @@ class NormalApplicationLauncher(ApplicationLauncher):
             process=process,
             pid=process.pid
         )
+        proxy_object.set_process(process)
         return proxy_object
 
     def _setup_environment(self, app_path, app_type, arguments):

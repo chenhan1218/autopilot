@@ -20,7 +20,12 @@
 """Base module for application launchers."""
 
 import fixtures
-from gi.repository import GLib, UbuntuAppLaunch
+from gi.repository import GLib
+try:
+    from gi.repository import UbuntuAppLaunch
+except ImportError:
+    # Note: the renamed package is not in Trusty.
+    from gi.repository import UpstartAppLaunch as UbuntuAppLaunch
 import json
 import logging
 import os

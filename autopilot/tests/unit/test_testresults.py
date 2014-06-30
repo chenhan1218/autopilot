@@ -22,7 +22,7 @@ from unittest.mock import Mock
 import os
 import tempfile
 from testtools import TestCase, PlaceHolder
-from testtools.content import text_content
+from testtools.content import Content, ContentType, text_content
 from testtools.matchers import Contains, raises, NotEquals
 from testscenarios import WithScenarios
 import unittest
@@ -81,6 +81,28 @@ class LoggedTestResultDecoratorTests(TestCase):
             fake_error,
             details=fake_details
         )
+
+    def test_addError_handles_binary_data(self):
+        fake_test = Mock()
+        fake_test.id.return_value = self.getUniqueString()
+        fake_test.getDetails.return_value = dict(
+            TestBinary=Content(ContentType('image', 'png'), lambda: b'')
+        )
+
+        wrapped = Mock()
+        result = testresult.LoggedTestResultDecorator(wrapped)
+        result.addError(fake_test)
+
+    def test_addFailure_handles_binary_data(self):
+        fake_test = Mock()
+        fake_test.id.return_value = self.getUniqueString()
+        fake_test.getDetails.return_value = dict(
+            TestBinary=Content(ContentType('image', 'png'), lambda: b'')
+        )
+
+        wrapped = Mock()
+        result = testresult.LoggedTestResultDecorator(wrapped)
+        result.addFailure(fake_test)
 
 
 class OutputFormatFactoryTests(TestCase):

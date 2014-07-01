@@ -87,8 +87,7 @@ class LoggedTestResultDecoratorTests(TestCase):
             TestBinary=Content(ContentType('image', 'png'), lambda: b'')
         )
 
-        wrapped = Mock()
-        result = testresult.LoggedTestResultDecorator(wrapped)
+        result = testresult.LoggedTestResultDecorator(None)
         result._log_details(0, fake_details)
 
     def test_log_details_logs_binary_attachment_details(self):
@@ -96,8 +95,7 @@ class LoggedTestResultDecoratorTests(TestCase):
             TestBinary=Content(ContentType('image', 'png'), lambda: b'')
         )
 
-        wrapped = Mock()
-        result = testresult.LoggedTestResultDecorator(wrapped)
+        result = testresult.LoggedTestResultDecorator(None)
         with patch.object(result, '_log') as p_log:
             result._log_details(0, fake_details)
 

@@ -82,27 +82,14 @@ class LoggedTestResultDecoratorTests(TestCase):
             details=fake_details
         )
 
-    def test_addError_handles_binary_data(self):
-        fake_test = Mock()
-        fake_test.id.return_value = self.getUniqueString()
-        fake_test.getDetails.return_value = dict(
+    def test_log_details_handles_binary_data(self):
+        fake_details = dict(
             TestBinary=Content(ContentType('image', 'png'), lambda: b'')
         )
 
         wrapped = Mock()
         result = testresult.LoggedTestResultDecorator(wrapped)
-        result.addError(fake_test)
-
-    def test_addFailure_handles_binary_data(self):
-        fake_test = Mock()
-        fake_test.id.return_value = self.getUniqueString()
-        fake_test.getDetails.return_value = dict(
-            TestBinary=Content(ContentType('image', 'png'), lambda: b'')
-        )
-
-        wrapped = Mock()
-        result = testresult.LoggedTestResultDecorator(wrapped)
-        result.addFailure(fake_test)
+        result._log_details(0, fake_details)
 
 
 class OutputFormatFactoryTests(TestCase):

@@ -18,7 +18,7 @@
 #
 
 import codecs
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 import os
 import tempfile
 from testtools import TestCase, PlaceHolder
@@ -90,6 +90,24 @@ class LoggedTestResultDecoratorTests(TestCase):
         wrapped = Mock()
         result = testresult.LoggedTestResultDecorator(wrapped)
         result._log_details(0, fake_details)
+
+    def test_log_details_logs_binary_attachment_details(self):
+        fake_details = dict(
+            TestBinary=Content(ContentType('image', 'png'), lambda: b'')
+        )
+
+        wrapped = Mock()
+        result = testresult.LoggedTestResultDecorator(wrapped)
+        with patch.object(result, '_log') as p_log:
+            result._log_details(0, fake_details)
+
+            p_log.assert_called_once_with(
+                0,
+                "Binary attachment: \"{name}\" ({type})".format(
+                    name="TestBinary",
+                    type="image/png"
+                )
+            )
 
 
 class OutputFormatFactoryTests(TestCase):

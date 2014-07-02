@@ -55,7 +55,7 @@ def move_mouse_to_screen(screen_number):
     geo = Display.create().get_screen_geometry(screen_number)
     x = geo[0] + (geo[2] / 2)
     y = geo[1] + (geo[3] / 2)
-    #dont animate this or it might not get there due to barriers
+    # dont animate this or it might not get there due to barriers
     Mouse.create().move(x, y, False)
 
 

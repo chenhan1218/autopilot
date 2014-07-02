@@ -56,7 +56,7 @@ class Display(DisplayBase):
         return self.get_screen_geometry(screen_number)[2]
 
     def get_screen_height(self, screen_number=0):
-        #return self._default_screen.get_height()
+        # return self._default_screen.get_height()
         return self.get_screen_geometry(screen_number)[3]
 
     def get_screen_geometry(self, screen_number):

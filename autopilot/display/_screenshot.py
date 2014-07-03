@@ -114,7 +114,13 @@ def _get_screenshot_mir():
     """
     screenshot_filepath = _take_mirscreencast_screenshot()
     display_resolution = _get_mir_screenresolution()
-    return _get_png_from_rgba_file(screenshot_filepath, display_resolution)
+    try:
+        png_data_file = _get_png_from_rgba_file(
+            screenshot_filepath,
+            display_resolution
+        )
+    finally:
+        os.remove(screenshot_filepath)
 
 
 def _get_mir_screenresolution():

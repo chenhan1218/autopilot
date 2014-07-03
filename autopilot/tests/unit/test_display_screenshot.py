@@ -19,23 +19,35 @@
 
 """Unit tests for the display screenshot functionality."""
 
+import subprocess
 import tempfile
 from testtools import TestCase
 from testtools.matchers import Contains, Equals, MatchesRegex, Not, StartsWith
 from textwrap import dedent
 from unittest.mock import Mock, patch
-import subprocess
 
 import autopilot.display._screenshot as _ss
 from autopilot.testcase import AutopilotTestCase
 
 
-class ScreenShotTests(AutopilotTestCase):
+class ScreenShotTests(TestCase):
 
     def test_get_screenshot_data_raises_RuntimeError_on_unknown_display(self):
         with patch.object(_ss, '_display_is_mir', return_value=False):
             with patch.object(_ss, '_display_is_x11', return_value=False):
                 self.assertRaises(RuntimeError, _ss._get_screenshot_data)
+
+    def test_screenshot_taken_when_test_fails(self):
+        class InnerTest(AutopilotTestCase):
+            def test_foo(self):
+                self.fail()
+
+        with patch.object(
+                AutopilotTestCase, "_take_screenshot_on_failure"
+        ) as p_take_ss:
+            test_run = InnerTest('test_foo').run()
+            self.assertFalse(test_run.wasSuccessful())
+            self.assertTrue(p_take_ss.called)
 
 
 class X11ScreenShotTests(TestCase):

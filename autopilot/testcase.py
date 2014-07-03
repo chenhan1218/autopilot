@@ -153,6 +153,9 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                 "Process manager backend unavailable, application snapshot "
                 "support disabled.")
 
+        # When a test fails take a screenshot and attach it to the details
+        self.addOnException(self._take_screenshot_on_failure)
+
     @property
     def process_manager(self):
         if self._process_manager is None:
@@ -361,6 +364,12 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                 "Taking screenshot failed: {exception}".format(exception=e)
             )
             return False
+
+    def _take_screenshot_on_failure(self, ex_info):
+        from unittest.case import SkipTest
+        failure_class_type = ex_info[0]
+        if failure_class_type is not SkipTest:
+            self.take_screenshot("FailedTestScreenshot")
 
     @deprecated('fixtures.EnvironmentVariable')
     def patch_environment(self, key, value):

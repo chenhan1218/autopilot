@@ -122,6 +122,8 @@ def _get_screenshot_mir():
     finally:
         os.remove(screenshot_filepath)
 
+    return png_data_file
+
 
 def _get_mir_screenresolution():
     """Return tuple containing the devices resolution."""

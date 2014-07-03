@@ -21,7 +21,6 @@
 """The display module contaions support for getting screen information."""
 
 from collections import OrderedDict
-from testtools.content import ContentType, content_from_stream
 
 from autopilot.utilities import _pick_backend
 from autopilot.input import Mouse
@@ -36,6 +35,7 @@ __all__ = [
     "is_point_on_any_screen",
     "move_mouse_to_screen",
 ]
+
 
 def is_rect_on_screen(screen_number, rect):
     """Return True if *rect* is **entirely** on the specified screen, with no

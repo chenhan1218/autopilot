@@ -33,7 +33,7 @@ from autopilot.utilities import Silence
 logger = logging.getLogger(__name__)
 
 
-def _get_screenshot_data():
+def get_screenshot_data():
     """Return a BytesIO object of the png data for the screenshot image.
 
     :raises RuntimeError: If attempting to capture an image on an unsupported

@@ -61,7 +61,7 @@ from autopilot.application import (
     NormalApplicationLauncher,
     UpstartApplicationLauncher,
 )
-from autopilot.display import Display, add_screenshot_as_detail
+from autopilot.display import Display, get_screenshot_data
 from autopilot.globals import get_debug_profile_fixture
 from autopilot.input import Keyboard, Mouse
 from autopilot.keybindings import KeybindingsHelper
@@ -357,7 +357,12 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         """
         try:
-            add_screenshot_as_detail(attachment_name, self.addDetailUniqueName)
+            image_content = content_from_stream(
+                get_screenshot_data(),
+                content_type=ContentType('image', 'png'),
+                buffer_now=True
+            )
+            self.addDetailUniqueName(attachment_name, image_content)
             return True
         except Exception as e:
             logging.error(

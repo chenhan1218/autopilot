@@ -35,7 +35,7 @@ class ScreenShotTests(TestCase):
     def test_get_screenshot_data_raises_RuntimeError_on_unknown_display(self):
         with patch.object(_ss, '_display_is_mir', return_value=False):
             with patch.object(_ss, '_display_is_x11', return_value=False):
-                self.assertRaises(RuntimeError, _ss._get_screenshot_data)
+                self.assertRaises(RuntimeError, _ss.get_screenshot_data)
 
     def test_screenshot_taken_when_test_fails(self):
         class InnerTest(AutopilotTestCase):

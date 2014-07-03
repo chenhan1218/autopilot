@@ -22,7 +22,7 @@
 import subprocess
 import tempfile
 from testtools import TestCase
-from testtools.matchers import Contains, Equals, MatchesRegex, Not, StartsWith
+from testtools.matchers import Contains, Equals, MatchesRegex, Not, StartsWith, raises
 from textwrap import dedent
 from unittest.mock import Mock, patch
 
@@ -90,24 +90,6 @@ class ScreenShotTests(TestCase):
 
 class X11ScreenShotTests(TestCase):
 
-    def test_is_x11_check_returns_True_on_success(self):
-        with patch.object(_ss.subprocess, 'check_call'):
-            self.assertTrue(_ss._display_is_x11())
-
-    def test_is_x11_check_returns_True_on_failure(self):
-        with patch.object(_ss.subprocess, 'check_call') as cc:
-            cc.side_effect = FileNotFoundError
-            self.assertFalse(_ss._display_is_x11())
-
-    @patch.object(_ss, 'logger')
-    def test_failing_x11_check_logs_message(self, patched_logger):
-        with patch.object(_ss.subprocess, 'check_call') as cc:
-            cc.side_effect = FileNotFoundError
-            self.assertFalse(_ss._display_is_x11())
-        patched_logger.debug.assert_called_once_with(
-            "Checking for X11. xset command failed or not found."
-        )
-
     def test_save_gdk_pixbuf_to_fileobject_raises_if_save_failed(self):
         pixbuf_obj = Mock()
         pixbuf_obj.save_to_bufferv.return_value = (False, None)
@@ -143,49 +125,31 @@ class X11ScreenShotTests(TestCase):
 
 class MirScreenShotTests(TestCase):
 
-    @patch.object(_ss.subprocess, 'check_output')
-    def test_is_mir_check_returns_True_on_success(self, check_output):
-        check_output.return_value = dedent("""
-        32610 ?        S      0:00 [kworker/1:0]
-         2017 ?        Sl     0:14 unity-system-compositor --spinner=/usr/bin/
-        """)
-
-        self.assertTrue(_ss._display_is_mir())
-
-    @patch.object(_ss.subprocess, 'check_output')
-    def test_is_mir_check_returns_False_on_success(self, check_output):
-        check_output.return_value = ""
-        self.assertFalse(_ss._display_is_mir())
-
     def test_take__screenshot_raises_when_binary_not_available(self):
         with patch.object(_ss.subprocess, 'check_call') as check_call:
             check_call.side_effect = FileNotFoundError()
 
-            try:
-                _ss._take_mirscreencast_screenshot()
-                self.fail("No exception was raised")
-            except FileNotFoundError as e:
-                self.assertThat(
-                    e.args,
-                    Contains("The utility 'mirscreencast' is not available.")
+            self.assertThat(
+                _ss._take_mirscreencast_screenshot,
+                raises(
+                    FileNotFoundError(
+                        "The utility 'mirscreencast' is not available."
+                    )
                 )
-            else:
-                self.fail("Expected exception was not caught")
+            )
 
     def test_take_screenshot_raises_when_screenshot_fails(self):
         with patch.object(_ss.subprocess, 'check_call') as check_call:
             check_call.side_effect = subprocess.CalledProcessError(None, None)
 
-            try:
-                _ss._take_mirscreencast_screenshot()
-                self.fail("No exception was raised")
-            except subprocess.CalledProcessError as e:
-                self.assertThat(
-                    e.args,
-                    Contains("Failed to take screenshot.")
+            self.assertThat(
+                _ss._take_mirscreencast_screenshot,
+                raises(
+                    subprocess.CalledProcessError(
+                        None, None, "Failed to take screenshot."
+                    )
                 )
-            else:
-                self.fail("Expected exception was not caught")
+            )
 
     def test_take_screenshot_returns_resulting_filename(self):
         with patch.object(_ss.subprocess, 'check_call'):

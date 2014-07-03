@@ -18,11 +18,11 @@
 #
 
 import codecs
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 import os
 import tempfile
 from testtools import TestCase, PlaceHolder
-from testtools.content import text_content
+from testtools.content import Content, ContentType, text_content
 from testtools.matchers import Contains, raises, NotEquals
 from testscenarios import WithScenarios
 import unittest
@@ -81,6 +81,31 @@ class LoggedTestResultDecoratorTests(TestCase):
             fake_error,
             details=fake_details
         )
+
+    def test_log_details_handles_binary_data(self):
+        fake_details = dict(
+            TestBinary=Content(ContentType('image', 'png'), lambda: b'')
+        )
+
+        result = testresult.LoggedTestResultDecorator(None)
+        result._log_details(0, fake_details)
+
+    def test_log_details_logs_binary_attachment_details(self):
+        fake_details = dict(
+            TestBinary=Content(ContentType('image', 'png'), lambda: b'')
+        )
+
+        result = testresult.LoggedTestResultDecorator(None)
+        with patch.object(result, '_log') as p_log:
+            result._log_details(0, fake_details)
+
+            p_log.assert_called_once_with(
+                0,
+                "Binary attachment: \"{name}\" ({type})".format(
+                    name="TestBinary",
+                    type="image/png"
+                )
+            )
 
 
 class OutputFormatFactoryTests(TestCase):

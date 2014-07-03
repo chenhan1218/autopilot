@@ -19,8 +19,9 @@
 
 """Unit tests for the display screenshot functionality."""
 
+import tempfile
 from testtools import TestCase
-from testtools.matchers import Contains, Equals, MatchesRegex, Not
+from testtools.matchers import Contains, Equals, MatchesRegex, Not, StartsWith
 from textwrap import dedent
 from unittest.mock import Mock, patch
 import subprocess
@@ -143,7 +144,14 @@ class MirScreenShotTests(TestCase):
         with patch.object(_ss.subprocess, 'check_call'):
             self.assertThat(
                 _ss._take_mirscreencast_screenshot(),
-                MatchesRegex("ap-fail-test-\d+.rgba")
+                MatchesRegex(".*ap-screenshot-data-\d+.rgba")
+            )
+
+    def test_take_screenshot_filepath_is_in_tmp_dir(self):
+        with patch.object(_ss.subprocess, 'check_call'):
+            self.assertThat(
+                _ss._take_mirscreencast_screenshot(),
+                StartsWith(tempfile.gettempdir())
             )
 
     @patch('autopilot.display._screenshot.open', create=True)

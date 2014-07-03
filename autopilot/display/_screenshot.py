@@ -20,8 +20,10 @@
 """This module contains support for capturing screenshots."""
 
 import logging
+import os
 import subprocess
 import time
+import tempfile
 from io import BytesIO
 from PIL import Image
 
@@ -131,14 +133,16 @@ def _take_mirscreencast_screenshot():
 
     """
     timestamp = int(time.time())
-    filename = "ap-fail-test-{ts}.rgba".format(ts=timestamp)
+    filename = "ap-screenshot-data-{ts}.rgba".format(ts=timestamp)
+
+    filepath = os.path.join(tempfile.gettempdir(), filename)
 
     try:
         subprocess.check_call([
             "mirscreencast",
             "-m", "/run/mir_socket",
             "-n", "1",
-            "-f", filename
+            "-f", filepath
         ])
     except FileNotFoundError as e:
         e.args += ("The utility 'mirscreencast' is not available.", )
@@ -147,7 +151,7 @@ def _take_mirscreencast_screenshot():
         e.args += ("Failed to take screenshot.", )
         raise
 
-    return filename
+    return filepath
 
 
 # This currently uses PIL but I'm investigating using something

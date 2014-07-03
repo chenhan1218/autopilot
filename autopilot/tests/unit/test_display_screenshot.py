@@ -37,9 +37,6 @@ class ScreenShotTests(AutopilotTestCase):
             with patch.object(_ss, '_display_is_x11', return_value=False):
                 self.assertRaises(RuntimeError, _ss._get_screenshot_data)
 
-    def test_test_test(self):
-        self.take_screenshot("veebersrocks")
-
 
 class X11ScreenShotTests(TestCase):
 

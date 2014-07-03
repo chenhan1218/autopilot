@@ -163,7 +163,9 @@ def _get_png_from_rgba_file(path_to_file, display_resolution):
 
     """
     with open(path_to_file, "rb") as f:
-        image_data = Image.fromstring("RGBA", display_resolution, f.read())
+        image_data = Image.frombuffer(
+            "RGBA", display_resolution, f.read(), "raw", "RGBA", 0, 1
+        )
     bio = BytesIO()
     image_data.save(bio, format="png")
     bio.seek(0)

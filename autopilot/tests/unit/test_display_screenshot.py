@@ -161,10 +161,14 @@ class MirScreenShotTests(TestCase):
 
         with patch.object(_ss, 'Image') as p_image:
             _ss._get_png_from_rgba_file(file_path, display_resolution)
-            p_image.fromstring.assert_called_once_with(
+            p_image.frombuffer.assert_called_once_with(
                 "RGBA",
                 display_resolution,
-                p_open.return_value.__enter__().read()
+                p_open.return_value.__enter__().read(),
+                "raw",
+                "RGBA",
+                0,
+                1
             )
 
     @patch('autopilot.display._screenshot.open', create=True)
@@ -175,7 +179,7 @@ class MirScreenShotTests(TestCase):
         test_save = lambda d, **kw: d.write(data)
 
         with patch.object(_ss, 'Image') as p_image:
-            p_image.fromstring.return_value.save = test_save
+            p_image.frombuffer.return_value.save = test_save
             image_data = _ss._get_png_from_rgba_file(
                 file_path,
                 display_resolution

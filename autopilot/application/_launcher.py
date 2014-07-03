@@ -289,7 +289,7 @@ class NormalApplicationLauncher(ApplicationLauncher):
     """Fixture to manage launching an application."""
     __doc__ += ApplicationLauncher.__doc__
 
-    def launch(self, application, arguments=[], app_type=None, cwd=None,
+    def launch(self, application, arguments=[], app_type=None, launch_dir=None,
                capture_output=True):
         """Launch an application and return a proxy object.
 
@@ -377,7 +377,7 @@ class NormalApplicationLauncher(ApplicationLauncher):
         app_path, arguments = self._setup_environment(
             app_path, app_type, arguments)
         process = self._launch_application_process(
-            app_path, capture_output, cwd, arguments)
+            app_path, capture_output, launch_dir, arguments)
         proxy_object = get_proxy_object_for_existing_process(
             dbus_bus=self.dbus_bus,
             emulator_base=self.proxy_base,

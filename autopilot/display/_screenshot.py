@@ -33,8 +33,12 @@ from autopilot.utilities import Silence
 logger = logging.getLogger(__name__)
 
 
-def get_screenshot_data():
+def get_screenshot_data(display_type):
     """Return a BytesIO object of the png data for the screenshot image.
+
+    *display_type* is the display server type. supported values are:
+      - "X11"
+      - "MIR"
 
     :raises RuntimeError: If attempting to capture an image on an unsupported
       display server.
@@ -42,34 +46,15 @@ def get_screenshot_data():
 
     """
 
-    if _display_is_mir():
+    if display_type == "MIR":
         return _get_screenshot_mir()
-    elif _display_is_x11():
+    elif display_type == "X11":
         return _get_screenshot_x11()
     else:
         raise RuntimeError(
-            "Don't know how to take screen shot for this display server"
+            "Don't know how to take screen shot for this display server: {}"
+            .format(display_type)
         )
-
-
-def _display_is_x11():
-    try:
-        subprocess.check_call(
-            ["xset", "q"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        return True
-    except:
-        logger.debug("Checking for X11. xset command failed or not found.")
-        return False
-
-
-def _display_is_mir():
-    return "unity-system-compositor" in subprocess.check_output(
-        ["ps", "ax"],
-        universal_newlines=True,
-    )
 
 
 def _get_screenshot_x11():

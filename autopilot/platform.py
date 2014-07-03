@@ -136,6 +136,42 @@ def is_tablet():
     return _PlatformDetector.create().is_tablet
 
 
+def get_display_server():
+    """Returns display server type.
+
+    :returns: string indicating display server type. Either "X11", "MIR" or
+      "UNKNOWN"
+
+    """
+    if _display_is_x11():
+        return "X11"
+    elif _display_is_mir():
+        return "MIR"
+    else:
+        return "UNKNOWN"
+
+
+def _display_is_x11():
+    try:
+        subprocess.check_call(
+            ["xset", "q"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        return True
+    except:
+        logger.debug("Checking for X11. xset command failed or not found.")
+        return False
+
+
+def _display_is_mir():
+    return "unity-system-compositor" in subprocess.check_output(
+        ["ps", "ax"],
+        universal_newlines=True,
+    )
+
+
+
 class _PlatformDetector(object):
 
     _cached_detector = None

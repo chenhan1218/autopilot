@@ -67,6 +67,7 @@ from autopilot.globals import get_debug_profile_fixture
 from autopilot.input import Keyboard, Mouse
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
+from autopilot.platform import get_display_server
 from autopilot.process import ProcessManager
 from autopilot.utilities import deprecated, on_test_started
 from autopilot._timeout import Timeout
@@ -359,7 +360,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         """
         try:
             image_content = content_from_stream(
-                get_screenshot_data(),
+                get_screenshot_data(get_display_server()),
                 content_type=ContentType('image', 'png'),
                 buffer_now=True
             )
@@ -374,7 +375,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
     def _take_screenshot_on_failure(self, ex_info):
         from unittest.case import SkipTest
         failure_class_type = ex_info[0]
-        if not isinstance(failure_class_type, SkipTest):
+        if failure_class_type is not SkipTest:
             self.take_screenshot("FailedTestScreenshot")
 
     @deprecated('fixtures.EnvironmentVariable')

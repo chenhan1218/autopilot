@@ -21,8 +21,11 @@
 """The display module contaions support for getting screen information."""
 
 from collections import OrderedDict
+from testtools.content import ContentType, content_from_stream
+
 from autopilot.utilities import _pick_backend
 from autopilot.input import Mouse
+from autopilot.display._screenshot import _get_screenshot_data
 
 
 def is_rect_on_screen(screen_number, rect):
@@ -162,3 +165,22 @@ class Display(object):
 
         """
         raise NotImplementedError("You cannot use this class directly.")
+
+
+def add_screenshot_as_detail(attachment_name, add_detail_callable):
+    """Take a screenshot of the visible screen and pass the resulting image to
+    the provided *add_detail_callable*
+
+    Example (within a TestCase):
+    >>> add_screenshot_as_detail('ExampleImage', self.addDetail)
+
+    result_stream must be a callable that takes a string and testtools.Content
+    object (i.e. testcase.addDetail).
+
+    """
+    image_content = content_from_stream(
+        _get_screenshot_data(),
+        content_type=ContentType('image', 'png'),
+        buffer_now=True
+    )
+    add_detail_callable(attachment_name, image_content)

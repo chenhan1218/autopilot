@@ -61,7 +61,7 @@ from autopilot.application import (
     NormalApplicationLauncher,
     UpstartApplicationLauncher,
 )
-from autopilot.display import Display
+from autopilot.display import Display, add_screenshot_as_detail
 from autopilot.globals import get_debug_profile_fixture
 from autopilot.input import Keyboard, Mouse
 from autopilot.keybindings import KeybindingsHelper
@@ -340,6 +340,27 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             )
         finally:
             self._app_snapshot = None
+
+    def take_screenshot(self, attachment_name):
+        """Take a screenshot of the current screen and adds it to the test as a
+        detail named *attachment_name*.
+
+        If *attachment_name* already exists as a detail the name will be
+        modified to remove the naming conflict
+        (i.e. using TestCase.addDetailUniqueName).
+
+        Returns True if the screenshot was taken and attached successfully,
+        False otherwise.
+
+        """
+        try:
+            add_screenshot_as_detail(attachment_name, self.addDetailUniqueName)
+            return True
+        except Exception as e:
+            logging.error(
+                "Taking screenshot failed: {exception}".format(exception=e)
+            )
+            return False
 
     @deprecated('fixtures.EnvironmentVariable')
     def patch_environment(self, key, value):

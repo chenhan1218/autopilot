@@ -53,6 +53,7 @@ import logging
 from fixtures import EnvironmentVariable
 from testscenarios import TestWithScenarios
 from testtools import TestCase
+from testtools.content import ContentType, content_from_stream
 from testtools.matchers import Equals
 
 from autopilot.application import (
@@ -373,7 +374,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
     def _take_screenshot_on_failure(self, ex_info):
         from unittest.case import SkipTest
         failure_class_type = ex_info[0]
-        if failure_class_type is not SkipTest:
+        if not isinstance(failure_class_type, SkipTest):
             self.take_screenshot("FailedTestScreenshot")
 
     @deprecated('fixtures.EnvironmentVariable')

@@ -155,7 +155,6 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                 "Process manager backend unavailable, application snapshot "
                 "support disabled.")
 
-        # When a test fails take a screenshot and attach it to the details
         self.addOnException(self._take_screenshot_on_failure)
 
     @property

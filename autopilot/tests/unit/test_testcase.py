@@ -177,16 +177,20 @@ class AutopilotTestCaseSupportFunctionTests(TestCase):
 
     def test_considered_failing_test_returns_false_for_inherited_skip(self):
         from unittest.case import SkipTest
+
         class CustomSkip(SkipTest):
             pass
+
         self.assertFalse(_considered_failing_test(CustomSkip))
 
     def test_considered_failing_test_returns_false_for_expected_fail(self):
         from testtools.testcase import _ExpectedFailure
         self.assertFalse(_considered_failing_test(_ExpectedFailure))
 
-    def test_considered_failing_test_returns_false_for_inherited_expected_fail(self): # NOQA
+    def test_considered_failing_test_returns_false_for_inherited_expected_fail(self):  # NOQA
         from testtools.testcase import _ExpectedFailure
+
         class CustomExpected(_ExpectedFailure):
             pass
+
         self.assertFalse(_considered_failing_test(CustomExpected))

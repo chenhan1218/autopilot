@@ -164,7 +164,7 @@ def _display_is_x11():
             stderr=subprocess.PIPE
         )
         return True
-    except:
+    except Exception:
         return False
 
 

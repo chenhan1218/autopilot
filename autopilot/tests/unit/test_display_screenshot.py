@@ -21,11 +21,12 @@
 
 import subprocess
 import tempfile
-from testtools import TestCase
+from testtools import TestCase, skipIf
 from testtools.matchers import Equals, MatchesRegex, Not, StartsWith, raises
 from unittest.mock import Mock, patch
 
 import autopilot.display._screenshot as _ss
+from autopilot import platform
 from autopilot.testcase import AutopilotTestCase
 
 
@@ -102,10 +103,15 @@ class ScreenShotTests(TestCase):
 
 class X11ScreenShotTests(TestCase):
 
-    def test_save_gdk_pixbuf_to_fileobject_raises_if_save_failed(self):
+    def get_pixbuf_that_mocks_saving(self, success, data):
         pixbuf_obj = Mock()
-        pixbuf_obj.save_to_bufferv.return_value = (False, None)
+        pixbuf_obj.save_to_bufferv.return_value = (success, data)
 
+        return pixbuf_obj
+
+    @skipIf(platform.model() != "Desktop", "Only available on desktop.")
+    def test_save_gdk_pixbuf_to_fileobject_raises_if_save_failed(self):
+        pixbuf_obj = self.get_pixbuf_that_mocks_saving(False, None)
         self.assertRaises(
             RuntimeError,
             lambda: _ss._save_gdk_pixbuf_to_fileobject(pixbuf_obj)
@@ -113,8 +119,7 @@ class X11ScreenShotTests(TestCase):
 
     @patch.object(_ss, 'logger')
     def test_save_gdk_pixbuf_to_fileobject_logs_if_save_failed(self, p_log):
-        pixbuf_obj = Mock()
-        pixbuf_obj.save_to_bufferv.return_value = (False, None)
+        pixbuf_obj = self.get_pixbuf_that_mocks_saving(False, None)
 
         self.assertRaises(
             RuntimeError,
@@ -125,8 +130,7 @@ class X11ScreenShotTests(TestCase):
 
     def test_save_gdk_pixbuf_to_fileobject_returns_data_object(self):
         expected_data = b"Tests Rock"
-        pixbuf_obj = Mock()
-        pixbuf_obj.save_to_bufferv.return_value = (True, expected_data)
+        pixbuf_obj = self.get_pixbuf_that_mocks_saving(True, expected_data)
 
         data_object = _ss._save_gdk_pixbuf_to_fileobject(pixbuf_obj)
 
@@ -175,23 +179,6 @@ class MirScreenShotTests(TestCase):
             self.assertThat(
                 _ss._take_mirscreencast_screenshot(),
                 StartsWith(tempfile.gettempdir())
-            )
-
-    @patch('autopilot.display._screenshot.open', create=True)
-    def test_get_png_from_rgba_file_creates_png_image(self, p_open):
-        file_path = self.getUniqueString()
-        display_resolution = self.getUniqueInteger()
-
-        with patch.object(_ss, 'Image') as p_image:
-            _ss._get_png_from_rgba_file(file_path, display_resolution)
-            p_image.frombuffer.assert_called_once_with(
-                "RGBA",
-                display_resolution,
-                p_open.return_value.__enter__().read(),
-                "raw",
-                "RGBA",
-                0,
-                1
             )
 
     @patch('autopilot.display._screenshot.open', create=True)

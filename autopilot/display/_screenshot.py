@@ -28,6 +28,7 @@ from io import BytesIO
 
 from PIL import Image
 
+from autopilot.display import Display
 from autopilot.utilities import Silence
 
 logger = logging.getLogger(__name__)
@@ -98,7 +99,7 @@ def _get_screenshot_mir():
 
     """
     screenshot_filepath = _take_mirscreencast_screenshot()
-    display_resolution = _get_mir_screenresolution()
+    display_resolution = Display.create().get_screen_geometry(0)[2:]
     try:
         png_data_file = _get_png_from_rgba_file(
             screenshot_filepath,
@@ -108,12 +109,6 @@ def _get_screenshot_mir():
         os.remove(screenshot_filepath)
 
     return png_data_file
-
-
-def _get_mir_screenresolution():
-    """Return tuple containing the devices resolution."""
-    from autopilot.display._upa import query_resolution
-    return query_resolution()
 
 
 def _take_mirscreencast_screenshot():

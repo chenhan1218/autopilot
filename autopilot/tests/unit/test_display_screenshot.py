@@ -138,6 +138,12 @@ class X11ScreenShotTests(TestCase):
         self.assertEqual(data_object.tell(), 0)
         self.assertEqual(data_object.getvalue(), expected_data)
 
+    def test_raw_data_file_cleaned_up_on_failure(self):
+        with patch.object(_ss, "_take_mirscreencast_screenshot") as mir_ss:
+            mir_ss.return_value = self.getUniqueString()
+
+            self.assertRaises(FileNotFoundError, _ss._get_screenshot_mir)
+
 
 class MirScreenShotTests(TestCase):
 
@@ -184,16 +190,12 @@ class MirScreenShotTests(TestCase):
     @patch('autopilot.display._screenshot.open', create=True)
     def test_get_png_from_rgba_file_returns_0_seek_fileobject(self, p_open):
         file_path = self.getUniqueString()
-        display_resolution = self.getUniqueInteger()
         data = b"Testing Data"
         test_save = lambda d, **kw: d.write(data)
 
         with patch.object(_ss, 'Image') as p_image:
             p_image.frombuffer.return_value.save = test_save
-            image_data = _ss._get_png_from_rgba_file(
-                file_path,
-                display_resolution
-            )
+            image_data = _ss._get_png_from_rgba_file(file_path)
 
             self.assertEqual(image_data.tell(), 0)
             self.assertEqual(image_data.getvalue(), data)

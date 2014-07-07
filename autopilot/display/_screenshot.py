@@ -97,15 +97,9 @@ def _get_screenshot_mir():
       taking a screenshot.
 
     """
-    from autopilot.display import Display
-
     screenshot_filepath = _take_mirscreencast_screenshot()
-    display_resolution = Display.create().get_screen_geometry(0)[2:]
     try:
-        png_data_file = _get_png_from_rgba_file(
-            screenshot_filepath,
-            display_resolution
-        )
+        png_data_file = _get_png_from_rgba_file(screenshot_filepath)
     finally:
         os.remove(screenshot_filepath)
 
@@ -146,12 +140,14 @@ def _take_mirscreencast_screenshot():
 
 # This currently uses PIL but I'm investigating using something
 # quicker/lighter-weight.
-def _get_png_from_rgba_file(path_to_file, display_resolution):
+def _get_png_from_rgba_file(path_to_file):
     """Convert an rgba file to a png file stored in a filelike object.
 
     Returns a BytesIO object containing the png data.
 
     """
+    from autopilot.display import Display
+    display_resolution = Display.create().get_screen_geometry(0)[2:]
     with open(path_to_file, "rb") as f:
         image_data = Image.frombuffer(
             "RGBA", display_resolution, f.read(), "raw", "RGBA", 0, 1

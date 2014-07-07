@@ -22,6 +22,7 @@ from testtools.matchers import Contains, raises
 
 from autopilot.testcase import (
     _compare_system_with_process_snapshot,
+    _considered_failing_test,
     AutopilotTestCase
 )
 from autopilot.utilities import sleep
@@ -160,3 +161,32 @@ class AutopilotTestCaseClassTests(TestCase):
             uf.assert_called_once_with(ual.return_value)
             uf.return_value.launch.assert_called_once_with('a', ['b'])
             self.assertEqual(result, uf.return_value.launch.return_value)
+
+
+class AutopilotTestCaseSupportFunctionTests(TestCase):
+    def test_considered_failing_test_returns_true_for_failing(self):
+        self.assertTrue(_considered_failing_test(AssertionError))
+
+    def test_considered_failing_test_returns_true_for_unexpected_success(self):
+        from unittest.case import _UnexpectedSuccess
+        self.assertTrue(_considered_failing_test(_UnexpectedSuccess))
+
+    def test_considered_failing_test_returns_false_for_skip(self):
+        from unittest.case import SkipTest
+        self.assertFalse(_considered_failing_test(SkipTest))
+
+    def test_considered_failing_test_returns_false_for_inherited_skip(self):
+        from unittest.case import SkipTest
+        class CustomSkip(SkipTest):
+            pass
+        self.assertFalse(_considered_failing_test(CustomSkip))
+
+    def test_considered_failing_test_returns_false_for_expected_fail(self):
+        from testtools.testcase import _ExpectedFailure
+        self.assertFalse(_considered_failing_test(_ExpectedFailure))
+
+    def test_considered_failing_test_returns_false_for_inherited_expected_fail(self): # NOQA
+        from testtools.testcase import _ExpectedFailure
+        class CustomExpected(_ExpectedFailure):
+            pass
+        self.assertFalse(_considered_failing_test(CustomExpected))

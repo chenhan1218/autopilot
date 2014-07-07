@@ -373,9 +373,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             return False
 
     def _take_screenshot_on_failure(self, ex_info):
-        from unittest.case import SkipTest
         failure_class_type = ex_info[0]
-        if failure_class_type is not SkipTest:
+        if _considered_failing_test(failure_class_type):
             self.take_screenshot("FailedTestScreenshot")
 
     @deprecated('fixtures.EnvironmentVariable')
@@ -526,3 +525,12 @@ def _ensure_uinput_device_created():
             "Failed to create Touch device for bug lp:1297595 workaround: "
             "%s" % str(e)
         )
+
+
+def _considered_failing_test(failure_class_type):
+    from unittest.case import SkipTest
+    from testtools.testcase import _ExpectedFailure
+    return (
+        not issubclass(failure_class_type, SkipTest)
+        and not issubclass(failure_class_type, _ExpectedFailure)
+    )

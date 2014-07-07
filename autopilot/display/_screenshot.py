@@ -28,7 +28,6 @@ from io import BytesIO
 
 from PIL import Image
 
-from autopilot.display import Display
 from autopilot.utilities import Silence
 
 logger = logging.getLogger(__name__)
@@ -98,6 +97,8 @@ def _get_screenshot_mir():
       taking a screenshot.
 
     """
+    from autopilot.display import Display
+
     screenshot_filepath = _take_mirscreencast_screenshot()
     display_resolution = Display.create().get_screen_geometry(0)[2:]
     try:

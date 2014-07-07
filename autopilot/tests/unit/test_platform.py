@@ -20,16 +20,14 @@
 """Tests for the autopilot platform code."""
 
 
-
-import functools
-import autopilot.platform as platform
-
 from contextlib import contextmanager
 from io import StringIO
 from unittest.mock import patch
 from testtools import TestCase, skipIf
 from testtools.matchers import Equals
 from tempfile import NamedTemporaryFile
+
+import autopilot.platform as platform
 
 
 class PublicAPITests(TestCase):
@@ -253,7 +251,8 @@ def _simulate_not_X11():
         cc.side_effect = FileNotFoundError
         yield
 
+
 @contextmanager
 def _simulate_X11():
-    with patch.object(platform.subprocess, "check_call") as cc:
+    with patch.object(platform.subprocess, "check_call"):
         yield

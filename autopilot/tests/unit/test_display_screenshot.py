@@ -19,8 +19,13 @@
 
 """Unit tests for the display screenshot functionality."""
 
+from tempfile import NamedTemporaryFile
+
 import subprocess
 import tempfile
+from contextlib import contextmanager
+from io import BytesIO
+from PIL import Image
 from testtools import TestCase, skipIf
 from testtools.matchers import Equals, MatchesRegex, Not, StartsWith, raises
 from unittest.mock import Mock, patch
@@ -187,15 +192,39 @@ class MirScreenShotTests(TestCase):
                 StartsWith(tempfile.gettempdir())
             )
 
-    @patch('autopilot.display._screenshot.open', create=True)
-    def test_get_png_from_rgba_file_returns_0_seek_fileobject(self, p_open):
-        file_path = self.getUniqueString()
-        data = b"Testing Data"
-        test_save = lambda d, **kw: d.write(data)
+    def test_get_png_from_rgba_file_returns_png_file(self):
+        with _using_single_pixel_image():
+            png_image_data = _ss._get_png_from_rgba_file("")
 
-        with patch.object(_ss, 'Image') as p_image:
-            p_image.frombuffer.return_value.save = test_save
-            image_data = _ss._get_png_from_rgba_file(file_path)
+            self.assertEqual(0, png_image_data.tell())
+            self.assertThat(png_image_data.read(), StartsWith(b'\x89PNG\r\n'))
 
-            self.assertEqual(image_data.tell(), 0)
-            self.assertEqual(image_data.getvalue(), data)
+    def test_image_data_from_file_returns_PIL_Image(self):
+        with _single_pixel_rgba_data_file() as filepath:
+            image_data = _ss._image_data_from_file(filepath, (1,1))
+        self.assertEqual(image_data.mode, "RGBA")
+        self.assertEqual(image_data.size, (1,1))
+
+
+@contextmanager
+def _using_single_pixel_image():
+    """Creates a 1x1 pixel PIL.Image to be returned by the patched function
+    _image_data_from_file
+
+    """
+    try:
+        bio = BytesIO()
+        bio.write(b'<\x1e#\xff')
+        bio.seek(0)
+        img = Image.frombytes("RGBA", (1,1), bio.read(), "raw")
+        with patch.object(_ss, "_image_data_from_file", return_value = img):
+            yield
+    finally:
+        bio.close()
+
+@contextmanager
+def _single_pixel_rgba_data_file():
+    with NamedTemporaryFile() as f:
+        f.write(b'<\x1e#\xff')
+        f.seek(0)
+        yield f.name

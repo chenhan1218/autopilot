@@ -24,7 +24,6 @@
 import functools
 import autopilot.platform as platform
 
-
 from contextlib import contextmanager
 from io import StringIO
 from unittest.mock import patch

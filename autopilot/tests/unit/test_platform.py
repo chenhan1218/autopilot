@@ -19,6 +19,9 @@
 
 """Tests for the autopilot platform code."""
 
+
+
+import functools
 import autopilot.platform as platform
 
 try:
@@ -28,6 +31,7 @@ except ImportError:
     # Python 3
     from io import StringIO
 
+from contextlib import contextmanager
 from unittest.mock import patch
 from testtools import TestCase, skipIf
 from testtools.matchers import Equals
@@ -35,6 +39,11 @@ from tempfile import NamedTemporaryFile
 
 
 class PublicAPITests(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        platform._display_is_x11.cache_clear()
+        platform._display_is_mir.cache_clear()
 
     @patch('autopilot.platform._PlatformDetector')
     def test_model_creates_platform_detector(self, mock_detector):
@@ -63,6 +72,14 @@ class PublicAPITests(TestCase):
     @skipIf(platform.model() == "Desktop", "Only available on device.")
     def test_get_display_server_returns_mir(self):
         self.assertEqual(platform.get_display_server(), "MIR")
+
+    def test_is_x11_returns_False_on_failure(self):
+        with _simulate_not_X11():
+            self.assertFalse(platform._display_is_x11())
+
+    def test_is_x11_returns_True_on_success(self):
+        with _simulate_X11():
+            self.assertTrue(platform._display_is_x11())
 
 
 class PlatformDetectorTests(TestCase):
@@ -234,3 +251,15 @@ class BuildPropertyParserTests(TestCase):
         prop_file = StringIO("ro.product.model=maguro")
         properties = platform._parse_build_properties_file(prop_file)
         self.assertThat(properties, Equals({'ro.product.model': 'maguro'}))
+
+
+@contextmanager
+def _simulate_not_X11():
+    with patch.object(platform.subprocess, "check_call") as cc:
+        cc.side_effect = FileNotFoundError
+        yield
+
+@contextmanager
+def _simulate_X11():
+    with patch.object(platform.subprocess, "check_call") as cc:
+        yield

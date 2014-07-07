@@ -29,7 +29,7 @@ except ImportError:
     from io import StringIO
 
 from unittest.mock import patch
-from testtools import TestCase
+from testtools import TestCase, skipIf
 from testtools.matchers import Equals
 from tempfile import NamedTemporaryFile
 
@@ -55,6 +55,14 @@ class PublicAPITests(TestCase):
     def test_image_codename_returns_correct_value(self, mock_detector):
         mock_detector.image_codename = "test123"
         self.assertThat(platform.image_codename(), Equals('test123'))
+
+    @skipIf(platform.model() != "Desktop", "Only available on desktop.")
+    def test_get_display_server_returns_x11(self):
+        self.assertEqual(platform.get_display_server(), "X11")
+
+    @skipIf(platform.model() == "Desktop", "Only available on device.")
+    def test_get_display_server_returns_mir(self):
+        self.assertEqual(platform.get_display_server(), "MIR")
 
 
 class PlatformDetectorTests(TestCase):

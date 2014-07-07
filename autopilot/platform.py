@@ -18,6 +18,10 @@
 #
 
 
+import psutil
+import subprocess
+from functools import lru_cache
+
 """
 Platform identification utilities for Autopilot.
 ================================================
@@ -151,6 +155,7 @@ def get_display_server():
         return "UNKNOWN"
 
 
+@lru_cache()
 def _display_is_x11():
     try:
         subprocess.check_call(
@@ -160,16 +165,12 @@ def _display_is_x11():
         )
         return True
     except:
-        logger.debug("Checking for X11. xset command failed or not found.")
         return False
 
 
+@lru_cache()
 def _display_is_mir():
-    return "unity-system-compositor" in subprocess.check_output(
-        ["ps", "ax"],
-        universal_newlines=True,
-    )
-
+    return "unity-system-compositor" in [p.name for p in psutil.process_iter()]
 
 
 class _PlatformDetector(object):

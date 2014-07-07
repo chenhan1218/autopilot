@@ -22,8 +22,7 @@
 import subprocess
 import tempfile
 from testtools import TestCase
-from testtools.matchers import Contains, Equals, MatchesRegex, Not, StartsWith, raises
-from textwrap import dedent
+from testtools.matchers import Equals, MatchesRegex, Not, StartsWith, raises
 from unittest.mock import Mock, patch
 
 import autopilot.display._screenshot as _ss
@@ -34,19 +33,6 @@ class ScreenShotTests(TestCase):
 
     def test_get_screenshot_data_raises_RuntimeError_on_unknown_display(self):
         self.assertRaises(RuntimeError, lambda: _ss.get_screenshot_data(""))
-
-    def test_screenshot_taken_when_test_expected_fails(self):
-        class InnerTest(AutopilotTestCase):
-            def test_foo(self):
-                self.fail()
-
-        test = InnerTest('test_foo')
-        test.take_screenshot = Mock()
-
-        test_run = test.run()
-
-        self.assertFalse(test_run.wasSuccessful())
-        self.assertTrue(test.take_screenshot.called)
 
     def test_screenshot_taken_when_test_expected_fails(self):
         class InnerTest(AutopilotTestCase):

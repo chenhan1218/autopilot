@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2013 Canonical
+# Copyright (C) 2013-2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,13 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from unittest.mock import call, Mock, patch
+
+from unittest.mock import Mock
 from testtools import TestCase
-from testtools.matchers import Contains, raises
+from testtools.matchers import raises
 
 from autopilot.testcase import (
     _compare_system_with_process_snapshot,
-    AutopilotTestCase
+    _get_application_launch_args,
 )
 from autopilot.utilities import sleep
 
@@ -73,56 +74,32 @@ class ProcessSnapshotTests(TestCase):
             self.assertEqual(1.0, mock_sleep.total_time_slept())
 
 
-class AutopilotTestCaseClassTests(TestCase):
+class AutopilotGetApplicationLaunchArgsTests(TestCase):
 
-    """Test functions of the AutopilotTestCase class."""
+    def test_when_no_args_returns_empty_dict(self):
+        self.assertEqual(_get_application_launch_args(dict()), dict())
 
-    @patch('autopilot.testcase.NormalApplicationLauncher')
-    def test_launch_test_application(self, nal):
-        class LauncherTest(AutopilotTestCase):
+    def test_ignores_unknown_args(self):
+        self.assertEqual(_get_application_launch_args(dict(unknown="")), {})
 
-            """Test launchers."""
+    def test_gets_argument_values(self):
+        app_type_value = self.getUniqueString()
 
-            def test_anything(self):
-                pass
+        self.assertEqual(
+            _get_application_launch_args(dict(app_type=app_type_value)),
+            dict(app_type=app_type_value)
+        )
 
-        test_case = LauncherTest('test_anything')
-        with patch.object(test_case, 'useFixture') as uf:
-            result = test_case.launch_test_application('a', 'b', 'c')
-            uf.assert_called_once_with(nal.return_value)
-            uf.return_value.launch.assert_called_once_with('a', ('b', 'c'))
-            self.assertEqual(result, uf.return_value.launch.return_value)
+    def test_gets_argument_values_ignores_unknown_values(self):
+        app_type_value = self.getUniqueString()
+        kwargs = dict(app_type=app_type_value, unknown=self.getUniqueString())
+        self.assertEqual(
+            _get_application_launch_args(kwargs),
+            dict(app_type=app_type_value)
+        )
 
-    @patch('autopilot.testcase.ClickApplicationLauncher')
-    def test_launch_click_package(self, cal):
-        class LauncherTest(AutopilotTestCase):
-
-            """Test launchers."""
-
-            def test_anything(self):
-                pass
-
-        test_case = LauncherTest('test_anything')
-        with patch.object(test_case, 'useFixture') as uf:
-            result = test_case.launch_click_package('a', 'b', ['c', 'd'])
-            uf.assert_called_once_with(cal.return_value)
-            uf.return_value.launch.assert_called_once_with(
-                'a', 'b', ['c', 'd']
-            )
-            self.assertEqual(result, uf.return_value.launch.return_value)
-
-    @patch('autopilot.testcase.UpstartApplicationLauncher')
-    def test_launch_upstart_application(self, ual):
-        class LauncherTest(AutopilotTestCase):
-
-            """Test launchers."""
-
-            def test_anything(self):
-                pass
-
-        test_case = LauncherTest('test_anything')
-        with patch.object(test_case, 'useFixture') as uf:
-            result = test_case.launch_upstart_application('a', ['b'])
-            uf.assert_called_once_with(ual.return_value)
-            uf.return_value.launch.assert_called_once_with('a', ['b'])
-            self.assertEqual(result, uf.return_value.launch.return_value)
+    def test_removes_used_arguments_from_parameter(self):
+        app_type_value = self.getUniqueString()
+        kwargs = dict(app_type=app_type_value)
+        _get_application_launch_args(kwargs)
+        self.assertEqual(kwargs, dict())

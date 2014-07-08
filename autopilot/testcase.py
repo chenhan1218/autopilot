@@ -246,11 +246,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
          data is retrievable via this object.
 
         """
-        launch_args = {}
-        launch_arg_list = ['app_type', 'launch_dir', 'capture_output']
-        for arg in launch_arg_list:
-            if arg in kwargs:
-                launch_args[arg] = kwargs.pop(arg)
+        launch_args = _get_application_launch_args(kwargs)
+
         launcher = self.useFixture(
             NormalApplicationLauncher(
                 case_addDetail=self.addDetailUniqueName,
@@ -424,6 +421,21 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                 Eventually(Equals(desired_value)))
 
     assertProperties = assertProperty
+
+
+def _get_application_launch_args(kwargs):
+    """Returns a dict containing relevant args and values for launching an
+    application.
+
+    Removes used arguments from kwargs parameter.
+
+    """
+    launch_args = {}
+    launch_arg_list = ['app_type', 'launch_dir', 'capture_output']
+    for arg in launch_arg_list:
+        if arg in kwargs:
+            launch_args[arg] = kwargs.pop(arg)
+    return launch_args
 
 
 def _get_process_snapshot():

@@ -170,7 +170,9 @@ def _display_is_x11():
 
 @lru_cache()
 def _display_is_mir():
-    return "unity-system-compositor" in [p.name for p in psutil.process_iter()]
+    return "unity-system-compositor" in [
+        p.name() for p in psutil.process_iter()
+    ]
 
 
 class _PlatformDetector(object):

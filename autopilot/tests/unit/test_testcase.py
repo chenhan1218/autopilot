@@ -18,7 +18,7 @@
 #
 from unittest.mock import call, Mock, patch
 from testtools import TestCase
-from testtools.matchers import Contains, raises
+from testtools.matchers import raises
 
 from autopilot.testcase import (
     _compare_system_with_process_snapshot,

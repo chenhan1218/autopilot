@@ -96,21 +96,6 @@ class AutopilotTestCaseClassTests(TestCase):
 
     """Test functions of the AutopilotTestCase class."""
 
-    @patch('autopilot.testcase.EnvironmentVariable')
-    def test_patch_environment(self, ep):
-        class EnvironmentVariableTestCase(AutopilotTestCase):
-
-            """Patch the enrivonment."""
-
-            def test_patch_environment(self):
-                self.patch_environment('foo', 'bar')
-
-        result = EnvironmentVariableTestCase('test_patch_environment').run()
-        self.assertTrue(result.wasSuccessful())
-        ep.assert_called_once_with('foo', 'bar')
-        self.assertIn(call().setUp(), ep.mock_calls)
-        self.assertIn(call().cleanUp(), ep.mock_calls)
-
     @patch('autopilot.testcase.NormalApplicationLauncher')
     def test_launch_test_application(self, nal):
         class LauncherTest(AutopilotTestCase):

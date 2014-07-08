@@ -57,7 +57,6 @@ from testtools.matchers import Equals
 
 from autopilot.application import (
     ClickApplicationLauncher,
-    get_application_launcher_wrapper,
     NormalApplicationLauncher,
     UpstartApplicationLauncher,
 )

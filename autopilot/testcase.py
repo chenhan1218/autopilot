@@ -425,25 +425,6 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
     assertProperties = assertProperty
 
-    @deprecated(
-        "the 'app_type' argument to the launch_test_application method"
-    )
-    def pick_app_launcher(self, app_path):
-        """Given an application path, return an object suitable for launching
-        the application.
-
-        This function attempts to guess what kind of application you are
-        launching. If, for some reason the default implementation returns the
-        wrong launcher, test authors may override this method to provide their
-        own implemetnation.
-
-        The default implementation calls
-        :py:func:`autopilot.application.get_application_launcher_wrapper`
-
-        """
-        # default implementation is in autopilot.application:
-        return get_application_launcher_wrapper(app_path)
-
 
 def _get_process_snapshot():
     """Return a snapshot of running processes on the system.

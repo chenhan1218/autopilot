@@ -72,25 +72,6 @@ class ProcessSnapshotTests(TestCase):
             )
             self.assertEqual(1.0, mock_sleep.total_time_slept())
 
-    def test_using_pick_app_launcher_produces_deprecation_message(self):
-        class InnerTest(AutopilotTestCase):
-            def test_foo(self):
-                self.pick_app_launcher('some_path')
-
-        with patch('autopilot.testcase.get_application_launcher_wrapper'):
-            with patch('autopilot.utilities.logger') as patched_log:
-                result = InnerTest('test_foo').run()
-                self.assertTrue(result.wasSuccessful())
-
-                self.assertThat(
-                    patched_log.warning.call_args[0][0],
-                    Contains(
-                        "This function is deprecated. Please use "
-                        "'the 'app_type' argument to the "
-                        "launch_test_application method' instead."
-                    )
-                )
-
 
 class AutopilotTestCaseClassTests(TestCase):
 

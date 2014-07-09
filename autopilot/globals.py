@@ -39,64 +39,25 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+_log_verbose = False
+
+
+# TODO: see if we can't remove this and the global...
 def get_log_verbose():
     """Return true if the user asked for verbose logging."""
-    return _test_logger._log_verbose
-
-
-class _TestLogger(CleanupRegistered):
-
-    """A class that handles adding test logs as test result content."""
-
-    def __init__(self):
-        self._log_verbose = False
-        self._log_buffer = None
-
-    def __call__(self, test_instance):
-        self._setUpTestLogging(test_instance)
-        if self._log_verbose:
-            global logger
-            logger.info("*" * 60)
-            logger.info("Starting test %s", test_instance.shortDescription())
-
-    @classmethod
-    def on_test_start(cls, test_instance):
-        if _test_logger._log_verbose:
-            _test_logger(test_instance)
-
-    def log_verbose(self, verbose):
-        self._log_verbose = verbose
-
-    def _setUpTestLogging(self, test_instance):
-        if self._log_buffer is None:
-            self._log_buffer = StringIO()
-            root_logger = logging.getLogger()
-            root_logger.setLevel(logging.DEBUG)
-            formatter = LogFormatter()
-            self._log_handler = logging.StreamHandler(stream=self._log_buffer)
-            self._log_handler.setFormatter(formatter)
-            root_logger.addHandler(self._log_handler)
-            test_instance.addCleanup(self._tearDownLogging, test_instance)
-
-    def _tearDownLogging(self, test_instance):
-        root_logger = logging.getLogger()
-        self._log_handler.flush()
-        self._log_buffer.seek(0)
-        test_instance.addDetail(
-            'test-log', text_content(self._log_buffer.getvalue()))
-        root_logger.removeHandler(self._log_handler)
-        self._log_buffer = None
-
-
-_test_logger = _TestLogger()
+    global _log_verbose
+    return _log_verbose
 
 
 def set_log_verbose(verbose):
     """Set whether or not we should log verbosely."""
-
+    global _log_verbose
     if type(verbose) is not bool:
         raise TypeError("Verbose flag must be a boolean.")
-    _test_logger.log_verbose(verbose)
+    _log_verbose = verbose
+    if verbose:
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging.DEBUG)
 
 
 class _VideoLogger(CleanupRegistered):

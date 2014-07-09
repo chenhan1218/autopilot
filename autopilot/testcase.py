@@ -69,6 +69,7 @@ from autopilot.matchers import Eventually
 from autopilot.process import ProcessManager
 from autopilot.utilities import deprecated, on_test_started
 from autopilot._timeout import Timeout
+from autopilot._logging import TestCaseLoggingFixture
 try:
     from autopilot import tracepoint as tp
     HAVE_TRACEPOINT = True
@@ -132,6 +133,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
     def setUp(self):
         super(AutopilotTestCase, self).setUp()
         on_test_started(self)
+        self.useFixture(TestCaseLoggingFixture(self.addDetailUniqueName))
         self.useFixture(get_debug_profile_fixture()(self.addDetailUniqueName))
 
         _lttng_trace_test_started(self.id())

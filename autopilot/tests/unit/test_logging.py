@@ -21,9 +21,11 @@ from __future__ import absolute_import
 
 import logging
 
+from mock import Mock
 import testtools
 
 from autopilot.logging import log_action
+from autopilot._logging import TestCaseLoggingFixture
 
 
 class LogHandlerTestCase(testtools.TestCase):
@@ -138,3 +140,18 @@ class LoggingTestCase(LogHandlerTestCase):
             "Do something with a multiline docstring. "
             "Arguments ('arg1', 'arg2'). "
             "Keyword arguments: {'arg3': 'arg3', 'arg4': 'arg4'}.")
+
+
+class TestCaseLoggingFixtureTests(testtools.TestCase):
+
+    def test_foo(self):
+        token = self.getUniqueString()
+        add_detail_fn = Mock()
+        fixture = TestCaseLoggingFixture(add_detail_fn)
+        fixture.setUp()
+        logging.getLogger(__name__).info(token)
+        fixture.cleanUp()
+
+        self.assertEqual(1, add_detail_fn.call_count)
+        self.assertEqual('test-log', add_detail_fn.call_args[0][0])
+        self.assertIn(token, add_detail_fn.call_args[0][1].as_text())

@@ -19,13 +19,21 @@
 
 """Unit tests for the display screenshot functionality."""
 
-from tempfile import NamedTemporaryFile
 
 import subprocess
 import tempfile
+import os
 from contextlib import contextmanager
+from tempfile import NamedTemporaryFile, mkstemp
 from testtools import TestCase, skipIf
-from testtools.matchers import Equals, MatchesRegex, Not, StartsWith, raises
+from testtools.matchers import (
+    Equals,
+    FileExists,
+    MatchesRegex,
+    Not,
+    StartsWith,
+    raises,
+)
 from unittest.mock import Mock, patch
 
 import autopilot.display._screenshot as _ss
@@ -134,10 +142,22 @@ class MirScreenShotTests(TestCase):
     @skipIf(platform.model() == "Desktop", "Only available on device.")
     def test_raw_data_file_cleaned_up_on_failure(self):
         """Creation of image will fail with a nonsense filepath."""
-        with patch.object(_ss, "_take_mirscreencast_screenshot") as mir_ss:
-            mir_ss.return_value = self.getUniqueString()
+        with _simulate_bad_rgba_image_file() as image_file_path:
+            self.assertRaises(ValueError, _ss._get_screenshot_mir)
+            self.assertThat(image_file_path, Not(FileExists()))
 
-            self.assertRaises(FileNotFoundError, _ss._get_screenshot_mir)
+
+@contextmanager
+def _simulate_bad_rgba_image_file():
+    try:
+        _, temp_filepath = mkstemp()
+        with patch.object(_ss, "_take_mirscreencast_screenshot") as mir_ss:
+            mir_ss.return_value = temp_filepath
+            yield temp_filepath
+    finally:
+        if os.path.exists(temp_filepath):
+            os.remove(temp_filepath)
+            raise AssertionError("Temp file was not cleaned up.")
 
 
 @contextmanager

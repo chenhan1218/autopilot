@@ -95,6 +95,7 @@ def _get_screenshot_mir():
     :raises FileNotFoundError: If the mirscreencast utility is not found.
     :raises CalledProcessError: If the mirscreencast utility errors while
       taking a screenshot.
+    :raises ValueError: If the PNG conversion step fails.
 
     """
     from autopilot.display import Display

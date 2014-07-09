@@ -17,25 +17,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from fixtures import Fixture
+
+from testtools import TestCase
+
+from autopilot._fixtures import FixtureWithDirectAddDetail
 
 
-class FixtureWithDirectAddDetail(Fixture):
+class FixtureWithDirectAddDetailTests(TestCase):
 
-    """A test fixture that has a 'caseAddDetail' method that corresponds
-    to the addDetail method of the test case in use.
+    def test_sets_caseAddDetail_method(self):
+        fixture = FixtureWithDirectAddDetail(self.addDetail)
+        self.assertEqual(fixture.caseAddDetail, self.addDetail)
 
-    You must derive from this class in order to add detail objects to tests
-    from within cleanup actions.
-
-    """
-
-    def __init__(self, caseAddDetail=None):
-        """Create the fixture.
-
-        :param caseAddDetail: A closure over the testcase's addDetail
-            method, or a similar substitution method. This may be omitted, in
-            which case the 'caseAddDetail' method will be set to the fixtures
-            normal 'addDetail' method.
-        """
-        self.caseAddDetail = caseAddDetail or self.addDetail
+    def test_can_construct_without_arguments(self):
+        fixture = FixtureWithDirectAddDetail()
+        self.assertEqual(fixture.caseAddDetail, fixture.addDetail)

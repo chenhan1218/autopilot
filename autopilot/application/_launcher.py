@@ -59,7 +59,7 @@ class ApplicationLauncher(FixtureWithDirectAddDetail):
 
     """
 
-    def __init__(self, case_addDetail, emulator_base=None,
+    def __init__(self, case_addDetail=None, emulator_base=None,
                  dbus_bus='session'):
         super().__init__(case_addDetail)
         self.proxy_base = emulator_base

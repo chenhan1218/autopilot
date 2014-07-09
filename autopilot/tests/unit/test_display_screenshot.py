@@ -157,7 +157,6 @@ def _simulate_bad_rgba_image_file():
     finally:
         if os.path.exists(temp_filepath):
             os.remove(temp_filepath)
-            raise AssertionError("Temp file was not cleaned up.")
 
 
 @contextmanager

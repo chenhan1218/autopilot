@@ -20,15 +20,8 @@
 
 from __future__ import absolute_import
 
-try:
-    # Python 2
-    from StringIO import StringIO
-except ImportError:
-    # Python 3
-    from io import StringIO
-
 from autopilot._debug import DebugProfile
-from autopilot.utilities import LogFormatter, CleanupRegistered
+from autopilot.utilities import CleanupRegistered
 from testtools.content import text_content
 import signal
 import subprocess

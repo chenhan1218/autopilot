@@ -38,4 +38,5 @@ class FixtureWithDirectAddDetail(Fixture):
             which case the 'caseAddDetail' method will be set to the fixtures
             normal 'addDetail' method.
         """
+        super().__init__()
         self.caseAddDetail = caseAddDetail or self.addDetail

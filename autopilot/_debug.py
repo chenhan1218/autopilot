@@ -29,27 +29,7 @@ fixtures of fixtures!
 """
 
 from autopilot.content import follow_file
-
-from fixtures import Fixture
-
-
-class FixtureWithDirectAddDetail(Fixture):
-
-    """A test fixture that has a 'caseAddDetail' method that corresponds
-    to the addDetail method of the test case in use.
-
-    You must derive from this class in order to add detail objects to tests
-    from within cleanup actions.
-
-    """
-
-    def __init__(self, caseAddDetail):
-        """Create the fixture.
-
-        :param caseAddDetail: A closure over the testcase's addDetail
-            method, or a similar substitution method.
-        """
-        self.caseAddDetail = caseAddDetail
+from autopilot._fixtures import FixtureWithDirectAddDetail
 
 
 class CaseAddDetailToNormalAddDetailDecorator(object):

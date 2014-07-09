@@ -35,6 +35,7 @@ import signal
 from testtools.content import content_from_file, text_content
 
 from autopilot._timeout import Timeout
+from autopilot._fixtures import FixtureWithDirectAddDetail
 from autopilot.application._environment import (
     GtkApplicationEnvironment,
     QtApplicationEnvironment,
@@ -46,23 +47,21 @@ from autopilot.introspection import (
 _logger = logging.getLogger(__name__)
 
 
-class ApplicationLauncher(fixtures.Fixture):
+class ApplicationLauncher(FixtureWithDirectAddDetail):
 
     """A class that knows how to launch an application with a certain type of
     introspection enabled.
 
-    :keyword case_addDetail: addDetail method to use (self.addDetail if not
-        specified)
+    :keyword case_addDetail: addDetail method to use.
     :keyword proxy_base: custom proxy base class to use, defaults to None
     :keyword dbus_bus: dbus bus to use, if set to something other than the
         default ('session') the environment will be patched
 
     """
 
-    def __init__(self, case_addDetail=None, emulator_base=None,
+    def __init__(self, case_addDetail, emulator_base=None,
                  dbus_bus='session'):
-        super().__init__()
-        self.case_addDetail = case_addDetail or self.addDetail
+        super().__init__(case_addDetail)
         self.proxy_base = emulator_base
         self.dbus_bus = dbus_bus
 
@@ -184,7 +183,7 @@ class UpstartApplicationLauncher(ApplicationLauncher):
     def _attach_application_log(self, app_id):
         log_path = UbuntuAppLaunch.application_log_path(app_id)
         if log_path and os.path.exists(log_path):
-            self.case_addDetail(
+            self.caseAddDetail(
                 "Application Log (%s)" % app_id,
                 content_from_file(log_path)
             )
@@ -411,15 +410,15 @@ class NormalApplicationLauncher(ApplicationLauncher):
 
     def _kill_process_and_attach_logs(self, process, app_path):
         stdout, stderr, return_code = _kill_process(process)
-        self.case_addDetail(
+        self.caseAddDetail(
             'process-return-code (%s)' % app_path,
             text_content(str(return_code))
         )
-        self.case_addDetail(
+        self.caseAddDetail(
             'process-stdout (%s)' % app_path,
             text_content(stdout)
         )
-        self.case_addDetail(
+        self.caseAddDetail(
             'process-stderr (%s)' % app_path,
             text_content(stderr)
         )

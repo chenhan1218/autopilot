@@ -131,6 +131,7 @@ class MirScreenShotTests(TestCase):
             self.assertEqual(0, png_image_data.tell())
             self.assertThat(png_image_data.read(), StartsWith(b'\x89PNG\r\n'))
 
+    @skipIf(platform.model() == "Desktop", "Only available on device.")
     def test_raw_data_file_cleaned_up_on_failure(self):
         """Creation of image will fail with a nonsense filepath."""
         with patch.object(_ss, "_take_mirscreencast_screenshot") as mir_ss:

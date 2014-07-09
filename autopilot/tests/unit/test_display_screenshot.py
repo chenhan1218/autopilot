@@ -75,17 +75,10 @@ class X11ScreenShotTests(TestCase):
         self.assertEqual(data_object.tell(), 0)
         self.assertEqual(data_object.getvalue(), expected_data)
 
-    def test_raw_data_file_cleaned_up_on_failure(self):
-        """Creation of image will fail with a nonsense filepath."""
-        with patch.object(_ss, "_take_mirscreencast_screenshot") as mir_ss:
-            mir_ss.return_value = self.getUniqueString()
-
-            self.assertRaises(FileNotFoundError, _ss._get_screenshot_mir)
-
 
 class MirScreenShotTests(TestCase):
 
-    def test_take__screenshot_raises_when_binary_not_available(self):
+    def test_take_screenshot_raises_when_binary_not_available(self):
         with patch.object(_ss.subprocess, 'check_call') as check_call:
             check_call.side_effect = FileNotFoundError()
 
@@ -137,6 +130,13 @@ class MirScreenShotTests(TestCase):
 
             self.assertEqual(0, png_image_data.tell())
             self.assertThat(png_image_data.read(), StartsWith(b'\x89PNG\r\n'))
+
+    def test_raw_data_file_cleaned_up_on_failure(self):
+        """Creation of image will fail with a nonsense filepath."""
+        with patch.object(_ss, "_take_mirscreencast_screenshot") as mir_ss:
+            mir_ss.return_value = self.getUniqueString()
+
+            self.assertRaises(FileNotFoundError, _ss._get_screenshot_mir)
 
 
 @contextmanager

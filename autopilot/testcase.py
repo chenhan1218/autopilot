@@ -60,7 +60,6 @@ from unittest.case import SkipTest
 
 from autopilot.application import (
     ClickApplicationLauncher,
-    get_application_launcher_wrapper,
     NormalApplicationLauncher,
     UpstartApplicationLauncher,
 )
@@ -252,11 +251,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
          data is retrievable via this object.
 
         """
-        launch_args = {}
-        launch_arg_list = ['app_type', 'launch_dir', 'capture_output']
-        for arg in launch_arg_list:
-            if arg in kwargs:
-                launch_args[arg] = kwargs.pop(arg)
+        launch_args = _get_application_launch_args(kwargs)
+
         launcher = self.useFixture(
             NormalApplicationLauncher(
                 case_addDetail=self.addDetailUniqueName,
@@ -462,24 +458,20 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
     assertProperties = assertProperty
 
-    @deprecated(
-        "the 'app_type' argument to the launch_test_application method"
-    )
-    def pick_app_launcher(self, app_path):
-        """Given an application path, return an object suitable for launching
-        the application.
 
-        This function attempts to guess what kind of application you are
-        launching. If, for some reason the default implementation returns the
-        wrong launcher, test authors may override this method to provide their
-        own implemetnation.
+def _get_application_launch_args(kwargs):
+    """Returns a dict containing relevant args and values for launching an
+    application.
 
-        The default implementation calls
-        :py:func:`autopilot.application.get_application_launcher_wrapper`
+    Removes used arguments from kwargs parameter.
 
-        """
-        # default implementation is in autopilot.application:
-        return get_application_launcher_wrapper(app_path)
+    """
+    launch_args = {}
+    launch_arg_list = ['app_type', 'launch_dir', 'capture_output']
+    for arg in launch_arg_list:
+        if arg in kwargs:
+            launch_args[arg] = kwargs.pop(arg)
+    return launch_args
 
 
 def _get_process_snapshot():

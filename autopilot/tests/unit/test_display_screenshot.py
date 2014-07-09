@@ -24,7 +24,7 @@ import subprocess
 import tempfile
 import os
 from contextlib import contextmanager
-from tempfile import NamedTemporaryFile, mkstemp
+from tempfile import NamedTemporaryFile
 from testtools import TestCase, skipIf
 from testtools.matchers import (
     Equals,
@@ -150,13 +150,13 @@ class MirScreenShotTests(TestCase):
 @contextmanager
 def _simulate_bad_rgba_image_file():
     try:
-        _, temp_filepath = mkstemp()
-        with patch.object(_ss, "_take_mirscreencast_screenshot") as mir_ss:
-            mir_ss.return_value = temp_filepath
-            yield temp_filepath
+        with NamedTemporaryFile(delete=False) as f:
+            with patch.object(_ss, "_take_mirscreencast_screenshot") as mir_ss:
+                mir_ss.return_value = f.name
+                yield f.name
     finally:
-        if os.path.exists(temp_filepath):
-            os.remove(temp_filepath)
+        if os.path.exists(f.name):
+            os.remove(f.name)
 
 
 @contextmanager

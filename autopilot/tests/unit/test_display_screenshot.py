@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2013 Canonical
+# Copyright (C) 2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,78 +30,12 @@ from unittest.mock import Mock, patch
 
 import autopilot.display._screenshot as _ss
 from autopilot import platform
-from autopilot.testcase import AutopilotTestCase
 
 
 class ScreenShotTests(TestCase):
 
     def test_get_screenshot_data_raises_RuntimeError_on_unknown_display(self):
         self.assertRaises(RuntimeError, lambda: _ss.get_screenshot_data(""))
-
-    def test_screenshot_taken_when_test_fails(self):
-        class InnerTest(AutopilotTestCase):
-            def test_foo(self):
-                self.fail()
-
-        test = InnerTest('test_foo')
-        test.take_screenshot = Mock()
-
-        test_run = test.run()
-
-        self.assertFalse(test_run.wasSuccessful())
-        self.assertTrue(test.take_screenshot.called)
-
-    def test_screenshot_taken_when_test_expected_fails(self):
-        class InnerTest(AutopilotTestCase):
-            def test_foo(self):
-                self.expectFailure("", self.assertTrue, False)
-
-        test = InnerTest('test_foo')
-        test.take_screenshot = Mock()
-
-        test_run = test.run()
-
-        self.assertTrue(test_run.wasSuccessful())
-        self.assertFalse(test.take_screenshot.called)
-
-    def test_screenshot_taken_when_test_unexpected_success(self):
-        class InnerTest(AutopilotTestCase):
-            def test_foo(self):
-                self.expectFailure("", self.assertTrue, True)
-
-        test = InnerTest('test_foo')
-        test.take_screenshot = Mock()
-
-        test_run = test.run()
-
-        self.assertFalse(test_run.wasSuccessful())
-        self.assertTrue(test.take_screenshot.called)
-
-    def test_screenshot_not_taken_when_test_passes(self):
-        class InnerTest(AutopilotTestCase):
-            def test_foo(self):
-                pass
-
-        test = InnerTest('test_foo')
-        test.take_screenshot = Mock()
-
-        test_run = test.run()
-
-        self.assertTrue(test_run.wasSuccessful())
-        self.assertFalse(test.take_screenshot.called)
-
-    def test_screenshot_not_taken_when_test_skipped(self):
-        class InnerTest(AutopilotTestCase):
-            def test_foo(self):
-                self.skip("")
-
-        test = InnerTest('test_foo')
-        test.take_screenshot = Mock()
-
-        test_run = test.run()
-
-        self.assertTrue(test_run.wasSuccessful())
-        self.assertFalse(test.take_screenshot.called)
 
 
 class X11ScreenShotTests(TestCase):

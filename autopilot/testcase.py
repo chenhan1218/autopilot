@@ -55,6 +55,8 @@ from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.content import ContentType, content_from_stream
 from testtools.matchers import Equals
+from testtools.testcase import _ExpectedFailure
+from unittest.case import SkipTest
 
 from autopilot.application import (
     ClickApplicationLauncher,
@@ -527,8 +529,6 @@ def _ensure_uinput_device_created():
 
 
 def _considered_failing_test(failure_class_type):
-    from unittest.case import SkipTest
-    from testtools.testcase import _ExpectedFailure
     return (
         not issubclass(failure_class_type, SkipTest)
         and not issubclass(failure_class_type, _ExpectedFailure)

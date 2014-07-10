@@ -21,7 +21,7 @@ from __future__ import absolute_import
 
 import logging
 
-from mock import Mock
+from unittest.mock import Mock
 import testtools
 
 from autopilot.logging import log_action

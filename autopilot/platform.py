@@ -94,6 +94,9 @@ example::
 
 """
 
+import logging
+_logger = logging.getLogger(__name__)
+
 
 def model():
     """Get the model name of the current platform.
@@ -157,22 +160,39 @@ def get_display_server():
 
 @lru_cache()
 def _display_is_x11():
+    _logger.warning("Checking if display is x11")
     try:
-        subprocess.check_call(
+        output = subprocess.check_output(
             ["xset", "q"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
         )
+        _logger.warning("Output: {}".format(output))
         return True
-    except Exception:
+    except Exception as e:
+        _logger.warning("Exception for x11: {}".format(e))
         return False
 
 
 @lru_cache()
 def _display_is_mir():
+    _logger.warning(
+        "Checking for mir: {}".format(
+            [_get_process_name(p.name) for p in psutil.process_iter()]
+        )
+    )
     return "unity-system-compositor" in [
-        p.name() for p in psutil.process_iter()
+        _get_process_name(p.name) for p in psutil.process_iter()
     ]
+
+
+# Different vers. of psutil across Trusty and Utopic have name as either a
+# string or a method.
+def _get_process_name(proc):
+    if callable(proc):
+        return proc()
+    elif isinstance(proc, str):
+        return proc
+    else:
+        raise ValueError("Unknown process name format.")
 
 
 class _PlatformDetector(object):

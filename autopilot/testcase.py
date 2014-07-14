@@ -370,7 +370,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             logging.warning("Have image data")
             self.addDetailUniqueName(attachment_name, image_content)
             logging.warning("Attached: {}".format(attachment_name))
-            logging.warning("Details: {}".format(self.getDetails()))
+            logging.warning("Details: {}".format(self.getDetails().keys()))
             return True
         except Exception as e:
             logging.error(

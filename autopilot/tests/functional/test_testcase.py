@@ -30,8 +30,6 @@ class AutopilotTestCaseScreenshotTests(TestCase):
             def test_foo(self):
                 self.fail()
 
-        import ipdb; ipdb.set_trace()
-
         test = InnerTest('test_foo')
         test_run = test.run()
 

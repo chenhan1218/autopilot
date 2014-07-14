@@ -356,7 +356,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         """
         try:
-            logging.warning(
+            print(
                 "Attempting to take screenshot: {}".format(
                     get_display_server()
                 )
@@ -367,24 +367,24 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
                 content_type=ContentType('image', 'png'),
                 buffer_now=True
             )
-            logging.warning("Have image data")
+            print("Have image data")
             self.addDetailUniqueName(attachment_name, image_content)
-            logging.warning("Attached: {}".format(attachment_name))
-            logging.warning("Details: {}".format(self.getDetails().keys()))
+            print("Attached: {}".format(attachment_name))
+            print("Details: {}".format(self.getDetails().keys()))
             return True
         except Exception as e:
-            logging.error(
+            print(
                 "Taking screenshot failed: {exception}".format(exception=e)
             )
             return False
 
     def _take_screenshot_on_failure(self, ex_info):
         failure_class_type = ex_info[0]
-        logging.warning(
+        print(
             "Checking failing screenshot: {}".format(failure_class_type)
         )
         if _considered_failing_test(failure_class_type):
-            logging.warning("test failed.")
+            print("test failed.")
             # Perhaps this needs a unique name as previous failures might have
             # already taken this name.
             self.take_screenshot("FailedTestScreenshot")

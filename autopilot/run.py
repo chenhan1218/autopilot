@@ -227,7 +227,7 @@ def setup_logging(verbose):
         set_stderr_stream_handler(root_logger)
     if verbose >= 2:
         enable_debug_log_messages()
-    #log autopilot version
+    # log autopilot version
     root_logger.info(get_version_string())
 
 
@@ -633,7 +633,7 @@ class TestProgram(object):
         # XXX - in quantal, overlay scrollbars make this process consume 100%
         # of the CPU. It's a known bug:
         #
-        #https://bugs.launchpad.net/ubuntu/quantal/+source/qt4-x11/+bug/1005677
+        # bugs.launchpad.net/ubuntu/quantal/+source/qt4-x11/+bug/1005677
         #
         # Once that's been fixed we can remove the following line:
         #

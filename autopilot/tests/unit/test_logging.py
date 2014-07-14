@@ -147,7 +147,7 @@ class TestCaseLoggingFixtureTests(testtools.TestCase):
     def test_foo(self):
         token = self.getUniqueString()
         add_detail_fn = Mock()
-        fixture = TestCaseLoggingFixture(add_detail_fn)
+        fixture = TestCaseLoggingFixture("Test.id", add_detail_fn)
         fixture.setUp()
         logging.getLogger(__name__).info(token)
         fixture.cleanUp()

@@ -239,12 +239,11 @@ class BuildPropertyParserTests(TestCase):
 
 @contextmanager
 def _simulate_not_X11():
-    with patch.object(platform.subprocess, "check_call") as cc:
-        cc.side_effect = FileNotFoundError
+    with patch.dict(platform.os.environ, dict(), clear=True):
         yield
 
 
 @contextmanager
 def _simulate_X11():
-    with patch.object(platform.subprocess, "check_call"):
+    with patch.dict(platform.os.environ, dict(DISPLAY=':0'), clear=True):
         yield

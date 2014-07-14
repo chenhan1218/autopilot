@@ -43,7 +43,6 @@ class LoggedTestResultDecorator(TestResultDecorator):
     def _log(self, level, message):
         """Perform the actual message logging."""
         if get_log_verbose():
-            print("Logging: %s" % message)
             logging.getLogger().log(level, message)
 
     def _log_details(self, level, details):

@@ -49,6 +49,7 @@ def set_log_verbose(verbose):
         raise TypeError("Verbose flag must be a boolean.")
     _log_verbose = verbose
     if verbose:
+        print("XXX: Setting log to be verbose!")
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.DEBUG)
 

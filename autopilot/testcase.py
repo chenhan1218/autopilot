@@ -133,7 +133,12 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
     def setUp(self):
         super(AutopilotTestCase, self).setUp()
         on_test_started(self)
-        self.useFixture(TestCaseLoggingFixture(self.addDetailUniqueName))
+        self.useFixture(
+            TestCaseLoggingFixture(
+                self.shortDescription(),
+                self.addDetailUniqueName,
+            )
+        )
         self.useFixture(get_debug_profile_fixture()(self.addDetailUniqueName))
 
         _lttng_trace_test_started(self.id())

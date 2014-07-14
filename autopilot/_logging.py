@@ -31,9 +31,15 @@ from autopilot.utilities import LogFormatter
 class TestCaseLoggingFixture(FixtureWithDirectAddDetail):
 
     """A fixture that adds the log to the test case as a detail object."""
+    def __init__(self, test_id, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._test_id = test_id
 
     def setUp(self):
         super().setUp()
+        logging.info("*" * 60)
+        logging.info("Starting test %s", self._test_id)
+
         self._log_buffer = StringIO()
         root_logger = logging.getLogger()
         formatter = LogFormatter()

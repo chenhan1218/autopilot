@@ -370,6 +370,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             logging.warning("Have image data")
             self.addDetailUniqueName(attachment_name, image_content)
             logging.warning("Attached: {}".format(attachment_name))
+            logging.warning("Details: {}".format(self.getDetails()))
             return True
         except Exception as e:
             logging.error(
@@ -384,6 +385,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         )
         if _considered_failing_test(failure_class_type):
             logging.warning("test failed.")
+            # Perhaps this needs a unique name as previous failures might have
+            # already taken this name.
             self.take_screenshot("FailedTestScreenshot")
 
     @deprecated('fixtures.EnvironmentVariable')

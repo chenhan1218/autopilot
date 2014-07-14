@@ -162,11 +162,11 @@ def get_display_server():
 def _display_is_x11():
     _logger.warning("Checking if display is x11")
     try:
+        print("Output: {}".format(os.environ))
         os.environ['DISPLAY']
-        _logger.warning("Output: {}".format(os.environ))
         return True
     except KeyError as e:
-        _logger.warning("Exception for x11: {}".format(e))
+        print("Exception for x11: {}".format(e))
         return False
 
 

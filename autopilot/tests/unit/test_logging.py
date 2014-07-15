@@ -144,7 +144,7 @@ class LoggingTestCase(LogHandlerTestCase):
 
 class TestCaseLoggingFixtureTests(testtools.TestCase):
 
-    def test_foo(self):
+    def test_test_log_is_added(self):
         token = self.getUniqueString()
         add_detail_fn = Mock()
         fixture = TestCaseLoggingFixture("Test.id", add_detail_fn)

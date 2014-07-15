@@ -35,7 +35,6 @@ logger = logging.getLogger(__name__)
 _log_verbose = False
 
 
-# TODO: see if we can't remove this and the global...
 def get_log_verbose():
     """Return true if the user asked for verbose logging."""
     global _log_verbose

@@ -20,7 +20,6 @@
 
 import autopilot._glib
 from autopilot.display import Display as DisplayBase
-from autopilot.utilities import Silence
 
 
 class Display(DisplayBase):

@@ -94,9 +94,6 @@ example::
 
 """
 
-import logging
-_logger = logging.getLogger(__name__)
-
 
 def model():
     """Get the model name of the current platform.
@@ -160,23 +157,15 @@ def get_display_server():
 
 @lru_cache()
 def _display_is_x11():
-    _logger.warning("Checking if display is x11")
     try:
         os.environ['DISPLAY']
-        _logger.warning("Output: {}".format(os.environ))
         return True
-    except KeyError as e:
-        _logger.warning("Exception for x11: {}".format(e))
+    except KeyError:
         return False
 
 
 @lru_cache()
 def _display_is_mir():
-    _logger.warning(
-        "Checking for mir: {}".format(
-            [_get_process_name(p.name) for p in psutil.process_iter()]
-        )
-    )
     return "unity-system-compositor" in [
         _get_process_name(p.name) for p in psutil.process_iter()
     ]

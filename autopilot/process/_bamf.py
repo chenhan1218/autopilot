@@ -31,16 +31,17 @@ import os
 from Xlib import display, X, protocol
 from subprocess import check_output, CalledProcessError, call
 
-from autopilot.dbus_handler import get_session_bus
-from autopilot.utilities import (
-    addCleanup,
-    Silence,
-)
+import autopilot._glib
 from autopilot._timeout import Timeout
+from autopilot.dbus_handler import get_session_bus
 from autopilot.process import (
     ProcessManager as ProcessManagerBase,
     Application as ApplicationBase,
     Window as WindowBase
+)
+from autopilot.utilities import (
+    addCleanup,
+    Silence,
 )
 
 
@@ -498,9 +499,8 @@ class Window(WindowBase):
         # documentation, which in turn tries to import Gdk, which in turn
         # fails because there's no DISPlAY environment set in the package
         # builder.
-        from gi import require_version
-        require_version('GdkX11', '3.0')
-        from gi.repository import Gdk, GdkX11
+        Gdk = autopilot._glib._import_gdk()
+        GdkX11 = autopilot._glib._import_gdkx11()
         # FIXME: We need to use the gdk window here to get the real coordinates
         geometry = self._x_win.get_geometry()
         origin = GdkX11.X11Window.foreign_new_for_display(

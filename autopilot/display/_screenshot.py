@@ -28,7 +28,7 @@ from io import BytesIO
 
 from PIL import Image
 
-from autopilot.utilities import Silence
+import autopilot._glib
 
 logger = logging.getLogger(__name__)
 
@@ -68,10 +68,7 @@ def _get_screenshot_x11():
 
 
 def _get_x11_pixbuf_data():
-    with Silence():
-        from gi import require_version
-        require_version('Gdk', '3.0')
-        from gi.repository import Gdk
+    Gdk = autopilot._glib._import_gdk()
     window = Gdk.get_default_root_window()
     x, y, width, height = window.get_geometry()
     return Gdk.pixbuf_get_from_window(window, x, y, width, height)

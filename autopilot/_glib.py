@@ -1,0 +1,67 @@
+# -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
+#
+# Autopilot Functional Test Tool
+# Copyright (C) 2014 Canonical
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+"""Private module for wrapping Gdk/GdkX11 import workarounds."""
+
+
+from autopilot.utilities import Silence
+
+
+_Gtk = None
+_Gdk = None
+_GdkX11 = None
+
+
+# Need to make sure that both modules are imported at the same time to stop any
+# API changes happening under the covers.
+def _import_gdk_modules(version):
+    global _Gtk
+    global _Gdk
+    global _GdkX11
+    with Silence():
+        from gi import require_version
+        require_version('Gdk', version)
+        require_version('GdkX11', version)
+        require_version('Gtk', version)
+        from gi.repository import Gtk, Gdk, GdkX11
+
+        _Gtk = Gtk
+        _Gdk = Gdk
+        _GdkX11 = GdkX11
+
+
+def _import_gtk(version="3.0"):
+    global _Gtk
+    if _Gtk is None:
+        _import_gdk_modules(version)
+    return _Gtk
+
+
+def _import_gdk(version="3.0"):
+    global _Gdk
+    if _Gdk is None:
+        _import_gdk_modules(version)
+    return _Gdk
+
+
+def _import_gdkx11(version="3.0"):
+    global _GdkX11
+    if _GdkX11 is None:
+        _import_gdk_modules(version)
+    return _GdkX11

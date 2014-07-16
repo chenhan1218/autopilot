@@ -18,6 +18,7 @@
 #
 
 
+import autopilot._glib
 from autopilot.display import Display as DisplayBase
 from autopilot.utilities import Silence
 
@@ -29,10 +30,7 @@ class Display(DisplayBase):
         # documentation, which in turn tries to import Gdk, which in turn
         # fails because there's no DISPLAY environment set in the package
         # builder.
-        with Silence():
-            from gi import require_version
-            require_version('Gdk', '3.0')
-            from gi.repository import Gdk
+        Gdk = autopilot._glib._import_gdk()
         self._default_screen = Gdk.Screen.get_default()
         if self._default_screen is None:
             raise RuntimeError(

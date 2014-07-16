@@ -20,6 +20,8 @@
 
 """A collection of functions relating to the X11clipboards."""
 
+import autopilot._glib
+
 
 def get_clipboard_contents():
     """Get the contents of the clipboard.
@@ -28,9 +30,7 @@ def get_clipboard_contents():
     can be added to this clipbaord using Ctrl+C.
 
     """
-    from gi import require_version
-    require_version('Gdk', '3.0')
-    require_version('Gtk', '3.0')
-    from gi.repository import Gtk, Gdk
+    Gtk = autopilot._glib._import_gtk()
+    Gdk = autopilot._glib._import_gdk()
     cb = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
     return cb.wait_for_text()

@@ -77,7 +77,7 @@ class ApplicationLauncherTests(TestCase):
 
     def test_init_uses_default_values(self):
         launcher = ApplicationLauncher()
-        self.assertEqual(launcher.case_addDetail, launcher.addDetail)
+        self.assertEqual(launcher.caseAddDetail, launcher.addDetail)
         self.assertEqual(launcher.proxy_base, None)
         self.assertEqual(launcher.dbus_bus, 'session')
 
@@ -91,7 +91,7 @@ class ApplicationLauncherTests(TestCase):
             emulator_base=emulator_base,
             dbus_bus=dbus_bus,
         )
-        self.assertEqual(launcher.case_addDetail, case_addDetail)
+        self.assertEqual(launcher.caseAddDetail, case_addDetail)
         self.assertEqual(launcher.proxy_base, emulator_base)
         self.assertEqual(launcher.dbus_bus, dbus_bus)
 

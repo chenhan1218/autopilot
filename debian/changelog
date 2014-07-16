@@ -1,3 +1,19 @@
+autopilot (1.5.0+14.10.20140716-0ubuntu1) utopic; urgency=low
+
+  [ Thomi Richards ]
+  * Bug Fix: Attaching binary files to test results Bug Fix: Revert
+    NormalApplicationLauncher launch arg (cwd -> launch_dir) Flake8: Fix
+    for updated pep8 Build: Fix build deps for Trusty Feature: Adding
+    screenshot ability Feature: Terse logging output. (LP: #1078732)
+
+  [ Christopher Lee ]
+  * Bug Fix: Attaching binary files to test results Bug Fix: Revert
+    NormalApplicationLauncher launch arg (cwd -> launch_dir) Flake8: Fix
+    for updated pep8 Build: Fix build deps for Trusty Feature: Adding
+    screenshot ability Feature: Terse logging output. (LP: #1078732)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 16 Jul 2014 02:57:50 +0000
+
 autopilot (1.5.0+14.10.20140613-0ubuntu1) utopic; urgency=low
 
   [ Tarmac ]

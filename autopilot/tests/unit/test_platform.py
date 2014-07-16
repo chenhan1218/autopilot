@@ -66,6 +66,19 @@ class PublicAPITests(TestCase):
             self.assertTrue(platform._display_is_x11())
 
 
+class PlatformGetProcessNameTests(TestCase):
+
+    def test_returns_callable_value(self):
+        test_callable = lambda: "foo"
+        self.assertEqual("foo", platform._get_process_name(test_callable))
+
+    def test_returns_string(self):
+        self.assertEqual("foo", platform._get_process_name("foo"))
+
+    def test_raises_exception_if_unsupported_passed(self):
+        self.assertRaises(ValueError, platform._get_process_name, 0)
+
+
 class PlatformDetectorTests(TestCase):
 
     def setUp(self):

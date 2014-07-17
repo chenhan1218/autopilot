@@ -44,10 +44,11 @@ _GdkX11 = None
 
 # Need to make sure that both modules are imported at the same time to stop any
 # API changes happening under the covers.
-def _import_gdk_modules(version):
+def _import_gdk_modules():
     global _Gtk
     global _Gdk
     global _GdkX11
+    version = '3.0'
     with Silence():
         from gi import require_version
         require_version('Gdk', version)
@@ -60,22 +61,22 @@ def _import_gdk_modules(version):
         _GdkX11 = GdkX11
 
 
-def _import_gtk(version="3.0"):
+def _import_gtk():
     global _Gtk
     if _Gtk is None:
-        _import_gdk_modules(version)
+        _import_gdk_modules()
     return _Gtk
 
 
-def _import_gdk(version="3.0"):
+def _import_gdk():
     global _Gdk
     if _Gdk is None:
-        _import_gdk_modules(version)
+        _import_gdk_modules()
     return _Gdk
 
 
-def _import_gdkx11(version="3.0"):
+def _import_gdkx11():
     global _GdkX11
     if _GdkX11 is None:
-        _import_gdk_modules(version)
+        _import_gdk_modules()
     return _GdkX11

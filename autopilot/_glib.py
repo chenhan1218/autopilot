@@ -17,8 +17,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Private module for wrapping Gdk/GdkX11 import workarounds."""
 
+"""Private module for wrapping Gdk/GdkX11 import workarounds.
+
+The Gtk/Gdk/GdkX11 gi.repository bindings have an issue where importing Gdk,
+running a Gdk method (specifically get_default_root_window) and then importing
+GdkX11 will cause a different API to be loaded than if one had imported both
+Gdk and GdkX11 at the same time.
+
+This is captured in this bug:
+https://bugs.launchpad.net/ubuntu/+source/gtk+3.0/+bug/1343069
+
+To work around this we ensure that all the modules are loaded once at the same
+time. This ensures that the call to _import_gdk will still import GdkX11 before
+any Gdk calls are made.
+
+"""
 
 from autopilot.utilities import Silence
 

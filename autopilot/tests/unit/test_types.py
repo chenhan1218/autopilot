@@ -296,7 +296,7 @@ class ColorTypeTests(TestCase):
 
 class DateTimeTests(TestCase):
     timestamp = 1377209927
-    large_timestamp = 2983579200
+    platform_limit_timestamp = 2983579200
 
     def test_can_construct_datetime(self):
         dt = DateTime(self.timestamp)
@@ -330,10 +330,10 @@ class DateTimeTests(TestCase):
         self.assertThat(dt.minute, Equals(dt_with_tz.minute))
         self.assertThat(dt.second, Equals(dt_with_tz.second))
 
-    def test_large_datetime_timestamp(self):
-        dt = DateTime(self.large_timestamp)
+    def test_platform_limit_timestamp(self):
+        dt = DateTime(self.platform_limit_timestamp)
         dt_with_tz = datetime.fromtimestamp(0) + \
-            timedelta(seconds=self.large_timestamp)
+            timedelta(seconds=self.platform_limit_timestamp)
 
         self.assertThat(dt.year, Equals(dt_with_tz.year))
         self.assertThat(dt.month, Equals(dt_with_tz.month))

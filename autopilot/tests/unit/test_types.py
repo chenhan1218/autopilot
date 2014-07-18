@@ -335,7 +335,6 @@ class DateTimeTests(TestCase):
         dt_with_tz = datetime.fromtimestamp(0) + \
             timedelta(seconds=self.large_timestamp)
 
-        #self.assertThat(dt.timestamp, Equals(dt_with_tz.timestamp()))
         self.assertThat(dt.year, Equals(dt_with_tz.year))
         self.assertThat(dt.month, Equals(dt_with_tz.month))
         self.assertThat(dt.day, Equals(dt_with_tz.day))

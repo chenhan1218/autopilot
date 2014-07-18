@@ -39,7 +39,7 @@ objects.
 
 from __future__ import absolute_import
 
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 import dbus
 import logging
 from testtools.matchers import Equals
@@ -604,7 +604,8 @@ class DateTime(_array_packed_type(1)):
     """
     def __init__(self, *args, **kwargs):
         super(DateTime, self).__init__(*args, **kwargs)
-        self._cached_dt = datetime.fromtimestamp(self[0])
+        self._cached_dt = datetime.fromtimestamp(0) + \
+            timedelta(seconds=self[0])
 
     @property
     def year(self):

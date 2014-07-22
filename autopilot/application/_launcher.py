@@ -20,7 +20,12 @@
 """Base module for application launchers."""
 
 import fixtures
-from gi.repository import GLib, UpstartAppLaunch
+from gi.repository import GLib
+try:
+    from gi.repository import UbuntuAppLaunch
+except ImportError:
+    # Note: the renamed package is not in Trusty.
+    from gi.repository import UpstartAppLaunch as UbuntuAppLaunch
 import json
 import logging
 import os
@@ -30,6 +35,7 @@ import signal
 from testtools.content import content_from_file, text_content
 
 from autopilot._timeout import Timeout
+from autopilot._fixtures import FixtureWithDirectAddDetail
 from autopilot.application._environment import (
     GtkApplicationEnvironment,
     QtApplicationEnvironment,
@@ -41,13 +47,12 @@ from autopilot.introspection import (
 _logger = logging.getLogger(__name__)
 
 
-class ApplicationLauncher(fixtures.Fixture):
+class ApplicationLauncher(FixtureWithDirectAddDetail):
 
     """A class that knows how to launch an application with a certain type of
     introspection enabled.
 
-    :keyword case_addDetail: addDetail method to use (self.addDetail if not
-        specified)
+    :keyword case_addDetail: addDetail method to use.
     :keyword proxy_base: custom proxy base class to use, defaults to None
     :keyword dbus_bus: dbus bus to use, if set to something other than the
         default ('session') the environment will be patched
@@ -56,8 +61,7 @@ class ApplicationLauncher(fixtures.Fixture):
 
     def __init__(self, case_addDetail=None, emulator_base=None,
                  dbus_bus='session'):
-        super().__init__()
-        self.case_addDetail = case_addDetail or self.addDetail
+        super().__init__(case_addDetail)
         self.proxy_base = emulator_base
         self.dbus_bus = dbus_bus
 
@@ -120,16 +124,16 @@ class UpstartApplicationLauncher(ApplicationLauncher):
         state['expected_app_id'] = app_id
         state['message'] = ''
 
-        UpstartAppLaunch.observer_add_app_failed(self._on_failed, state)
-        UpstartAppLaunch.observer_add_app_started(self._on_started, state)
-        UpstartAppLaunch.observer_add_app_focus(self._on_started, state)
+        UbuntuAppLaunch.observer_add_app_failed(self._on_failed, state)
+        UbuntuAppLaunch.observer_add_app_started(self._on_started, state)
+        UbuntuAppLaunch.observer_add_app_focus(self._on_started, state)
         GLib.timeout_add_seconds(10.0, self._on_timeout, state)
 
         self._launch_app(app_id, app_uris)
         state['loop'].run()
-        UpstartAppLaunch.observer_delete_app_failed(self._on_failed)
-        UpstartAppLaunch.observer_delete_app_started(self._on_started)
-        UpstartAppLaunch.observer_delete_app_focus(self._on_started)
+        UbuntuAppLaunch.observer_delete_app_failed(self._on_failed)
+        UbuntuAppLaunch.observer_delete_app_started(self._on_started)
+        UbuntuAppLaunch.observer_delete_app_focus(self._on_started)
         self._maybe_add_application_cleanups(state)
         self._check_status_error(
             state.get('status', None),
@@ -146,9 +150,9 @@ class UpstartApplicationLauncher(ApplicationLauncher):
     @staticmethod
     def _on_failed(launched_app_id, failure_type, state):
         if launched_app_id == state['expected_app_id']:
-            if failure_type == UpstartAppLaunch.AppFailed.CRASH:
+            if failure_type == UbuntuAppLaunch.AppFailed.CRASH:
                 state['message'] = 'Application crashed.'
-            elif failure_type == UpstartAppLaunch.AppFailed.START_FAILURE:
+            elif failure_type == UbuntuAppLaunch.AppFailed.START_FAILURE:
                 state['message'] = 'Application failed to start.'
             state['status'] = UpstartApplicationLauncher.Failed
             state['loop'].quit()
@@ -177,9 +181,9 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             self.addCleanup(self._attach_application_log, app_id)
 
     def _attach_application_log(self, app_id):
-        log_path = UpstartAppLaunch.application_log_path(app_id)
+        log_path = UbuntuAppLaunch.application_log_path(app_id)
         if log_path and os.path.exists(log_path):
-            self.case_addDetail(
+            self.caseAddDetail(
                 "Application Log (%s)" % app_id,
                 content_from_file(log_path)
             )
@@ -189,12 +193,12 @@ class UpstartApplicationLauncher(ApplicationLauncher):
         state['loop'] = self._get_glib_loop()
         state['expected_app_id'] = app_id
 
-        UpstartAppLaunch.observer_add_app_stop(self._on_stopped, state)
+        UbuntuAppLaunch.observer_add_app_stop(self._on_stopped, state)
         GLib.timeout_add_seconds(10.0, self._on_timeout, state)
 
-        UpstartAppLaunch.stop_application(app_id)
+        UbuntuAppLaunch.stop_application(app_id)
         state['loop'].run()
-        UpstartAppLaunch.observer_delete_app_stop(self._on_stopped)
+        UbuntuAppLaunch.observer_delete_app_stop(self._on_stopped)
 
         if state.get('status', None) == UpstartApplicationLauncher.Timeout:
             _logger.error(
@@ -208,11 +212,11 @@ class UpstartApplicationLauncher(ApplicationLauncher):
 
     @staticmethod
     def _get_pid_for_launched_app(app_id):
-        return UpstartAppLaunch.get_primary_pid(app_id)
+        return UbuntuAppLaunch.get_primary_pid(app_id)
 
     @staticmethod
     def _launch_app(app_name, app_uris):
-        UpstartAppLaunch.start_application_test(app_name, app_uris)
+        UbuntuAppLaunch.start_application_test(app_name, app_uris)
 
     @staticmethod
     def _check_status_error(status, extra_message=''):
@@ -284,7 +288,7 @@ class NormalApplicationLauncher(ApplicationLauncher):
     """Fixture to manage launching an application."""
     __doc__ += ApplicationLauncher.__doc__
 
-    def launch(self, application, arguments=[], app_type=None, cwd=None,
+    def launch(self, application, arguments=[], app_type=None, launch_dir=None,
                capture_output=True):
         """Launch an application and return a proxy object.
 
@@ -372,13 +376,14 @@ class NormalApplicationLauncher(ApplicationLauncher):
         app_path, arguments = self._setup_environment(
             app_path, app_type, arguments)
         process = self._launch_application_process(
-            app_path, capture_output, cwd, arguments)
+            app_path, capture_output, launch_dir, arguments)
         proxy_object = get_proxy_object_for_existing_process(
             dbus_bus=self.dbus_bus,
             emulator_base=self.proxy_base,
             process=process,
             pid=process.pid
         )
+        proxy_object.set_process(process)
         return proxy_object
 
     def _setup_environment(self, app_path, app_type, arguments):
@@ -405,15 +410,15 @@ class NormalApplicationLauncher(ApplicationLauncher):
 
     def _kill_process_and_attach_logs(self, process, app_path):
         stdout, stderr, return_code = _kill_process(process)
-        self.case_addDetail(
+        self.caseAddDetail(
             'process-return-code (%s)' % app_path,
             text_content(str(return_code))
         )
-        self.case_addDetail(
+        self.caseAddDetail(
             'process-stdout (%s)' % app_path,
             text_content(stdout)
         )
-        self.case_addDetail(
+        self.caseAddDetail(
             'process-stderr (%s)' % app_path,
             text_content(stderr)
         )

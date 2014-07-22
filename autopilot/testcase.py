@@ -55,7 +55,6 @@ from testtools.matchers import Equals
 
 from autopilot.application import (
     ClickApplicationLauncher,
-    get_application_launcher_wrapper,
     NormalApplicationLauncher,
     UpstartApplicationLauncher,
 )
@@ -67,6 +66,7 @@ from autopilot.matchers import Eventually
 from autopilot.process import ProcessManager
 from autopilot.utilities import deprecated, on_test_started
 from autopilot._timeout import Timeout
+from autopilot._logging import TestCaseLoggingFixture
 try:
     from autopilot import tracepoint as tp
     HAVE_TRACEPOINT = True
@@ -130,6 +130,12 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
     def setUp(self):
         super(AutopilotTestCase, self).setUp()
         on_test_started(self)
+        self.useFixture(
+            TestCaseLoggingFixture(
+                self.shortDescription(),
+                self.addDetailUniqueName,
+            )
+        )
         self.useFixture(get_debug_profile_fixture()(self.addDetailUniqueName))
 
         _lttng_trace_test_started(self.id())
@@ -244,11 +250,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
          data is retrievable via this object.
 
         """
-        launch_args = {}
-        launch_arg_list = ['app_type', 'launch_dir', 'capture_output']
-        for arg in launch_arg_list:
-            if arg in kwargs:
-                launch_args[arg] = kwargs.pop(arg)
+        launch_args = _get_application_launch_args(kwargs)
+
         launcher = self.useFixture(
             NormalApplicationLauncher(
                 case_addDetail=self.addDetailUniqueName,
@@ -302,7 +305,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
     def launch_upstart_application(self, application_name, uris=[], **kwargs):
         """Launch an application with upstart.
 
-        This method launched an application via the ``upstart-app-launch``
+        This method launched an application via the ``ubuntu-app-launch``
         library, on platforms that support it.
 
         Usage is similar to the
@@ -423,24 +426,20 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
     assertProperties = assertProperty
 
-    @deprecated(
-        "the 'app_type' argument to the launch_test_application method"
-    )
-    def pick_app_launcher(self, app_path):
-        """Given an application path, return an object suitable for launching
-        the application.
 
-        This function attempts to guess what kind of application you are
-        launching. If, for some reason the default implementation returns the
-        wrong launcher, test authors may override this method to provide their
-        own implemetnation.
+def _get_application_launch_args(kwargs):
+    """Returns a dict containing relevant args and values for launching an
+    application.
 
-        The default implementation calls
-        :py:func:`autopilot.application.get_application_launcher_wrapper`
+    Removes used arguments from kwargs parameter.
 
-        """
-        # default implementation is in autopilot.application:
-        return get_application_launcher_wrapper(app_path)
+    """
+    launch_args = {}
+    launch_arg_list = ['app_type', 'launch_dir', 'capture_output']
+    for arg in launch_arg_list:
+        if arg in kwargs:
+            launch_args[arg] = kwargs.pop(arg)
+    return launch_args
 
 
 def _get_process_snapshot():

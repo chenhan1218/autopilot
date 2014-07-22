@@ -171,7 +171,9 @@ class ProxyObjectPrintTreeTests(TestCase):
             path: '/some/path'
             text: 'Hello'
             Error: Object not found with name 'child'.
-            """))
+
+            {}
+            """.format(StateNotFoundError._troubleshoot_url_message)))
 
     def test_print_tree_fileobj(self):
         """print_tree with file object output"""

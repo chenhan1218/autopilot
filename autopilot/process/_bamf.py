@@ -563,7 +563,7 @@ class Window(WindowBase):
         of this object instance.
 
         """
-        return not self._x_win is None
+        return self._x_win is not None
 
     @property
     def monitor(self):

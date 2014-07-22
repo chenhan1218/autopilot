@@ -921,13 +921,19 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
 
         self.assertThat(code, Equals(0))
         self.assertThat(
-            error, Contains(
+            error,
+            Contains(
                 "Starting test tests.test_simple.OuterTestCase."
-                "test_nested_classes"))
+                "test_nested_classes"
+            )
+        )
         self.assertThat(
-            error, Contains(
+            error,
+            Contains(
                 "Starting test tests.test_simple.InnerTestCase."
-                "test_produce_log_output"))
+                "test_produce_log_output"
+            )
+        )
 
     def test_can_enable_debug_output(self):
         """Verbose log must show debug messages if we specify '-vv'."""

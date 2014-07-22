@@ -45,11 +45,19 @@ class LoggedTestResultDecorator(TestResultDecorator):
 
     def _log_details(self, level, details):
         """Log the relavent test details."""
+
         for detail in details:
             # Skip the test-log as it was logged while the test executed
             if detail == "test-log":
                 continue
-            text = "%s: {{{\n%s}}}" % (detail, details[detail].as_text())
+            detail_content = details[detail]
+            if detail_content.content_type.type == "text":
+                text = "%s: {{{\n%s}}}" % (detail, detail_content.as_text())
+            else:
+                text = "Binary attachment: \"%s\" (%s)" % (
+                    detail,
+                    detail_content.content_type
+                )
             self._log(level, text)
 
     def addSuccess(self, test, details=None):

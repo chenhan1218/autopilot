@@ -40,7 +40,9 @@ class StateNotFoundTests(TestCase):
         err = StateNotFoundError("MyClass")
         self.assertThat(
             str(err),
-            Equals("Object not found with name 'MyClass'.")
+            Equals("Object not found with name 'MyClass'.\n\n{}".format(
+                StateNotFoundError._troubleshoot_url_message
+            ))
         )
 
     def test_can_be_constructed_with_filters_only(self):
@@ -48,7 +50,12 @@ class StateNotFoundTests(TestCase):
         err = StateNotFoundError(foo="bar")
         self.assertThat(
             str(err),
-            Equals("Object not found with properties {'foo': 'bar'}.")
+            Equals(
+                "Object not found with properties {}."
+                "\n\n{}".format(
+                    "{'foo': 'bar'}",
+                    StateNotFoundError._troubleshoot_url_message
+                ))
         )
 
     def test_can_be_constructed_with_class_name_and_filters(self):
@@ -57,5 +64,21 @@ class StateNotFoundTests(TestCase):
         self.assertThat(
             str(err),
             Equals("Object not found with name 'MyClass'"
-                   " and properties {'foo': 'bar'}.")
+                   " and properties {}.\n\n{}".format(
+                       "{'foo': 'bar'}",
+                       StateNotFoundError._troubleshoot_url_message
+                   ))
+        )
+
+    def test_StateNotFoundError_endswith_troubleshoot_url_message_text(self):
+        """The assertion raised must end with a link to troubleshooting url."""
+        err = StateNotFoundError('MyClass', foo="bar")
+        self.assertThat(
+            str(err),
+            EndsWith(
+                'Tips on minimizing the occurrence of this failure'
+                'are available here: '
+                'http://developer.ubuntu.com/api/devel/ubuntu-14.10/python/'
+                'autopilot/faq/troubleshooting.html'
+            )
         )

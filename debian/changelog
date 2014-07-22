@@ -1,3 +1,26 @@
+autopilot (1.5.0+14.10.20140613-0ubuntu1) utopic; urgency=low
+
+  [ Tarmac ]
+  * Fix DateTime tests that failed due to recent DateTime changes that
+    removed assumption of UTC TZ. (LP: #1324441, #1327377)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 13 Jun 2014 00:31:08 +0000
+
+autopilot (1.5.0+14.10.20140601-0ubuntu1) utopic; urgency=low
+
+  [ Ted Gould ]
+  * Name change for UAL
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Sun, 01 Jun 2014 21:22:28 +0000
+
+autopilot (1.5.0+14.10.20140526.1-0ubuntu1) utopic; urgency=low
+
+  [ Tarmac ]
+  * Add fixtures for launching applications. (LP: #1322033, #1291531,
+    #1320149)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 26 May 2014 12:50:10 +0000
+
 autopilot (1.5.0+14.10.20140509-0ubuntu1) utopic; urgency=low
 
   [ Thomi Richards ]

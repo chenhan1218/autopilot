@@ -156,7 +156,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def on_proxy_object_built(self, proxy_object):
         cls_name = proxy_object.__class__.__name__
-        if not cls_name in self.selectable_interfaces:
+        if cls_name not in self.selectable_interfaces:
             self.selectable_interfaces[cls_name] = proxy_object
             self.update_selectable_interfaces()
         self.statusBar().clearMessage()

@@ -40,6 +40,8 @@ objects.
 from __future__ import absolute_import
 
 from datetime import datetime, time, timedelta
+from dateutil.tz import tzlocal
+import pytz
 import dbus
 import logging
 from testtools.matchers import Equals
@@ -552,6 +554,8 @@ class DateTime(_array_packed_type(1)):
     """The DateTime class represents a date and time in the UTC timezone.
 
     DateTime is constructed by passing a unix timestamp in to the constructor.
+    The incoming timestamp is assumed to be in localtime.
+    To provide as much support for 32-bit platforms, we use a timedelta.
     Timestamps are expressed as the number of seconds since 1970-01-01T00:00:00
     in the UTC timezone::
 
@@ -604,8 +608,11 @@ class DateTime(_array_packed_type(1)):
     """
     def __init__(self, *args, **kwargs):
         super(DateTime, self).__init__(*args, **kwargs)
-        self._cached_dt = datetime.fromtimestamp(0) + \
-            timedelta(seconds=self[0])
+        ref_dt = pytz.utc.localize(datetime.utcfromtimestamp(0))
+        tz_offset = ref_dt.astimezone(tzlocal()).utcoffset()
+        naive_dt = datetime.fromtimestamp(0) + \
+            timedelta(seconds=self[0]) - tz_offset
+        self._cached_dt = naive_dt.replace(tzinfo=tzlocal())
 
     @property
     def year(self):

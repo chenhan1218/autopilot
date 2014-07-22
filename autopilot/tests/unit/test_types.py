@@ -23,6 +23,7 @@ import dbus
 import six
 
 from datetime import datetime, time
+from dateutil.tz import tzlocal
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import Equals, IsInstance, NotEquals, raises
@@ -359,10 +360,9 @@ class DateTimeTests(TestCase):
         self.assertThat(dt1, Equals(dt2))
 
     def test_equality_with_datetime_timestamp(self):
-        # DateTime no longer assumes UTC and uses local TZ.
         dt1 = DateTime(self.timestamp)
-        dt2 = datetime.fromtimestamp(self.timestamp)
-        dt3 = datetime.fromtimestamp(self.timestamp + 1)
+        dt2 = datetime.fromtimestamp(self.timestamp, tzlocal())
+        dt3 = datetime.fromtimestamp(self.timestamp + 1, tzlocal())
 
         self.assertThat(dt1, Equals(dt2))
         self.assertThat(dt1, NotEquals(dt3))

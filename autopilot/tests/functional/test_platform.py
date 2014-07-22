@@ -26,9 +26,6 @@ class PublicAPITests(TestCase):
 
     @skipIf(platform.model() != "Desktop", "Only available on desktop.")
     def test_get_display_server_returns_x11(self):
-        from time import sleep
-        # Sleep for testing on the VM
-        sleep(600)
         self.assertEqual(platform.get_display_server(), "X11")
 
     @skipIf(platform.model() == "Desktop", "Only available on device.")

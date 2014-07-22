@@ -34,7 +34,6 @@ class PublicAPITests(TestCase):
 
     def setUp(self):
         super().setUp()
-        platform._display_is_x11.cache_clear()
         platform._display_is_mir.cache_clear()
 
     @patch('autopilot.platform._PlatformDetector')

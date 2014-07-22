@@ -155,14 +155,9 @@ def get_display_server():
         return "UNKNOWN"
 
 
-@lru_cache()
 def _display_is_x11():
-    try:
-        print(os.environ)
-        os.environ['DISPLAY']
-        return True
-    except KeyError:
-        return False
+    print(os.environ)
+    return 'DISPLAY' in os.environ
 
 
 @lru_cache()

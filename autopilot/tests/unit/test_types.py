@@ -321,24 +321,6 @@ class DateTimeTests(TestCase):
         self.assertTrue(hasattr(dt, 'second'))
 
     def test_datetime_properties_have_correct_values(self):
-        dt = DateTime(self.timestamp)
-        dt_with_tz = datetime.fromtimestamp(self.timestamp)
-
-        self.assertThat(dt.timestamp, Equals(dt_with_tz.timestamp()))
-        self.assertThat(dt.year, Equals(dt_with_tz.year))
-        self.assertThat(dt.month, Equals(dt_with_tz.month))
-        self.assertThat(dt.day, Equals(dt_with_tz.day))
-        self.assertThat(dt.hour, Equals(dt_with_tz.hour))
-        self.assertThat(dt.minute, Equals(dt_with_tz.minute))
-        self.assertThat(dt.second, Equals(dt_with_tz.second))
-
-    def test_platform_limit_timestamp(self):
-        try:
-            self.assertTrue(DateTime(self.platform_limit_timestamp))
-        except:
-            assert False
-
-    def test_platform_limit_workaround_creates_equivalent_timestamp(self):
         dt = DateTime(self.winter_timestamp)
         winter_dt = datetime.fromtimestamp(self.winter_timestamp)
 
@@ -360,6 +342,12 @@ class DateTimeTests(TestCase):
         self.assertThat(dt.hour, Equals(summer_timestamp.hour))
         self.assertThat(dt.minute, Equals(summer_timestamp.minute))
         self.assertThat(dt.second, Equals(summer_timestamp.second))
+
+    def test_platform_limit_timestamp(self):
+        try:
+            self.assertTrue(DateTime(self.platform_limit_timestamp))
+        except:
+            assert False
 
     def test_equality_with_datetime(self):
         dt1 = DateTime(self.timestamp)

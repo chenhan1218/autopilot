@@ -555,7 +555,7 @@ class DateTime(_array_packed_type(1)):
 
     DateTime is constructed by passing a unix timestamp in to the constructor.
     The incoming timestamp is assumed to be in localtime.
-    To provide as much support for 32-bit platforms, we use a timedelta.
+    To provide date support for 32-bit platforms beyond 2038, we use a timedelta.
     Timestamps are expressed as the number of seconds since 1970-01-01T00:00:00
     in the UTC timezone::
 

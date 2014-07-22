@@ -344,10 +344,7 @@ class DateTimeTests(TestCase):
         self.assertThat(dt.second, Equals(summer_timestamp.second))
 
     def test_platform_limit_timestamp(self):
-        try:
-            self.assertTrue(DateTime(self.platform_limit_timestamp))
-        except:
-            assert False
+        self.assertTrue(DateTime(self.platform_limit_timestamp))
 
     def test_equality_with_datetime(self):
         dt1 = DateTime(self.timestamp)

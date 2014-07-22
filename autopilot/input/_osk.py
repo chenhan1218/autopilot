@@ -18,7 +18,6 @@
 #
 
 import logging
-import six
 from contextlib import contextmanager
 
 from ubuntu_keyboard.emulators.keyboard import Keyboard as KeyboardDriver
@@ -100,7 +99,7 @@ class Keyboard(KeyboardBase):
         not supported by the OSK Backend (or the current OSK langauge layout.)
 
         """
-        if not isinstance(string, six.string_types):
+        if not isinstance(string, str):
             raise TypeError("'string' argument must be a string.")
         _logger.debug("Typing text: %s", string)
         self._keyboard.type(string, delay)

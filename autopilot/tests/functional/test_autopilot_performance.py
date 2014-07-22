@@ -17,9 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import absolute_import
-
-
 from contextlib import contextmanager
 from timeit import default_timer
 from textwrap import dedent

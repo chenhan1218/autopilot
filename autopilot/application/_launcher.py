@@ -559,7 +559,7 @@ def _kill_process(process):
             "10 seconds."
         )
         _attempt_kill_pid(process.pid, signal.SIGKILL)
-    return u''.join(stdout_parts), u''.join(stderr_parts), process.returncode
+    return ''.join(stdout_parts), ''.join(stderr_parts), process.returncode
 
 
 def _attempt_kill_pid(pid, sig=signal.SIGTERM):

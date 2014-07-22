@@ -17,15 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import absolute_import
-
-import dbus
-import six
-
 from datetime import datetime, time
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import Equals, IsInstance, NotEquals, raises
+
+import dbus
 from unittest.mock import patch, Mock
 
 from autopilot.introspection.types import (
@@ -67,21 +64,16 @@ class PlainTypeTests(TestWithScenarios, TestCase):
         ('int32 -ve', dict(t=dbus.Int32, v=-3002050)),
         ('int64 +ve', dict(t=dbus.Int64, v=9223372036854775807)),
         ('int64 -ve', dict(t=dbus.Int64, v=-9223372036854775807)),
-        ('ascii string', dict(t=dbus.String, v=u"Hello World")),
-        ('unicode string', dict(t=dbus.String, v=u"\u2603")),
+        ('ascii string', dict(t=dbus.String, v="Hello World")),
+        ('unicode string', dict(t=dbus.String, v="\u2603")),
         ('bytearray', dict(t=dbus.ByteArray, v=b"Hello World")),
-        ('object path', dict(t=dbus.ObjectPath, v=u"/path/to/object")),
-        ('dbus signature', dict(t=dbus.Signature, v=u"is")),
+        ('object path', dict(t=dbus.ObjectPath, v="/path/to/object")),
+        ('dbus signature', dict(t=dbus.Signature, v="is")),
         ('dictionary', dict(t=dbus.Dictionary, v={'hello': 'world'})),
         ('double', dict(t=dbus.Double, v=3.1415)),
         ('struct', dict(t=dbus.Struct, v=('some', 42, 'value'))),
         ('array', dict(t=dbus.Array, v=['some', 42, 'value'])),
     ]
-
-    if not six.PY3:
-        scenarios.append(
-            ('utf8 string', dict(t=dbus.UTF8String, v=b"Hello World"))
-        )
 
     def test_can_construct(self):
         p = PlainType(self.t(self.v))
@@ -101,14 +93,9 @@ class PlainTypeTests(TestWithScenarios, TestCase):
     def test_str(self):
         """str(p) for PlainType must be the same as the pythonic type."""
         p = PlainType(self.t(self.v))
-        try:
-            expected = str(self.v)
-            observed = str(p)
-            self.assertEqual(expected, observed)
-        # in Python 2.x, str(u'\2603') *should* raise a UnicodeEncode error:
-        except UnicodeEncodeError:
-            if not six.PY2:
-                raise
+        expected = str(self.v)
+        observed = str(p)
+        self.assertEqual(expected, observed)
 
     def test_wait_for_raises_RuntimeError(self):
         """The wait_for method must raise a RuntimeError if it's called."""
@@ -856,12 +843,12 @@ class TypeReprTests(TestCase):
         self.assertEqual(_boolean_repr, observed)
 
     def test_text_repr_handles_dbus_string(self):
-        unicode_text = u"plɹoʍ ollǝɥ"
+        unicode_text = "plɹoʍ ollǝɥ"
         observed = _text_repr(dbus.String(unicode_text))
         self.assertEqual(repr(unicode_text), observed)
 
     def test_text_repr_handles_dbus_object_path(self):
-        path = u"/path/to/some/object"
+        path = "/path/to/some/object"
         observed = _text_repr(dbus.ObjectPath(path))
         self.assertEqual(repr(path), observed)
 

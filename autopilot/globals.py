@@ -18,8 +18,6 @@
 #
 
 
-from __future__ import absolute_import
-
 from autopilot._debug import DebugProfile
 from autopilot.utilities import CleanupRegistered
 from testtools.content import text_content

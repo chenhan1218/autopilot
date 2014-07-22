@@ -24,12 +24,7 @@
 
 from unittest.mock import patch
 
-try:
-    # Python 2
-    from StringIO import StringIO
-except ImportError:
-    # Python 3
-    from io import StringIO
+from io import StringIO
 
 from testscenarios import WithScenarios
 from testtools import TestCase

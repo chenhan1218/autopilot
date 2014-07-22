@@ -18,12 +18,9 @@
 #
 
 
-from __future__ import absolute_import
-
 import dbus
 import logging
 from PyQt4 import QtGui, QtCore
-import six
 
 from autopilot.exceptions import StateNotFoundError
 from autopilot.introspection._search import (
@@ -189,8 +186,6 @@ class MainWindow(QtGui.QMainWindow):
 
     def conn_list_activated(self, index):
         proxy_object = self.connection_list.itemData(index)
-        if not six.PY3:
-            proxy_object = proxy_object.toPyObject()
         self.proxy_object = proxy_object
         if self.proxy_object:
             self.filter_widget.set_enabled(True)

@@ -340,7 +340,7 @@ class DateTimeTests(TestCase):
 
     def test_platform_limit_workaround_creates_equivalent_timestamp(self):
         dt = DateTime(self.winter_timestamp)
-        winter_dt = datetime.utcfromtimestamp(self.winter_timestamp)
+        winter_dt = datetime.fromtimestamp(self.winter_timestamp)
 
         self.assertThat(dt.timestamp, Equals(winter_dt.timestamp()))
         self.assertThat(dt.year, Equals(winter_dt.year))
@@ -351,7 +351,7 @@ class DateTimeTests(TestCase):
         self.assertThat(dt.second, Equals(winter_dt.second))
 
         dt = DateTime(self.summer_timestamp)
-        summer_timestamp = datetime.utcfromtimestamp(self.summer_timestamp)
+        summer_timestamp = datetime.fromtimestamp(self.summer_timestamp)
 
         self.assertThat(dt.timestamp, Equals(summer_timestamp.timestamp()))
         self.assertThat(dt.year, Equals(summer_timestamp.year))
@@ -374,6 +374,7 @@ class DateTimeTests(TestCase):
         self.assertThat(dt1, Equals(dt2))
 
     def test_equality_with_datetime_timestamp(self):
+        # DateTime no longer assumes UTC and uses local TZ.
         dt1 = DateTime(self.timestamp)
         dt2 = datetime.fromtimestamp(self.timestamp)
         dt3 = datetime.fromtimestamp(self.timestamp + 1)

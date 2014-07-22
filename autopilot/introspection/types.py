@@ -40,7 +40,7 @@ objects.
 from __future__ import absolute_import
 
 from datetime import datetime, time, timedelta
-from dateutil.tz import tzlocal
+from dateutil.tz import tzlocal, tzutc
 import pytz
 import dbus
 import logging
@@ -608,10 +608,17 @@ class DateTime(_array_packed_type(1)):
     """
     def __init__(self, *args, **kwargs):
         super(DateTime, self).__init__(*args, **kwargs)
+        # grab the reference offset for the local timezone
+        # compare to the offset for the local timezone after object is created
+        # finally create an object that is in the proper local timezone
         ref_dt = pytz.utc.localize(datetime.utcfromtimestamp(0))
-        tz_offset = ref_dt.astimezone(tzlocal()).utcoffset()
-        naive_dt = datetime.fromtimestamp(0) + \
-            timedelta(seconds=self[0]) - tz_offset
+        tz_ref_offset = ref_dt.astimezone(tzlocal()).utcoffset()
+
+        naive_dt = datetime.fromtimestamp(0) + timedelta(seconds=self[0])
+        tz_naive_offset = \
+            naive_dt.replace(tzinfo=tzutc()).astimezone(tzlocal()).utcoffset()
+        naive_dt = naive_dt + (tz_naive_offset - tz_ref_offset)
+
         self._cached_dt = naive_dt.replace(tzinfo=tzlocal())
 
     @property

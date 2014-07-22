@@ -88,8 +88,18 @@ class StateNotFoundError(RuntimeError):
                     repr(filters)
                 )
 
+    _troubleshoot_url_message = (
+        'Tips on minimizing the occurrence of this failure'
+        'are available here: '
+        'http://developer.ubuntu.com/api/devel/ubuntu-14.10/python/'
+        'autopilot/faq/troubleshooting.html'
+    )
+
     def __str__(self):
-        return self._message
+        return '{}\n\n{}'.format(
+            self._message,
+            self._troubleshoot_url_message
+        )
 
 
 class InvalidXPathQuery(ValueError):

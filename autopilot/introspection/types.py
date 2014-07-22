@@ -616,7 +616,8 @@ class DateTime(_array_packed_type(1)):
 
         naive_dt = datetime.fromtimestamp(0) + timedelta(seconds=self[0])
         tz_naive_offset = \
-            naive_dt.replace(tzinfo=tzutc()).astimezone(tzlocal()).utcoffset()
+            naive_dt.replace(year=datetime.now().year, tzinfo=tzutc()). \
+            astimezone(tzlocal()).utcoffset()
         naive_dt = naive_dt + (tz_naive_offset - tz_ref_offset)
 
         self._cached_dt = naive_dt.replace(tzinfo=tzlocal())

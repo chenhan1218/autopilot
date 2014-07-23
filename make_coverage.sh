@@ -59,13 +59,13 @@ if [ -d htmlcov ]; then
 	rm -r htmlcov
 fi
 
-python -m coverage erase
+python3 -m coverage erase
 python3 -m coverage run --append --branch --include "autopilot/*" -m autopilot.run run $TEST_SUITE_TO_RUN
 
 if [ "$INCLUDE_TEST_FILES" = "yes" ]; then
-    python -m coverage html
+    python3 -m coverage html
 else
-    python -m coverage html --omit "autopilot/tests/*"
+    python3 -m coverage html --omit "autopilot/tests/*"
 fi
 
 if [ "$SHOW_IN_BROWSER" = "yes" ]; then

@@ -18,8 +18,6 @@
 #
 
 
-from __future__ import absolute_import
-
 import glob
 import os
 import os.path
@@ -635,7 +633,7 @@ SyntaxError: invalid syntax
 
     def test_can_create_subunit_result_file(self):
         self.create_test_file(
-            "test_simple.py", dedent(u"""\
+            "test_simple.py", dedent("""\
 
             from autopilot.testcase import AutopilotTestCase
 
@@ -923,13 +921,19 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
 
         self.assertThat(code, Equals(0))
         self.assertThat(
-            error, Contains(
+            error,
+            Contains(
                 "Starting test tests.test_simple.OuterTestCase."
-                "test_nested_classes"))
+                "test_nested_classes"
+            )
+        )
         self.assertThat(
-            error, Contains(
+            error,
+            Contains(
                 "Starting test tests.test_simple.InnerTestCase."
-                "test_produce_log_output"))
+                "test_produce_log_output"
+            )
+        )
 
     def test_can_enable_debug_output(self):
         """Verbose log must show debug messages if we specify '-vv'."""

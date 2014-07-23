@@ -20,8 +20,6 @@
 
 """BAMF implementation of the Process Management"""
 
-from __future__ import absolute_import
-
 import dbus
 import dbus.glib
 from gi.repository import Gio

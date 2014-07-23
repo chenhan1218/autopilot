@@ -17,11 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from six import PY3
-if PY3:
-    from contextlib import ExitStack
-else:
-    from contextlib2 import ExitStack
+from contextlib import ExitStack
 from gi.repository import GLib
 import signal
 import subprocess
@@ -77,7 +73,7 @@ class ApplicationLauncherTests(TestCase):
 
     def test_init_uses_default_values(self):
         launcher = ApplicationLauncher()
-        self.assertEqual(launcher.case_addDetail, launcher.addDetail)
+        self.assertEqual(launcher.caseAddDetail, launcher.addDetail)
         self.assertEqual(launcher.proxy_base, None)
         self.assertEqual(launcher.dbus_bus, 'session')
 
@@ -91,7 +87,7 @@ class ApplicationLauncherTests(TestCase):
             emulator_base=emulator_base,
             dbus_bus=dbus_bus,
         )
-        self.assertEqual(launcher.case_addDetail, case_addDetail)
+        self.assertEqual(launcher.caseAddDetail, case_addDetail)
         self.assertEqual(launcher.proxy_base, emulator_base)
         self.assertEqual(launcher.dbus_bus, dbus_bus)
 
@@ -108,7 +104,7 @@ class NormalApplicationLauncherTests(TestCase):
         app_launcher = NormalApplicationLauncher(mock_addDetail)
 
         with patch.object(
-            _l, '_kill_process', return_value=(u"stdout", u"stderr", 0)
+            _l, '_kill_process', return_value=("stdout", "stderr", 0)
         ):
             app_launcher._kill_process_and_attach_logs(0, 'app')
 

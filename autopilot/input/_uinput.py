@@ -22,7 +22,6 @@
 import logging
 import os.path
 
-import six
 from evdev import UInput, ecodes as e
 
 import autopilot.platform
@@ -135,7 +134,7 @@ class Keyboard(KeyboardBase):
         :raises TypeError: if ``keys`` is not a string.
 
         """
-        if not isinstance(keys, six.string_types):
+        if not isinstance(keys, str):
             raise TypeError("'keys' argument must be a string.")
 
         for key in self._sanitise_keys(keys):
@@ -159,7 +158,7 @@ class Keyboard(KeyboardBase):
         :raises ValueError: if one of the keys to be released is not pressed.
 
         """
-        if not isinstance(keys, six.string_types):
+        if not isinstance(keys, str):
             raise TypeError("'keys' argument must be a string.")
 
         for key in reversed(self._sanitise_keys(keys)):
@@ -195,7 +194,7 @@ class Keyboard(KeyboardBase):
         :raises TypeError: if ``keys`` is not a string.
 
         """
-        if not isinstance(string, six.string_types):
+        if not isinstance(string, str):
             raise TypeError("'keys' argument must be a string.")
         _logger.debug("Typing text %r", string)
         for key in string:

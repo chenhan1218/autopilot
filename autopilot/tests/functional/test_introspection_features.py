@@ -36,7 +36,7 @@ from testtools.matchers import (
     StartsWith,
 )
 from textwrap import dedent
-from six import StringIO
+from io import StringIO
 
 from autopilot import platform
 from autopilot.matchers import Eventually

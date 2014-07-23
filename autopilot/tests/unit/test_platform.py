@@ -22,10 +22,10 @@
 
 from contextlib import contextmanager
 from io import StringIO
-from unittest.mock import patch
 from testtools import TestCase
 from testtools.matchers import Equals
 from tempfile import NamedTemporaryFile
+from unittest.mock import patch
 
 import autopilot.platform as platform
 

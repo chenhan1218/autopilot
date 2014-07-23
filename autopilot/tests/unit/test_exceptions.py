@@ -18,7 +18,7 @@
 #
 
 from testtools import TestCase
-from testtools.matchers import raises, EndsWith, Equals
+from testtools.matchers import raises, Equals, EndsWith
 
 from autopilot.exceptions import StateNotFoundError
 

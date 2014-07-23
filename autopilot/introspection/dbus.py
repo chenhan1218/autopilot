@@ -25,12 +25,9 @@ module is the DBusIntrospectableObject class.
 
 """
 
-from __future__ import absolute_import
-
 from contextlib import contextmanager
 import sys
 import logging
-import six
 
 from autopilot.exceptions import StateNotFoundError
 from autopilot.introspection._object_registry import (
@@ -480,7 +477,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         indent = "  " * _curdepth
         if output is None:
             output = sys.stdout
-        elif isinstance(output, six.string_types):
+        elif isinstance(output, str):
             output = open(output, 'w')
 
         # print path
@@ -543,7 +540,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         """
         state_name = xpathselect.get_classname_from_path(path)
-        if isinstance(state_name, six.text_type):
+        if isinstance(state_name, str):
             state_name = state_name.encode('utf-8')
         class_name = cls.__name__.encode('utf-8')
         return state_name == class_name
@@ -560,6 +557,6 @@ def get_type_name(maybe_string_or_class):
     can specify the query to be used to select themselves.
 
     """
-    if not isinstance(maybe_string_or_class, six.string_types):
+    if not isinstance(maybe_string_or_class, str):
         return maybe_string_or_class.__name__
     return maybe_string_or_class

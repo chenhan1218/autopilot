@@ -28,6 +28,7 @@ raises it.
 
 
 class BackendException(RuntimeError):
+
     """An error occured while trying to initialise an autopilot backend."""
 
     def __init__(self, original_exception):
@@ -60,6 +61,7 @@ class StateNotFoundError(RuntimeError):
       application.
 
     """
+
     def __init__(self, class_name=None, **filters):
         """Construct a StateNotFoundError.
 
@@ -67,22 +69,21 @@ class StateNotFoundError(RuntimeError):
             are specified.
 
         """
-
         if class_name is None and not filters:
             raise ValueError("Must specify either class name or filters.")
 
         if class_name is None:
             self._message = \
-                u"Object not found with properties {}.".format(
-                    repr(filters),
+                "Object not found with properties {}.".format(
+                    repr(filters)
                 )
         elif not filters:
-            self._message = u"Object not found with name '{}'.".format(
+            self._message = "Object not found with name '{}'.".format(
                 class_name
             )
         else:
             self._message = \
-                u"Object not found with name '{}' and properties {}.".format(
+                "Object not found with name '{}' and properties {}.".format(
                     class_name,
                     repr(filters)
                 )

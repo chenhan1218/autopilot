@@ -17,8 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import absolute_import
-
 from unittest.mock import patch
 from testtools import TestCase
 from testtools.matchers import (

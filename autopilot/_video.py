@@ -80,12 +80,12 @@ class RMDVideoLogFixture(fixtures.Fixture):
         self._capture_process = subprocess.Popen(
             args,
             stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT
+            stderr=subprocess.STDOUT,
+            universal_newlines=True
         )
         # wait until rmd session directory is created
-        self.assertThat(
-            lambda: glob.glob(video_session_pattern),
-            Eventually(NotEquals(orig_sessions))
+        Eventually(NotEquals(orig_sessions)).match(
+            lambda: glob.glob(video_session_pattern)
         )
 
     def _stop_video_capture(self, test_instance):

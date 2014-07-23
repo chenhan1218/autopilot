@@ -34,7 +34,7 @@ from autopilot import run
 class LoggedTestResultDecoratorTests(TestCase):
 
     def construct_simple_content_object(self):
-        return text_content(self.getUniqueString)
+        return text_content(self.getUniqueString())
 
     def test_can_construct(self):
         testresult.LoggedTestResultDecorator(Mock())

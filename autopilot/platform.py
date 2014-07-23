@@ -156,7 +156,6 @@ def get_display_server():
 
 
 def _display_is_x11():
-    print(os.environ)
     return 'DISPLAY' in os.environ
 
 

@@ -22,7 +22,6 @@ from unittest.mock import Mock, patch
 import logging
 import os.path
 from shutil import rmtree
-import six
 import subprocess
 import tempfile
 from testtools import TestCase, skipUnless
@@ -38,10 +37,8 @@ from testtools.matchers import (
     StartsWith,
 )
 
-if six.PY3:
-    from contextlib import ExitStack
-else:
-    from contextlib2 import ExitStack
+from contextlib import ExitStack
+from io import StringIO
 
 from autopilot import have_vis, run, _video
 
@@ -241,7 +238,7 @@ class TestRunLaunchApp(TestCase):
             '_prepare_application_for_launch',
             return_value=(app_name, app_arguments)
         ):
-            with patch('sys.stdout', new=six.StringIO()) as stdout:
+            with patch('sys.stdout', new=StringIO()) as stdout:
                 patched_launch_proc.side_effect = RuntimeError(
                     "Failure Message"
                 )
@@ -537,7 +534,7 @@ class TestRunLaunchAppHelpers(TestCase):
 
     def test_print_message_and_exit_error_prints_message(self):
         err_msg = self.getUniqueString()
-        with patch('sys.stdout', new=six.StringIO()) as stdout:
+        with patch('sys.stdout', new=StringIO()) as stdout:
             try:
                 run._print_message_and_exit_error(err_msg)
             except SystemExit:
@@ -732,24 +729,20 @@ class OutputStreamTests(TestCase):
         path = tempfile.mktemp()
         self.addCleanup(os.unlink, path)
         stream = run._get_text_mode_file_stream(path)
-        if six.PY2:
-            self.assertThat(stream.mode, Equals('w'))
-        else:
-            self.assertThat(stream.mode, Equals('wb'))
+        self.assertThat(stream.mode, Equals('wb'))
 
     def test_text_mode_file_stream_accepts_text_type_only(self):
         path = tempfile.mktemp()
         self.addCleanup(os.unlink, path)
         stream = run._get_text_mode_file_stream(path)
         self.assertThat(
-            lambda: stream.write(u'Text!'),
+            lambda: stream.write('Text!'),
             Not(Raises())
         )
-        if six.PY3:
-            self.assertThat(
-                lambda: stream.write(b'Bytes'),
-                raises(TypeError)
-            )
+        self.assertThat(
+            lambda: stream.write(b'Bytes'),
+            raises(TypeError)
+        )
 
     def test_binary_mode_file_stream_opens_in_binary_mode(self):
         path = tempfile.mktemp()
@@ -762,14 +755,13 @@ class OutputStreamTests(TestCase):
         self.addCleanup(os.unlink, path)
         stream = run._get_binary_mode_file_stream(path)
         self.assertThat(
-            lambda: stream.write(u'Text!'),
+            lambda: stream.write('Text!'),
             Not(Raises())
         )
-        if six.PY3:
-            self.assertThat(
-                lambda: stream.write(b'Bytes'),
-                raises(TypeError)
-            )
+        self.assertThat(
+            lambda: stream.write(b'Bytes'),
+            raises(TypeError)
+        )
 
     def test_raw_binary_mode_file_stream_opens_in_binary_mode(self):
         path = tempfile.mktemp()
@@ -785,11 +777,10 @@ class OutputStreamTests(TestCase):
             lambda: stream.write(b'Bytes'),
             Not(Raises())
         )
-        if six.PY3:
-            self.assertThat(
-                lambda: stream.write(u'Text'),
-                raises(TypeError)
-            )
+        self.assertThat(
+            lambda: stream.write('Text'),
+            raises(TypeError)
+        )
 
     def test_xml_format_opens_text_mode_stream(self):
         output = tempfile.mktemp()
@@ -815,7 +806,7 @@ class OutputStreamTests(TestCase):
     def test_print_log_file_location_prints_correct_message(self):
         path = self.getUniqueString()
 
-        with patch('sys.stdout', new=six.StringIO()) as patched_stdout:
+        with patch('sys.stdout', new=StringIO()) as patched_stdout:
             run._print_default_log_path(path)
             output = patched_stdout.getvalue()
 
@@ -942,7 +933,7 @@ class TestProgramTests(TestCase):
     def test_dont_run_when_zero_tests_loaded(self):
         fake_args = create_default_run_args()
         program = run.TestProgram(fake_args)
-        with patch('sys.stdout', new=six.StringIO()):
+        with patch('sys.stdout', new=StringIO()):
             self.assertRaisesRegexp(RuntimeError,
                                     'Did not find any tests',
                                     program.run)

@@ -20,7 +20,6 @@
 from autopilot import _debug as d
 
 from unittest.mock import Mock, patch
-import six
 from tempfile import NamedTemporaryFile
 from testtools import TestCase
 from testtools.matchers import (
@@ -176,37 +175,31 @@ class LogFollowerTests(TestCase):
             self.assertTrue(callable(getattr(args[1], 'addCleanup', None)))
 
     def test_reads_new_file_lines(self):
-        if six.PY2:
-            open_args = dict(bufsize=0)
-        else:
-            open_args = dict(buffering=0)
+        open_args = dict(buffering=0)
         with NamedTemporaryFile(**open_args) as temp_file:
-            temp_file.write(six.b("Hello\n"))
+            temp_file.write("Hello\n".encode())
             log_debug_object = d.LogFileDebugObject(
                 self.fake_caseAddDetail,
                 temp_file.name
             )
             log_debug_object.setUp()
-            temp_file.write(six.b("World\n"))
+            temp_file.write("World\n".encode())
             log_debug_object.cleanUp()
 
             self.assertThat(self.fake_caseAddDetail.call_count, Equals(1))
             args, _ = self.fake_caseAddDetail.call_args
             self.assertThat(args[0], Equals(temp_file.name))
-            self.assertThat(args[1].as_text(), Equals(six.u("World\n")))
+            self.assertThat(args[1].as_text(), Equals("World\n"))
 
     def test_can_follow_file_with_binary_content(self):
-        if six.PY2:
-            open_args = dict(bufsize=0)
-        else:
-            open_args = dict(buffering=0)
+        open_args = dict(buffering=0)
         with NamedTemporaryFile(**open_args) as temp_file:
             log_debug_object = d.LogFileDebugObject(
                 self.fake_caseAddDetail,
                 temp_file.name
             )
             log_debug_object.setUp()
-            temp_file.write(six.b("Hello\x88World"))
+            temp_file.write("Hello\x88World".encode())
             log_debug_object.cleanUp()
 
         args, _ = self.fake_caseAddDetail.call_args

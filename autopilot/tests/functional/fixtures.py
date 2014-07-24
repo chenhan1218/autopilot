@@ -19,8 +19,6 @@
 
 """Fixtures for the autopilot functional test suite."""
 
-from __future__ import absolute_import
-
 import logging
 import os
 import stat

@@ -46,8 +46,6 @@ root of the application introspection tree.
 
 """
 
-from __future__ import absolute_import
-
 import logging
 
 from fixtures import EnvironmentVariable
@@ -68,6 +66,7 @@ from autopilot.matchers import Eventually
 from autopilot.process import ProcessManager
 from autopilot.utilities import deprecated, on_test_started
 from autopilot._timeout import Timeout
+from autopilot._logging import TestCaseLoggingFixture
 from autopilot._video import get_video_recording_fixture
 try:
     from autopilot import tracepoint as tp
@@ -132,6 +131,12 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
     def setUp(self):
         super(AutopilotTestCase, self).setUp()
         on_test_started(self)
+        self.useFixture(
+            TestCaseLoggingFixture(
+                self.shortDescription(),
+                self.addDetailUniqueName,
+            )
+        )
         self.useFixture(get_debug_profile_fixture()(self.addDetailUniqueName))
         self.useFixture(get_video_recording_fixture()(self))
         _lttng_trace_test_started(self.id())

@@ -55,23 +55,14 @@ class X11ScreenShotTests(TestCase):
         return pixbuf_obj
 
     @skipIf(platform.model() != "Desktop", "Only available on desktop.")
-    def test_save_gdk_pixbuf_to_fileobject_raises_if_save_failed(self):
+    def test_save_gdk_pixbuf_to_fileobject_raises_error_if_save_failed(self):
         pixbuf_obj = self.get_pixbuf_that_mocks_saving(False, None)
-        self.assertRaises(
-            RuntimeError,
-            lambda: _ss._save_gdk_pixbuf_to_fileobject(pixbuf_obj)
-        )
-
-    @patch.object(_ss, 'logger')
-    def test_save_gdk_pixbuf_to_fileobject_logs_if_save_failed(self, p_log):
-        pixbuf_obj = self.get_pixbuf_that_mocks_saving(False, None)
-
-        self.assertRaises(
-            RuntimeError,
-            lambda: _ss._save_gdk_pixbuf_to_fileobject(pixbuf_obj)
-        )
-
-        p_log.error.assert_called_once_with("Unable to write image data.")
+        with patch.object(_ss, 'logger') as p_log:
+            self.assertRaises(
+                RuntimeError,
+                lambda: _ss._save_gdk_pixbuf_to_fileobject(pixbuf_obj)
+            )
+            p_log.error.assert_called_once_with("Unable to write image data.")
 
     def test_save_gdk_pixbuf_to_fileobject_returns_data_object(self):
         expected_data = b"Tests Rock"

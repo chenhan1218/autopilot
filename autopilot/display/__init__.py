@@ -21,8 +21,20 @@
 """The display module contaions support for getting screen information."""
 
 from collections import OrderedDict
+
 from autopilot.utilities import _pick_backend
 from autopilot.input import Mouse
+from autopilot.display._screenshot import get_screenshot_data
+
+
+__all__ = [
+    "Display",
+    "get_screenshot_data",
+    "is_rect_on_screen",
+    "is_point_on_screen",
+    "is_point_on_any_screen",
+    "move_mouse_to_screen",
+]
 
 
 def is_rect_on_screen(screen_number, rect):

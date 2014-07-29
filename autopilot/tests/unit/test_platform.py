@@ -19,17 +19,22 @@
 
 """Tests for the autopilot platform code."""
 
-import autopilot.platform as platform
 
+from contextlib import contextmanager
 from io import StringIO
-
-from unittest.mock import patch
 from testtools import TestCase
 from testtools.matchers import Equals
 from tempfile import NamedTemporaryFile
+from unittest.mock import patch
+
+import autopilot.platform as platform
 
 
 class PublicAPITests(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        platform._display_is_mir.cache_clear()
 
     @patch('autopilot.platform._PlatformDetector')
     def test_model_creates_platform_detector(self, mock_detector):
@@ -50,6 +55,27 @@ class PublicAPITests(TestCase):
     def test_image_codename_returns_correct_value(self, mock_detector):
         mock_detector.image_codename = "test123"
         self.assertThat(platform.image_codename(), Equals('test123'))
+
+    def test_is_x11_returns_False_on_failure(self):
+        with _simulate_not_X11():
+            self.assertFalse(platform._display_is_x11())
+
+    def test_is_x11_returns_True_on_success(self):
+        with _simulate_X11():
+            self.assertTrue(platform._display_is_x11())
+
+
+class PlatformGetProcessNameTests(TestCase):
+
+    def test_returns_callable_value(self):
+        test_callable = lambda: "foo"
+        self.assertEqual("foo", platform._get_process_name(test_callable))
+
+    def test_returns_string(self):
+        self.assertEqual("foo", platform._get_process_name("foo"))
+
+    def test_raises_exception_if_unsupported_passed(self):
+        self.assertRaises(ValueError, platform._get_process_name, 0)
 
 
 class PlatformDetectorTests(TestCase):
@@ -221,3 +247,15 @@ class BuildPropertyParserTests(TestCase):
         prop_file = StringIO("ro.product.model=maguro")
         properties = platform._parse_build_properties_file(prop_file)
         self.assertThat(properties, Equals({'ro.product.model': 'maguro'}))
+
+
+@contextmanager
+def _simulate_not_X11():
+    with patch.dict(platform.os.environ, dict(), clear=True):
+        yield
+
+
+@contextmanager
+def _simulate_X11():
+    with patch.dict(platform.os.environ, dict(DISPLAY=':0'), clear=True):
+        yield

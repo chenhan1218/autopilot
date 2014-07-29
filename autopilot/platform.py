@@ -18,6 +18,10 @@
 #
 
 
+import os
+import psutil
+from functools import lru_cache
+
 """
 Platform identification utilities for Autopilot.
 ================================================
@@ -134,6 +138,43 @@ def is_tablet():
 
     """
     return _PlatformDetector.create().is_tablet
+
+
+def get_display_server():
+    """Returns display server type.
+
+    :returns: string indicating display server type. Either "X11", "MIR" or
+      "UNKNOWN"
+
+    """
+    if _display_is_x11():
+        return "X11"
+    elif _display_is_mir():
+        return "MIR"
+    else:
+        return "UNKNOWN"
+
+
+def _display_is_x11():
+    return 'DISPLAY' in os.environ
+
+
+@lru_cache()
+def _display_is_mir():
+    return "unity-system-compositor" in [
+        _get_process_name(p.name) for p in psutil.process_iter()
+    ]
+
+
+# Different vers. of psutil across Trusty and Utopic have name as either a
+# string or a method.
+def _get_process_name(proc):
+    if callable(proc):
+        return proc()
+    elif isinstance(proc, str):
+        return proc
+    else:
+        raise ValueError("Unknown process name format.")
 
 
 class _PlatformDetector(object):

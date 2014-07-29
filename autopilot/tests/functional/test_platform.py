@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,20 +17,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from testtools import TestCase, skipIf
 
-"""A collection of functions relating to the X11clipboards."""
-
-import autopilot._glib
+import autopilot.platform as platform
 
 
-def get_clipboard_contents():
-    """Get the contents of the clipboard.
+class PublicAPITests(TestCase):
 
-    This function returns the text copied to the 'CLIPBOARD' clipboard. Text
-    can be added to this clipbaord using Ctrl+C.
+    @skipIf(platform.model() != "Desktop", "Only available on desktop.")
+    def test_get_display_server_returns_x11(self):
+        self.assertEqual(platform.get_display_server(), "X11")
 
-    """
-    Gtk = autopilot._glib._import_gtk()
-    Gdk = autopilot._glib._import_gdk()
-    cb = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-    return cb.wait_for_text()
+    @skipIf(platform.model() == "Desktop", "Only available on device.")
+    def test_get_display_server_returns_mir(self):
+        self.assertEqual(platform.get_display_server(), "MIR")

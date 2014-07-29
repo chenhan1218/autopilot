@@ -40,7 +40,7 @@ from testtools.matchers import (
 from contextlib import ExitStack
 from io import StringIO
 
-from autopilot import have_vis, run
+from autopilot import have_vis, run, _video
 
 
 class RunUtilityFunctionTests(TestCase):
@@ -87,45 +87,52 @@ class RunUtilityFunctionTests(TestCase):
         self.assertFalse(patched_globals.set_default_timeout_period.called)
         self.assertFalse(patched_globals.set_long_timeout_period.called)
 
-    @patch('autopilot.run.autopilot.globals')
-    def test_configure_video_recording_not_called(self, patched_globals):
-        args = Namespace(record_directory='', record=False, record_options='')
-        run._configure_video_recording(args)
+    @patch.object(_video, '_have_video_recording_facilities', new=lambda: True)
+    def test_correct_video_record_fixture_is_called_with_record_on(self):
+        args = Namespace(record_directory='', record=True)
+        _video.configure_video_recording(args)
+        FixtureClass = _video.get_video_recording_fixture()
+        fixture = FixtureClass(args)
 
-        self.assertFalse(patched_globals._configure_video_recording.called)
+        self.assertEqual(fixture.__class__.__name__, 'RMDVideoLogFixture')
 
-    @patch.object(run, '_have_video_recording_facilities', new=lambda: True)
-    def test_configure_video_recording_called_with_record_set(self):
-        args = Namespace(record_directory='', record=True, record_options='')
-        with patch('autopilot.run.autopilot.globals') as patched_globals:
-            run._configure_video_recording(args)
-            patched_globals.configure_video_recording.assert_called_once_with(
-                True,
-                '/tmp/autopilot',
-                ''
-            )
+    @patch.object(_video, '_have_video_recording_facilities', new=lambda: True)
+    def test_correct_video_record_fixture_is_called_with_record_off(self):
+        args = Namespace(record_directory='', record=False)
+        _video.configure_video_recording(args)
+        FixtureClass = _video.get_video_recording_fixture()
+        fixture = FixtureClass(args)
 
-    @patch.object(run, '_have_video_recording_facilities', new=lambda: True)
-    def test_configure_video_record_directory_imples_record(self):
+        self.assertEqual(fixture.__class__.__name__, 'DoNothingFixture')
+
+    @patch.object(_video, '_have_video_recording_facilities', new=lambda: True)
+    def test_configure_video_record_directory_implies_record(self):
         token = self.getUniqueString()
-        args = Namespace(
-            record_directory=token,
-            record=False,
-            record_options=''
-        )
-        with patch('autopilot.run.autopilot.globals') as patched_globals:
-            run._configure_video_recording(args)
-            patched_globals.configure_video_recording.assert_called_once_with(
-                True,
-                token,
-                ''
-            )
+        args = Namespace(record_directory=token, record=False)
+        _video.configure_video_recording(args)
+        FixtureClass = _video.get_video_recording_fixture()
+        fixture = FixtureClass(args)
 
-    @patch.object(run, '_have_video_recording_facilities', new=lambda: False)
+        self.assertEqual(fixture.__class__.__name__, 'RMDVideoLogFixture')
+
+    @patch.object(_video, '_have_video_recording_facilities', new=lambda: True)
+    def test_configure_video_recording_sets_default_dir(self):
+        args = Namespace(record_directory='', record=True)
+        _video.configure_video_recording(args)
+        PartialFixture = _video.get_video_recording_fixture()
+        partial_fixture = PartialFixture(None)
+
+        self.assertEqual(partial_fixture.recording_directory, '/tmp/autopilot')
+
+    @patch.object(
+        _video,
+        '_have_video_recording_facilities',
+        new=lambda: False
+    )
     def test_configure_video_recording_raises_RuntimeError(self):
-        args = Namespace(record_directory='', record=True, record_options='')
+        args = Namespace(record_directory='', record=True)
         self.assertThat(
-            lambda: run._configure_video_recording(args),
+            lambda: _video.configure_video_recording(args),
             raises(
                 RuntimeError(
                     "The application 'recordmydesktop' needs to be installed "
@@ -135,22 +142,22 @@ class RunUtilityFunctionTests(TestCase):
         )
 
     def test_video_record_check_calls_subprocess_with_correct_args(self):
-        with patch.object(run.subprocess, 'call') as patched_call:
-            run._have_video_recording_facilities()
+        with patch.object(_video.subprocess, 'call') as patched_call:
+            _video._have_video_recording_facilities()
             patched_call.assert_called_once_with(
                 ['which', 'recordmydesktop'],
                 stdout=run.subprocess.PIPE
             )
 
     def test_video_record_check_returns_true_on_zero_return_code(self):
-        with patch.object(run.subprocess, 'call') as patched_call:
+        with patch.object(_video.subprocess, 'call') as patched_call:
             patched_call.return_value = 0
-            self.assertTrue(run._have_video_recording_facilities())
+            self.assertTrue(_video._have_video_recording_facilities())
 
     def test_video_record_check_returns_false_on_nonzero_return_code(self):
-        with patch.object(run.subprocess, 'call') as patched_call:
+        with patch.object(_video.subprocess, 'call') as patched_call:
             patched_call.return_value = 1
-            self.assertFalse(run._have_video_recording_facilities())
+            self.assertFalse(_video._have_video_recording_facilities())
 
     def test_run_with_profiling_creates_profile_data_file(self):
         output_path = tempfile.mktemp()
@@ -913,15 +920,11 @@ class TestProgramTests(TestCase):
             config_timeout = stack.enter_context(
                 patch.object(run, '_configure_timeout_profile')
             )
-            configure_video = stack.enter_context(
-                patch.object(run, '_configure_video_recording')
-            )
 
             load_tests.return_value = (mock_test_suite, False)
             fake_construct.return_value = mock_construct_test_result
             program.run()
 
-            configure_video.assert_called_once_with(fake_args)
             config_timeout.assert_called_once_with(fake_args)
             configure_debug.assert_called_once_with(fake_args)
             fake_construct.assert_called_once_with(fake_args)

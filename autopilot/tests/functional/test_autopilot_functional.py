@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2012-2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,17 +18,21 @@
 #
 
 
+from fixtures import TempDir
 import glob
 import os
 import os.path
 import re
 from tempfile import mktemp
 from testtools import skipIf
-from testtools.matchers import Contains, Equals, MatchesRegex, Not
+from testtools.matchers import Contains, Equals, MatchesRegex, Not, NotEquals
 from textwrap import dedent
+from unittest.mock import Mock
 
 from autopilot import platform
+from autopilot.matchers import Eventually
 from autopilot.tests.functional import AutopilotRunTestBase, remove_if_exists
+from autopilot._video import RMDVideoLogFixture
 
 
 class AutopilotFunctionalTestsBase(AutopilotRunTestBase):
@@ -326,40 +330,39 @@ Loading tests from: %s
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_record_flag_works(self):
         """Must be able to record videos when the -r flag is present."""
+        video_dir = mktemp()
+        ap_dir = '/tmp/autopilot'
+        video_session_pattern = '/tmp/rMD-session*'
+        self.addCleanup(remove_if_exists, video_dir)
+        self.addCleanup(
+            remove_if_exists,
+            '%s/Dummy_Description.ogv' % (ap_dir)
+        )
+        self.addCleanup(remove_if_exists, ap_dir)
 
-        # The sleep is to avoid the case where recordmydesktop does not create
-        # a file because it gets stopped before it's even started capturing
-        # anything.
-        self.create_test_file(
-            "test_simple.py", dedent("""\
+        mock_test_case = Mock()
+        mock_test_case.shortDescription.return_value = 'Dummy_Description'
+        orig_sessions = glob.glob(video_session_pattern)
 
-            from autopilot.testcase import AutopilotTestCase
-            from time import sleep
+        video_logger = RMDVideoLogFixture(video_dir, mock_test_case)
+        video_logger.setUp()
+        video_logger._test_passed = False
 
-            class SimpleTest(AutopilotTestCase):
-
-                def test_simple(self):
-                    sleep(1)
-                    self.fail()
-            """)
+        # We use Eventually() to avoid the case where recordmydesktop does not
+        # create a file because it gets stopped before it's even started
+        # capturing anything.
+        self.assertThat(
+            lambda: glob.glob(video_session_pattern),
+            Eventually(NotEquals(orig_sessions))
         )
 
-        should_delete = not os.path.exists('/tmp/autopilot')
-        if should_delete:
-            self.addCleanup(remove_if_exists, "/tmp/autopilot")
-        else:
-            self.addCleanup(
-                remove_if_exists,
-                '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv')
+        video_logger._stop_video_capture(mock_test_case)
 
-        code, output, error = self.run_autopilot(["run", "-r", "tests"])
-
-        self.assertThat(code, Equals(1))
-        self.assertTrue(os.path.exists('/tmp/autopilot'))
+        self.assertTrue(os.path.exists(video_dir))
         self.assertTrue(os.path.exists(
-            '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv'))
-        if should_delete:
-            self.addCleanup(remove_if_exists, "/tmp/autopilot")
+            '%s/Dummy_Description.ogv' % (video_dir)))
+        self.assertFalse(os.path.exists(
+            '%s/Dummy_Description.ogv' % (ap_dir)))
 
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_record_dir_option_and_record_works(self):
@@ -497,38 +500,21 @@ Loading tests from: %s
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_no_video_session_dir_saved_for_passed_test(self):
         """RecordMyDesktop should clean up its session files in tmp dir."""
-        dir_pattern = '/tmp/rMD-session*'
-        original_session_dirs = glob.glob(dir_pattern)
-
-        self.create_test_file(
-            "test_simple.py", dedent("""\
-
-            from autopilot.testcase import AutopilotTestCase
-            from time import sleep
-
-            class SimpleTest(AutopilotTestCase):
-
-                def test_simple(self):
-                    sleep(1)
-                    self.assertTrue(True)
-            """)
-        )
-
-        code, output, error = self.run_autopilot(["run", "-r", "tests"])
-
-        self.assertThat(code, Equals(0))
-
-        session_dirs = glob.glob(dir_pattern)
-        try:
-            new_session_dirs = \
-                list(set(session_dirs) - set(original_session_dirs))
-            leftover_session = new_session_dirs.pop()
-        except IndexError:
-            leftover_session = None
-
-        self.assertEqual(leftover_session, None)
-        if leftover_session is not None:
-            self.addCleanup(remove_if_exists, leftover_session)
+        with TempDir() as tmp_dir_fixture:
+            dir_pattern = os.path.join(tmp_dir_fixture.path, 'rMD-session*')
+            original_session_dirs = set(glob.glob(dir_pattern))
+            get_new_sessions = lambda: \
+                set(glob.glob(dir_pattern)) - original_session_dirs
+            mock_test_case = Mock()
+            mock_test_case.shortDescription.return_value = "Dummy_Description"
+            logger = RMDVideoLogFixture(tmp_dir_fixture.path, mock_test_case)
+            logger.set_recording_dir(tmp_dir_fixture.path)
+            logger._recording_opts = ['--workdir', tmp_dir_fixture.path] \
+                + logger._recording_opts
+            logger.setUp()
+            self.assertThat(get_new_sessions, Eventually(NotEquals(set())))
+            logger._stop_video_capture(mock_test_case)
+        self.assertThat(get_new_sessions, Eventually(Equals(set())))
 
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_no_video_for_nested_testcase_when_parent_and_child_fail(self):

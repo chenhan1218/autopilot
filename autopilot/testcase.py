@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2012-2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -71,6 +71,7 @@ from autopilot.process import ProcessManager
 from autopilot.utilities import deprecated, on_test_started
 from autopilot._timeout import Timeout
 from autopilot._logging import TestCaseLoggingFixture
+from autopilot._video import get_video_recording_fixture
 try:
     from autopilot import tracepoint as tp
     HAVE_TRACEPOINT = True
@@ -141,7 +142,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             )
         )
         self.useFixture(get_debug_profile_fixture()(self.addDetailUniqueName))
-
+        self.useFixture(get_video_recording_fixture()(self))
         _lttng_trace_test_started(self.id())
         self.addCleanup(_lttng_trace_test_ended, self.id())
 

@@ -42,6 +42,7 @@ from autopilot._debug import (
     get_all_debug_profiles,
     get_default_debug_profile,
 )
+from autopilot import _video
 from autopilot.testresult import get_default_format, get_output_formats
 from autopilot.utilities import DebugLogFilter, LogFormatter
 from autopilot.application._launcher import (
@@ -95,7 +96,8 @@ def _get_parser():
                             default=False, required=False,
                             help="Record failing tests. Required \
                             'recordmydesktop' app to be installed.\
-                            Videos are stored in /tmp/autopilot.")
+                            Videos are stored in /tmp/autopilot if not \
+                            specified with -rd option.")
     parser_run.add_argument("-rd", "--record-directory", required=False,
                             type=str, help="Directory to put recorded tests")
     parser_run.add_argument("--record-options", required=False,
@@ -482,40 +484,6 @@ def _configure_timeout_profile(args):
         autopilot.globals.set_long_timeout_period(30.0)
 
 
-def _configure_video_recording(args):
-    """Configure video recording based on contents of ``args``.
-
-    :raises RuntimeError: If the user asked for video recording, but the
-        system does not support video recording.
-
-    """
-    if args.record_directory:
-        args.record = True
-
-    if args.record:
-        if not args.record_directory:
-            args.record_directory = '/tmp/autopilot'
-
-        if not _have_video_recording_facilities():
-            raise RuntimeError(
-                "The application 'recordmydesktop' needs to be installed to "
-                "record failing jobs."
-            )
-        autopilot.globals.configure_video_recording(
-            True,
-            args.record_directory,
-            args.record_options
-        )
-
-
-def _have_video_recording_facilities():
-    call_ret_code = subprocess.call(
-        ['which', 'recordmydesktop'],
-        stdout=subprocess.PIPE
-    )
-    return call_ret_code == 0
-
-
 def _prepare_application_for_launch(application, interface):
     app_path, app_arguments = _get_application_path_and_arguments(application)
     return _prepare_launcher_environment(
@@ -696,12 +664,13 @@ class TestProgram(object):
 
         _configure_debug_profile(self.args)
         _configure_timeout_profile(self.args)
-        test_config.set_configuration_string(self.args.test_config)
         try:
-            _configure_video_recording(self.args)
+            _video.configure_video_recording(self.args)
         except RuntimeError as e:
             print("Error: %s" % str(e))
             exit(1)
+
+        test_config.set_configuration_string(self.args.test_config)
 
         if self.args.verbose:
             autopilot.globals.set_log_verbose(True)

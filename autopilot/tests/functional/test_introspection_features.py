@@ -73,6 +73,31 @@ class IntrospectionFeatureTests(AutopilotTestCase):
             emulator_base=emulator_base,
         )
 
+    def test_can_get_custom_proxy_for_app_root(self):
+        """Test two things:
+
+        1) We can get a custom proxy object for the root object in the object
+           tree.
+
+        2) We can get a custom proxy object for an objcet in the tree which
+           contains characters which are usually disallowed in python class
+           names.
+        """
+        class WindowMockerApp(EmulatorBase):
+            @classmethod
+            def validate_dbus_object(cls, path, _state):
+                return path == '/window-mocker'
+
+        # verify that the initial proxy object we get back is the correct type:
+        app = self.start_mock_app(EmulatorBase)
+        self.assertThat(type(app), Equals(WindowMockerApp))
+
+        # verify that we get the correct type from get_root_instance:
+        self.assertThat(
+            type(app.get_root_instance()),
+            Equals(WindowMockerApp)
+        )
+
     def test_can_select_custom_emulators_by_name(self):
         """Must be able to select a custom emulator type by name."""
         class MouseTestWidget(EmulatorBase):

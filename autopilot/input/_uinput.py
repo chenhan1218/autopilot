@@ -20,7 +20,6 @@
 """UInput device drivers."""
 
 import logging
-import os.path
 
 from evdev import UInput, ecodes as e
 
@@ -35,11 +34,8 @@ _logger = logging.getLogger(__name__)
 
 
 def _get_devnode_path():
-    """Provide a fallback uinput node for devices which don't support udev"""
-    devnode = '/dev/autopilot-uinput'
-    if not os.path.exists(devnode):
-        devnode = '/dev/uinput'
-    return devnode
+    """Return the uinput device node"""
+    return '/dev/uinput'
 
 
 class _UInputKeyboardDevice(object):

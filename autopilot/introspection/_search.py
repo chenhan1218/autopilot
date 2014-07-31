@@ -402,7 +402,7 @@ def _make_proxy_object(dbus_address, emulator_base):
         the user.
     """
     # make sure we always have an emulator base. Either use the one the user
-    # gave us, ot make one:
+    # gave us, or make one:
     emulator_base = emulator_base or _make_default_emulator_base()
     # Get the dbus introspection Xml for the backend.
     intro_xml = _get_introspection_xml_from_backend(dbus_address)
@@ -613,8 +613,7 @@ def _get_proxy_bases_from_introspection_xml(introspection_xml):
 class ApplicationProxyObject(object):
     """A class that better supports query data from an application."""
 
-    def __init__(self, state, path, backend):
-        super(ApplicationProxyObject, self).__init__(state, path, backend)
+    def __init__(self):
         self._process = None
 
     def set_process(self, process):

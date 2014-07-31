@@ -79,14 +79,14 @@ class IntrospectionFeatureTests(AutopilotTestCase):
         1) We can get a custom proxy object for the root object in the object
            tree.
 
-        2) We can get a custom proxy object for an objcet in the tree which
+        2) We can get a custom proxy object for an object in the tree which
            contains characters which are usually disallowed in python class
            names.
         """
         class WindowMockerApp(EmulatorBase):
             @classmethod
             def validate_dbus_object(cls, path, _state):
-                return path == '/window-mocker'
+                return path == b'/window-mocker'
 
         # verify that the initial proxy object we get back is the correct type:
         app = self.start_mock_app(EmulatorBase)

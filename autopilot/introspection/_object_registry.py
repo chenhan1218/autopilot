@@ -26,6 +26,20 @@ classes we use when creating proxy classes. The object registry allows test
 authors to write their own classes to be used instead of the generic one that
 autopilot creates.
 
+This module contains two global dictionaries, both are keys by unique connection
+id's (UUID objects). The values are described below.
+
+* ``_object_registry`` contains dictionaries of class names (as strings)
+  to class objects. Custom proxy classes defined by test authors will end up
+  with their class object in this dictionary. This is used when we want to
+  create a proxy instance - if nothing matches in this dictionary then we
+  create a generic proxy instance instead.
+
+* ``_proxy_extensions`` contains a tuple of extension classes to mix in to
+   *every proxy class*. This is used to extend the proxy API on a per-connection
+   basis. For example, Qt-based apps allow us to monitor signals and slots in
+   the applicaiton, but Gtk apps do not.
+
 """
 
 from uuid import uuid4
@@ -35,6 +49,17 @@ from autopilot.utilities import get_debug_logger
 from contextlib import contextmanager
 
 _object_registry = {}
+_proxy_extensions = {}
+
+
+def register_extension_classes_for_proxy_base(proxy_base, extensions):
+    global _proxy_extensions
+    _proxy_extensions[proxy_base._id] = (proxy_base,) + extensions
+
+
+def _get_proxy_bases_for_id(id):
+    global _proxy_extensions
+    return _proxy_extensions.get(id, ())
 
 
 class IntrospectableObjectMetaclass(type):
@@ -50,31 +75,44 @@ class IntrospectableObjectMetaclass(type):
         custom proxy classes for more than one process at the same time and
         avoid clashes in the dictionary.
         """
-
         # ignore the classes at the top of the inheritance heirarchy (i.e.- the
         # ones that we control.)
-        if classname not in (
-            'ApplicationProxyObject',
-            'CustomEmulatorBase',
-            'DBusIntrospectionObject',
-            'DBusIntrospectionObjectBase',
-        ):
-            # also ignore classes that derive from a class that already has the
-            # _id attribute set.
-            have_id = any([hasattr(b, '_id') for b in bases])
-            if not have_id:
-                # Add the '_id' attribute as a class attr:
-                classdict['_id'] = uuid4()
+        cls_id = None
 
+        for base in bases:
+            if hasattr(base, '_id'):
+                cls_id = base._id
+                break
+        else:
+            if classname not in (
+                'ApplicationProxyObject',
+                'CustomEmulatorBase',
+                'DBusIntrospectionObject',
+                'DBusIntrospectionObjectBase',
+            ):
+                # also ignore classes that derive from a class that already has the
+                # _id attribute set.:
+                # Add the '_id' attribute as a class attr:
+                cls_id = classdict['_id'] = uuid4()
+
+
+        # use the bases passed to us, but extend it with whatever is stored in
+        # the proxy_extensions dictionary.
+        extensions = _get_proxy_bases_for_id(cls_id)
+        for extension in extensions:
+            if extension not in bases:
+                bases += (extension,)
         # make the object. Nothing special here.
+
         class_object = type.__new__(cls, classname, bases, classdict)
 
-        # If the newly made object has an id, add it to the object registry.
-        if getattr(class_object, '_id', None) is not None:
-            if class_object._id in _object_registry:
-                _object_registry[class_object._id][classname] = class_object
-            else:
-                _object_registry[class_object._id] = {classname: class_object}
+        if not classdict.get('__generated', False):
+            # If the newly made object has an id, add it to the object registry.
+            if getattr(class_object, '_id', None) is not None:
+                if class_object._id in _object_registry:
+                    _object_registry[class_object._id][classname] = class_object
+                else:
+                    _object_registry[class_object._id] = {classname: class_object}
         # in all cases, return the class unchanged.
         return class_object
 
@@ -86,7 +124,7 @@ DBusIntrospectionObjectBase = IntrospectableObjectMetaclass(
 )
 
 
-def _get_proxy_object_class(object_id, default_class, path, state):
+def _get_proxy_object_class(object_id, path, state):
     """Return a custom proxy class, from the object registry or the default.
 
     This function first inspects the object registry using the object_id passed
@@ -105,12 +143,10 @@ def _get_proxy_object_class(object_id, default_class, path, state):
     :raises ValueError: if more than one class in the dict matches
 
     """
-    class_type = None
-    if object_id is not None:
-        class_type = _try_custom_proxy_classes(object_id, path, state)
+    class_type = _try_custom_proxy_classes(object_id, path, state)
 
     return class_type or _get_default_proxy_class(
-        default_class,
+        object_id,
         get_classname_from_path(path)
     )
 
@@ -132,16 +168,18 @@ def _try_custom_proxy_classes(object_id, path, state):
     if len(possible_classes) > 1:
         raise ValueError(
             'More than one custom proxy class matches this object: '
-            'Matching classes are: %s. State is %s.  Path is %s.'
-            ','.join([repr(c) for c in possible_classes]),
-            repr(state),
-            path)
+            'Matching classes are: %s. State is %s.  Path is %s.' % (
+                ','.join([repr(c) for c in possible_classes]),
+                repr(state),
+                path,
+            )
+        )
     if len(possible_classes) == 1:
         return possible_classes[0]
     return None
 
 
-def _get_default_proxy_class(default_class, name):
+def _get_default_proxy_class(id, name):
     """Return a custom proxy object class of the default or a base class.
 
     We want the object to inherit from the class that is set as the emulator
@@ -156,15 +194,9 @@ def _get_default_proxy_class(default_class, name):
     get_debug_logger().warning(
         "Generating introspection instance for type '%s' based on generic "
         "class.", name)
-    for base in default_class.__bases__:
-        if hasattr(base, '_id'):
-            base_class = base
-            break
-    else:
-        base_class = default_class
     if isinstance(name, bytes):
         name = name.decode('utf-8')
-    return type(name, (base_class,), {})
+    return type(name, _get_proxy_bases_for_id(id), dict(__generated=True))
 
 
 @contextmanager

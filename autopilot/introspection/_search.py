@@ -33,6 +33,7 @@ from autopilot.exceptions import ProcessSearchError
 from autopilot.introspection import backends
 from autopilot.introspection import constants
 from autopilot.introspection import dbus as ap_dbus
+from autopilot.introspection import _object_registry
 from autopilot.introspection._xpathselect import get_classname_from_path
 from autopilot.introspection.backends import WireProtocolVersionMismatch
 from autopilot.introspection.utilities import (
@@ -400,26 +401,47 @@ def _make_proxy_object(dbus_address, emulator_base):
     :param emulator_base: The emulator base object (or None), as provided by
         the user.
     """
+    # make sure we always have an emulator base. Either use the one the user
+    # gave us, ot make one:
+    emulator_base = emulator_base or _make_default_emulator_base()
+    # Get the dbus introspection Xml for the backend.
     intro_xml = _get_introspection_xml_from_backend(dbus_address)
-    cls_name, path, cls_state = _get_proxy_object_class_name_and_state(
-        dbus_address
-    )
-
     try:
-        proxy_bases = _get_proxy_bases_from_introspection_xml(intro_xml)
+        # Figure out if the backend has any extension methods, and return classes
+        # that understand how to use each of those extensions:
+        extension_classes = _get_proxy_bases_from_introspection_xml(intro_xml)
+        # Register those base classes for everything that will derive from this
+        # emulator base class.
+        _object_registry.register_extension_classes_for_proxy_base(
+            emulator_base,
+            extension_classes,
+        )
     except RuntimeError as e:
         e.args = (
             "Could not find Autopilot interface on dbus address '%s'."
             % dbus_address,
         )
         raise e
-    proxy_bases = _extend_proxy_bases_with_emulator_base(
-        proxy_bases,
-        emulator_base
-    )
-    proxy_class = _make_proxy_class_object(cls_name, proxy_bases)
 
+    cls_name, path, cls_state = _get_proxy_object_class_name_and_state(
+        dbus_address
+    )
+
+    proxy_class = _object_registry._get_proxy_object_class(
+        emulator_base._id,
+        path,
+        cls_state
+    )
+    # For this object only, add the ApplicationProxy class, since it's the
+    # root of the tree. Ideally this would be nicer...
+    if ApplicationProxyObject not in proxy_class.__bases__:
+        proxy_class.__bases__ += (ApplicationProxyObject, )
     return proxy_class(cls_state, path, backends.Backend(dbus_address))
+
+
+def _make_default_emulator_base():
+    """Make a default base class for all proxy classes to derive from."""
+    return type("DefaultEmulatorBase", (ap_dbus.DBusIntrospectionObject,), {})
 
 
 def _make_proxy_object_async(
@@ -440,14 +462,22 @@ def _make_proxy_object_async(
     # Final phase: We have all the information we need, now we construct
     # everything. This phase has no dbus calls, and so is very fast:
     def build_proxy(introspection_xml, cls_name, path, cls_state):
-        proxy_bases = _get_proxy_bases_from_introspection_xml(
+        # Figure out if the backend has any extension methods, and return classes
+        # that understand how to use each of those extensions:
+        extension_classes = _get_proxy_bases_from_introspection_xml(
             introspection_xml
         )
-        proxy_bases = _extend_proxy_bases_with_emulator_base(
-            proxy_bases,
-            emulator_base
+        # Register those base classes for everything that will derive from this
+        # emulator base class.
+        _object_registry.register_extension_classes_for_proxy_base(
+            emulator_base,
+            extension_classes,
         )
-        proxy_class = _make_proxy_class_object(cls_name, proxy_bases)
+        proxy_class = _object_registry._get_proxy_object_class(
+            emulator_base._id,
+            path,
+            cls_state
+        )
         reply_handler(
             proxy_class(cls_state, path, backends.Backend(data_source))
         )
@@ -463,6 +493,8 @@ def _make_proxy_object_async(
 
     # Phase 1: Make an asynchronous dbus call to get the introspection xml
     # from the data_source provided for us.
+    emulator_base = emulator_base or _make_default_emulator_base()
+
     _get_introspection_xml_from_backend(
         data_source,
         reply_handler=get_root_state,
@@ -566,7 +598,7 @@ def _get_proxy_bases_from_introspection_xml(introspection_xml):
 
     """
 
-    bases = [ApplicationProxyObject]
+    bases = []
 
     if constants.AP_INTROSPECTION_IFACE not in introspection_xml:
         raise RuntimeError("Could not find Autopilot interface.")
@@ -578,7 +610,7 @@ def _get_proxy_bases_from_introspection_xml(introspection_xml):
     return tuple(bases)
 
 
-class ApplicationProxyObject(ap_dbus.DBusIntrospectionObject):
+class ApplicationProxyObject(object):
     """A class that better supports query data from an application."""
 
     def __init__(self, state, path, backend):
@@ -620,20 +652,6 @@ def _extend_proxy_bases_with_emulator_base(proxy_bases, emulator_base):
             {}
         )
     return proxy_bases + (emulator_base, )
-
-
-def _make_proxy_class_object(cls_name, proxy_bases):
-    """Return a class object for a proxy.
-
-    :param cls_name: The name of the class to be created. This is usually the
-        type as returned over the wire from an autopilot backend.
-    :param proxy_bases: A list of base classes this proxy class should derive
-        from. This determines the specific abilities of the new proxy.
-
-    """
-    clsobj = type(str("%sBase" % cls_name), proxy_bases, {})
-    proxy_class = type(str(cls_name), (clsobj,), {})
-    return proxy_class
 
 
 def _get_dbus_address_object(connection_name, object_path, bus):

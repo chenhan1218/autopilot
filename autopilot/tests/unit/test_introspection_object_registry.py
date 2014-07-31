@@ -64,7 +64,6 @@ class MakeIntrospectionObjectTests(TestCase):
         gpoc_return = object_registry._get_proxy_object_class(
             "fake_id",  # cannot set to none.
             None,
-            None,
             None
         )
 
@@ -78,7 +77,7 @@ class MakeIntrospectionObjectTests(TestCase):
         class_dict = {'DefaultSelector': self.DefaultSelector}
         path = '/path/to/DefaultSelector'
         state = {}
-        object_registry._get_proxy_object_class(class_dict, None, path, state)
+        object_registry._get_proxy_object_class(class_dict, path, state)
         tcpc.assert_called_once_with(class_dict, path, state)
 
     @patch.object(object_registry, '_try_custom_proxy_classes')
@@ -89,7 +88,6 @@ class MakeIntrospectionObjectTests(TestCase):
         self.assertThat(
             lambda: object_registry._get_proxy_object_class(
                 "None",  # Cannot be set to None, but don't care about value
-                None,
                 None,
                 None
             ),
@@ -102,7 +100,7 @@ class MakeIntrospectionObjectTests(TestCase):
         """_get_proxy_object_class should call _get_default_proxy_class if
         _try_custom_proxy_classes returns None."""
         tcpc.return_value = None
-        object_registry._get_proxy_object_class(None, None, None, None)
+        object_registry._get_proxy_object_class(None, None, None)
         self.assertTrue(gdpc.called)
 
     @patch.object(object_registry, '_try_custom_proxy_classes')
@@ -111,11 +109,11 @@ class MakeIntrospectionObjectTests(TestCase):
         """_get_proxy_object_class should pass the correct arguments to
         _get_default_proxy_class"""
         tcpc.return_value = None
-        default = self.DefaultSelector
+        obj_id = 123
         path = '/path/to/DefaultSelector'
-        object_registry._get_proxy_object_class(None, default, path, None)
+        object_registry._get_proxy_object_class(obj_id, path, None)
         gdpc.assert_called_once_with(
-            default,
+            obj_id,
             xpathselect.get_classname_from_path(path)
         )
 
@@ -132,7 +130,6 @@ class MakeIntrospectionObjectTests(TestCase):
             None,
             None,
             None,
-            None
         )
         self.assertThat(gpoc_return, Equals(token))
 

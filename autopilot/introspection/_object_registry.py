@@ -26,8 +26,8 @@ classes we use when creating proxy classes. The object registry allows test
 authors to write their own classes to be used instead of the generic one that
 autopilot creates.
 
-This module contains two global dictionaries, both are keys by unique connection
-id's (UUID objects). The values are described below.
+This module contains two global dictionaries, both are keys by unique
+connection id's (UUID objects). The values are described below.
 
 * ``_object_registry`` contains dictionaries of class names (as strings)
   to class objects. Custom proxy classes defined by test authors will end up
@@ -36,9 +36,9 @@ id's (UUID objects). The values are described below.
   create a generic proxy instance instead.
 
 * ``_proxy_extensions`` contains a tuple of extension classes to mix in to
-   *every proxy class*. This is used to extend the proxy API on a per-connection
-   basis. For example, Qt-based apps allow us to monitor signals and slots in
-   the applicaiton, but Gtk apps do not.
+   *every proxy class*. This is used to extend the proxy API on a
+   per-connection basis. For example, Qt-based apps allow us to monitor
+   signals and slots in the applicaiton, but Gtk apps do not.
 
 """
 
@@ -84,17 +84,15 @@ class IntrospectableObjectMetaclass(type):
                 cls_id = base._id
                 break
         else:
+            # Ignore classes that are in the autopilot class heirarchy:
             if classname not in (
                 'ApplicationProxyObject',
                 'CustomEmulatorBase',
                 'DBusIntrospectionObject',
                 'DBusIntrospectionObjectBase',
             ):
-                # also ignore classes that derive from a class that already has the
-                # _id attribute set.:
                 # Add the '_id' attribute as a class attr:
                 cls_id = classdict['_id'] = uuid4()
-
 
         # use the bases passed to us, but extend it with whatever is stored in
         # the proxy_extensions dictionary.
@@ -107,12 +105,15 @@ class IntrospectableObjectMetaclass(type):
         class_object = type.__new__(cls, classname, bases, classdict)
 
         if not classdict.get('__generated', False):
-            # If the newly made object has an id, add it to the object registry.
+            # If the newly made object has an id, add it to the object
+            # registry.
             if getattr(class_object, '_id', None) is not None:
                 if class_object._id in _object_registry:
-                    _object_registry[class_object._id][classname] = class_object
+                    _object_registry[class_object._id][classname] = \
+                        class_object
                 else:
-                    _object_registry[class_object._id] = {classname: class_object}
+                    _object_registry[class_object._id] = \
+                        {classname: class_object}
         # in all cases, return the class unchanged.
         return class_object
 

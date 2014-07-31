@@ -407,8 +407,8 @@ def _make_proxy_object(dbus_address, emulator_base):
     # Get the dbus introspection Xml for the backend.
     intro_xml = _get_introspection_xml_from_backend(dbus_address)
     try:
-        # Figure out if the backend has any extension methods, and return classes
-        # that understand how to use each of those extensions:
+        # Figure out if the backend has any extension methods, and return
+        # classes that understand how to use each of those extensions:
         extension_classes = _get_proxy_bases_from_introspection_xml(intro_xml)
         # Register those base classes for everything that will derive from this
         # emulator base class.
@@ -462,8 +462,8 @@ def _make_proxy_object_async(
     # Final phase: We have all the information we need, now we construct
     # everything. This phase has no dbus calls, and so is very fast:
     def build_proxy(introspection_xml, cls_name, path, cls_state):
-        # Figure out if the backend has any extension methods, and return classes
-        # that understand how to use each of those extensions:
+        # Figure out if the backend has any extension methods, and return
+        # classes that understand how to use each of those extensions:
         extension_classes = _get_proxy_bases_from_introspection_xml(
             introspection_xml
         )

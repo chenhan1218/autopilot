@@ -18,6 +18,7 @@
 #
 
 from datetime import datetime, time
+from dateutil.tz import tzlocal
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import Equals, IsInstance, NotEquals, raises
@@ -282,18 +283,22 @@ class ColorTypeTests(TestCase):
 
 
 class DateTimeTests(TestCase):
+    timestamp = 1377209927
+    platform_limit_timestamp = 2983579200
+    winter_timestamp = 1389744000
+    summer_timestamp = 1405382400
 
     def test_can_construct_datetime(self):
-        dt = DateTime(1377209927)
+        dt = DateTime(self.timestamp)
         self.assertThat(dt, IsInstance(dbus.Array))
 
     def test_datetime_has_slice_access(self):
-        dt = DateTime(1377209927)
+        dt = DateTime(self.timestamp)
 
-        self.assertThat(dt[0], Equals(1377209927))
+        self.assertThat(dt[0], Equals(self.timestamp))
 
     def test_datetime_has_properties(self):
-        dt = DateTime(1377209927)
+        dt = DateTime(self.timestamp)
 
         self.assertTrue(hasattr(dt, 'timestamp'))
         self.assertTrue(hasattr(dt, 'year'))
@@ -304,55 +309,68 @@ class DateTimeTests(TestCase):
         self.assertTrue(hasattr(dt, 'second'))
 
     def test_datetime_properties_have_correct_values(self):
-        dt = DateTime(1377209927)
-        dt_with_tz = datetime.fromtimestamp(1377209927)
+        dt = DateTime(self.winter_timestamp)
+        winter_dt = datetime.fromtimestamp(self.winter_timestamp)
 
-        self.assertThat(dt.timestamp, Equals(dt_with_tz.timestamp()))
-        self.assertThat(dt.year, Equals(dt_with_tz.year))
-        self.assertThat(dt.month, Equals(dt_with_tz.month))
-        self.assertThat(dt.day, Equals(dt_with_tz.day))
-        self.assertThat(dt.hour, Equals(dt_with_tz.hour))
-        self.assertThat(dt.minute, Equals(dt_with_tz.minute))
-        self.assertThat(dt.second, Equals(dt_with_tz.second))
+        self.assertThat(dt.timestamp, Equals(winter_dt.timestamp()))
+        self.assertThat(dt.year, Equals(winter_dt.year))
+        self.assertThat(dt.month, Equals(winter_dt.month))
+        self.assertThat(dt.day, Equals(winter_dt.day))
+        self.assertThat(dt.hour, Equals(winter_dt.hour))
+        self.assertThat(dt.minute, Equals(winter_dt.minute))
+        self.assertThat(dt.second, Equals(winter_dt.second))
+
+        dt = DateTime(self.summer_timestamp)
+        summer_timestamp = datetime.fromtimestamp(self.summer_timestamp)
+
+        self.assertThat(dt.timestamp, Equals(summer_timestamp.timestamp()))
+        self.assertThat(dt.year, Equals(summer_timestamp.year))
+        self.assertThat(dt.month, Equals(summer_timestamp.month))
+        self.assertThat(dt.day, Equals(summer_timestamp.day))
+        self.assertThat(dt.hour, Equals(summer_timestamp.hour))
+        self.assertThat(dt.minute, Equals(summer_timestamp.minute))
+        self.assertThat(dt.second, Equals(summer_timestamp.second))
+
+    def test_platform_limit_timestamp(self):
+        self.assertTrue(DateTime(self.platform_limit_timestamp))
 
     def test_equality_with_datetime(self):
-        dt1 = DateTime(1377209927)
-        dt2 = DateTime(1377209927)
+        dt1 = DateTime(self.timestamp)
+        dt2 = DateTime(self.timestamp)
 
         self.assertThat(dt1, Equals(dt2))
 
     def test_equality_with_list(self):
-        dt1 = DateTime(1377209927)
-        dt2 = [1377209927]
+        dt1 = DateTime(self.timestamp)
+        dt2 = [self.timestamp]
 
         self.assertThat(dt1, Equals(dt2))
 
     def test_equality_with_datetime_timestamp(self):
-        # DateTime no longer assumes UTC and uses local TZ.
-        dt1 = DateTime(1377209927)
-        dt2 = datetime.fromtimestamp(1377209927)
-        dt3 = datetime.fromtimestamp(1377209928)
+        dt1 = DateTime(self.timestamp)
+        dt2 = datetime.fromtimestamp(self.timestamp, tzlocal())
+        dt3 = datetime.fromtimestamp(self.timestamp + 1, tzlocal())
 
         self.assertThat(dt1, Equals(dt2))
         self.assertThat(dt1, NotEquals(dt3))
 
     def test_can_convert_to_datetime(self):
-        dt1 = DateTime(1377209927)
+        dt1 = DateTime(self.timestamp)
 
         self.assertThat(dt1.datetime, IsInstance(datetime))
 
     def test_repr(self):
         expected = repr_type(
             u"DateTime({:%Y-%m-%d %H:%M:%S})".format(
-                datetime.fromtimestamp(1377209927)
+                datetime.fromtimestamp(self.timestamp)
             )
         )
-        dt = DateTime(1377209927)
+        dt = DateTime(self.timestamp)
         observed = repr(dt)
         self.assertEqual(expected, observed)
 
     def test_repr_equals_str(self):
-        dt = DateTime(1377209927)
+        dt = DateTime(self.timestamp)
         self.assertEqual(repr(dt), str(dt))
 
 

@@ -38,7 +38,7 @@ connection id's (UUID objects). The values are described below.
 * ``_proxy_extensions`` contains a tuple of extension classes to mix in to
    *every proxy class*. This is used to extend the proxy API on a
    per-connection basis. For example, Qt-based apps allow us to monitor
-   signals and slots in the applicaiton, but Gtk apps do not.
+   signals and slots in the application, but Gtk apps do not.
 
 """
 
@@ -75,8 +75,6 @@ class IntrospectableObjectMetaclass(type):
         custom proxy classes for more than one process at the same time and
         avoid clashes in the dictionary.
         """
-        # ignore the classes at the top of the inheritance heirarchy (i.e.- the
-        # ones that we control.)
         cls_id = None
 
         for base in bases:
@@ -101,7 +99,6 @@ class IntrospectableObjectMetaclass(type):
             if extension not in bases:
                 bases += (extension,)
         # make the object. Nothing special here.
-
         class_object = type.__new__(cls, classname, bases, classdict)
 
         if not classdict.get('__generated', False):

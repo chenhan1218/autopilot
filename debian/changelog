@@ -2,7 +2,7 @@ autopilot (1.5.0+14.10.20140806-0ubuntu1) UNRELEASED; urgency=medium
 
   [Thomi Richards]
   * Fix the development make_coverage.py script.
-    Remove the python3-six dependency.
+  * Remove the python3-six dependency.
 
   [Max Brustkern]
   * Remove python2 compatibility code from autopilot.

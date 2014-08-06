@@ -21,7 +21,6 @@
 """Code for introspection tree object properties."""
 
 
-import six
 from PyQt4 import QtGui, QtCore
 
 
@@ -97,10 +96,7 @@ class PropertyView(AbstractView):
     def __init__(self, *args, **kwargs):
         super(PropertyView, self).__init__(*args, **kwargs)
 
-        if six.PY3:
-            header_titles = ["Name", "Value"]
-        else:
-            header_titles = QtCore.QStringList(["Name", "Value"])
+        header_titles = ["Name", "Value"]
         self.details_layout = QtGui.QVBoxLayout(self)
 
         self.table_view = QtGui.QTableWidget()

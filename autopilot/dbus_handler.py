@@ -20,8 +20,6 @@
 
 """Initialise dbus once using glib mainloop."""
 
-from __future__ import absolute_import
-
 from dbus._dbus import BusConnection
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop

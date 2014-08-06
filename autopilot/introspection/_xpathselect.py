@@ -47,7 +47,6 @@ Queries are executed in the autopilot.introspection.backends module.
 
 """
 import re
-import six
 
 from autopilot.utilities import compatible_repr
 from autopilot.exceptions import InvalidXPathQuery
@@ -94,12 +93,12 @@ class Query(object):
             to select a parent node in the introspection tree.
 
         """
-        if not isinstance(query, six.binary_type):
+        if not isinstance(query, bytes):
             raise TypeError(
                 "'query' parameter must be bytes, not %s"
                 % type(query).__name__
             )
-        if not isinstance(operation, six.binary_type):
+        if not isinstance(operation, bytes):
             raise TypeError(
                 "'operation' parameter must be bytes, not '%s'"
                 % type(operation).__name__)
@@ -176,7 +175,7 @@ class Query(object):
         :raises ValueError: If the path does not start with b'/'
 
         """
-        if not isinstance(path, six.binary_type):
+        if not isinstance(path, bytes):
             raise TypeError(
                 "'path' attribute must be bytes, not '%s'"
                 % type(path).__name__
@@ -327,7 +326,7 @@ class Query(object):
 
 
 def _try_encode_type_name(name):
-    if isinstance(name, six.string_types):
+    if isinstance(name, str):
         try:
             name = name.encode('ascii')
         except UnicodeEncodeError:
@@ -353,10 +352,10 @@ def _is_valid_server_side_filter_param(key, value):
     elif type(value) == bool:
         return key_is_valid
 
-    elif type(value) == six.binary_type:
+    elif type(value) == bytes:
         return key_is_valid
 
-    elif type(value) == six.text_type:
+    elif type(value) == str:
         try:
             value.encode('ascii')
             return key_is_valid
@@ -372,26 +371,16 @@ def _get_filter_string_for_key_value_pair(key, value):
     this is not the case.
 
     """
-    if isinstance(value, six.text_type):
-        if six.PY3:
-            escaped_value = value.encode("unicode_escape")\
-                .decode('ASCII')\
-                .replace("'", "\\'")
-        else:
-            escaped_value = value.encode('utf-8').encode("string_escape")
-            # note: string_escape codec escapes "'" but not '"'...
-            escaped_value = escaped_value.replace('"', r'\"')
+    if isinstance(value, str):
+        escaped_value = value.encode("unicode_escape")\
+            .decode('ASCII')\
+            .replace("'", "\\'")
         return '{}="{}"'.format(key, escaped_value).encode('utf-8')
-    elif isinstance(value, six.binary_type):
-        if six.PY3:
-            escaped_value = value.decode('utf-8')\
-                .encode("unicode_escape")\
-                .decode('ASCII')\
-                .replace("'", "\\'")
-        else:
-            escaped_value = value.encode("string_escape")
-            # note: string_escape codec escapes "'" but not '"'...
-            escaped_value = escaped_value.replace('"', r'\"')
+    elif isinstance(value, bytes):
+        escaped_value = value.decode('utf-8')\
+            .encode("unicode_escape")\
+            .decode('ASCII')\
+            .replace("'", "\\'")
         return '{}="{}"'.format(key, escaped_value).encode('utf-8')
     elif isinstance(value, int) or isinstance(value, bool):
         return "{}={}".format(key, repr(value)).encode('utf-8')
@@ -406,7 +395,7 @@ def get_classname_from_path(object_path):
     # TODO: Find places where paths are strings, and convert them to
     # bytestrings. Figure out what to do with the whole string vs. bytestring
     # mess.
-    is_string = isinstance(object_path, six.string_types)
+    is_string = isinstance(object_path, str)
     if is_string:
         object_path = object_path.encode('utf-8')
     class_name = object_path.split(b"/")[-1]

@@ -3,22 +3,9 @@
 
 set -e
 
-AUTOPILOT_GROUP=autopilot
-
 if [ "$1" = configure ]; then
-    # Add the autopilot group
-    addgroup --quiet \
-             --system \
-             --no-create-home \
-             "$AUTOPILOT_GROUP" || true
-
-    # Add each sudo user to the autopilot group
-    for u in $(getent group sudo | sed -e "s/^.*://" -e "s/,/ /g"); do
-        adduser --quiet "$u" "$AUTOPILOT_GROUP" > /dev/null || true
-    done
-
-    # udev rules were installed, trigger creation of the /dev node
-    udevadm trigger --action=change
+    # udev rules were installed, trigger update of /dev/uinput
+    udevadm trigger --action=change --sysname-match=uinput
 fi
 
 #DEBHELPER#

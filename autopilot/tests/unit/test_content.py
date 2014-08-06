@@ -47,7 +47,7 @@ class FileFollowerTests(TestCase):
 
         fake_test.addCleanup.call_args[0][0]()
         actual = fake_test.addDetail.call_args[0][1].as_text()
-        self.assertEqual(u"Hello", actual)
+        self.assertEqual("Hello", actual)
 
     def test_follow_file_does_not_contain_old_file_data(self):
         fake_test = Mock()
@@ -60,7 +60,7 @@ class FileFollowerTests(TestCase):
 
         fake_test.addCleanup.call_args[0][0]()
         actual = fake_test.addDetail.call_args[0][1].as_text()
-        self.assertEqual(u"World", actual)
+        self.assertEqual("World", actual)
 
     def test_follow_file_uses_filename_by_default(self):
         fake_test = Mock()
@@ -113,7 +113,7 @@ class FileFollowerTests(TestCase):
             os.chmod(f.name, 0)
 
             content_obj = follow_file(f.name, fake_test, content_name)
-            self.assertThat(content_obj.as_text(), Equals(u''))
+            self.assertThat(content_obj.as_text(), Equals(''))
 
     def test_real_test_has_detail_added(self):
         with NamedTemporaryFile() as f:

@@ -20,7 +20,6 @@
 from dbus import DBusException
 import os
 from unittest.mock import patch, Mock
-from six import u
 from testtools import TestCase
 from testtools.matchers import (
     Contains,
@@ -634,19 +633,19 @@ class ProcessSearchErrorStringRepTests(TestCase):
 
     def test_pid(self):
         self.assertEqual(
-            u('pid = 123'),
+            'pid = 123',
             _s._get_search_criteria_string_representation(pid=123)
         )
 
     def test_dbus_bus(self):
         self.assertEqual(
-            u("dbus bus = 'foo'"),
+            "dbus bus = 'foo'",
             _s._get_search_criteria_string_representation(dbus_bus='foo')
         )
 
     def test_connection_name(self):
         self.assertEqual(
-            u("connection name = 'foo'"),
+            "connection name = 'foo'",
             _s._get_search_criteria_string_representation(
                 connection_name='foo'
             )
@@ -654,13 +653,13 @@ class ProcessSearchErrorStringRepTests(TestCase):
 
     def test_object_path(self):
         self.assertEqual(
-            u("object path = 'foo'"),
+            "object path = 'foo'",
             _s._get_search_criteria_string_representation(object_path='foo')
         )
 
     def test_application_name(self):
         self.assertEqual(
-            u("application name = 'foo'"),
+            "application name = 'foo'",
             _s._get_search_criteria_string_representation(
                 application_name='foo'
             )
@@ -673,7 +672,7 @@ class ProcessSearchErrorStringRepTests(TestCase):
                 return 'foo'
         process = FakeProcess()
         self.assertEqual(
-            u("process object = 'foo'"),
+            "process object = 'foo'",
             _s._get_search_criteria_string_representation(process=process)
         )
 

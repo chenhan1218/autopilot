@@ -20,9 +20,7 @@
 """UInput device drivers."""
 
 import logging
-import os.path
 
-import six
 from evdev import UInput, ecodes as e
 
 import autopilot.platform
@@ -36,11 +34,8 @@ _logger = logging.getLogger(__name__)
 
 
 def _get_devnode_path():
-    """Provide a fallback uinput node for devices which don't support udev"""
-    devnode = '/dev/autopilot-uinput'
-    if not os.path.exists(devnode):
-        devnode = '/dev/uinput'
-    return devnode
+    """Return the uinput device node"""
+    return '/dev/uinput'
 
 
 class _UInputKeyboardDevice(object):
@@ -135,7 +130,7 @@ class Keyboard(KeyboardBase):
         :raises TypeError: if ``keys`` is not a string.
 
         """
-        if not isinstance(keys, six.string_types):
+        if not isinstance(keys, str):
             raise TypeError("'keys' argument must be a string.")
 
         for key in self._sanitise_keys(keys):
@@ -159,7 +154,7 @@ class Keyboard(KeyboardBase):
         :raises ValueError: if one of the keys to be released is not pressed.
 
         """
-        if not isinstance(keys, six.string_types):
+        if not isinstance(keys, str):
             raise TypeError("'keys' argument must be a string.")
 
         for key in reversed(self._sanitise_keys(keys)):
@@ -195,7 +190,7 @@ class Keyboard(KeyboardBase):
         :raises TypeError: if ``keys`` is not a string.
 
         """
-        if not isinstance(string, six.string_types):
+        if not isinstance(string, str):
             raise TypeError("'keys' argument must be a string.")
         _logger.debug("Typing text %r", string)
         for key in string:

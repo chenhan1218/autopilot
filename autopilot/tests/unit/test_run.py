@@ -22,7 +22,6 @@ from unittest.mock import Mock, patch
 import logging
 import os.path
 from shutil import rmtree
-import six
 import subprocess
 import tempfile
 from testtools import TestCase, skipUnless
@@ -38,12 +37,10 @@ from testtools.matchers import (
     StartsWith,
 )
 
-if six.PY3:
-    from contextlib import ExitStack
-else:
-    from contextlib2 import ExitStack
+from contextlib import ExitStack
+from io import StringIO
 
-from autopilot import have_vis, run
+from autopilot import have_vis, run, _video
 
 
 class RunUtilityFunctionTests(TestCase):
@@ -90,45 +87,52 @@ class RunUtilityFunctionTests(TestCase):
         self.assertFalse(patched_globals.set_default_timeout_period.called)
         self.assertFalse(patched_globals.set_long_timeout_period.called)
 
-    @patch('autopilot.run.autopilot.globals')
-    def test_configure_video_recording_not_called(self, patched_globals):
-        args = Namespace(record_directory='', record=False, record_options='')
-        run._configure_video_recording(args)
+    @patch.object(_video, '_have_video_recording_facilities', new=lambda: True)
+    def test_correct_video_record_fixture_is_called_with_record_on(self):
+        args = Namespace(record_directory='', record=True)
+        _video.configure_video_recording(args)
+        FixtureClass = _video.get_video_recording_fixture()
+        fixture = FixtureClass(args)
 
-        self.assertFalse(patched_globals._configure_video_recording.called)
+        self.assertEqual(fixture.__class__.__name__, 'RMDVideoLogFixture')
 
-    @patch.object(run, '_have_video_recording_facilities', new=lambda: True)
-    def test_configure_video_recording_called_with_record_set(self):
-        args = Namespace(record_directory='', record=True, record_options='')
-        with patch('autopilot.run.autopilot.globals') as patched_globals:
-            run._configure_video_recording(args)
-            patched_globals.configure_video_recording.assert_called_once_with(
-                True,
-                '/tmp/autopilot',
-                ''
-            )
+    @patch.object(_video, '_have_video_recording_facilities', new=lambda: True)
+    def test_correct_video_record_fixture_is_called_with_record_off(self):
+        args = Namespace(record_directory='', record=False)
+        _video.configure_video_recording(args)
+        FixtureClass = _video.get_video_recording_fixture()
+        fixture = FixtureClass(args)
 
-    @patch.object(run, '_have_video_recording_facilities', new=lambda: True)
-    def test_configure_video_record_directory_imples_record(self):
+        self.assertEqual(fixture.__class__.__name__, 'DoNothingFixture')
+
+    @patch.object(_video, '_have_video_recording_facilities', new=lambda: True)
+    def test_configure_video_record_directory_implies_record(self):
         token = self.getUniqueString()
-        args = Namespace(
-            record_directory=token,
-            record=False,
-            record_options=''
-        )
-        with patch('autopilot.run.autopilot.globals') as patched_globals:
-            run._configure_video_recording(args)
-            patched_globals.configure_video_recording.assert_called_once_with(
-                True,
-                token,
-                ''
-            )
+        args = Namespace(record_directory=token, record=False)
+        _video.configure_video_recording(args)
+        FixtureClass = _video.get_video_recording_fixture()
+        fixture = FixtureClass(args)
 
-    @patch.object(run, '_have_video_recording_facilities', new=lambda: False)
+        self.assertEqual(fixture.__class__.__name__, 'RMDVideoLogFixture')
+
+    @patch.object(_video, '_have_video_recording_facilities', new=lambda: True)
+    def test_configure_video_recording_sets_default_dir(self):
+        args = Namespace(record_directory='', record=True)
+        _video.configure_video_recording(args)
+        PartialFixture = _video.get_video_recording_fixture()
+        partial_fixture = PartialFixture(None)
+
+        self.assertEqual(partial_fixture.recording_directory, '/tmp/autopilot')
+
+    @patch.object(
+        _video,
+        '_have_video_recording_facilities',
+        new=lambda: False
+    )
     def test_configure_video_recording_raises_RuntimeError(self):
-        args = Namespace(record_directory='', record=True, record_options='')
+        args = Namespace(record_directory='', record=True)
         self.assertThat(
-            lambda: run._configure_video_recording(args),
+            lambda: _video.configure_video_recording(args),
             raises(
                 RuntimeError(
                     "The application 'recordmydesktop' needs to be installed "
@@ -138,22 +142,22 @@ class RunUtilityFunctionTests(TestCase):
         )
 
     def test_video_record_check_calls_subprocess_with_correct_args(self):
-        with patch.object(run.subprocess, 'call') as patched_call:
-            run._have_video_recording_facilities()
+        with patch.object(_video.subprocess, 'call') as patched_call:
+            _video._have_video_recording_facilities()
             patched_call.assert_called_once_with(
                 ['which', 'recordmydesktop'],
                 stdout=run.subprocess.PIPE
             )
 
     def test_video_record_check_returns_true_on_zero_return_code(self):
-        with patch.object(run.subprocess, 'call') as patched_call:
+        with patch.object(_video.subprocess, 'call') as patched_call:
             patched_call.return_value = 0
-            self.assertTrue(run._have_video_recording_facilities())
+            self.assertTrue(_video._have_video_recording_facilities())
 
     def test_video_record_check_returns_false_on_nonzero_return_code(self):
-        with patch.object(run.subprocess, 'call') as patched_call:
+        with patch.object(_video.subprocess, 'call') as patched_call:
             patched_call.return_value = 1
-            self.assertFalse(run._have_video_recording_facilities())
+            self.assertFalse(_video._have_video_recording_facilities())
 
     def test_run_with_profiling_creates_profile_data_file(self):
         output_path = tempfile.mktemp()
@@ -234,7 +238,7 @@ class TestRunLaunchApp(TestCase):
             '_prepare_application_for_launch',
             return_value=(app_name, app_arguments)
         ):
-            with patch('sys.stdout', new=six.StringIO()) as stdout:
+            with patch('sys.stdout', new=StringIO()) as stdout:
                 patched_launch_proc.side_effect = RuntimeError(
                     "Failure Message"
                 )
@@ -530,7 +534,7 @@ class TestRunLaunchAppHelpers(TestCase):
 
     def test_print_message_and_exit_error_prints_message(self):
         err_msg = self.getUniqueString()
-        with patch('sys.stdout', new=six.StringIO()) as stdout:
+        with patch('sys.stdout', new=StringIO()) as stdout:
             try:
                 run._print_message_and_exit_error(err_msg)
             except SystemExit:
@@ -725,24 +729,20 @@ class OutputStreamTests(TestCase):
         path = tempfile.mktemp()
         self.addCleanup(os.unlink, path)
         stream = run._get_text_mode_file_stream(path)
-        if six.PY2:
-            self.assertThat(stream.mode, Equals('w'))
-        else:
-            self.assertThat(stream.mode, Equals('wb'))
+        self.assertThat(stream.mode, Equals('wb'))
 
     def test_text_mode_file_stream_accepts_text_type_only(self):
         path = tempfile.mktemp()
         self.addCleanup(os.unlink, path)
         stream = run._get_text_mode_file_stream(path)
         self.assertThat(
-            lambda: stream.write(u'Text!'),
+            lambda: stream.write('Text!'),
             Not(Raises())
         )
-        if six.PY3:
-            self.assertThat(
-                lambda: stream.write(b'Bytes'),
-                raises(TypeError)
-            )
+        self.assertThat(
+            lambda: stream.write(b'Bytes'),
+            raises(TypeError)
+        )
 
     def test_binary_mode_file_stream_opens_in_binary_mode(self):
         path = tempfile.mktemp()
@@ -755,14 +755,13 @@ class OutputStreamTests(TestCase):
         self.addCleanup(os.unlink, path)
         stream = run._get_binary_mode_file_stream(path)
         self.assertThat(
-            lambda: stream.write(u'Text!'),
+            lambda: stream.write('Text!'),
             Not(Raises())
         )
-        if six.PY3:
-            self.assertThat(
-                lambda: stream.write(b'Bytes'),
-                raises(TypeError)
-            )
+        self.assertThat(
+            lambda: stream.write(b'Bytes'),
+            raises(TypeError)
+        )
 
     def test_raw_binary_mode_file_stream_opens_in_binary_mode(self):
         path = tempfile.mktemp()
@@ -778,11 +777,10 @@ class OutputStreamTests(TestCase):
             lambda: stream.write(b'Bytes'),
             Not(Raises())
         )
-        if six.PY3:
-            self.assertThat(
-                lambda: stream.write(u'Text'),
-                raises(TypeError)
-            )
+        self.assertThat(
+            lambda: stream.write('Text'),
+            raises(TypeError)
+        )
 
     def test_xml_format_opens_text_mode_stream(self):
         output = tempfile.mktemp()
@@ -808,7 +806,7 @@ class OutputStreamTests(TestCase):
     def test_print_log_file_location_prints_correct_message(self):
         path = self.getUniqueString()
 
-        with patch('sys.stdout', new=six.StringIO()) as patched_stdout:
+        with patch('sys.stdout', new=StringIO()) as patched_stdout:
             run._print_default_log_path(path)
             output = patched_stdout.getvalue()
 
@@ -922,15 +920,11 @@ class TestProgramTests(TestCase):
             config_timeout = stack.enter_context(
                 patch.object(run, '_configure_timeout_profile')
             )
-            configure_video = stack.enter_context(
-                patch.object(run, '_configure_video_recording')
-            )
 
             load_tests.return_value = (mock_test_suite, False)
             fake_construct.return_value = mock_construct_test_result
             program.run()
 
-            configure_video.assert_called_once_with(fake_args)
             config_timeout.assert_called_once_with(fake_args)
             configure_debug.assert_called_once_with(fake_args)
             fake_construct.assert_called_once_with(fake_args)
@@ -939,7 +933,7 @@ class TestProgramTests(TestCase):
     def test_dont_run_when_zero_tests_loaded(self):
         fake_args = create_default_run_args()
         program = run.TestProgram(fake_args)
-        with patch('sys.stdout', new=six.StringIO()):
+        with patch('sys.stdout', new=StringIO()):
             self.assertRaisesRegexp(RuntimeError,
                                     'Did not find any tests',
                                     program.run)

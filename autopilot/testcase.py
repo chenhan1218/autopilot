@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2012-2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,29 +46,32 @@ root of the application introspection tree.
 
 """
 
-from __future__ import absolute_import
-
 import logging
 
 from fixtures import EnvironmentVariable
 from testscenarios import TestWithScenarios
 from testtools import TestCase
+from testtools.content import ContentType, content_from_stream
 from testtools.matchers import Equals
+from testtools.testcase import _ExpectedFailure
+from unittest.case import SkipTest
 
 from autopilot.application import (
     ClickApplicationLauncher,
     NormalApplicationLauncher,
     UpstartApplicationLauncher,
 )
-from autopilot.display import Display
+from autopilot.display import Display, get_screenshot_data
 from autopilot.globals import get_debug_profile_fixture
 from autopilot.input import Keyboard, Mouse
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
+from autopilot.platform import get_display_server
 from autopilot.process import ProcessManager
 from autopilot.utilities import deprecated, on_test_started
 from autopilot._timeout import Timeout
 from autopilot._logging import TestCaseLoggingFixture
+from autopilot._video import get_video_recording_fixture
 try:
     from autopilot import tracepoint as tp
     HAVE_TRACEPOINT = True
@@ -139,7 +142,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             )
         )
         self.useFixture(get_debug_profile_fixture()(self.addDetailUniqueName))
-
+        self.useFixture(get_video_recording_fixture()(self))
         _lttng_trace_test_started(self.id())
         self.addCleanup(_lttng_trace_test_ended, self.id())
 
@@ -158,6 +161,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             _logger.warning(
                 "Process manager backend unavailable, application snapshot "
                 "support disabled.")
+
+        self.addOnException(self._take_screenshot_on_failure)
 
     @property
     def process_manager(self):
@@ -344,6 +349,37 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         finally:
             self._app_snapshot = None
 
+    def take_screenshot(self, attachment_name):
+        """Take a screenshot of the current screen and adds it to the test as a
+        detail named *attachment_name*.
+
+        If *attachment_name* already exists as a detail the name will be
+        modified to remove the naming conflict
+        (i.e. using TestCase.addDetailUniqueName).
+
+        Returns True if the screenshot was taken and attached successfully,
+        False otherwise.
+
+        """
+        try:
+            image_content = content_from_stream(
+                get_screenshot_data(get_display_server()),
+                content_type=ContentType('image', 'png'),
+                buffer_now=True
+            )
+            self.addDetailUniqueName(attachment_name, image_content)
+            return True
+        except Exception as e:
+            logging.error(
+                "Taking screenshot failed: {exception}".format(exception=e)
+            )
+            return False
+
+    def _take_screenshot_on_failure(self, ex_info):
+        failure_class_type = ex_info[0]
+        if _considered_failing_test(failure_class_type):
+            self.take_screenshot("FailedTestScreenshot")
+
     @deprecated('fixtures.EnvironmentVariable')
     def patch_environment(self, key, value):
         """Patch environment using fixture.
@@ -488,3 +524,10 @@ def _ensure_uinput_device_created():
             "Failed to create Touch device for bug lp:1297595 workaround: "
             "%s" % str(e)
         )
+
+
+def _considered_failing_test(failure_class_type):
+    return (
+        not issubclass(failure_class_type, SkipTest)
+        and not issubclass(failure_class_type, _ExpectedFailure)
+    )

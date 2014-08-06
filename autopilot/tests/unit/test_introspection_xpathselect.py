@@ -31,14 +31,14 @@ class XPathSelectQueryTests(TestCase):
         fn = lambda: xpathselect.Query(
             None,
             xpathselect.Query.Operation.CHILD,
-            u'asd'
+            'asd'
         )
         self.assertThat(
             fn,
             raises(
                 TypeError(
                     "'query' parameter must be bytes, not %s"
-                    % type(u'').__name__
+                    % type('').__name__
                 )
             )
         )
@@ -48,15 +48,15 @@ class XPathSelectQueryTests(TestCase):
         self.assertEqual(b"/Foo", q.server_query_bytes())
 
     def test_can_create_app_name_from_ascii_string(self):
-        q = xpathselect.Query.root(u'Foo')
+        q = xpathselect.Query.root('Foo')
         self.assertEqual(b"/Foo", q.server_query_bytes())
 
     def test_creating_root_query_with_unicode_app_name_raises(self):
         self.assertThat(
-            lambda: xpathselect.Query.root(u"\u2026"),
+            lambda: xpathselect.Query.root("\u2026"),
             raises(
                 InvalidXPathQuery(
-                    "Type name '%s', must be ASCII encodable" % (u'\u2026')
+                    "Type name '%s', must be ASCII encodable" % ('\u2026')
                 )
             )
         )
@@ -136,13 +136,13 @@ class XPathSelectQueryTests(TestCase):
     def test_client_side_filter(self):
         q = xpathselect.Query.root("Foo") \
             .select_descendant("Bar", dict(visible=True)) \
-            .select_descendant("Baz", dict(name=u"\u2026"))
+            .select_descendant("Baz", dict(name="\u2026"))
         self.assertTrue(q.needs_client_side_filtering())
 
     def test_client_side_filter_all_query_bytes(self):
         q = xpathselect.Query.root("Foo") \
             .select_descendant("Bar", dict(visible=True)) \
-            .select_descendant("Baz", dict(name=u"\u2026"))
+            .select_descendant("Baz", dict(name="\u2026"))
         self.assertEqual(
             b'/Foo//Bar[visible=True]//Baz',
             q.server_query_bytes()
@@ -150,7 +150,7 @@ class XPathSelectQueryTests(TestCase):
 
     def test_deriving_from_client_side_filtered_query_raises_ValueError(self):
         q = xpathselect.Query.root("Foo") \
-            .select_descendant("Baz", dict(name=u"\u2026"))
+            .select_descendant("Baz", dict(name="\u2026"))
         fn = lambda: q.select_child("Foo")
         self.assertThat(
             fn,
@@ -161,12 +161,12 @@ class XPathSelectQueryTests(TestCase):
         )
 
     def test_init_raises_TypeError_on_invalid_operation_type(self):
-        fn = lambda: xpathselect.Query(None, u'/', b'sdf')
+        fn = lambda: xpathselect.Query(None, '/', b'sdf')
         self.assertThat(
             fn,
             raises(TypeError(
                 "'operation' parameter must be bytes, not '%s'"
-                % type(u'').__name__
+                % type('').__name__
             ))
         )
 
@@ -188,11 +188,11 @@ class XPathSelectQueryTests(TestCase):
         )
 
     def test_new_from_path_and_id_raises_TypeError_on_unicode_path(self):
-        fn = lambda: xpathselect.Query.new_from_path_and_id(u'bad_path', 42)
+        fn = lambda: xpathselect.Query.new_from_path_and_id('bad_path', 42)
         self.assertThat(
             fn,
             raises(TypeError(
-                "'path' attribute must be bytes, not '%s'" % type(u'').__name__
+                "'path' attribute must be bytes, not '%s'" % type('').__name__
             ))
         )
 
@@ -224,8 +224,8 @@ class XPathSelectQueryTests(TestCase):
 
     def test_get_client_side_filters_returns_client_side_filters(self):
         q = xpathselect.Query.root('app') \
-            .select_child('leaf', dict(name=u'\u2026'))
-        self.assertEqual(dict(name=u'\u2026'), q.get_client_side_filters())
+            .select_child('leaf', dict(name='\u2026'))
+        self.assertEqual(dict(name='\u2026'), q.get_client_side_filters())
 
     def test_get_parent_on_root_node_returns_the_same_query(self):
         q = xpathselect.Query.root('app')
@@ -284,13 +284,13 @@ class ParameterFilterStringScenariodTests(TestWithScenarios, TestCase):
         ('bool false', dict(k='visible', v=False, r=b"visible=False")),
         ('int +ve', dict(k='size', v=123, r=b"size=123")),
         ('int -ve', dict(k='prio', v=-12, r=b"prio=-12")),
-        ('simple string', dict(k='Name', v=u"btn1", r=b"Name=\"btn1\"")),
+        ('simple string', dict(k='Name', v="btn1", r=b"Name=\"btn1\"")),
         ('simple bytes', dict(k='Name', v=b"btn1", r=b"Name=\"btn1\"")),
-        ('string space', dict(k='Name', v=u"a b  c ", r=b"Name=\"a b  c \"")),
+        ('string space', dict(k='Name', v="a b  c ", r=b"Name=\"a b  c \"")),
         ('bytes space', dict(k='Name', v=b"a b  c ", r=b"Name=\"a b  c \"")),
         ('string escapes', dict(
             k='a',
-            v=u"\a\b\f\n\r\t\v\\",
+            v="\a\b\f\n\r\t\v\\",
             r=br'a="\x07\x08\x0c\n\r\t\x0b\\"')),
         ('byte escapes', dict(
             k='a',
@@ -343,7 +343,7 @@ class ServerSideParamMatchingTests(TestWithScenarios, TestCase):
         ('int overflow 2', dict(key='key', value=-2147483649, result=False)),
         ('int overflow 3', dict(key='key', value=2147483647, result=True)),
         ('int overflow 4', dict(key='key', value=2147483648, result=False)),
-        ('unicode string', dict(key='key', value=u'H\u2026i', result=False)),
+        ('unicode string', dict(key='key', value='H\u2026i', result=False)),
     ]
 
     def test_valid_server_side_param(self):

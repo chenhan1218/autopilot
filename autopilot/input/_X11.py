@@ -24,10 +24,7 @@ In the future we may also need other devices.
 
 """
 
-from __future__ import absolute_import
-
 import logging
-import six
 
 from autopilot.display import is_point_on_any_screen, move_mouse_to_screen
 from autopilot.utilities import (
@@ -140,7 +137,7 @@ class Keyboard(KeyboardBase):
         presses the 'Alt' and 'F2' keys.
 
         """
-        if not isinstance(keys, six.string_types):
+        if not isinstance(keys, str):
             raise TypeError("'keys' argument must be a string.")
         _logger.debug("Pressing keys %r with delay %f", keys, delay)
         for key in self.__translate_keys(keys):
@@ -159,7 +156,7 @@ class Keyboard(KeyboardBase):
         releases the 'Alt' and 'F2' keys.
 
         """
-        if not isinstance(keys, six.string_types):
+        if not isinstance(keys, str):
             raise TypeError("'keys' argument must be a string.")
         _logger.debug("Releasing keys %r with delay %f", keys, delay)
         # release keys in the reverse order they were pressed in.
@@ -195,7 +192,7 @@ class Keyboard(KeyboardBase):
          and a 't').
 
         """
-        if not isinstance(string, six.string_types):
+        if not isinstance(string, str):
             raise TypeError("'keys' argument must be a string.")
         _logger.debug("Typing text %r", string)
         for key in string:
@@ -222,7 +219,7 @@ class Keyboard(KeyboardBase):
         _PRESSED_KEYS = []
 
     def __perform_on_key(self, key, event):
-        if not isinstance(key, six.string_types):
+        if not isinstance(key, str):
             raise TypeError("Key parameter must be a string")
 
         keycode = 0

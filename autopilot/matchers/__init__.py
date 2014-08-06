@@ -20,8 +20,6 @@
 
 """Autopilot-specific testtools matchers."""
 
-from __future__ import absolute_import
-
 from functools import partial
 from testtools.matchers import Matcher, Mismatch
 

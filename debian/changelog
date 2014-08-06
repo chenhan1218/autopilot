@@ -1,5 +1,6 @@
-autopilot (1.5.0+14.10.20140806-0ubuntu1) UNRELEASED; urgency=medium
+autopilot (1.5.0+14.10.20140806.1-0ubuntu1) utopic; urgency=medium
 
+  [ Christopher Lee ]
   [Thomi Richards]
   * Fix the development make_coverage.py script.
   * Remove the python3-six dependency.
@@ -21,7 +22,7 @@ autopilot (1.5.0+14.10.20140806-0ubuntu1) UNRELEASED; urgency=medium
     symlink and "autopilot" group.
     Fixes: https://bugs.launchpad.net/bugs/1350263.
 
- -- Christopher Lee <chris.lee@canonical.com>  Wed, 06 Aug 2014 10:29:45 +1200
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 06 Aug 2014 01:20:38 +0000
 
 autopilot (1.5.0+14.10.20140716-0ubuntu2) utopic; urgency=medium
 

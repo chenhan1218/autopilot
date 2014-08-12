@@ -227,7 +227,7 @@ class BackendTests(TestCase):
         backend = backends.Backend(fake_dbus_address)
 
         self.assertThat(
-            backend.execute_query_get_proxy_instances(query, 0, self),
+            backend.execute_query_get_proxy_instances(query, 0),
             Equals([None])
         )
 
@@ -244,7 +244,7 @@ class BackendTests(TestCase):
         with patch.object(
                 backends, '_object_passes_filters', return_value=True):
             self.assertThat(
-                backend.execute_query_get_proxy_instances(query, 0, self),
+                backend.execute_query_get_proxy_instances(query, 0),
                 Equals([None])
             )
 
@@ -285,17 +285,14 @@ class MakeIntrospectionObjectTests(TestCase):
         """Verify that make_introspection_object makes the right call."""
         gpoc.return_value = self.DefaultSelector
         fake_id = Mock()
-        fake_proxy_type = Mock()
         new_fake = backends.make_introspection_object(
             (String('/Object'), {'id': [0, 42]}),
             None,
             fake_id,
-            fake_proxy_type,
         )
         self.assertThat(new_fake, IsInstance(self.DefaultSelector))
         gpoc.assert_called_once_with(
             fake_id,
-            fake_proxy_type,
             b'/Object',
             {'id': [0, 42]}
         )

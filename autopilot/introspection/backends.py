@@ -230,7 +230,7 @@ class Backend(object):
                 )
             return data
 
-    def execute_query_get_proxy_instances(self, query, id, proxy_type):
+    def execute_query_get_proxy_instances(self, query, id):
         """Execute 'query', returning proxy instances."""
         data = self.execute_query_get_data(query)
         objects = [
@@ -238,7 +238,6 @@ class Backend(object):
                 t,
                 type(self)(self.ipc_address),
                 id,
-                proxy_type
             )
             for t in data
         ]
@@ -274,7 +273,7 @@ class FakeBackend(Backend):
         return self.fake_ipc_return_data
 
 
-def make_introspection_object(dbus_tuple, backend, object_id, proxy_type):
+def make_introspection_object(dbus_tuple, backend, object_id):
     """Make an introspection object given a DBus tuple of
     (path, state_dict).
 
@@ -289,7 +288,7 @@ def make_introspection_object(dbus_tuple, backend, object_id, proxy_type):
     """
     path, state = dbus_tuple
     path = path.encode('utf-8')
-    class_object = _get_proxy_object_class(object_id, proxy_type, path, state)
+    class_object = _get_proxy_object_class(object_id, path, state)
     return class_object(state, path, backend)
 
 

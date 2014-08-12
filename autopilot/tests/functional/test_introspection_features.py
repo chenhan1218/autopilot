@@ -43,6 +43,7 @@ from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional.fixtures import TempDesktopFile
 from autopilot.introspection import CustomEmulatorBase
+from autopilot.introspection.qt import QtObjectProxyMixin
 from autopilot.display import Display
 
 
@@ -72,6 +73,40 @@ class IntrospectionFeatureTests(AutopilotTestCase):
             app_type='qt',
             emulator_base=emulator_base,
         )
+
+    def test_can_get_custom_proxy_for_app_root(self):
+        """Test two things:
+
+        1) We can get a custom proxy object for the root object in the object
+           tree.
+
+        2) We can get a custom proxy object for an object in the tree which
+           contains characters which are usually disallowed in python class
+           names.
+        """
+        class WindowMockerApp(EmulatorBase):
+            @classmethod
+            def validate_dbus_object(cls, path, _state):
+                return path == b'/window-mocker'
+
+        # verify that the initial proxy object we get back is the correct type:
+        app = self.start_mock_app(EmulatorBase)
+        self.assertThat(type(app), Equals(WindowMockerApp))
+
+        # verify that we get the correct type from get_root_instance:
+        self.assertThat(
+            type(app.get_root_instance()),
+            Equals(WindowMockerApp)
+        )
+
+    def test_customised_proxy_classes_have_extension_classes(self):
+        class WindowMockerApp(EmulatorBase):
+            @classmethod
+            def validate_dbus_object(cls, path, _state):
+                return path == b'/window-mocker'
+
+        app = self.start_mock_app(EmulatorBase)
+        self.assertThat(app.__class__.__bases__, Contains(QtObjectProxyMixin))
 
     def test_can_select_custom_emulators_by_name(self):
         """Must be able to select a custom emulator type by name."""

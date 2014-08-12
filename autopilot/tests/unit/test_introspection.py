@@ -30,33 +30,6 @@ from autopilot.introspection.qt import QtObjectProxyMixin
 import autopilot.introspection as _i
 
 
-class MakeProxyClassObjectTests(TestCase):
-
-    class BaseOne(object):
-        pass
-
-    class BaseTwo(object):
-        pass
-
-    def test_merges_multiple_proxy_bases(self):
-        cls = _s._make_proxy_class_object(
-            "MyProxy",
-            (self.BaseOne, self.BaseTwo)
-        )
-        self.assertThat(
-            len(cls.__bases__),
-            Equals(1)
-        )
-        self.assertThat(cls.__bases__[0].__name__, Equals("MyProxyBase"))
-
-    def test_uses_class_name(self):
-        cls = _s._make_proxy_class_object(
-            "MyProxy",
-            (self.BaseOne, self.BaseTwo)
-        )
-        self.assertThat(cls.__name__, Equals("MyProxy"))
-
-
 class GetDetailsFromStateDataTests(TestCase):
 
     fake_state_data = (String('/some/path'), dict(foo=123))
@@ -155,7 +128,7 @@ class FooTests(TestCase):
             _s._get_proxy_bases_from_introspection_xml(
                 self.fake_data_with_ap_interface
             ),
-            Equals((_s.ApplicationProxyObject,))
+            Equals(())
         )
 
     def test_returns_both_base_and_qt_interface(self):
@@ -163,7 +136,7 @@ class FooTests(TestCase):
             _s._get_proxy_bases_from_introspection_xml(
                 self.fake_data_with_ap_and_qt_interfaces
             ),
-            Equals((_s.ApplicationProxyObject, QtObjectProxyMixin))
+            Equals((QtObjectProxyMixin,))
         )
 
 

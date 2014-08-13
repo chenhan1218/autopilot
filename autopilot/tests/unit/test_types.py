@@ -286,15 +286,15 @@ class DateTimeTests(TestWithScenarios, TestCase):
 
     timestamps = [
         ('32bitlimit',
-            {'timestamp': '2983579200'
+            {'timestamp': 2983579200
              }),
 
         ('winter',
-            {'timestamp': '1389744000'
+            {'timestamp': 1389744000
              }),
 
         ('summer',
-            {'timestamp': '1405382400'
+            {'timestamp': 1405382400
              })
     ]
 

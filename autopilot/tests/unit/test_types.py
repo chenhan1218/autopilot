@@ -341,7 +341,6 @@ class DateTimeTests(TestWithScenarios, TestCase):
         self.assertTrue(hasattr(dt, 'hour'))
         self.assertTrue(hasattr(dt, 'minute'))
         self.assertTrue(hasattr(dt, 'second'))
-        self.assertTrue(hasattr(dt, 'timezone'))
 
     def test_datetime_properties_have_correct_values(self):
         dt = DateTime(self.timestamp)
@@ -369,8 +368,8 @@ class DateTimeTests(TestWithScenarios, TestCase):
 
     def test_equality_with_datetime_timestamp(self):
         dt1 = DateTime(self.timestamp)
-        dt2 = datetime.fromtimestamp(self.timestamp, tzlocal())
-        dt3 = datetime.fromtimestamp(self.timestamp + 1, tzlocal())
+        dt2 = datetime.fromtimestamp(self.timestamp)
+        dt3 = datetime.fromtimestamp(self.timestamp + 1)
 
         self.assertThat(dt1, Equals(dt2))
         self.assertThat(dt1, NotEquals(dt3))

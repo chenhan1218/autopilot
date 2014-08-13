@@ -284,27 +284,43 @@ class ColorTypeTests(TestCase):
 
 class DateTimeTests(TestWithScenarios, TestCase):
 
-    #timestamps = [
-        #('32bitlimit', dict(timestamp=2983579200)),
-        #('winter', dict(timestamp=1389744000)),
-        #('summer', dict(timestamp=1405382400)),
-    #]
+    timestamps = [
+        ('32bitlimit',
+            {'timestamp': '2983579200'
+             }),
 
-    #timezones = [
-        #('UTC', dict(timezone='UTC')),
-        #('NZST', dict(timezone='NZST')),
-        #('PDT', dict(timezone='PDT')),
-        #('CET', dict(timezone='CET')),
-        #('local', dict(timezone=datetime.now(tzlocal()).tzname())),
-    #]
+        ('winter',
+            {'timestamp': '1389744000'
+             }),
 
-    #scenarios = multiply_scenarios(timestamps, timezones)
-
-    scenarios = [
-        ('32bitlimit', dict(timestamp=2983579200, timezone='UTC')),
-        ('winter', dict(timestamp=1389744000, timezone='UTC')),
-        ('summer', dict(timestamp=1405382400, timezone='UTC')),
+        ('summer',
+            {'timestamp': '1405382400'
+             })
     ]
+
+    timezones = [
+        ('UTC',
+            {'timezone': 'UTC'
+             }),
+
+        ('NZST',
+            {'timezone': 'NZST'
+             }),
+
+        ('PDT',
+            {'timezone': 'PDT'
+             }),
+
+        ('CET',
+            {'timezone': 'CET'
+             }),
+
+        ('local',
+            {'timezone': datetime.now(tzlocal()).tzname())
+             })
+    ]
+
+    scenarios = multiply_scenarios(timestamps, timezones)
 
     def test_can_construct_datetime(self):
         dt = DateTime(self.timestamp)

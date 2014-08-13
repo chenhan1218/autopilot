@@ -19,7 +19,7 @@
 
 from datetime import datetime, time
 from dateutil.tz import tzlocal
-from testscenarios import TestWithScenarios
+from testscenarios import TestWithScenarios, multiply_scenarios
 from testtools import TestCase
 from testtools.matchers import Equals, IsInstance, NotEquals, raises
 
@@ -51,7 +51,6 @@ from autopilot.introspection.types import (
 )
 from autopilot.introspection.dbus import DBusIntrospectionObject
 from autopilot.utilities import compatible_repr
-from autopilot.tests import multiply_scenarios
 
 
 class PlainTypeTests(TestWithScenarios, TestCase):

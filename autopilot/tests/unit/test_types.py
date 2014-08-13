@@ -53,6 +53,7 @@ from autopilot.introspection.dbus import DBusIntrospectionObject
 from autopilot.utilities import compatible_repr
 from autopilot.tests import multiply_scenarios
 
+
 class PlainTypeTests(TestWithScenarios, TestCase):
 
     scenarios = [
@@ -316,7 +317,7 @@ class DateTimeTests(TestWithScenarios, TestCase):
              }),
 
         ('local',
-            {'timezone': datetime.now(tzlocal()).tzname())
+            {'timezone': datetime.now(tzlocal()).tzname()
              })
     ]
 
@@ -332,7 +333,6 @@ class DateTimeTests(TestWithScenarios, TestCase):
         self.assertThat(dt[0], Equals(self.timestamp))
 
     def test_datetime_has_properties(self):
-        p = DateTimeTests(self.timestamp)
         dt = DateTime(self.timestamp, tzinfo=self.timezone)
 
         self.assertTrue(hasattr(dt, 'timestamp'))

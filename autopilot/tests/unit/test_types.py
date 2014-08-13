@@ -51,7 +51,7 @@ from autopilot.introspection.types import (
 )
 from autopilot.introspection.dbus import DBusIntrospectionObject
 from autopilot.utilities import compatible_repr
-
+from autopilot.tests import multiply_scenarios
 
 class PlainTypeTests(TestWithScenarios, TestCase):
 
@@ -282,11 +282,29 @@ class ColorTypeTests(TestCase):
         self.assertEqual(repr(c), str(c))
 
 
-class DateTimeTests(TestCase):
-    timestamp = 1377209927
-    platform_limit_timestamp = 2983579200
-    winter_timestamp = 1389744000
-    summer_timestamp = 1405382400
+class DateTimeTests(TestWithScenarios, TestCase):
+
+    #timestamps = [
+        #('32bitlimit', dict(timestamp=2983579200)),
+        #('winter', dict(timestamp=1389744000)),
+        #('summer', dict(timestamp=1405382400)),
+    #]
+
+    #timezones = [
+        #('UTC', dict(timezone='UTC')),
+        #('NZST', dict(timezone='NZST')),
+        #('PDT', dict(timezone='PDT')),
+        #('CET', dict(timezone='CET')),
+        #('local', dict(timezone=datetime.now(tzlocal()).tzname())),
+    #]
+
+    #scenarios = multiply_scenarios(timestamps, timezones)
+
+    scenarios = [
+        ('32bitlimit', dict(timestamp=2983579200, timezone='UTC')),
+        ('winter', dict(timestamp=1389744000, timezone='UTC')),
+        ('summer', dict(timestamp=1405382400, timezone='UTC')),
+    ]
 
     def test_can_construct_datetime(self):
         dt = DateTime(self.timestamp)
@@ -298,7 +316,8 @@ class DateTimeTests(TestCase):
         self.assertThat(dt[0], Equals(self.timestamp))
 
     def test_datetime_has_properties(self):
-        dt = DateTime(self.timestamp)
+        p = DateTimeTests(self.timestamp)
+        dt = DateTime(self.timestamp, tzinfo=self.timezone)
 
         self.assertTrue(hasattr(dt, 'timestamp'))
         self.assertTrue(hasattr(dt, 'year'))
@@ -307,32 +326,19 @@ class DateTimeTests(TestCase):
         self.assertTrue(hasattr(dt, 'hour'))
         self.assertTrue(hasattr(dt, 'minute'))
         self.assertTrue(hasattr(dt, 'second'))
+        self.assertTrue(hasattr(dt, 'timezone'))
 
     def test_datetime_properties_have_correct_values(self):
-        dt = DateTime(self.winter_timestamp)
-        winter_dt = datetime.fromtimestamp(self.winter_timestamp)
+        dt = DateTime(self.timestamp)
+        ts_dt = datetime.fromtimestamp(self.timestamp)
 
-        self.assertThat(dt.timestamp, Equals(winter_dt.timestamp()))
-        self.assertThat(dt.year, Equals(winter_dt.year))
-        self.assertThat(dt.month, Equals(winter_dt.month))
-        self.assertThat(dt.day, Equals(winter_dt.day))
-        self.assertThat(dt.hour, Equals(winter_dt.hour))
-        self.assertThat(dt.minute, Equals(winter_dt.minute))
-        self.assertThat(dt.second, Equals(winter_dt.second))
-
-        dt = DateTime(self.summer_timestamp)
-        summer_timestamp = datetime.fromtimestamp(self.summer_timestamp)
-
-        self.assertThat(dt.timestamp, Equals(summer_timestamp.timestamp()))
-        self.assertThat(dt.year, Equals(summer_timestamp.year))
-        self.assertThat(dt.month, Equals(summer_timestamp.month))
-        self.assertThat(dt.day, Equals(summer_timestamp.day))
-        self.assertThat(dt.hour, Equals(summer_timestamp.hour))
-        self.assertThat(dt.minute, Equals(summer_timestamp.minute))
-        self.assertThat(dt.second, Equals(summer_timestamp.second))
-
-    def test_platform_limit_timestamp(self):
-        self.assertTrue(DateTime(self.platform_limit_timestamp))
+        self.assertThat(dt.timestamp, Equals(ts_dt.timestamp()))
+        self.assertThat(dt.year, Equals(ts_dt.year))
+        self.assertThat(dt.month, Equals(ts_dt.month))
+        self.assertThat(dt.day, Equals(ts_dt.day))
+        self.assertThat(dt.hour, Equals(ts_dt.hour))
+        self.assertThat(dt.minute, Equals(ts_dt.minute))
+        self.assertThat(dt.second, Equals(ts_dt.second))
 
     def test_equality_with_datetime(self):
         dt1 = DateTime(self.timestamp)

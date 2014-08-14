@@ -67,7 +67,7 @@ Recommends: python3-xlib,
             libautopilot-qt (>= 1.4),
             python3-autopilot-trace,
             recordmydesktop,
-Breaks: libautopilot-gtk (<< 1.4),
+Breaks:     libautopilot-gtk (<< 1.4),
     libautopilot-qt (<< 1.4),
 Description: Utility to write and run integration tests easily (Python 3)
  The autopilot engine enables to ease the writing of python tests

@@ -19,6 +19,7 @@
 
 from datetime import datetime, time
 from dateutil.tz import tzlocal
+import pytz
 from testscenarios import TestWithScenarios, multiply_scenarios
 from testtools import TestCase
 from testtools.matchers import Equals, IsInstance, NotEquals, raises
@@ -304,19 +305,19 @@ class DateTimeTests(TestWithScenarios, TestCase):
              }),
 
         ('NZST',
-            {'timezone': 'NZST'
+            {'timezone': 'NZ'
              }),
 
-        ('PDT',
-            {'timezone': 'PDT'
+        ('PST',
+            {'timezone': 'US/Pacific'
              }),
 
-        ('CET',
-            {'timezone': 'CET'
+        ('Hongkong',
+            {'timezone': 'Hongkong'
              }),
 
-        ('local',
-            {'timezone': datetime.now(tzlocal()).tzname()
+        ('MSK',
+            {'timezone': 'Europe/Moscow'
              })
     ]
 
@@ -343,22 +344,28 @@ class DateTimeTests(TestWithScenarios, TestCase):
         self.assertTrue(hasattr(dt, 'second'))
 
     def test_datetime_properties_have_correct_values(self):
-        dt = DateTime(self.timestamp)
-        ts_dt = datetime.fromtimestamp(self.timestamp)
+        dt1 = DateTime(self.timestamp)
+        dt2 = datetime.fromtimestamp(self.timestamp)
 
-        self.assertThat(dt.timestamp, Equals(ts_dt.timestamp()))
-        self.assertThat(dt.year, Equals(ts_dt.year))
-        self.assertThat(dt.month, Equals(ts_dt.month))
-        self.assertThat(dt.day, Equals(ts_dt.day))
-        self.assertThat(dt.hour, Equals(ts_dt.hour))
-        self.assertThat(dt.minute, Equals(ts_dt.minute))
-        self.assertThat(dt.second, Equals(ts_dt.second))
+        self.assertThat(dt1.timestamp, Equals(dt2.timestamp()))
+        self.assertThat(dt1.year, Equals(dt2.year))
+        self.assertThat(dt1.month, Equals(dt2.month))
+        self.assertThat(dt1.day, Equals(dt2.day))
+        self.assertThat(dt1.hour, Equals(dt2.hour))
+        self.assertThat(dt1.minute, Equals(dt2.minute))
+        self.assertThat(dt1.second, Equals(dt2.second))
 
     def test_equality_with_datetime(self):
-        dt1 = DateTime(self.timestamp)
-        dt2 = DateTime(self.timestamp)
+        dt2 = datetime.fromtimestamp(self.timestamp)
 
-        self.assertThat(dt1, Equals(dt2))
+        dt1 = DateTime(dt2.timestamp())
+
+        self.assertThat(dt1.year, Equals(dt2.year))
+        self.assertThat(dt1.month, Equals(dt2.month))
+        self.assertThat(dt1.day, Equals(dt2.day))
+        self.assertThat(dt1.hour, Equals(dt2.hour))
+        self.assertThat(dt1.minute, Equals(dt2.minute))
+        self.assertThat(dt1.second, Equals(dt2.second))
 
     def test_equality_with_list(self):
         dt1 = DateTime(self.timestamp)

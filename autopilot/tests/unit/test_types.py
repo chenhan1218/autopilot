@@ -350,7 +350,6 @@ class DateTimeTests(TestWithScenarios, TestCase):
     def test_equality_with_datetime_timestamp(self):
         dt1 = DateTime(self.timestamp)
         dt2 = datetime.fromtimestamp(self.timestamp)
-        dt3 = datetime.fromtimestamp(self.timestamp + 1)
 
         self.assertThat(dt1.year, Equals(dt2.year))
         self.assertThat(dt1.month, Equals(dt2.month))
@@ -358,8 +357,6 @@ class DateTimeTests(TestWithScenarios, TestCase):
         self.assertThat(dt1.hour, Equals(dt2.hour))
         self.assertThat(dt1.minute, Equals(dt2.minute))
         self.assertThat(dt1.second, Equals(dt2.second))
-
-        self.assertThat(dt1, NotEquals(dt3))
 
     def test_can_convert_to_datetime(self):
         dt1 = DateTime(self.timestamp)

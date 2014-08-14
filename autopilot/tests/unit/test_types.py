@@ -19,7 +19,8 @@
 
 from datetime import datetime, time
 from dateutil.tz import tzlocal
-from testscenarios import TestWithScenarios
+import pytz
+from testscenarios import TestWithScenarios, multiply_scenarios
 from testtools import TestCase
 from testtools.matchers import Equals, IsInstance, NotEquals, raises
 
@@ -284,7 +285,7 @@ class ColorTypeTests(TestCase):
 
 class DateTimeTests(TestWithScenarios, TestCase):
 
-    scenarios = [
+    timestamps = [
         ('32bitlimit',
             {'timestamp': 2983579200
              }),
@@ -298,6 +299,30 @@ class DateTimeTests(TestWithScenarios, TestCase):
              })
     ]
 
+    timezones = [
+        ('UTC',
+            {'timezone': 'UTC'
+             }),
+
+        ('NZST',
+            {'timezone': 'NZ'
+             }),
+
+        ('PST',
+            {'timezone': 'US/Pacific'
+             }),
+
+        ('Hongkong',
+            {'timezone': 'Hongkong'
+             }),
+
+        ('MSK',
+            {'timezone': 'Europe/Moscow'
+             })
+    ]
+
+    scenarios = multiply_scenarios(timestamps, timezones)
+
     def test_can_construct_datetime(self):
         dt = DateTime(self.timestamp)
         self.assertThat(dt, IsInstance(dbus.Array))
@@ -308,7 +333,7 @@ class DateTimeTests(TestWithScenarios, TestCase):
         self.assertThat(dt[0], Equals(self.timestamp))
 
     def test_datetime_has_properties(self):
-        dt = DateTime(self.timestamp)
+        dt = DateTime(self.timestamp, tzinfo=self.timezone)
 
         self.assertTrue(hasattr(dt, 'timestamp'))
         self.assertTrue(hasattr(dt, 'year'))
@@ -331,15 +356,12 @@ class DateTimeTests(TestWithScenarios, TestCase):
         self.assertThat(dt1.second, Equals(dt2.second))
 
     def test_equality_with_datetime(self):
-        dt1 = datetime.fromtimestamp(self.timestamp)
-        dt2 = DateTime(dt1.timestamp())
+        dt1 = DateTime(self.timestamp)
+        dt2 = datetime(dt1.year, dt1.month, dt1.day,
+                       dt1.hour, dt1.minute, dt1.second,
+                       tzinfo=dt1.tzinfo)
 
-        self.assertThat(dt1.year, Equals(dt2.year))
-        self.assertThat(dt1.month, Equals(dt2.month))
-        self.assertThat(dt1.day, Equals(dt2.day))
-        self.assertThat(dt1.hour, Equals(dt2.hour))
-        self.assertThat(dt1.minute, Equals(dt2.minute))
-        self.assertThat(dt1.second, Equals(dt2.second))
+        self.assertThat(dt1, Equals(dt2))
 
     def test_equality_with_list(self):
         dt1 = DateTime(self.timestamp)
@@ -349,14 +371,11 @@ class DateTimeTests(TestWithScenarios, TestCase):
 
     def test_equality_with_datetime_timestamp(self):
         dt1 = DateTime(self.timestamp)
-        dt2 = datetime.fromtimestamp(self.timestamp)
+        dt2 = datetime.fromtimestamp(self.timestamp).replace(tzinfo=tzlocal())
+        dt3 = datetime.fromtimestamp(self.timestamp + 1).replace(tzinfo=tzlocal())
 
-        self.assertThat(dt1.year, Equals(dt2.year))
-        self.assertThat(dt1.month, Equals(dt2.month))
-        self.assertThat(dt1.day, Equals(dt2.day))
-        self.assertThat(dt1.hour, Equals(dt2.hour))
-        self.assertThat(dt1.minute, Equals(dt2.minute))
-        self.assertThat(dt1.second, Equals(dt2.second))
+        self.assertThat(dt1, Equals(dt2))
+        self.assertThat(dt1, NotEquals(dt3))
 
     def test_can_convert_to_datetime(self):
         dt1 = DateTime(self.timestamp)

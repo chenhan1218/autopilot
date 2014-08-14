@@ -648,6 +648,10 @@ class DateTime(_array_packed_type(1)):
         return self[0]
 
     @property
+    def tzinfo(self):
+        return self._cached_dt.tzinfo
+
+    @property
     def datetime(self):
         return self._cached_dt
 

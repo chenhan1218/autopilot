@@ -19,7 +19,6 @@
 
 from datetime import datetime, time
 from dateutil.tz import tzlocal
-import pytz
 from testscenarios import TestWithScenarios, multiply_scenarios
 from testtools import TestCase
 from testtools.matchers import Equals, IsInstance, NotEquals, raises
@@ -372,7 +371,8 @@ class DateTimeTests(TestWithScenarios, TestCase):
     def test_equality_with_datetime_timestamp(self):
         dt1 = DateTime(self.timestamp)
         dt2 = datetime.fromtimestamp(self.timestamp).replace(tzinfo=tzlocal())
-        dt3 = datetime.fromtimestamp(self.timestamp + 1).replace(tzinfo=tzlocal())
+        dt3 = datetime.fromtimestamp(
+            self.timestamp + 1).replace(tzinfo=tzlocal())
 
         self.assertThat(dt1, Equals(dt2))
         self.assertThat(dt1, NotEquals(dt3))

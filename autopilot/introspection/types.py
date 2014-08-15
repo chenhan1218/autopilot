@@ -579,6 +579,9 @@ class DateTime(_array_packed_type(1)):
         18
         >>> my_dt.second
         47
+        >>> my_dt.tzinfo
+        UTC
+
 
     Two DateTime objects can be compared for equality::
 

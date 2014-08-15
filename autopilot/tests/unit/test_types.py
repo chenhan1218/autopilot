@@ -18,7 +18,6 @@
 #
 
 from datetime import datetime, time
-from dateutil.tz import tzlocal
 import pytz
 from testscenarios import TestWithScenarios, multiply_scenarios
 from testtools import TestCase
@@ -413,7 +412,8 @@ class DateTimeTests(TestWithScenarios, TestCase):
             observed = repr(dt)
             expected = repr_type(
                 u"DateTime({:%Y-%m-%d %H:%M:%S})".format(
-                    datetime.fromtimestamp(self.timestamp).replace(tzinfo=dt.tzinfo)
+                    datetime.fromtimestamp(
+                        self.timestamp).replace(tzinfo=dt.tzinfo)
                 )
             )
             self.assertEqual(expected, observed)

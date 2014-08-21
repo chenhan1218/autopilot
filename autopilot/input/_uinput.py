@@ -460,7 +460,7 @@ class Touch(TouchBase):
     def pressed(self):
         return self._device.pressed
 
-    def tap(self, x, y):
+    def tap(self, x, y, press_duration=0.1):
         """Click (or 'tap') at given x and y coordinates.
 
         :raises RuntimeError: if the finger is already pressed.
@@ -469,7 +469,7 @@ class Touch(TouchBase):
         """
         _logger.debug("Tapping at: %d,%d", x, y)
         self._device.finger_down(x, y)
-        sleep(0.1)
+        sleep(press_duration)
         self._device.finger_up()
 
     def tap_object(self, object_):

@@ -759,10 +759,9 @@ class UInputTouchTestCase(TestCase):
     def test_tap_with_press_duration_must_sleep_specified_time(self):
         touch = self.get_touch_with_mocked_backend()
 
-        with utilities.sleep.mocked() as mock_sleep:
-            touch.tap(0, 0, press_duration=10)
+        touch.tap(0, 0, press_duration=10)
 
-        self.assertEqual(mock_sleep.total_time_slept(), 10)
+        self.assertEqual(utilities.sleep.total_time_slept(), 10)
 
 
 class MultipleUInputTouchBackend(_uinput._UInputTouchDevice):

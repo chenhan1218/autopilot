@@ -440,11 +440,11 @@ class Touch(object):
         """
         raise NotImplementedError("You cannot use this class directly.")
 
-    def tap(self, x, y):
+    def tap(self, x, y, press_duration=0.1):
         """Click (or 'tap') at given x,y coordinates."""
         raise NotImplementedError("You cannot use this class directly.")
 
-    def tap_object(self, object):
+    def tap_object(self, object, press_duration=0.1):
         """Tap the center point of a given object.
 
         It does this by looking for several attributes, in order. The first

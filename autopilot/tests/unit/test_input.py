@@ -763,22 +763,24 @@ class UInputTouchTestCase(TestCase):
         self.assertEqual(utilities.sleep.total_time_slept(), 10)
 
     def test_tap_object_without_duration_must_call_tap_with_default_time(self):
-        object_ = type('Dummy', (object,), {'globalRect': (0, 0, 10, 10)})
+        object_ = make_fake_object(center=True)
         touch = self.get_touch_with_mocked_backend()
 
         with patch.object(touch, 'tap') as mock_tap:
             touch.tap_object(object_)
 
-        mock_tap.assert_called_once_with(5.0, 5.0, press_duration=0.1)
+        mock_tap.assert_called_once_with(
+            object_.center_x, object_.center_y, press_duration=0.1)
 
     def test_tap_object_with_duration_must_call_tap_with_specified_time(self):
-        object_ = type('Dummy', (object,), {'globalRect': (0, 0, 10, 10)})
+        object_ = make_fake_object(center=True)
         touch = self.get_touch_with_mocked_backend()
 
         with patch.object(touch, 'tap') as mock_tap:
             touch.tap_object(object_, press_duration=10)
 
-        mock_tap.assert_called_once_with(5.0, 5.0, press_duration=10)
+        mock_tap.assert_called_once_with(
+            object_.center_x, object_.center_y, press_duration=10)
 
 
 class MultipleUInputTouchBackend(_uinput._UInputTouchDevice):

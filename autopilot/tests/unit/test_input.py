@@ -669,9 +669,9 @@ class UInputTouchTestCase(TestCase):
         self.assertEqual(expected_calls, touch._device.mock_calls)
 
     def test_tap_object_must_put_finger_down_and_then_up_on_the_center(self):
-        object_ = type('Dummy', (object,), {'globalRect': (0, 0, 10, 10)})
+        object_ = make_fake_object(center=True)
         expected_calls = [
-            call.finger_down(5, 5),
+            call.finger_down(object_.center_x, object_.center_y),
             call.finger_up()
         ]
 

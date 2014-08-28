@@ -324,16 +324,6 @@ class DateTimeTests(TestWithScenarios, TestCase):
 
     scenarios = multiply_scenarios(timestamps, timezones)
 
-    def timezone_offset(self):
-        local_offset = timezone
-        if daylight:
-            local_offset = altzone
-        tz_offset = datetime.now(pytz.utc).astimezone(self.local_timezone()).utcoffset().seconds
-
-        print('local offset ', local_offset)
-        print('timezone offset ', tz_offset)
-        return local_offset + tz_offset
-
     def local_timezone(self):
         tz = pytz.timezone(self.timezone)
         return tz
@@ -341,11 +331,10 @@ class DateTimeTests(TestWithScenarios, TestCase):
     def local_from_timestamp(self, timestamp):
         # fromtimestamp is naive
         # thus we need create a "local" timestamp for test comparision
-        ref_ts = datetime.fromtimestamp(0, tz=self.local_timezone()) + timedelta(seconds=timestamp)
-        print('ref_ts ', ref_ts)
-        print('ref_ts %s' % ref_ts.timestamp())
-
-        return ref_ts
+        # and support 32-bit limit via timedelta
+        return datetime.fromtimestamp(0,
+                                      tz=self.local_timezone()
+                                      ) + timedelta(seconds=timestamp)
 
     def test_can_construct_datetime(self):
         with patch('autopilot.introspection.types.tzlocal',
@@ -379,16 +368,6 @@ class DateTimeTests(TestWithScenarios, TestCase):
                    new=self.local_timezone):
             dt1 = DateTime(self.timestamp)
             dt2 = self.local_from_timestamp(self.timestamp)
-            dt3 = datetime.fromtimestamp(self.timestamp)
-            dt4 = dt3.replace(tzinfo=self.local_timezone())
-            print('dt1 ', dt1)
-            print('dt2 ',dt2)
-            print('dt3 ',dt3)
-            print('dt4 ',dt4)
-            print('dt1 ts %s' % dt1.timestamp())
-            print('dt2 ts %s' % dt2.timestamp())
-            print('dt3 ts %s' % dt3.timestamp())
-            print('dt4 ts %s' % dt4.timestamp())
 
             self.assertThat(dt1.year, Equals(dt2.year))
             self.assertThat(dt1.month, Equals(dt2.month))
@@ -398,6 +377,7 @@ class DateTimeTests(TestWithScenarios, TestCase):
             self.assertThat(dt1.second, Equals(dt2.second))
             self.assertThat(dt1.tzinfo, Equals(dt2.tzinfo))
             self.assertThat(dt1.timestamp(), Equals(dt2.timestamp()))
+            self.assertThat(dt1.timestamp(), Equals(self.timestamp))
 
     def test_equality_with_datetime(self):
         with patch('autopilot.introspection.types.tzlocal',

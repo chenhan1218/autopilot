@@ -609,60 +609,9 @@ class DateTime(_array_packed_type(1)):
     """
     def __init__(self, *args, **kwargs):
         super(DateTime, self).__init__(*args, **kwargs)
-        # grab the reference offset for the local timezone
-        # compare to the offset for the local timezone after object is created
-        # finally create an object that is in the proper local timezone
-        #ref_dt = datetime.utcfromtimestamp(0)
-        #_logger.debug("ref_dt %s", ref_dt)
-        #ref_dt = pytz.utc.localize(datetime.utcfromtimestamp(0))
-        #_logger.debug("ref_dt %s", ref_dt)
-        #tz_ref_offset = ref_dt.astimezone(tzlocal()).utcoffset()
-
-        #utc_dt = datetime.utcfromtimestamp(0) + timedelta(seconds=self[0])
-        #_logger.debug("utc_dt %s", utc_dt)
-        if daylight:
-            dst_offset = timezone - altzone
-        else:
-            dst_offset = 0
-        dst_offset = 0
-        naive_dt = datetime.fromtimestamp(0, tz=tzlocal()) + timedelta(seconds=self[0] + dst_offset)
-        _logger.debug("naive_dt %s", naive_dt)
-        _logger.debug("timestamp %s" % naive_dt.timestamp())
-        #naive_dt = naive_dt.replace(tzinfo=tzlocal())
-        #_logger.debug("naive_dt %s", naive_dt)
-        #_logger.debug("timestamp %s" % naive_dt.timestamp())
-        #naive_dt = naive_dt + timedelta(seconds=(timezone - altzone))
-        #_logger.debug("timestamp %s" % naive_dt.timestamp())
-        tz_naive_offset = \
-            naive_dt.replace(year=datetime.now().year, tzinfo=tzutc()). \
-            astimezone(tzlocal()).utcoffset().seconds
-        naive_offset = timezone
-        if daylight:
-            naive_offset = altzone
-        #naive_offset = utc_dt - naive_dt
-
-        _logger.debug("naive_offset %s, tz_naive_offset %s" % (naive_offset, tz_naive_offset))
-        #_logger.debug("naive_offset %s, tz_ref_offset %s" % (naive_offset.seconds, tz_ref_offset.seconds))
-        #_logger.debug("naive_offset %s, tz_naive_offset %s, tz_ref_offset %s" % (naive_offset.seconds, tz_naive_offset.seconds, tz_ref_offset.seconds))
-        #naive_dt = naive_dt + (tz_naive_offset - tz_ref_offset)
-        #naive_dt = naive_dt + tz_ref_offset
-        #naive_dt = naive_dt + (tz_naive_offset + tz_ref_offset)
-        #naive_dt = naive_dt + timedelta(seconds=(tz_naive_offset.seconds + tz_ref_offset))
-        naive_dt = naive_dt + timedelta(seconds=tz_naive_offset + naive_offset)
-        #naive_dt = naive_dt + tz_ref_offset + naive_offset
-
-        naive_dt = naive_dt.replace(tzinfo=tzlocal())
-        #if daylight:
-            #_logger.debug("daylight %s" % (timezone - altzone))
-            #_logger.debug("timestamp %s" % naive_dt.timestamp())
-            #naive_dt = naive_dt + timedelta(seconds=(timezone - altzone))
-            #_logger.debug("timestamp %s" % naive_dt.timestamp())
-        _logger.debug("naive_dt %s", naive_dt)
-        self._cached_dt = naive_dt
-        self._cached_dt = datetime.fromtimestamp(0, tz=tzlocal()) + timedelta(seconds=self[0] + dst_offset)
-        _logger.debug("_cached_dt %s", self._cached_dt)
-        _logger.debug("timestamp %s" % self._cached_dt.timestamp())
-
+        self._cached_dt = datetime.fromtimestamp(0,
+                                                 tz=tzlocal()
+                                                 ) + timedelta(seconds=self[0])
 
     @property
     def year(self):

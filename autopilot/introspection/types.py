@@ -618,10 +618,21 @@ class DateTime(_array_packed_type(1)):
         #_logger.debug("ref_dt %s", ref_dt)
         #tz_ref_offset = ref_dt.astimezone(tzlocal()).utcoffset()
 
-        utc_dt = datetime.utcfromtimestamp(0) + timedelta(seconds=self[0])
-        _logger.debug("utc_dt %s", utc_dt)
-        naive_dt = datetime.fromtimestamp(0) + timedelta(seconds=self[0])
+        #utc_dt = datetime.utcfromtimestamp(0) + timedelta(seconds=self[0])
+        #_logger.debug("utc_dt %s", utc_dt)
+        if daylight:
+            dst_offset = timezone - altzone
+        else:
+            dst_offset = 0
+        dst_offset = 0
+        naive_dt = datetime.fromtimestamp(0, tz=tzlocal()) + timedelta(seconds=self[0] + dst_offset)
         _logger.debug("naive_dt %s", naive_dt)
+        _logger.debug("timestamp %s" % naive_dt.timestamp())
+        #naive_dt = naive_dt.replace(tzinfo=tzlocal())
+        #_logger.debug("naive_dt %s", naive_dt)
+        #_logger.debug("timestamp %s" % naive_dt.timestamp())
+        #naive_dt = naive_dt + timedelta(seconds=(timezone - altzone))
+        #_logger.debug("timestamp %s" % naive_dt.timestamp())
         tz_naive_offset = \
             naive_dt.replace(year=datetime.now().year, tzinfo=tzutc()). \
             astimezone(tzlocal()).utcoffset().seconds
@@ -641,15 +652,17 @@ class DateTime(_array_packed_type(1)):
         #naive_dt = naive_dt + tz_ref_offset + naive_offset
 
         naive_dt = naive_dt.replace(tzinfo=tzlocal())
-        if daylight:
-            _logger.debug("daylight %s" % (timezone - altzone))
-            _logger.debug("timestamp %s" % naive_dt.timestamp())
-            naive_dt = naive_dt + timedelta(seconds=(timezone - altzone))
-            _logger.debug("timestamp %s" % naive_dt.timestamp())
+        #if daylight:
+            #_logger.debug("daylight %s" % (timezone - altzone))
+            #_logger.debug("timestamp %s" % naive_dt.timestamp())
+            #naive_dt = naive_dt + timedelta(seconds=(timezone - altzone))
+            #_logger.debug("timestamp %s" % naive_dt.timestamp())
         _logger.debug("naive_dt %s", naive_dt)
         self._cached_dt = naive_dt
+        self._cached_dt = datetime.fromtimestamp(0, tz=tzlocal()) + timedelta(seconds=self[0] + dst_offset)
         _logger.debug("_cached_dt %s", self._cached_dt)
         _logger.debug("timestamp %s" % self._cached_dt.timestamp())
+
 
     @property
     def year(self):

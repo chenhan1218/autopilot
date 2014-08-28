@@ -287,39 +287,39 @@ class ColorTypeTests(TestCase):
 class DateTimeTests(TestWithScenarios, TestCase):
 
     timestamps = [
-        #('32bitlimit',
-            #{'timestamp': 2983579200
-             #}),
+        ('32bitlimit',
+            {'timestamp': 2983579200
+             }),
 
         ('winter',
             {'timestamp': 1389744000
              }),
 
-        #('summer',
-            #{'timestamp': 1405382400
-             #})
+        ('summer',
+            {'timestamp': 1405382400
+             })
     ]
 
     timezones = [
-        #('UTC',
-            #{'timezone': 'UTC'
-             #}),
+        ('UTC',
+            {'timezone': 'UTC'
+             }),
 
-        ('NZST',
+        ('NewZealand',
             {'timezone': 'NZ',
              }),
 
-        #('PST',
-            #{'timezone': 'US/Pacific'
-             #}),
+        ('Pacific',
+            {'timezone': 'US/Pacific'
+             }),
 
-        #('Hongkong',
-            #{'timezone': 'Hongkong'
-             #}),
+        ('Hongkong',
+            {'timezone': 'Hongkong'
+             }),
 
-        #('MSK',
-            #{'timezone': 'Europe/Moscow'
-             #})
+        ('MSK',
+            {'timezone': 'Europe/Moscow'
+             })
     ]
 
     scenarios = multiply_scenarios(timestamps, timezones)
@@ -330,30 +330,21 @@ class DateTimeTests(TestWithScenarios, TestCase):
             local_offset = altzone
         tz_offset = datetime.now(pytz.utc).astimezone(self.local_timezone()).utcoffset().seconds
 
-
         print('local offset ', local_offset)
         print('timezone offset ', tz_offset)
         return local_offset + tz_offset
 
     def local_timezone(self):
         tz = pytz.timezone(self.timezone)
-        #print('pretending to be %s, %s' % (self.timezone, tz))
         return tz
 
     def local_from_timestamp(self, timestamp):
-        # fromtimestamp is naive, thus we need to convert the utc timestamp
-        # from the scenario to a local timestamp for test comparision
-        ref_ts = datetime.fromtimestamp(timestamp).replace(tzinfo=self.local_timezone()) + timedelta(
-            seconds=self.timezone_offset())
-        #ts.replace(tzinfo=self.local_timezone(), timestamp=timestamp)
-        #naive_ts = datetime.fromtimestamp(timestamp)
-        #ts = naive_ts.replace(year=ref_ts.year, month=ref_ts.month, day=ref_ts.day, hour=ref_ts.hour, minute=ref_ts.minute, second=ref_ts.second, tzinfo=self.local_timezone())
+        # fromtimestamp is naive
+        # thus we need create a "local" timestamp for test comparision
+        ref_ts = datetime.fromtimestamp(0, tz=self.local_timezone()) + timedelta(seconds=timestamp)
         print('ref_ts ', ref_ts)
-        #print('naive_ts ', naive_ts)
-        #print('ts ', ts)
         print('ref_ts %s' % ref_ts.timestamp())
-        #print('naive_ts %s' % naive_ts.timestamp())
-        #print('ts %s' % ts.timestamp())
+
         return ref_ts
 
     def test_can_construct_datetime(self):
@@ -388,10 +379,16 @@ class DateTimeTests(TestWithScenarios, TestCase):
                    new=self.local_timezone):
             dt1 = DateTime(self.timestamp)
             dt2 = self.local_from_timestamp(self.timestamp)
+            dt3 = datetime.fromtimestamp(self.timestamp)
+            dt4 = dt3.replace(tzinfo=self.local_timezone())
             print('dt1 ', dt1)
             print('dt2 ',dt2)
+            print('dt3 ',dt3)
+            print('dt4 ',dt4)
             print('dt1 ts %s' % dt1.timestamp())
             print('dt2 ts %s' % dt2.timestamp())
+            print('dt3 ts %s' % dt3.timestamp())
+            print('dt4 ts %s' % dt4.timestamp())
 
             self.assertThat(dt1.year, Equals(dt2.year))
             self.assertThat(dt1.month, Equals(dt2.month))

@@ -38,11 +38,8 @@ objects.
 """
 
 from __future__ import absolute_import
-
-from time import timezone, altzone, daylight
 from datetime import datetime, time, timedelta
-from dateutil.tz import tzlocal, tzutc
-import pytz
+from dateutil.tz import tzlocal
 import dbus
 import logging
 from testtools.matchers import Equals

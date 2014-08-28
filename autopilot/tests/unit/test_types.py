@@ -17,9 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from time import timezone, altzone, daylight
-from datetime import datetime, timedelta
-from dateutil.tz import tzlocal
+from datetime import datetime, time, timedelta
 import pytz
 from testscenarios import TestWithScenarios, multiply_scenarios
 from testtools import TestCase

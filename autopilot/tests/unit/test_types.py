@@ -53,7 +53,7 @@ from autopilot.introspection.dbus import DBusIntrospectionObject
 from autopilot.utilities import compatible_repr
 
 
-class PlainTypeTests(TestCase, TestWithScenarios):
+class PlainTypeTests(TestWithScenarios, TestCase):
 
     scenarios = [
         ('bool true', dict(t=dbus.Boolean, v=True)),
@@ -282,7 +282,7 @@ class ColorTypeTests(TestCase):
         self.assertEqual(repr(c), str(c))
 
 
-class DateTimeTests(TestCase, TestWithScenarios):
+class DateTimeTests(TestWithScenarios, TestCase):
 
     timestamps = [
         ('32bitlimit',

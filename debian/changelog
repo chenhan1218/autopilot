@@ -1,3 +1,51 @@
+autopilot (1.5.0+14.10.20140806-0ubuntu1) UNRELEASED; urgency=medium
+
+  [Thomi Richards]
+  * Fix the development make_coverage.py script.
+  * Remove the python3-six dependency.
+
+  [Max Brustkern]
+  * Remove python2 compatibility code from autopilot.
+
+  [Christopher Lee]
+  * Add the ability to take screenshots with a test run.
+    Automatically takes a screenshot on a failing test.
+    Fixes: https://bugs.launchpad.net/bugs/1308762.
+
+  [Corey Goldberg]
+  * Refactor video recording code.
+
+  [Martin Pitt]
+  * Replace group membership based access to /dev/uinput with dynamic ACLs
+    for the current foreground session, and drop the /dev/autopilot-uinput
+    symlink and "autopilot" group.
+    Fixes: https://bugs.launchpad.net/bugs/1350263.
+
+ -- Christopher Lee <chris.lee@canonical.com>  Wed, 06 Aug 2014 10:29:45 +1200
+
+autopilot (1.5.0+14.10.20140716-0ubuntu2) utopic; urgency=medium
+
+  * autopilot-touch: depend on autopilot-qt5 and qttestability-autopilot
+    instead of libautopilot-qt.
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Tue, 05 Aug 2014 01:28:37 +0200
+
+autopilot (1.5.0+14.10.20140716-0ubuntu1) utopic; urgency=low
+
+  [ Thomi Richards ]
+  * Bug Fix: Attaching binary files to test results Bug Fix: Revert
+    NormalApplicationLauncher launch arg (cwd -> launch_dir) Flake8: Fix
+    for updated pep8 Build: Fix build deps for Trusty Feature: Adding
+    screenshot ability Feature: Terse logging output. (LP: #1078732)
+
+  [ Christopher Lee ]
+  * Bug Fix: Attaching binary files to test results Bug Fix: Revert
+    NormalApplicationLauncher launch arg (cwd -> launch_dir) Flake8: Fix
+    for updated pep8 Build: Fix build deps for Trusty Feature: Adding
+    screenshot ability Feature: Terse logging output. (LP: #1078732)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 16 Jul 2014 02:57:50 +0000
+
 autopilot (1.5.0+14.10.20140613-0ubuntu1) utopic; urgency=low
 
   [ Tarmac ]

@@ -88,7 +88,6 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         return self._backend.execute_query_get_proxy_instances(
             query,
             getattr(self, '_id', None),
-            type(self)
         )
 
     def _set_properties(self, state_dict):

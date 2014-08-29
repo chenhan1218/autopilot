@@ -89,7 +89,8 @@ Package: autopilot-touch
 Architecture: all
 Section: metapackages
 Depends: ${misc:Depends},
-         libautopilot-qt (>= 1.4),
+         autopilot-qt5,
+         qttestability-autopilot,
          python3-autopilot,
          python3-evdev,
          fbset,

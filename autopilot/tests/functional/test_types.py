@@ -25,5 +25,5 @@ class TypeTests(AutopilotTestCase, QmlScriptRunnerMixin):
         item = proxy.select_single('*', objectName="TestMePlease")
         self.assertEqual(
             item.foo,
-            datetime(2014, 1, 1, 0, 0, 0)
+            datetime(2014, 1, 1)
         )

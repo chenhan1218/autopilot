@@ -18,10 +18,9 @@
 #
 
 
-from testtools import TestCase, ExpectedException
+from testtools import TestCase
 from testtools.content_type import ContentType
 
-from fixtures import TimeoutException
 from mock import patch
 import time
 
@@ -71,7 +70,7 @@ class TimedRunTestTests(TestCase):
         class TimedTest(testcase.AutopilotTestCase):
 
             def test_will_timeout(self):
-                time.sleep(10) # should timeout after 5 seconds
+                time.sleep(10)  # should timeout after 5 seconds
 
         test = TimedTest('test_will_timeout')
         result = test.run()

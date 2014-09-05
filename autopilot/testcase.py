@@ -124,7 +124,6 @@ def _lttng_trace_test_ended(test_id):
 class _TimedRunTest(RunTest):
 
     def run(self, *args, **kwargs):
-        import pudb; pudb.set_trace()
         timeout = get_test_timeout()
         if timeout > 0:
             with fixtures.Timeout(timeout, True):

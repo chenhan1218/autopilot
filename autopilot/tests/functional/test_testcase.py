@@ -81,9 +81,9 @@ class TimedRunTestTests(TestCase):
     def test_untimed_run_test_does_not_time_out(self):
         class TimedTest(testcase.AutopilotTestCase):
 
-            def test_will_timeout(self):
+            def test_wont_timeout(self):
                 time.sleep(10)
 
-        test = TimedTest('test_will_timeout')
+        test = TimedTest('test_wont_timeout')
         result = test.run()
         self.assertTrue(result.wasSuccessful())

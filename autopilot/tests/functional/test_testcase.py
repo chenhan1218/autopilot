@@ -18,15 +18,19 @@
 #
 
 
-from testtools import TestCase
+from testtools import TestCase, ExpectedException
 from testtools.content_type import ContentType
 
-from autopilot.testcase import AutopilotTestCase
+from fixtures import TimeoutException
+from mock import patch
+import time
+
+from autopilot import testcase
 
 
 class AutopilotTestCaseScreenshotTests(TestCase):
     def test_screenshot_taken_when_test_fails(self):
-        class InnerTest(AutopilotTestCase):
+        class InnerTest(testcase.AutopilotTestCase):
             def test_foo(self):
                 self.fail()
 
@@ -44,7 +48,7 @@ class AutopilotTestCaseScreenshotTests(TestCase):
     def test_take_screenshot(self):
         screenshot_name = self.getUniqueString()
 
-        class InnerTest(AutopilotTestCase):
+        class InnerTest(testcase.AutopilotTestCase):
             def test_foo(self):
                 self.take_screenshot(screenshot_name)
 
@@ -58,3 +62,29 @@ class AutopilotTestCaseScreenshotTests(TestCase):
             screenshot_content.content_type,
             ContentType("image", "png")
         )
+
+
+class TimedRunTestTests(TestCase):
+
+    @patch.object(testcase, 'get_test_timeout', new=lambda: 5)
+    def test_timed_run_test_times_out(self):
+        class TimedTest(testcase.AutopilotTestCase):
+
+            def test_will_timeout(self):
+                time.sleep(10) # should timeout after 5 seconds
+
+        test = TimedTest('test_will_timeout')
+        result = test.run()
+        self.assertFalse(result.wasSuccessful())
+        self.assertEqual(1, len(result.errors))
+
+    @patch.object(testcase, 'get_test_timeout', new=lambda: 0)
+    def test_untimed_run_test_does_not_time_out(self):
+        class TimedTest(testcase.AutopilotTestCase):
+
+            def test_will_timeout(self):
+                time.sleep(10)
+
+        test = TimedTest('test_will_timeout')
+        result = test.run()
+        self.assertTrue(result.wasSuccessful())

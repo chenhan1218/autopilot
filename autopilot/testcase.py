@@ -48,9 +48,9 @@ root of the application introspection tree.
 
 import logging
 
-from fixtures import EnvironmentVariable
+import fixtures
 from testscenarios import TestWithScenarios
-from testtools import TestCase
+from testtools import TestCase, RunTest
 from testtools.content import ContentType, content_from_stream
 from testtools.matchers import Equals
 from testtools.testcase import _ExpectedFailure
@@ -62,7 +62,7 @@ from autopilot.application import (
     UpstartApplicationLauncher,
 )
 from autopilot.display import Display, get_screenshot_data
-from autopilot.globals import get_debug_profile_fixture
+from autopilot.globals import get_debug_profile_fixture, get_test_timeout
 from autopilot.input import Keyboard, Mouse
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
@@ -121,6 +121,18 @@ def _lttng_trace_test_ended(test_id):
         tp.emit_test_ended(test_id)
 
 
+class _TimedRunTest(RunTest):
+
+    def run(self, *args, **kwargs):
+        import pudb; pudb.set_trace()
+        timeout = get_test_timeout()
+        if timeout > 0:
+            with fixtures.Timeout(timeout, True):
+                return super().run(*args, **kwargs)
+        else:
+            return super().run(*args, **kwargs)
+
+
 class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
     """Wrapper around testtools.TestCase that adds significant functionality.
@@ -131,6 +143,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
     recording tools.
 
     """
+
+    run_tests_with = _TimedRunTest
 
     def setUp(self):
         super(AutopilotTestCase, self).setUp()
@@ -398,7 +412,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         previous value, if one is found, or unset if not.
 
         """
-        self.useFixture(EnvironmentVariable(key, value))
+        self.useFixture(fixtures.EnvironmentVariable(key, value))
 
     def assertVisibleWindowStack(self, stack_start):
         """Check that the visible window stack starts with the windows passed

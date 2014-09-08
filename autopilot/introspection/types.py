@@ -37,7 +37,6 @@ objects.
 
 """
 
-from __future__ import absolute_import
 from datetime import datetime, time, timedelta
 from dateutil.tz import tzlocal
 import dbus
@@ -606,9 +605,8 @@ class DateTime(_array_packed_type(1)):
     """
     def __init__(self, *args, **kwargs):
         super(DateTime, self).__init__(*args, **kwargs)
-        self._cached_dt = datetime.fromtimestamp(0,
-                                                 tz=tzlocal()
-                                                 ) + timedelta(seconds=self[0])
+        self._cached_dt = datetime.fromtimestamp(
+            0, tz=tzlocal()) + timedelta(seconds=self[0])
 
     @property
     def year(self):

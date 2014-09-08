@@ -1,5 +1,6 @@
 
-from datetime import datetime
+from datetime import datetime, timedelta
+import time
 
 from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional import QmlScriptRunnerMixin
@@ -24,7 +25,11 @@ class TypeTests(AutopilotTestCase, QmlScriptRunnerMixin):
             )
         )
         item = proxy.select_single('*', objectName="TestMePlease")
+        dt = datetime(2014, 1, 1, 0, 0, 0, tzinfo=tzlocal())
+        timestamp = time.mktime(dt.timetuple())
+        dt = datetime.fromtimestamp(
+            0, tz=tzlocal()) + timedelta(seconds=timestamp)
         self.assertEqual(
             item.foo,
-            datetime(2014, 1, 1, 0, 0, 0, tzinfo=tzlocal())
+            dt
         )

@@ -330,9 +330,8 @@ class DateTimeTests(TestWithScenarios, TestCase):
         # fromtimestamp is naive
         # thus we need create a "local" timestamp for test comparision
         # and support 32-bit limit via timedelta
-        return datetime.fromtimestamp(0,
-                                      tz=self.local_timezone()
-                                      ) + timedelta(seconds=timestamp)
+        return datetime.fromtimestamp(
+            0, tz=self.local_timezone()) + timedelta(seconds=timestamp)
 
     def test_can_construct_datetime(self):
         with patch('autopilot.introspection.types.tzlocal',

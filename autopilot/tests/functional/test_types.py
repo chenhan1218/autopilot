@@ -3,6 +3,7 @@ from datetime import datetime
 
 from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional import QmlScriptRunnerMixin
+from dateutil.tz import tzlocal
 
 from textwrap import dedent
 
@@ -25,5 +26,5 @@ class TypeTests(AutopilotTestCase, QmlScriptRunnerMixin):
         item = proxy.select_single('*', objectName="TestMePlease")
         self.assertEqual(
             item.foo,
-            datetime(2014, 1, 1)
+            datetime(2014, 1, 1, 0, 0, 0, tzinfo=tzlocal())
         )

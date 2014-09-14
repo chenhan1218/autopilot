@@ -21,7 +21,7 @@
 from testtools import TestCase
 from testtools.content_type import ContentType
 
-from mock import patch
+from unittest.mock import patch
 import time
 
 from autopilot import testcase

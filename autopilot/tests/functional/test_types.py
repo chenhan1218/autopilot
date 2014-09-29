@@ -53,7 +53,7 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
         )),
     ]
 
-    def test_TZ_env_changes_display_string(self):
+    def test_qml_provides_in_localtime(self):
         qml_script = dedent("""
             import QtQuick 2.0
             import QtQml 2.2
@@ -69,6 +69,22 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
             proxy.select_single('QQuickText').text,
             self.expected_string
         )
+
+    def test_localtime_always_provided(self):
+        qml_script = dedent("""
+            import QtQuick 2.0
+            import QtQml 2.2
+            Rectangle {
+                property date testingTime: new Date('2014-01-15 12:34:52');
+                Text {
+                    text: testingTime;
+                }
+            }""");
+        self.useFixture(EnvironmentVariable('TZ', self.TZ))
+        proxy = self.start_qml_script(qml_script)
+        date_object = proxy.select_single("QQuickRectangle").testingTime
+        self.assertEqual(date_object.day, 15)
+        self.assertEqual(date_object.hour, 12)
 
 
     def test_comparisons_with_timezone(self):

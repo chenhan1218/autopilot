@@ -31,39 +31,61 @@ class TypeTests(AutopilotTestCase, QmlScriptRunnerMixin):
 
 class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
     scenarios = [
-        ('UTC', dict(TZ='UTC')),
-        ('NZ', dict(TZ='Pacific/Auckland')),
-        ('US Central', dict(TZ='US/Central ')),
-        ('US Eastern', dict(TZ='US/Eastern')),
+        ('UTC', dict(
+            TZ='UTC',
+            expected_string='2014-09-29T12:00:00',
+            expected_datetime = dict(day=29, hour=12),
+        )),
+        ('NZ', dict(
+            TZ='Pacific/Auckland',
+            expected_string='2014-09-30T01:00:00',
+            expected_datetime = dict(day=30, hour=1),
+        )),
+        ('US Central', dict(
+            TZ='US/Central',
+            expected_string='2014-09-29T07:00:00',
+            expected_datetime = dict(day=29, hour=7),
+        )),
+        ('US Eastern', dict(
+            TZ='US/Eastern',
+            expected_string='2014-09-29T08:00:00',
+            expected_datetime = dict(day=29, hour=8),
+        )),
     ]
+
+    def test_TZ_env_changes_display_string(self):
+        qml_script = dedent("""
+            import QtQuick 2.0
+            import QtQml 2.2
+            Rectangle {
+                property date testingTime: new Date(1411992000000);
+                Text {
+                    text: testingTime;
+                }
+            }""");
+        self.useFixture(EnvironmentVariable('TZ', self.TZ))
+        proxy = self.start_qml_script(qml_script)
+        self.assertEqual(
+            proxy.select_single('QQuickText').text,
+            self.expected_string
+        )
+
 
     def test_comparisons_with_timezone(self):
         epoch_timestamp = 1411992000
         epoch_timestamp_milli = 1411992000000
-        # epoch: 1411992000
-        # epoch (milli): 1411992000000
-        # UTC: Mon, 29 Sep 2014 12:00:00 GMT
-        # Local (NZ): 30/9/2014 01:00:00 GMT+13
         qml_script = dedent("""
         import QtQuick 2.0
         import QtQml 2.2
         Rectangle {
-            property date currentTime: new Date(1411992000000);
+            property date testingTime: new Date(1411992000000);
             Text {
-                // Display (local time): 2014-09-30T01:00:00
-                text: currentTime;
+                text: testingTime;
             }
         }""");
         self.useFixture(EnvironmentVariable('TZ', self.TZ))
         proxy = self.start_qml_script(qml_script)
 
-        self.assertEqual(
-            proxy.select_single("QQuickRectangle").currentTime,
-            datetime.fromtimestamp(epoch_timestamp)
-        )
-        self.assertEqual(
-            datetime.utcfromtimestamp(
-                proxy.select_single("QQuickRectangle").currentTime.timestamp
-            ),
-            datetime.utcfromtimestamp(epoch_timestamp)
-        )
+        date_object = proxy.select_single("QQuickRectangle").testingTime
+        self.assertEqual(date_object.day, self.expected_datetime['day'])
+        self.assertEqual(date_object.hour, self.expected_datetime['hour'])

@@ -34,35 +34,38 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
         ('UTC', dict(
             TZ='UTC',
             expected_string='2014-09-29T12:00:00',
-            expected_datetime = dict(day=29, hour=12),
+            expected_datetime=dict(day=29, hour=12),
         )),
         ('NZ', dict(
             TZ='Pacific/Auckland',
             expected_string='2014-09-30T01:00:00',
-            expected_datetime = dict(day=30, hour=1),
+            expected_datetime=dict(day=30, hour=1),
         )),
         ('US Central', dict(
             TZ='US/Central',
             expected_string='2014-09-29T07:00:00',
-            expected_datetime = dict(day=29, hour=7),
+            expected_datetime=dict(day=29, hour=7),
         )),
         ('US Eastern', dict(
             TZ='US/Eastern',
             expected_string='2014-09-29T08:00:00',
-            expected_datetime = dict(day=29, hour=8),
+            expected_datetime=dict(day=29, hour=8),
         )),
     ]
 
-    def test_qml_provides_in_localtime(self):
-        qml_script = dedent("""
+    def get_test_qml_string(self, date_string):
+        return dedent("""
             import QtQuick 2.0
             import QtQml 2.2
             Rectangle {
-                property date testingTime: new Date(1411992000000);
+                property date testingTime: new Date(%s);
                 Text {
                     text: testingTime;
                 }
-            }""");
+            }""" % date_string)
+
+    def test_qml_provides_in_localtime(self):
+        qml_script = self.get_test_qml_string('1411992000000')
         self.useFixture(EnvironmentVariable('TZ', self.TZ))
         proxy = self.start_qml_script(qml_script)
         self.assertEqual(
@@ -71,15 +74,7 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
         )
 
     def test_localtime_always_provided(self):
-        qml_script = dedent("""
-            import QtQuick 2.0
-            import QtQml 2.2
-            Rectangle {
-                property date testingTime: new Date('2014-01-15 12:34:52');
-                Text {
-                    text: testingTime;
-                }
-            }""");
+        qml_script = self.get_test_qml_string('2014-01-15 12:34:52')
         self.useFixture(EnvironmentVariable('TZ', self.TZ))
         proxy = self.start_qml_script(qml_script)
         date_object = proxy.select_single("QQuickRectangle").testingTime
@@ -94,22 +89,3 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
             datetime.strptime('2014-01-15 12:34:52', '%Y-%m-%d %H:%M:%S'),
             date_object
         )
-
-    def test_comparisons_with_timezone(self):
-        epoch_timestamp = 1411992000
-        epoch_timestamp_milli = 1411992000000
-        qml_script = dedent("""
-        import QtQuick 2.0
-        import QtQml 2.2
-        Rectangle {
-            property date testingTime: new Date(1411992000000);
-            Text {
-                text: testingTime;
-            }
-        }""");
-        self.useFixture(EnvironmentVariable('TZ', self.TZ))
-        proxy = self.start_qml_script(qml_script)
-
-        date_object = proxy.select_single("QQuickRectangle").testingTime
-        self.assertEqual(date_object.day, self.expected_datetime['day'])
-        self.assertEqual(date_object.hour, self.expected_datetime['hour'])

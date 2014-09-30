@@ -83,9 +83,17 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
         self.useFixture(EnvironmentVariable('TZ', self.TZ))
         proxy = self.start_qml_script(qml_script)
         date_object = proxy.select_single("QQuickRectangle").testingTime
+
+        self.assertEqual(date_object.year, 2014)
+        self.assertEqual(date_object.month, 1)
         self.assertEqual(date_object.day, 15)
         self.assertEqual(date_object.hour, 12)
-
+        self.assertEqual(date_object.minute, 34)
+        self.assertEqual(date_object.second, 52)
+        self.assertEqual(
+            datetime.strptime('2014-01-15 12:34:52', '%Y-%m-%d %H:%M:%S'),
+            date_object
+        )
 
     def test_comparisons_with_timezone(self):
         epoch_timestamp = 1411992000

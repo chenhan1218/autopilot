@@ -144,7 +144,7 @@ class DoNothingFixture(fixtures.Fixture):
         pass
 
 
-VideoLogFixture = None
+VideoLogFixture = DoNothingFixture
 
 
 def configure_video_recording(args):

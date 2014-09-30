@@ -34,22 +34,18 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
         ('UTC', dict(
             TZ='UTC',
             expected_string='2014-09-29T12:00:00',
-            expected_datetime=dict(day=29, hour=12),
         )),
         ('NZ', dict(
             TZ='Pacific/Auckland',
             expected_string='2014-09-30T01:00:00',
-            expected_datetime=dict(day=30, hour=1),
         )),
         ('US Central', dict(
             TZ='US/Central',
             expected_string='2014-09-29T07:00:00',
-            expected_datetime=dict(day=29, hour=7),
         )),
         ('US Eastern', dict(
             TZ='US/Eastern',
             expected_string='2014-09-29T08:00:00',
-            expected_datetime=dict(day=29, hour=8),
         )),
     ]
 
@@ -64,7 +60,14 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
                 }
             }""" % date_string)
 
-    def test_qml_provides_in_localtime(self):
+    def test_qml_applies_timezone_to_timestamp(self):
+        """Test that when given a timestamp the datetime displayed has the
+        timezone applied to it.
+
+        QML will apply a timezone calculation to a timestamp (but not a
+        timestring).
+
+        """
         qml_script = self.get_test_qml_string('1411992000000')
         self.useFixture(EnvironmentVariable('TZ', self.TZ))
         proxy = self.start_qml_script(qml_script)
@@ -73,8 +76,8 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
             self.expected_string
         )
 
-    def test_localtime_always_provided(self):
-        qml_script = self.get_test_qml_string('2014-01-15 12:34:52')
+    def test_timezone_not_applied_to_timestring(self):
+        qml_script = self.get_test_qml_string("'2014-01-15 12:34:52'")
         self.useFixture(EnvironmentVariable('TZ', self.TZ))
         proxy = self.start_qml_script(qml_script)
         date_object = proxy.select_single("QQuickRectangle").testingTime
@@ -85,7 +88,4 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
         self.assertEqual(date_object.hour, 12)
         self.assertEqual(date_object.minute, 34)
         self.assertEqual(date_object.second, 52)
-        self.assertEqual(
-            datetime.strptime('2014-01-15 12:34:52', '%Y-%m-%d %H:%M:%S'),
-            date_object
-        )
+        self.assertEqual(datetime(2014, 1, 15, 12, 34, 52), date_object)

@@ -42,6 +42,8 @@ from dateutil.tz import tzlocal
 import dbus
 import logging
 from testtools.matchers import Equals
+import pytz
+import os
 
 from autopilot.introspection.utilities import translate_state_keys
 from autopilot.utilities import sleep, compatible_repr
@@ -605,8 +607,22 @@ class DateTime(_array_packed_type(1)):
     """
     def __init__(self, *args, **kwargs):
         super(DateTime, self).__init__(*args, **kwargs)
-        self._cached_dt = datetime.fromtimestamp(
-            0, tz=tzlocal()) + timedelta(seconds=self[0])
+
+        # This is a workaround where timedelta takes into account day-light
+        # savings.
+        # Work with utc then apply the local timezone to get the correct time
+        # then strip out the tzinfo (making it naive).
+        utc_stamp = datetime.fromtimestamp(
+            0, tz=pytz.utc
+        ) + timedelta(seconds=self[0])
+
+        # Get the correct local tz to apply (and then strip from the datetime
+        # object.)
+        try:
+            local_tz = pytz.timezone(os.environ['TZ'])
+        except KeyError:
+            local_tz = tzlocal()
+        self._cached_dt = utc_stamp.astimezone(local_tz).replace(tzinfo=None)
 
     @property
     def year(self):

@@ -19,6 +19,7 @@
 
 
 from testtools import TestCase
+from testtools.matchers import Contains
 from testtools.content_type import ContentType
 
 from unittest.mock import patch
@@ -76,6 +77,10 @@ class TimedRunTestTests(TestCase):
         result = test.run()
         self.assertFalse(result.wasSuccessful())
         self.assertEqual(1, len(result.errors))
+        self.assertThat(
+            result.errors[0][1],
+            Contains('raise TimeoutException()')
+        )
 
     @patch.object(testcase, 'get_test_timeout', new=lambda: 0)
     def test_untimed_run_test_does_not_time_out(self):

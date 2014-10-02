@@ -18,7 +18,6 @@
 #
 
 from datetime import datetime, time, timedelta
-import pytz
 from testscenarios import TestWithScenarios, multiply_scenarios
 from testtools import TestCase
 from testtools.matchers import Equals, IsInstance, NotEquals, raises
@@ -51,6 +50,9 @@ from autopilot.introspection.types import (
 )
 from autopilot.introspection.dbus import DBusIntrospectionObject
 from autopilot.utilities import compatible_repr
+
+from fixtures import EnvironmentVariable
+from dateutil import tz
 
 
 class PlainTypeTests(TestWithScenarios, TestCase):
@@ -323,46 +325,40 @@ class DateTimeTests(TestWithScenarios, TestCase):
     scenarios = multiply_scenarios(timestamps, timezones)
 
     def local_timezone(self):
-        tz = pytz.timezone(self.timezone)
-        return tz
+        return tz.gettz(self.timezone)
 
     def local_from_timestamp(self, timestamp):
         # fromtimestamp is naive
         # thus we need create a "local" timestamp for test comparision
         # and support 32-bit limit via timedelta
-        return datetime.fromtimestamp(
-            0, tz=self.local_timezone()) + timedelta(seconds=timestamp)
+        utc_time = datetime.fromtimestamp(
+            0, tz=tz.tzutc()
+        ) + timedelta(seconds=timestamp)
+        return utc_time.astimezone(self.local_timezone()).replace(tzinfo=None)
 
     def test_can_construct_datetime(self):
-        with patch('autopilot.introspection.types.tzlocal',
-                   new=self.local_timezone):
-            dt = DateTime(self.timestamp)
-            self.assertThat(dt, IsInstance(dbus.Array))
+        dt = DateTime(self.timestamp)
+        self.assertThat(dt, IsInstance(dbus.Array))
 
     def test_datetime_has_slice_access(self):
-        with patch('autopilot.introspection.types.tzlocal',
-                   new=self.local_timezone):
-            dt = DateTime(self.timestamp)
-
-            self.assertThat(dt[0], Equals(self.timestamp))
+        dt = DateTime(self.timestamp)
+        self.assertThat(dt[0], Equals(self.timestamp))
 
     def test_datetime_has_properties(self):
-        with patch('autopilot.introspection.types.tzlocal',
-                   new=self.local_timezone):
-            dt = DateTime(self.timestamp)
+        dt = DateTime(self.timestamp)
 
-            self.assertTrue(hasattr(dt, 'timestamp'))
-            self.assertTrue(hasattr(dt, 'year'))
-            self.assertTrue(hasattr(dt, 'month'))
-            self.assertTrue(hasattr(dt, 'day'))
-            self.assertTrue(hasattr(dt, 'hour'))
-            self.assertTrue(hasattr(dt, 'minute'))
-            self.assertTrue(hasattr(dt, 'second'))
-            self.assertTrue(hasattr(dt, 'tzinfo'))
+        self.assertTrue(hasattr(dt, 'timestamp'))
+        self.assertTrue(hasattr(dt, 'year'))
+        self.assertTrue(hasattr(dt, 'month'))
+        self.assertTrue(hasattr(dt, 'day'))
+        self.assertTrue(hasattr(dt, 'hour'))
+        self.assertTrue(hasattr(dt, 'minute'))
+        self.assertTrue(hasattr(dt, 'second'))
 
     def test_datetime_properties_have_correct_values(self):
         with patch('autopilot.introspection.types.tzlocal',
                    new=self.local_timezone):
+            self.useFixture(EnvironmentVariable('TZ', self.timezone))
             dt1 = DateTime(self.timestamp)
             dt2 = self.local_from_timestamp(self.timestamp)
 
@@ -372,7 +368,6 @@ class DateTimeTests(TestWithScenarios, TestCase):
             self.assertThat(dt1.hour, Equals(dt2.hour))
             self.assertThat(dt1.minute, Equals(dt2.minute))
             self.assertThat(dt1.second, Equals(dt2.second))
-            self.assertThat(dt1.tzinfo, Equals(dt2.tzinfo))
             self.assertThat(dt1.timestamp(), Equals(dt2.timestamp()))
             self.assertThat(dt1.timestamp(), Equals(self.timestamp))
 
@@ -381,8 +376,7 @@ class DateTimeTests(TestWithScenarios, TestCase):
                    new=self.local_timezone):
             dt1 = DateTime(self.timestamp)
             dt2 = datetime(dt1.year, dt1.month, dt1.day,
-                           dt1.hour, dt1.minute, dt1.second,
-                           tzinfo=dt1.tzinfo)
+                           dt1.hour, dt1.minute, dt1.second)
 
             self.assertThat(dt1, Equals(dt2))
 
@@ -416,10 +410,12 @@ class DateTimeTests(TestWithScenarios, TestCase):
                    new=self.local_timezone):
             dt = DateTime(self.timestamp)
             observed = repr(dt)
+
             expected = repr_type(
                 u"DateTime({:%Y-%m-%d %H:%M:%S})".format(
                     self.local_from_timestamp(
-                        self.timestamp).replace(tzinfo=self.local_timezone())
+                        self.timestamp
+                    ).replace(tzinfo=self.local_timezone())
                 )
             )
             self.assertEqual(expected, observed)

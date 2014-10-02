@@ -577,8 +577,6 @@ class DateTime(_array_packed_type(1)):
         18
         >>> my_dt.second
         47
-        >>> my_dt.tzinfo
-        UTC
 
 
     Two DateTime objects can be compared for equality::
@@ -606,7 +604,6 @@ class DateTime(_array_packed_type(1)):
     """
     def __init__(self, *args, **kwargs):
         super(DateTime, self).__init__(*args, **kwargs)
-
         # This is a workaround where timedelta takes into account day-light
         # savings.
         # Work with utc then apply the local timezone to get the correct time
@@ -650,10 +647,6 @@ class DateTime(_array_packed_type(1)):
     @property
     def timestamp(self):
         return self._cached_dt.timestamp
-
-    @property
-    def tzinfo(self):
-        return self._cached_dt.tzinfo
 
     @property
     def datetime(self):

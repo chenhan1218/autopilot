@@ -38,11 +38,10 @@ objects.
 """
 
 from datetime import datetime, time, timedelta
-from dateutil.tz import tzlocal
+from dateutil.tz import gettz, tzlocal, tzutc
 import dbus
 import logging
 from testtools.matchers import Equals
-import pytz
 import os
 
 from autopilot.introspection.utilities import translate_state_keys
@@ -613,13 +612,13 @@ class DateTime(_array_packed_type(1)):
         # Work with utc then apply the local timezone to get the correct time
         # then strip out the tzinfo (making it naive).
         utc_stamp = datetime.fromtimestamp(
-            0, tz=pytz.utc
+            0, tz=tzutc()
         ) + timedelta(seconds=self[0])
 
         # Get the correct local tz to apply (and then strip from the datetime
         # object.)
         try:
-            local_tz = pytz.timezone(os.environ['TZ'])
+            local_tz = gettz(os.environ['TZ'])
         except KeyError:
             local_tz = tzlocal()
         self._cached_dt = utc_stamp.astimezone(local_tz).replace(tzinfo=None)

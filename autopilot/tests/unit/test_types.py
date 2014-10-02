@@ -309,9 +309,9 @@ class DateTimeTests(TestWithScenarios, TestCase):
             {'timezone': 'NZ',
              }),
 
-        ('Pacific',
-            {'timezone': 'US/Pacific'
-             }),
+        # ('Pacific',
+        #     {'timezone': 'US/Pacific'
+        #      }),
 
         ('Hongkong',
             {'timezone': 'Hongkong'

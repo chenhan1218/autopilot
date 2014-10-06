@@ -42,7 +42,6 @@ from dateutil.tz import gettz, tzlocal, tzutc
 import dbus
 import logging
 from testtools.matchers import Equals
-import os
 
 from autopilot.introspection.utilities import translate_state_keys
 from autopilot.utilities import sleep, compatible_repr
@@ -606,19 +605,29 @@ class DateTime(_array_packed_type(1)):
         super(DateTime, self).__init__(*args, **kwargs)
         # This is a workaround where timedelta takes into account day-light
         # savings.
-        # Work with utc then apply the local timezone to get the correct time
-        # then strip out the tzinfo (making it naive).
+        # Get a UTC datetime for the incoming timestamp.
+        # Get a localtime dst offset for the time in question
+        # Use the timedelta workaround again, but this time in localtime and
+        # manually apply the dst offset.
         utc_stamp = datetime.fromtimestamp(
             0, tz=tzutc()
         ) + timedelta(seconds=self[0])
 
-        # Get the correct local tz to apply (and then strip from the datetime
-        # object.)
-        try:
-            local_tz = gettz(os.environ['TZ'])
-        except KeyError:
-            local_tz = tzlocal()
-        self._cached_dt = utc_stamp.astimezone(local_tz).replace(tzinfo=None)
+        # gettz tries a number of things (os.environ['TZ'], files # etc.) so no
+        # need to manually attempt to get os.environ, or tzname or
+        # time.tzname[0] etc.
+        localtz_file = gettz()
+
+        if localtz_file is None:
+            localtz_file = tzlocal()
+
+        dst_offset = localtz_file.dst(utc_stamp)
+
+        local_stamp = (datetime.fromtimestamp(
+            0, tz=localtz_file
+        ) + timedelta(seconds=self[0])) + dst_offset
+
+        self._cached_dt = local_stamp.replace(tzinfo=None)
 
     @property
     def year(self):

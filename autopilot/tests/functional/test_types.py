@@ -76,7 +76,12 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
 
         """
         qml_script = self.get_test_qml_string('1411992000000')
+
+        import time as _time
+        self.addCleanup(_time.tzset)
         self.useFixture(EnvironmentVariable('TZ', self.TZ))
+        _time.tzset()
+
         proxy = self.start_qml_script(qml_script)
         self.assertEqual(
             proxy.select_single('QQuickText').text,
@@ -84,8 +89,13 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
         )
 
     def test_timezone_not_applied_to_timestring(self):
-        qml_script = self.get_test_qml_string("'2014-01-15 12:34:52'")
+        # self.useFixture(EnvironmentVariable('TZ', self.TZ))
+        import time as _time
+        self.addCleanup(_time.tzset)
         self.useFixture(EnvironmentVariable('TZ', self.TZ))
+        _time.tzset()
+
+        qml_script = self.get_test_qml_string("'2014-01-15 12:34:52'")
         proxy = self.start_qml_script(qml_script)
         date_object = proxy.select_single("QQuickRectangle").testingTime
 

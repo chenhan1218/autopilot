@@ -71,6 +71,12 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
                 }
             }""" % date_string)
 
+    def set_testing_timezone(self):
+        import time as _time
+        self.addCleanup(_time.tzset)
+        self.useFixture(EnvironmentVariable('TZ', self.TZ))
+        _time.tzset()
+
     def test_qml_applies_timezone_to_timestamp(self):
         """Test that when given a timestamp the datetime displayed has the
         timezone applied to it.
@@ -79,12 +85,8 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
         timestring).
 
         """
+        self.set_testing_timezone()
         qml_script = self.get_test_qml_string('1411992000000')
-
-        import time as _time
-        self.addCleanup(_time.tzset)
-        self.useFixture(EnvironmentVariable('TZ', self.TZ))
-        _time.tzset()
 
         proxy = self.start_qml_script(qml_script)
         self.assertEqual(
@@ -93,11 +95,7 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
         )
 
     def test_timezone_not_applied_to_timestring(self):
-        # self.useFixture(EnvironmentVariable('TZ', self.TZ))
-        import time as _time
-        self.addCleanup(_time.tzset)
-        self.useFixture(EnvironmentVariable('TZ', self.TZ))
-        _time.tzset()
+        self.set_testing_timezone()
 
         qml_script = self.get_test_qml_string("'2014-01-15 12:34:52'")
         proxy = self.start_qml_script(qml_script)

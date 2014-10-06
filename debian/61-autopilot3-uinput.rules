@@ -1,0 +1,2 @@
+# Make local foreground session able to run autopilot
+KERNEL=="uinput", SUBSYSTEM=="misc", TAG+="uaccess"

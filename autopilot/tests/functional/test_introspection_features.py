@@ -17,27 +17,44 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dbus import SessionBus
 import json
-from mock import patch
+import logging
 import os
+import re
 import subprocess
 import tempfile
 from tempfile import mktemp
-from testtools.matchers import Equals, IsInstance, Not, Contains
+from testtools import skipIf
+from testtools.matchers import (
+    Contains,
+    Equals,
+    GreaterThan,
+    IsInstance,
+    LessThan,
+    MatchesRegex,
+    Not,
+    StartsWith,
+)
 from textwrap import dedent
-from six import StringIO
+from io import StringIO
 
+from autopilot import platform
 from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase
-from autopilot.introspection.dbus import CustomEmulatorBase
-from autopilot.introspection import _connection_matches_pid
+from autopilot.tests.functional.fixtures import TempDesktopFile
+from autopilot.introspection import CustomEmulatorBase
+from autopilot.introspection.qt import QtObjectProxyMixin
+from autopilot.display import Display
+
+
+logger = logging.getLogger(__name__)
 
 
 class EmulatorBase(CustomEmulatorBase):
     pass
 
 
+@skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
 class IntrospectionFeatureTests(AutopilotTestCase):
     """Test various features of the introspection code."""
 
@@ -56,6 +73,40 @@ class IntrospectionFeatureTests(AutopilotTestCase):
             app_type='qt',
             emulator_base=emulator_base,
         )
+
+    def test_can_get_custom_proxy_for_app_root(self):
+        """Test two things:
+
+        1) We can get a custom proxy object for the root object in the object
+           tree.
+
+        2) We can get a custom proxy object for an object in the tree which
+           contains characters which are usually disallowed in python class
+           names.
+        """
+        class WindowMockerApp(EmulatorBase):
+            @classmethod
+            def validate_dbus_object(cls, path, _state):
+                return path == b'/window-mocker'
+
+        # verify that the initial proxy object we get back is the correct type:
+        app = self.start_mock_app(EmulatorBase)
+        self.assertThat(type(app), Equals(WindowMockerApp))
+
+        # verify that we get the correct type from get_root_instance:
+        self.assertThat(
+            type(app.get_root_instance()),
+            Equals(WindowMockerApp)
+        )
+
+    def test_customised_proxy_classes_have_extension_classes(self):
+        class WindowMockerApp(EmulatorBase):
+            @classmethod
+            def validate_dbus_object(cls, path, _state):
+                return path == b'/window-mocker'
+
+        app = self.start_mock_app(EmulatorBase)
+        self.assertThat(app.__class__.__bases__, Contains(QtObjectProxyMixin))
 
     def test_can_select_custom_emulators_by_name(self):
         """Must be able to select a custom emulator type by name."""
@@ -131,19 +182,42 @@ class IntrospectionFeatureTests(AutopilotTestCase):
         out = stream.getvalue()
 
         # starts with root node
-        self.assertThat(out.startswith("== /Root/QMainWindow ==\nChildren:"),
-                        Equals(True))
+        self.assertThat(
+            out,
+            StartsWith("== /window-mocker/QMainWindow ==\nChildren:")
+        )
         # has root node properties
-        self.assertThat(out, Contains("windowTitle: 'Default Window Title'\n"))
+        self.assertThat(
+            out,
+            MatchesRegex(
+                ".*windowTitle: [u]?'Default Window Title'.*",
+                re.DOTALL
+            )
+        )
+
         # has level-1 widgets with expected indent
-        self.assertThat(out,
-                        Contains("  == /Root/QMainWindow/QRubberBand ==\n"))
-        self.assertThat(out, Contains("  objectName: 'qt_rubberband'\n"))
+        self.assertThat(
+            out,
+            Contains("  == /window-mocker/QMainWindow/QRubberBand ==\n")
+        )
+        self.assertThat(
+            out,
+            MatchesRegex(".*  objectName: [u]?'qt_rubberband'\n", re.DOTALL)
+        )
         # has level-2 widgets with expected indent
-        self.assertThat(out, Contains("    == /Root/QMainWindow/QMenuBar/"
-                                      "QToolButton =="))
-        self.assertThat(out, Contains("    objectName: "
-                                      "'qt_menubar_ext_button'"))
+        self.assertThat(
+            out,
+            Contains(
+                "    == /window-mocker/QMainWindow/QMenuBar/QToolButton =="
+            )
+        )
+        self.assertThat(
+            out,
+            MatchesRegex(
+                ".*    objectName: [u]?'qt_menubar_ext_button'.*",
+                re.DOTALL
+            )
+        )
 
     def test_print_tree_depth_limit(self):
         """Print depth-limited tree for a widget"""
@@ -156,12 +230,62 @@ class IntrospectionFeatureTests(AutopilotTestCase):
         out = stream.getvalue()
 
         # has level-0 (root) node
-        self.assertThat(out, Contains("== /Root/QMainWindow =="))
+        self.assertThat(out, Contains("== /window-mocker/QMainWindow =="))
         # has level-1 widgets
-        self.assertThat(out, Contains("/Root/QMainWindow/QMenuBar"))
+        self.assertThat(out, Contains("/window-mocker/QMainWindow/QMenuBar"))
         # no level-2 widgets
         self.assertThat(out, Not(Contains(
-            "/Root/QMainWindow/QMenuBar/QToolButton")))
+            "/window-mocker/QMainWindow/QMenuBar/QToolButton")))
+
+    def test_window_geometry(self):
+        """Window.geometry property
+
+        Check that all Window geometry properties work and have a plausible
+        range.
+        """
+        # ensure we have at least one open app window
+        self.start_mock_app(EmulatorBase)
+
+        display = Display.create()
+        top = left = right = bottom = None
+        # for multi-monitor setups, make sure we examine the full desktop
+        # space:
+        for monitor in range(display.get_num_screens()):
+            sx, sy, swidth, sheight = Display.create().get_screen_geometry(
+                monitor
+            )
+            logger.info(
+                "Monitor %d geometry is (%d, %d, %d, %d)",
+                monitor,
+                sx,
+                sy,
+                swidth,
+                sheight,
+            )
+            if left is None or sx < left:
+                left = sx
+            if top is None or sy < top:
+                top = sy
+            if right is None or sx + swidth >= right:
+                right = sx + swidth
+            if bottom is None or sy + sheight >= bottom:
+                bottom = sy + sheight
+
+        logger.info(
+            "Total desktop geometry is (%d, %d), (%d, %d)",
+            left,
+            top,
+            right,
+            bottom,
+        )
+        for win in self.process_manager.get_open_windows():
+            logger.info("Win '%r' geometry is %r", win, win.geometry)
+            geom = win.geometry
+            self.assertThat(len(geom), Equals(4))
+            self.assertThat(geom[0], GreaterThan(left - 1))  # no GreaterEquals
+            self.assertThat(geom[1], GreaterThan(top - 1))
+            self.assertThat(geom[2], LessThan(right))
+            self.assertThat(geom[3], LessThan(bottom))
 
 
 class QMLCustomEmulatorTestCase(AutopilotTestCase):
@@ -189,9 +313,21 @@ class QMLCustomEmulatorTestCase(AutopilotTestCase):
                 qml_path = tempfile.mktemp(suffix='.qml')
                 open(qml_path, 'w').write(self.test_qml)
                 self.addCleanup(os.remove, qml_path)
+
+                extra_args = ''
+                if platform.model() != "Desktop":
+                    # We need to add the desktop-file-hint
+                    desktop_file = self.useFixture(
+                        TempDesktopFile()
+                    ).get_desktop_file_path()
+                    extra_args = '--desktop_file_hint={hint_file}'.format(
+                        hint_file=desktop_file
+                    )
+
                 return self.launch_test_application(
                     "/usr/lib/" + arch + "/qt5/bin/qmlscene",
                     qml_path,
+                    extra_args,
                     emulator_base=EmulatorBase)
 
             def test_custom_emulator(self):
@@ -215,15 +351,3 @@ class QMLCustomEmulatorTestCase(AutopilotTestCase):
                 [e[1] for e in result2.decorated.errors]
             )
         )
-
-
-class IntrospectionFunctionTests(AutopilotTestCase):
-
-    @patch('autopilot.introspection._connection_matches_pid')
-    @patch('autopilot.introspection._bus_pid_is_our_pid')
-    def test_connection_matches_pid_ignores_dbus_daemon(
-            self, bus_pid_is_our_pid, conn_matches_pid_fn):
-        _connection_matches_pid(SessionBus(), 'org.freedesktop.DBus', 123)
-
-        self.assertThat(bus_pid_is_our_pid.called, Equals(False))
-        self.assertThat(conn_matches_pid_fn.called, Equals(False))

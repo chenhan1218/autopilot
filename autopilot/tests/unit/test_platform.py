@@ -19,19 +19,63 @@
 
 """Tests for the autopilot platform code."""
 
-import autopilot.platform as platform
 
-try:
-    # Python 2
-    from StringIO import StringIO
-except ImportError:
-    # Python 3
-    from io import StringIO
-
+from contextlib import contextmanager
+from io import StringIO
 from testtools import TestCase
 from testtools.matchers import Equals
+from tempfile import NamedTemporaryFile
+from unittest.mock import patch
 
-from mock import patch
+import autopilot.platform as platform
+
+
+class PublicAPITests(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        platform._display_is_mir.cache_clear()
+
+    @patch('autopilot.platform._PlatformDetector')
+    def test_model_creates_platform_detector(self, mock_detector):
+        platform.model()
+        mock_detector.create.assert_called_once()
+
+    @patch('autopilot.platform._PlatformDetector._cached_detector')
+    def test_model_returns_correct_value(self, mock_detector):
+        mock_detector.model = "test123"
+        self.assertThat(platform.model(), Equals('test123'))
+
+    @patch('autopilot.platform._PlatformDetector')
+    def test_image_codename_creates_platform_detector(self, mock_detector):
+        platform.image_codename()
+        mock_detector.create.assert_called_once()
+
+    @patch('autopilot.platform._PlatformDetector._cached_detector')
+    def test_image_codename_returns_correct_value(self, mock_detector):
+        mock_detector.image_codename = "test123"
+        self.assertThat(platform.image_codename(), Equals('test123'))
+
+    def test_is_x11_returns_False_on_failure(self):
+        with _simulate_not_X11():
+            self.assertFalse(platform._display_is_x11())
+
+    def test_is_x11_returns_True_on_success(self):
+        with _simulate_X11():
+            self.assertTrue(platform._display_is_x11())
+
+
+class PlatformGetProcessNameTests(TestCase):
+
+    def test_returns_callable_value(self):
+        test_callable = lambda: "foo"
+        self.assertEqual("foo", platform._get_process_name(test_callable))
+
+    def test_returns_string(self):
+        self.assertEqual("foo", platform._get_process_name("foo"))
+
+    def test_raises_exception_if_unsupported_passed(self):
+        self.assertRaises(ValueError, platform._get_process_name, 0)
 
 
 class PlatformDetectorTests(TestCase):
@@ -107,6 +151,51 @@ class PlatformDetectorTests(TestCase):
         detector = platform._PlatformDetector.create()
         self.assertThat(detector.image_codename, Equals('Desktop'))
 
+    def test_has_correct_file_name(self):
+        observed = platform._get_property_file_path()
+        self.assertEqual("/system/build.prop", observed)
+
+    def test_get_property_file_opens_path(self):
+        token = self.getUniqueString()
+        with NamedTemporaryFile(mode='w+') as f:
+            f.write(token)
+            f.flush()
+            with patch('autopilot.platform._get_property_file_path') as p:
+                p.return_value = f.name
+                observed = platform._get_property_file().read()
+        self.assertEqual(token, observed)
+
+    @patch('autopilot.platform._get_property_file')
+    def test_get_tablet_from_property_file(
+            self, mock_get_property_file):
+        """Detector must read tablet from android properties file."""
+        mock_get_property_file.return_value = StringIO(
+            "ro.build.characteristics=tablet")
+
+        detector = platform._PlatformDetector.create()
+        self.assertThat(detector.is_tablet, Equals(True))
+
+    @patch('autopilot.platform._get_property_file')
+    def test_get_not_tablet_from_property_file(
+            self, mock_get_property_file):
+        """Detector must read lack of tablet from android properties file."""
+        mock_get_property_file.return_value = StringIO(
+            "ro.build.characteristics=nosdcard")
+
+        detector = platform._PlatformDetector.create()
+        self.assertThat(detector.is_tablet, Equals(False))
+
+    @patch('autopilot.platform._get_property_file')
+    def test_tablet_without_property_file(self, mock_get_property_file):
+        """Detector must return False for tablet when there is no properties
+        file.
+
+        """
+        mock_get_property_file.return_value = None
+
+        detector = platform._PlatformDetector.create()
+        self.assertThat(detector.is_tablet, Equals(False))
+
 
 class BuildPropertyParserTests(TestCase):
     """Tests for the android build properties file parser."""
@@ -158,3 +247,15 @@ class BuildPropertyParserTests(TestCase):
         prop_file = StringIO("ro.product.model=maguro")
         properties = platform._parse_build_properties_file(prop_file)
         self.assertThat(properties, Equals({'ro.product.model': 'maguro'}))
+
+
+@contextmanager
+def _simulate_not_X11():
+    with patch.dict(platform.os.environ, dict(), clear=True):
+        yield
+
+
+@contextmanager
+def _simulate_X11():
+    with patch.dict(platform.os.environ, dict(DISPLAY=':0'), clear=True):
+        yield

@@ -21,16 +21,20 @@
 
 """Various utility classes and functions that are useful when running tests."""
 
-from __future__ import absolute_import
-
 from contextlib import contextmanager
+from decorator import decorator
+import functools
 import inspect
 import logging
 import os
 import time
+import timeit
 from functools import wraps
 
 from autopilot.exceptions import BackendException
+
+
+logger = logging.getLogger(__name__)
 
 
 def _pick_backend(backends, preferred_backend):
@@ -61,6 +65,7 @@ def _pick_backend(backends, preferred_backend):
 # Taken from http://ur1.ca/eqapv
 # licensed under the MIT license.
 class Silence(object):
+
     """Context manager which uses low-level file descriptors to suppress
     output to stdout/stderr, optionally redirecting to the named file(s).
 
@@ -70,6 +75,7 @@ class Silence(object):
             # do something that prints to stdout or stderr
 
     """
+
     def __init__(self, stdout=os.devnull, stderr=os.devnull, mode='wb'):
         self.outfiles = stdout, stderr
         self.combine = (stdout == stderr)
@@ -136,6 +142,7 @@ class LogFormatter(logging.Formatter):
 
 
 class Timer(object):
+
     """A context-manager that times a block of code, writing the results to
     the log."""
 
@@ -146,16 +153,17 @@ class Timer(object):
         self.logger = get_debug_logger()
 
     def __enter__(self):
-        self.start = time.time()
+        self.start = timeit.default_timer()
 
     def __exit__(self, *args):
-        self.end = time.time()
+        self.end = timeit.default_timer()
+        elapsed = self.end - self.start
         self.logger.log(
-            self.log_level, "'%s' took %.3fS", self.code_name,
-            self.end - self.start)
+            self.log_level, "'%s' took %.3fS", self.code_name, elapsed)
 
 
 class StagnantStateDetector(object):
+
     """Detect when the state of something doesn't change over many iterations.
 
 
@@ -183,7 +191,7 @@ class StagnantStateDetector(object):
         :param threshold: Amount of times the updated state can fail to
           differ consecutively before raising an exception.
 
-        :raises: **ValueError** if *threshold* isn't a positive integer.
+        :raises ValueError: if *threshold* isn't a positive integer.
 
         """
         if type(threshold) is not int or threshold <= 0:
@@ -193,13 +201,13 @@ class StagnantStateDetector(object):
         self._previous_state_hash = -1
 
     def check_state(self, *state):
-        """Checks if there is a difference between the previous state and
+        """Check if there is a difference between the previous state and
         state.
 
         :param state: Hashable state argument to compare against the previous
           iteration
 
-        :raises: **TypeError** when state is unhashable
+        :raises TypeError: when state is unhashable
 
         """
         state_hash = hash(state)
@@ -216,7 +224,11 @@ class StagnantStateDetector(object):
 
 
 def get_debug_logger():
-    """Get a logging object to be used as a debug logger only."""
+    """Get a logging object to be used as a debug logger only.
+
+    :returns: logger object from logging module
+
+    """
     logger = logging.getLogger("autopilot.debug")
     logger.addFilter(DebugLogFilter())
     return logger
@@ -236,26 +248,27 @@ class DebugLogFilter(object):
 
 
 def deprecated(alternative):
-    """Write a deprecation warning directly to stderr."""
+    """Write a deprecation warning to the logging framework."""
+
     def fdec(fn):
         @wraps(fn)
         def wrapped(*args, **kwargs):
-            import sys
             outerframe_details = inspect.getouterframes(
                 inspect.currentframe())[1]
             filename, line_number, function_name = outerframe_details[1:4]
-            sys.stderr.write(
-                "WARNING: in file \"{0}\", line {1} in {2}\n".format(
-                    filename, line_number, function_name))
-            sys.stderr.write(
-                "This function is deprecated. Please use '%s' instead.\n" %
-                alternative)
+
+            logger.warning(
+                "WARNING: in file \"{0}\", line {1} in {2}\n"
+                "This function is deprecated. Please use '{3}' instead.\n"
+                .format(filename, line_number, function_name, alternative)
+            )
             return fn(*args, **kwargs)
         return wrapped
     return fdec
 
 
 class _CleanupWrapper(object):
+
     """Support for calling 'addCleanup' outside the test case."""
 
     def __init__(self):
@@ -283,7 +296,9 @@ _cleanup_objects = []
 
 
 class _TestCleanupMeta(type):
-    """Metaclass to inject the object into on test start/end functionality"""
+
+    """Metaclass to inject the object into on test start/end functionality."""
+
     def __new__(cls, classname, bases, classdict):
         class EmptyStaticMethod(object):
             """Class used to give us 'default classmethods' for those that
@@ -344,6 +359,7 @@ def on_test_started(test_case_instance):
 
 
 class MockableSleep(object):
+
     """Delay execution for a certain number of seconds.
 
     Functionally identical to `time.sleep`, except we can replace it during
@@ -363,6 +379,7 @@ class MockableSleep(object):
             self.assertEqual(mock_sleep.total_time_slept(), 10.0)
 
     """
+
     def __init__(self):
         self._mock_count = 0.0
         self._mocked = False
@@ -392,3 +409,68 @@ class MockableSleep(object):
         return self._mock_count
 
 sleep = MockableSleep()
+
+
+@decorator
+def compatible_repr(f, *args, **kwargs):
+    result = f(*args, **kwargs)
+    if not isinstance(result, str):
+        return result.decode('utf-8')
+    return result
+
+
+def _raise_on_unknown_kwargs(kwargs):
+    """Raise ValueError on unknown keyword arguments.
+
+    The standard use case is to warn callers that they've passed an unknown
+    keyword argument. For example::
+
+        def my_function(**kwargs):
+            known_option = kwargs.pop('known_option')
+            _raise_on_unknown_kwargs(kwargs)
+
+    Given the code above, this will not raise any exceptions::
+
+        my_function(known_option=123)
+
+    ...but this code *will* raise a ValueError::
+
+        my_function(known_option=123, other_option=456)
+
+    """
+    if kwargs:
+        arglist = [repr(k) for k in kwargs.keys()]
+        arglist.sort()
+        raise ValueError(
+            "Unknown keyword arguments: %s." % (', '.join(arglist))
+        )
+
+
+class cached_result(object):
+
+    """A simple caching decorator.
+
+    This class is deliberately simple. It does not handle unhashable types,
+    keyword arguments, and has no built-in size control.
+
+    """
+
+    def __init__(self, f):
+        functools.update_wrapper(self, f)
+        self.f = f
+        self._cache = {}
+
+    def __call__(self, *args):
+        try:
+            return self._cache[args]
+        except KeyError:
+            result = self.f(*args)
+            self._cache[args] = result
+            return result
+        except TypeError:
+            raise TypeError(
+                "The '%r' function can only be called with hashable arguments."
+            )
+
+    def reset_cache(self):
+        self._cache.clear()

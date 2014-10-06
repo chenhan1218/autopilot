@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2012-2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,41 +46,39 @@ root of the application introspection tree.
 
 """
 
-from __future__ import absolute_import
-
 import logging
-import os
-import psutil
-import signal
-import subprocess
 
+from fixtures import EnvironmentVariable
 from testscenarios import TestWithScenarios
 from testtools import TestCase
-from testtools.content import text_content
+from testtools.content import ContentType, content_from_stream
 from testtools.matchers import Equals
+from testtools.testcase import _ExpectedFailure
+from unittest.case import SkipTest
 
-from autopilot.process import ProcessManager
-from autopilot.input import Keyboard, Mouse
-from autopilot.introspection import (
-    get_application_launcher,
-    get_application_launcher_from_string_hint,
-    get_autopilot_proxy_object_for_process,
-    get_proxy_object_for_existing_process,
-    launch_application,
+from autopilot.application import (
+    ClickApplicationLauncher,
+    NormalApplicationLauncher,
+    UpstartApplicationLauncher,
 )
-from autopilot.introspection.utilities import _get_click_app_id
-from autopilot.display import Display
-from autopilot.utilities import on_test_started, sleep
+from autopilot.display import Display, get_screenshot_data
+from autopilot.globals import get_debug_profile_fixture
+from autopilot.input import Keyboard, Mouse
 from autopilot.keybindings import KeybindingsHelper
 from autopilot.matchers import Eventually
+from autopilot.platform import get_display_server
+from autopilot.process import ProcessManager
+from autopilot.utilities import deprecated, on_test_started
+from autopilot._timeout import Timeout
+from autopilot._logging import TestCaseLoggingFixture
+from autopilot._video import get_video_recording_fixture
 try:
     from autopilot import tracepoint as tp
     HAVE_TRACEPOINT = True
 except ImportError:
     HAVE_TRACEPOINT = False
 
-
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 try:
@@ -113,7 +111,7 @@ def _lttng_trace_test_started(test_id):
     if HAVE_TRACEPOINT:
         tp.emit_test_started(test_id)
     else:
-        logger.warning(
+        _logger.warning(
             "No tracing available - install the python-autopilot-trace "
             "package!")
 
@@ -124,6 +122,7 @@ def _lttng_trace_test_ended(test_id):
 
 
 class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
+
     """Wrapper around testtools.TestCase that adds significant functionality.
 
     This class should be the base class for all autopilot test case classes.
@@ -136,7 +135,14 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
     def setUp(self):
         super(AutopilotTestCase, self).setUp()
         on_test_started(self)
-
+        self.useFixture(
+            TestCaseLoggingFixture(
+                self.shortDescription(),
+                self.addDetailUniqueName,
+            )
+        )
+        self.useFixture(get_debug_profile_fixture()(self.addDetailUniqueName))
+        self.useFixture(get_video_recording_fixture()(self))
         _lttng_trace_test_started(self.id())
         self.addCleanup(_lttng_trace_test_ended, self.id())
 
@@ -145,14 +151,18 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         self._kb = None
         self._display = None
 
+        # Work around for bug lp:1297592.
+        _ensure_uinput_device_created()
+
         try:
-            self._app_snapshot = \
-                self.process_manager.get_running_applications()
+            self._app_snapshot = _get_process_snapshot()
             self.addCleanup(self._compare_system_with_app_snapshot)
         except RuntimeError:
-            logger.warning(
+            _logger.warning(
                 "Process manager backend unavailable, application snapshot "
                 "support disabled.")
+
+        self.addOnException(self._take_screenshot_on_failure)
 
     @property
     def process_manager(self):
@@ -219,11 +229,6 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             app_proxy = self.launch_test_application(
                 'my_gtk_app.py', app_type='gtk')
 
-        .. seealso::
-
-            Method :py:meth:`AutopilotTestCase.pick_app_launcher`
-                Specify application introspection type globally.
-
         :param application: The application to launch. The application can be
             specified as:
 
@@ -248,43 +253,22 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :keyword emulator_base: If set, specifies the base class to be used for
             all emulators for this loaded application.
 
-        :raises: **ValueError** if unknown keyword arguments are passed.
         :return: A proxy object that represents the application. Introspection
          data is retrievable via this object.
 
         """
-        app_path = subprocess.check_output(['which', application],
-                                           universal_newlines=True).strip()
-        # Get a launcher, tests can override this if they need:
-        launcher_hint = kwargs.pop('app_type', '')
-        launcher = None
-        if launcher_hint != '':
-            launcher = get_application_launcher_from_string_hint(launcher_hint)
-        if launcher is None:
-            try:
-                launcher = self.pick_app_launcher(app_path)
-            except RuntimeError:
-                pass
-        if launcher is None:
-            raise RuntimeError(
-                "Autopilot could not determine the correct introspection type "
-                "to use. You can specify one by overriding the "
-                "AutopilotTestCase.pick_app_launcher method.")
-        emulator_base = kwargs.pop('emulator_base', None)
-        dbus_bus = kwargs.pop('dbus_bus', 'session')
+        launch_args = _get_application_launch_args(kwargs)
 
-        if dbus_bus != 'session':
-            self.patch_environment("DBUS_SESSION_BUS_ADDRESS", dbus_bus)
-
-        process = launch_application(launcher, app_path, *arguments, **kwargs)
-        self.addCleanup(self._kill_process_and_attach_logs, process)
-        return get_autopilot_proxy_object_for_process(
-            process,
-            emulator_base,
-            dbus_bus
+        launcher = self.useFixture(
+            NormalApplicationLauncher(
+                case_addDetail=self.addDetailUniqueName,
+                **kwargs
+            )
         )
+        return launcher.launch(application, arguments, **launch_args)
 
-    def launch_click_package(self, package_id, app_name=None, **kwargs):
+    def launch_click_package(self, package_id, app_name=None, app_uris=[],
+                             **kwargs):
         """Launch a click package application with introspection enabled.
 
         This method takes care of launching a click package with introspection
@@ -303,6 +287,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :param app_name: Currently, only one application can be packaged in a
             click package, and this parameter can be left at None. If
             specified, it should be the application name you wish to launch.
+        :param app_uris: Parameters used to launch the click package. This
+            parameter will be left empty if not used.
 
         :keyword emulator_base: If set, specifies the base class to be used for
             all emulators for this loaded application.
@@ -312,67 +298,41 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :raises RuntimeError: If the specified app_name cannot be found within
             the specified click package.
 
+        :returns: proxy object for the launched package application
+
         """
-        app_id = _get_click_app_id(package_id, app_name)
-        # sadly, we cannot re-use the existing launch_test_application
-        # since upstart is a little odd.
-        # set the qt testability env:
-        subprocess.call([
-            "/sbin/initctl",
-            "set-env",
-            "QT_LOAD_TESTABILITY=1",
-        ])
-        # launch the application:
-        subprocess.check_output([
-            "/sbin/start",
-            "application",
-            "APP_ID={}".format(app_id),
-        ])
-        # perhaps we should do this with a regular expression instead?
-        for i in range(10):
-            try:
-                list_output = subprocess.check_output([
-                    "/sbin/initctl",
-                    "status",
-                    "application-click",
-                    "APP_ID={}".format(app_id)
-                ])
-            except subprocess.CalledProcessError:
-                # application not started yet.
-                pass
-            else:
-                for line in list_output.split('\n'):
-                    if app_id in line and "start/running" in line:
-                        target_pid = int(line.split()[-1])
-
-                        self.addCleanup(self._kill_pid, target_pid)
-                        logger.info(
-                            "Click package %s has been launched with PID %d",
-                            app_id,
-                            target_pid
-                        )
-
-                        emulator_base = kwargs.pop('emulator_base', None)
-                        proxy = get_proxy_object_for_existing_process(
-                            pid=target_pid,
-                            emulator_base=emulator_base
-                        )
-                        # reset the upstart env, and hope no one else launched,
-                        # or they'll have introspection enabled as well,
-                        # although this isn't the worth thing in the world.
-                        subprocess.call([
-                            "/sbin/initctl",
-                            "unset-env",
-                            "QT_LOAD_TESTABILITY",
-                        ])
-                        return proxy
-            # give the app time to launch - maybe this is not needed?:
-            sleep(1)
-        else:
-            raise RuntimeError(
-                "Could not find autopilot interface for click package"
-                " '{}' after 10 seconds.".format(app_id)
+        launcher = self.useFixture(
+            ClickApplicationLauncher(
+                case_addDetail=self.addDetailUniqueName,
+                **kwargs
             )
+        )
+        return launcher.launch(package_id, app_name, app_uris)
+
+    def launch_upstart_application(self, application_name, uris=[], **kwargs):
+        """Launch an application with upstart.
+
+        This method launched an application via the ``ubuntu-app-launch``
+        library, on platforms that support it.
+
+        Usage is similar to the
+        :py:meth:`AutopilotTestCase.launch_test_application`::
+
+            app_proxy = self.launch_upstart_application("gallery-app")
+
+        :param application_name: The name of the application to launch.
+        :keyword emulator_base: If set, specifies the base class to be used for
+            all emulators for this loaded application.
+
+        :raises RuntimeError: If the specified application cannot be launched.
+        """
+        launcher = self.useFixture(
+            UpstartApplicationLauncher(
+                case_addDetail=self.addDetailUniqueName,
+                **kwargs
+            )
+        )
+        return launcher.launch(application_name, uris)
 
     def _compare_system_with_app_snapshot(self):
         """Compare the currently running application with the last snapshot.
@@ -381,79 +341,64 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         applications currently running that were not running when the snapshot
         was taken.
         """
-        if self._app_snapshot is None:
-            raise RuntimeError("No snapshot to match against.")
+        try:
+            _compare_system_with_process_snapshot(
+                _get_process_snapshot,
+                self._app_snapshot
+            )
+        finally:
+            self._app_snapshot = None
 
-        new_apps = []
-        for i in range(10):
-            current_apps = self.process_manager.get_running_applications()
-            new_apps = list(filter(
-                lambda i: i not in self._app_snapshot, current_apps))
-            if not new_apps:
-                self._app_snapshot = None
-                return
-            sleep(1)
-        self._app_snapshot = None
-        raise AssertionError(
-            "The following apps were started during the test and not closed: "
-            "%r", new_apps)
+    def take_screenshot(self, attachment_name):
+        """Take a screenshot of the current screen and adds it to the test as a
+        detail named *attachment_name*.
 
-    def patch_environment(self, key, value):
-        """Patch the process environment, setting *key* with value *value*.
+        If *attachment_name* already exists as a detail the name will be
+        modified to remove the naming conflict
+        (i.e. using TestCase.addDetailUniqueName).
 
-        This patches os.environ for the duration of the test only. After
-        calling this method, the following should be True::
-
-            os.environ[key] == value
-
-        After the test, the patch will be undone (including deleting the key if
-        if didn't exist before this method was called).
-
-        .. note:: Be aware that patching the environment in this way only
-         affects the current autopilot process, and any processes spawned by
-         autopilot. If you are planing on starting an application from within
-         autopilot and you want this new application to read the patched
-         environment variable, you must patch the environment *before*
-         launching the new process.
-
-        :param string key: The name of the key you wish to set. If the key
-         does not already exist in the process environment it will be created
-         (and then deleted when the test ends).
-        :param string value: The value you wish to set.
+        Returns True if the screenshot was taken and attached successfully,
+        False otherwise.
 
         """
-        if key in os.environ:
-            def _undo_patch(key, old_value):
-                logger.info(
-                    "Resetting environment variable '%s' to '%s'",
-                    key,
-                    old_value
-                )
-                os.environ[key] = old_value
-            old_value = os.environ[key]
-            self.addCleanup(_undo_patch, key, old_value)
-        else:
-            def _remove_patch(key):
-                try:
-                    logger.info(
-                        "Deleting previously-created environment "
-                        "variable '%s'",
-                        key
-                    )
-                    del os.environ[key]
-                except KeyError:
-                    logger.warning(
-                        "Attempted to delete environment key '%s' that doesn't"
-                        "exist in the environment",
-                        key
-                    )
-            self.addCleanup(_remove_patch, key)
-        logger.info(
-            "Setting environment variable '%s' to '%s'",
-            key,
-            value
-        )
-        os.environ[key] = value
+        try:
+            image_content = content_from_stream(
+                get_screenshot_data(get_display_server()),
+                content_type=ContentType('image', 'png'),
+                buffer_now=True
+            )
+            self.addDetailUniqueName(attachment_name, image_content)
+            return True
+        except Exception as e:
+            logging.error(
+                "Taking screenshot failed: {exception}".format(exception=e)
+            )
+            return False
+
+    def _take_screenshot_on_failure(self, ex_info):
+        failure_class_type = ex_info[0]
+        if _considered_failing_test(failure_class_type):
+            self.take_screenshot("FailedTestScreenshot")
+
+    @deprecated('fixtures.EnvironmentVariable')
+    def patch_environment(self, key, value):
+        """Patch environment using fixture.
+
+        This function is deprecated and planned for removal in autopilot 1.6.
+        New implementations should use EnvironmenVariable from the fixtures
+        module::
+
+            from fixtures import EnvironmentVariable
+
+            def my_test(AutopilotTestCase):
+                my_patch = EnvironmentVariable('key', 'value')
+                self.useFixture(my_patch)
+
+        'key' will be set to 'value'.  During tearDown, it will be reset to a
+        previous value, if one is found, or unset if not.
+
+        """
+        self.useFixture(EnvironmentVariable(key, value))
 
     def assertVisibleWindowStack(self, stack_start):
         """Check that the visible window stack starts with the windows passed
@@ -463,7 +408,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         :param stack_start: An iterable of
          :class:`~autopilot.process.Window` instances.
-        :raises: **AssertionError** if the top of the window stack does not
+        :raises AssertionError: if the top of the window stack does not
          match the contents of the stack_start parameter.
 
         """
@@ -493,9 +438,9 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :param obj: The object to test.
         :param kwargs: One or more keyword arguments to match against the
          attributes of the *obj* parameter.
-        :raises: **ValueError** if no keyword arguments were given.
-        :raises: **ValueError** if a named attribute is a callable object.
-        :raises: **AssertionError** if any of the attribute/value pairs in
+        :raises ValueError: if no keyword arguments were given.
+        :raises ValueError: if a named attribute is a callable object.
+        :raises AssertionError: if any of the attribute/value pairs in
          kwargs do not match the attributes on the object passed in.
 
         """
@@ -519,72 +464,70 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
     assertProperties = assertProperty
 
-    def pick_app_launcher(self, app_path):
-        """Given an application path, return an object suitable for launching
-        the application.
 
-        This function attempts to guess what kind of application you are
-        launching. If, for some reason the default implementation returns the
-        wrong launcher, test authors may override this method to provide their
-        own implemetnation.
+def _get_application_launch_args(kwargs):
+    """Returns a dict containing relevant args and values for launching an
+    application.
 
-        The default implementation calls
-        :py:func:`autopilot.introspection.get_application_launcher`
+    Removes used arguments from kwargs parameter.
 
-        """
-        # default implementation is in autopilot.introspection:
-        return get_application_launcher(app_path)
-
-    def _kill_pid(self, pid):
-        """Kill the process with the specified pid."""
-        logger.info("waiting for process to exit.")
-        try:
-            logger.info("Killing process %d", pid)
-            os.killpg(pid, signal.SIGTERM)
-        except OSError:
-            logger.info("Appears process has already exited.")
-        for i in range(10):
-            if not _is_process_running(pid):
-                break
-            if i == 9:
-                logger.info(
-                    "Killing process group, since it hasn't exited after "
-                    "10 seconds."
-                )
-                os.killpg(pid, signal.SIGKILL)
-            sleep(1)
-
-    def _kill_process(self, process):
-        """Kill the process, and return the stdout, stderr and return code."""
-        stdout = ""
-        stderr = ""
-        logger.info("waiting for process to exit.")
-        try:
-            logger.info("Killing process %d", process.pid)
-            os.killpg(process.pid, signal.SIGTERM)
-        except OSError:
-            logger.info("Appears process has already exited.")
-        for i in range(10):
-            tmp_out, tmp_err = process.communicate()
-            stdout += tmp_out
-            stderr += tmp_err
-            if not _is_process_running(process.pid):
-                break
-            if i == 9:
-                logger.info(
-                    "Killing process group, since it hasn't exited after "
-                    "10 seconds."
-                )
-                os.killpg(process.pid, signal.SIGKILL)
-            sleep(1)
-        return stdout, stderr, process.returncode
-
-    def _kill_process_and_attach_logs(self, process):
-        stdout, stderr, return_code = self._kill_process(process)
-        self.addDetail('process-return-code', text_content(str(return_code)))
-        self.addDetail('process-stdout', text_content(stdout))
-        self.addDetail('process-stderr', text_content(stderr))
+    """
+    launch_args = {}
+    launch_arg_list = ['app_type', 'launch_dir', 'capture_output']
+    for arg in launch_arg_list:
+        if arg in kwargs:
+            launch_args[arg] = kwargs.pop(arg)
+    return launch_args
 
 
-def _is_process_running(pid):
-    return psutil.pid_exists(pid)
+def _get_process_snapshot():
+    """Return a snapshot of running processes on the system.
+
+    :returns: a list of running processes.
+    :raises RuntimeError: if the process manager is unsavailble on this
+        platform.
+
+    """
+    return ProcessManager.create().get_running_applications()
+
+
+def _compare_system_with_process_snapshot(snapshot_fn, old_snapshot):
+    """Compare an existing process snapshot with current running processes.
+
+    :param snapshot_fn: A callable that returns the current running process
+        list.
+    :param old_snapshot: A list of processes to compare against.
+    :raises AssertionError: If, after 10 seconds, there are still running
+        processes that were not present in ``old_snapshot``.
+
+    """
+    new_apps = []
+    for _ in Timeout.default():
+        current_apps = snapshot_fn()
+        new_apps = [app for app in current_apps if app not in old_snapshot]
+        if not new_apps:
+            return
+    raise AssertionError(
+        "The following apps were started during the test and not closed: "
+        "%r" % new_apps)
+
+
+def _ensure_uinput_device_created():
+    # This exists for a work around for bug lp:1297592. Need to create
+    # an input device before an application launch.
+    try:
+        from autopilot.input._uinput import Touch, _UInputTouchDevice
+        if _UInputTouchDevice._device is None:
+            Touch.create()
+    except Exception as e:
+        _logger.warning(
+            "Failed to create Touch device for bug lp:1297595 workaround: "
+            "%s" % str(e)
+        )
+
+
+def _considered_failing_test(failure_class_type):
+    return (
+        not issubclass(failure_class_type, SkipTest)
+        and not issubclass(failure_class_type, _ExpectedFailure)
+    )

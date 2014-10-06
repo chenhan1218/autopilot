@@ -33,16 +33,13 @@ Keybindings come from two different places:
  2) Elsewhere. Right now we're hard-coding these in a separate dictionary.
 """
 
-from __future__ import absolute_import
-
 import logging
 import re
-import six
 
 from autopilot.input import Keyboard
 from autopilot.utilities import Silence
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 #
@@ -137,55 +134,57 @@ def get(binding_name):
     """Get a keybinding, given its well-known name.
 
     :param string binding_name:
-    :raises: **TypeError** if binding_name cannot be found in the bindings
-     dictionaries.
+    :raises TypeError: if binding_name is not a string
+    :raises ValueError: if binding_name cannot be found in the bindings
+                        dictionaries.
+    :returns: string for keybinding
 
     """
-    if not isinstance(binding_name, six.string_types):
+    if not isinstance(binding_name, str):
         raise TypeError("binding_name must be a string.")
     if binding_name not in _keys:
         raise ValueError("Unknown binding name '%s'." % (binding_name))
     v = _keys[binding_name]
-    if isinstance(v, six.string_types):
+    if isinstance(v, str):
         return v
     else:
         return _get_compiz_keybinding(v)
 
 
 def get_hold_part(binding_name):
-    """Returns the part of a keybinding that must be held permanently.
+    """Return the part of a keybinding that must be held permanently.
 
     Use this function to split bindings like "Alt+Tab" into the part that must
     be held down. See :meth:`get_tap_part` for the part that must be tapped.
 
-    :raises: **ValueError** if the binding specified does not have multiple
+    :raises ValueError: if the binding specified does not have multiple
      parts.
 
     """
     binding = get(binding_name)
     parts = binding.split('+')
     if len(parts) == 1:
-        logger.warning(
+        _logger.warning(
             "Key binding '%s' does not have a hold part.", binding_name)
         return parts[0]
     return '+'.join(parts[:-1])
 
 
 def get_tap_part(binding_name):
-    """Returns the part of a keybinding that must be tapped.
+    """Return the part of a keybinding that must be tapped.
 
     Use this function to split bindings like "Alt+Tab" into the part that must
     be held tapped. See :meth:`get_hold_part` for the part that must be held
     down.
 
-    :Raises: **ValueError** if the binding specified does not have multiple
+    :raises ValueError: if the binding specified does not have multiple
      parts.
 
     """
     binding = get(binding_name)
     parts = binding.split('+')
     if len(parts) == 1:
-        logger.warning(
+        _logger.warning(
             "Key binding '%s' does not have a tap part.", binding_name)
         return parts[0]
     return parts[-1]
@@ -195,9 +194,10 @@ def _get_compiz_keybinding(compiz_tuple):
     """Given a keybinding name, get the keybinding string from the compiz
     option.
 
-    :raises: **ValueError** if the compiz setting described does not hold a
+    :raises ValueError: if the compiz setting described does not hold a
      keybinding.
-    :raises: **RuntimeError** if the compiz keybinding has been disabled.
+    :raises RuntimeError: if the compiz keybinding has been disabled.
+    :returns: compiz keybinding
 
     """
     plugin_name, setting_name = compiz_tuple
@@ -208,7 +208,7 @@ def _get_compiz_keybinding(compiz_tuple):
             "Key binding maps to a compiz option that does not hold a "
             "keybinding.")
     if not plugin.Enabled:
-        logger.warning(
+        _logger.warning(
             "Returning keybinding for '%s' which is in un-enabled plugin '%s'",
             setting.ShortDesc,
             plugin.ShortDesc)
@@ -228,7 +228,7 @@ def _translate_compiz_keystroke_string(keystroke_string):
     :param string keystroke_string: A compizconfig-style keystroke string.
 
     """
-    if not isinstance(keystroke_string, six.string_types):
+    if not isinstance(keystroke_string, str):
         raise TypeError("keystroke string must be a string.")
 
     translations = {
@@ -249,6 +249,7 @@ def _translate_compiz_keystroke_string(keystroke_string):
 
 
 class KeybindingsHelper(object):
+
     """A helper class that makes it easier to use Unity keybindings."""
 
     @property
@@ -294,7 +295,12 @@ _global_compiz_context = None
 
 
 def _get_global_compiz_context():
-    """Get the compizconfig global context object."""
+    """Get the compizconfig global context object.
+
+    :returns: global compiz context, either already defined or from compiz
+              config
+
+    """
     global _global_compiz_context
     if _global_compiz_context is None:
         with Silence():
@@ -306,7 +312,8 @@ def _get_global_compiz_context():
 def _get_compiz_plugin(plugin_name):
     """Get a compizconfig plugin with the specified name.
 
-    Raises KeyError of the plugin named does not exist.
+    :raises KeyError: if the plugin named does not exist.
+    :returns: compizconfig plugin
 
     """
     ctx = _get_global_compiz_context()
@@ -321,7 +328,8 @@ def _get_compiz_plugin(plugin_name):
 def _get_compiz_setting(plugin_name, setting_name):
     """Get a compizconfig setting object, given a plugin name and setting name.
 
-    Raises KeyError if the plugin or setting is not found.
+    :raises KeyError: if the plugin or setting is not found.
+    :returns: compiz setting object
 
     """
     plugin = _get_compiz_plugin(plugin_name)

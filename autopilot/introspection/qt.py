@@ -21,40 +21,7 @@
 """Classes and tools to support Qt introspection."""
 
 
-__all__ = ['QtApplicationLauncher']
-
 import functools
-
-import logging
-
-from autopilot.introspection import ApplicationLauncher
-
-
-logger = logging.getLogger(__name__)
-
-
-class QtApplicationLauncher(ApplicationLauncher):
-    """A mix-in class to make Qt application introspection easier.
-
-    Inherit from this class if you want to launch and test Qt application with
-    autopilot.
-
-    """
-
-    def prepare_environment(self, app_path, arguments):
-        """Prepare the application, or environment to launch with
-        autopilot-support.
-
-        """
-        if '-testability' not in arguments:
-            insert_pos = 0
-            for pos, argument in enumerate(arguments):
-                if argument.startswith("-qt="):
-                    insert_pos = pos + 1
-                    break
-            arguments.insert(insert_pos, '-testability')
-
-        return app_path, arguments
 
 
 class QtSignalWatcher(object):
@@ -105,7 +72,7 @@ class QtObjectProxyMixin(object):
 
         """
 
-        return self._backend.qt_introspection_iface
+        return self._backend.ipc_address.qt_introspection_iface
 
     @property
     def slots(self):

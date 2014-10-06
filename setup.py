@@ -1,8 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2012-2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,11 +18,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import sys
+assert sys.version_info >= (3,), 'Python 3 is required'
 
 from setuptools import find_packages, setup, Extension
 
 
-VERSION = '1.4.0'
+VERSION = '1.5.0'
 
 
 autopilot_tracepoint = Extension(
@@ -42,9 +44,9 @@ setup(
     license='GPLv3',
     packages=find_packages(),
     test_suite='autopilot.tests',
-    scripts=['bin/autopilot-sandbox-run'],
+    scripts=['bin/autopilot3-sandbox-run'],
     ext_modules=[autopilot_tracepoint],
     entry_points={
-        'console_scripts': ['autopilot = autopilot.run:main']
+        'console_scripts': ['autopilot3 = autopilot.run:main']
     }
 )

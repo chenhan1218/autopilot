@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2012-2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,8 +20,6 @@
 
 """BAMF implementation of the Process Management"""
 
-from __future__ import absolute_import
-
 import dbus
 import dbus.glib
 from gi.repository import Gio
@@ -31,24 +29,24 @@ import os
 from Xlib import display, X, protocol
 from subprocess import check_output, CalledProcessError, call
 
+import autopilot._glib
+from autopilot._timeout import Timeout
 from autopilot.dbus_handler import get_session_bus
-from autopilot.utilities import (
-    addCleanup,
-    Silence,
-    sleep,
-)
-
 from autopilot.process import (
     ProcessManager as ProcessManagerBase,
     Application as ApplicationBase,
     Window as WindowBase
+)
+from autopilot.utilities import (
+    addCleanup,
+    Silence,
 )
 
 
 _BAMF_BUS_NAME = 'org.ayatana.bamf'
 _X_DISPLAY = None
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 def get_display():
@@ -153,11 +151,11 @@ class ProcessManager(ProcessManagerBase):
         if locale:
             os.putenv("LC_ALL", locale)
             addCleanup(os.unsetenv, "LC_ALL")
-            logger.info(
+            _logger.info(
                 "Starting application '%s' with files %r in locale %s",
                 app_name, files, locale)
         else:
-            logger.info(
+            _logger.info(
                 "Starting application '%s' with files %r", app_name, files)
 
         app = self.KNOWN_APPS[app_name]
@@ -165,7 +163,7 @@ class ProcessManager(ProcessManagerBase):
         apps = self.get_running_applications_by_desktop_file(
             app['desktop-file'])
 
-        for i in range(10):
+        for _ in Timeout.default():
             try:
                 new_windows = []
                 [new_windows.extend(a.get_windows()) for a in apps]
@@ -177,7 +175,6 @@ class ProcessManager(ProcessManagerBase):
                     return new_wins[0]
             except dbus.DBusException:
                 pass
-            sleep(1)
         return None
 
     def get_open_windows_by_application(self, app_name):
@@ -202,7 +199,7 @@ class ProcessManager(ProcessManagerBase):
             if len(pids):
                 call(["kill"] + pids)
         except CalledProcessError:
-            logger.warning(
+            _logger.warning(
                 "Tried to close applicaton '%s' but it wasn't running.",
                 app_name)
 
@@ -326,12 +323,27 @@ class ProcessManager(ProcessManagerBase):
         """
         if type(files) is not list:
             raise TypeError("files must be a list.")
-        proc = Gio.DesktopAppInfo.new(desktop_file)
-        # FIXME: second item is a GEerror
-        proc.launch_uris(files, None)
+        proc = _launch_application(desktop_file, files)
         if wait:
             self.wait_until_application_is_running(desktop_file, 10)
         return proc
+
+
+def _launch_application(desktop_file, files):
+    proc = Gio.DesktopAppInfo.new(desktop_file)
+    # simple launch_uris() uses GLib.SpawnFlags.SEARCH_PATH by default only,
+    # but this inherits stdout; we don't want that as it hangs when tee'ing
+    # autopilot output into a file.
+    # Instead of depending on a newer version of gir/glib attempt to use the
+    # newer verison (i.e. launch_uris_as_manager works) and fall back on using
+    # the simple launch_uris
+    try:
+        proc.launch_uris_as_manager(
+            files, None,
+            GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.STDOUT_TO_DEV_NULL,
+            None, None, None, None)
+    except TypeError:
+        proc.launch_uris(files, None)
 
 
 class Application(ApplicationBase):
@@ -485,14 +497,13 @@ class Window(WindowBase):
         # documentation, which in turn tries to import Gdk, which in turn
         # fails because there's no DISPlAY environment set in the package
         # builder.
-        from gi import require_version
-        require_version('GdkX11', '3.0')
-        from gi.repository import GdkX11
+        Gdk = autopilot._glib._import_gdk()
+        GdkX11 = autopilot._glib._import_gdkx11()
         # FIXME: We need to use the gdk window here to get the real coordinates
         geometry = self._x_win.get_geometry()
         origin = GdkX11.X11Window.foreign_new_for_display(
-            GdkX11.X11Display(), self._xid).get_origin()
-        return (origin[0], origin[1], geometry.width, geometry.height)
+            Gdk.Display().get_default(), self._xid).get_origin()
+        return (origin[1], origin[2], geometry.width, geometry.height)
 
     @property
     def is_maximized(self):
@@ -552,7 +563,7 @@ class Window(WindowBase):
         of this object instance.
 
         """
-        return not self._x_win is None
+        return self._x_win is not None
 
     @property
     def monitor(self):
@@ -618,3 +629,16 @@ class Window(WindowBase):
         get_display().sync()
         return [get_display().get_atom_name(p)
                 for p in self._getProperty('_NET_WM_STATE')]
+
+    def resize(self, width, height):
+        """Resize the window.
+
+        :param width: The new width for the window.
+        :param height: The new height for the window.
+
+        """
+        self.x_win.configure(width=width, height=height)
+        self.x_win.change_attributes(
+            win_gravity=X.NorthWestGravity, bit_gravity=X.StaticGravity)
+        # A call to get the window geometry commits the changes.
+        self.geometry

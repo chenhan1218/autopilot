@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2012, 2013, 2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,10 +24,7 @@ In the future we may also need other devices.
 
 """
 
-from __future__ import absolute_import
-
 import logging
-import six
 
 from autopilot.display import is_point_on_any_screen, move_mouse_to_screen
 from autopilot.utilities import (
@@ -47,7 +44,7 @@ from Xlib.ext.xtest import fake_input
 _PRESSED_KEYS = []
 _PRESSED_MOUSE_BUTTONS = []
 _DISPLAY = None
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 def get_display():
@@ -140,9 +137,9 @@ class Keyboard(KeyboardBase):
         presses the 'Alt' and 'F2' keys.
 
         """
-        if not isinstance(keys, six.string_types):
+        if not isinstance(keys, str):
             raise TypeError("'keys' argument must be a string.")
-        logger.debug("Pressing keys %r with delay %f", keys, delay)
+        _logger.debug("Pressing keys %r with delay %f", keys, delay)
         for key in self.__translate_keys(keys):
             self.__perform_on_key(key, X.KeyPress)
             sleep(delay)
@@ -159,9 +156,9 @@ class Keyboard(KeyboardBase):
         releases the 'Alt' and 'F2' keys.
 
         """
-        if not isinstance(keys, six.string_types):
+        if not isinstance(keys, str):
             raise TypeError("'keys' argument must be a string.")
-        logger.debug("Releasing keys %r with delay %f", keys, delay)
+        _logger.debug("Releasing keys %r with delay %f", keys, delay)
         # release keys in the reverse order they were pressed in.
         keys = self.__translate_keys(keys)
         keys.reverse()
@@ -195,9 +192,9 @@ class Keyboard(KeyboardBase):
          and a 't').
 
         """
-        if not isinstance(string, six.string_types):
+        if not isinstance(string, str):
             raise TypeError("'keys' argument must be a string.")
-        logger.debug("Typing text %r", string)
+        _logger.debug("Typing text %r", string)
         for key in string:
             # Don't call press or release here, as they translate keys to
             # keysyms.
@@ -216,13 +213,13 @@ class Keyboard(KeyboardBase):
         """
         global _PRESSED_KEYS
         for keycode in _PRESSED_KEYS:
-            logger.warning(
+            _logger.warning(
                 "Releasing key %r as part of cleanup call.", keycode)
             fake_input(get_display(), X.KeyRelease, keycode)
         _PRESSED_KEYS = []
 
     def __perform_on_key(self, key, event):
-        if not isinstance(key, six.string_types):
+        if not isinstance(key, str):
             raise TypeError("Key parameter must be a string")
 
         keycode = 0
@@ -234,14 +231,14 @@ class Keyboard(KeyboardBase):
             fake_input(get_display(), event, 50)
 
         if event == X.KeyPress:
-            logger.debug("Sending press event for key: %s", key)
+            _logger.debug("Sending press event for key: %s", key)
             _PRESSED_KEYS.append(keycode)
         elif event == X.KeyRelease:
-            logger.debug("Sending release event for key: %s", key)
+            _logger.debug("Sending release event for key: %s", key)
             if keycode in _PRESSED_KEYS:
                 _PRESSED_KEYS.remove(keycode)
             else:
-                logger.warning(
+                _logger.warning(
                     "Generating release event for keycode %d that was not "
                     "pressed.", keycode)
 
@@ -264,7 +261,7 @@ class Keyboard(KeyboardBase):
         keysym = self.__get_keysym(key)
         keycode = get_display().keysym_to_keycode(keysym)
         if keycode == 0:
-            logger.warning("Sorry, can't map '%s'", key)
+            _logger.warning("Sorry, can't map '%s'", key)
 
         if (self.__is_shifted(key)):
             shift_mask = X.ShiftMask
@@ -302,18 +299,18 @@ class Mouse(MouseBase):
 
     def press(self, button=1):
         """Press mouse button at current mouse location."""
-        logger.debug("Pressing mouse button %d", button)
+        _logger.debug("Pressing mouse button %d", button)
         _PRESSED_MOUSE_BUTTONS.append(button)
         fake_input(get_display(), X.ButtonPress, button)
         get_display().sync()
 
     def release(self, button=1):
         """Releases mouse button at current mouse location."""
-        logger.debug("Releasing mouse button %d", button)
+        _logger.debug("Releasing mouse button %d", button)
         if button in _PRESSED_MOUSE_BUTTONS:
             _PRESSED_MOUSE_BUTTONS.remove(button)
         else:
-            logger.warning(
+            _logger.warning(
                 "Generating button release event or button %d that was not "
                 "pressed.", button)
         fake_input(get_display(), X.ButtonRelease, button)
@@ -345,7 +342,7 @@ class Mouse(MouseBase):
             sleep(time_between_events)
 
         dest_x, dest_y = int(x), int(y)
-        logger.debug(
+        _logger.debug(
             "Moving mouse to position %d,%d %s animation.", dest_x, dest_y,
             "with" if animate else "without")
 
@@ -408,7 +405,7 @@ class Mouse(MouseBase):
         """
         try:
             x, y, w, h = object_proxy.globalRect
-            logger.debug("Moving to object's globalRect coordinates.")
+            _logger.debug("Moving to object's globalRect coordinates.")
             self.move(x+w/2, y+h/2)
             return
         except AttributeError:
@@ -420,7 +417,7 @@ class Mouse(MouseBase):
 
         try:
             x, y = object_proxy.center_x, object_proxy.center_y
-            logger.debug("Moving to object's center_x, center_y coordinates.")
+            _logger.debug("Moving to object's center_x, center_y coordinates.")
             self.move(x, y)
             return
         except AttributeError:
@@ -433,7 +430,7 @@ class Mouse(MouseBase):
         try:
             x, y, w, h = (
                 object_proxy.x, object_proxy.y, object_proxy.w, object_proxy.h)
-            logger.debug(
+            _logger.debug(
                 "Moving to object's center point calculated from x,y,w,h "
                 "attributes.")
             self.move(x+w/2, y+h/2)
@@ -458,16 +455,31 @@ class Mouse(MouseBase):
         x, y = coord["root_x"], coord["root_y"]
         return x, y
 
-    def drag(self, x1, y1, x2, y2):
-        """Performs a press, move and release.
+    def drag(self, x1, y1, x2, y2, rate=10, time_between_events=0.01):
+        """Perform a press, move and release.
 
         This is to keep a common API between Mouse and Finger as long as
         possible.
 
+        The pointer will be dragged from the starting point to the ending point
+        with multiple moves. The number of moves, and thus the time that it
+        will take to complete the drag can be altered with the `rate`
+        parameter.
+
+        :param x1: The point on the x axis where the drag will start from.
+        :param y1: The point on the y axis where the drag will starts from.
+        :param x2: The point on the x axis where the drag will end at.
+        :param y2: The point on the y axis where the drag will end at.
+        :param rate: The number of pixels the mouse will be moved per
+            iteration. Default is 10 pixels. A higher rate will make the drag
+            faster, and lower rate will make it slower.
+        :param time_between_events: The number of seconds that the drag will
+            wait between iterations.
+
         """
         self.move(x1, y1)
         self.press()
-        self.move(x2, y2)
+        self.move(x2, y2, rate=rate, time_between_events=time_between_events)
         self.release()
 
     @classmethod
@@ -475,7 +487,7 @@ class Mouse(MouseBase):
         """Put mouse in a known safe state."""
         global _PRESSED_MOUSE_BUTTONS
         for btn in _PRESSED_MOUSE_BUTTONS:
-            logger.debug("Releasing mouse button %d as part of cleanup", btn)
+            _logger.debug("Releasing mouse button %d as part of cleanup", btn)
             fake_input(get_display(), X.ButtonRelease, btn)
         _PRESSED_MOUSE_BUTTONS = []
         move_mouse_to_screen(0)

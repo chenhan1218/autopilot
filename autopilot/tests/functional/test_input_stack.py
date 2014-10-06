@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2012, 2013, 2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,12 +20,13 @@
 
 import json
 import os
-from tempfile import mktemp, NamedTemporaryFile
+from tempfile import mktemp
 from testtools import TestCase, skipIf
 from testtools.matchers import IsInstance, Equals, raises
 from textwrap import dedent
+from time import sleep
 from unittest import SkipTest
-from mock import patch
+from unittest.mock import patch
 
 from autopilot.display import Display
 from autopilot import platform
@@ -34,24 +35,25 @@ from autopilot.input import Keyboard, Mouse, Pointer, Touch
 from autopilot.input._common import get_center_point
 from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase, multiply_scenarios
+from autopilot.tests.functional import QmlScriptRunnerMixin
 from autopilot.utilities import on_test_started
 
 
 class InputStackKeyboardBase(AutopilotTestCase):
 
     scenarios = [
-        ('X11', dict(backend='X11')),
         ('UInput', dict(backend='UInput')),
     ]
 
+    if platform.model() == "Desktop":
+        scenarios.append(('X11', dict(backend='X11')))
+
     def setUp(self):
         super(InputStackKeyboardBase, self).setUp()
-        if self.backend == 'UInput' and not (
-                os.access('/dev/autopilot-uinput', os.W_OK) or
-                os.access('/dev/uinput', os.W_OK)):
+        if self.backend == 'UInput' and not os.access('/dev/uinput', os.W_OK):
             raise SkipTest(
                 "UInput backend currently requires write access to "
-                "/dev/autopilot-uinput or /dev/uinput")
+                "/dev/uinput")
 
 
 class InputStackKeyboardCreationTests(InputStackKeyboardBase):
@@ -61,6 +63,7 @@ class InputStackKeyboardCreationTests(InputStackKeyboardBase):
         self.assertThat(keyboard, IsInstance(Keyboard))
 
 
+@skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
 class InputStackKeyboardTypingTests(InputStackKeyboardBase):
 
     scenarios = multiply_scenarios(
@@ -83,12 +86,11 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
         )
         self.addCleanup(os.remove, window_spec_file)
 
-        return self.launch_test_application('window-mocker', window_spec_file)
-
-    def pick_app_launcher(self, app_path):
-        # force Qt app introspection:
-        from autopilot.introspection.qt import QtApplicationLauncher
-        return QtApplicationLauncher()
+        return self.launch_test_application(
+            'window-mocker',
+            window_spec_file,
+            app_type='qt'
+        )
 
     def test_text_typing(self):
         """Typing text must produce the correct characters in the target
@@ -100,6 +102,12 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
 
         # make sure the text edit has keyboard focus:
         self.mouse.click_object(text_edit)
+        self.assertThat(text_edit.focus, Eventually(Equals(True)))
+
+        # even though we ensured the textedit has focus, it occasionally
+        # does not yet accept keyboard input, causing this test to fail
+        # intermittently.  to remedy this, we just add a sleep.
+        sleep(2)
 
         # create keyboard and type the text.
         keyboard = Keyboard.create(self.backend)
@@ -151,14 +159,15 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
             from autopilot.input._X11 import _PRESSED_KEYS
             return _PRESSED_KEYS
         elif self.backend == 'UInput':
-            from autopilot.input._uinput import _PRESSED_KEYS
-            return _PRESSED_KEYS
+            from autopilot.input import _uinput
+            return _uinput.Keyboard._device._pressed_keys_ecodes
         else:
             self.fail("Don't know how to get pressed keys list for backend "
                       + self.backend
                       )
 
 
+@skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
 class InputStackKeyboardBackspaceTests(InputStackKeyboardBase):
 
     def start_mock_app(self):
@@ -206,8 +215,15 @@ class InputStackKeyboardBackspaceTests(InputStackKeyboardBase):
                         )
 
 
-@skipIf(platform.model() == 'Desktop', "Only suitable on a device")
-class OSKBackendTests(AutopilotTestCase):
+def osk_backend_available():
+    try:
+        from autopilot.input._osk import Keyboard  # NOQA
+        return True
+    except ImportError:
+        return False
+
+
+class OSKBackendTests(AutopilotTestCase, QmlScriptRunnerMixin):
     """Testing the Onscreen Keyboard (Ubuntu Keyboard) backend specifically.
 
     There are limitations (i.e. on device only, window-mocker doesn't work on
@@ -229,51 +245,6 @@ class OSKBackendTests(AutopilotTestCase):
         text_area = self.app.select_single("QQuickTextInput")
 
         return text_area
-
-    def _start_qml_script(self, script_contents):
-        """Launch a qml script."""
-        qml_path = mktemp(suffix='.qml')
-        open(qml_path, 'w').write(script_contents)
-        self.addCleanup(os.remove, qml_path)
-
-        desktop_file = self._write_test_desktop_file()
-
-        return self.launch_test_application(
-            "qmlscene",
-            "-qt=qt5",
-            qml_path,
-            '--desktop_file_hint=%s' % desktop_file,
-            app_type='qt',
-        )
-
-    def _write_test_desktop_file(self):
-        desktop_file_dir = self._get_local_desktop_file_directory()
-        if not os.path.exists(desktop_file_dir):
-            os.makedirs(desktop_file_dir)
-        with NamedTemporaryFile(
-            suffix='.desktop',
-            dir=desktop_file_dir,
-            delete=False  # Will ensure it happens with addCleanup
-        ) as desktop_file:
-            desktop_file.write(
-                dedent("""\
-                [Desktop Entry]
-                Type=Application
-                Exec=Not important
-                Path=Not important
-                Name=Test app
-                Icon=Not important""")
-            )
-        self.addCleanup(os.remove, desktop_file.name)
-        return desktop_file.name
-
-    def _get_local_desktop_file_directory(self):
-        return os.path.join(
-            os.getenv('HOME'),
-            '.local',
-            'share',
-            'applications'
-        )
 
     def _launch_simple_input(self):
         simple_script = dedent("""
@@ -311,8 +282,10 @@ class OSKBackendTests(AutopilotTestCase):
 
         """)
 
-        return self._start_qml_script(simple_script)
+        return self.start_qml_script(simple_script)
 
+    @skipIf(platform.model() == 'Desktop', "Only suitable on a device")
+    @skipIf(not osk_backend_available(), "Test requires OSK Backend installed")
     def test_can_type_string(self):
         """Typing text must produce the expected characters in the input
         field.
@@ -329,6 +302,8 @@ class OSKBackendTests(AutopilotTestCase):
 
         self.assertThat(text_area.text, Eventually(Equals(self.input)))
 
+    @skipIf(platform.model() == 'Desktop', "Only suitable on a device")
+    @skipIf(not osk_backend_available(), "Test requires OSK Backend installed")
     def test_focused_typing_contextmanager(self):
         """Typing text using the 'focused_typing' context manager must not only
         produce the expected characters in the input field but also cleanup the
@@ -351,6 +326,7 @@ class OSKBackendTests(AutopilotTestCase):
 
 class MouseTestCase(AutopilotTestCase):
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (Mouse)")
     def test_move_to_nonint_point(self):
         """Test mouse does not get stuck when we move to a non-integer point.
 
@@ -377,6 +353,7 @@ class MouseTestCase(AutopilotTestCase):
                         raises(expected_exception))
 
 
+@skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
 class TouchTests(AutopilotTestCase):
 
     def setUp(self):
@@ -419,19 +396,7 @@ class TouchTests(AutopilotTestCase):
             self.button_status.text, Eventually(Equals("Touch Release")))
 
 
-class TouchGesturesTests(AutopilotTestCase):
-    def _start_qml_script(self, script_contents):
-        """Launch a qml script."""
-        qml_path = mktemp(suffix='.qml')
-        open(qml_path, 'w').write(script_contents)
-        self.addCleanup(os.remove, qml_path)
-
-        return self.launch_test_application(
-            "qmlscene",
-            "-qt=qt5",
-            qml_path,
-            app_type='qt',
-        )
+class TouchGesturesTests(AutopilotTestCase, QmlScriptRunnerMixin):
 
     def test_pinch_gesture(self):
         """Ensure that the pinch gesture pinches as expected."""
@@ -458,7 +423,7 @@ class TouchGesturesTests(AutopilotTestCase):
         start_green_bg = [0, 255, 0, 255]
         end_blue_bg = [0, 0, 255, 255]
 
-        app = self._start_qml_script(test_qml)
+        app = self.start_qml_script(test_qml)
         pinch_widget = app.select_single("QQuickRectangle")
         widget_bg_colour = lambda: pinch_widget.color
 
@@ -488,7 +453,8 @@ class PointerWrapperTests(AutopilotTestCase):
             def __init__(self):
                 pass
 
-            def drag(self, x1, y1, x2, y2):
+            def drag(self, x1, y1, x2, y2, rate='dummy',
+                     time_between_events='dummy'):
                 pass
 
         p = Pointer(FakeTouch())
@@ -527,6 +493,7 @@ class InputStackCleanupTests(TestCase):
 
 class InputStackCleanup(AutopilotTestCase):
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (X11)")
     def test_keyboard_keys_released_X11(self):
         """Cleanup must release any keys that an X11 keyboard has had
         pressed."""
@@ -552,9 +519,11 @@ class InputStackCleanup(AutopilotTestCase):
         test_result = FakeTestCase("test_press_key").run()
 
         self.assertThat(test_result.wasSuccessful(), Equals(True))
-        from autopilot.input._uinput import _PRESSED_KEYS
-        self.assertThat(_PRESSED_KEYS, Equals([]))
+        from autopilot.input import _uinput
+        self.assertThat(
+            _uinput.Keyboard._device._pressed_keys_ecodes, Equals([]))
 
+    @skipIf(platform.model() != "Desktop", "Not suitable for device (X11)")
     @patch('autopilot.input._X11.fake_input', new=lambda *args: None, )
     def test_mouse_button_released(self):
         """Cleanup must release any mouse buttons that have been pressed."""

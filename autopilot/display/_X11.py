@@ -18,12 +18,8 @@
 #
 
 
-import logging
-
+import autopilot._glib
 from autopilot.display import Display as DisplayBase
-from autopilot.utilities import Silence
-
-logger = logging.getLogger(__name__)
 
 
 class Display(DisplayBase):
@@ -33,10 +29,7 @@ class Display(DisplayBase):
         # documentation, which in turn tries to import Gdk, which in turn
         # fails because there's no DISPLAY environment set in the package
         # builder.
-        with Silence():
-            from gi import require_version
-            require_version('Gdk', '3.0')
-            from gi.repository import Gdk
+        Gdk = autopilot._glib._import_gdk()
         self._default_screen = Gdk.Screen.get_default()
         if self._default_screen is None:
             raise RuntimeError(
@@ -44,19 +37,21 @@ class Display(DisplayBase):
         self._blacklisted_drivers = ["NVIDIA"]
 
     def get_num_screens(self):
-        """Get the number of screens attached to the PC."""
+        """Get the number of screens attached to the PC.
+
+        :returns: int indicating number of screens attached.
+
+        """
         return self._default_screen.get_n_monitors()
 
     def get_primary_screen(self):
-        """Returns an integer of which screen is considered the primary"""
+        """Return an integer of which screen is considered the primary."""
         return self._default_screen.get_primary_monitor()
 
     def get_screen_width(self, screen_number=0):
-        # return self._default_screen.get_width()
         return self.get_screen_geometry(screen_number)[2]
 
     def get_screen_height(self, screen_number=0):
-        #return self._default_screen.get_height()
         return self.get_screen_geometry(screen_number)[3]
 
     def get_screen_geometry(self, screen_number):

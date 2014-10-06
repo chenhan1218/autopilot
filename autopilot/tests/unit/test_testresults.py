@@ -17,28 +17,31 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from mock import Mock, patch
+import codecs
+from unittest.mock import Mock, patch
+import os
+import tempfile
 from testtools import TestCase, PlaceHolder
-from testtools.content import text_content
+from testtools.content import Content, ContentType, text_content
+from testtools.matchers import Contains, raises, NotEquals
+from testscenarios import WithScenarios
+import unittest
 
-from autopilot.testresult import (
-    get_default_format,
-    get_output_formats,
-    LoggedTestResultDecorator,
-)
+from autopilot import testresult
+from autopilot import run
 
 
 class LoggedTestResultDecoratorTests(TestCase):
 
     def construct_simple_content_object(self):
-        return text_content(self.getUniqueString)
+        return text_content(self.getUniqueString())
 
     def test_can_construct(self):
-        LoggedTestResultDecorator(Mock())
+        testresult.LoggedTestResultDecorator(Mock())
 
     def test_addSuccess_calls_decorated_test(self):
         wrapped = Mock()
-        result = LoggedTestResultDecorator(wrapped)
+        result = testresult.LoggedTestResultDecorator(wrapped)
         fake_test = PlaceHolder('fake_test')
         fake_details = self.construct_simple_content_object()
 
@@ -51,7 +54,7 @@ class LoggedTestResultDecoratorTests(TestCase):
 
     def test_addError_calls_decorated_test(self):
         wrapped = Mock()
-        result = LoggedTestResultDecorator(wrapped)
+        result = testresult.LoggedTestResultDecorator(wrapped)
         fake_test = PlaceHolder('fake_test')
         fake_error = object()
         fake_details = self.construct_simple_content_object()
@@ -66,7 +69,7 @@ class LoggedTestResultDecoratorTests(TestCase):
 
     def test_addFailure_calls_decorated_test(self):
         wrapped = Mock()
-        result = LoggedTestResultDecorator(wrapped)
+        result = testresult.LoggedTestResultDecorator(wrapped)
         fake_test = PlaceHolder('fake_test')
         fake_error = object()
         fake_details = self.construct_simple_content_object()
@@ -79,14 +82,203 @@ class LoggedTestResultDecoratorTests(TestCase):
             details=fake_details
         )
 
+    def test_log_details_handles_binary_data(self):
+        fake_details = dict(
+            TestBinary=Content(ContentType('image', 'png'), lambda: b'')
+        )
+
+        result = testresult.LoggedTestResultDecorator(None)
+        result._log_details(0, fake_details)
+
+    def test_log_details_logs_binary_attachment_details(self):
+        fake_details = dict(
+            TestBinary=Content(ContentType('image', 'png'), lambda: b'')
+        )
+
+        result = testresult.LoggedTestResultDecorator(None)
+        with patch.object(result, '_log') as p_log:
+            result._log_details(0, fake_details)
+
+            p_log.assert_called_once_with(
+                0,
+                "Binary attachment: \"{name}\" ({type})".format(
+                    name="TestBinary",
+                    type="image/png"
+                )
+            )
+
 
 class OutputFormatFactoryTests(TestCase):
 
     def test_has_text_format(self):
-        self.assertTrue('text' in get_output_formats())
+        self.assertTrue('text' in testresult.get_output_formats())
 
     def test_has_xml_format(self):
-        self.assertTrue('xml' in get_output_formats())
+        self.assertTrue('xml' in testresult.get_output_formats())
+
+    def test_has_subunit_format(self):
+        self.assertTrue('subunit' in testresult.get_output_formats())
 
     def test_default_format_is_available(self):
-        self.assertTrue(get_default_format() in get_output_formats())
+        self.assertThat(
+            testresult.get_output_formats(),
+            Contains(testresult.get_default_format())
+        )
+
+
+class TestResultOutputStreamTests(WithScenarios, TestCase):
+
+    scenarios = [
+        (f, dict(format=f)) for f in testresult.get_output_formats().keys()
+    ]
+
+    def get_supported_options(self, **kwargs):
+        """Get a dictionary of all supported keyword arguments for the current
+        result class.
+
+        Pass in keyword arguments to override default options.
+        """
+        output_path = tempfile.mktemp()
+        self.addCleanup(remove_if_exists, output_path)
+        options = {
+            'stream': run.get_output_stream(self.format, output_path),
+            'failfast': False
+        }
+        options.update(kwargs)
+        return options
+
+    def run_test_with_result(self, test_suite, **kwargs):
+        """Run the given test with the current result object.
+
+        Returns the test result and output file path.
+        Use keyword arguments to alter result object options.
+
+        """
+        ResultClass = testresult.get_output_formats()[self.format]
+        result_options = self.get_supported_options(**kwargs)
+        output_path = result_options['stream'].name
+        result = ResultClass(**result_options)
+        result.startTestRun()
+        test_result = test_suite.run(result)
+        result.stopTestRun()
+        result_options['stream'].flush()
+        return test_result, output_path
+
+    def test_factory_function_is_a_callable(self):
+        self.assertTrue(
+            callable(testresult.get_output_formats()[self.format])
+        )
+
+    def test_factory_callable_raises_on_unknown_kwargs(self):
+        factory_fn = testresult.get_output_formats()[self.format]
+        options = self.get_supported_options()
+        options['unknown_kwarg'] = True
+
+        self.assertThat(
+            lambda: factory_fn(**options),
+            raises(ValueError)
+        )
+
+    def test_creates_non_empty_file_on_passing_test(self):
+        class PassingTests(TestCase):
+
+            def test_passes(self):
+                pass
+
+        test_result, output_path = self.run_test_with_result(
+            PassingTests('test_passes')
+        )
+        self.assertTrue(test_result.wasSuccessful())
+        self.assertThat(open(output_path, 'rb').read(), NotEquals(b''))
+
+    def test_creates_non_empty_file_on_failing_test(self):
+        class FailingTests(TestCase):
+
+            def test_fails(self):
+                self.fail("Failing Test: ")
+
+        test_result, output_path = self.run_test_with_result(
+            FailingTests('test_fails')
+        )
+        self.assertFalse(test_result.wasSuccessful())
+        self.assertThat(open(output_path, 'rb').read(), NotEquals(b''))
+
+    def test_creates_non_empty_file_on_erroring_test(self):
+        class ErroringTests(TestCase):
+
+            def test_errors(self):
+                raise RuntimeError("Uncaught Exception!")
+
+        test_result, output_path = self.run_test_with_result(
+            ErroringTests('test_errors')
+        )
+        self.assertFalse(test_result.wasSuccessful())
+        self.assertThat(open(output_path, 'rb').read(), NotEquals(b''))
+
+    def test_creates_non_empty_log_file_when_failing_with_unicode(self):
+        class FailingTests(TestCase):
+
+            def test_fails_unicode(self):
+                self.fail(
+                    '\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH'
+                )
+        test_result, output_path = self.run_test_with_result(
+            FailingTests('test_fails_unicode')
+        )
+        # We need to specify 'errors="ignore"' because subunit write non-valid
+        # unicode data.
+        log_contents = codecs.open(
+            output_path,
+            'r',
+            encoding='utf-8',
+            errors='ignore'
+        ).read()
+        self.assertFalse(test_result.wasSuccessful())
+        self.assertThat(
+            log_contents,
+            Contains('\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH')
+        )
+
+    def test_result_object_supports_many_tests(self):
+        class ManyFailingTests(TestCase):
+
+            def test_fail1(self):
+                self.fail("Failing test")
+
+            def test_fail2(self):
+                self.fail("Failing test")
+        suite = unittest.TestSuite(
+            tests=(
+                ManyFailingTests('test_fail1'),
+                ManyFailingTests('test_fail2'),
+            )
+        )
+        test_result, output_path = self.run_test_with_result(suite)
+        self.assertFalse(test_result.wasSuccessful())
+        self.assertEqual(2, test_result.testsRun)
+
+    def test_result_object_supports_failfast(self):
+        class ManyFailingTests(TestCase):
+
+            def test_fail1(self):
+                self.fail("Failing test")
+
+            def test_fail2(self):
+                self.fail("Failing test")
+        suite = unittest.TestSuite(
+            tests=(
+                ManyFailingTests('test_fail1'),
+                ManyFailingTests('test_fail2'),
+            )
+        )
+        test_result, output_path = self.run_test_with_result(
+            suite,
+            failfast=True
+        )
+        self.assertFalse(test_result.wasSuccessful())
+        self.assertEqual(1, test_result.testsRun)
+
+
+def remove_if_exists(path):
+    if os.path.exists(path):
+        os.remove(path)

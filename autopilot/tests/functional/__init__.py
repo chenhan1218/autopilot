@@ -18,18 +18,19 @@
 #
 
 
-from __future__ import absolute_import
-
 from codecs import open
 import os
 import os.path
+import sys
 import logging
 from shutil import rmtree
-import sys
 import subprocess
-from tempfile import mkdtemp
+from tempfile import mkdtemp, mktemp
 from testtools.content import text_content
 
+
+from autopilot import platform
+from autopilot.tests.functional.fixtures import TempDesktopFile
 from autopilot.testcase import AutopilotTestCase
 
 
@@ -81,30 +82,23 @@ class AutopilotRunTestBase(AutopilotTestCase):
             'w').write('# Auto-generated file.')
         return base_path
 
-    def run_autopilot(self, arguments):
-        ap_base_path = os.path.abspath(
-            os.path.join(
-                os.path.dirname(__file__),
-                '..',
-                '..',
-                '..'
-            )
-        )
+    def run_autopilot(self, arguments, pythonpath="", use_script=False):
+        environment_patch = _get_environment_patch(pythonpath)
 
-        environment_patch = dict(DISPLAY=':0')
-        if not os.getcwd().startswith('/usr/'):
-            environment_patch['PYTHONPATH'] = ap_base_path
-        autopilot_command = [sys.executable, '-m', 'autopilot.run']
+        if use_script:
+            arg = [sys.executable, self._write_setup_tools_script()]
+        else:
+            arg = [sys.executable, '-m', 'autopilot.run']
 
-        environ = os.environ
+        environ = os.environ.copy()
         environ.update(environment_patch)
 
         logger.info("Starting autopilot command with:")
-        logger.info("Autopilot command = %s", ' '.join(autopilot_command))
+        logger.info("Autopilot command = %s", ' '.join(arg))
         logger.info("Arguments = %s", arguments)
         logger.info("CWD = %r", self.base_path)
 
-        arg = autopilot_command + arguments
+        arg.extend(arguments)
         process = subprocess.Popen(
             arg,
             cwd=self.base_path,
@@ -143,3 +137,77 @@ class AutopilotRunTestBase(AutopilotTestCase):
                 name),
             'w',
             encoding='utf8').write(contents)
+
+    def _write_setup_tools_script(self):
+        """Creates a python script that contains the setup entry point."""
+        base_path = mkdtemp()
+        self.addCleanup(rmtree, base_path)
+
+        script_file = os.path.join(base_path, 'autopilot')
+        open(script_file, 'w').write(load_entry_point_script)
+
+        return script_file
+
+
+def _get_environment_patch(pythonpath):
+    environment_patch = dict(DISPLAY=':0')
+
+    ap_base_path = os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__),
+            '..',
+            '..',
+            '..'
+        )
+    )
+
+    pythonpath_additions = []
+    if pythonpath:
+        pythonpath_additions.append(pythonpath)
+    if not ap_base_path.startswith('/usr/'):
+        pythonpath_additions.append(ap_base_path)
+    environment_patch['PYTHONPATH'] = ":".join(pythonpath_additions)
+
+    return environment_patch
+
+
+load_entry_point_script = """\
+#!/usr/bin/python
+__requires__ = 'autopilot==1.5.0'
+import sys
+from pkg_resources import load_entry_point
+
+if __name__ == '__main__':
+    sys.exit(
+        load_entry_point('autopilot==1.5.0', 'console_scripts', 'autopilot3')()
+    )
+"""
+
+
+class QmlScriptRunnerMixin(object):
+
+    """A Mixin class that knows how to get a proxy object for a qml script."""
+
+    def start_qml_script(self, script_contents):
+        """Launch a qml script."""
+        qml_path = mktemp(suffix='.qml')
+        open(qml_path, 'w').write(script_contents)
+        self.addCleanup(os.remove, qml_path)
+
+        extra_args = ''
+        if platform.model() != "Desktop":
+            # We need to add the desktop-file-hint
+            desktop_file = self.useFixture(
+                TempDesktopFile()
+            ).get_desktop_file_path()
+            extra_args = '--desktop_file_hint={hint_file}'.format(
+                hint_file=desktop_file
+            )
+
+        return self.launch_test_application(
+            "qmlscene",
+            "-qt=qt5",
+            qml_path,
+            extra_args,
+            app_type='qt',
+        )

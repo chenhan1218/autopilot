@@ -18,6 +18,10 @@
 #
 
 
+import os
+import psutil
+from functools import lru_cache
+
 """
 Platform identification utilities for Autopilot.
 ================================================
@@ -37,6 +41,12 @@ on. For example::
         elif platform.model() == "Desktop":
             # do something else
 
+    def test_something_else(self):
+        if platform.is_tablet():
+            # run a tablet test
+        else:
+            # run a non-tablet test
+
 Skipping tests based on Platform
 ++++++++++++++++++++++++++++++++
 
@@ -50,7 +60,10 @@ this::
 
     ...
 
-    @skipUnless(platform.model() == 'Galaxy Nexus')
+    @skipUnless(
+        platform.model() == 'Galaxy Nexus',
+        "Test is only for Galaxy Nexus"
+    )
     def test_something(self):
         # test things!
 
@@ -61,21 +74,25 @@ except the Galaxy Nexus, write this::
 
     ...
 
-    @skipIf(platform.model() == 'Galaxy Nexus')
+    @skipIf(
+        platform.model() == 'Galaxy Nexus',
+        "Test not available for Galaxy Nexus"
+    )
     def test_something(self):
         # test things!
 
 Tuples of values can be used as well, to select more than one platform. For
 example::
 
-    @skipIf(platform.model() in ('Model One', 'Model Two'))
+    @skipIf(
+        platform.model() in ('Model One', 'Model Two'),
+        "Test not available for Models One and Two"
+    )
         def test_something(self):
             # test things!
 
 
 """
-
-from os.path import exists
 
 
 def model():
@@ -107,6 +124,59 @@ def image_codename():
     return _PlatformDetector.create().image_codename
 
 
+def is_tablet():
+    """Indicate whether system is a tablet.
+
+    The 'ro.build.characteristics' property is checked for 'tablet'.
+    For example:
+
+    platform.tablet()
+
+    ... True
+
+    :returns: boolean indicating whether this is a tablet
+
+    """
+    return _PlatformDetector.create().is_tablet
+
+
+def get_display_server():
+    """Returns display server type.
+
+    :returns: string indicating display server type. Either "X11", "MIR" or
+      "UNKNOWN"
+
+    """
+    if _display_is_x11():
+        return "X11"
+    elif _display_is_mir():
+        return "MIR"
+    else:
+        return "UNKNOWN"
+
+
+def _display_is_x11():
+    return 'DISPLAY' in os.environ
+
+
+@lru_cache()
+def _display_is_mir():
+    return "unity-system-compositor" in [
+        _get_process_name(p.name) for p in psutil.process_iter()
+    ]
+
+
+# Different vers. of psutil across Trusty and Utopic have name as either a
+# string or a method.
+def _get_process_name(proc):
+    if callable(proc):
+        return proc()
+    elif isinstance(proc, str):
+        return proc
+    else:
+        raise ValueError("Unknown process name format.")
+
+
 class _PlatformDetector(object):
 
     _cached_detector = None
@@ -122,6 +192,7 @@ class _PlatformDetector(object):
     def __init__(self):
         self.model = "Desktop"
         self.image_codename = "Desktop"
+        self.is_tablet = False
 
         property_file = _get_property_file()
         if property_file is not None:
@@ -132,6 +203,12 @@ class _PlatformDetector(object):
         properties = _parse_build_properties_file(property_file)
         self.model = properties.get('ro.product.model', "Desktop")
         self.image_codename = properties.get('ro.product.name', "Desktop")
+        self.is_tablet = ('ro.build.characteristics' in properties and
+                          'tablet' in properties['ro.build.characteristics'])
+
+
+def _get_property_file_path():
+    return '/system/build.prop'
 
 
 def _get_property_file():
@@ -139,9 +216,11 @@ def _get_property_file():
     properties file, if it exists, or None.
 
     """
-    if exists('/system/build.prop'):
-        return open('/system/build.prop')
-    return None
+    path = _get_property_file_path()
+    try:
+        return open(path)
+    except IOError:
+        return None
 
 
 def _parse_build_properties_file(property_file):
@@ -154,7 +233,7 @@ def _parse_build_properties_file(property_file):
     properties = {}
     for line in property_file:
         line = line.strip()
-        if not line or line.startswith('#') or line.isspace():
+        if not line or line.startswith('#'):
             continue
         split_location = line.find('=')
         if split_location == -1:

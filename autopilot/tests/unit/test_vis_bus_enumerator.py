@@ -18,13 +18,16 @@
 #
 
 
-from mock import patch, Mock
-from testtools import TestCase
+from unittest.mock import patch, Mock
+from testtools import TestCase, skipUnless
 from textwrap import dedent
 
-from autopilot.vis.dbus_search import XmlProcessor
+from autopilot import have_vis
+if have_vis():
+    from autopilot.vis.dbus_search import XmlProcessor
 
 
+@skipUnless(have_vis(), "Tests require vis module to be installed")
 class BusEnumeratorXmlProcessorTest(TestCase):
 
     _example_connection_name = "com.autopilot.test"
@@ -35,7 +38,7 @@ class BusEnumeratorXmlProcessorTest(TestCase):
 
         xml_processor(self._example_connection_name, "/", xml)
 
-    @patch('autopilot.vis.dbus_search.logger')
+    @patch('autopilot.vis.dbus_search._logger')
     def test_invalid_xml_logs_details(self, logger_meth):
         xml = "<invalid xml>"
         xml_processor = XmlProcessor()

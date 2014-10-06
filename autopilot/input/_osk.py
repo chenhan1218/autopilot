@@ -18,7 +18,6 @@
 #
 
 import logging
-import six
 from contextlib import contextmanager
 
 from ubuntu_keyboard.emulators.keyboard import Keyboard as KeyboardDriver
@@ -27,7 +26,7 @@ from autopilot.input import Keyboard as KeyboardBase
 from autopilot.utilities import sleep
 
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class Keyboard(KeyboardBase):
@@ -100,9 +99,9 @@ class Keyboard(KeyboardBase):
         not supported by the OSK Backend (or the current OSK langauge layout.)
 
         """
-        if not isinstance(string, six.string_types):
+        if not isinstance(string, str):
             raise TypeError("'string' argument must be a string.")
-        logger.debug("Typing text: %s", string)
+        _logger.debug("Typing text: %s", string)
         self._keyboard.type(string, delay)
 
     @classmethod
@@ -110,7 +109,7 @@ class Keyboard(KeyboardBase):
         """Dismiss (swipe hide) the keyboard.
 
         """
-        logger.debug("Dismissing the OSK with a swipe.")
+        _logger.debug("Dismissing the OSK with a swipe.")
         cls._keyboard.dismiss()
 
     def _sanitise_keys(self, keys):

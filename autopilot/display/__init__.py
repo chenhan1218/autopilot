@@ -21,12 +21,24 @@
 """The display module contaions support for getting screen information."""
 
 from collections import OrderedDict
+
 from autopilot.utilities import _pick_backend
 from autopilot.input import Mouse
+from autopilot.display._screenshot import get_screenshot_data
+
+
+__all__ = [
+    "Display",
+    "get_screenshot_data",
+    "is_rect_on_screen",
+    "is_point_on_screen",
+    "is_point_on_any_screen",
+    "move_mouse_to_screen",
+]
 
 
 def is_rect_on_screen(screen_number, rect):
-    """Returns True if *rect* is **entirely** on the specified screen, with no
+    """Return True if *rect* is **entirely** on the specified screen, with no
     overlap."""
     (x, y, w, h) = rect
     (mx, my, mw, mh) = Display.create().get_screen_geometry(screen_number)
@@ -34,7 +46,7 @@ def is_rect_on_screen(screen_number, rect):
 
 
 def is_point_on_screen(screen_number, point):
-    """Returns True if *point* is on the specified screen.
+    """Return True if *point* is on the specified screen.
 
     *point* must be an iterable type with two elements: (x, y)
 
@@ -45,7 +57,7 @@ def is_point_on_screen(screen_number, point):
 
 
 def is_point_on_any_screen(point):
-    """Returns true if *point* is on any currently configured screen."""
+    """Return true if *point* is on any currently configured screen."""
     return any([is_point_on_screen(m, point) for m in
                 range(Display.create().get_num_screens())])
 
@@ -55,7 +67,7 @@ def move_mouse_to_screen(screen_number):
     geo = Display.create().get_screen_geometry(screen_number)
     x = geo[0] + (geo[2] / 2)
     y = geo[1] + (geo[3] / 2)
-    #dont animate this or it might not get there due to barriers
+    # dont animate this or it might not get there due to barriers
     Mouse.create().move(x, y, False)
 
 
@@ -98,8 +110,9 @@ def move_mouse_to_screen(screen_number):
 #     mouse.release()
 
 
-class Display:
-    """The base class/inteface for the display devices"""
+class Display(object):
+
+    """The base class/inteface for the display devices."""
 
     @staticmethod
     def create(preferred_backend=''):
@@ -121,6 +134,7 @@ class Display:
             one of the possible backends for this device class.
         :raises: :class:`~autopilot.BackendException` if the preferred_backend
             is set, but that backend could not be instantiated.
+        :returns: Instance of Display with appropriate backend.
 
         """
         def get_x11_display():

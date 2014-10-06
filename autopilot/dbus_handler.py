@@ -20,8 +20,6 @@
 
 """Initialise dbus once using glib mainloop."""
 
-from __future__ import absolute_import
-
 from dbus._dbus import BusConnection
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
@@ -42,7 +40,7 @@ def _ensure_glib_loop_set():
 
 
 def get_session_bus():
-    """This function returns a session bus that has had the DBus GLib main loop
+    """Return a session bus that has had the DBus GLib main loop
     initialised.
 
     """
@@ -51,7 +49,7 @@ def get_session_bus():
 
 
 def get_system_bus():
-    """This function returns a system bus that has had the DBus GLib main loop
+    """Return a system bus that has had the DBus GLib main loop
     initialised.
 
     """
@@ -60,7 +58,7 @@ def get_system_bus():
 
 
 def get_custom_bus(bus_address):
-    """This function returns a custom bus that has had the DBus GLib main loop
+    """Return a custom bus that has had the DBus GLib main loop
     initialised.
 
     """

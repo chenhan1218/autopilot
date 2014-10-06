@@ -20,11 +20,8 @@
 
 """Autopilot test result classes"""
 
-from __future__ import absolute_import
-
 import logging
 
-from autopilot.globals import get_log_verbose
 from testtools import (
     ExtendedToOriginalDecorator,
     ExtendedToStreamDecorator,
@@ -33,22 +30,34 @@ from testtools import (
     try_import,
 )
 
+from autopilot.globals import get_log_verbose
+from autopilot.utilities import _raise_on_unknown_kwargs
+
 
 class LoggedTestResultDecorator(TestResultDecorator):
+
     """A decorator that logs messages to python's logging system."""
 
     def _log(self, level, message):
-        """Performs the actual message logging"""
+        """Perform the actual message logging."""
         if get_log_verbose():
             logging.getLogger().log(level, message)
 
     def _log_details(self, level, details):
-        """Logs the relavent test details"""
+        """Log the relavent test details."""
+
         for detail in details:
             # Skip the test-log as it was logged while the test executed
             if detail == "test-log":
                 continue
-            text = "%s: {{{\n%s}}}" % (detail, details[detail].as_text())
+            detail_content = details[detail]
+            if detail_content.content_type.type == "text":
+                text = "%s: {{{\n%s}}}" % (detail, detail_content.as_text())
+            else:
+                text = "Binary attachment: \"%s\" (%s)" % (
+                    detail,
+                    detail_content.content_type
+                )
             self._log(level, text)
 
     def addSuccess(self, test, details=None):
@@ -62,7 +71,7 @@ class LoggedTestResultDecorator(TestResultDecorator):
         return super(type(self), self).addError(test, err, details)
 
     def addFailure(self, test, err=None, details=None):
-        """Called for a test which failed an assert"""
+        """Called for a test which failed an assert."""
         self._log(logging.ERROR, "FAIL: %s" % (test.id()))
         if hasattr(test, "getDetails"):
             self._log_details(logging.ERROR, test.getDetails())
@@ -70,7 +79,11 @@ class LoggedTestResultDecorator(TestResultDecorator):
 
 
 def get_output_formats():
-    """Get information regarding the different output formats supported."""
+    """Get information regarding the different output formats supported.
+
+    :returns: dict of supported formats and appropriate construct functions
+
+    """
     supported_formats = {}
 
     supported_formats['text'] = _construct_text
@@ -89,24 +102,33 @@ def get_default_format():
 def _construct_xml(**kwargs):
     from junitxml import JUnitXmlResult
     stream = kwargs.pop('stream')
-    return LoggedTestResultDecorator(
+    failfast = kwargs.pop('failfast')
+    _raise_on_unknown_kwargs(kwargs)
+    result_object = LoggedTestResultDecorator(
         ExtendedToOriginalDecorator(
             JUnitXmlResult(stream)
         )
     )
+    result_object.failfast = failfast
+    return result_object
 
 
 def _construct_text(**kwargs):
     stream = kwargs.pop('stream')
     failfast = kwargs.pop('failfast')
+    _raise_on_unknown_kwargs(kwargs)
     return LoggedTestResultDecorator(TextTestResult(stream, failfast))
 
 
 def _construct_subunit(**kwargs):
     from subunit import StreamResultToBytes
     stream = kwargs.pop('stream')
-    return LoggedTestResultDecorator(
+    failfast = kwargs.pop('failfast')
+    _raise_on_unknown_kwargs(kwargs)
+    result_object = LoggedTestResultDecorator(
         ExtendedToStreamDecorator(
             StreamResultToBytes(stream)
         )
     )
+    result_object.failfast = failfast
+    return result_object

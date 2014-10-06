@@ -18,28 +18,28 @@
 #
 
 
-from __future__ import absolute_import
-
 from contextlib import contextmanager
 import dbus
 from testscenarios import TestWithScenarios
-import six
 from testtools import TestCase
 from testtools.matchers import (
     Contains,
     Equals,
+    Is,
     IsInstance,
-    MatchesException,
     Mismatch,
-    Raises,
+    raises,
 )
 
+from autopilot.introspection import backends
 from autopilot.introspection.dbus import DBusIntrospectionObject
+from autopilot.introspection.types import Color, ValueType
 from autopilot.matchers import Eventually
 from autopilot.utilities import sleep
 
 
-def make_fake_attribute_with_result(result, attribute_type='wait_for'):
+def make_fake_attribute_with_result(result, attribute_type='wait_for',
+                                    typeid=None):
     """Make a fake attribute with the given result.
 
     This will either return a callable, or an attribute patched with a
@@ -48,23 +48,27 @@ def make_fake_attribute_with_result(result, attribute_type='wait_for'):
     """
     class FakeObject(DBusIntrospectionObject):
         def __init__(self, props):
-            super(FakeObject, self).__init__(props, "/FakeObject", None)
-            FakeObject._fake_props = props
-
-        @classmethod
-        def get_state_by_path(cls, piece):
-            return [('/FakeObject', cls._fake_props)]
+            super(FakeObject, self).__init__(
+                props,
+                b"/FakeObject",
+                backends.FakeBackend(
+                    [(dbus.String('/FakeObject'), props)]
+                )
+            )
 
     if attribute_type == 'callable':
         return lambda: result
     elif attribute_type == 'wait_for':
-        if isinstance(result, six.text_type):
+        if isinstance(result, str):
             obj = FakeObject(dict(id=[0, 123], attr=[0, dbus.String(result)]))
             return obj.attr
-        elif isinstance(result, six.binary_type):
+        elif isinstance(result, bytes):
             obj = FakeObject(
                 dict(id=[0, 123], attr=[0, dbus.UTF8String(result)])
             )
+            return obj.attr
+        elif typeid is not None:
+            obj = FakeObject(dict(id=[0, 123], attr=[typeid] + result))
             return obj.attr
         else:
             obj = FakeObject(dict(id=[0, 123], attr=[0, dbus.Boolean(result)]))
@@ -139,19 +143,61 @@ class EventuallyMatcherTests(TestWithScenarios, MockedSleepTests):
         self.assertThat(
             mismatch.describe(), Contains("After 1.0 seconds test"))
 
+    def test_eventually_matcher_works_with_list_type(self):
+        attr = make_fake_attribute_with_result(
+            Color(
+                dbus.Int32(1),
+                dbus.Int32(2),
+                dbus.Int32(3),
+                dbus.Int32(4)
+            ),
+            self.attribute_type,
+            typeid=ValueType.COLOR,
+        )
+
+        mismatch = Eventually(Equals([1, 2, 3, 4])).match(attr)
+        self.assertThat(mismatch, Is(None))
+
 
 class EventuallyNonScenariodTests(MockedSleepTests):
 
     def test_eventually_matcher_raises_ValueError_on_unknown_kwargs(self):
         self.assertThat(
             lambda: Eventually(Equals(True), foo=123),
-            Raises(MatchesException(
-                ValueError, "Unknown keyword arguments: foo")))
+            raises(ValueError("Unknown keyword arguments: foo"))
+        )
+
+    def test_eventually_matcher_raises_TypeError_on_non_matcher_argument(self):
+        self.assertThat(
+            lambda: Eventually(None),
+            raises(
+                TypeError(
+                    "Eventually must be called with a testtools "
+                    "matcher argument."
+                )
+            )
+        )
+
+    def test_match_raises_TypeError_when_called_with_plain_attribute(self):
+        eventually = Eventually(Equals(True))
+        self.assertThat(
+            lambda: eventually.match(False),
+            raises(
+                TypeError(
+                    "Eventually is only usable with attributes that "
+                    "have a wait_for function or callable objects."
+                )
+            )
+        )
+
+    def test_repr(self):
+        eventually = Eventually(Equals(True))
+        self.assertEqual("Eventually Equals(True)", str(eventually))
 
     def test_match_with_expected_value_unicode(self):
         """The expected unicode value matches new value string."""
         attr = make_fake_attribute_with_result(
-            u'\u963f\u5e03\u4ece', 'wait_for')
+            '\u963f\u5e03\u4ece', 'wait_for')
         with self.expected_runtime(0.0, 1.0):
             Eventually(Equals("阿布从")).match(attr)
 
@@ -159,7 +205,7 @@ class EventuallyNonScenariodTests(MockedSleepTests):
         """new value with unicode must match expected value string."""
         attr = make_fake_attribute_with_result(str("阿布从"), 'wait_for')
         with self.expected_runtime(0.0, 1.0):
-            Eventually(Equals(u'\u963f\u5e03\u4ece')).match(attr)
+            Eventually(Equals('\u963f\u5e03\u4ece')).match(attr)
 
     def test_mismatch_with_bool(self):
         """The mismatch value must fail boolean values."""
@@ -172,7 +218,7 @@ class EventuallyNonScenariodTests(MockedSleepTests):
         """The mismatch value must fail with str and unicode mix."""
         attr = make_fake_attribute_with_result(str("阿布从1"), 'wait_for')
         mismatch = Eventually(Equals(
-            u'\u963f\u5e03\u4ece'), timeout=.5).match(attr)
+            '\u963f\u5e03\u4ece'), timeout=.5).match(attr)
         self.assertThat(
             mismatch.describe(), Contains('failed'))
 
@@ -181,6 +227,6 @@ class EventuallyNonScenariodTests(MockedSleepTests):
         self.skip("mismatch Contains returns ascii error")
         attr = make_fake_attribute_with_result(str("阿布从1"), 'wait_for')
         mismatch = Eventually(Equals(
-            u'\u963f\u5e03\u4ece'), timeout=.5).match(attr)
+            '\u963f\u5e03\u4ece'), timeout=.5).match(attr)
         self.assertThat(
             mismatch.describe(), Contains("阿布从11"))

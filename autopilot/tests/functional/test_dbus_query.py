@@ -22,14 +22,17 @@ import json
 import os
 import subprocess
 import signal
-from time import time
+from timeit import default_timer
 from tempfile import mktemp
-
-from autopilot.testcase import AutopilotTestCase
+from testtools import skipIf
 from testtools.matchers import Equals, NotEquals, raises, LessThan, GreaterThan
-from autopilot.introspection.dbus import StateNotFoundError
+
+from autopilot import platform
+from autopilot.testcase import AutopilotTestCase
+from autopilot.exceptions import StateNotFoundError
 
 
+@skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
 class DbusQueryTests(AutopilotTestCase):
     """A collection of dbus query tests for autopilot."""
 
@@ -138,7 +141,7 @@ class DbusQueryTests(AutopilotTestCase):
     def test_select_single_no_name_no_parameter_raises_exception(self):
         app = self.start_fully_featured_app()
         fn = lambda: app.select_single()
-        self.assertThat(fn, raises(TypeError))
+        self.assertThat(fn, raises(ValueError))
 
     def test_select_single_no_match_raises_exception(self):
         app = self.start_fully_featured_app()
@@ -168,7 +171,7 @@ class DbusQueryTests(AutopilotTestCase):
     def test_select_many_no_name_no_parameter_raises_exception(self):
         app = self.start_fully_featured_app()
         fn = lambda: app.select_single()
-        self.assertThat(fn, raises(TypeError))
+        self.assertThat(fn, raises(ValueError))
 
     def test_select_many_only_using_parameters(self):
         app = self.start_fully_featured_app()
@@ -182,22 +185,23 @@ class DbusQueryTests(AutopilotTestCase):
 
     def test_wait_select_single_succeeds_quickly(self):
         app = self.start_fully_featured_app()
-        start_time = time()
+        start_time = default_timer()
         main_window = app.wait_select_single('QMainWindow')
-        end_time = time()
+        end_time = default_timer()
         self.assertThat(main_window, NotEquals(None))
         self.assertThat(abs(end_time - start_time), LessThan(1))
 
     def test_wait_select_single_fails_slowly(self):
         app = self.start_fully_featured_app()
-        start_time = time()
+        start_time = default_timer()
         fn = lambda: app.wait_select_single('QMadeupType')
         self.assertThat(fn, raises(StateNotFoundError('QMadeupType')))
-        end_time = time()
+        end_time = default_timer()
         self.assertThat(abs(end_time - start_time), GreaterThan(9))
         self.assertThat(abs(end_time - start_time), LessThan(11))
 
 
+@skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
 class DbusCustomBusTests(AutopilotTestCase):
     """Test the ability to use custom dbus buses during a test."""
 

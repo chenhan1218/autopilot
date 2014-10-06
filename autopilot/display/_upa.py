@@ -18,35 +18,58 @@
 #
 
 
-import logging
-
 from autopilot.display import Display as DisplayBase
-from subprocess import check_output
+from autopilot.platform import image_codename
+import subprocess
 
-try:
-    DEVICE = check_output(
-        ["/usr/bin/getprop", "ro.product.device"]).decode().strip()
-except OSError:
-    DEVICE = ''
 
-RESOLUTIONS = {
-    "mako": (768, 1280),
-    "maguro": (720, 1280),
-    "manta": (2560, 1600),
-    "grouper": (800, 1280),
-}
+def query_resolution():
+    try:
+        return _get_fbset_resolution()
+    except Exception:
+        return _get_hardcoded_resolution()
 
-if DEVICE not in RESOLUTIONS:
-    raise NotImplementedError(
-        'Device "{}" is not supported by Autopilot.'.format(DEVICE))
 
-X, Y = RESOLUTIONS[DEVICE]
+def _get_fbset_resolution():
+    """Return the resolution, as determined by fbset, or None."""
+    fbset_output = _get_fbset_output()
+    for line in fbset_output.split('\n'):
+        line = line.strip()
+        if line.startswith('Mode'):
+            quoted_resolution = line.split()[1]
+            resolution_string = quoted_resolution.strip('"')
+            return tuple(int(piece) for piece in resolution_string.split('x'))
+    raise RuntimeError("No modes found from fbset output")
 
-logger = logging.getLogger(__name__)
+
+def _get_fbset_output():
+    return subprocess.check_output(["fbset", "-s", "-x"]).decode().strip()
+
+
+def _get_hardcoded_resolution():
+    name = image_codename()
+
+    resolutions = {
+        "generic": (480, 800),
+        "mako": (768, 1280),
+        "maguro": (720, 1280),
+        "manta": (2560, 1600),
+        "grouper": (800, 1280),
+    }
+
+    if name not in resolutions:
+        raise NotImplementedError(
+            'Device "{}" is not supported by Autopilot.'.format(name))
+
+    return resolutions[name]
 
 
 class Display(DisplayBase):
     """The base class/inteface for the display devices"""
+
+    def __init__(self):
+        super(Display, self).__init__()
+        self._X, self._Y = query_resolution()
 
     def get_num_screens(self):
         """Get the number of screens attached to the PC."""
@@ -57,10 +80,10 @@ class Display(DisplayBase):
         return 0
 
     def get_screen_width(self):
-        return X
+        return self._X
 
     def get_screen_height(self):
-        return Y
+        return self._Y
 
     def get_screen_geometry(self, screen_number):
         """Get the geometry for a particular screen.
@@ -68,4 +91,4 @@ class Display(DisplayBase):
         :return: Tuple containing (x, y, width, height).
 
         """
-        return (0, 0, X, Y)
+        return (0, 0, self._X, self._Y)

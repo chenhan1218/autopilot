@@ -18,6 +18,7 @@
 #
 
 
+import os.path
 import dbus
 
 from PyQt4 import QtGui
@@ -25,6 +26,24 @@ from PyQt4 import QtGui
 
 def get_qt_icon():
     return QtGui.QIcon(":/trolltech/qmessagebox/images/qtlogo-64.png")
+
+
+def get_filter_icon():
+    return QtGui.QIcon("/usr/share/icons/gnome/32x32/actions/search.png")
+
+
+def get_overlay_icon():
+    name = "autopilot-toggle-overlay.svg"
+    possible_locations = [
+        "/usr/share/icons/hicolor/scalable/actions/",
+        os.path.join(os.path.dirname(__file__), '../../icons'),
+        "icons",
+    ]
+    for location in possible_locations:
+        path = os.path.join(location, name)
+        if os.path.exists(path):
+            return QtGui.QIcon(path)
+    return QtGui.QIcon()
 
 
 def dbus_string_rep(dbus_type):

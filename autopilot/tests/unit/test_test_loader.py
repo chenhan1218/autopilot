@@ -24,10 +24,15 @@ import string
 from testtools import TestCase
 from testtools.matchers import Not, Raises
 from contextlib import contextmanager
+from unittest.mock import patch
 import shutil
 import tempfile
 
-from autopilot.run import get_package_location, load_test_suite_from_name
+from autopilot.run import (
+    _discover_test,
+    get_package_location,
+    load_test_suite_from_name
+)
 
 
 @contextmanager
@@ -139,46 +144,74 @@ class TestLoaderTests(TestCase):
 
         self.assertEqual(self.sandbox_dir, actual)
 
+    @patch('autopilot.run._show_test_locations', new=lambda a: True)
     def test_load_test_suite_from_name_can_load_file(self):
         with self.open_sandbox_file('test_foo.py') as f:
             f.write(SIMPLE_TESTCASE)
         with working_dir(self.sandbox_dir):
-            suite = load_test_suite_from_name('test_foo')
+            suite, _ = load_test_suite_from_name('test_foo')
 
         self.assertEqual(1, len(suite._tests))
 
+    @patch('autopilot.run._show_test_locations', new=lambda a: True)
     def test_load_test_suite_from_name_can_load_nested_module(self):
         self.create_empty_package_file('__init__.py')
         self.create_package_file_with_contents('test_foo.py', SIMPLE_TESTCASE)
         with working_dir(self.sandbox_dir):
-            suite = load_test_suite_from_name(
+            suite, _ = load_test_suite_from_name(
                 '%s.test_foo' % self.test_module_name
             )
 
         self.assertEqual(1, suite.countTestCases())
 
+    @patch('autopilot.run._show_test_locations', new=lambda a: True)
     def test_load_test_suite_from_name_only_loads_requested_suite(self):
         self.create_empty_package_file('__init__.py')
         self.create_package_file_with_contents('test_foo.py', SIMPLE_TESTCASE)
         self.create_package_file_with_contents('test_bar.py', SIMPLE_TESTCASE)
         with working_dir(self.sandbox_dir):
-            suite = load_test_suite_from_name(
+            suite, _ = load_test_suite_from_name(
                 '%s.test_bar' % self.test_module_name
             )
 
         self.assertEqual(1, suite.countTestCases())
 
+    @patch('autopilot.run._show_test_locations', new=lambda a: True)
     def test_load_test_suite_from_name_loads_requested_test_from_suite(self):
         self.create_empty_package_file('__init__.py')
         self.create_package_file_with_contents('test_foo.py', SAMPLE_TESTCASES)
         self.create_package_file_with_contents('test_bar.py', SAMPLE_TESTCASES)
         with working_dir(self.sandbox_dir):
-            suite = load_test_suite_from_name(
+            suite, _ = load_test_suite_from_name(
                 '%s.test_bar.SampleTests.test_passes_again'
                 % self.test_module_name
             )
 
         self.assertEqual(1, suite.countTestCases())
+
+    @patch('autopilot.run._handle_discovery_error')
+    @patch('autopilot.run._show_test_locations', new=lambda a: True)
+    def test_loading_nonexistent_test_suite_doesnt_error(self, err_handler):
+        self.assertThat(
+            lambda: load_test_suite_from_name('nonexistent'),
+            Not(Raises())
+        )
+
+    def test_loading_nonexistent_test_suite_indicates_error(self):
+        self.assertRaises(
+            ImportError,
+            lambda: _discover_test('nonexistent')
+        )
+
+    @patch('autopilot.run._reexecute_autopilot_using_module')
+    @patch('autopilot.run._is_testing_autopilot_module', new=lambda *a: True)
+    def test_testing_autopilot_is_redirected(self, patched_executor):
+        patched_executor.return_value = 0
+        self.assertRaises(
+            SystemExit,
+            lambda: load_test_suite_from_name('autopilot')
+        )
+        self.assertTrue(patched_executor.called)
 
 
 SIMPLE_TESTCASE = """\

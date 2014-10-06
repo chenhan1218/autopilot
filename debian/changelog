@@ -1,3 +1,499 @@
+autopilot (1.5.0+14.10.20140806-0ubuntu1) UNRELEASED; urgency=medium
+
+  [Thomi Richards]
+  * Fix the development make_coverage.py script.
+  * Remove the python3-six dependency.
+
+  [Max Brustkern]
+  * Remove python2 compatibility code from autopilot.
+
+  [Christopher Lee]
+  * Add the ability to take screenshots with a test run.
+    Automatically takes a screenshot on a failing test.
+    Fixes: https://bugs.launchpad.net/bugs/1308762.
+
+  [Corey Goldberg]
+  * Refactor video recording code.
+
+  [Martin Pitt]
+  * Replace group membership based access to /dev/uinput with dynamic ACLs
+    for the current foreground session, and drop the /dev/autopilot-uinput
+    symlink and "autopilot" group.
+    Fixes: https://bugs.launchpad.net/bugs/1350263.
+
+ -- Christopher Lee <chris.lee@canonical.com>  Wed, 06 Aug 2014 10:29:45 +1200
+
+autopilot (1.5.0+14.10.20140716-0ubuntu2) utopic; urgency=medium
+
+  * autopilot-touch: depend on autopilot-qt5 and qttestability-autopilot
+    instead of libautopilot-qt.
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Tue, 05 Aug 2014 01:28:37 +0200
+
+autopilot (1.5.0+14.10.20140716-0ubuntu1) utopic; urgency=low
+
+  [ Thomi Richards ]
+  * Bug Fix: Attaching binary files to test results Bug Fix: Revert
+    NormalApplicationLauncher launch arg (cwd -> launch_dir) Flake8: Fix
+    for updated pep8 Build: Fix build deps for Trusty Feature: Adding
+    screenshot ability Feature: Terse logging output. (LP: #1078732)
+
+  [ Christopher Lee ]
+  * Bug Fix: Attaching binary files to test results Bug Fix: Revert
+    NormalApplicationLauncher launch arg (cwd -> launch_dir) Flake8: Fix
+    for updated pep8 Build: Fix build deps for Trusty Feature: Adding
+    screenshot ability Feature: Terse logging output. (LP: #1078732)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 16 Jul 2014 02:57:50 +0000
+
+autopilot (1.5.0+14.10.20140613-0ubuntu1) utopic; urgency=low
+
+  [ Tarmac ]
+  * Fix DateTime tests that failed due to recent DateTime changes that
+    removed assumption of UTC TZ. (LP: #1324441, #1327377)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 13 Jun 2014 00:31:08 +0000
+
+autopilot (1.5.0+14.10.20140601-0ubuntu1) utopic; urgency=low
+
+  [ Ted Gould ]
+  * Name change for UAL
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Sun, 01 Jun 2014 21:22:28 +0000
+
+autopilot (1.5.0+14.10.20140526.1-0ubuntu1) utopic; urgency=low
+
+  [ Tarmac ]
+  * Add fixtures for launching applications. (LP: #1322033, #1291531,
+    #1320149)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 26 May 2014 12:50:10 +0000
+
+autopilot (1.5.0+14.10.20140509-0ubuntu1) utopic; urgency=low
+
+  [ Thomi Richards ]
+  * Remove python2 packages and dependencies, as they're now handled by the
+    autopilot-legacy source package. (lp: #1308661)
+  * Autopilot vis tool can now search the introspection tree. (lp: #1097392)
+  * Autopilot vis tool can now draw a transparent overlay over the selected 
+    widget.
+  * Autopilot vis tool now shows the root of the introspection tree (lp: #1298600)
+  * Autopilot vis tool can now be launched from the unity dash.
+  * Autopilot test runner now has a man page installed.
+  * Autopilot introspection package now has a cleaner API.
+  * Don't leak temporary files when recording tests on the desktop (lp: #1187856)
+  * Use a more accurate timer within autopilot.
+  * Autopilot uses server-side parameter matching when selecting children (lp :#1214246)
+  * Test result artifacts are no longer overwritten when more than one artifact with
+    the same name is added to a test result (lp: #1214246)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 09 May 2014 00:48:14 +0000
+
+autopilot (1.4+14.04.20140416-0ubuntu1) trusty; urgency=low
+
+  [ Francis Ginther ]
+  * Revert r480 to restore python2 packages as autopilot-touch
+    dependencies as not all tests have been updated. (LP: #1308661)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 16 Apr 2014 19:55:48 +0000
+
+autopilot (1.4+14.04.20140415-0ubuntu1) trusty; urgency=low
+
+  [ Michael Terry ]
+  * Treat an upstart 'app focus' event like a successful app launch.
+    (LP: #1307489)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 15 Apr 2014 00:12:05 +0000
+
+autopilot (1.4+14.04.20140410-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Remove python2 from the autopilot-touch metapackage.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 10 Apr 2014 20:51:07 +0000
+
+autopilot (1.4+14.04.20140409-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Ensure autopilot waits for upstart applications to end before ending
+    the test. (LP: #1305320)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 09 Apr 2014 22:15:25 +0000
+
+autopilot (1.4+14.04.20140408-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Fix flake8 errors in trunk.
+  * Make the make-coverage.sh script exit non-0 when tests fail.
+  * Don't abort print_tree when we catch the StateNotFoundError
+    exception. (LP: #1276672)
+  * Tweak the vis tool so the splitter between the tree widget and the
+    properties pane cannot be completely dragged to one side or the
+    other. (LP: #1281360)
+  * Fix functional test that was very dependant on timing. (LP:
+    #1301005)
+  * Make logger objects within autopilot private.
+
+  [ Nicholas Skaggs ]
+  * Don't abort print_tree when we catch the StateNotFoundError
+    exception. (LP: #1276672)
+
+  [ Corey Goldberg ]
+  * When no tests are found, display "Did not find any tests" and exit,
+    instead of invoking the runner. (LP: #1282995)
+  * Fix functional test that was very dependant on timing. (LP:
+    #1301005)
+
+  [ nskaggs ]
+  * Don't abort print_tree when we catch the StateNotFoundError
+    exception. (LP: #1276672)
+
+  [ Max Brustkern ]
+  * Update documentation to reflect new terminology (LP:1288054) (LP:
+    #1288054)
+  * Make logger objects within autopilot private.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 08 Apr 2014 00:29:56 +0000
+
+autopilot (1.4+14.04.20140401-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Make the --enable-profile option for all autopilot commands.
+  * Refactor introspection code to make the vis tool call only
+    asynchronous dbus calls.
+  * Optimisations for print_tree method.
+
+  [ Leo Arias ]
+  * Added a window resize for the BAMF process helper.
+
+  [ Christopher Lee ]
+  * Move functionality out of __init__.py
+  * Add workaround for bug lp:1297592 by creating Touch device in
+    AutopilotTestCase setUp. (LP: #1297592)
+  * Fixes some functional tests that were failing on the devices. (skip
+    Gtk, use desktop file hint for the qt one).
+
+  [ Max Brustkern ]
+  * Move functionality out of __init__.py
+  * Additional pep257 changes.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 01 Apr 2014 01:30:45 +0000
+
+autopilot (1.4+14.04.20140319.1-0ubuntu2) trusty; urgency=medium
+
+  * Add python-gi and python3-gi dependencies which provide gi.repository
+    modules. (since gir1.2-upstart-app-launch is accessed via
+    gi.repository)
+
+ -- Dimitri John Ledkov <xnox@ubuntu.com>  Sat, 22 Mar 2014 18:18:46 +0000
+
+autopilot (1.4+14.04.20140319.1-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Launch upstart and click applications via upstart app launch.
+
+  [ Max Brustkern ]
+  * PEP257 docstring fixes.
+  * Autopilot emulators can declare a validate_dbus_object class method
+    that takes a dbus path and state as arguments. (LP:1210260) (LP:
+    #1210260)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 19 Mar 2014 20:13:30 +0000
+
+autopilot (1.4+14.04.20140311-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Fix unicode error in key/value xpathselect encoding.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 11 Mar 2014 18:18:06 +0000
+
+autopilot (1.4+14.04.20140310.1-0ubuntu1) trusty; urgency=low
+
+  * 
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 10 Mar 2014 19:39:00 +0000
+
+autopilot (1.4+14.04.20140303.is.1.4+14.04.20140219-0ubuntu1) trusty; urgency=medium
+
+  * Revert to previous version as it creates some AP tests to fail.
+    Autopilot was part of the autopilot-qt transaction, so reverting that one
+    as well to have a tested combination. (LP: #1287727)
+
+ -- Didier Roche <didrocks@ubuntu.com>  Tue, 04 Mar 2014 15:53:30 +0100
+
+autopilot (1.4+14.04.20140303-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Prepare functional tests so that they can run on a device (Skips any
+    that cannot run on a device).
+  * Make proxy object attributes look more pythonic when calling
+    repr(...) or str(...) on them. (LP: #1279977)
+
+  [ Nicholas Skaggs ]
+  * Fix the veribage for statenotfound errors, fixes
+    https://bugs.launchpad.net/autopilot/+bug/1269649 (LP: #1269649)
+
+  [ nskaggs ]
+  * Fix the veribage for statenotfound errors, fixes
+    https://bugs.launchpad.net/autopilot/+bug/1269649 (LP: #1269649)
+
+  [ Christopher Lee ]
+  * Prepare functional tests so that they can run on a device (Skips any
+    that cannot run on a device).
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 03 Mar 2014 04:38:08 +0000
+
+autopilot (1.4+14.04.20140219-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Vis tool improvements for self-testing: Added ability for vis tool
+    to be run with testability enabled, and able to be profiled. (LP:
+    #1279944)
+  * Add a decorator that makes it easy to write compatible __repr__
+    functions in both python 2.x and 3.x.
+
+  [ Leo Arias ]
+  * Refactor the _uinput module to avoid side-effects when we import it.
+  * Added Mouse, Touch and Pointer drags with rate. (LP: #1257055)
+
+  [ Max Brustkern ]
+  * Handle trailing slashes on suites. (LP: #1199088)
+
+  [ Christopher Lee ]
+  * Fix import error in functional test
+    test_bamf_geometry_gives_reliable_results. (LP: #1281253)
+
+  [ CI bot ]
+  * Fix test_command_line_args issues with python 3.4. (LP: #1281733)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 19 Feb 2014 21:41:38 +0000
+
+autopilot (1.4+14.04.20140213-0ubuntu1) trusty; urgency=low
+
+  [ Thomi Richards ]
+  * Fix bamf geometry property.
+  * Fix subunit output when outputting to a file instead of stdout. (LP:
+    #1279507)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 13 Feb 2014 03:11:50 +0000
+
+autopilot (1.4+14.04.20140212-0ubuntu1) trusty; urgency=low
+
+  [ CI bot ]
+  * Resync trunk
+
+  [ Christopher Lee ]
+  * Deprecating the use of AutopilotTestCase.pick_app_launcher
+  * Fix a regression in the "autopilot launch" command which meant that
+    application arguments were taken as the application to launch. (LP:
+    #1275913)
+
+  [ Thomi Richards ]
+  * Remove ibus.py from autopilot, as it should live in lp:unity. (LP:
+    #1210661)
+  * Add unit tests to the autopilot.run module.
+  * Refactor parts of the 'autopilot.run' module, adding unit tests and
+    simplifying the code along the way.
+  * Fix docs WRT Eventually matcher's interaction with Raises() matcher.
+    (LP: #1244490)
+  * Get display resolution using fbset, falling back to hard coded
+    values based on image codename on phablet devices.
+  * Fix functional tests that started failing when window-mocker
+    changed. (LP: #1278187)
+  * Add unit tests for missing coverage on code that picks device
+    backends at runtime.
+  * Fix a bug where autopilot didn't do the right thing with non-unicode
+    valid bytestrings. (LP: #1278272)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 12 Feb 2014 01:14:02 +0000
+
+autopilot (1.4+14.04.20140129-0ubuntu1) trusty; urgency=low
+
+  [ Barry Warsaw ]
+  * Make Autopilot tracepoint extension module compatible with python 3.
+    (LP: #1266574)
+
+  [ Steve Langasek ]
+  * Fix the autopilot-touch package to be Architecture: all instead of
+    having it be Architecture: any with a wrong architecture exclusion
+    of a dependency.
+
+  [ Christopher Lee ]
+  * Handle xml parse exception nicely as well as add some nicer
+    logging/feedback.
+  * Fixes issues with load_test_suite_from_name.
+  * Make autopilot able to run it's own tests again.
+  * When setting up logging take into account not all modes/commands
+    have a verbose argument.
+  * Fixes the issue when listing an non-existent test suite raised an
+    uncaught exception. .
+  * Minor fix for a failing functional test, now passes under python 2
+    and 3.
+  * Minor fixup of TypeError in platform docs re: skipping tests.
+  * Add details to Faq docs re: launching (click) applications. (LP:
+    #1257148)
+  * Refactor of the application launching code (incl. tests).
+  * Fix issue with launching click app and added test to cover it.
+  * Ensure test discovery looks and uses cwd before system path.
+  * Attempts to use the newer version call to 'launch_uris_as_manager',
+    falls back to the simpler 'launch_uris' if that fails.
+  * Click applications now provide application_name to
+    get_proxy_object_for_existing_process. (LP: #1274292)
+
+  [ Thomi Richards ]
+  * Fix tox.ini config file to restrict flake8 runs to the autopilot/
+    directory.
+  * Make autopilot fail when no command is specified. (LP: #1255334)
+  * Move the contents of the 'autopilot' script into autopilot/run.py,
+    and make setuptools generate the autopilot script for us.
+  * Make autopilot understand how the "-qt=XXX" option works. (LP:
+    #1255405)
+  * Handle xml parse exception nicely as well as add some nicer
+    logging/feedback.
+  * Fix autopilot test case loading. (LP: #1255752, #1255659)
+  * Move the BackendException class to solve a circular import.
+  * Make autopilot support subunit bytestream output. (LP: #1255662)
+  * Make autopilot able to run it's own tests again.
+  * Remove an incorrect comment from the source code.
+  * Fix some unit tests that were printing to stdout.
+  * Lay the groundwork for attaching files to test results.
+  * Fix failing tests in python3.
+  * Add click package log file to test result. (LP: #1257453)
+  * Add a simple shell script that can be used to generate unit test
+    coverage for autopilot itself.
+  * Add unit tests for common input code.
+  * Remove some unused code code in the type support unit tests.
+  * Don't include test lines in coverage count.
+  * Add a few missing test cases, increase test case coverage.
+  * Add unit tests for process snapshot support.
+  * A few tweaks to the make_coverage script to make it a bit more
+    useful.
+  * Fix issue with launching click app and added test to cover it.
+  * Add suppoprt for debugging profiles to autopilot.
+  * Add ability to control autopilot timeout values from the command
+    line. Refactor code so I can add testing to autopilot run module.
+  * Fix flake8 warnings.
+  * Fix Eventually matcher so it can correctly match against complex
+    types. (LP: #1269984)
+  * Improve the error message in the ProcessSearchError exception. (LP:
+    #1239427)
+
+  [ Martin Pitt ]
+  * Fix initialization of GdkDisplay, to fix crash when accessing
+    Window.geometry. (LP: #1258170)
+  * tests: Ensure we don't leave remmina and other processes open. (LP:
+    #1259721)
+  * Don't inherit our stdout to spawned processes, to allow users to
+    redirect autopilot's stdout to tee and other programs which wait for
+    EOF. (LP: #1259721)
+  * Fix functional tests to actually run against the build tree again,
+    and fix some of their failures.
+
+  [ Sergio Schvezov ]
+  * The generic goldfish target as a upa device.
+  * Adding APP_URIS parameter to Click package launching.
+
+  [ Dimitri John Ledkov ]
+  * Fix emulator template screen size.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 29 Jan 2014 21:30:58 +0000
+
+autopilot (1.4+14.04.20140123.1-0ubuntu1) trusty; urgency=low
+
+  [ Barry Warsaw ]
+  * Make Autopilot tracepoint extension module compatible with python 3.
+    (LP: #1266574)
+
+  [ Christopher Lee ]
+  * Handle xml parse exception nicely as well as add some nicer
+    logging/feedback.
+  * Fixes issues with load_test_suite_from_name.
+  * Make autopilot able to run it's own tests again.
+  * When setting up logging take into account not all modes/commands
+    have a verbose argument.
+  * Fixes the issue when listing an non-existent test suite raised an
+    uncaught exception. .
+  * Minor fix for a failing functional test, now passes under python 2
+    and 3.
+  * Minor fixup of TypeError in platform docs re: skipping tests.
+  * Add details to Faq docs re: launching (click) applications. (LP:
+    #1257148)
+  * Refactor of the application launching code (incl. tests).
+  * Fix issue with launching click app and added 100% unit test to cover
+    it.
+  * Fixes the issue where test discovery gets confused when there are
+    local (in cwd) and system installed tests.
+
+  [ Thomi Richards ]
+  * Fix tox.ini config file to restrict flake8 runs to the autopilot/
+    directory.
+  * Make autopilot fail when no command is specified. (LP: #1255334)
+  * Move the contents of the 'autopilot' script into autopilot/run.py,
+    and make setuptools generate the autopilot script for us.
+  * Make autopilot understand how the "-qt=XXX" option works. (LP:
+    #1255405)
+  * Handle xml parse exception nicely as well as add some nicer
+    logging/feedback.
+  * Fix autopilot test case loading. (LP: #1255752, #1255659)
+  * Move the BackendException class to solve a circular import.
+  * Make autopilot support subunit bytestream output. (LP: #1255662)
+  * Make autopilot able to run it's own tests again.
+  * Remove an incorrect comment from the source code.
+  * Fix some unit tests that were printing to stdout.
+  * Lay the groundwork for attaching files to test results.
+  * Fix failing tests in python3.
+  * Add click package log file to test result. (LP: #1257453)
+  * Add a simple shell script that can be used to generate unit test
+    coverage for autopilot itself.
+  * Add unit tests for common input code.
+  * Remove some unused code code in the type support unit tests.
+  * Don't include test lines in coverage count.
+  * Add a few missing test cases, increase test case coverage.
+  * Add unit tests for process snapshot support.
+  * A few tweaks to the make_coverage script to make it a bit more
+    useful.
+  * Fix issue with launching click app and added 100% unit test to cover
+    it.
+  * Fix eventually matcher so it can match against complex types. (LP:
+    #1269984)
+
+  [ Martin Pitt ]
+  * Fix initialization of GdkDisplay, to fix crash when accessing
+    Window.geometry. (LP: #1258170)
+  * tests: Ensure we don't leave remmina and other processes open. (LP:
+    #1259721)
+  * Don't inherit our stdout to spawned processes, to allow users to
+    redirect autopilot's stdout to tee and other programs which wait for
+    EOF. (LP: #1259721)
+  * Fix functional tests to actually run against the build tree again,
+    and fix some of their failures.
+
+  [ Sergio Schvezov ]
+  * The generic goldfish target as a upa device.
+
+  [ Dimitri John Ledkov ]
+  * Fix emulator template screen size.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 23 Jan 2014 23:21:34 +0000
+
+autopilot (1.4+14.04.20131125-0ubuntu4) trusty; urgency=medium
+
+  * Seed python3-autopilots on ubuntu touch by default.
+
+ -- Dimitri John Ledkov <xnox@ubuntu.com>  Fri, 10 Jan 2014 00:00:18 +0000
+
+autopilot (1.4+14.04.20131125-0ubuntu3) trusty; urgency=low
+
+  * Cherry-pick resolution constants for the default emulator skin.
+
+ -- Dimitri John Ledkov <xnox@ubuntu.com>  Wed, 18 Dec 2013 13:12:58 +0000
+
+autopilot (1.4+14.04.20131125-0ubuntu2) trusty; urgency=low
+
+  * No-change rebuild for ust.
+
+ -- Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>  Fri, 06 Dec 2013 15:08:24 -0500
+
 autopilot (1.4+14.04.20131125-0ubuntu1) trusty; urgency=low
 
   [ Leo Arias ]
@@ -141,7 +637,7 @@ autopilot (1.3.1+13.10.20131003.1-0ubuntu2) trusty; urgency=low
 
   * No change rebuild to pick up liblttng-ust2.
 
- -- Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>   Wed, 30 Oct 2013 16:24:04 -0700
+ -- Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>  Wed, 30 Oct 2013 16:24:04 -0700
 
 autopilot (1.3.1+13.10.20131003.1-0ubuntu1) saucy; urgency=low
 

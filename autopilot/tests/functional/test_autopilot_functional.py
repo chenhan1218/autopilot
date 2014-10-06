@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2012-2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,18 +18,21 @@
 #
 
 
-from __future__ import absolute_import
-
-from codecs import open
+from fixtures import TempDir
+import glob
 import os
 import os.path
 import re
 from tempfile import mktemp
-from testtools.matchers import Contains, Equals, MatchesRegex, Not
+from testtools import skipIf
+from testtools.matchers import Contains, Equals, MatchesRegex, Not, NotEquals
 from textwrap import dedent
+from unittest.mock import Mock
 
-from autopilot.testcase import AutopilotTestCase
+from autopilot import platform
+from autopilot.matchers import Eventually
 from autopilot.tests.functional import AutopilotRunTestBase, remove_if_exists
+from autopilot._video import RMDVideoLogFixture
 
 
 class AutopilotFunctionalTestsBase(AutopilotRunTestBase):
@@ -49,23 +52,47 @@ class AutopilotFunctionalTestsBase(AutopilotRunTestBase):
         return self.run_autopilot(args_list)
 
     def assertTestsInOutput(self, tests, output, total_title='tests'):
-        """Asserts that 'tests' are all present in 'output'."""
+        """Asserts that 'tests' are all present in 'output'.
+
+        This assertion is intelligent enough to know that tests are not always
+        printed in alphabetical order.
+
+        'tests' can either be a list of test ids, or a list of tuples
+        containing (scenario_count, test_id), in the case of scenarios.
+
+        """
 
         if type(tests) is not list:
             raise TypeError("tests must be a list, not %r" % type(tests))
         if not isinstance(output, str):
             raise TypeError("output must be a string, not %r" % type(output))
 
-        test_names = ''.join(['    %s\n' % t for t in sorted(tests)])
-        expected = '''\
-Loading tests from: %s
+        expected_heading = 'Loading tests from: %s\n\n' % self.base_path
+        expected_tests = []
+        expected_total = 0
+        for test in tests:
+            if type(test) == tuple:
+                expected_tests.append(' *%d %s' % test)
+                expected_total += test[0]
+            else:
+                expected_tests.append('    %s' % test)
+                expected_total += 1
+        expected_footer = ' %d total %s.' % (expected_total, total_title)
 
-%s
+        parts = output.split('\n')
+        observed_heading = '\n'.join(parts[:2]) + '\n'
+        observed_test_list = parts[2:-4]
+        observed_footer = parts[-2]
 
- %d total %s.
-''' % (self.base_path, test_names, len(tests), total_title)
+        self.assertThat(expected_heading, Equals(observed_heading))
+        self.assertThat(
+            sorted(expected_tests),
+            Equals(sorted(observed_test_list))
+        )
+        self.assertThat(expected_footer, Equals(observed_footer))
 
-        self.assertThat(output, Equals(expected))
+
+class FunctionalTestMain(AutopilotFunctionalTestsBase):
 
     def test_can_list_empty_test_dir(self):
         """Autopilot list must report 0 tests found with an empty test
@@ -150,6 +177,14 @@ Loading tests from: %s
         self.assertThat(error, Equals(''))
         self.assertThat(output, Contains(expected_error))
 
+    def test_list_nonexistent_test_returns_nonzero(self):
+        code, output, error = self.run_autopilot_list(list_spec='1234')
+        expected_msg = "could not import package 1234: No module"
+        expected_result = "0 total tests"
+        self.assertThat(code, Equals(1))
+        self.assertThat(output, Contains(expected_msg))
+        self.assertThat(output, Contains(expected_result))
+
     def test_can_list_scenariod_tests(self):
         """Autopilot must show scenario counts next to tests that have
         scenarios."""
@@ -213,20 +248,16 @@ Loading tests from: %s
             """)
         )
 
-        expected_output = '''\
-Loading tests from: %s
-
- *2 tests.test_simple.SimpleTest.test_simple
- *2 tests.test_simple.SimpleTest.test_simple_two
-
-
- 4 total tests.
-''' % self.base_path
-
         code, output, error = self.run_autopilot_list()
         self.assertThat(code, Equals(0))
         self.assertThat(error, Equals(''))
-        self.assertThat(output, Equals(expected_output))
+        self.assertTestsInOutput(
+            [
+                (2, 'tests.test_simple.SimpleTest.test_simple'),
+                (2, 'tests.test_simple.SimpleTest.test_simple_two'),
+            ],
+            output
+        )
 
     def test_can_list_invalid_scenarios(self):
         """Autopilot must ignore scenarios that are not lists."""
@@ -250,6 +281,20 @@ Loading tests from: %s
         self.assertThat(error, Equals(''))
         self.assertTestsInOutput(
             ['tests.test_simple.SimpleTest.test_simple'], output)
+
+    def test_local_module_loaded_and_not_system_module(self):
+        module_path1 = self.create_empty_test_module()
+        module_path2 = self.create_empty_test_module()
+
+        self.base_path = module_path2
+
+        retcode, stdout, stderr = self.run_autopilot(
+            ["run", "tests"],
+            pythonpath=module_path1,
+            use_script=True
+        )
+
+        self.assertThat(stdout, Contains(module_path2))
 
     def test_can_list_just_suites(self):
         """Must only list available suites, not the contained tests."""
@@ -282,43 +327,44 @@ Loading tests from: %s
              'tests.test_simple_suites.AnotherSimpleTest'],
             output, total_title='suites')
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_record_flag_works(self):
         """Must be able to record videos when the -r flag is present."""
+        video_dir = mktemp()
+        ap_dir = '/tmp/autopilot'
+        video_session_pattern = '/tmp/rMD-session*'
+        self.addCleanup(remove_if_exists, video_dir)
+        self.addCleanup(
+            remove_if_exists,
+            '%s/Dummy_Description.ogv' % (ap_dir)
+        )
+        self.addCleanup(remove_if_exists, ap_dir)
 
-        # The sleep is to avoid the case where recordmydesktop does not create
-        # a file because it gets stopped before it's even started capturing
-        # anything.
-        self.create_test_file(
-            "test_simple.py", dedent("""\
+        mock_test_case = Mock()
+        mock_test_case.shortDescription.return_value = 'Dummy_Description'
+        orig_sessions = glob.glob(video_session_pattern)
 
-            from autopilot.testcase import AutopilotTestCase
-            from time import sleep
+        video_logger = RMDVideoLogFixture(video_dir, mock_test_case)
+        video_logger.setUp()
+        video_logger._test_passed = False
 
-            class SimpleTest(AutopilotTestCase):
-
-                def test_simple(self):
-                    sleep(1)
-                    self.fail()
-            """)
+        # We use Eventually() to avoid the case where recordmydesktop does not
+        # create a file because it gets stopped before it's even started
+        # capturing anything.
+        self.assertThat(
+            lambda: glob.glob(video_session_pattern),
+            Eventually(NotEquals(orig_sessions))
         )
 
-        should_delete = not os.path.exists('/tmp/autopilot')
-        if should_delete:
-            self.addCleanup(remove_if_exists, "/tmp/autopilot")
-        else:
-            self.addCleanup(
-                remove_if_exists,
-                '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv')
+        video_logger._stop_video_capture(mock_test_case)
 
-        code, output, error = self.run_autopilot(["run", "-r", "tests"])
-
-        self.assertThat(code, Equals(1))
-        self.assertTrue(os.path.exists('/tmp/autopilot'))
+        self.assertTrue(os.path.exists(video_dir))
         self.assertTrue(os.path.exists(
-            '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv'))
-        if should_delete:
-            self.addCleanup(remove_if_exists, "/tmp/autopilot")
+            '%s/Dummy_Description.ogv' % (video_dir)))
+        self.assertFalse(os.path.exists(
+            '%s/Dummy_Description.ogv' % (ap_dir)))
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_record_dir_option_and_record_works(self):
         """Must be able to specify record directory flag and record."""
 
@@ -362,6 +408,7 @@ Loading tests from: %s
             os.path.exists(
                 '%s/tests.test_simple.SimpleTest.test_simple.ogv' % (ap_dir)))
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_record_dir_option_works(self):
         """Must be able to specify record directory flag."""
 
@@ -395,6 +442,7 @@ Loading tests from: %s
                 '%s/tests.test_simple.SimpleTest.test_simple.ogv' %
                 (video_dir)))
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_no_videos_saved_when_record_option_is_not_present(self):
         """Videos must not be saved if the '-r' option is not specified."""
         self.create_test_file(
@@ -420,6 +468,7 @@ Loading tests from: %s
         self.assertFalse(os.path.exists(
             '/tmp/autopilot/tests.test_simple.SimpleTest.test_simple.ogv'))
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_no_videos_saved_for_skipped_test(self):
         """Videos must not be saved if the test has been skipped (not
         failed).
@@ -448,6 +497,26 @@ Loading tests from: %s
         self.assertThat(code, Equals(0))
         self.assertThat(os.path.exists(video_file_path), Equals(False))
 
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
+    def test_no_video_session_dir_saved_for_passed_test(self):
+        """RecordMyDesktop should clean up its session files in tmp dir."""
+        with TempDir() as tmp_dir_fixture:
+            dir_pattern = os.path.join(tmp_dir_fixture.path, 'rMD-session*')
+            original_session_dirs = set(glob.glob(dir_pattern))
+            get_new_sessions = lambda: \
+                set(glob.glob(dir_pattern)) - original_session_dirs
+            mock_test_case = Mock()
+            mock_test_case.shortDescription.return_value = "Dummy_Description"
+            logger = RMDVideoLogFixture(tmp_dir_fixture.path, mock_test_case)
+            logger.set_recording_dir(tmp_dir_fixture.path)
+            logger._recording_opts = ['--workdir', tmp_dir_fixture.path] \
+                + logger._recording_opts
+            logger.setUp()
+            self.assertThat(get_new_sessions, Eventually(NotEquals(set())))
+            logger._stop_video_capture(mock_test_case)
+        self.assertThat(get_new_sessions, Eventually(Equals(set())))
+
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (VidRec)")
     def test_no_video_for_nested_testcase_when_parent_and_child_fail(self):
         """Test recording must not create a new recording for nested testcases
         where both the parent and the child testcase fail.
@@ -548,54 +617,17 @@ SyntaxError: invalid syntax
         self.assertThat(output, Contains(expected_error))
         self.assertThat(output, Contains("FAILED (failures=1)"))
 
-    def test_can_error_with_unicode_data(self):
-        """Tests that assert with unicode errors must get saved to a log
-        file."""
+    def test_can_create_subunit_result_file(self):
         self.create_test_file(
-            "test_simple.py", dedent(u"""\
-            # encoding: utf-8
+            "test_simple.py", dedent("""\
 
-            # from autopilot.testcase import AutopilotTestCase
-            from testtools import TestCase
+            from autopilot.testcase import AutopilotTestCase
 
-            class SimpleTest(TestCase):
+
+            class SimpleTest(AutopilotTestCase):
 
                 def test_simple(self):
-                    self.fail(
-                        u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll'
-                        u'\u01ddH')
-
-            """)
-        )
-        output_file_path = mktemp()
-        self.addCleanup(remove_if_exists, output_file_path)
-
-        code, output, error = self.run_autopilot(
-            ["run", "-o", output_file_path, "tests"])
-
-        self.assertThat(code, Equals(1))
-        self.assertTrue(os.path.exists(output_file_path))
-        log_contents = open(output_file_path, encoding='utf-8').read()
-        self.assertThat(
-            log_contents,
-            Contains(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH'))
-
-    def test_can_write_xml_error_with_unicode_data(self):
-        """Tests that assert with unicode errors must get saved to XML log
-        file."""
-        self.create_test_file(
-            "test_simple.py", dedent(u"""\
-            # encoding: utf-8
-
-            # from autopilot.testcase import AutopilotTestCase
-            from testtools import TestCase
-
-            class SimpleTest(TestCase):
-
-                def test_simple(self):
-                    error = (u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u'
-                        u'\u2229 oll\u01ddH')
-                    self.fail(error)
+                    pass
 
             """)
         )
@@ -605,15 +637,11 @@ SyntaxError: invalid syntax
         code, output, error = self.run_autopilot([
             "run",
             "-o", output_file_path,
-            "-f", "xml",
+            "-f", "subunit",
             "tests"])
 
-        self.assertThat(code, Equals(1))
+        self.assertThat(code, Equals(0))
         self.assertTrue(os.path.exists(output_file_path))
-        log_contents = open(output_file_path, encoding='utf-8').read()
-        self.assertThat(
-            log_contents,
-            Contains(u'\xa1pl\u0279oM \u01ddpo\u0254\u0131u\u2229 oll\u01ddH'))
 
     def test_launch_needs_arguments(self):
         """Autopilot launch must complain if not given an application to
@@ -642,7 +670,7 @@ SyntaxError: invalid syntax
 
         self.assertThat(rc, Equals(1))
         self.assertThat(
-            stdout, Contains("Error: cannot find application 'DoEsNotExist'"))
+            stdout, Contains("Error: Cannot find application 'DoEsNotExist'"))
 
     def test_complains_on_non_dynamic_binary(self):
         """Must give a nice error message when passing in a non-dynamic
@@ -703,49 +731,25 @@ SyntaxError: invalid syntax
         self.assertThat(code, Equals(0))
         self.assertThat(output, Not(Contains('Running tests in random order')))
 
+    def test_get_test_configuration_from_command_line(self):
+        self.create_test_file(
+            'test_config.py', dedent("""\
 
-class AutopilotPatchEnvironmentTests(AutopilotTestCase):
+                from autopilot import get_test_configuration
+                from autopilot.testcase import AutopilotTestCase
 
-    def test_patch_environment_new_patch_is_unset_to_none(self):
-        """patch_environment must unset the environment variable if previously
-        was unset.
+                class Tests(AutopilotTestCase):
 
-        """
-
-        class PatchEnvironmentSubTests(AutopilotTestCase):
-
-            def test_patch_env_sets_var(self):
-                """Setting the environment variable must make it available."""
-                self.patch_environment("APABC321", "Foo")
-                self.assertThat(os.getenv("APABC321"), Equals("Foo"))
-
-        self.assertThat(os.getenv('APABC321'), Equals(None))
-
-        result = PatchEnvironmentSubTests("test_patch_env_sets_var").run()
-
-        self.assertThat(result.wasSuccessful(), Equals(True))
-        self.assertThat(os.getenv('APABC321'), Equals(None))
-
-    def test_patch_environment_existing_patch_is_reset(self):
-        """patch_environment must reset the environment back to it's previous
-        value.
-
-        """
-
-        class PatchEnvironmentSubTests(AutopilotTestCase):
-
-            def test_patch_env_sets_var(self):
-                """Setting the environment variable must make it available."""
-                self.patch_environment("APABC987", "InnerTest")
-                self.assertThat(os.getenv("APABC987"), Equals("InnerTest"))
-
-        self.patch_environment('APABC987', "OuterTest")
-        self.assertThat(os.getenv('APABC987'), Equals("OuterTest"))
-
-        result = PatchEnvironmentSubTests("test_patch_env_sets_var").run()
-
-        self.assertThat(result.wasSuccessful(), Equals(True))
-        self.assertThat(os.getenv('APABC987'), Equals("OuterTest"))
+                    def test_foo(self):
+                        c = get_test_configuration()
+                        print(c['foo'])
+            """)
+        )
+        code, output, error = self.run_autopilot(
+            ["run", "--config", "foo=This is a test", "tests"]
+        )
+        self.assertThat(code, Equals(0))
+        self.assertIn("This is a test", output)
 
 
 class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
@@ -903,13 +907,19 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
 
         self.assertThat(code, Equals(0))
         self.assertThat(
-            error, Contains(
+            error,
+            Contains(
                 "Starting test tests.test_simple.OuterTestCase."
-                "test_nested_classes"))
+                "test_nested_classes"
+            )
+        )
         self.assertThat(
-            error, Contains(
+            error,
+            Contains(
                 "Starting test tests.test_simple.InnerTestCase."
-                "test_produce_log_output"))
+                "test_produce_log_output"
+            )
+        )
 
     def test_can_enable_debug_output(self):
         """Verbose log must show debug messages if we specify '-vv'."""

@@ -37,19 +37,16 @@ objects.
 
 """
 
-from __future__ import absolute_import
-
 from datetime import datetime, time
 import dbus
 import logging
 from testtools.matchers import Equals
-import six
 
 from autopilot.introspection.utilities import translate_state_keys
-from autopilot.utilities import sleep
+from autopilot.utilities import sleep, compatible_repr
 
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class ValueType(object):
@@ -95,7 +92,7 @@ def create_value_instance(value, parent, name):
     value = value[1:]
 
     if type_id not in type_dict:
-        logger.warning("Unknown type id %d", type_id)
+        _logger.warning("Unknown type id %d", type_id)
         type_id = ValueType.UNKNOWN
 
     type_class = type_dict.get(type_id, None)
@@ -155,9 +152,11 @@ class TypeBase(object):
         while True:
             # TODO: These next three lines are duplicated from the parent...
             # can we just have this code once somewhere?
-            _, new_state = self.parent.get_new_state()
+            _, new_state = self.parent._get_new_state()
             new_state = translate_state_keys(new_state)
-            new_value = make_unicode(new_state[self.name][1])  # [1] is the val
+            new_value = new_state[self.name][1:]
+            if len(new_value) == 1:
+                new_value = make_unicode(new_value[0])
             # Support for testtools.matcher classes:
             mismatch = expected_value.match(new_value)
             if mismatch:
@@ -215,70 +214,86 @@ class PlainType(TypeBase):
         return _make_plain_type(value, parent=parent, name=name)
 
 
+def _get_repr_callable_for_value_class(cls):
+    repr_map = {
+        dbus.Byte: _integer_repr,
+        dbus.Int16: _integer_repr,
+        dbus.Int32: _integer_repr,
+        dbus.UInt16: _integer_repr,
+        dbus.UInt32: _integer_repr,
+        dbus.Int64: _integer_repr,
+        dbus.UInt64: _integer_repr,
+        dbus.String: _text_repr,
+        dbus.ObjectPath: _text_repr,
+        dbus.Signature: _text_repr,
+        dbus.ByteArray: _bytes_repr,
+        dbus.Boolean: _boolean_repr,
+        dbus.Dictionary: _dict_repr,
+        dbus.Double: _float_repr,
+        dbus.Struct: _tuple_repr,
+        dbus.Array: _list_repr,
+    }
+    return repr_map.get(cls, None)
+
+
+def _get_str_callable_for_value_class(cls):
+    str_map = {
+        dbus.Boolean: _boolean_str,
+        dbus.Byte: _integer_str,
+    }
+    return str_map.get(cls, None)
+
+
+@compatible_repr
+def _integer_repr(self):
+    return str(int(self))
+
+
+def _create_generic_repr(target_type):
+    return compatible_repr(lambda self: repr(target_type(self)))
+
+_bytes_repr = _create_generic_repr(bytes)
+_text_repr = _create_generic_repr(str)
+_dict_repr = _create_generic_repr(dict)
+_list_repr = _create_generic_repr(list)
+_tuple_repr = _create_generic_repr(tuple)
+_float_repr = _create_generic_repr(float)
+_boolean_repr = _create_generic_repr(bool)
+
+
+def _create_generic_str(target_type):
+    return compatible_repr(lambda self: str(target_type(self)))
+
+
+_boolean_str = _create_generic_str(bool)
+_integer_str = _integer_repr
+
+
 def _make_plain_type(value, parent=None, name=None):
-    def repr(self):
-        # Convert our value to the pythonic type,and call __repr__ on it.
-        # At the moment we switch based on our type, which is less than ideal.
-        if six.PY3:
-            long_type = int
-        else:
-            long_type = long
-        dbus_integer_types = (
-            dbus.Byte,
-            dbus.Int16,
-            dbus.Int32,
-            dbus.UInt16,
-            dbus.UInt32,
-        )
-
-        dbus_string_types = (
-            dbus.String,
-            dbus.ObjectPath,
-            dbus.Signature,
-        )
-
-        # no UTFString in python 3.
-        if six.PY3:
-            dbus_binary_types = (
-                dbus.ByteArray,
-            )
-        else:
-            dbus_binary_types = (
-                dbus.ByteArray,
-                dbus.UTF8String,
-            )
-
-        if isinstance(self, dbus_integer_types):
-            return int(self).__repr__()
-        elif isinstance(self, (dbus.Int64, dbus.UInt64)):
-            # Python 2 integer landling is... odd. The maximum integer size
-            # changes depending on platform, so maybe we can get away with
-            # using an int, in which case we should:
-            if not six.PY3 and self <= six.MAXSIZE:
-                return int(self).__repr__()
-            return long_type(self).__repr__()
-        elif isinstance(self, dbus_string_types):
-            return six.text_type(self).__repr__()
-        elif isinstance(self, dbus.Boolean):
-            return bool(self).__repr__()
-        elif isinstance(self, dbus_binary_types):
-            return six.binary_type(self).__repr__()
-        elif isinstance(self, dbus.Dictionary):
-            return dict(self).__repr__()
-        elif isinstance(self, dbus.Double):
-            return float(self).__repr__()
-        elif isinstance(self, dbus.Struct):
-            return tuple(self).__repr__()
-        elif isinstance(self, dbus.Array):
-            return list(self).__repr__()
-        else:
-            return super(type(self), self).__repr__()
-
-    new_type_name = type(value).__name__
-    new_type_bases = (type(value), PlainType)
-    new_type_dict = dict(parent=parent, name=name, __repr__=repr)
-    new_type = type(new_type_name, new_type_bases, new_type_dict)
+    new_type = _get_plain_type_class(type(value), parent, name)
     return new_type(value)
+
+
+# Thomi 2014-03-27: dbus types are immutable, which means that we cannot set
+# parent and name on the instances we create. This means we have to set them
+# as type attributes, which means that this cache doesn't speed things up that
+# much. Ideally we'd not rely on the dbus types at all, and simply transform
+# them into our own types, but that's work for a separate branch.
+#
+# Further to the above, we cannot cache these results, since the hash for
+# the parent parameter is almost always the same, leading to incorrect cache
+# hits. We really need to implement our own types here I think.
+def _get_plain_type_class(value_class, parent, name):
+    new_type_name = value_class.__name__
+    new_type_bases = (value_class, PlainType)
+    new_type_dict = dict(parent=parent, name=name)
+    repr_callable = _get_repr_callable_for_value_class(value_class)
+    if repr_callable:
+        new_type_dict['__repr__'] = repr_callable
+    str_callable = _get_str_callable_for_value_class(value_class)
+    if str_callable:
+        new_type_dict['__str__'] = str_callable
+    return type(new_type_name, new_type_bases, new_type_dict)
 
 
 def _array_packed_type(num_args):
@@ -373,6 +388,11 @@ class Rectangle(_array_packed_type(4)):
     def height(self):
         return self[3]
 
+    @compatible_repr
+    def __repr__(self):
+        coords = ', '.join((str(c) for c in self))
+        return 'Rectangle(%s)' % (coords)
+
 
 class Point(_array_packed_type(2)):
 
@@ -409,6 +429,10 @@ class Point(_array_packed_type(2)):
     @property
     def y(self):
         return self[1]
+
+    @compatible_repr
+    def __repr__(self):
+        return 'Point(%d, %d)' % (self.x, self.y)
 
 
 class Size(_array_packed_type(2)):
@@ -454,6 +478,10 @@ class Size(_array_packed_type(2)):
     @property
     def height(self):
         return self[1]
+
+    @compatible_repr
+    def __repr__(self):
+        return 'Size(%d, %d)' % (self.w, self.h)
 
 
 class Color(_array_packed_type(4)):
@@ -503,6 +531,15 @@ class Color(_array_packed_type(4)):
     @property
     def alpha(self):
         return self[3]
+
+    @compatible_repr
+    def __repr__(self):
+        return 'Color(%d, %d, %d, %d)' % (
+            self.red,
+            self.green,
+            self.blue,
+            self.alpha
+        )
 
 
 class DateTime(_array_packed_type(1)):
@@ -562,7 +599,7 @@ class DateTime(_array_packed_type(1)):
     """
     def __init__(self, *args, **kwargs):
         super(DateTime, self).__init__(*args, **kwargs)
-        self._cached_dt = datetime.utcfromtimestamp(self[0])
+        self._cached_dt = datetime.fromtimestamp(self[0])
 
     @property
     def year(self):
@@ -600,6 +637,17 @@ class DateTime(_array_packed_type(1)):
         if isinstance(other, datetime):
             return other == self._cached_dt
         return super(DateTime, self).__eq__(other)
+
+    @compatible_repr
+    def __repr__(self):
+        return 'DateTime(%d-%02d-%02d %02d:%02d:%02d)' % (
+            self.year,
+            self.month,
+            self.day,
+            self.hour,
+            self.minute,
+            self.second
+        )
 
 
 class Time(_array_packed_type(4)):
@@ -681,6 +729,15 @@ class Time(_array_packed_type(4)):
             return other == self._cached_time
         return super(Time, self).__eq__(other)
 
+    @compatible_repr
+    def __repr__(self):
+        return 'Time(%02d:%02d:%02d.%03d)' % (
+            self.hour,
+            self.minute,
+            self.second,
+            self.millisecond
+        )
+
 
 class Point3D(_array_packed_type(3)):
 
@@ -723,3 +780,11 @@ class Point3D(_array_packed_type(3)):
     @property
     def z(self):
         return self[2]
+
+    @compatible_repr
+    def __repr__(self):
+        return 'Point3D(%d, %d, %d)' % (
+            self.x,
+            self.y,
+            self.z,
+        )

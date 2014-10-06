@@ -20,7 +20,7 @@
 
 from testtools import TestCase
 from testtools.matchers import Equals, Contains
-from mock import patch, Mock
+from unittest.mock import patch, Mock
 
 from autopilot.utilities import (
     CleanupRegistered,
@@ -28,7 +28,7 @@ from autopilot.utilities import (
     action_on_test_start,
     action_on_test_end,
 )
-from autopilot.testcase import AutopilotTestCase
+from autopilot.utilities import on_test_started
 
 
 class StartFinalExecutionTests(TestCase):
@@ -57,7 +57,11 @@ class StartFinalExecutionTests(TestCase):
             def on_test_end(cls, test_instance):
                 cls._on_end_test = True
 
-        class InnerTest(AutopilotTestCase):
+        class InnerTest(TestCase):
+            def setUp(self):
+                super().setUp()
+                on_test_started(self)
+
             def test_foo(self):
                 pass
 

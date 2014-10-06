@@ -153,7 +153,7 @@ Here's what we changed:
  * Removed the ``set_unity_option`` lines, as they didn't affect the test results at all.
  * Removed assertions that were duplicated from other tests. For example, there's already an autopilot test that ensures that new applications have their title displayed on the panel.
 
-With a bit of refactoring, this test could be even smaller (the launcher emulators could have a method to click an icon given a desktop id), but this is now perfectly readable and understandable within a few seconds of reading.
+With a bit of refactoring, this test could be even smaller (the launcher proxy classes could have a method to click an icon given a desktop id), but this is now perfectly readable and understandable within a few seconds of reading.
 
 Good docstrings
 +++++++++++++++
@@ -323,7 +323,7 @@ Tests should use the ``Eventually`` matcher. This can be imported as follows:
 
  from autopilot.matchers import Eventually
 
-The ``Eventually`` matcher works on all attributes in an emulator that derives from ``UnityIntrospectableObject`` (at the time of writing that is almost all the autopilot unity emulators).
+The ``Eventually`` matcher works on all attributes in a proxy class that derives from ``UnityIntrospectableObject`` (at the time of writing that is almost all the autopilot unity proxy classes).
 
 The ``Eventually`` matcher takes a single argument, which is another testtools matcher instance. For example, the bad assertion from the example above could be rewritten like so:
 
@@ -339,12 +339,12 @@ Since we can use any testtools matcher, we can also write code like this:
 
 Note that you can pass any object that follows the testtools matcher protocol (so you can write your own matchers, if you like).
 
-In Emulators
-------------
+In Proxy Classes
+----------------
 
-Emulators are not test cases, and do not have access to the ``self.assertThat`` method. However, we want emulator methods to block until unity has had time to process the commands given. For example, the ``ensure_visible`` method on the Dash controller should block until the dash really is visible.
+Proxy classes are not test cases, and do not have access to the ``self.assertThat`` method. However, we want proxy class methods to block until unity has had time to process the commands given. For example, the ``ensure_visible`` method on the Dash controller should block until the dash really is visible.
 
-To achieve this goal, all attributes on unity emulators have been patched with a ``wait_for`` method that takes a testtools matcher (just like ``Eventually`` - in fact, the ``Eventually`` matcher just calls wait_for under the hood). For example, previously the ``ensure_visible`` method on the Dash controller might have looked like this:
+To achieve this goal, all attributes on unity proxy classes have been patched with a ``wait_for`` method that takes a testtools matcher (just like ``Eventually`` - in fact, the ``Eventually`` matcher just calls wait_for under the hood). For example, previously the ``ensure_visible`` method on the Dash controller might have looked like this:
 
 **Bad Example:**
 
@@ -510,7 +510,7 @@ Scenarios can be useful, but we must be careful not to abuse them. It is far bet
 Do Not Depend on Object Ordering
 ++++++++++++++++++++++++++++++++
 
-Calls such as :meth:`~autopilot.introspection.dbus.DBusIntrospectionObject.select_many` return several objects at once. These objects are explicitly unordered, and test authors must take care not to make assumptions about their order.
+Calls such as :meth:`~autopilot.introspection.ProxyBase.select_many` return several objects at once. These objects are explicitly unordered, and test authors must take care not to make assumptions about their order.
 
 **Bad Example:**
 

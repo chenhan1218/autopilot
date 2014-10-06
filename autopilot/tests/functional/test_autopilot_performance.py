@@ -17,15 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import absolute_import
-
-
 from contextlib import contextmanager
-from time import time
+from timeit import default_timer
 from textwrap import dedent
+from testtools import skipIf
 from testtools.matchers import Equals
 
 import logging
+from autopilot import platform
 from autopilot.tests.functional import AutopilotRunTestBase
 
 
@@ -34,9 +33,9 @@ logger = logging.getLogger(__name__)
 
 @contextmanager
 def maximum_runtime(max_time):
-    start_time = time()
+    start_time = default_timer()
     yield
-    total_time = abs(time() - start_time)
+    total_time = abs(default_timer() - start_time)
     if total_time >= max_time:
         raise AssertionError(
             "Runtime of %f was not within defined "
@@ -51,6 +50,7 @@ def maximum_runtime(max_time):
         )
 
 
+@skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
 class AutopilotPerformanceTests(AutopilotRunTestBase):
 
     """A suite of functional tests that will fail if autopilot performance

@@ -62,7 +62,7 @@ from autopilot.input._common import get_center_point
 
 import logging
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class Keyboard(CleanupRegistered):
@@ -282,7 +282,7 @@ class Mouse(CleanupRegistered):
 
         from autopilot.platform import model
         if model() != 'Desktop':
-            logger.info(
+            _logger.info(
                 "You cannot create a Mouse on the devices where X11 is not "
                 "available. consider using a Touch or Pointer device. "
                 "For more information, see: "
@@ -369,11 +369,26 @@ class Mouse(CleanupRegistered):
         """
         raise NotImplementedError("You cannot use this class directly.")
 
-    def drag(self, x1, y1, x2, y2):
-        """Performs a press, move and release.
+    def drag(self, x1, y1, x2, y2, rate=10, time_between_events=0.01):
+        """Perform a press, move and release.
 
         This is to keep a common API between Mouse and Finger as long as
         possible.
+
+        The pointer will be dragged from the starting point to the ending point
+        with multiple moves. The number of moves, and thus the time that it
+        will take to complete the drag can be altered with the `rate`
+        parameter.
+
+        :param x1: The point on the x axis where the drag will start from.
+        :param y1: The point on the y axis where the drag will starts from.
+        :param x2: The point on the x axis where the drag will end at.
+        :param y2: The point on the y axis where the drag will end at.
+        :param rate: The number of pixels the mouse will be moved per
+            iteration. Default is 10 pixels. A higher rate will make the drag
+            faster, and lower rate will make it slower.
+        :param time_between_events: The number of seconds that the drag will
+            wait between iterations.
 
         """
         raise NotImplementedError("You cannot use this class directly.")
@@ -425,11 +440,11 @@ class Touch(object):
         """
         raise NotImplementedError("You cannot use this class directly.")
 
-    def tap(self, x, y):
+    def tap(self, x, y, press_duration=0.1):
         """Click (or 'tap') at given x,y coordinates."""
         raise NotImplementedError("You cannot use this class directly.")
 
-    def tap_object(self, object):
+    def tap_object(self, object, press_duration=0.1):
         """Tap the center point of a given object.
 
         It does this by looking for several attributes, in order. The first
@@ -466,8 +481,28 @@ class Touch(object):
         """Release a previously pressed finger"""
         raise NotImplementedError("You cannot use this class directly.")
 
-    def drag(self, x1, y1, x2, y2):
-        """Perform a drag gesture from (x1,y1) to (x2,y2)"""
+    def drag(self, x1, y1, x2, y2, rate=10, time_between_events=0.01):
+        """Perform a drag gesture.
+
+        The finger will be dragged from the starting point to the ending point
+        with multiple moves. The number of moves, and thus the time that it
+        will take to complete the drag can be altered with the `rate`
+        parameter.
+
+        :param x1: The point on the x axis where the drag will start from.
+        :param y1: The point on the y axis where the drag will starts from.
+        :param x2: The point on the x axis where the drag will end at.
+        :param y2: The point on the y axis where the drag will end at.
+        :param rate: The number of pixels the finger will be moved per
+            iteration. Default is 10 pixels. A higher rate will make the drag
+            faster, and lower rate will make it slower.
+        :param time_between_events: The number of seconds that the drag will
+            wait between iterations.
+
+        :raises RuntimeError: if the finger is already pressed.
+        :raises RuntimeError: if no more finger slots are available.
+
+        """
         raise NotImplementedError("You cannot use this class directly.")
 
 
@@ -575,7 +610,7 @@ class Pointer(object):
             if button != 1:
                 raise ValueError(
                     "Touch devices do not have button %d" % (button))
-            self._device.tap(self._x, self._y)
+            self._device.tap(self._x, self._y, press_duration=press_duration)
 
     def move(self, x, y):
         """Moves the pointer to the specified coordinates.
@@ -641,9 +676,30 @@ class Pointer(object):
         else:
             return (self._x, self._y)
 
-    def drag(self, x1, y1, x2, y2):
-        """Performs a press, move and release."""
-        self._device.drag(x1, y1, x2, y2)
+    def drag(self, x1, y1, x2, y2, rate=10, time_between_events=0.01):
+        """Perform a press, move and release.
+
+        This is to keep a common API between Mouse and Finger as long as
+        possible.
+
+        The pointer will be dragged from the starting point to the ending point
+        with multiple moves. The number of moves, and thus the time that it
+        will take to complete the drag can be altered with the `rate`
+        parameter.
+
+        :param x1: The point on the x axis where the drag will start from.
+        :param y1: The point on the y axis where the drag will starts from.
+        :param x2: The point on the x axis where the drag will end at.
+        :param y2: The point on the y axis where the drag will end at.
+        :param rate: The number of pixels the mouse will be moved per
+            iteration. Default is 10 pixels. A higher rate will make the drag
+            faster, and lower rate will make it slower.
+        :param time_between_events: The number of seconds that the drag will
+            wait between iterations.
+
+        """
+        self._device.drag(
+            x1, y1, x2, y2, rate=rate, time_between_events=time_between_events)
         if isinstance(self._device, Touch):
             self._x = x2
             self._y = y2

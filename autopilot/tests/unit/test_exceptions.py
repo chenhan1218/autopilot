@@ -17,11 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import six
 from testtools import TestCase
-from testtools.matchers import raises, Equals
+from testtools.matchers import raises, Equals, EndsWith
 
-from autopilot.introspection.dbus import StateNotFoundError
+from autopilot.exceptions import StateNotFoundError
 
 
 class StateNotFoundTests(TestCase):
@@ -41,38 +40,45 @@ class StateNotFoundTests(TestCase):
         err = StateNotFoundError("MyClass")
         self.assertThat(
             str(err),
-            Equals("State not found for class 'MyClass'.")
+            Equals("Object not found with name 'MyClass'.\n\n{}".format(
+                StateNotFoundError._troubleshoot_url_message
+            ))
         )
-        if not six.PY3:
-            self.assertThat(
-                unicode(err),
-                Equals(u"State not found for class 'MyClass'.")
-            )
 
     def test_can_be_constructed_with_filters_only(self):
         """Must be able to construct exception with filters only."""
         err = StateNotFoundError(foo="bar")
         self.assertThat(
             str(err),
-            Equals("State not found with filters {'foo': 'bar'}.")
+            Equals(
+                "Object not found with properties {}."
+                "\n\n{}".format(
+                    "{'foo': 'bar'}",
+                    StateNotFoundError._troubleshoot_url_message
+                ))
         )
-        if not six.PY3:
-            self.assertThat(
-                unicode(err),
-                Equals(u"State not found with filters {'foo': 'bar'}.")
-            )
 
     def test_can_be_constructed_with_class_name_and_filters(self):
         """Must be able to construct with both class name and filters."""
         err = StateNotFoundError('MyClass', foo="bar")
         self.assertThat(
             str(err),
-            Equals("State not found for class 'MyClass'"
-                   " and filters {'foo': 'bar'}.")
+            Equals("Object not found with name 'MyClass'"
+                   " and properties {}.\n\n{}".format(
+                       "{'foo': 'bar'}",
+                       StateNotFoundError._troubleshoot_url_message
+                   ))
         )
-        if not six.PY3:
-            self.assertThat(
-                unicode(err),
-                Equals(u"State not found for class 'MyClass'"
-                       " and filters {'foo': 'bar'}.")
+
+    def test_StateNotFoundError_endswith_troubleshoot_url_message_text(self):
+        """The assertion raised must end with a link to troubleshooting url."""
+        err = StateNotFoundError('MyClass', foo="bar")
+        self.assertThat(
+            str(err),
+            EndsWith(
+                'Tips on minimizing the occurrence of this failure'
+                'are available here: '
+                'http://developer.ubuntu.com/api/devel/ubuntu-14.10/python/'
+                'autopilot/faq/troubleshooting.html'
             )
+        )

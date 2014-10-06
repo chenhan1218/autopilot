@@ -17,15 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import absolute_import
-
 from datetime import datetime, time
-from mock import patch, Mock
-import six
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import Equals, IsInstance, NotEquals, raises
+
 import dbus
+from unittest.mock import patch, Mock
 
 from autopilot.introspection.types import (
     Color,
@@ -38,21 +36,20 @@ from autopilot.introspection.types import (
     Size,
     Time,
     ValueType,
+    _integer_repr,
+    _boolean_repr,
+    _text_repr,
+    _bytes_repr,
+    _dict_repr,
+    _list_repr,
+    _float_repr,
+    _tuple_repr,
+    _get_repr_callable_for_value_class,
+    _boolean_str,
+    _integer_str,
 )
 from autopilot.introspection.dbus import DBusIntrospectionObject
-
-
-class FakeObject(object):
-
-    def __init__(self):
-        self.get_new_state_called = False
-        self.set_properties_called = False
-
-    def get_new_state(self):
-        self.get_new_state_called = True
-
-    def _set_properties(self, state):
-        self.set_properties_called = True
+from autopilot.utilities import compatible_repr
 
 
 class PlainTypeTests(TestWithScenarios, TestCase):
@@ -67,21 +64,16 @@ class PlainTypeTests(TestWithScenarios, TestCase):
         ('int32 -ve', dict(t=dbus.Int32, v=-3002050)),
         ('int64 +ve', dict(t=dbus.Int64, v=9223372036854775807)),
         ('int64 -ve', dict(t=dbus.Int64, v=-9223372036854775807)),
-        ('ascii string', dict(t=dbus.String, v=u"Hello World")),
-        ('unicode string', dict(t=dbus.String, v=u"\u2603")),
+        ('ascii string', dict(t=dbus.String, v="Hello World")),
+        ('unicode string', dict(t=dbus.String, v="\u2603")),
         ('bytearray', dict(t=dbus.ByteArray, v=b"Hello World")),
-        ('object path', dict(t=dbus.ObjectPath, v=u"/path/to/object")),
-        ('dbus signature', dict(t=dbus.Signature, v=u"is")),
+        ('object path', dict(t=dbus.ObjectPath, v="/path/to/object")),
+        ('dbus signature', dict(t=dbus.Signature, v="is")),
         ('dictionary', dict(t=dbus.Dictionary, v={'hello': 'world'})),
         ('double', dict(t=dbus.Double, v=3.1415)),
         ('struct', dict(t=dbus.Struct, v=('some', 42, 'value'))),
         ('array', dict(t=dbus.Array, v=['some', 42, 'value'])),
     ]
-
-    if not six.PY3:
-        scenarios.append(
-            ('utf8 string', dict(t=dbus.UTF8String, v=b"Hello World"))
-        )
 
     def test_can_construct(self):
         p = PlainType(self.t(self.v))
@@ -94,7 +86,27 @@ class PlainTypeTests(TestWithScenarios, TestCase):
         """repr for PlainType must be the same as the pythonic type."""
         p = PlainType(self.t(self.v))
 
-        self.assertThat(repr(p), Equals(repr(self.v)))
+        expected = repr(self.v)
+        expected = expected.rstrip('L')
+        self.assertThat(repr(p), Equals(expected))
+
+    def test_str(self):
+        """str(p) for PlainType must be the same as the pythonic type."""
+        p = PlainType(self.t(self.v))
+        expected = str(self.v)
+        observed = str(p)
+        self.assertEqual(expected, observed)
+
+    def test_wait_for_raises_RuntimeError(self):
+        """The wait_for method must raise a RuntimeError if it's called."""
+        p = PlainType(self.t(self.v))
+        self.assertThat(
+            lambda: p.wait_for(object()),
+            raises(RuntimeError(
+                "This variable was not constructed as part of "
+                "an object. The wait_for method cannot be used."
+            ))
+        )
 
 
 class RectangleTypeTests(TestCase):
@@ -133,6 +145,15 @@ class RectangleTypeTests(TestCase):
 
         self.assertThat(r1, Equals(r2))
 
+    def test_repr(self):
+        expected = repr_type("Rectangle(1, 2, 3, 4)")
+        observed = repr(Rectangle(1, 2, 3, 4))
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        r = Rectangle(1, 2, 3, 4)
+        self.assertEqual(repr(r), str(r))
+
 
 class PointTypeTests(TestCase):
 
@@ -163,6 +184,15 @@ class PointTypeTests(TestCase):
         p2 = [1, 2]
 
         self.assertThat(p1, Equals(p2))
+
+    def test_repr(self):
+        expected = repr_type('Point(1, 2)')
+        observed = repr(Point(1, 2))
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        p = Point(1, 2)
+        self.assertEqual(repr(p), str(p))
 
 
 class SizeTypeTests(TestCase):
@@ -196,6 +226,15 @@ class SizeTypeTests(TestCase):
         s2 = [50, 100]
 
         self.assertThat(s1, Equals(s2))
+
+    def test_repr(self):
+        expected = repr_type('Size(1, 2)')
+        observed = repr(Size(1, 2))
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        s = Size(3, 4)
+        self.assertEqual(repr(s), str(s))
 
 
 class ColorTypeTests(TestCase):
@@ -232,6 +271,15 @@ class ColorTypeTests(TestCase):
 
         self.assertThat(c1, Equals(c2))
 
+    def test_repr(self):
+        expected = repr_type('Color(1, 2, 3, 4)')
+        observed = repr(Color(1, 2, 3, 4))
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        c = Color(255, 255, 255, 0)
+        self.assertEqual(repr(c), str(c))
+
 
 class DateTimeTests(TestCase):
 
@@ -247,13 +295,25 @@ class DateTimeTests(TestCase):
     def test_datetime_has_properties(self):
         dt = DateTime(1377209927)
 
-        self.assertThat(dt.timestamp, Equals(1377209927))
-        self.assertThat(dt.year, Equals(2013))
-        self.assertThat(dt.month, Equals(8))
-        self.assertThat(dt.day, Equals(22))
-        self.assertThat(dt.hour, Equals(22))
-        self.assertThat(dt.minute, Equals(18))
-        self.assertThat(dt.second, Equals(47))
+        self.assertTrue(hasattr(dt, 'timestamp'))
+        self.assertTrue(hasattr(dt, 'year'))
+        self.assertTrue(hasattr(dt, 'month'))
+        self.assertTrue(hasattr(dt, 'day'))
+        self.assertTrue(hasattr(dt, 'hour'))
+        self.assertTrue(hasattr(dt, 'minute'))
+        self.assertTrue(hasattr(dt, 'second'))
+
+    def test_datetime_properties_have_correct_values(self):
+        dt = DateTime(1377209927)
+        dt_with_tz = datetime.fromtimestamp(1377209927)
+
+        self.assertThat(dt.timestamp, Equals(dt_with_tz.timestamp()))
+        self.assertThat(dt.year, Equals(dt_with_tz.year))
+        self.assertThat(dt.month, Equals(dt_with_tz.month))
+        self.assertThat(dt.day, Equals(dt_with_tz.day))
+        self.assertThat(dt.hour, Equals(dt_with_tz.hour))
+        self.assertThat(dt.minute, Equals(dt_with_tz.minute))
+        self.assertThat(dt.second, Equals(dt_with_tz.second))
 
     def test_equality_with_datetime(self):
         dt1 = DateTime(1377209927)
@@ -268,9 +328,10 @@ class DateTimeTests(TestCase):
         self.assertThat(dt1, Equals(dt2))
 
     def test_equality_with_datetime_timestamp(self):
+        # DateTime no longer assumes UTC and uses local TZ.
         dt1 = DateTime(1377209927)
-        dt2 = datetime.utcfromtimestamp(1377209927)
-        dt3 = datetime.utcfromtimestamp(1377209928)
+        dt2 = datetime.fromtimestamp(1377209927)
+        dt3 = datetime.fromtimestamp(1377209928)
 
         self.assertThat(dt1, Equals(dt2))
         self.assertThat(dt1, NotEquals(dt3))
@@ -279,6 +340,20 @@ class DateTimeTests(TestCase):
         dt1 = DateTime(1377209927)
 
         self.assertThat(dt1.datetime, IsInstance(datetime))
+
+    def test_repr(self):
+        expected = repr_type(
+            u"DateTime({:%Y-%m-%d %H:%M:%S})".format(
+                datetime.fromtimestamp(1377209927)
+            )
+        )
+        dt = DateTime(1377209927)
+        observed = repr(dt)
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        dt = DateTime(1377209927)
+        self.assertEqual(repr(dt), str(dt))
 
 
 class TimeTests(TestCase):
@@ -324,6 +399,15 @@ class TimeTests(TestCase):
 
         self.assertThat(dt1.time, IsInstance(time))
 
+    def test_repr(self):
+        expected = repr_type('Time(01:02:03.004)')
+        observed = repr(Time(1, 2, 3, 4))
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        t = Time(2, 3, 4, 5)
+        self.assertEqual(repr(t), str(t))
+
 
 class Point3DTypeTests(TestCase):
 
@@ -368,6 +452,15 @@ class Point3DTypeTests(TestCase):
         p2 = [1, 2, 4]
 
         self.assertThat(p1, NotEquals(p2))
+
+    def test_repr(self):
+        expected = repr_type('Point3D(1, 2, 3)')
+        observed = repr(Point3D(1, 2, 3))
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        p3d = Point3D(1, 2, 3)
+        self.assertEqual(repr(p3d), str(p3d))
 
 
 class CreateValueInstanceTests(TestCase):
@@ -678,20 +771,145 @@ class CreateValueInstanceTests(TestCase):
 
 class DBusIntrospectionObjectTests(TestCase):
 
-    @patch('autopilot.introspection.dbus.logger.warning')
+    @patch('autopilot.introspection.dbus._logger.warning')
     def test_dbus_introspection_object_logs_bad_data(self, error_logger):
         """The DBusIntrospectionObject class must log an error when it gets
         bad data from the autopilot backend.
 
         """
         DBusIntrospectionObject(
-            dict(foo=[0]),
-            '/some/dummy/path',
+            dict(foo=[0], id=[0, 42]),
+            b'/some/dummy/path',
             Mock()
         )
         error_logger.assert_called_once_with(
             "While constructing attribute '%s.%s': %s",
-            "DBusIntrospectionObject",
+            "ProxyBase",
             "foo",
             "Cannot create attribute, no data supplied"
         )
+
+
+class TypeReprTests(TestCase):
+
+    def test_integer_repr(self):
+        expected = repr_type('42')
+        observed = _integer_repr(42)
+        self.assertEqual(expected, observed)
+
+    def test_dbus_int_types_all_work(self):
+        expected = repr_type('42')
+        int_types = (
+            dbus.Byte,
+            dbus.Int16,
+            dbus.Int32,
+            dbus.UInt16,
+            dbus.UInt32,
+            dbus.Int64,
+            dbus.UInt64,
+        )
+        for t in int_types:
+            observed = _integer_repr(t(42))
+            self.assertEqual(expected, observed)
+
+    def test_get_repr_gets_integer_repr_for_all_integer_types(self):
+        int_types = (
+            dbus.Byte,
+            dbus.Int16,
+            dbus.Int32,
+            dbus.UInt16,
+            dbus.UInt32,
+            dbus.Int64,
+            dbus.UInt64,
+        )
+        for t in int_types:
+            observed = _get_repr_callable_for_value_class(t)
+            self.assertEqual(_integer_repr, observed)
+
+    def test_boolean_repr_true(self):
+        expected = repr_type('True')
+        for values in (True, dbus.Boolean(True)):
+            observed = _boolean_repr(True)
+            self.assertEqual(expected, observed)
+
+    def test_boolean_repr_false(self):
+        expected = repr_type('False')
+        for values in (False, dbus.Boolean(False)):
+            observed = _boolean_repr(False)
+            self.assertEqual(expected, observed)
+
+    def test_get_repr_gets_boolean_repr_for_dbus_boolean_type(self):
+        observed = _get_repr_callable_for_value_class(dbus.Boolean)
+        self.assertEqual(_boolean_repr, observed)
+
+    def test_text_repr_handles_dbus_string(self):
+        unicode_text = "plɹoʍ ollǝɥ"
+        observed = _text_repr(dbus.String(unicode_text))
+        self.assertEqual(repr(unicode_text), observed)
+
+    def test_text_repr_handles_dbus_object_path(self):
+        path = "/path/to/some/object"
+        observed = _text_repr(dbus.ObjectPath(path))
+        self.assertEqual(repr(path), observed)
+
+    def test_binry_repr_handles_dbys_byte_array(self):
+        data = b'Some bytes'
+        observed = _bytes_repr(dbus.ByteArray(data))
+        self.assertEqual(repr(data), observed)
+
+    def test_get_repr_gets_bytes_repr_for_dbus_byte_array(self):
+        observed = _get_repr_callable_for_value_class(dbus.ByteArray)
+        self.assertEqual(_bytes_repr, observed)
+
+    def test_dict_repr_handles_dbus_dictionary(self):
+        token = dict(foo='bar')
+        observed = _dict_repr(dbus.Dictionary(token))
+        self.assertEqual(repr(token), observed)
+
+    def test_get_repr_gets_dict_repr_on_dbus_dictionary(self):
+        observed = _get_repr_callable_for_value_class(dbus.Dictionary)
+        self.assertEqual(_dict_repr, observed)
+
+    def test_float_repr_handles_dbus_double(self):
+        token = 1.2345
+        observed = _float_repr(token)
+        self.assertEqual(repr(token), observed)
+
+    def test_get_repr_gets_float_repr_on_dbus_double(self):
+        observed = _get_repr_callable_for_value_class(dbus.Double)
+        self.assertEqual(_float_repr, observed)
+
+    def test_tuple_repr_handles_dbus_struct(self):
+        data = (1, 2, 3)
+        observed = _tuple_repr(dbus.Struct(data))
+        self.assertEqual(repr(data), observed)
+
+    def test_get_repr_gets_tuple_repr_on_dbus_struct(self):
+        observed = _get_repr_callable_for_value_class(dbus.Struct)
+        self.assertEqual(_tuple_repr, observed)
+
+    def test_list_repr_handles_dbus_array(self):
+        data = [1, 2, 3]
+        observed = _list_repr(dbus.Array(data))
+        self.assertEqual(repr(data), observed)
+
+    def test_get_repr_gets_list_repr_on_dbus_array(self):
+        observed = _get_repr_callable_for_value_class(dbus.Array)
+        self.assertEqual(_list_repr, observed)
+
+
+class TypeStrTests(TestCase):
+
+    def test_boolean_str_handles_dbus_boolean(self):
+        observed = _boolean_str(dbus.Boolean(False))
+        self.assertEqual(str(False), observed)
+
+    def test_integer_str_handles_dbus_byte(self):
+        observed = _integer_str(dbus.Byte(14))
+        self.assertEqual(str(14), observed)
+
+
+def repr_type(value):
+    """Convert a text or bytes object into the appropriate return type for
+    the __repr__ method."""
+    return compatible_repr(lambda: value)()

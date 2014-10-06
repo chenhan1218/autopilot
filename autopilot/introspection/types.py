@@ -618,9 +618,6 @@ class DateTime(_array_packed_type(1)):
         # time.tzname[0] etc.
         localtz_file = gettz()
 
-        if localtz_file is None:
-            localtz_file = tzlocal()
-
         local_stamp = utc_stamp.replace(tzinfo=localtz_file) + (
             localtz_file.utcoffset(utc_stamp)
         )

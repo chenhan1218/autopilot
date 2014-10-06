@@ -583,7 +583,6 @@ class UInputTouchDeviceTestCase(tests.LogHandlerTestCase):
             touch, slot=first_slot, x=14, y=14)
 
     def test_finger_move_must_log_position_at_debug_level(self):
-        self.memento_handler.setLevel(logging.DEBUG)
         self.root_logger.setLevel(logging.DEBUG)
         touch = self.get_touch_with_mocked_backend()
         touch.finger_down(0, 0)

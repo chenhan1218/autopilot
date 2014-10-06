@@ -608,7 +608,7 @@ class DateTime(_array_packed_type(1)):
         # Get a UTC datetime for the incoming timestamp.
         # Get a localtime dst offset for the time in question
         # Use the timedelta workaround again, but this time in localtime and
-        # manually apply the dst offset.
+        # manually apply the utc offset.
         utc_stamp = datetime.fromtimestamp(
             0, tz=tzutc()
         ) + timedelta(seconds=self[0])
@@ -621,11 +621,9 @@ class DateTime(_array_packed_type(1)):
         if localtz_file is None:
             localtz_file = tzlocal()
 
-        dst_offset = localtz_file.dst(utc_stamp)
-
-        local_stamp = (datetime.fromtimestamp(
-            0, tz=localtz_file
-        ) + timedelta(seconds=self[0])) + dst_offset
+        local_stamp = utc_stamp.replace(tzinfo=localtz_file) + (
+            localtz_file.utcoffset(utc_stamp)
+        )
 
         self._cached_dt = local_stamp.replace(tzinfo=None)
 

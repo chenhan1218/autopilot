@@ -19,7 +19,7 @@
 
 from datetime import datetime, time, timedelta
 from testscenarios import TestWithScenarios, multiply_scenarios
-from testtools import TestCase
+from testtools import TestCase, skipUnless
 from testtools.matchers import Equals, IsInstance, NotEquals, raises
 
 import dbus
@@ -284,6 +284,13 @@ class ColorTypeTests(TestCase):
         self.assertEqual(repr(c), str(c))
 
 
+def can_handle_large_timestamps():
+    try:
+        datetime.fromtimestamp(2983579200)
+        return True
+    except:
+        return False
+
 class DateTimeTests(TestWithScenarios, TestCase):
 
     timestamps = [
@@ -363,20 +370,26 @@ class DateTimeTests(TestWithScenarios, TestCase):
         self.assertTrue(hasattr(dt, 'minute'))
         self.assertTrue(hasattr(dt, 'second'))
 
-    # using local_from_timestamp
-    # def test_datetime_properties_have_correct_values(self):
-    #     self.update_timezone()
-    #     dt1 = DateTime(self.timestamp)
-    #     dt2 = self.local_from_timestamp(self.timestamp)
+    @skipUnless(
+        can_handle_large_timestamps(),
+        "Available only where large timestamps are."
+    )
+    def test_datetime_properties_have_correct_values(self):
+        self.update_timezone()
+        dt1 = DateTime(self.timestamp)
+        # dt2 = self.local_from_timestamp(self.timestamp)
+        # Create an actual timestamp, perhaps only do this on desktop? or amd64
+        # (time_t size)
+        dt2 = datetime.fromtimestamp(self.timestamp)
 
-    #     self.assertThat(dt1.year, Equals(dt2.year))
-    #     self.assertThat(dt1.month, Equals(dt2.month))
-    #     self.assertThat(dt1.day, Equals(dt2.day))
-    #     self.assertThat(dt1.hour, Equals(dt2.hour))
-    #     self.assertThat(dt1.minute, Equals(dt2.minute))
-    #     self.assertThat(dt1.second, Equals(dt2.second))
-    #     self.assertThat(dt1.timestamp(), Equals(dt2.timestamp()))
-    #     self.assertThat(dt1.timestamp(), Equals(self.timestamp))
+        self.assertThat(dt1.year, Equals(dt2.year))
+        self.assertThat(dt1.month, Equals(dt2.month))
+        self.assertThat(dt1.day, Equals(dt2.day))
+        self.assertThat(dt1.hour, Equals(dt2.hour))
+        self.assertThat(dt1.minute, Equals(dt2.minute))
+        self.assertThat(dt1.second, Equals(dt2.second))
+        self.assertThat(dt1.timestamp(), Equals(dt2.timestamp()))
+        self.assertThat(dt1.timestamp(), Equals(self.timestamp))
 
     def test_equality_with_datetime(self):
         self.update_timezone()

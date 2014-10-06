@@ -54,6 +54,10 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
             TZ='US/Eastern',
             expected_string='2014-09-29T08:00:00',
         )),
+        ('MSK', dict(
+            TZ='Europe/Moscow',
+            expected_string='2014-09-29T16:00:00',
+        )),
     ]
 
     def get_test_qml_string(self, date_string):

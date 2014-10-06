@@ -387,8 +387,7 @@ class Mouse(MouseBase):
                 raise
 
         x, y = self.position()
-        _logger.debug(
-            "The mouse is now at position %d,%d.", x, y)
+        _logger.debug('The mouse is now at position %d,%d.', x, y)
 
     def move_to_object(self, object_proxy):
         """Attempts to move the mouse to 'object_proxy's centre point.

@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import logging
+
 import testscenarios
 from evdev import ecodes, uinput
 from unittest.mock import ANY, call, Mock, patch
@@ -581,6 +583,7 @@ class UInputTouchDeviceTestCase(tests.LogHandlerTestCase):
             touch, slot=first_slot, x=14, y=14)
 
     def test_finger_move_must_log_position_at_debug_level(self):
+        self.memento_handler.setLevel(logging.DEBUG)
         touch = self.get_touch_with_mocked_backend()
         touch.finger_down(0, 0)
 

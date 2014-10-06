@@ -19,6 +19,7 @@
 
 
 import json
+import logging
 import os
 from tempfile import mktemp
 from testtools import TestCase, skipIf
@@ -357,6 +358,7 @@ class MouseTestCase(AutopilotTestCase, tests.LogHandlerTestCase):
 
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (Mouse)")
     def test_mouse_move_must_log_final_position_at_debug_level(self):
+        self.memento_handler.setLevel(logging.DEBUG)
         mouse = Mouse.create()
         mouse.move(10, 10)
         self.assertLogLevelContains(

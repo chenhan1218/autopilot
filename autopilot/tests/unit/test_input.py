@@ -24,10 +24,12 @@ from testtools import TestCase
 from testtools.matchers import Contains, raises
 
 import autopilot.input
-from autopilot import utilities
+from autopilot import (
+    tests,
+    utilities
+)
 from autopilot.input import _uinput
 from autopilot.input._common import get_center_point
-from autopilot.tests import unit
 
 
 class Empty(object):
@@ -421,7 +423,7 @@ class TouchEventsTestCase(TestCase):
         self.assert_expected_ev_abs('given_res_x', 'given_res_y', ev_abs)
 
 
-class UInputTouchDeviceTestCase(unit.LogHandlerTestCase):
+class UInputTouchDeviceTestCase(tests.LogHandlerTestCase):
     """Test the integration with evdev.UInput for the touch device."""
 
     def setUp(self):

@@ -22,9 +22,9 @@ import logging
 from unittest.mock import Mock
 import testtools
 
+from autopilot import tests
 from autopilot.logging import log_action
 from autopilot._logging import TestCaseLoggingFixture
-from autopilot.tests import unit
 
 
 class ObjectWithLogDecorator(object):
@@ -47,7 +47,7 @@ class ObjectWithLogDecorator(object):
         pass
 
 
-class LoggingTestCase(unit.LogHandlerTestCase):
+class LoggingTestCase(tests.LogHandlerTestCase):
 
     def setUp(self):
         super(LoggingTestCase, self).setUp()

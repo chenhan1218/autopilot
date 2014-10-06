@@ -28,8 +28,11 @@ from time import sleep
 from unittest import SkipTest
 from unittest.mock import patch
 
+from autopilot import (
+    platform,
+    tests
+)
 from autopilot.display import Display
-from autopilot import platform
 from autopilot.gestures import pinch
 from autopilot.input import Keyboard, Mouse, Pointer, Touch
 from autopilot.input._common import get_center_point
@@ -324,7 +327,7 @@ class OSKBackendTests(AutopilotTestCase, QmlScriptRunnerMixin):
         )
 
 
-class MouseTestCase(AutopilotTestCase):
+class MouseTestCase(AutopilotTestCase, tests.LogHandlerTestCase):
 
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (Mouse)")
     def test_move_to_nonint_point(self):
@@ -351,6 +354,15 @@ class MouseTestCase(AutopilotTestCase):
         )
         self.assertThat(lambda: Mouse.create(),
                         raises(expected_exception))
+
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (Mouse)")
+    def test_mouse_move_must_log_final_position_at_debug_level(self):
+        mouse = Mouse.create()
+        mouse.move(10, 10)
+        self.assertLogLevelContains(
+            'DEBUG',
+            "The mouse is now at position 10,10."
+        )
 
 
 @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")

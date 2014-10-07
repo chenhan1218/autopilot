@@ -39,7 +39,7 @@ class LogHandlerTestCase(testtools.TestCase):
 
         def __init__(self, *args, **kwargs):
             """Create the instance, and add a records attribute."""
-            super().__init__(self, *args, **kwargs)
+            super().__init__(*args, **kwargs)
             self.records = []
 
         def emit(self, record):

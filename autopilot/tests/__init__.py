@@ -23,6 +23,7 @@ import testtools
 
 
 class LogHandlerTestCase(testtools.TestCase):
+
     """A mixin that adds a memento loghandler for testing logging.
 
     Originally written by:
@@ -33,10 +34,12 @@ class LogHandlerTestCase(testtools.TestCase):
     """
 
     class MementoHandler(logging.Handler):
+
         """A handler class which stores logging records in a list."""
+
         def __init__(self, *args, **kwargs):
             """Create the instance, and add a records attribute."""
-            logging.Handler.__init__(self, *args, **kwargs)
+            super().__init__(self, *args, **kwargs)
             self.records = []
 
         def emit(self, record):
@@ -58,7 +61,7 @@ class LogHandlerTestCase(testtools.TestCase):
 
     def setUp(self):
         """Add the memento handler to the root logger."""
-        super(LogHandlerTestCase, self).setUp()
+        super().setUp()
         self.memento_handler = self.MementoHandler()
         self.root_logger = logging.getLogger()
         self.root_logger.addHandler(self.memento_handler)
@@ -66,7 +69,7 @@ class LogHandlerTestCase(testtools.TestCase):
     def tearDown(self):
         """Remove the memento handler from the root logger."""
         self.root_logger.removeHandler(self.memento_handler)
-        super(LogHandlerTestCase, self).tearDown()
+        super().tearDown()
 
     def assertLogLevelContains(self, level, message, check_traceback=False):
         check = self.memento_handler.check(

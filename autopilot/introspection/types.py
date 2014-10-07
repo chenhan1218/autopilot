@@ -38,7 +38,7 @@ objects.
 """
 
 from datetime import datetime, time, timedelta
-from dateutil.tz import gettz, tzlocal, tzutc
+from dateutil.tz import gettz, tzutc
 import dbus
 import logging
 from testtools.matchers import Equals
@@ -618,9 +618,17 @@ class DateTime(_array_packed_type(1)):
         # time.tzname[0] etc.
         localtz_file = gettz()
 
+        # There needs to be a conditional use of (utcoffset - dst) instead of
+        # just utcoffset here.
+        # Need to get back to basics to determine how and when this is
+        # determined.
         local_stamp = utc_stamp.replace(tzinfo=localtz_file) + (
             localtz_file.utcoffset(utc_stamp)
         )
+
+        # For instance this gives the right d/m/y but the resulting stored
+        # timestamp is different
+        # utc_stamp.astimezone(localtz_file)
 
         self._cached_dt = local_stamp.replace(tzinfo=None)
 

@@ -17,10 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from testtools.content import text_content
+
 from datetime import datetime, time, timedelta
 from testscenarios import TestWithScenarios, multiply_scenarios
 from testtools import TestCase, skipUnless
 from testtools.matchers import Equals, IsInstance, NotEquals, raises
+
+# # Used in the full tz scenario
+# from pytz import common_timezones
 
 import dbus
 from unittest.mock import patch, Mock
@@ -291,42 +296,72 @@ def can_handle_large_timestamps():
     except:
         return False
 
+
 class DateTimeTests(TestWithScenarios, TestCase):
 
+    # timestamps = [
+    #     ('32bitlimit',
+    #         {'timestamp': 2983579200
+    #          }),
+
+    #     ('Original US/Pacific Issues',
+    #      {'timestamp': 1090123200}),
+
+    #     ('NZ dst example',
+    #      {'timestamp': 2047570047}),
+
+    #     ('winter',
+    #         {'timestamp': 1389744000
+    #          }),
+
+    #     ('summer',
+    #         {'timestamp': 1405382400
+    #          })
+    # ]
+
+    # # This produces a list of time stamp from 2014-1-1 -> 2015-1-1 in 30
+    # # minute steps.
+    # # We used this to determine the pattern of approching DST where things go
+    # # wrong.
+    # timestamps = [
+    #     (str(x), {'timestamp': x})
+    #     for x in range(1388487600, 1420023600, (60*30))
+    # ]
+
+    # # These are 2 timestamp examples I'm testing against NZTZ (and thus DST).
+    # # In the current state example1 passes but not example2
     timestamps = [
-        ('32bitlimit',
-            {'timestamp': 2983579200
-             }),
-
-        ('winter',
-            {'timestamp': 1389744000
-             }),
-
-        ('summer',
-            {'timestamp': 1405382400
-             })
+        ('failing example1', {'timestamp': 1420021800}),
+        # example2 one also needs the dst offset applied.
+        ('failing example2', {'timestamp': 1396706400})
     ]
 
+    # # Uncomment this to test against the common timezones declared in pytz.
+    # timezones = [
+    #     (x, {'timezone': x}) for x in common_timezones
+    # ]
+
+    # # Commented out all but NZ as I'm testing against that.
     timezones = [
-        ('UTC',
-            {'timezone': 'UTC'
-             }),
+        # ('UTC',
+        #     {'timezone': 'UTC'
+        #      }),
 
         ('NewZealand',
             {'timezone': 'NZ',
              }),
 
-        ('Pacific',
-            {'timezone': 'US/Pacific'
-             }),
+        # ('Pacific',
+        #     {'timezone': 'US/Pacific'
+        #      }),
 
-        ('Hongkong',
-            {'timezone': 'Hongkong'
-             }),
+        # ('Hongkong',
+        #     {'timezone': 'Hongkong'
+        #      }),
 
-        ('MSK',
-            {'timezone': 'Europe/Moscow'
-             })
+        # ('MSK',
+        #     {'timezone': 'Europe/Moscow'
+        #      })
     ]
 
     scenarios = multiply_scenarios(timestamps, timezones)
@@ -377,10 +412,9 @@ class DateTimeTests(TestWithScenarios, TestCase):
     def test_datetime_properties_have_correct_values(self):
         self.update_timezone()
         dt1 = DateTime(self.timestamp)
-        # dt2 = self.local_from_timestamp(self.timestamp)
-        # Create an actual timestamp, perhaps only do this on desktop? or amd64
-        # (time_t size)
         dt2 = datetime.fromtimestamp(self.timestamp)
+        # # Logging this to find out which dates are failing.
+        self.addDetail("Actual datetime", text_content(str(dt2)))
 
         self.assertThat(dt1.year, Equals(dt2.year))
         self.assertThat(dt1.month, Equals(dt2.month))

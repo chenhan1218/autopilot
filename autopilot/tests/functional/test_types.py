@@ -1,39 +1,29 @@
+# -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
+#
+# Autopilot Functional Test Tool
+# Copyright (C) 2013 Canonical
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
-import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from fixtures import EnvironmentVariable
 
 from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional import QmlScriptRunnerMixin
-from dateutil.tz import tzlocal
 
 from textwrap import dedent
-
-
-class TypeTests(AutopilotTestCase, QmlScriptRunnerMixin):
-
-    def test_date(self):
-        proxy = self.start_qml_script(
-            dedent(
-                """\
-                import QtQuick 2.0
-
-                Item {
-                    objectName: "TestMePlease"
-                    property date foo: "2014-01-01"
-                }
-                """
-            )
-        )
-        item = proxy.select_single('*', objectName="TestMePlease")
-        dt = datetime(2014, 1, 1, 0, 0, 0, tzinfo=tzlocal())
-        timestamp = time.mktime(dt.timetuple())
-        dt = datetime.fromtimestamp(
-            0, tz=tzlocal()) + timedelta(seconds=timestamp)
-        self.assertEqual(
-            item.foo,
-            dt
-        )
 
 
 class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):

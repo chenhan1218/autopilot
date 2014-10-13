@@ -474,3 +474,51 @@ class cached_result(object):
 
     def reset_cache(self):
         self._cache.clear()
+
+
+class EventIntervalAdder(object):
+
+    def __init__(self):
+        self._mocked = False
+        self._mock_count = 0.0
+        self._last_event = 0.0
+
+    def __call__(self, interval):
+        self.interval = float(interval)
+        if self._mocked:
+            self._mock_count += self.interval
+
+        self._set_interval(self.interval)
+
+    @contextmanager
+    def mocked(self):
+        self.enable_mock()
+        try:
+            yield self
+        finally:
+            self.disable_mock()
+
+    def enable_mock(self):
+        self._mocked = True
+        self._mock_count = 0.0
+
+    def disable_mock(self):
+        self._mocked = False
+
+    def total_interval_time(self):
+        return self._mock_count
+
+    def _sleep_for_calculated_delta(self, interval=0.1):
+        delta = (self._last_event + interval) - time.time()
+        if delta > 0.0:
+            sleep(delta)
+        else:
+            pass
+
+    def _set_interval(self, interval=0.1):
+        if time.time() <= (self._last_event + self.interval):
+            self._sleep_for_calculated_delta(interval=self.interval)
+
+        self._last_event = time.time()
+
+set_interval = EventIntervalAdder()

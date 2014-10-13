@@ -28,6 +28,7 @@ import logging
 
 from autopilot.display import is_point_on_any_screen, move_mouse_to_screen
 from autopilot.utilities import (
+    set_interval,
     Silence,
     sleep,
     StagnantStateDetector,
@@ -316,8 +317,9 @@ class Mouse(MouseBase):
         fake_input(get_display(), X.ButtonRelease, button)
         get_display().sync()
 
-    def click(self, button=1, press_duration=0.10):
+    def click(self, button=1, press_duration=0.10, interval=0.1):
         """Click mouse at current location."""
+        set_interval(interval)
         self.press(button)
         sleep(press_duration)
         self.release(button)

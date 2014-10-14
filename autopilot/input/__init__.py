@@ -316,7 +316,12 @@ class Mouse(CleanupRegistered):
         raise NotImplementedError("You cannot use this class directly.")
 
     def click(self, button=1, press_duration=0.10, time_between_clicks=0.1):
-        """Click mouse at current location."""
+        """Click mouse at current location.
+        
+        :param time_between_clicks: time to wait between subsequent click
+         event.
+        
+        """
         raise NotImplementedError("You cannot use this class directly.")
 
     def click_object(
@@ -334,6 +339,8 @@ class Mouse(CleanupRegistered):
          * center_x, center_y
          * x, y, w, h
 
+        :param time_between_clicks: time to wait between subsequent click
+         event.
         :raises: **ValueError** if none of these attributes are found, or if an
          attribute is of an incorrect type.
 
@@ -446,7 +453,11 @@ class Touch(object):
         raise NotImplementedError("You cannot use this class directly.")
 
     def tap(self, x, y, press_duration=0.1, time_between_taps=0.1):
-        """Click (or 'tap') at given x,y coordinates."""
+        """Click (or 'tap') at given x,y coordinates.
+        
+        :param time_between_taps: time to wait between subsequent tap events.
+        
+        """
         raise NotImplementedError("You cannot use this class directly.")
 
     def tap_object(self, object, press_duration=0.1, time_between_taps=0.1):
@@ -459,6 +470,7 @@ class Touch(object):
          * center_x, center_y
          * x, y, w, h
 
+        :param time_between_taps: time to wait between subsequent tap events.
         :raises: **ValueError** if none of these attributes are found, or if an
          attribute is of an incorrect type.
 
@@ -608,6 +620,9 @@ class Pointer(object):
         it is a touch device, passing anything other than 1 will raise a
         ValueError exception.
 
+        :param time_between_clicks: time to wait between subsequent click/tap
+         events.
+
         """
         if isinstance(self._device, Mouse):
             self._device.click(button, press_duration, time_between_clicks)
@@ -657,6 +672,9 @@ class Pointer(object):
         If the wrapped device is a mouse, the button specification is used. If
         it is a touch device, passing anything other than 1 will raise a
         ValueError exception.
+
+        :param time_between_clicks: time to wait between subsequent click/tap
+         events.
 
         """
 

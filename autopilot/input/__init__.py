@@ -317,10 +317,10 @@ class Mouse(CleanupRegistered):
 
     def click(self, button=1, press_duration=0.10, time_between_clicks=0.1):
         """Click mouse at current location.
-        
+
         :param time_between_clicks: time to wait between subsequent click
          event.
-        
+
         """
         raise NotImplementedError("You cannot use this class directly.")
 
@@ -454,9 +454,9 @@ class Touch(object):
 
     def tap(self, x, y, press_duration=0.1, time_between_taps=0.1):
         """Click (or 'tap') at given x,y coordinates.
-        
+
         :param time_between_taps: time to wait between subsequent tap events.
-        
+
         """
         raise NotImplementedError("You cannot use this class directly.")
 

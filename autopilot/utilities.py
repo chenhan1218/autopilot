@@ -483,13 +483,6 @@ class EventIntervalAdder(object):
         self._mock_count = 0.0
         self._last_event = 0.0
 
-    def __call__(self, interval):
-        self.interval = float(interval)
-        if self._mocked:
-            self._mock_count += self.interval
-
-        self._set_interval(self.interval)
-
     @contextmanager
     def mocked(self):
         self.enable_mock()
@@ -505,20 +498,19 @@ class EventIntervalAdder(object):
     def disable_mock(self):
         self._mocked = False
 
-    def total_interval_time(self):
+    def total_delay(self):
         return self._mock_count
 
-    def _sleep_for_calculated_delta(self, interval=0.1):
-        delta = (self._last_event + interval) - time.time()
+    def _sleep_for_calculated_delta(self, duration=0.1):
+        delta = (self._last_event + duration) - time.time()
         if delta > 0.0:
             sleep(delta)
         else:
-            pass
+            return
 
-    def _set_interval(self, interval=0.1):
-        if time.time() <= (self._last_event + self.interval):
-            self._sleep_for_calculated_delta(interval=self.interval)
+    def delay(self, duration=0.1):
+        self.duration = float(duration)
+        if time.time() <= (self._last_event + self.duration):
+            self._sleep_for_calculated_delta(self.duration)
 
         self._last_event = time.time()
-
-set_interval = EventIntervalAdder()

@@ -36,7 +36,7 @@ from autopilot.utilities import (
     cached_result,
     compatible_repr,
     deprecated,
-    set_interval,
+    EventIntervalAdder,
     sleep,
 )
 
@@ -96,18 +96,20 @@ class MockableSleepTests(TestCase):
 class EventIntervalAdderTests(TestCase):
 
     def test_mocked_event_interval_adder_contextmanager(self):
+        event_delayer = EventIntervalAdder()
         with ElapsedTimeCounter() as time_counter:
             with sleep.mocked():
-                with set_interval.mocked():
-                    set_interval(10)
-                    set_interval(3)
+                with event_delayer.mocked():
+                    event_delayer.delay(10)
+                    event_delayer.delay(3)
                     self.assertThat(time_counter.elapsed_time, LessThan(2))
 
     def test_total_interval_time_starts_at_zero(self):
+        event_delayer = EventIntervalAdder()
         with sleep.mocked():
-            with set_interval.mocked() as mocked_interval:
+            with event_delayer.mocked() as mocked_delayer:
                 self.assertThat(
-                    mocked_interval.total_interval_time(), Equals(0.0))
+                        mocked_delayer.total_delay(), Equals(0.0))
 
 
 class CompatibleReprTests(TestCase):

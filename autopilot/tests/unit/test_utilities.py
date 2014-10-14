@@ -109,7 +109,7 @@ class EventIntervalAdderTests(TestCase):
         with sleep.mocked():
             with event_delayer.mocked() as mocked_delayer:
                 self.assertThat(
-                        mocked_delayer.total_delay(), Equals(0.0))
+                    mocked_delayer.total_delay(), Equals(0.0))
 
 
 class CompatibleReprTests(TestCase):

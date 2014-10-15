@@ -633,8 +633,8 @@ class Pointer(object):
             self._device.tap(
                 self._x,
                 self._y,
-                press_duration,
-                time_between_events
+                press_duration=press_duration,
+                time_between_events=time_between_events
             )
 
     def move(self, x, y):

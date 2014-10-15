@@ -781,7 +781,10 @@ class UInputTouchTestCase(TestCase):
         touch = self.get_touch_with_mocked_backend()
 
         with patch.object(touch, 'tap') as mock_tap:
-            touch.tap_object(object_, press_duration=10)
+            touch.tap_object(
+                object_,
+                press_duration=10
+            )
 
         mock_tap.assert_called_once_with(
             object_.center_x,

@@ -418,7 +418,7 @@ class TouchTests(AutopilotTestCase):
         self.assertThat(
             self.button_status.text, Eventually(Equals("Touch Release")))
 
-    def test_tap_subsequent_event_delay(self):
+    def test_tap_subsequent_events_delay(self):
         x, y = get_center_point(self.widget)
         with ElapsedTimeCounter() as time_counter:
             for i in range(3):

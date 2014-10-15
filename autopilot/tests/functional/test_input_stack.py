@@ -422,7 +422,7 @@ class TouchTests(AutopilotTestCase):
         x, y = get_center_point(self.widget)
         with ElapsedTimeCounter() as time_counter:
             for i in range(3):
-                self.device.tap(x, y, time_between_taps=0.6)
+                self.device.tap(x, y, time_between_events=0.6)
 
         self.assertThat(time_counter.elapsed_time, GreaterThan(1.0))
 
@@ -430,7 +430,7 @@ class TouchTests(AutopilotTestCase):
         x, y = get_center_point(self.widget)
         with ElapsedTimeCounter() as time_counter:
             for i in range(3):
-                self.device.tap(x, y, time_between_taps=0.0)
+                self.device.tap(x, y, time_between_events=0.0)
 
         self.assertThat(time_counter.elapsed_time, LessThan(1.0))
 

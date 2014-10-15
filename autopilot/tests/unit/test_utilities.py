@@ -100,9 +100,10 @@ class EventIntervalAdderTests(TestCase):
         with ElapsedTimeCounter() as time_counter:
             with sleep.mocked():
                 with event_delayer.mocked():
-                    # The second call will take place after 10 seconds
-                    # but in the mocked environment we make sure it
-                    # completes in less than 2 seconds.
+                    # The first call of delay() only stores the last time stamp,
+                    # it is only the second call where the delay actually
+                    # happens. So we call delay() twice here to ensure mocking
+                    # is working as expected.
                     event_delayer.delay(10)
                     event_delayer.delay(3)
                     self.assertThat(time_counter.elapsed_time, LessThan(2))

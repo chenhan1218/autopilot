@@ -22,9 +22,16 @@ import json
 import os
 from tempfile import mktemp
 from testtools import TestCase, skipIf
-from testtools.matchers import IsInstance, Equals, raises
+from testtools.matchers import (
+    IsInstance,
+    Equals,
+    raises,
+    LessThan,
+    GreaterThan
+)
 from textwrap import dedent
 import time
+import timeit
 from unittest import SkipTest
 from unittest.mock import patch
 
@@ -37,6 +44,22 @@ from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase, multiply_scenarios
 from autopilot.tests.functional import QmlScriptRunnerMixin
 from autopilot.utilities import on_test_started
+
+
+class ElapsedTimeCounter(object):
+
+    """A simple utility to count the amount of real time that passes."""
+
+    def __enter__(self):
+        self._start_time = timeit.default_timer()
+        return self
+
+    def __exit__(self, *args):
+        pass
+
+    @property
+    def elapsed_time(self):
+        return timeit.default_timer() - self._start_time
 
 
 class InputStackKeyboardBase(AutopilotTestCase):
@@ -396,28 +419,28 @@ class TouchTests(AutopilotTestCase):
             self.button_status.text, Eventually(Equals("Touch Release")))
 
     def test_tap_subsequent_event_delay(self):
-        time_before_tap = time.time()
         x, y = get_center_point(self.widget)
-        for i in range(3):
-            self.device.tap(x, y, time_between_taps=0.6)
+        with ElapsedTimeCounter() as time_counter:
+            for i in range(3):
+                self.device.tap(x, y, time_between_taps=0.6)
 
-        self.assertTrue(time.time() >= (time_before_tap + 1.0))
+        self.assertThat(time_counter.elapsed_time, GreaterThan(1.0))
 
     def test_tap_subsequent_events_no_delay(self):
-        time_before_tap = time.time()
         x, y = get_center_point(self.widget)
-        for i in range(3):
-            self.device.tap(x, y, time_between_taps=0.0)
+        with ElapsedTimeCounter() as time_counter:
+            for i in range(3):
+                self.device.tap(x, y, time_between_taps=0.0)
 
-        self.assertTrue((time_before_tap + 1.0) >= time.time())
+        self.assertThat(time_counter.elapsed_time, LessThan(1.0))
 
     def test_tap_subsequent_events_default_delay(self):
-        time_before_tap = time.time()
         x, y = get_center_point(self.widget)
-        for i in range(10):
-            self.device.tap(x, y)
+        with ElapsedTimeCounter() as time_counter:
+            for i in range(10):
+                self.device.tap(x, y)
 
-        self.assertTrue(time.time() >= (time_before_tap + 1.0))
+        self.assertThat(time_counter.elapsed_time, GreaterThan(0.9))
 
 
 class TouchGesturesTests(AutopilotTestCase, QmlScriptRunnerMixin):

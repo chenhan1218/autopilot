@@ -39,6 +39,9 @@ objects.
 
 from datetime import datetime, time, timedelta
 from dateutil.tz import gettz, tzutc
+from tzlocal import get_localzone
+import pytz
+
 import dbus
 import logging
 from testtools.matchers import Equals
@@ -612,23 +615,42 @@ class DateTime(_array_packed_type(1)):
         utc_stamp = datetime.fromtimestamp(
             0, tz=tzutc()
         ) + timedelta(seconds=self[0])
+        # utc_stamp = datetime.fromtimestamp(
+        #     0, tz=pytz.utc
+        # ) + timedelta(seconds=self[0])
 
         # gettz tries a number of things (os.environ['TZ'], files # etc.) so no
         # need to manually attempt to get os.environ, or tzname or
         # time.tzname[0] etc.
         localtz_file = gettz()
+        # localtz_file = get_localzone()
 
         # There needs to be a conditional use of (utcoffset - dst) instead of
         # just utcoffset here.
         # Need to get back to basics to determine how and when this is
         # determined.
+        # local_stamp = utc_stamp.replace(tzinfo=localtz_file) + (
+        #     localtz_file.utcoffset(utc_stamp)
+        # )
+
+        utc_offset = localtz_file.utcoffset(utc_stamp)
+        dst_offset = localtz_file.dst(utc_stamp)
         local_stamp = utc_stamp.replace(tzinfo=localtz_file) + (
-            localtz_file.utcoffset(utc_stamp)
+            utc_offset - dst_offset
         )
+
+        further_dst_offset = localtz_file.dst(local_stamp)
+        if further_dst_offset != timedelta(0):
+            local_stamp = local_stamp + further_dst_offset
+
+        # # if localtz_file.dst(local_stamp) < localtz_file.dst(utc_stamp):
+        # #     local_stamp = local_stamp - localtz_file.dst(utc_stamp)
+        # # elif localtz_file.dst(local_stamp) > localtz_file.dst(utc_stamp):
+        # #     local_stamp = local_stamp + localtz_file.dst(local_stamp)
 
         # For instance this gives the right d/m/y but the resulting stored
         # timestamp is different
-        # utc_stamp.astimezone(localtz_file)
+        # local_stamp = utc_stamp.astimezone(localtz_file)
 
         self._cached_dt = local_stamp.replace(tzinfo=None)
 
@@ -658,6 +680,7 @@ class DateTime(_array_packed_type(1)):
 
     @property
     def timestamp(self):
+        # return self[0]
         return self._cached_dt.timestamp
 
     @property

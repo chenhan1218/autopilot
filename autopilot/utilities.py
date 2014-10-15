@@ -478,6 +478,30 @@ class cached_result(object):
 
 class EventDelay(object):
 
+    """Delay execution of a subsequent event for a certain number
+    of seconds.
+
+    To delay the execution of a subsequent event for two seconds
+    use it like this::
+
+        from autopilot.utilities import EventDelay
+
+        event_delayer = EventDelay()
+        event_delayer.delay(2)
+
+    To mock out all calls to EventDelay, one might do this instead::
+
+        from autopilot.utilities import EventDelay, sleep
+
+        event_delayer = EventDelay()
+        with sleep.mocked():
+            with event_delayer.mocked() as mocked_delay:
+                event_delayer.delay(10)
+                event_delayer.delay(2)
+                self.assertThat(mocked_delay.total_delay(), Equals(12.0))
+
+    """
+
     def __init__(self):
         self._mocked = False
         self._mock_count = 0.0

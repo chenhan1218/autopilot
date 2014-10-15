@@ -476,7 +476,7 @@ class cached_result(object):
         self._cache.clear()
 
 
-class EventIntervalAdder(object):
+class EventDelay(object):
 
     def __init__(self):
         self._mocked = False

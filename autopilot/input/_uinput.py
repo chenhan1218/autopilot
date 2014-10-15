@@ -27,7 +27,7 @@ import autopilot.platform
 from autopilot.input import Keyboard as KeyboardBase
 from autopilot.input import Touch as TouchBase
 from autopilot.input._common import get_center_point
-from autopilot.utilities import deprecated, EventIntervalAdder, sleep
+from autopilot.utilities import deprecated, EventDelay, sleep
 
 
 _logger = logging.getLogger(__name__)
@@ -455,7 +455,7 @@ class Touch(TouchBase):
     def __init__(self, device_class=_UInputTouchDevice):
         super(Touch, self).__init__()
         self._device = device_class()
-        self.event_delayer = EventIntervalAdder()
+        self.event_delayer = EventDelay()
 
     @property
     def pressed(self):

@@ -28,7 +28,7 @@ import logging
 
 from autopilot.display import is_point_on_any_screen, move_mouse_to_screen
 from autopilot.utilities import (
-    EventIntervalAdder,
+    EventDelay,
     Silence,
     sleep,
     StagnantStateDetector,
@@ -287,7 +287,7 @@ class Mouse(MouseBase):
         super(Mouse, self).__init__()
         # Try to access the screen to see if X11 mouse is supported
         get_display()
-        self.event_delayer = EventIntervalAdder()
+        self.event_delayer = EventDelay()
 
     @property
     def x(self):

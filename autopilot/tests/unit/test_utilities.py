@@ -37,7 +37,7 @@ from autopilot.utilities import (
     cached_result,
     compatible_repr,
     deprecated,
-    EventIntervalAdder,
+    EventDelay,
     sleep,
 )
 
@@ -94,10 +94,10 @@ class MockableSleepTests(TestCase):
             patched_time.sleep.assert_called_once_with(1.0)
 
 
-class EventIntervalAdderTests(TestCase):
+class EventDelayTests(TestCase):
 
     def test_mocked_event_interval_adder_contextmanager(self):
-        event_delayer = EventIntervalAdder()
+        event_delayer = EventDelay()
         with ElapsedTimeCounter() as time_counter:
             with sleep.mocked():
                 with event_delayer.mocked():
@@ -110,14 +110,14 @@ class EventIntervalAdderTests(TestCase):
                     self.assertThat(time_counter.elapsed_time, LessThan(2))
 
     def test_total_interval_time_starts_at_zero(self):
-        event_delayer = EventIntervalAdder()
+        event_delayer = EventDelay()
         with sleep.mocked():
             with event_delayer.mocked() as mocked_delayer:
                 self.assertThat(
                     mocked_delayer.total_delay(), Equals(0.0))
 
     def test_total_delay_time_accumulates(self):
-        event_delayer = EventIntervalAdder()
+        event_delayer = EventDelay()
         with sleep.mocked():
             with event_delayer.mocked() as mocked_delayer:
                 event_delayer.delay(2)
@@ -126,13 +126,13 @@ class EventIntervalAdderTests(TestCase):
                 self.assertThat(mocked_delayer.total_delay(), Equals(5))
 
     def test_last_event_delay_counter_updates_on_first_call(self):
-        event_delayer = EventIntervalAdder()
+        event_delayer = EventDelay()
         event_delayer.delay(1.0)
 
         self.assertThat(event_delayer._last_event, GreaterThan(0.0))
 
     def test_last_event_counter_not_updates_with_mocked(self):
-        event_delayer = EventIntervalAdder()
+        event_delayer = EventDelay()
         with event_delayer.mocked() as mocked_delayer:
             event_delayer.delay(2)
             self.assertThat(mocked_delayer._last_event, Equals(0.0))

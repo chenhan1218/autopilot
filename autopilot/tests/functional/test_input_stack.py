@@ -24,7 +24,7 @@ from tempfile import mktemp
 from testtools import TestCase, skipIf
 from testtools.matchers import IsInstance, Equals, raises
 from textwrap import dedent
-from time import sleep
+import time
 from unittest import SkipTest
 from unittest.mock import patch
 
@@ -107,7 +107,7 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
         # even though we ensured the textedit has focus, it occasionally
         # does not yet accept keyboard input, causing this test to fail
         # intermittently.  to remedy this, we just add a sleep.
-        sleep(2)
+        time.sleep(2)
 
         # create keyboard and type the text.
         keyboard = Keyboard.create(self.backend)
@@ -394,6 +394,30 @@ class TouchTests(AutopilotTestCase):
         self.device.release()
         self.assertThat(
             self.button_status.text, Eventually(Equals("Touch Release")))
+
+    def test_tap_subsequent_event_delay(self):
+        time_before_tap = time.time()
+        x, y = get_center_point(self.widget)
+        for i in range(3):
+            self.device.tap(x, y, time_between_taps=0.6)
+
+        self.assertTrue(time.time() >= (time_before_tap + 1.0))
+
+    def test_tap_subsequent_events_no_delay(self):
+        time_before_tap = time.time()
+        x, y = get_center_point(self.widget)
+        for i in range(3):
+            self.device.tap(x, y, time_between_taps=0.0)
+
+        self.assertTrue((time_before_tap + 1.0) >= time.time())
+
+    def test_tap_subsequent_events_default_delay(self):
+        time_before_tap = time.time()
+        x, y = get_center_point(self.widget)
+        for i in range(10):
+            self.device.tap(x, y)
+
+        self.assertTrue(time.time() >= (time_before_tap + 1.0))
 
 
 class TouchGesturesTests(AutopilotTestCase, QmlScriptRunnerMixin):

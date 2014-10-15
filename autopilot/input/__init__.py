@@ -315,10 +315,10 @@ class Mouse(CleanupRegistered):
         """Releases mouse button at current mouse location."""
         raise NotImplementedError("You cannot use this class directly.")
 
-    def click(self, button=1, press_duration=0.10, time_between_clicks=0.1):
+    def click(self, button=1, press_duration=0.10, time_between_events=0.1):
         """Click mouse at current location.
 
-        :param time_between_clicks: time to wait between subsequent click
+        :param time_between_events: time to wait between subsequent click
          event.
 
         """
@@ -329,7 +329,7 @@ class Mouse(CleanupRegistered):
             object_proxy,
             button=1,
             press_duration=0.10,
-            time_between_clicks=0.1):
+            time_between_events=0.1):
         """Click the center point of a given object.
 
         It does this by looking for several attributes, in order. The first
@@ -339,14 +339,14 @@ class Mouse(CleanupRegistered):
          * center_x, center_y
          * x, y, w, h
 
-        :param time_between_clicks: time to wait between subsequent click
+        :param time_between_events: time to wait between subsequent click
          event.
         :raises: **ValueError** if none of these attributes are found, or if an
          attribute is of an incorrect type.
 
          """
         self.move_to_object(object_proxy)
-        self.click(button, press_duration, time_between_clicks)
+        self.click(button, press_duration, time_between_events)
 
     def move(self, x, y, animate=True, rate=10, time_between_events=0.01):
         """Moves mouse to location (x,y).
@@ -452,15 +452,15 @@ class Touch(object):
         """
         raise NotImplementedError("You cannot use this class directly.")
 
-    def tap(self, x, y, press_duration=0.1, time_between_taps=0.1):
+    def tap(self, x, y, press_duration=0.1, time_between_events=0.1):
         """Click (or 'tap') at given x,y coordinates.
 
-        :param time_between_taps: time to wait between subsequent tap events.
+        :param time_between_events: time to wait between subsequent tap events.
 
         """
         raise NotImplementedError("You cannot use this class directly.")
 
-    def tap_object(self, object, press_duration=0.1, time_between_taps=0.1):
+    def tap_object(self, object, press_duration=0.1, time_between_events=0.1):
         """Tap the center point of a given object.
 
         It does this by looking for several attributes, in order. The first
@@ -470,7 +470,7 @@ class Touch(object):
          * center_x, center_y
          * x, y, w, h
 
-        :param time_between_taps: time to wait between subsequent tap events.
+        :param time_between_events: time to wait between subsequent tap events.
         :raises: **ValueError** if none of these attributes are found, or if an
          attribute is of an incorrect type.
 
@@ -613,19 +613,19 @@ class Pointer(object):
                     "Touch devices do not have button %d" % (button))
             self._device.release()
 
-    def click(self, button=1, press_duration=0.10, time_between_clicks=0.1):
+    def click(self, button=1, press_duration=0.10, time_between_events=0.1):
         """Press and release at the current pointer location.
 
         If the wrapped device is a mouse, the button specification is used. If
         it is a touch device, passing anything other than 1 will raise a
         ValueError exception.
 
-        :param time_between_clicks: time to wait between subsequent click/tap
+        :param time_between_events: time to wait between subsequent click/tap
          events.
 
         """
         if isinstance(self._device, Mouse):
-            self._device.click(button, press_duration, time_between_clicks)
+            self._device.click(button, press_duration, time_between_events)
         else:
             if button != 1:
                 raise ValueError(
@@ -634,7 +634,7 @@ class Pointer(object):
                 self._x,
                 self._y,
                 press_duration,
-                time_between_taps=time_between_clicks
+                time_between_events
             )
 
     def move(self, x, y):
@@ -657,7 +657,7 @@ class Pointer(object):
             object_proxy,
             button=1,
             press_duration=0.10,
-            time_between_clicks=0.1):
+            time_between_events=0.1):
         """
         Attempts to move the pointer to 'object_proxy's centre point.
         and click a button
@@ -673,13 +673,13 @@ class Pointer(object):
         it is a touch device, passing anything other than 1 will raise a
         ValueError exception.
 
-        :param time_between_clicks: time to wait between subsequent click/tap
+        :param time_between_events: time to wait between subsequent click/tap
          events.
 
         """
 
         self.move_to_object(object_proxy)
-        self.click(button, press_duration, time_between_clicks)
+        self.click(button, press_duration, time_between_events)
 
     def move_to_object(self, object_proxy):
         """Attempts to move the pointer to 'object_proxy's centre point.

@@ -318,9 +318,9 @@ class Mouse(MouseBase):
         fake_input(get_display(), X.ButtonRelease, button)
         get_display().sync()
 
-    def click(self, button=1, press_duration=0.10, time_between_clicks=0.1):
+    def click(self, button=1, press_duration=0.10, time_between_events=0.1):
         """Click mouse at current location."""
-        self.event_delayer.delay(time_between_clicks)
+        self.event_delayer.delay(time_between_events)
         self.press(button)
         sleep(press_duration)
         self.release(button)

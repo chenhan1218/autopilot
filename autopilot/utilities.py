@@ -510,6 +510,9 @@ class EventIntervalAdder(object):
 
     def delay(self, duration=0.1):
         self.duration = float(duration)
+        if self._mocked:
+            self._mock_count += self.duration
+            return
         if time.time() <= (self._last_event + self.duration):
             self._sleep_for_calculated_delta(self.duration)
 

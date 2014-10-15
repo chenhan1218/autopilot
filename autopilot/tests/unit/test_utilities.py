@@ -22,6 +22,7 @@ import re
 from testtools import TestCase
 from testtools.matchers import (
     Equals,
+    GreaterThan,
     IsInstance,
     LessThan,
     MatchesRegex,
@@ -100,10 +101,10 @@ class EventIntervalAdderTests(TestCase):
         with ElapsedTimeCounter() as time_counter:
             with sleep.mocked():
                 with event_delayer.mocked():
-                    # The first call of delay() only stores the last time stamp,
-                    # it is only the second call where the delay actually
-                    # happens. So we call delay() twice here to ensure mocking
-                    # is working as expected.
+                    # The first call of delay() only stores the last time
+                    # stamp, it is only the second call where the delay
+                    # actually happens. So we call delay() twice here to
+                    # ensure mocking is working as expected.
                     event_delayer.delay(10)
                     event_delayer.delay(3)
                     self.assertThat(time_counter.elapsed_time, LessThan(2))
@@ -114,6 +115,27 @@ class EventIntervalAdderTests(TestCase):
             with event_delayer.mocked() as mocked_delayer:
                 self.assertThat(
                     mocked_delayer.total_delay(), Equals(0.0))
+
+    def test_total_delay_time_accumulates(self):
+        event_delayer = EventIntervalAdder()
+        with sleep.mocked():
+            with event_delayer.mocked() as mocked_delayer:
+                event_delayer.delay(2)
+                self.assertThat(mocked_delayer.total_delay(), Equals(2))
+                event_delayer.delay(3)
+                self.assertThat(mocked_delayer.total_delay(), Equals(5))
+
+    def test_last_event_delay_counter_updates_on_first_call(self):
+        event_delayer = EventIntervalAdder()
+        event_delayer.delay(1.0)
+
+        self.assertThat(event_delayer._last_event, GreaterThan(0.0))
+
+    def test_last_event_counter_not_updates_with_mocked(self):
+        event_delayer = EventIntervalAdder()
+        with event_delayer.mocked() as mocked_delayer:
+            event_delayer.delay(2)
+            self.assertThat(mocked_delayer._last_event, Equals(0.0))
 
 
 class CompatibleReprTests(TestCase):

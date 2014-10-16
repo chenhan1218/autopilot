@@ -663,8 +663,7 @@ class DateTime(_array_packed_type(1)):
 
     @property
     def timestamp(self):
-        # return self[0]
-        return self._cached_dt.timestamp()
+        return self[0]
 
     @property
     def datetime(self):

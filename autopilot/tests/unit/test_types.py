@@ -17,9 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from datetime import datetime, time, timedelta
+from datetime import datetime, time
 from testscenarios import TestWithScenarios, multiply_scenarios
-from testtools import TestCase, skipUnless
+from testtools import TestCase
 from testtools.matchers import Equals, IsInstance, NotEquals, raises
 
 import dbus
@@ -305,7 +305,7 @@ class DateTimeBase(TestCase):
 class DateTimeCreationTests(DateTimeBase):
     def setUp(self):
         super().setUp()
-        self.timestamp = 1405382400 # Has no significance, just a timestamp
+        self.timestamp = 1405382400  # No significance, just a timestamp
 
     def test_can_construct_datetime(self):
         dt = DateTime(self.timestamp)
@@ -327,7 +327,7 @@ class DateTimeCreationTests(DateTimeBase):
         self.assertTrue(hasattr(dt, 'second'))
 
     def test_repr(self):
-        self.update_timezone('UTC') # Use a well known timezone for comparison
+        self.update_timezone('UTC')  # Use a well known timezone for comparison
         dt = DateTime(self.timestamp)
         observed = repr(dt)
 
@@ -347,8 +347,8 @@ class DateTimeCreationTests(DateTimeBase):
         than the 32bit time_t limit.
 
         """
-        self.update_timezone('UTC') # Use a well known timezone for comparison
-        dt = DateTime(2983579200)  # or GMT: Fri, 18 Jul 2064 04:00:00 GMT
+        self.update_timezone('UTC')  # Use a well known timezone for comparison
+        dt = DateTime(2983579200)  # or: Fri, 18 Jul 2064 04:00:00 GMT
 
         self.assertEqual(dt.year, 2064)
         self.assertEqual(dt.month, 7)
@@ -361,10 +361,11 @@ class DateTimeCreationTests(DateTimeBase):
 class DateTimeTests(TestWithScenarios, DateTimeBase):
 
     timestamps = [
-        ('Test US/Pacific explicitly',
+        # This timestamp uncovered an issue during development.
+        ('Explicit US/Pacific test',
          {'timestamp': 1090123200}),
 
-        ('NZ dst example',
+        ('NZ DST example',
          {'timestamp': 2047570047}),
 
         ('winter',

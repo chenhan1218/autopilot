@@ -25,8 +25,9 @@ import stat
 from shutil import rmtree
 import tempfile
 from textwrap import dedent
+import time
 
-from fixtures import Fixture
+from fixtures import EnvironmentVariable, Fixture
 
 
 logger = logging.getLogger(__name__)
@@ -166,3 +167,16 @@ class TempDesktopFile(Fixture):
         with open(tmp_file_path, 'w') as desktop_file:
             desktop_file.write(file_contents)
         return tmp_file_path
+
+
+class SetTimezone(Fixture):
+    def __init__(self, timezone):
+        self._timezone = timezone
+
+    def setUp(self):
+        super().setUp()
+        # These steps need to happen in the right order otherwise they won't
+        # get cleaned up properly and we'll be left in an incorrect timezone.
+        self.addCleanup(time.tzset)
+        self.useFixture(EnvironmentVariable('TZ', self._timezone))
+        time.tzset()

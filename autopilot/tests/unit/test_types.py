@@ -25,6 +25,7 @@ from testtools.matchers import Equals, IsInstance, NotEquals, raises
 import dbus
 from unittest.mock import patch, Mock
 
+from autopilot.tests.functional.fixtures import SetTimezone
 from autopilot.introspection.types import (
     Color,
     create_value_instance,
@@ -51,7 +52,6 @@ from autopilot.introspection.types import (
 from autopilot.introspection.dbus import DBusIntrospectionObject
 from autopilot.utilities import compatible_repr
 
-from fixtures import EnvironmentVariable
 from dateutil import tz
 
 
@@ -296,17 +296,7 @@ def can_handle_large_timestamps():
         return False
 
 
-class DateTimeBase(TestCase):
-    def update_timezone(self, timezone):
-        # These steps need to happen in the right order otherwise they won't
-        # get cleaned up properly and we'll be left in an incorrect timezone.
-        import time as _time
-        self.addCleanup(_time.tzset)
-        self.useFixture(EnvironmentVariable('TZ', timezone))
-        _time.tzset()
-
-
-class DateTimeCreationTests(DateTimeBase):
+class DateTimeCreationTests(TestCase):
 
     timestamp = 1405382400  # No significance, just a timestamp
 
@@ -330,7 +320,8 @@ class DateTimeCreationTests(DateTimeBase):
         self.assertTrue(hasattr(dt, 'second'))
 
     def test_repr(self):
-        self.update_timezone('UTC')  # Use a well known timezone for comparison
+        # Use a well known timezone for comparison
+        self.useFixture(SetTimezone('UTC'))
         dt = DateTime(self.timestamp)
         observed = repr(dt)
 
@@ -348,18 +339,19 @@ class DateTimeCreationTests(DateTimeBase):
         than the 32bit time_t limit.
 
         """
-        self.update_timezone('UTC')  # Use a well known timezone for comparison
+        # Use a well known timezone for comparison
+        self.useFixture(SetTimezone('UTC'))
         dt = DateTime(2**32+1)  # or: Fri, 18 Jul 2064 04:00:00 GMT
 
-        self.assertEqual(dt.year, 2064)
-        self.assertEqual(dt.month, 7)
-        self.assertEqual(dt.day, 18)
-        self.assertEqual(dt.hour, 4)
-        self.assertEqual(dt.minute, 0)
-        self.assertEqual(dt.second, 0)
+        self.assertEqual(dt.year, 2106)
+        self.assertEqual(dt.month, 2)
+        self.assertEqual(dt.day, 7)
+        self.assertEqual(dt.hour, 6)
+        self.assertEqual(dt.minute, 28)
+        self.assertEqual(dt.second, 17)
 
 
-class DateTimeTests(TestWithScenarios, DateTimeBase):
+class DateTimeTests(TestWithScenarios, TestCase):
 
     timestamps = [
         # This timestamp uncovered an issue during development.
@@ -414,7 +406,7 @@ class DateTimeTests(TestWithScenarios, DateTimeBase):
     scenarios = multiply_scenarios(timestamps, timezones)
 
     def test_datetime_properties_have_correct_values(self):
-        self.update_timezone(self.timezone)
+        self.useFixture(SetTimezone(self.timezone))
         dt1 = DateTime(self.timestamp)
         dt2 = datetime.fromtimestamp(self.timestamp, tz.gettz())
 
@@ -428,7 +420,7 @@ class DateTimeTests(TestWithScenarios, DateTimeBase):
         # self.assertThat(dt1.timestamp, Equals(self.timestamp))
 
     def test_equality_with_datetime(self):
-        self.update_timezone(self.timezone)
+        self.useFixture(SetTimezone(self.timezone))
         dt1 = DateTime(self.timestamp)
         dt2 = datetime(
             dt1.year, dt1.month, dt1.day, dt1.hour, dt1.minute, dt1.second
@@ -437,14 +429,14 @@ class DateTimeTests(TestWithScenarios, DateTimeBase):
         self.assertThat(dt1, Equals(dt2))
 
     def test_equality_with_list(self):
-        self.update_timezone(self.timezone)
+        self.useFixture(SetTimezone(self.timezone))
         dt1 = DateTime(self.timestamp)
         dt2 = [self.timestamp]
 
         self.assertThat(dt1, Equals(dt2))
 
     def test_equality_with_datetime_object(self):
-        self.update_timezone(self.timezone)
+        self.useFixture(SetTimezone(self.timezone))
         dt1 = DateTime(self.timestamp)
         dt2 = datetime.fromtimestamp(self.timestamp, tz.gettz())
         dt3 = datetime.fromtimestamp(self.timestamp + 1, tz.gettz())

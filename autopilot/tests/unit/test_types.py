@@ -285,6 +285,10 @@ class ColorTypeTests(TestCase):
 
 
 def can_handle_large_timestamps():
+    """Return true if the platform can handle timestamps larger than 32bit
+    limit.
+
+    """
     try:
         datetime.fromtimestamp(2983579200)
         return True
@@ -295,7 +299,7 @@ def can_handle_large_timestamps():
 class DateTimeBase(TestCase):
     def update_timezone(self, timezone):
         # These steps need to happen in the right order otherwise they won't
-        # get cleanedup properly.
+        # get cleaned up properly and we'll be left in an incorrect timezone.
         import time as _time
         self.addCleanup(_time.tzset)
         self.useFixture(EnvironmentVariable('TZ', timezone))
@@ -343,7 +347,7 @@ class DateTimeCreationTests(DateTimeBase):
         self.assertEqual(repr(dt), str(dt))
 
     def test_can_create_DateTime_using_large_timestamp(self):
-        """Must be abel to create a DateTime object using a timestamp larger
+        """Must be able to create a DateTime object using a timestamp larger
         than the 32bit time_t limit.
 
         """
@@ -362,17 +366,21 @@ class DateTimeTests(TestWithScenarios, DateTimeBase):
 
     timestamps = [
         # This timestamp uncovered an issue during development.
-        ('Explicit US/Pacific test',
-         {'timestamp': 1090123200}),
+        ('Explicit US/Pacific test', dict(
+            timestamp=1090123200
+        )),
 
-        ('NZ DST example',
-         {'timestamp': 2047570047}),
+        ('NZ DST example', dict(
+            timestamp=2047570047
+        )),
 
-        ('winter',
-         {'timestamp': 1389744000}),
+        ('Winter', dict(
+            timestamp=1389744000
+        )),
 
-        ('summer',
-         {'timestamp': 1405382400})
+        ('Summer', dict(
+            timestamp=1405382400
+        ))
     ]
 
     if can_handle_large_timestamps():
@@ -381,29 +389,29 @@ class DateTimeTests(TestWithScenarios, DateTimeBase):
         )
 
     timezones = [
-        ('UTC',
-            {'timezone': 'UTC'
-             }),
+        ('UTC', dict(
+            timezone='UTC'
+        )),
 
-        ('London',
-            {'timezone': 'Europe/London'
-             }),
+        ('London', dict(
+            timezone='Europe/London'
+        )),
 
-        ('New Zealand',
-            {'timezone': 'NZ',
-             }),
+        ('New Zealand', dict(
+            timezone='NZ',
+        )),
 
-        ('Pacific',
-            {'timezone': 'US/Pacific'
-             }),
+        ('Pacific', dict(
+            timezone='US/Pacific'
+        )),
 
-        ('Hongkong',
-            {'timezone': 'Hongkong'
-             }),
+        ('Hongkong', dict(
+            timezone='Hongkong'
+        )),
 
-        ('MSK',
-            {'timezone': 'Europe/Moscow'
-             })
+        ('Moscow', dict(
+            timezone='Europe/Moscow'
+        ))
     ]
 
     scenarios = multiply_scenarios(timestamps, timezones)
@@ -425,8 +433,9 @@ class DateTimeTests(TestWithScenarios, DateTimeBase):
     def test_equality_with_datetime(self):
         self.update_timezone(self.timezone)
         dt1 = DateTime(self.timestamp)
-        dt2 = datetime(dt1.year, dt1.month, dt1.day,
-                       dt1.hour, dt1.minute, dt1.second)
+        dt2 = datetime(
+            dt1.year, dt1.month, dt1.day,dt1.hour, dt1.minute, dt1.second
+        )
 
         self.assertThat(dt1, Equals(dt2))
 

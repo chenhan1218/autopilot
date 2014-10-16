@@ -551,6 +551,13 @@ class DateTime(_array_packed_type(1)):
     DateTime is constructed by passing a unix timestamp in to the constructor.
     The incoming timestamp is assumed to be in UTC.
 
+    .. note:: This class expects the passed in timestamp to be in UTC but will
+      display the resulting date and time in local time (using the local
+      timezone).
+
+      This is done to mimic the behaviour of most applications which will
+      display date and time in local time by default
+
     Timestamps are expressed as the number of seconds since 1970-01-01T00:00:00
     in the UTC timezone::
 
@@ -647,15 +654,17 @@ class DateTime(_array_packed_type(1)):
 
         local_tzinfo = gettz()
 
-        # Get the localtimes timezone offset (known as standard offset) from
-        # utc and its dst offset (if any).
-        # We will apply this to the utc datetime object to get datetime object
-        # in localtime.
+        # Get the localtimes timezone offset (known as standard offset) by
+        # subtracting its dst offset (if any) from the utc offset.
+        # We apply this to the utc datetime object to get datetime object in
+        # localtime.
+        # (We will check (once we have a local datetime) if the time is in dst
+        # and make that adjustment then.)
         utc_offset = local_tzinfo.utcoffset(utc_dt)
         dst_offset = local_tzinfo.dst(utc_dt)
         standard_offset = utc_offset - dst_offset
 
-        # Create an local timezone aware datetime object from the utc_dt
+        # Create a local timezone aware datetime object from the utc_dt
         # (i.e. attaching a timezone to it) and apply the standard offset to
         # give us the local time.
         local_dt = utc_dt.replace(tzinfo=local_tzinfo) + standard_offset

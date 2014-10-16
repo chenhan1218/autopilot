@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2013 Canonical
+# Copyright (C) 2013-2014 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -85,7 +85,12 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
         )
 
     def test_timezone_not_applied_to_timestring(self):
+        """Test that, in all timezones, the literal representation we get in
+        the proxy object matches the one in the Qml script.
+
+        """
         self.set_testing_timezone()
+
 
         qml_script = self.get_test_qml_string("'2014-01-15 12:34:52'")
         proxy = self.start_qml_script(qml_script)

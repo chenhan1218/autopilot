@@ -290,7 +290,7 @@ def can_handle_large_timestamps():
 
     """
     try:
-        datetime.fromtimestamp(2983579200)
+        datetime.fromtimestamp(2**32+1)
         return True
     except:
         return False
@@ -307,9 +307,8 @@ class DateTimeBase(TestCase):
 
 
 class DateTimeCreationTests(DateTimeBase):
-    def setUp(self):
-        super().setUp()
-        self.timestamp = 1405382400  # No significance, just a timestamp
+
+    timestamp = 1405382400  # No significance, just a timestamp
 
     def test_can_construct_datetime(self):
         dt = DateTime(self.timestamp)
@@ -335,10 +334,8 @@ class DateTimeCreationTests(DateTimeBase):
         dt = DateTime(self.timestamp)
         observed = repr(dt)
 
-        expected = repr_type(
-            u"DateTime({:%Y-%m-%d %H:%M:%S})".format(
-                datetime.fromtimestamp(self.timestamp)
-            )
+        expected = "DateTime({:%Y-%m-%d %H:%M:%S})".format(
+            datetime.fromtimestamp(self.timestamp)
         )
         self.assertEqual(expected, observed)
 
@@ -352,7 +349,7 @@ class DateTimeCreationTests(DateTimeBase):
 
         """
         self.update_timezone('UTC')  # Use a well known timezone for comparison
-        dt = DateTime(2983579200)  # or: Fri, 18 Jul 2064 04:00:00 GMT
+        dt = DateTime(2**32+1)  # or: Fri, 18 Jul 2064 04:00:00 GMT
 
         self.assertEqual(dt.year, 2064)
         self.assertEqual(dt.month, 7)

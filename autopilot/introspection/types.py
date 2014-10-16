@@ -664,7 +664,14 @@ class DateTime(_array_packed_type(1)):
         return self._cached_dt
 
     def __eq__(self, other):
+        # A little 'magic' here, if the datetime object to test against is
+        # naive, use the tzinfo from the cached datetime (just for the
+        # comparison)
         if isinstance(other, datetime):
+            if other.tzinfo is None:
+                return other.replace(
+                    tzinfo=self._cached_dt.tzinfo
+                ) == self._cached_dt
             return other == self._cached_dt
         return super(DateTime, self).__eq__(other)
 

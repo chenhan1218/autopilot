@@ -326,14 +326,28 @@ class DateTimeCreationTests(DateTimeBase):
         self.assertTrue(hasattr(dt, 'minute'))
         self.assertTrue(hasattr(dt, 'second'))
 
+    def test_repr(self):
+        self.update_timezone('UTC') # Use a well known timezone for comparison
+        dt = DateTime(self.timestamp)
+        observed = repr(dt)
+
+        expected = repr_type(
+            u"DateTime({:%Y-%m-%d %H:%M:%S})".format(
+                datetime.fromtimestamp(self.timestamp)
+            )
+        )
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        dt = DateTime(self.timestamp)
+        self.assertEqual(repr(dt), str(dt))
+
     def test_can_create_DateTime_using_large_timestamp(self):
         """Must be abel to create a DateTime object using a timestamp larger
         than the 32bit time_t limit.
 
-        Note. Uses a well known timezone for comparison.
-
         """
-        self.update_timezone('UTC')
+        self.update_timezone('UTC') # Use a well known timezone for comparison
         dt = DateTime(2983579200)  # or GMT: Fri, 18 Jul 2064 04:00:00 GMT
 
         self.assertEqual(dt.year, 2064)
@@ -436,26 +450,6 @@ class DateTimeTests(TestWithScenarios, DateTimeBase):
     def test_can_convert_to_datetime(self):
         dt1 = DateTime(self.timestamp)
         self.assertThat(dt1.datetime, IsInstance(datetime))
-
-    # Using local_from_timestamp
-    # def test_repr(self):
-    #     self.update_timezone(self.timezone)
-    #     dt = DateTime(self.timestamp)
-    #     observed = repr(dt)
-
-    #     expected = repr_type(
-    #         u"DateTime({:%Y-%m-%d %H:%M:%S})".format(
-    #             self.local_from_timestamp(
-    #                 self.timestamp
-    #             ).replace(tzinfo=self.local_timezone())
-    #         )
-    #     )
-    #     self.assertEqual(expected, observed)
-
-    def test_repr_equals_str(self):
-        self.update_timezone(self.timezone)
-        dt = DateTime(self.timestamp)
-        self.assertEqual(repr(dt), str(dt))
 
 
 class TimeTests(TestCase):

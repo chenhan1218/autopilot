@@ -604,13 +604,28 @@ class DateTime(_array_packed_type(1)):
       This means that the following won't always be true (due to the naive
       timestamp not having the correct daylight-savings time details)::
 
-        >>> datetime.fromtimestamp(example_ts).day == DateTime(example_ts).day
+        >>> # This time stamp is within DST in the 'Europe/London' timezone
+        >>> dst_ts = 1405382400
+        >>> os.environ['TZ'] ='Europe/London'
+        >>> time.tzset()
+        >>> datetime.fromtimestamp(dst_ts).hour == DateTime(dst_ts).hour
+        False
 
       But this will work::
 
         >>> from dateutil.tz import gettz
         >>> datetime.fromtimestamp(
-                example_ts, gettz()).day == DateTime(example_ts).day
+                dst_ts, gettz()).hour == DateTime(dst_ts).hour
+        True
+
+      And this will always work to::
+
+        >>> dt1 =  DateTime(nz_dst_timestamp)
+        >>> dt2 = datetime(
+                dt1.year, dt1.month, dt1.day, dt1.hour, dt1.minute, dt1.second
+            )
+        >>> dt1 == dt2
+        True
 
     DateTime instances can be converted to datetime instances::
 

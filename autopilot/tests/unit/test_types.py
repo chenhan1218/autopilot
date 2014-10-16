@@ -434,7 +434,7 @@ class DateTimeTests(TestWithScenarios, DateTimeBase):
         self.update_timezone(self.timezone)
         dt1 = DateTime(self.timestamp)
         dt2 = datetime(
-            dt1.year, dt1.month, dt1.day,dt1.hour, dt1.minute, dt1.second
+            dt1.year, dt1.month, dt1.day, dt1.hour, dt1.minute, dt1.second
         )
 
         self.assertThat(dt1, Equals(dt2))
@@ -446,16 +446,14 @@ class DateTimeTests(TestWithScenarios, DateTimeBase):
 
         self.assertThat(dt1, Equals(dt2))
 
-    # Not sure what to do with local_from_timestamp, don't really want to test
-    # ourself against ourself.
-    # def test_equality_with_datetime_timestamp(self):
-    #     self.update_timezone(self.timezone)
-    #     dt1 = DateTime(self.timestamp)
-    #     dt2 = self.local_from_timestamp(self.timestamp)
-    #     dt3 = self.local_from_timestamp(self.timestamp + 1)
+    def test_equality_with_datetime_object(self):
+        self.update_timezone(self.timezone)
+        dt1 = DateTime(self.timestamp)
+        dt2 = datetime.fromtimestamp(self.timestamp, tz.gettz())
+        dt3 = datetime.fromtimestamp(self.timestamp + 1, tz.gettz())
 
-    #     self.assertThat(dt1, Equals(dt2))
-    #     self.assertThat(dt1, NotEquals(dt3))
+        self.assertThat(dt1, Equals(dt2))
+        self.assertThat(dt1, NotEquals(dt3))
 
     def test_can_convert_to_datetime(self):
         dt1 = DateTime(self.timestamp)

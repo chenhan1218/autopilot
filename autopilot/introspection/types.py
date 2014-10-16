@@ -604,31 +604,38 @@ class DateTime(_array_packed_type(1)):
     """
     def __init__(self, *args, **kwargs):
         super(DateTime, self).__init__(*args, **kwargs)
-        # This is a workaround where timedelta takes into account day-light
-        # savings.
-        # Get a UTC datetime for the incoming timestamp.
-        # Get a localtime dst offset for the time in question
-        # Use the timedelta workaround again, but this time in localtime and
-        # manually apply the utc offset.
+        # Using timedelta in this manner is a workaround so that we can support
+        # timestamps larger than the 32bit time_t limit on 32bit hardware.
+        # We then apply another workaround where timedelta doesn't apply
+        # daylight savings, so we need to work out the offsets for the
+        # localtime manually and apply them to give us the correct local time.
+        #
+        # Note. self[0] is a UTC timestamp
         EPOCH = datetime(1970, 1, 1, tzinfo=tzutc())
-        utc_stamp = EPOCH + timedelta(seconds=self[0])
+        utc_dt = EPOCH + timedelta(seconds=self[0])
 
-        # gettz tries a number of things (os.environ['TZ'], files # etc.) so no
-        # need to manually attempt to get os.environ, or tzname or
-        # time.tzname[0] etc.
-        localtz_file = gettz()
+        local_tzinfo = gettz()
 
-        utc_offset = localtz_file.utcoffset(utc_stamp)
-        dst_offset = localtz_file.dst(utc_stamp)
-        local_stamp = utc_stamp.replace(tzinfo=localtz_file) + (
-            utc_offset - dst_offset
-        )
+        # Get the localtimes timezone offset (known as standard offset) from
+        # utc and its dst offset (if any).
+        # We will apply this to the utc datetime object to get datetime object
+        # in localtime.
+        utc_offset = local_tzinfo.utcoffset(utc_dt)
+        dst_offset = local_tzinfo.dst(utc_dt)
+        standard_offset = utc_offset - dst_offset
 
-        if (utc_offset - dst_offset) != timedelta(0):
-            apply_dst_offset = localtz_file.dst(local_stamp)
-            local_stamp = local_stamp + apply_dst_offset
+        # Create an local timezone aware datetime object from the utc_dt
+        # (i.e. attaching a timezone to it) and apply the standard offset to
+        # give us the local time.
+        local_dt = utc_dt.replace(tzinfo=local_tzinfo) + standard_offset
 
-        self._cached_dt = local_stamp
+        # If the standard offset is zero we are in standard-time, if not then
+        # we need shift local_dt into the local timezones daylight time.
+        # i.e. apply the dst offset to local_dt.
+        if standard_offset != timedelta(0):
+            local_dt = local_dt + local_tzinfo.dst(local_dt)
+
+        self._cached_dt = local_dt
 
     @property
     def year(self):

@@ -17,15 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from testtools.content import text_content
-
 from datetime import datetime, time, timedelta
 from testscenarios import TestWithScenarios, multiply_scenarios
 from testtools import TestCase, skipUnless
 from testtools.matchers import Equals, IsInstance, NotEquals, raises
-
-# # Used in the full tz scenario
-from pytz import common_timezones
 
 import dbus
 from unittest.mock import patch, Mock
@@ -297,114 +292,20 @@ def can_handle_large_timestamps():
         return False
 
 
-class DateTimeTests(TestWithScenarios, TestCase):
-
-    # timestamps = [
-    #     ('32bitlimit',
-    #         {'timestamp': 2983579200
-    #          }),
-
-    #     ('Original US/Pacific Issues',
-    #      {'timestamp': 1090123200}),
-
-    #     ('NZ dst example',
-    #      {'timestamp': 2047570047}),
-
-    #     ('winter',
-    #         {'timestamp': 1389744000
-    #          }),
-
-    #     ('summer',
-    #         {'timestamp': 1405382400
-    #          })
-    # ]
-
-    # # This produces a list of time stamp from 2014-1-1 -> 2015-1-1 in 30
-    # # minute steps.
-    # # We used this to determine the pattern of approching DST where things go
-    # # wrong.
-    timestamps = [
-        (str(x), {'timestamp': x})
-        for x in range(1388487600, 1420023600, (60*30))
-    ]
-
-    # # These are 2 timestamp examples I'm testing against NZTZ (and thus DST).
-    # # In the current state example1 passes but not example2
-    # ('Breaks things', {'timestamp': 1420021800}),  # This breaks things if it's first in order.
-    # timestamps = [
-    #     # example2 one also needs the dst offset applied.
-    #     ('Will Work', {'timestamp': 1396706400}),
-
-    #     # This breaks when just by itself, uncomment 'Doesn\'t break things'
-    #     # and it doesn't break.
-    #     ('Breaks things', {'timestamp': 1411826400}),
-    #     # ('Doesn\'t break things', {'timestamp': 1411826399}), # This doesn't break.
-
-    #     ('Used to work', {'timestamp': 1396706400}),
-    # ]
-
-    # timestamps = [
-    #     # Example1 needs dst applied.
-    #     ('Example1', {'timestamp': 1396706400}), # Needs local_stamp - localtz_file.dst(utc_stamp)
-    #     ('Example2', {'timestamp': 1420021800}), # Needs nothing
-    #     ('Example3', {'timestamp': 1411866000}), # Needs local_stamp + localtz_file.dst(local_stamp)
-    # ]
-
-    # Remaining MSK failures.
-    # timestamps = [
-    #     ('Example1', {'timestamp': 1414274400}),
-    # ]
-
-
-    # # Uncomment this to test against the common timezones declared in pytz.
-    # timezones = [
-    #     (x, {'timezone': x}) for x in common_timezones
-    # ]
-
-    # # Commented out all but NZ as I'm testing against that.
-    timezones = [
-    #     # ('UTC',
-    #     #     {'timezone': 'UTC'
-    #     #      }),
-
-        ('NewZealand',
-            {'timezone': 'NZ',
-             }),
-
-        ('Pacific',
-            {'timezone': 'US/Pacific'
-             }),
-
-        ('Hongkong',
-            {'timezone': 'Hongkong'
-             }),
-
-    #     # ('MSK',
-    #     #     {'timezone': 'Europe/Moscow'
-    #     #      })
-    ]
-
-    scenarios = multiply_scenarios(timestamps, timezones)
-
-    def local_timezone(self):
-        return tz.gettz(self.timezone)
-
-    def local_from_timestamp(self, timestamp):
-        # fromtimestamp is naive
-        # thus we need create a "local" timestamp for test comparision
-        # and support 32-bit limit via timedelta
-        utc_time = datetime.fromtimestamp(
-            0, tz=tz.tzutc()
-        ) + timedelta(seconds=timestamp)
-        return utc_time.astimezone(self.local_timezone()).replace(tzinfo=None)
-
-    def update_timezone(self):
+class DateTimeBase(TestCase):
+    def update_timezone(self, timezone):
         # These steps need to happen in the right order otherwise they won't
         # get cleanedup properly.
         import time as _time
         self.addCleanup(_time.tzset)
-        self.useFixture(EnvironmentVariable('TZ', self.timezone))
+        self.useFixture(EnvironmentVariable('TZ', timezone))
         _time.tzset()
+
+
+class DateTimeCreationTests(DateTimeBase):
+    def setUp(self):
+        super().setUp()
+        self.timestamp = 1405382400 # Has no significance, just a timestamp
 
     def test_can_construct_datetime(self):
         dt = DateTime(self.timestamp)
@@ -425,16 +326,77 @@ class DateTimeTests(TestWithScenarios, TestCase):
         self.assertTrue(hasattr(dt, 'minute'))
         self.assertTrue(hasattr(dt, 'second'))
 
-    @skipUnless(
-        can_handle_large_timestamps(),
-        "Available only where large timestamps are."
-    )
+    def test_can_create_DateTime_using_large_timestamp(self):
+        """Must be abel to create a DateTime object using a timestamp larger
+        than the 32bit time_t limit.
+
+        Note. Uses a well known timezone for comparison.
+
+        """
+        self.update_timezone('UTC')
+        dt = DateTime(2983579200)  # or GMT: Fri, 18 Jul 2064 04:00:00 GMT
+
+        self.assertEqual(dt.year, 2064)
+        self.assertEqual(dt.month, 7)
+        self.assertEqual(dt.day, 18)
+        self.assertEqual(dt.hour, 4)
+        self.assertEqual(dt.minute, 0)
+        self.assertEqual(dt.second, 0)
+
+
+class DateTimeTests(TestWithScenarios, DateTimeBase):
+
+    timestamps = [
+        ('Test US/Pacific explicitly',
+         {'timestamp': 1090123200}),
+
+        ('NZ dst example',
+         {'timestamp': 2047570047}),
+
+        ('winter',
+         {'timestamp': 1389744000}),
+
+        ('summer',
+         {'timestamp': 1405382400})
+    ]
+
+    if can_handle_large_timestamps():
+        timestamps.append(
+            ('32bitlimit', {'timestamp': 2983579200}),
+        )
+
+    timezones = [
+        ('UTC',
+            {'timezone': 'UTC'
+             }),
+
+        ('London',
+            {'timezone': 'Europe/London'
+             }),
+
+        ('New Zealand',
+            {'timezone': 'NZ',
+             }),
+
+        ('Pacific',
+            {'timezone': 'US/Pacific'
+             }),
+
+        ('Hongkong',
+            {'timezone': 'Hongkong'
+             }),
+
+        ('MSK',
+            {'timezone': 'Europe/Moscow'
+             })
+    ]
+
+    scenarios = multiply_scenarios(timestamps, timezones)
+
     def test_datetime_properties_have_correct_values(self):
-        self.update_timezone()
+        self.update_timezone(self.timezone)
         dt1 = DateTime(self.timestamp)
-        dt2 = datetime.fromtimestamp(self.timestamp)
-        # # Logging this to find out which dates are failing.
-        self.addDetail("Actual datetime", text_content(str(dt2)))
+        dt2 = datetime.fromtimestamp(self.timestamp, tz.gettz())
 
         self.assertThat(dt1.year, Equals(dt2.year))
         self.assertThat(dt1.month, Equals(dt2.month))
@@ -442,11 +404,11 @@ class DateTimeTests(TestWithScenarios, TestCase):
         self.assertThat(dt1.hour, Equals(dt2.hour))
         self.assertThat(dt1.minute, Equals(dt2.minute))
         self.assertThat(dt1.second, Equals(dt2.second))
-        # self.assertThat(dt1.timestamp(), Equals(dt2.timestamp()))
-        # self.assertThat(dt1.timestamp(), Equals(self.timestamp))
+        # self.assertThat(dt1.timestamp, Equals(dt2.timestamp()))
+        # self.assertThat(dt1.timestamp, Equals(self.timestamp))
 
     def test_equality_with_datetime(self):
-        self.update_timezone()
+        self.update_timezone(self.timezone)
         dt1 = DateTime(self.timestamp)
         dt2 = datetime(dt1.year, dt1.month, dt1.day,
                        dt1.hour, dt1.minute, dt1.second)
@@ -454,7 +416,7 @@ class DateTimeTests(TestWithScenarios, TestCase):
         self.assertThat(dt1, Equals(dt2))
 
     def test_equality_with_list(self):
-        self.update_timezone()
+        self.update_timezone(self.timezone)
         dt1 = DateTime(self.timestamp)
         dt2 = [self.timestamp]
 
@@ -463,7 +425,7 @@ class DateTimeTests(TestWithScenarios, TestCase):
     # Not sure what to do with local_from_timestamp, don't really want to test
     # ourself against ourself.
     # def test_equality_with_datetime_timestamp(self):
-    #     self.update_timezone()
+    #     self.update_timezone(self.timezone)
     #     dt1 = DateTime(self.timestamp)
     #     dt2 = self.local_from_timestamp(self.timestamp)
     #     dt3 = self.local_from_timestamp(self.timestamp + 1)
@@ -477,7 +439,7 @@ class DateTimeTests(TestWithScenarios, TestCase):
 
     # Using local_from_timestamp
     # def test_repr(self):
-    #     self.update_timezone()
+    #     self.update_timezone(self.timezone)
     #     dt = DateTime(self.timestamp)
     #     observed = repr(dt)
 
@@ -491,7 +453,7 @@ class DateTimeTests(TestWithScenarios, TestCase):
     #     self.assertEqual(expected, observed)
 
     def test_repr_equals_str(self):
-        self.update_timezone()
+        self.update_timezone(self.timezone)
         dt = DateTime(self.timestamp)
         self.assertEqual(repr(dt), str(dt))
 

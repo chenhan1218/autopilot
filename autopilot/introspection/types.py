@@ -549,8 +549,8 @@ class DateTime(_array_packed_type(1)):
     """The DateTime class represents a date and time in the UTC timezone.
 
     DateTime is constructed by passing a unix timestamp in to the constructor.
-    The incoming timestamp is assumed to be in localtime.
-    For date support for 32-bit platforms beyond 2038, we use a timedelta.
+    The incoming timestamp is assumed to be in UTC.
+
     Timestamps are expressed as the number of seconds since 1970-01-01T00:00:00
     in the UTC timezone::
 
@@ -593,10 +593,26 @@ class DateTime(_array_packed_type(1)):
     Finally, you can also compare a DateTime instance with a python datetime
     instance::
 
-        >>> my_datetime = datetime.datetime.fromutctimestamp(1377209927)
+        >>> my_datetime = datetime.datetime.utcfromtimestamp(1377209927)
         True
 
-    DateTime instances can be converted to datetime instances:
+
+    .. note:: Autopilot supports dates beyond 2038 on 32-bit platforms. To
+     achieve this the underlying mechanisms require to work with timezone aware
+     datetime objects.
+
+      This means that the following won't always be true (due to the naive
+      timestamp not having the correct daylight-savings time details)::
+
+        >>> datetime.fromtimestamp(example_ts).day == DateTime(example_ts).day
+
+      But this will work::
+
+        >>> from dateutil.tz import gettz
+        >>> datetime.fromtimestamp(
+                example_ts, gettz()).day == DateTime(example_ts).day
+
+    DateTime instances can be converted to datetime instances::
 
         >>> isinstance(my_dt.datetime, datetime.datetime)
         True

@@ -669,9 +669,10 @@ class DateTime(_array_packed_type(1)):
         # give us the local time.
         local_dt = utc_dt.replace(tzinfo=local_tzinfo) + standard_offset
 
-        # If the standard offset is zero we are in standard-time, if not then
-        # we need shift local_dt into the local timezones daylight time.
-        # i.e. apply the dst offset to local_dt.
+        # If the new local time is firmly in std time then the standard offset
+        # will be 0 (i.e. timedelta(0)).
+        # If the delta isn't 0 then we need to use the timezone information to
+        # apply the dst delta to the local time.
         if standard_offset != timedelta(0):
             local_dt = local_dt + local_tzinfo.dst(local_dt)
 

@@ -359,7 +359,7 @@ class PointingInputBase(AutopilotTestCase):
         self.addCleanup(os.remove, window_spec_file)
 
         return self.launch_test_application(
-            'window-mocker', window_spec_file, app_type='qt')    
+            'window-mocker', window_spec_file, app_type='qt')
 
 
 class MouseTestCase(PointingInputBase):
@@ -367,7 +367,7 @@ class MouseTestCase(PointingInputBase):
     def setUp(self):
         super(MouseTestCase, self).setUp()
         self.device = Mouse.create()
-    
+
     def get_mock_app_main_widget_center_point(self):
         self.app = self.start_mock_app()
         self.widget = self.app.select_single('MouseTestWidget')

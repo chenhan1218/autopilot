@@ -347,7 +347,31 @@ class OSKBackendTests(AutopilotTestCase, QmlScriptRunnerMixin):
         )
 
 
-class MouseTestCase(AutopilotTestCase):
+class PointingInputBase(AutopilotTestCase):
+
+    def start_mock_app(self):
+        window_spec_file = mktemp(suffix='.json')
+        window_spec = {"Contents": "MouseTest"}
+        json.dump(
+            window_spec,
+            open(window_spec_file, 'w')
+        )
+        self.addCleanup(os.remove, window_spec_file)
+
+        return self.launch_test_application(
+            'window-mocker', window_spec_file, app_type='qt')    
+
+
+class MouseTestCase(PointingInputBase):
+
+    def setUp(self):
+        super(MouseTestCase, self).setUp()
+        self.device = Mouse.create()
+    
+    def get_mock_app_main_widget_center_point(self):
+        self.app = self.start_mock_app()
+        self.widget = self.app.select_single('MouseTestWidget')
+        return get_center_point(self.widget)
 
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (Mouse)")
     def test_move_to_nonint_point(self):
@@ -357,11 +381,10 @@ class MouseTestCase(AutopilotTestCase):
 
         """
         screen_geometry = Display.create().get_screen_geometry(0)
-        device = Mouse.create()
         target_x = screen_geometry[0] + 10
         target_y = screen_geometry[1] + 10.6
-        device.move(target_x, target_y)
-        self.assertEqual(device.position(), (target_x, int(target_y)))
+        self.device.move(target_x, target_y)
+        self.assertEqual(self.device.position(), (target_x, int(target_y)))
 
     @patch('autopilot.platform.model', new=lambda *args: "Not Desktop", )
     def test_mouse_creation_on_device_raises_useful_error(self):
@@ -374,6 +397,33 @@ class MouseTestCase(AutopilotTestCase):
         )
         self.assertThat(lambda: Mouse.create(),
                         raises(expected_exception))
+
+    def test_click_subsequent_event_default_delay(self):
+        x, y = self.get_mock_app_main_widget_center_point()
+        self.device.move(x, y)
+        with ElapsedTimeCounter() as time_counter:
+            for i in range(10):
+                self.device.click()
+
+        self.assertThat(time_counter.elapsed_time, GreaterThan(0.9))
+
+    def test_click_subsequent_events_delay(self):
+        x, y = self.get_mock_app_main_widget_center_point()
+        self.device.move(x, y)
+        with ElapsedTimeCounter() as time_counter:
+            for i in range(3):
+                self.device.click(time_between_events=0.6)
+
+        self.assertThat(time_counter.elapsed_time, GreaterThan(1.0))
+
+    def test_click_subsequent_events_no_delay(self):
+        x, y = self.get_mock_app_main_widget_center_point()
+        self.device.move(x, y)
+        with ElapsedTimeCounter() as time_counter:
+            for i in range(3):
+                self.device.click(time_between_events=0.0)
+
+        self.assertThat(time_counter.elapsed_time, LessThan(0.9))
 
 
 @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")

@@ -347,7 +347,7 @@ class OSKBackendTests(AutopilotTestCase, QmlScriptRunnerMixin):
         )
 
 
-class PointingInputBase(AutopilotTestCase):
+class MockAppMouseTestBase(AutopilotTestCase):
 
     def start_mock_app(self):
         window_spec_file = mktemp(suffix='.json')
@@ -362,7 +362,7 @@ class PointingInputBase(AutopilotTestCase):
             'window-mocker', window_spec_file, app_type='qt')
 
 
-class MouseTestCase(PointingInputBase):
+class MouseTestCase(MockAppMouseTestBase):
 
     def setUp(self):
         super(MouseTestCase, self).setUp()
@@ -427,7 +427,7 @@ class MouseTestCase(PointingInputBase):
 
 
 @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
-class TouchTests(AutopilotTestCase):
+class TouchTests(MockAppMouseTestBase):
 
     def setUp(self):
         super(TouchTests, self).setUp()
@@ -437,18 +437,6 @@ class TouchTests(AutopilotTestCase):
         self.widget = self.app.select_single('MouseTestWidget')
         self.button_status = self.app.select_single(
             'QLabel', objectName='button_status')
-
-    def start_mock_app(self):
-        window_spec_file = mktemp(suffix='.json')
-        window_spec = {"Contents": "MouseTest"}
-        json.dump(
-            window_spec,
-            open(window_spec_file, 'w')
-        )
-        self.addCleanup(os.remove, window_spec_file)
-
-        return self.launch_test_application(
-            'window-mocker', window_spec_file, app_type='qt')
 
     def test_tap(self):
         x, y = get_center_point(self.widget)

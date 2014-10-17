@@ -662,7 +662,7 @@ class DateTime(_array_packed_type(1)):
         local_tzinfo = gettz()
 
         # Get the localtimes timezone offset (known as standard offset) by
-        # subtracting its dst offset (if any) from the utc offset.
+        # subtracting its dst offset (if any) from its utc offset.
         # We apply this to the utc datetime object to get datetime object in
         # localtime.
         # (We will check (once we have a local datetime) if the time is in dst

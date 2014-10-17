@@ -284,16 +284,16 @@ class ColorTypeTests(TestCase):
         self.assertEqual(repr(c), str(c))
 
 
-def can_handle_large_timestamps():
-    """Return true if the platform can handle timestamps larger than 32bit
+def unable_to_handle_timestamp(timestamp):
+    """Return false if the platform can handle timestamps larger than 32bit
     limit.
 
     """
     try:
-        datetime.fromtimestamp(2**32+1)
-        return True
-    except:
+        datetime.fromtimestamp(timestamp)
         return False
+    except:
+        return True
 
 
 class DateTimeCreationTests(TestCase):
@@ -369,13 +369,17 @@ class DateTimeTests(TestWithScenarios, TestCase):
 
         ('Summer', dict(
             timestamp=1405382400
-        ))
-    ]
+        )),
 
-    if can_handle_large_timestamps():
-        timestamps.append(
-            ('32bitlimit', {'timestamp': 2983579200}),
-        )
+        ('32bit max', dict(
+            timestamp=2**32+1
+        )),
+
+        ('32bit limit', dict(
+            timestamp=2983579200
+        )),
+
+    ]
 
     timezones = [
         ('UTC', dict(
@@ -405,8 +409,14 @@ class DateTimeTests(TestWithScenarios, TestCase):
 
     scenarios = multiply_scenarios(timestamps, timezones)
 
+    def skip_if_timestamp_too_large(self, timestamp):
+        if unable_to_handle_timestamp(self.timestamp):
+            self.skip("Timestamp to large for platform time_t")
+
     def test_datetime_properties_have_correct_values(self):
+        self.skip_if_timestamp_too_large(self.timestamp)
         self.useFixture(SetTimezone(self.timezone))
+
         dt1 = DateTime(self.timestamp)
         dt2 = datetime.fromtimestamp(self.timestamp, tz.gettz())
 
@@ -420,7 +430,9 @@ class DateTimeTests(TestWithScenarios, TestCase):
         # self.assertThat(dt1.timestamp, Equals(self.timestamp))
 
     def test_equality_with_datetime(self):
+        self.skip_if_timestamp_too_large(self.timestamp)
         self.useFixture(SetTimezone(self.timezone))
+
         dt1 = DateTime(self.timestamp)
         dt2 = datetime(
             dt1.year, dt1.month, dt1.day, dt1.hour, dt1.minute, dt1.second
@@ -429,14 +441,18 @@ class DateTimeTests(TestWithScenarios, TestCase):
         self.assertThat(dt1, Equals(dt2))
 
     def test_equality_with_list(self):
+        self.skip_if_timestamp_too_large(self.timestamp)
         self.useFixture(SetTimezone(self.timezone))
+
         dt1 = DateTime(self.timestamp)
         dt2 = [self.timestamp]
 
         self.assertThat(dt1, Equals(dt2))
 
     def test_equality_with_datetime_object(self):
+        self.skip_if_timestamp_too_large(self.timestamp)
         self.useFixture(SetTimezone(self.timezone))
+
         dt1 = DateTime(self.timestamp)
         dt2 = datetime.fromtimestamp(self.timestamp, tz.gettz())
         dt3 = datetime.fromtimestamp(self.timestamp + 1, tz.gettz())
@@ -445,6 +461,8 @@ class DateTimeTests(TestWithScenarios, TestCase):
         self.assertThat(dt1, NotEquals(dt3))
 
     def test_can_convert_to_datetime(self):
+        self.skip_if_timestamp_too_large(self.timestamp)
+
         dt1 = DateTime(self.timestamp)
         self.assertThat(dt1.datetime, IsInstance(datetime))
 

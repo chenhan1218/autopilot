@@ -341,7 +341,8 @@ class DateTimeCreationTests(TestCase):
         """
         # Use a well known timezone for comparison
         self.useFixture(SetTimezone('UTC'))
-        dt = DateTime(2**32+1)  # or: Fri, 18 Jul 2064 04:00:00 GMT
+        large_timestamp = 2**32+1
+        dt = DateTime(large_timestamp)
 
         self.assertEqual(dt.year, 2106)
         self.assertEqual(dt.month, 2)
@@ -349,6 +350,7 @@ class DateTimeCreationTests(TestCase):
         self.assertEqual(dt.hour, 6)
         self.assertEqual(dt.minute, 28)
         self.assertEqual(dt.second, 17)
+        self.assertEqual(dt.timestamp, large_timestamp)
 
 
 class DateTimeTests(TestWithScenarios, TestCase):
@@ -426,8 +428,7 @@ class DateTimeTests(TestWithScenarios, TestCase):
         self.assertThat(dt1.hour, Equals(dt2.hour))
         self.assertThat(dt1.minute, Equals(dt2.minute))
         self.assertThat(dt1.second, Equals(dt2.second))
-        # self.assertThat(dt1.timestamp, Equals(dt2.timestamp()))
-        # self.assertThat(dt1.timestamp, Equals(self.timestamp))
+        self.assertThat(dt1.timestamp, Equals(dt2.timestamp()))
 
     def test_equality_with_datetime(self):
         self.skip_if_timestamp_too_large(self.timestamp)

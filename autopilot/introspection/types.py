@@ -634,6 +634,13 @@ class DateTime(_array_packed_type(1)):
         >>> dt1 == dt2
         True
 
+    .. note:: DateTime.timestamp() will not always equal the passed in
+      timestamp.
+      To paraphrase a message from [http://bugs.python.org/msg229393]
+      "datetime.timestamp is supposed to be inverse of
+      datetime.fromtimestamp(), but since the later is not monotonic, no such
+      inverse exists in the strict mathematical sense."
+
     DateTime instances can be converted to datetime instances::
 
         >>> isinstance(my_dt.datetime, datetime.datetime)
@@ -704,7 +711,7 @@ class DateTime(_array_packed_type(1)):
 
     @property
     def timestamp(self):
-        return self[0]
+        return self._cached_dt.timestamp()
 
     @property
     def datetime(self):

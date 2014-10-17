@@ -319,7 +319,7 @@ class Mouse(CleanupRegistered):
         """Click mouse at current location.
 
         :param time_between_events: time to wait between subsequent click
-         event.
+         events.
 
         """
         raise NotImplementedError("You cannot use this class directly.")
@@ -340,7 +340,7 @@ class Mouse(CleanupRegistered):
          * x, y, w, h
 
         :param time_between_events: time to wait between subsequent click
-         event.
+         events.
         :raises: **ValueError** if none of these attributes are found, or if an
          attribute is of an incorrect type.
 

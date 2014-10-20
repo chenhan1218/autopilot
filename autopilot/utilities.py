@@ -478,8 +478,8 @@ class cached_result(object):
 
 class EventDelay(object):
 
-    """Delay execution of a subsequent event for a certain number
-    of seconds.
+    """Delay execution of a subsequent event for a certain period
+    of time.
 
     To delay the execution of a subsequent event for two seconds
     use it like this::

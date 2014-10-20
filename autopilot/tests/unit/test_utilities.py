@@ -102,29 +102,26 @@ class EventDelayTests(TestCase):
 
     def test_mocked_event_interval_adder_contextmanager(self):
         with ElapsedTimeCounter() as time_counter:
-            with sleep.mocked():
-                with self.event_delayer.mocked():
-                    # The first call of delay() only stores the last time
-                    # stamp, it is only the second call where the delay
-                    # actually happens. So we call delay() twice here to
-                    # ensure mocking is working as expected.
-                    self.event_delayer.delay(10)
-                    self.event_delayer.delay(3)
-                    self.assertThat(time_counter.elapsed_time, LessThan(2))
+            with self.event_delayer.mocked():
+                # The first call of delay() only stores the last time
+                # stamp, it is only the second call where the delay
+                # actually happens. So we call delay() twice here to
+                # ensure mocking is working as expected.
+                self.event_delayer.delay(10)
+                self.event_delayer.delay(3)
+                self.assertThat(time_counter.elapsed_time, LessThan(2))
 
     def test_total_interval_time_starts_at_zero(self):
-        with sleep.mocked():
-            with self.event_delayer.mocked() as mocked_delayer:
-                self.assertThat(
-                    mocked_delayer.total_delay(), Equals(0.0))
+        with self.event_delayer.mocked() as mocked_delayer:
+            self.assertThat(
+                mocked_delayer.total_delay(), Equals(0.0))
 
     def test_total_delay_time_accumulates(self):
-        with sleep.mocked():
-            with self.event_delayer.mocked() as mocked_delayer:
-                self.event_delayer.delay(2)
-                self.assertThat(mocked_delayer.total_delay(), Equals(2))
-                self.event_delayer.delay(3)
-                self.assertThat(mocked_delayer.total_delay(), Equals(5))
+        with self.event_delayer.mocked() as mocked_delayer:
+            self.event_delayer.delay(2)
+            self.assertThat(mocked_delayer.total_delay(), Equals(2))
+            self.event_delayer.delay(3)
+            self.assertThat(mocked_delayer.total_delay(), Equals(5))
 
     def test_last_event_delay_counter_updates_on_first_call(self):
         self.event_delayer.delay(1.0)

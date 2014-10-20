@@ -494,11 +494,10 @@ class EventDelay(object):
         from autopilot.utilities import EventDelay, sleep
 
         event_delayer = EventDelay()
-        with sleep.mocked():
-            with event_delayer.mocked() as mocked_delay:
-                event_delayer.delay(10)
-                event_delayer.delay(2)
-                self.assertThat(mocked_delay.total_delay(), Equals(12.0))
+        with event_delayer.mocked() as mocked_delay:
+            event_delayer.delay(10)
+            event_delayer.delay(2)
+            self.assertThat(mocked_delay.total_delay(), Equals(12.0))
 
     """
 
@@ -509,11 +508,13 @@ class EventDelay(object):
 
     @contextmanager
     def mocked(self):
+        sleep.enable_mock()
         self.enable_mock()
         try:
             yield self
         finally:
             self.disable_mock()
+            sleep.disable_mock()
 
     def enable_mock(self):
         self._mocked = True
@@ -537,6 +538,7 @@ class EventDelay(object):
         if self._mocked:
             self._mock_count += self.duration
             return
+        
         if time.monotonic() <= (self._last_event + self.duration):
             self._sleep_for_calculated_delta(self.duration)
 

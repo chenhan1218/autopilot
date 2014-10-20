@@ -497,14 +497,14 @@ class EventDelay(object):
         with event_delayer.mocked() as mocked_delay:
             event_delayer.delay(10)
             event_delayer.delay(2)
-            self.assertThat(mocked_delay.total_delay(), Equals(12.0))
+            self.assertThat(mocked_delay.delay_time(), Equals(12.0))
 
     """
 
     def __init__(self):
         self._mocked = False
-        self._mock_count = 0.0
         self._last_event = 0.0
+        self._time_delta = 0.0
 
     @contextmanager
     def mocked(self):
@@ -523,23 +523,23 @@ class EventDelay(object):
     def disable_mock(self):
         self._mocked = False
 
-    def total_delay(self):
-        return self._mock_count
+    def delay_time(self):
+        return self._time_delta
 
-    def _sleep_for_calculated_delta(self, duration=0.1):
-        delta = (self._last_event + duration) - time.monotonic()
-        if delta > 0.0:
-            sleep(delta)
+    def _get_current_time(self):
+        return float(time.monotonic())
+
+    def _sleep_for_calculated_delta(self, current_time, duration=0.1):
+        self._time_delta = (self._last_event + duration) - current_time
+        if self._time_delta > 0.0:
+            sleep(self._time_delta)
         else:
             return
 
     def delay(self, duration=0.1):
         self.duration = float(duration)
-        if self._mocked:
-            self._mock_count += self.duration
-            return
-        
-        if time.monotonic() <= (self._last_event + self.duration):
-            self._sleep_for_calculated_delta(self.duration)
+        self.current_time = self._get_current_time()
+        if self.current_time <= (self._last_event + self.duration):
+            self._sleep_for_calculated_delta(self.current_time, self.duration)
 
-        self._last_event = time.monotonic()
+        self._last_event = self._get_current_time()

@@ -111,27 +111,26 @@ class EventDelayTests(TestCase):
                 self.event_delayer.delay(3)
                 self.assertThat(time_counter.elapsed_time, LessThan(2))
 
-    def test_total_interval_time_starts_at_zero(self):
+    def test_time_delta_start_at_zero(self):
         with self.event_delayer.mocked() as mocked_delayer:
             self.assertThat(
-                mocked_delayer.total_delay(), Equals(0.0))
-
-    def test_total_delay_time_accumulates(self):
-        with self.event_delayer.mocked() as mocked_delayer:
-            self.event_delayer.delay(2)
-            self.assertThat(mocked_delayer.total_delay(), Equals(2))
-            self.event_delayer.delay(3)
-            self.assertThat(mocked_delayer.total_delay(), Equals(5))
+                mocked_delayer.delay_time(), Equals(0.0))
 
     def test_last_event_delay_counter_updates_on_first_call(self):
         self.event_delayer.delay(1.0)
 
         self.assertThat(self.event_delayer._last_event, GreaterThan(0.0))
 
-    def test_last_event_counter_not_updates_with_mocked(self):
-        with self.event_delayer.mocked() as mocked_delayer:
-            self.event_delayer.delay(2)
-            self.assertThat(mocked_delayer._last_event, Equals(0.0))
+    def test_unmocked_first_call_no_delay(self):
+        with patch('autopilot.utilities.time') as patched_time:
+            self.event_delayer.delay()
+            self.assertThat(patched_time.sleep.call_count, Equals(0))
+
+    def test_unmocked_second_call_delay(self):
+        with patch('autopilot.utilities.time') as patched_time:
+            self.event_delayer.delay()
+            self.event_delayer.delay()
+            self.assertThat(patched_time.sleep.call_count, Equals(1))
 
 
 class CompatibleReprTests(TestCase):

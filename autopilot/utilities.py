@@ -526,7 +526,7 @@ class EventDelay(object):
         return self._mock_count
 
     def _sleep_for_calculated_delta(self, duration=0.1):
-        delta = (self._last_event + duration) - time.time()
+        delta = (self._last_event + duration) - time.monotonic()
         if delta > 0.0:
             sleep(delta)
         else:
@@ -537,7 +537,7 @@ class EventDelay(object):
         if self._mocked:
             self._mock_count += self.duration
             return
-        if time.time() <= (self._last_event + self.duration):
+        if time.monotonic() <= (self._last_event + self.duration):
             self._sleep_for_calculated_delta(self.duration)
 
-        self._last_event = time.time()
+        self._last_event = time.monotonic()

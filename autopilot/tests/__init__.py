@@ -24,14 +24,7 @@ import testtools
 
 class LogHandlerTestCase(testtools.TestCase):
 
-    """A mixin that adds a memento loghandler for testing logging.
-
-    Originally written by:
-     - Guillermo Gonzalez
-     - Facundo Batista
-     - Natalia Bidart
-
-    """
+    """A mixin that adds a memento loghandler for testing logging."""
 
     class MementoHandler(logging.Handler):
 

@@ -38,7 +38,7 @@ AP_OPT=""
 
 SERVERNUM=5
 SCREEN="1024x768x24"
-
+WINDOWMANAGER="xmonad"
 DBUS_SESSION_BUS_PID=""
 X_PID=""
 
@@ -58,6 +58,8 @@ Options:
     -X, --xephyr         Run in nested mode with Xephyr
     -s, --screen WxHxD   Sets screen width, height, and depth to W, H, and D
                          respectively (default: $SCREEN)
+    -w, --windowmanager  Start a window manager before executing tests
+                         (default: $WINDOWMANAGER)
 
 EOF
     RC=1
@@ -117,8 +119,8 @@ on_exit() {
 
 trap on_exit EXIT INT QUIT ABRT PIPE TERM
 
-SHORTOPTS="hda:s:X"
-LONGOPTS="help,debug,autopilot:,screen:,xephyr"
+SHORTOPTS="hda:s:X:w:"
+LONGOPTS="help,debug,autopilot:,screen:,xephyr,windowmanager:"
 
 TEMP=$(getopt -o $SHORTOPTS --long $LONGOPTS -- "$@")
 eval set -- "$TEMP"
@@ -138,6 +140,13 @@ while true ; do
         -s|-screen)
             SCREEN=$2
             shift 2;;
+        -w|--windowmanager)
+            WINDOWMANAGER=$2
+            WINDOWMANAGER_CMD="$(which $WINDOWMANAGER||true)"
+            [ ! -x "$WINDOWMANAGER_CMD" ] && \
+                echo "E: $WINDOWMANAGER Executable not found" &&\
+                RC=1 && exit 1
+            shift;;
         -X|--xephyr)
             XEPHYR=1
             [ ! -x "$XEPHYR_CMD" ] && \
@@ -171,6 +180,10 @@ export DISPLAY=:${SERVERNUM}.0
 
 export XAUTHORITY=/dev/null
 wait_for_x $SERVERNUM
+if [$WINDOWMANAGER_CMD -eq 1]; then
+    echo "I: Starting window manager"
+    dbus-launch --exit-with-session $WINDOWMANAGER &
+fi
 echo "I: Starting autopilot"
 dbus-launch --exit-with-session python3 -m autopilot.run run $AP_OPT $TESTLIST || RC=$?
 echo "I: autopilot tests done"

@@ -416,6 +416,7 @@ class _UInputTouchDevice(object):
         self._device.write(e.EV_ABS, e.ABS_MT_POSITION_X, int(x))
         self._device.write(e.EV_ABS, e.ABS_MT_POSITION_Y, int(y))
         self._device.syn()
+        _logger.debug("The pointing 'finger' is now at position %d,%d.", x, y)
 
     def finger_up(self):
         """Internal: moves finger "finger" up from the touchscreen

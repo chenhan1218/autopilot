@@ -592,6 +592,10 @@ class UInputTouchDeviceTestCase(tests.LogHandlerTestCase):
             'DEBUG',
             "Moving pointing 'finger' to position 10,10."
         )
+        self.assertLogLevelContains(
+            'DEBUG',
+            "The pointing 'finger' is now at position 10,10."
+        )
 
     def test_finger_up_without_finger_pressed_must_raise_error(self):
         touch = self.get_touch_with_mocked_backend()

@@ -585,7 +585,6 @@ class DateTime(_array_packed_type(1)):
         >>> my_dt.second
         47
 
-
     Two DateTime objects can be compared for equality::
 
         >>> my_dt == DateTime(1377209927)

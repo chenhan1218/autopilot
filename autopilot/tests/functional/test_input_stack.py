@@ -29,6 +29,7 @@ from testtools.matchers import (
     LessThan,
     GreaterThan
 )
+from testscenarios import TestWithScenarios
 from textwrap import dedent
 import time
 import timeit
@@ -362,16 +363,11 @@ class MockAppMouseTestBase(AutopilotTestCase):
             'window-mocker', window_spec_file, app_type='qt')
 
 
-class MouseTestCase(MockAppMouseTestBase):
+class MouseTestCase(AutopilotTestCase):
 
     def setUp(self):
         super(MouseTestCase, self).setUp()
         self.device = Mouse.create()
-
-    def get_mock_app_main_widget_center_point(self):
-        self.app = self.start_mock_app()
-        self.widget = self.app.select_single('MouseTestWidget')
-        return get_center_point(self.widget)
 
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (Mouse)")
     def test_move_to_nonint_point(self):
@@ -397,33 +393,6 @@ class MouseTestCase(MockAppMouseTestBase):
         )
         self.assertThat(lambda: Mouse.create(),
                         raises(expected_exception))
-
-    def test_click_subsequent_event_default_delay(self):
-        x, y = self.get_mock_app_main_widget_center_point()
-        self.device.move(x, y)
-        with ElapsedTimeCounter() as time_counter:
-            for i in range(10):
-                self.device.click()
-
-        self.assertThat(time_counter.elapsed_time, GreaterThan(0.9))
-
-    def test_click_subsequent_events_delay(self):
-        x, y = self.get_mock_app_main_widget_center_point()
-        self.device.move(x, y)
-        with ElapsedTimeCounter() as time_counter:
-            for i in range(3):
-                self.device.click(time_between_events=0.6)
-
-        self.assertThat(time_counter.elapsed_time, GreaterThan(1.0))
-
-    def test_click_subsequent_events_no_delay(self):
-        x, y = self.get_mock_app_main_widget_center_point()
-        self.device.move(x, y)
-        with ElapsedTimeCounter() as time_counter:
-            for i in range(3):
-                self.device.click(time_between_events=0.0)
-
-        self.assertThat(time_counter.elapsed_time, LessThan(0.9))
 
 
 @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
@@ -455,30 +424,6 @@ class TouchTests(MockAppMouseTestBase):
         self.device.release()
         self.assertThat(
             self.button_status.text, Eventually(Equals("Touch Release")))
-
-    def test_tap_subsequent_events_delay(self):
-        x, y = get_center_point(self.widget)
-        with ElapsedTimeCounter() as time_counter:
-            for i in range(3):
-                self.device.tap(x, y, time_between_events=0.6)
-
-        self.assertThat(time_counter.elapsed_time, GreaterThan(1.0))
-
-    def test_tap_subsequent_events_no_delay(self):
-        x, y = get_center_point(self.widget)
-        with ElapsedTimeCounter() as time_counter:
-            for i in range(3):
-                self.device.tap(x, y, time_between_events=0.0)
-
-        self.assertThat(time_counter.elapsed_time, LessThan(1.0))
-
-    def test_tap_subsequent_events_default_delay(self):
-        x, y = get_center_point(self.widget)
-        with ElapsedTimeCounter() as time_counter:
-            for i in range(10):
-                self.device.tap(x, y)
-
-        self.assertThat(time_counter.elapsed_time, GreaterThan(0.9))
 
 
 class TouchGesturesTests(AutopilotTestCase, QmlScriptRunnerMixin):
@@ -546,6 +491,44 @@ class PointerWrapperTests(AutopilotTestCase):
         p.drag(0, 0, 100, 123)
         self.assertThat(p.x, Equals(100))
         self.assertThat(p.y, Equals(123))
+
+
+class InputEventDelayTests(MockAppMouseTestBase, TestWithScenarios):
+
+    scenarios = [
+        ('Touch', dict(input_class=Touch)),
+        ('Mouse', dict(input_class=Mouse)),
+    ]
+    
+    def setUp(self):
+        super(InputEventDelayTests, self).setUp()
+        self.device = Pointer(self.input_class.create())
+        self.widget = self.get_mock_app_main_widget()
+
+    def get_mock_app_main_widget(self):
+        self.app = self.start_mock_app()
+        return self.app.select_single('MouseTestWidget')
+
+    def test_subsequent_events_delay(self):
+        with ElapsedTimeCounter() as time_counter:
+            for i in range(3):
+                self.device.click_object(self.widget, time_between_events=0.6)
+
+        self.assertThat(time_counter.elapsed_time, GreaterThan(1.0))
+
+    def test_subsequent_events_no_delay(self):
+        with ElapsedTimeCounter() as time_counter:
+            for i in range(3):
+                self.device.click_object(self.widget, time_between_events=0.0)
+
+        self.assertThat(time_counter.elapsed_time, LessThan(1.0))
+
+    def test_subsequent_events_default_delay(self):
+        with ElapsedTimeCounter() as time_counter:
+            for i in range(10):
+                self.device.click_object(self.widget)
+
+        self.assertThat(time_counter.elapsed_time, GreaterThan(0.9))
 
 
 class InputStackCleanupTests(TestCase):

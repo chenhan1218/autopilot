@@ -39,6 +39,7 @@ from autopilot.utilities import (
     deprecated,
     EventDelay,
     sleep,
+    sleep_for_calculated_delta,
 )
 
 
@@ -111,10 +112,10 @@ class EventDelayTests(TestCase):
                 self.event_delayer.delay(3)
                 self.assertThat(time_counter.elapsed_time, LessThan(2))
 
-    def test_time_delta_start_at_zero(self):
+    def test_last_event_start_at_zero(self):
         with self.event_delayer.mocked() as mocked_delayer:
             self.assertThat(
-                mocked_delayer.delay_time(), Equals(0.0))
+                mocked_delayer.last_event_time(), Equals(0.0))
 
     def test_last_event_delay_counter_updates_on_first_call(self):
         self.event_delayer.delay(1.0)
@@ -131,6 +132,40 @@ class EventDelayTests(TestCase):
             self.event_delayer.delay()
             self.event_delayer.delay()
             self.assertThat(patched_time.sleep.call_count, Equals(1))
+
+    def test_raises_exception_if_current_time_last_event_equal(self):
+        self.event_delayer.delay(current_time=lambda: 100)
+        self.assertRaises(
+            ValueError,
+            self.event_delayer.delay,
+            current_time=lambda: 100
+        )
+
+    def test_raises_exception_if_current_time_smaller_than_last_event(self):
+        self.event_delayer.delay(current_time=lambda: 100)
+        self.assertRaises(
+            ValueError,
+            self.event_delayer.delay,
+            current_time=lambda: 80
+        )
+
+    def test_no_sleep_if_time_jumps_since_last_event(self):
+        with patch('autopilot.utilities.time') as patched_time:
+            self.event_delayer.delay(2, current_time=lambda: 100)
+            self.event_delayer.delay(2, current_time=lambda: 110)
+            self.assertThat(patched_time.sleep.call_count, Equals(0))
+
+    def test_sleep_delta_calculator_returns_zero_if_time_delta_negative(self):
+        result = sleep_for_calculated_delta(100, 2, 97)
+        self.assertThat(result, Equals(0.0))
+
+    def test_sleep_delta_calculator_returns_zero_if_time_delta_zero(self):
+        result = sleep_for_calculated_delta(100, 2, 98)
+        self.assertThat(result, Equals(0.0))
+
+    def test_sleep_delta_calculator_returns_non_zero_if_delta_not_zero(self):
+        result = sleep_for_calculated_delta(100, 1, 100)
+        self.assertThat(result, Equals(1.0))
 
 
 class CompatibleReprTests(TestCase):

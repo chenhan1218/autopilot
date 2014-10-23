@@ -504,7 +504,6 @@ class EventDelay(object):
     def __init__(self):
         self._mocked = False
         self._last_event = 0.0
-        self._time_delta = 0.0
 
     @contextmanager
     def mocked(self):
@@ -523,23 +522,33 @@ class EventDelay(object):
     def disable_mock(self):
         self._mocked = False
 
-    def delay_time(self):
-        return self._time_delta
+    def last_event_time(self):
+        return self._last_event
 
-    def _get_current_time(self):
-        return float(time.monotonic())
-
-    def _sleep_for_calculated_delta(self, current_time, duration=0.1):
-        self._time_delta = (self._last_event + duration) - current_time
-        if self._time_delta > 0.0:
-            sleep(self._time_delta)
+    def delay(self, duration=0.1, current_time=time.monotonic):
+        current_time = current_time()
+        if current_time == self._last_event:
+            raise ValueError(
+                'current_time should not be more than the last event time.')
+        elif current_time < self._last_event:
+            raise ValueError(
+                'current_time should not be behind the last event time.')
+        elif current_time < (self._last_event + duration):
+            slept_time = sleep_for_calculated_delta(
+                current_time,
+                duration,
+                self._last_event)
+            current_time += slept_time
         else:
-            return
+            pass
 
-    def delay(self, duration=0.1):
-        self.duration = float(duration)
-        self.current_time = self._get_current_time()
-        if self.current_time <= (self._last_event + self.duration):
-            self._sleep_for_calculated_delta(self.current_time, self.duration)
+        self._last_event = current_time
 
-        self._last_event = self._get_current_time()
+
+def sleep_for_calculated_delta(current_time, duration, last_event):
+    time_delta = (last_event + duration) - current_time
+    if time_delta > 0.0:
+        sleep(time_delta)
+        return time_delta
+    else:
+        return 0.0

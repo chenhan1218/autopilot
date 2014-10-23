@@ -499,7 +499,7 @@ class InputEventDelayTests(MockAppMouseTestBase, TestWithScenarios):
         ('Touch', dict(input_class=Touch)),
         ('Mouse', dict(input_class=Mouse)),
     ]
-    
+
     def setUp(self):
         super(InputEventDelayTests, self).setUp()
         self.device = Pointer(self.input_class.create())

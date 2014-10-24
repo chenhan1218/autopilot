@@ -100,9 +100,9 @@ class EventDelayTests(TestCase):
 
     def setUp(self):
         super(EventDelayTests, self).setUp()
-        self.event_delayer = EventDelay()
 
     def test_mocked_event_interval_adder_contextmanager(self):
+        self.event_delayer = EventDelay()
         with ElapsedTimeCounter() as time_counter:
             with self.event_delayer.mocked():
                 # The first call of delay() only stores the last time
@@ -114,27 +114,32 @@ class EventDelayTests(TestCase):
                 self.assertThat(time_counter.elapsed_time, LessThan(2))
 
     def test_last_event_start_at_zero(self):
+        self.event_delayer = EventDelay()
         with self.event_delayer.mocked() as mocked_delayer:
             self.assertThat(
                 mocked_delayer.last_event_time(), Equals(0.0))
 
     def test_last_event_delay_counter_updates_on_first_call(self):
+        self.event_delayer = EventDelay()
         self.event_delayer.delay(1.0)
 
         self.assertThat(self.event_delayer._last_event, GreaterThan(0.0))
 
     def test_unmocked_first_call_no_delay(self):
+        self.event_delayer = EventDelay()
         with patch('autopilot.utilities.time') as patched_time:
             self.event_delayer.delay()
             self.assertThat(patched_time.sleep.call_count, Equals(0))
 
     def test_unmocked_second_call_delay(self):
+        self.event_delayer = EventDelay()
         with patch('autopilot.utilities.time') as patched_time:
             self.event_delayer.delay()
             self.event_delayer.delay()
             self.assertThat(patched_time.sleep.call_count, Equals(1))
 
     def test_no_sleep_if_time_jumps_since_last_event(self):
+        self.event_delayer = EventDelay()
         with patch('autopilot.utilities.time') as patched_time:
             self.event_delayer.delay(2, current_time=lambda: 100)
             self.event_delayer.delay(2, current_time=lambda: 110)

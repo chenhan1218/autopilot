@@ -39,7 +39,7 @@ from autopilot.utilities import (
     deprecated,
     EventDelay,
     sleep,
-    sleep_for_calculated_delta,
+    _sleep_for_calculated_delta,
 )
 
 
@@ -156,15 +156,15 @@ class EventDelayTests(TestCase):
             self.assertThat(patched_time.sleep.call_count, Equals(0))
 
     def test_sleep_delta_calculator_returns_zero_if_time_delta_negative(self):
-        result = sleep_for_calculated_delta(100, 2, 97)
+        result = _sleep_for_calculated_delta(100, 2, 97)
         self.assertThat(result, Equals(0.0))
 
     def test_sleep_delta_calculator_returns_zero_if_time_delta_zero(self):
-        result = sleep_for_calculated_delta(100, 2, 98)
+        result = _sleep_for_calculated_delta(100, 2, 98)
         self.assertThat(result, Equals(0.0))
 
     def test_sleep_delta_calculator_returns_non_zero_if_delta_not_zero(self):
-        result = sleep_for_calculated_delta(100, 1, 100)
+        result = _sleep_for_calculated_delta(100, 1, 100)
         self.assertThat(result, Equals(1.0))
 
 

@@ -493,6 +493,7 @@ class PointerWrapperTests(AutopilotTestCase):
         self.assertThat(p.y, Equals(123))
 
 
+@skipIf(platform.model() != "Desktop", "Window mocker only available on X11")
 class InputEventDelayTests(MockAppMouseTestBase, TestWithScenarios):
 
     scenarios = [

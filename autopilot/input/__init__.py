@@ -320,7 +320,7 @@ class Mouse(CleanupRegistered):
 
         :param time_between_events: takes floating point to represent the
           delay time between subsequent clicks. Default value 0.1 represents
-          tenth of a second.          
+          tenth of a second.
 
         """
         raise NotImplementedError("You cannot use this class directly.")

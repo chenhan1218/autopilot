@@ -31,7 +31,7 @@ from testtools.matchers import (
 )
 from testscenarios import TestWithScenarios
 from textwrap import dedent
-import time
+from time import sleep
 import timeit
 from unittest import SkipTest
 from unittest.mock import patch
@@ -131,7 +131,7 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
         # even though we ensured the textedit has focus, it occasionally
         # does not yet accept keyboard input, causing this test to fail
         # intermittently.  to remedy this, we just add a sleep.
-        time.sleep(2)
+        sleep(2)
 
         # create keyboard and type the text.
         keyboard = Keyboard.create(self.backend)

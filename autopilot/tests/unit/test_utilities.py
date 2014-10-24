@@ -120,9 +120,9 @@ class EventDelayTests(TestCase):
 
     def test_last_event_delay_counter_updates_on_first_call(self):
         self.event_delayer = EventDelay()
-        self.event_delayer.delay(1.0)
+        self.event_delayer.delay(1.0, current_time=lambda: 10)
 
-        self.assertThat(self.event_delayer._last_event, GreaterThan(0.0))
+        self.assertThat(self.event_delayer._last_event, Equals(10.0))
 
     def test_unmocked_first_call_no_delay(self):
         self.event_delayer = EventDelay()

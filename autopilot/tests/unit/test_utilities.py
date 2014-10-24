@@ -33,13 +33,14 @@ from testtools.matchers import (
 import timeit
 
 from autopilot.utilities import (
+    _raise_if_time_oddity_since_last_event,
     _raise_on_unknown_kwargs,
+    _sleep_for_calculated_delta,
     cached_result,
     compatible_repr,
     deprecated,
     EventDelay,
     sleep,
-    _sleep_for_calculated_delta,
 )
 
 
@@ -133,22 +134,6 @@ class EventDelayTests(TestCase):
             self.event_delayer.delay()
             self.assertThat(patched_time.sleep.call_count, Equals(1))
 
-    def test_raises_exception_if_current_time_last_event_equal(self):
-        self.event_delayer.delay(current_time=lambda: 100)
-        self.assertRaises(
-            ValueError,
-            self.event_delayer.delay,
-            current_time=lambda: 100
-        )
-
-    def test_raises_exception_if_current_time_smaller_than_last_event(self):
-        self.event_delayer.delay(current_time=lambda: 100)
-        self.assertRaises(
-            ValueError,
-            self.event_delayer.delay,
-            current_time=lambda: 80
-        )
-
     def test_no_sleep_if_time_jumps_since_last_event(self):
         with patch('autopilot.utilities.time') as patched_time:
             self.event_delayer.delay(2, current_time=lambda: 100)
@@ -166,6 +151,28 @@ class EventDelayTests(TestCase):
     def test_sleep_delta_calculator_returns_non_zero_if_delta_not_zero(self):
         result = _sleep_for_calculated_delta(100, 1, 100)
         self.assertThat(result, Equals(1.0))
+
+    def test_time_sanity_checker_raises_if_time_smaller_than_last_event(self):
+        self.assertRaises(
+            ValueError,
+            _raise_if_time_oddity_since_last_event,
+            current_time=90,
+            last_event_time=100
+        )
+
+    def test_time_sanity_checker_raises_if_time_equal_last_event_time(self):
+        self.assertRaises(
+            ValueError,
+            _raise_if_time_oddity_since_last_event,
+            current_time=100,
+            last_event_time=100
+        )
+
+    def test_time_sanity_checker_return_if_time_greater_than_last_event(self):
+        result = _raise_if_time_oddity_since_last_event(
+            current_time=400, last_event_time=100)
+
+        self.assertIsNone(result)
 
 
 class CompatibleReprTests(TestCase):

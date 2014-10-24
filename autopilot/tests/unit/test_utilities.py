@@ -115,9 +115,8 @@ class EventDelayTests(TestCase):
 
     def test_last_event_start_at_zero(self):
         self.event_delayer = EventDelay()
-        with self.event_delayer.mocked() as mocked_delayer:
-            self.assertThat(
-                mocked_delayer.last_event_time(), Equals(0.0))
+        self.assertThat(
+            self.event_delayer.last_event_time(), Equals(0.0))
 
     def test_last_event_delay_counter_updates_on_first_call(self):
         self.event_delayer = EventDelay()

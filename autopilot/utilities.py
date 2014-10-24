@@ -585,7 +585,6 @@ def _sleep_for_calculated_delta(current_time, last_event_time, gap_duration):
 
     Calculate the time since last event and sleep for it.
 
-    :returns: the time for which the sleep happened.
     :param current_time: Any given numeric to be used as relative
       time between subsequent events.
     :param last_event_time: The time when last event in the sequence

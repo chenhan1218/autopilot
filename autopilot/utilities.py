@@ -487,7 +487,7 @@ class EventDelay(object):
         from autopilot.utilities import EventDelay
 
         event_delayer = EventDelay()
-        
+
         def print_something():
             event_delayer.delay(2)
             print("Hi! I am an event.")
@@ -577,12 +577,11 @@ def _sleep_for_calculated_delta(
         current_time,
         last_event_time,
         event_gap_duration):
-    
     """Sleep if delay time hasn't passed since last event
 
     Calculate the time since last event and sleep for it.
 
-    :returns: the time for which the sleep happened. 
+    :returns: the time for which the sleep happened.
     :param current_time: Any given numeric to be used as relative
       time between subsequent events.
     :param last_event_time: The time when last event in the sequence

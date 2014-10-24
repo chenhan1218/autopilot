@@ -318,8 +318,9 @@ class Mouse(CleanupRegistered):
     def click(self, button=1, press_duration=0.10, time_between_events=0.1):
         """Click mouse at current location.
 
-        :param time_between_events: time to wait between subsequent click
-         events.
+        :param time_between_events: takes floating point to represent the
+          delay time between subsequent clicks. Default value 0.1 represents
+          tenth of a second.          
 
         """
         raise NotImplementedError("You cannot use this class directly.")
@@ -339,8 +340,9 @@ class Mouse(CleanupRegistered):
          * center_x, center_y
          * x, y, w, h
 
-        :param time_between_events: time to wait between subsequent click
-         events.
+        :param time_between_events: takes floating point to represent the
+          delay time between subsequent clicks. Default value 0.1 represents
+          tenth of a second.
         :raises: **ValueError** if none of these attributes are found, or if an
          attribute is of an incorrect type.
 
@@ -455,7 +457,9 @@ class Touch(object):
     def tap(self, x, y, press_duration=0.1, time_between_events=0.1):
         """Click (or 'tap') at given x,y coordinates.
 
-        :param time_between_events: time to wait between subsequent tap events.
+        :param time_between_events: takes floating point to represent the
+          delay time between subsequent taps. Default value 0.1 represents
+          tenth of a second.
 
         """
         raise NotImplementedError("You cannot use this class directly.")
@@ -470,7 +474,9 @@ class Touch(object):
          * center_x, center_y
          * x, y, w, h
 
-        :param time_between_events: time to wait between subsequent tap events.
+        :param time_between_events: takes floating point to represent the
+          delay time between subsequent taps. Default value 0.1 represents
+          tenth of a second.
         :raises: **ValueError** if none of these attributes are found, or if an
          attribute is of an incorrect type.
 
@@ -620,9 +626,9 @@ class Pointer(object):
         it is a touch device, passing anything other than 1 will raise a
         ValueError exception.
 
-        :param time_between_events: time to wait between subsequent click/tap
-         events.
-
+        :param time_between_events: takes floating point to represent the
+          delay time between subsequent clicks/taps. Default value 0.1
+          represents tenth of a second.
         """
         if isinstance(self._device, Mouse):
             self._device.click(button, press_duration, time_between_events)
@@ -673,8 +679,9 @@ class Pointer(object):
         it is a touch device, passing anything other than 1 will raise a
         ValueError exception.
 
-        :param time_between_events: time to wait between subsequent click/tap
-         events.
+        :param time_between_events: takes floating point to represent the
+          delay time between subsequent clicks/taps. Default value 0.1
+          represents tenth of a second.
 
         """
 

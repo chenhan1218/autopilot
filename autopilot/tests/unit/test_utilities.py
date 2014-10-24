@@ -132,14 +132,14 @@ class EventDelayTests(TestCase):
 
     def test_second_call_to_delay_causes_sleep(self):
         self.event_delayer = EventDelay()
-        with sleep.mocked() as mocked_sleep:    
+        with sleep.mocked() as mocked_sleep:
             self.event_delayer.delay(2, current_time=lambda: 100)
             self.event_delayer.delay(2, current_time=lambda: 100.1)
             self.assertThat(mocked_sleep.total_time_slept(), GreaterThan(1.8))
 
     def test_no_delay_if_time_jumps_since_last_event(self):
         self.event_delayer = EventDelay()
-        with sleep.mocked() as mocked_sleep:    
+        with sleep.mocked() as mocked_sleep:
             self.event_delayer.delay(2, current_time=lambda: 100)
             self.event_delayer.delay(2, current_time=lambda: 110)
             self.assertThat(mocked_sleep.total_time_slept(), Equals(0.0))
@@ -163,7 +163,7 @@ class EventDelayTests(TestCase):
             self.assertThat(mocked_sleep.total_time_slept(), Equals(0.0))
 
     def test_sleep_delta_calculator_returns_non_zero_if_delta_not_zero(self):
-        with sleep.mocked() as mocked_sleep:
+        with sleep.mocked():
             result = _sleep_for_calculated_delta(100, 1, 100)
             self.assertThat(result, Equals(1.0))
 

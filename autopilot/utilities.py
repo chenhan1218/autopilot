@@ -549,7 +549,7 @@ class EventDelay(object):
         :param duration: the time interval between events. default value
           is 0.1 seconds.
         :param current_time: Specify the block of time to use as relative
-          time. It is a float, representing time with precision of 
+          time. It is a float, representing time with precision of
           microseconds. Only for testing purpose. Default value is the
           monotonic time. 0.1 is the tenth part of a second.
         :raises ValueError: If the time stopped or went back since last

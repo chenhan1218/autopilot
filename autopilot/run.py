@@ -132,6 +132,13 @@ def _get_parser():
         "of values, where each value is either of the form 'key', or "
         "'key=value'.", dest="test_config"
     )
+    parser_run.add_argument(
+        "--test-timeout", default=0, type=int, help="If set, autopilot will "
+        "attempt to abort tests that have run longer than <test-timeout> "
+        "seconds. This is not guaranteed to succeed - several scenarios exist "
+        "which make it impossible to abort a test case. Tests aborted will "
+        "raise a 'TimeoutException' error."
+    )
     parser_run.add_argument("suite", nargs="+",
                             help="Specify test suite(s) to run.")
 
@@ -484,6 +491,10 @@ def _configure_timeout_profile(args):
         autopilot.globals.set_long_timeout_period(30.0)
 
 
+def _configure_test_timeout(args):
+    autopilot.globals.set_test_timeout(args.test_timeout)
+
+
 def _prepare_application_for_launch(application, interface):
     app_path, app_arguments = _get_application_path_and_arguments(application)
     return _prepare_launcher_environment(
@@ -664,6 +675,8 @@ class TestProgram(object):
 
         _configure_debug_profile(self.args)
         _configure_timeout_profile(self.args)
+        _configure_test_timeout(self.args)
+
         try:
             _video.configure_video_recording(self.args)
         except RuntimeError as e:

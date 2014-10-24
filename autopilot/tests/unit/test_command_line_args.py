@@ -375,6 +375,14 @@ class CommandLineArgsTests(TestCase):
         args = parse_args('run foo')
         self.assertThat(args.test_config, Equals(""))
 
+    def test_default_test_timeout(self):
+        args = parse_args('run foo')
+        self.assertThat(args.test_timeout, Equals(0))
+
+    def test_can_set_test_timeout(self):
+        args = parse_args('run --test-timeout 42 foo')
+        self.assertThat(args.test_timeout, Equals(42))
+
 
 class GlobalProfileOptionTests(WithScenarios, TestCase):
 

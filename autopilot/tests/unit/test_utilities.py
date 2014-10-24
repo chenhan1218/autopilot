@@ -183,6 +183,14 @@ class EventDelayTests(TestCase):
             last_event_time=100
         )
 
+    def test_time_sanity_checker_raises_if_time_negative_last_event_not(self):
+        self.assertRaises(
+            ValueError,
+            _raise_if_time_delta_not_sane,
+            current_time=-100,
+            last_event_time=100
+        )
+
     def test_time_sanity_checker_return_if_time_greater_than_last_event(self):
         result = _raise_if_time_delta_not_sane(
             current_time=400, last_event_time=100)

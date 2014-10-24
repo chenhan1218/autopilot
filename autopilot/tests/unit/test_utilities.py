@@ -33,7 +33,7 @@ from testtools.matchers import (
 import timeit
 
 from autopilot.utilities import (
-    _raise_if_time_oddity_since_last_event,
+    _raise_if_time_delta_not_sane,
     _raise_on_unknown_kwargs,
     _sleep_for_calculated_delta,
     cached_result,
@@ -124,42 +124,53 @@ class EventDelayTests(TestCase):
 
         self.assertThat(self.event_delayer._last_event, Equals(10.0))
 
-    def test_unmocked_first_call_no_delay(self):
+    def test_first_call_to_delay_causes_no_sleep(self):
         self.event_delayer = EventDelay()
-        with patch('autopilot.utilities.time') as patched_time:
+        with sleep.mocked() as mocked_sleep:
             self.event_delayer.delay()
-            self.assertThat(patched_time.sleep.call_count, Equals(0))
+            self.assertThat(mocked_sleep.total_time_slept(), Equals(0.0))
 
-    def test_unmocked_second_call_delay(self):
+    def test_second_call_to_delay_causes_sleep(self):
         self.event_delayer = EventDelay()
-        with patch('autopilot.utilities.time') as patched_time:
-            self.event_delayer.delay()
-            self.event_delayer.delay()
-            self.assertThat(patched_time.sleep.call_count, Equals(1))
+        with sleep.mocked() as mocked_sleep:    
+            self.event_delayer.delay(2, current_time=lambda: 100)
+            self.event_delayer.delay(2, current_time=lambda: 100.1)
+            self.assertThat(mocked_sleep.total_time_slept(), GreaterThan(1.8))
 
-    def test_no_sleep_if_time_jumps_since_last_event(self):
+    def test_no_delay_if_time_jumps_since_last_event(self):
         self.event_delayer = EventDelay()
-        with patch('autopilot.utilities.time') as patched_time:
+        with sleep.mocked() as mocked_sleep:    
             self.event_delayer.delay(2, current_time=lambda: 100)
             self.event_delayer.delay(2, current_time=lambda: 110)
-            self.assertThat(patched_time.sleep.call_count, Equals(0))
+            self.assertThat(mocked_sleep.total_time_slept(), Equals(0.0))
 
     def test_sleep_delta_calculator_returns_zero_if_time_delta_negative(self):
         result = _sleep_for_calculated_delta(100, 2, 97)
         self.assertThat(result, Equals(0.0))
 
+    def test_sleep_delta_calculator_doesnt_sleep_if_time_delta_negative(self):
+        with sleep.mocked() as mocked_sleep:
+            _sleep_for_calculated_delta(100, 2, 97)
+            self.assertThat(mocked_sleep.total_time_slept(), Equals(0.0))
+
     def test_sleep_delta_calculator_returns_zero_if_time_delta_zero(self):
         result = _sleep_for_calculated_delta(100, 2, 98)
         self.assertThat(result, Equals(0.0))
 
+    def test_sleep_delta_calculator_doesnt_sleep_if_time_delta_zero(self):
+        with sleep.mocked() as mocked_sleep:
+            _sleep_for_calculated_delta(100, 2, 98)
+            self.assertThat(mocked_sleep.total_time_slept(), Equals(0.0))
+
     def test_sleep_delta_calculator_returns_non_zero_if_delta_not_zero(self):
-        result = _sleep_for_calculated_delta(100, 1, 100)
-        self.assertThat(result, Equals(1.0))
+        with sleep.mocked() as mocked_sleep:
+            result = _sleep_for_calculated_delta(100, 1, 100)
+            self.assertThat(result, Equals(1.0))
 
     def test_time_sanity_checker_raises_if_time_smaller_than_last_event(self):
         self.assertRaises(
             ValueError,
-            _raise_if_time_oddity_since_last_event,
+            _raise_if_time_delta_not_sane,
             current_time=90,
             last_event_time=100
         )
@@ -167,13 +178,13 @@ class EventDelayTests(TestCase):
     def test_time_sanity_checker_raises_if_time_equal_last_event_time(self):
         self.assertRaises(
             ValueError,
-            _raise_if_time_oddity_since_last_event,
+            _raise_if_time_delta_not_sane,
             current_time=100,
             last_event_time=100
         )
 
     def test_time_sanity_checker_return_if_time_greater_than_last_event(self):
-        result = _raise_if_time_oddity_since_last_event(
+        result = _raise_if_time_delta_not_sane(
             current_time=400, last_event_time=100)
 
         self.assertIsNone(result)

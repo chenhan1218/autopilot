@@ -505,7 +505,10 @@ class EventDelay(object):
 
     @contextmanager
     def mocked(self):
-        """Enable mocking for the EventDelay class::
+        """Enable mocking for the EventDelay class
+
+        Also mocks all calls to autopilot.utilities.sleep.
+        One my use it like::
 
             from autopilot.utilities import EventDelay
 
@@ -534,6 +537,7 @@ class EventDelay(object):
         self._mocked = False
 
     def last_event_time(self):
+        """return the time when delay() was last called."""
         return self._last_event
 
     def delay(self, duration=0.1, current_time=time.monotonic):
@@ -542,15 +546,18 @@ class EventDelay(object):
         To humanize events, so that if a certain action is repeated
         continuously, there is a delay between each subsequent action.
 
-        :param duration: the time interval between events.
+        :param duration: the time interval between events. default value
+          is 0.1 seconds.
         :param current_time: Specify the block of time to use as relative
-          time. It could be an integer. This is only for testing purpose.
+          time. It is a float, representing time with precision of 
+          microseconds. Only for testing purpose. Default value is the
+          monotonic time. 0.1 is the tenth part of a second.
         :raises ValueError: If the time stopped or went back since last
           event.
 
         """
         monotime = current_time()
-        _raise_if_time_oddity_since_last_event(monotime, self._last_event)
+        _raise_if_time_delta_not_sane(monotime, self._last_event)
         if monotime < (self._last_event + duration):
             slept_time = _sleep_for_calculated_delta(
                 monotime,
@@ -562,21 +569,18 @@ class EventDelay(object):
         self._last_event = monotime
 
 
-def _raise_if_time_oddity_since_last_event(current_time, last_event_time):
+def _raise_if_time_delta_not_sane(current_time, last_event_time):
     if current_time == last_event_time:
         raise ValueError(
-            'current_time should not be more than the last event time.')
+            'current_time must not be more than the last event time.'
+        )
     elif current_time < last_event_time:
         raise ValueError(
-            'current_time should not be behind the last event time.')
-    else:
-        return
+            'current_time must not be behind the last event time.'
+        )
 
 
-def _sleep_for_calculated_delta(
-        current_time,
-        last_event_time,
-        event_gap_duration):
+def _sleep_for_calculated_delta(current_time, last_event_time, gap_duration):
     """Sleep if delay time hasn't passed since last event
 
     Calculate the time since last event and sleep for it.
@@ -586,11 +590,11 @@ def _sleep_for_calculated_delta(
       time between subsequent events.
     :param last_event_time: The time when last event in the sequence
       happened. This is basically a numeric value.
-    :param event_gap_duration: Specify the time range within which
+    :param gap_duration: Specify the time range within which
       the sleep should happen.
 
     """
-    time_delta = (last_event_time + event_gap_duration) - current_time
+    time_delta = (last_event_time + gap_duration) - current_time
     if time_delta > 0.0:
         sleep(time_delta)
         return time_delta

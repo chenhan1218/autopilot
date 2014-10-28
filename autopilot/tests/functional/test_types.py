@@ -21,7 +21,7 @@ from datetime import datetime
 
 from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional import QmlScriptRunnerMixin
-from autopilot.tests.functional.fixtures import SetTimezone
+from autopilot.tests.functional.fixtures import Timezone
 
 from textwrap import dedent
 
@@ -69,7 +69,7 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
         timestring).
 
         """
-        self.useFixture(SetTimezone(self.TZ))
+        self.useFixture(Timezone(self.TZ))
 
         qml_script = self.get_test_qml_string('1411992000000')
 
@@ -84,7 +84,7 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
         the proxy object matches the one in the Qml script.
 
         """
-        self.useFixture(SetTimezone(self.TZ))
+        self.useFixture(Timezone(self.TZ))
 
         qml_script = self.get_test_qml_string("'2014-01-15 12:34:52'")
         proxy = self.start_qml_script(qml_script)

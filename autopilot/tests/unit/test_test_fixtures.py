@@ -19,7 +19,7 @@
 
 from autopilot.tests.functional.fixtures import (
     ExecutableScript,
-    SetTimezone,
+    Timezone,
     TempDesktopFile,
 )
 
@@ -216,12 +216,12 @@ class ExecutableScriptTests(TestCase):
         self.assertTrue(os.stat(fixture.path).st_mode & stat.S_IXUSR)
 
 
-class SetTimezoneTests(TestCase):
+class TimezoneFixtureTests(TestCase):
 
     def test_sets_environment_variable_to_timezone(self):
         token = self.getUniqueString()
 
-        self.useFixture(SetTimezone(token))
+        self.useFixture(Timezone(token))
 
         self.assertEqual(os.environ.get('TZ'), token)
 
@@ -229,7 +229,7 @@ class SetTimezoneTests(TestCase):
         original_tz = os.environ.get('TZ', None)
         token = self.getUniqueString()
 
-        fixture = self.useFixture(SetTimezone(token))
+        fixture = self.useFixture(Timezone(token))
         fixture.cleanUp()
 
         self.assertEqual(os.environ.get('TZ', None), original_tz)

@@ -169,7 +169,7 @@ class TempDesktopFile(Fixture):
         return tmp_file_path
 
 
-class SetTimezone(Fixture):
+class Timezone(Fixture):
     def __init__(self, timezone):
         self._timezone = timezone
 

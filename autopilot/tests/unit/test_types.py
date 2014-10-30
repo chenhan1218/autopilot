@@ -18,13 +18,14 @@
 #
 
 from datetime import datetime, time
-from testscenarios import TestWithScenarios
+from testscenarios import TestWithScenarios, multiply_scenarios
 from testtools import TestCase
 from testtools.matchers import Equals, IsInstance, NotEquals, raises
 
 import dbus
 from unittest.mock import patch, Mock
 
+from autopilot.tests.functional.fixtures import Timezone
 from autopilot.introspection.types import (
     Color,
     create_value_instance,
@@ -50,6 +51,8 @@ from autopilot.introspection.types import (
 )
 from autopilot.introspection.dbus import DBusIntrospectionObject
 from autopilot.utilities import compatible_repr
+
+from dateutil import tz
 
 
 class PlainTypeTests(TestWithScenarios, TestCase):
@@ -281,19 +284,32 @@ class ColorTypeTests(TestCase):
         self.assertEqual(repr(c), str(c))
 
 
-class DateTimeTests(TestCase):
+def unable_to_handle_timestamp(timestamp):
+    """Return false if the platform can handle timestamps larger than 32bit
+    limit.
+
+    """
+    try:
+        datetime.fromtimestamp(timestamp)
+        return False
+    except:
+        return True
+
+
+class DateTimeCreationTests(TestCase):
+
+    timestamp = 1405382400  # No significance, just a timestamp
 
     def test_can_construct_datetime(self):
-        dt = DateTime(1377209927)
+        dt = DateTime(self.timestamp)
         self.assertThat(dt, IsInstance(dbus.Array))
 
     def test_datetime_has_slice_access(self):
-        dt = DateTime(1377209927)
-
-        self.assertThat(dt[0], Equals(1377209927))
+        dt = DateTime(self.timestamp)
+        self.assertThat(dt[0], Equals(self.timestamp))
 
     def test_datetime_has_properties(self):
-        dt = DateTime(1377209927)
+        dt = DateTime(self.timestamp)
 
         self.assertTrue(hasattr(dt, 'timestamp'))
         self.assertTrue(hasattr(dt, 'year'))
@@ -303,57 +319,160 @@ class DateTimeTests(TestCase):
         self.assertTrue(hasattr(dt, 'minute'))
         self.assertTrue(hasattr(dt, 'second'))
 
-    def test_datetime_properties_have_correct_values(self):
-        dt = DateTime(1377209927)
-        dt_with_tz = datetime.fromtimestamp(1377209927)
+    def test_repr(self):
+        # Use a well known timezone for comparison
+        self.useFixture(Timezone('UTC'))
+        dt = DateTime(self.timestamp)
+        observed = repr(dt)
 
-        self.assertThat(dt.timestamp, Equals(dt_with_tz.timestamp()))
-        self.assertThat(dt.year, Equals(dt_with_tz.year))
-        self.assertThat(dt.month, Equals(dt_with_tz.month))
-        self.assertThat(dt.day, Equals(dt_with_tz.day))
-        self.assertThat(dt.hour, Equals(dt_with_tz.hour))
-        self.assertThat(dt.minute, Equals(dt_with_tz.minute))
-        self.assertThat(dt.second, Equals(dt_with_tz.second))
+        expected = "DateTime({:%Y-%m-%d %H:%M:%S})".format(
+            datetime.fromtimestamp(self.timestamp)
+        )
+        self.assertEqual(expected, observed)
+
+    def test_repr_equals_str(self):
+        dt = DateTime(self.timestamp)
+        self.assertEqual(repr(dt), str(dt))
+
+    def test_can_create_DateTime_using_large_timestamp(self):
+        """Must be able to create a DateTime object using a timestamp larger
+        than the 32bit time_t limit.
+
+        """
+        # Use a well known timezone for comparison
+        self.useFixture(Timezone('UTC'))
+        large_timestamp = 2**32+1
+        dt = DateTime(large_timestamp)
+
+        self.assertEqual(dt.year, 2106)
+        self.assertEqual(dt.month, 2)
+        self.assertEqual(dt.day, 7)
+        self.assertEqual(dt.hour, 6)
+        self.assertEqual(dt.minute, 28)
+        self.assertEqual(dt.second, 17)
+        self.assertEqual(dt.timestamp, large_timestamp)
+
+
+class DateTimeTests(TestWithScenarios, TestCase):
+
+    timestamps = [
+        # This timestamp uncovered an issue during development.
+        ('Explicit US/Pacific test', dict(
+            timestamp=1090123200
+        )),
+        ('September 2014', dict(
+            timestamp=1411992000
+        )),
+
+        ('NZ DST example', dict(
+            timestamp=2047570047
+        )),
+
+        ('Winter', dict(
+            timestamp=1389744000
+        )),
+
+        ('Summer', dict(
+            timestamp=1405382400
+        )),
+
+        ('32bit max', dict(
+            timestamp=2**32+1
+        )),
+
+        ('32bit limit', dict(
+            timestamp=2983579200
+        )),
+
+    ]
+
+    timezones = [
+        ('UTC', dict(
+            timezone='UTC'
+        )),
+
+        ('London', dict(
+            timezone='Europe/London'
+        )),
+
+        ('New Zealand', dict(
+            timezone='NZ',
+        )),
+
+        ('Pacific', dict(
+            timezone='US/Pacific'
+        )),
+
+        ('Hongkong', dict(
+            timezone='Hongkong'
+        )),
+
+        ('Moscow', dict(
+            timezone='Europe/Moscow'
+        )),
+
+        ('Copenhagen', dict(
+            timezone='Europe/Copenhagen',
+        )),
+    ]
+
+    scenarios = multiply_scenarios(timestamps, timezones)
+
+    def skip_if_timestamp_too_large(self, timestamp):
+        if unable_to_handle_timestamp(self.timestamp):
+            self.skip("Timestamp to large for platform time_t")
+
+    def test_datetime_properties_have_correct_values(self):
+        self.skip_if_timestamp_too_large(self.timestamp)
+        self.useFixture(Timezone(self.timezone))
+
+        dt1 = DateTime(self.timestamp)
+        dt2 = datetime.fromtimestamp(self.timestamp, tz.gettz())
+
+        self.assertThat(dt1.year, Equals(dt2.year))
+        self.assertThat(dt1.month, Equals(dt2.month))
+        self.assertThat(dt1.day, Equals(dt2.day))
+        self.assertThat(dt1.hour, Equals(dt2.hour))
+        self.assertThat(dt1.minute, Equals(dt2.minute))
+        self.assertThat(dt1.second, Equals(dt2.second))
+        self.assertThat(dt1.timestamp, Equals(dt2.timestamp()))
 
     def test_equality_with_datetime(self):
-        dt1 = DateTime(1377209927)
-        dt2 = DateTime(1377209927)
+        self.skip_if_timestamp_too_large(self.timestamp)
+        self.useFixture(Timezone(self.timezone))
+
+        dt1 = DateTime(self.timestamp)
+        dt2 = datetime(
+            dt1.year, dt1.month, dt1.day, dt1.hour, dt1.minute, dt1.second
+        )
 
         self.assertThat(dt1, Equals(dt2))
 
     def test_equality_with_list(self):
-        dt1 = DateTime(1377209927)
-        dt2 = [1377209927]
+        self.skip_if_timestamp_too_large(self.timestamp)
+        self.useFixture(Timezone(self.timezone))
+
+        dt1 = DateTime(self.timestamp)
+        dt2 = [self.timestamp]
 
         self.assertThat(dt1, Equals(dt2))
 
-    def test_equality_with_datetime_timestamp(self):
-        # DateTime no longer assumes UTC and uses local TZ.
-        dt1 = DateTime(1377209927)
-        dt2 = datetime.fromtimestamp(1377209927)
-        dt3 = datetime.fromtimestamp(1377209928)
+    def test_equality_with_datetime_object(self):
+        self.skip_if_timestamp_too_large(self.timestamp)
+        self.useFixture(Timezone(self.timezone))
+
+        dt1 = DateTime(self.timestamp)
+        dt2 = datetime.fromtimestamp(self.timestamp, tz.gettz())
+        dt3 = datetime.fromtimestamp(self.timestamp + 1, tz.gettz())
 
         self.assertThat(dt1, Equals(dt2))
         self.assertThat(dt1, NotEquals(dt3))
 
     def test_can_convert_to_datetime(self):
-        dt1 = DateTime(1377209927)
+        self.skip_if_timestamp_too_large(self.timestamp)
 
+        dt1 = DateTime(self.timestamp)
         self.assertThat(dt1.datetime, IsInstance(datetime))
-
-    def test_repr(self):
-        expected = repr_type(
-            u"DateTime({:%Y-%m-%d %H:%M:%S})".format(
-                datetime.fromtimestamp(1377209927)
-            )
-        )
-        dt = DateTime(1377209927)
-        observed = repr(dt)
-        self.assertEqual(expected, observed)
-
-    def test_repr_equals_str(self):
-        dt = DateTime(1377209927)
-        self.assertEqual(repr(dt), str(dt))
 
 
 class TimeTests(TestCase):

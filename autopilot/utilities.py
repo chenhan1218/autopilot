@@ -584,12 +584,14 @@ def _sleep_for_calculated_delta(current_time, last_event_time, gap_duration):
 
     Calculate the time since last event and sleep for it.
 
-    :param current_time: Any given numeric to be used as relative
-      time between subsequent events.
-    :param last_event_time: The time when last event in the sequence
-      happened. This is basically a numeric value.
-    :param gap_duration: Specify the time range within which
-      the sleep should happen.
+    :param current_time: This must be a float representing fractional
+      seconds to be used as absolute time to calculate time delta since
+      last event.
+    :param last_event_time: This must be a float representing fractional
+      seconds to represent the last time sleep happened.
+    :param gap_duration: This must be a float representing fractional
+      time to be used as maximum time to be slept between two
+      given fractional times.
 
     """
     time_delta = (last_event_time + gap_duration) - current_time

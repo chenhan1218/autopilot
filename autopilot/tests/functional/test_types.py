@@ -46,9 +46,9 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
         ('CET', dict(
             TZ='Europe/Copenhagen',
         )),
-        # QML timezone database is incorrect/out-of-date for Europe/Moscow. Given
-        # the timestamp of 1411992000 (UTC: 2014:9:29 12:00) for this date
-        # offset should be +0400
+        # QML timezone database is incorrect/out-of-date for
+        # Europe/Moscow. Given the timestamp of 1411992000 (UTC: 2014:9:29
+        # 12:00) for this date offset should be +0400
         # (http://en.wikipedia.org/wiki/Time_in_Russia#Daylight_saving_time)
         # QML app gives: 2014:9:29 14:00 where it should be 2014:9:29 16:00
         # ('MSK', dict(

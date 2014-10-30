@@ -1,3 +1,4 @@
+
 debian/61-autopilot3-uinput.rules /lib/udev/rules.d
 usr/bin/autopilot3 /usr/bin/
 usr/bin/autopilot3-sandbox-run /usr/bin/
@@ -9,4 +10,3 @@ usr/lib/python3*/*/autopilot/input/*.py
 usr/lib/python3*/*/autopilot/introspection/*.py
 usr/lib/python3*/*/autopilot/matchers/*.py
 usr/lib/python3*/*/autopilot/process/*.py
-

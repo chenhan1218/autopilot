@@ -19,6 +19,7 @@
 
 from autopilot.tests.functional.fixtures import (
     ExecutableScript,
+    Timezone,
     TempDesktopFile,
 )
 
@@ -213,3 +214,22 @@ class ExecutableScriptTests(TestCase):
     def test_creates_file_with_execute_bit_set(self):
         fixture = self.useFixture(ExecutableScript(script=""))
         self.assertTrue(os.stat(fixture.path).st_mode & stat.S_IXUSR)
+
+
+class TimezoneFixtureTests(TestCase):
+
+    def test_sets_environment_variable_to_timezone(self):
+        token = self.getUniqueString()
+
+        self.useFixture(Timezone(token))
+
+        self.assertEqual(os.environ.get('TZ'), token)
+
+    def test_resets_timezone_back_to_original(self):
+        original_tz = os.environ.get('TZ', None)
+        token = self.getUniqueString()
+
+        fixture = self.useFixture(Timezone(token))
+        fixture.cleanUp()
+
+        self.assertEqual(os.environ.get('TZ', None), original_tz)

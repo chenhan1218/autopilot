@@ -37,7 +37,9 @@ objects.
 
 """
 
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
+from dateutil.tz import gettz, tzutc
+
 import dbus
 import logging
 from testtools.matchers import Equals
@@ -547,6 +549,15 @@ class DateTime(_array_packed_type(1)):
     """The DateTime class represents a date and time in the UTC timezone.
 
     DateTime is constructed by passing a unix timestamp in to the constructor.
+    The incoming timestamp is assumed to be in UTC.
+
+    .. note:: This class expects the passed in timestamp to be in UTC but will
+      display the resulting date and time in local time (using the local
+      timezone).
+
+      This is done to mimic the behaviour of most applications which will
+      display date and time in local time by default
+
     Timestamps are expressed as the number of seconds since 1970-01-01T00:00:00
     in the UTC timezone::
 
@@ -588,10 +599,48 @@ class DateTime(_array_packed_type(1)):
     Finally, you can also compare a DateTime instance with a python datetime
     instance::
 
-        >>> my_datetime = datetime.datetime.fromutctimestamp(1377209927)
+        >>> my_datetime = datetime.datetime.utcfromtimestamp(1377209927)
         True
 
-    DateTime instances can be converted to datetime instances:
+
+    .. note:: Autopilot supports dates beyond 2038 on 32-bit platforms. To
+     achieve this the underlying mechanisms require to work with timezone aware
+     datetime objects.
+
+      This means that the following won't always be true (due to the naive
+      timestamp not having the correct daylight-savings time details)::
+
+        >>> # This time stamp is within DST in the 'Europe/London' timezone
+        >>> dst_ts = 1405382400
+        >>> os.environ['TZ'] ='Europe/London'
+        >>> time.tzset()
+        >>> datetime.fromtimestamp(dst_ts).hour == DateTime(dst_ts).hour
+        False
+
+      But this will work::
+
+        >>> from dateutil.tz import gettz
+        >>> datetime.fromtimestamp(
+                dst_ts, gettz()).hour == DateTime(dst_ts).hour
+        True
+
+      And this will always work to::
+
+        >>> dt1 =  DateTime(nz_dst_timestamp)
+        >>> dt2 = datetime(
+                dt1.year, dt1.month, dt1.day, dt1.hour, dt1.minute, dt1.second
+            )
+        >>> dt1 == dt2
+        True
+
+    .. note:: DateTime.timestamp() will not always equal the passed in
+      timestamp.
+      To paraphrase a message from [http://bugs.python.org/msg229393]
+      "datetime.timestamp is supposed to be inverse of
+      datetime.fromtimestamp(), but since the later is not monotonic, no such
+      inverse exists in the strict mathematical sense."
+
+    DateTime instances can be converted to datetime instances::
 
         >>> isinstance(my_dt.datetime, datetime.datetime)
         True
@@ -599,7 +648,41 @@ class DateTime(_array_packed_type(1)):
     """
     def __init__(self, *args, **kwargs):
         super(DateTime, self).__init__(*args, **kwargs)
-        self._cached_dt = datetime.fromtimestamp(self[0])
+        # Using timedelta in this manner is a workaround so that we can support
+        # timestamps larger than the 32bit time_t limit on 32bit hardware.
+        # We then apply another workaround where timedelta doesn't apply
+        # daylight savings, so we need to work out the offsets for the
+        # localtime manually and apply them to give us the correct local time.
+        #
+        # Note. self[0] is a UTC timestamp
+        EPOCH = datetime(1970, 1, 1, tzinfo=tzutc())
+        utc_dt = EPOCH + timedelta(seconds=self[0])
+
+        local_tzinfo = gettz()
+
+        # Get the localtimes timezone offset (known as standard offset) by
+        # subtracting its dst offset (if any) from its utc offset.
+        # We apply this to the utc datetime object to get datetime object in
+        # localtime.
+        # (We will check (once we have a local datetime) if the time is in dst
+        # and make that adjustment then.)
+        utc_offset = local_tzinfo.utcoffset(utc_dt)
+        dst_offset = local_tzinfo.dst(utc_dt)
+        standard_offset = utc_offset - dst_offset
+
+        # Create a local timezone aware datetime object from the utc_dt
+        # (i.e. attaching a timezone to it) and apply the standard offset to
+        # give us the local time.
+        local_dt = utc_dt.replace(tzinfo=local_tzinfo) + standard_offset
+
+        # If the new local time is firmly in std time then the standard offset
+        # will be 0 (i.e. timedelta(0)).
+        # If the delta isn't 0 then we need to use the timezone information to
+        # apply the dst delta to the local time.
+        if standard_offset != timedelta(0):
+            local_dt = local_dt + local_tzinfo.dst(local_dt)
+
+        self._cached_dt = local_dt
 
     @property
     def year(self):
@@ -627,14 +710,21 @@ class DateTime(_array_packed_type(1)):
 
     @property
     def timestamp(self):
-        return self[0]
+        return self._cached_dt.timestamp()
 
     @property
     def datetime(self):
         return self._cached_dt
 
     def __eq__(self, other):
+        # A little 'magic' here, if the datetime object to test against is
+        # naive, use the tzinfo from the cached datetime (just for the
+        # comparison)
         if isinstance(other, datetime):
+            if other.tzinfo is None:
+                return other.replace(
+                    tzinfo=self._cached_dt.tzinfo
+                ) == self._cached_dt
             return other == self._cached_dt
         return super(DateTime, self).__eq__(other)
 

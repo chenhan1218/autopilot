@@ -80,3 +80,17 @@ def set_long_timeout_period(new_timeout):
 def get_long_timeout_period():
     global _long_timeout_value
     return _long_timeout_value
+
+
+# The timeout to apply to each test. 0 means no timeout. Value is in seconds.
+_test_timeout = 0
+
+
+def set_test_timeout(new_timeout):
+    global _test_timeout
+    _test_timeout = new_timeout
+
+
+def get_test_timeout():
+    global _test_timeout
+    return _test_timeout

@@ -19,6 +19,7 @@
 
 
 import json
+import logging
 import os
 from tempfile import mktemp
 from testtools import TestCase, skipIf
@@ -36,8 +37,11 @@ import timeit
 from unittest import SkipTest
 from unittest.mock import patch
 
+from autopilot import (
+    platform,
+    tests
+)
 from autopilot.display import Display
-from autopilot import platform
 from autopilot.gestures import pinch
 from autopilot.input import Keyboard, Mouse, Pointer, Touch
 from autopilot.input._common import get_center_point
@@ -363,7 +367,7 @@ class MockAppMouseTestBase(AutopilotTestCase):
             'window-mocker', window_spec_file, app_type='qt')
 
 
-class MouseTestCase(AutopilotTestCase):
+class MouseTestCase(AutopilotTestCase, tests.LogHandlerTestCase):
 
     def setUp(self):
         super(MouseTestCase, self).setUp()
@@ -393,6 +397,16 @@ class MouseTestCase(AutopilotTestCase):
         )
         self.assertThat(lambda: Mouse.create(),
                         raises(expected_exception))
+
+    @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (Mouse)")
+    def test_mouse_move_must_log_final_position_at_debug_level(self):
+        self.root_logger.setLevel(logging.DEBUG)
+        mouse = Mouse.create()
+        mouse.move(10, 10)
+        self.assertLogLevelContains(
+            'DEBUG',
+            "The mouse is now at position 10,10."
+        )
 
 
 @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")

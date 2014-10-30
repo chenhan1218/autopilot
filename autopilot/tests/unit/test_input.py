@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import logging
+
 import testscenarios
 from evdev import ecodes, uinput
 from unittest.mock import ANY, call, Mock, patch
@@ -24,7 +26,10 @@ from testtools import TestCase
 from testtools.matchers import Contains, raises
 
 import autopilot.input
-from autopilot import utilities
+from autopilot import (
+    tests,
+    utilities
+)
 from autopilot.input import _uinput
 from autopilot.input._common import get_center_point
 
@@ -420,7 +425,7 @@ class TouchEventsTestCase(TestCase):
         self.assert_expected_ev_abs('given_res_x', 'given_res_y', ev_abs)
 
 
-class UInputTouchDeviceTestCase(TestCase):
+class UInputTouchDeviceTestCase(tests.LogHandlerTestCase):
     """Test the integration with evdev.UInput for the touch device."""
 
     def setUp(self):
@@ -576,6 +581,21 @@ class UInputTouchDeviceTestCase(TestCase):
         touch.finger_move(14, 14)
         self.assert_finger_move_emitted_write_and_syn(
             touch, slot=first_slot, x=14, y=14)
+
+    def test_finger_move_must_log_position_at_debug_level(self):
+        self.root_logger.setLevel(logging.DEBUG)
+        touch = self.get_touch_with_mocked_backend()
+        touch.finger_down(0, 0)
+
+        touch.finger_move(10, 10)
+        self.assertLogLevelContains(
+            'DEBUG',
+            "Moving pointing 'finger' to position 10,10."
+        )
+        self.assertLogLevelContains(
+            'DEBUG',
+            "The pointing 'finger' is now at position 10,10."
+        )
 
     def test_finger_up_without_finger_pressed_must_raise_error(self):
         touch = self.get_touch_with_mocked_backend()

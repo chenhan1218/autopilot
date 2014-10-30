@@ -25,7 +25,7 @@ from testtools.matchers import Equals, IsInstance, NotEquals, raises
 import dbus
 from unittest.mock import patch, Mock
 
-from autopilot.tests.functional.fixtures import SetTimezone
+from autopilot.tests.functional.fixtures import Timezone
 from autopilot.introspection.types import (
     Color,
     create_value_instance,
@@ -321,7 +321,7 @@ class DateTimeCreationTests(TestCase):
 
     def test_repr(self):
         # Use a well known timezone for comparison
-        self.useFixture(SetTimezone('UTC'))
+        self.useFixture(Timezone('UTC'))
         dt = DateTime(self.timestamp)
         observed = repr(dt)
 
@@ -340,7 +340,7 @@ class DateTimeCreationTests(TestCase):
 
         """
         # Use a well known timezone for comparison
-        self.useFixture(SetTimezone('UTC'))
+        self.useFixture(Timezone('UTC'))
         large_timestamp = 2**32+1
         dt = DateTime(large_timestamp)
 
@@ -359,6 +359,9 @@ class DateTimeTests(TestWithScenarios, TestCase):
         # This timestamp uncovered an issue during development.
         ('Explicit US/Pacific test', dict(
             timestamp=1090123200
+        )),
+        ('September 2014', dict(
+            timestamp=1411992000
         )),
 
         ('NZ DST example', dict(
@@ -406,7 +409,11 @@ class DateTimeTests(TestWithScenarios, TestCase):
 
         ('Moscow', dict(
             timezone='Europe/Moscow'
-        ))
+        )),
+
+        ('Copenhagen', dict(
+            timezone='Europe/Copenhagen',
+        )),
     ]
 
     scenarios = multiply_scenarios(timestamps, timezones)
@@ -417,7 +424,7 @@ class DateTimeTests(TestWithScenarios, TestCase):
 
     def test_datetime_properties_have_correct_values(self):
         self.skip_if_timestamp_too_large(self.timestamp)
-        self.useFixture(SetTimezone(self.timezone))
+        self.useFixture(Timezone(self.timezone))
 
         dt1 = DateTime(self.timestamp)
         dt2 = datetime.fromtimestamp(self.timestamp, tz.gettz())
@@ -432,7 +439,7 @@ class DateTimeTests(TestWithScenarios, TestCase):
 
     def test_equality_with_datetime(self):
         self.skip_if_timestamp_too_large(self.timestamp)
-        self.useFixture(SetTimezone(self.timezone))
+        self.useFixture(Timezone(self.timezone))
 
         dt1 = DateTime(self.timestamp)
         dt2 = datetime(
@@ -443,7 +450,7 @@ class DateTimeTests(TestWithScenarios, TestCase):
 
     def test_equality_with_list(self):
         self.skip_if_timestamp_too_large(self.timestamp)
-        self.useFixture(SetTimezone(self.timezone))
+        self.useFixture(Timezone(self.timezone))
 
         dt1 = DateTime(self.timestamp)
         dt2 = [self.timestamp]
@@ -452,7 +459,7 @@ class DateTimeTests(TestWithScenarios, TestCase):
 
     def test_equality_with_datetime_object(self):
         self.skip_if_timestamp_too_large(self.timestamp)
-        self.useFixture(SetTimezone(self.timezone))
+        self.useFixture(Timezone(self.timezone))
 
         dt1 = DateTime(self.timestamp)
         dt2 = datetime.fromtimestamp(self.timestamp, tz.gettz())

@@ -21,7 +21,7 @@ from datetime import datetime
 
 from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional import QmlScriptRunnerMixin
-from autopilot.tests.functional.fixtures import SetTimezone
+from autopilot.tests.functional.fixtures import Timezone
 
 from textwrap import dedent
 
@@ -30,24 +30,30 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
     scenarios = [
         ('UTC', dict(
             TZ='UTC',
-            expected_string='2014-09-29T12:00:00',
         )),
         ('NZ', dict(
             TZ='Pacific/Auckland',
-            expected_string='2014-09-30T01:00:00',
         )),
         ('US Central', dict(
             TZ='US/Central',
-            expected_string='2014-09-29T07:00:00',
         )),
         ('US Eastern', dict(
             TZ='US/Eastern',
-            expected_string='2014-09-29T08:00:00',
         )),
-        ('MSK', dict(
-            TZ='Europe/Moscow',
-            expected_string='2014-09-29T16:00:00',
+        ('Hongkong', dict(
+            TZ='Hongkong'
         )),
+        ('CET', dict(
+            TZ='Europe/Copenhagen',
+        )),
+        # QML timezone database is incorrect/out-of-date for
+        # Europe/Moscow. Given the timestamp of 1411992000 (UTC: 2014:9:29
+        # 12:00) for this date offset should be +0400
+        # (http://en.wikipedia.org/wiki/Time_in_Russia#Daylight_saving_time)
+        # QML app gives: 2014:9:29 14:00 where it should be 2014:9:29 16:00
+        # ('MSK', dict(
+        #     TZ='Europe/Moscow',
+        # )),
     ]
 
     def get_test_qml_string(self, date_string):
@@ -69,14 +75,18 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
         timestring).
 
         """
-        self.useFixture(SetTimezone(self.TZ))
+        self.useFixture(Timezone(self.TZ))
 
-        qml_script = self.get_test_qml_string('1411992000000')
+        timestamp = 1411992000
+        timestamp_ms = 1411992000 * 1000
+
+        qml_script = self.get_test_qml_string(timestamp_ms)
+        expected_string = datetime.fromtimestamp(timestamp).strftime('%FT%T')
 
         proxy = self.start_qml_script(qml_script)
         self.assertEqual(
             proxy.select_single('QQuickText').text,
-            self.expected_string
+            expected_string
         )
 
     def test_timezone_not_applied_to_timestring(self):
@@ -84,7 +94,7 @@ class DateTimeTests(AutopilotTestCase, QmlScriptRunnerMixin):
         the proxy object matches the one in the Qml script.
 
         """
-        self.useFixture(SetTimezone(self.TZ))
+        self.useFixture(Timezone(self.TZ))
 
         qml_script = self.get_test_qml_string("'2014-01-15 12:34:52'")
         proxy = self.start_qml_script(qml_script)

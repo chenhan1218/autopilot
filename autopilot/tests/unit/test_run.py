@@ -87,6 +87,13 @@ class RunUtilityFunctionTests(TestCase):
         self.assertFalse(patched_globals.set_default_timeout_period.called)
         self.assertFalse(patched_globals.set_long_timeout_period.called)
 
+    @patch('autopilot.run.autopilot.globals')
+    def test_test_tiemout_value_set_in_globals(self, patched_globals):
+        args = Namespace(test_timeout=42)
+        run._configure_test_timeout(args)
+
+        patched_globals.set_test_timeout.assert_called_once_with(42)
+
     @patch.object(_video, '_have_video_recording_facilities', new=lambda: True)
     def test_correct_video_record_fixture_is_called_with_record_on(self):
         args = Namespace(record_directory='', record=True)
@@ -920,6 +927,9 @@ class TestProgramTests(TestCase):
             config_timeout = stack.enter_context(
                 patch.object(run, '_configure_timeout_profile')
             )
+            config_test_timeout = stack.enter_context(
+                patch.object(run, '_configure_test_timeout')
+            )
 
             load_tests.return_value = (mock_test_suite, False)
             fake_construct.return_value = mock_construct_test_result
@@ -927,6 +937,7 @@ class TestProgramTests(TestCase):
 
             config_timeout.assert_called_once_with(fake_args)
             configure_debug.assert_called_once_with(fake_args)
+            config_test_timeout.assert_called_once_with(fake_args)
             fake_construct.assert_called_once_with(fake_args)
             load_tests.assert_called_once_with(fake_args.suite)
 
@@ -957,6 +968,7 @@ def create_default_run_args(**kwargs):
         mode='run',
         suite='foo',
         test_config='',
+        test_timeout=0,
     )
     defaults.update(kwargs)
     return Namespace(**defaults)

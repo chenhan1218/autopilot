@@ -360,6 +360,9 @@ class DateTimeTests(TestWithScenarios, TestCase):
         ('Explicit US/Pacific test', dict(
             timestamp=1090123200
         )),
+        ('September 2014', dict(
+            timestamp=1411992000
+        )),
 
         ('NZ DST example', dict(
             timestamp=2047570047
@@ -406,7 +409,11 @@ class DateTimeTests(TestWithScenarios, TestCase):
 
         ('Moscow', dict(
             timezone='Europe/Moscow'
-        ))
+        )),
+
+        ('Copenhagen', dict(
+            timezone='Europe/Copenhagen',
+        )),
     ]
 
     scenarios = multiply_scenarios(timestamps, timezones)

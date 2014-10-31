@@ -546,7 +546,7 @@ class EventDelay(object):
         To humanize events, so that if a certain action is repeated
         continuously, there is a delay between each subsequent action.
 
-        :param duration: the time interval between events. default value
+        :param duration: Time interval between events. default value
           is 0.1 seconds.
         :param current_time: Specify the block of time to use as relative
           time. It is a float, representing time with precision of

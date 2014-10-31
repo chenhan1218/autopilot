@@ -133,8 +133,8 @@ class EventDelayTests(TestCase):
         self.event_delayer = EventDelay()
         with sleep.mocked() as mocked_sleep:
             self.event_delayer.delay(2, current_time=lambda: 100)
-            self.event_delayer.delay(2, current_time=lambda: 100.1)
-            self.assertThat(mocked_sleep.total_time_slept(), GreaterThan(1.8))
+            self.event_delayer.delay(10, current_time=lambda: 105)
+            self.assertThat(mocked_sleep.total_time_slept(), Equals(5.0))
 
     def test_no_delay_if_time_jumps_since_last_event(self):
         self.event_delayer = EventDelay()

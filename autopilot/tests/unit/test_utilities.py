@@ -103,15 +103,14 @@ class EventDelayTests(TestCase):
 
     def test_mocked_event_interval_adder_contextmanager(self):
         self.event_delayer = EventDelay()
-        with ElapsedTimeCounter() as time_counter:
-            with self.event_delayer.mocked():
-                # The first call of delay() only stores the last time
-                # stamp, it is only the second call where the delay
-                # actually happens. So we call delay() twice here to
-                # ensure mocking is working as expected.
-                self.event_delayer.delay(10)
-                self.event_delayer.delay(3)
-                self.assertThat(time_counter.elapsed_time, LessThan(2))
+        with self.event_delayer.mocked():
+            # The first call of delay() only stores the last time
+            # stamp, it is only the second call where the delay
+            # actually happens. So we call delay() twice here to
+            # ensure mocking is working as expected.
+            self.event_delayer.delay()
+            self.event_delayer.delay(3)
+            self.assertAlmostEqual(sleep.total_time_slept(), 3, places=1)
 
     def test_last_event_start_at_zero(self):
         self.event_delayer = EventDelay()

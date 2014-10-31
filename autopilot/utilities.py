@@ -588,6 +588,8 @@ def _sleep_for_calculated_delta(current_time, last_event_time, gap_duration):
     """Sleep if delay time hasn't passed since last event
 
     Calculate the time since last event and sleep for it.
+    This represents the delay that happened between two
+    subsequent events.
 
     :param float current_timestamp: Current monotonic time,
       in fractional seconds, used to calculate the time delta
@@ -596,6 +598,7 @@ def _sleep_for_calculated_delta(current_time, last_event_time, gap_duration):
       the previous delay occured. 
     :param float gap_duration: Maximum time, in fractional seconds,
       to be slept between two events.
+    :return: Time, in fractional seconds, for which sleep happened. 
 
     """
     time_delta = (last_event_time + gap_duration) - current_time

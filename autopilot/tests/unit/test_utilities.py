@@ -144,26 +144,26 @@ class EventDelayTests(TestCase):
             self.assertThat(mocked_sleep.total_time_slept(), Equals(0.0))
 
     def test_sleep_delta_calculator_returns_zero_if_time_delta_negative(self):
-        result = _sleep_for_calculated_delta(100, 2, 97)
+        result = _sleep_for_calculated_delta(100, 97, 2)
         self.assertThat(result, Equals(0.0))
 
     def test_sleep_delta_calculator_doesnt_sleep_if_time_delta_negative(self):
         with sleep.mocked() as mocked_sleep:
-            _sleep_for_calculated_delta(100, 2, 97)
+            _sleep_for_calculated_delta(100, 97, 2)
             self.assertThat(mocked_sleep.total_time_slept(), Equals(0.0))
 
     def test_sleep_delta_calculator_returns_zero_if_time_delta_zero(self):
-        result = _sleep_for_calculated_delta(100, 2, 98)
+        result = _sleep_for_calculated_delta(100, 98, 2)
         self.assertThat(result, Equals(0.0))
 
     def test_sleep_delta_calculator_doesnt_sleep_if_time_delta_zero(self):
         with sleep.mocked() as mocked_sleep:
-            _sleep_for_calculated_delta(100, 2, 98)
+            _sleep_for_calculated_delta(100, 98, 2)
             self.assertThat(mocked_sleep.total_time_slept(), Equals(0.0))
 
     def test_sleep_delta_calculator_returns_non_zero_if_delta_not_zero(self):
         with sleep.mocked():
-            result = _sleep_for_calculated_delta(100, 1, 100)
+            result = _sleep_for_calculated_delta(100, 100, 1)
             self.assertThat(result, Equals(1.0))
 
     def test_time_sanity_checker_raises_if_time_smaller_than_last_event(self):

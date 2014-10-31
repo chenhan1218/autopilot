@@ -558,14 +558,15 @@ class EventDelay(object):
         """
         monotime = current_time()
         _raise_if_time_delta_not_sane(monotime, self._last_event)
+        time_slept = 0.0
         if monotime < (self._last_event + duration):
-            slept_time = _sleep_for_calculated_delta(
+            time_slept = _sleep_for_calculated_delta(
                 monotime,
                 self._last_event,
                 duration
             )
 
-        self._last_event = monotime + slept_time
+        self._last_event = monotime + time_slept
 
 
 def _raise_if_time_delta_not_sane(current_time, last_event_time):

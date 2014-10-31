@@ -1,3 +1,32 @@
+autopilot (1.5.0+15.04.20141031-0ubuntu1) vivid; urgency=low
+
+  [ Thomi Richards ]
+  * Autopilot release: - Add support for large timestamps - Add per-test
+    timeouts - Add press duration to touch clicks - Improved logging -
+    Make own autopilot functional test runnable with testtools runner.
+
+  [ Leo Arias ]
+  * Autopilot release: - Add support for large timestamps - Add per-test
+    timeouts - Add press duration to touch clicks - Improved logging -
+    Make own autopilot functional test runnable with testtools runner.
+
+  [ Leonardo Arias Fonseca ]
+  * Autopilot release: - Add support for large timestamps - Add per-test
+    timeouts - Add press duration to touch clicks - Improved logging -
+    Make own autopilot functional test runnable with testtools runner.
+
+  [ Christopher Lee ]
+  * Autopilot release: - Add support for large timestamps - Add per-test
+    timeouts - Add press duration to touch clicks - Improved logging -
+    Make own autopilot functional test runnable with testtools runner.
+
+  [ nskaggs ]
+  * Autopilot release: - Add support for large timestamps - Add per-test
+    timeouts - Add press duration to touch clicks - Improved logging -
+    Make own autopilot functional test runnable with testtools runner.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 31 Oct 2014 21:50:09 +0000
+
 autopilot (1.5.0+14.10.20141022~rtm-0ubuntu1) 14.09; urgency=low
 
   [ Christopher Lee ]

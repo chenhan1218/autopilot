@@ -595,10 +595,10 @@ def _sleep_for_calculated_delta(current_time, last_event_time, gap_duration):
       in fractional seconds, used to calculate the time delta
       since last event.
     :param float last_event_timestamp: The last timestamp that
-      the previous delay occured. 
+      the previous delay occured.
     :param float gap_duration: Maximum time, in fractional seconds,
       to be slept between two events.
-    :return: Time, in fractional seconds, for which sleep happened. 
+    :return: Time, in fractional seconds, for which sleep happened.
 
     """
     time_delta = (last_event_time + gap_duration) - current_time

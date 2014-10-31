@@ -22,7 +22,6 @@ import re
 from testtools import TestCase
 from testtools.matchers import (
     Equals,
-    GreaterThan,
     IsInstance,
     LessThan,
     MatchesRegex,

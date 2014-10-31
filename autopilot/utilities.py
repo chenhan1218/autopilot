@@ -570,6 +570,10 @@ class EventDelay(object):
 
 
 def _raise_if_time_delta_not_sane(current_time, last_event_time):
+    """Will raise a ValueError exception if current_time is before
+    the last event or equal to it.
+
+    """
     if current_time == last_event_time:
         raise ValueError(
             'current_time must be more than the last event time.'

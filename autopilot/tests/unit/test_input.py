@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import logging
+
 import testscenarios
 from evdev import ecodes, uinput
 from unittest.mock import ANY, call, Mock, patch
@@ -24,7 +26,10 @@ from testtools import TestCase
 from testtools.matchers import Contains, raises
 
 import autopilot.input
-from autopilot import utilities
+from autopilot import (
+    tests,
+    utilities
+)
 from autopilot.input import _uinput
 from autopilot.input._common import get_center_point
 
@@ -420,7 +425,7 @@ class TouchEventsTestCase(TestCase):
         self.assert_expected_ev_abs('given_res_x', 'given_res_y', ev_abs)
 
 
-class UInputTouchDeviceTestCase(TestCase):
+class UInputTouchDeviceTestCase(tests.LogHandlerTestCase):
     """Test the integration with evdev.UInput for the touch device."""
 
     def setUp(self):
@@ -577,6 +582,21 @@ class UInputTouchDeviceTestCase(TestCase):
         self.assert_finger_move_emitted_write_and_syn(
             touch, slot=first_slot, x=14, y=14)
 
+    def test_finger_move_must_log_position_at_debug_level(self):
+        self.root_logger.setLevel(logging.DEBUG)
+        touch = self.get_touch_with_mocked_backend()
+        touch.finger_down(0, 0)
+
+        touch.finger_move(10, 10)
+        self.assertLogLevelContains(
+            'DEBUG',
+            "Moving pointing 'finger' to position 10,10."
+        )
+        self.assertLogLevelContains(
+            'DEBUG',
+            "The pointing 'finger' is now at position 10,10."
+        )
+
     def test_finger_up_without_finger_pressed_must_raise_error(self):
         touch = self.get_touch_with_mocked_backend()
 
@@ -652,24 +672,26 @@ class UInputTouchTestCase(TestCase):
 
     def get_touch_with_mocked_backend(self):
         touch = _uinput.Touch(device_class=Mock)
-        touch._device.mock_add_spec(
-            _uinput._UInputTouchDevice, spec_set=True)
+        touch._device.mock_add_spec(_uinput._UInputTouchDevice)
         return touch
 
-    def test_tap_must_put_finger_down_and_then_up(self):
+    def test_tap_must_put_finger_down_then_sleep_and_then_put_finger_up(self):
         expected_calls = [
             call.finger_down(0, 0),
+            call.sleep(ANY),
             call.finger_up()
         ]
 
         touch = self.get_touch_with_mocked_backend()
-        touch.tap(0, 0)
+        with patch('autopilot.input._uinput.sleep') as mock_sleep:
+            touch._device.attach_mock(mock_sleep, 'sleep')
+            touch.tap(0, 0)
         self.assertEqual(expected_calls, touch._device.mock_calls)
 
     def test_tap_object_must_put_finger_down_and_then_up_on_the_center(self):
-        object_ = type('Dummy', (object,), {'globalRect': (0, 0, 10, 10)})
+        object_ = make_fake_object(center=True)
         expected_calls = [
-            call.finger_down(5, 5),
+            call.finger_down(object_.center_x, object_.center_y),
             call.finger_up()
         ]
 
@@ -745,6 +767,40 @@ class UInputTouchTestCase(TestCase):
         touch = self.get_touch_with_mocked_backend()
         touch.drag(0, 0, 0, 0)
         self.assertEqual(expected_calls, touch._device.mock_calls)
+
+    def test_tap_without_press_duration_must_sleep_default_time(self):
+        touch = self.get_touch_with_mocked_backend()
+
+        touch.tap(0, 0)
+
+        self.assertEqual(utilities.sleep.total_time_slept(), 0.1)
+
+    def test_tap_with_press_duration_must_sleep_specified_time(self):
+        touch = self.get_touch_with_mocked_backend()
+
+        touch.tap(0, 0, press_duration=10)
+
+        self.assertEqual(utilities.sleep.total_time_slept(), 10)
+
+    def test_tap_object_without_duration_must_call_tap_with_default_time(self):
+        object_ = make_fake_object(center=True)
+        touch = self.get_touch_with_mocked_backend()
+
+        with patch.object(touch, 'tap') as mock_tap:
+            touch.tap_object(object_)
+
+        mock_tap.assert_called_once_with(
+            object_.center_x, object_.center_y, press_duration=0.1)
+
+    def test_tap_object_with_duration_must_call_tap_with_specified_time(self):
+        object_ = make_fake_object(center=True)
+        touch = self.get_touch_with_mocked_backend()
+
+        with patch.object(touch, 'tap') as mock_tap:
+            touch.tap_object(object_, press_duration=10)
+
+        mock_tap.assert_called_once_with(
+            object_.center_x, object_.center_y, press_duration=10)
 
 
 class MultipleUInputTouchBackend(_uinput._UInputTouchDevice):
@@ -885,3 +941,17 @@ class PointerWithTouchBackendTestCase(TestCase):
 
         mock_drag.assert_called_once_with(
             0, 0, 20, 20, rate=10, time_between_events=0.01)
+
+    def test_click_with_default_press_duration(self):
+        pointer = self.get_pointer_with_touch_backend_with_mock_device()
+        with patch.object(pointer._device, 'tap') as mock_tap:
+            pointer.click(1)
+
+        mock_tap.assert_called_once_with(0, 0, press_duration=0.1)
+
+    def test_press_with_specified_press_duration(self):
+        pointer = self.get_pointer_with_touch_backend_with_mock_device()
+        with patch.object(pointer._device, 'tap') as mock_tap:
+            pointer.click(1, press_duration=10)
+
+        mock_tap.assert_called_once_with(0, 0, press_duration=10)

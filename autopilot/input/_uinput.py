@@ -411,10 +411,12 @@ class _UInputTouchDevice(object):
         """
         if not self.pressed:
             raise RuntimeError('Attempting to move without finger being down.')
+        _logger.debug("Moving pointing 'finger' to position %d,%d.", x, y)
         self._device.write(e.EV_ABS, e.ABS_MT_SLOT, self._touch_finger_slot)
         self._device.write(e.EV_ABS, e.ABS_MT_POSITION_X, int(x))
         self._device.write(e.EV_ABS, e.ABS_MT_POSITION_Y, int(y))
         self._device.syn()
+        _logger.debug("The pointing 'finger' is now at position %d,%d.", x, y)
 
     def finger_up(self):
         """Internal: moves finger "finger" up from the touchscreen
@@ -460,7 +462,7 @@ class Touch(TouchBase):
     def pressed(self):
         return self._device.pressed
 
-    def tap(self, x, y):
+    def tap(self, x, y, press_duration=0.1):
         """Click (or 'tap') at given x and y coordinates.
 
         :raises RuntimeError: if the finger is already pressed.
@@ -469,10 +471,10 @@ class Touch(TouchBase):
         """
         _logger.debug("Tapping at: %d,%d", x, y)
         self._device.finger_down(x, y)
-        sleep(0.1)
+        sleep(press_duration)
         self._device.finger_up()
 
-    def tap_object(self, object_):
+    def tap_object(self, object_, press_duration=0.1):
         """Click (or 'tap') a given object.
 
         :raises RuntimeError: if the finger is already pressed.
@@ -483,7 +485,7 @@ class Touch(TouchBase):
         """
         _logger.debug("Tapping object: %r", object)
         x, y = get_center_point(object_)
-        self.tap(x, y)
+        self.tap(x, y, press_duration=press_duration)
 
     def press(self, x, y):
         """Press and hold a given object or at the given coordinates.

@@ -56,6 +56,7 @@ class TimeoutFunctionTests(TestCase):
         # the original value after each test has run:
         restore_value(self, _g, '_default_timeout_value')
         restore_value(self, _g, '_long_timeout_value')
+        restore_value(self, _g, '_test_timeout')
 
     def test_default_timeout_values(self):
         self.assertEqual(10.0, _g.get_default_timeout_period())
@@ -70,3 +71,8 @@ class TimeoutFunctionTests(TestCase):
         new_value = self.getUniqueInteger()
         _g.set_long_timeout_period(new_value)
         self.assertEqual(new_value, _g.get_long_timeout_period())
+
+    def test_can_set_test_timeout(self):
+        new_value = self.getUniqueInteger()
+        _g.set_test_timeout(new_value)
+        self.assertEqual(new_value, _g.get_test_timeout())

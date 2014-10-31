@@ -26,7 +26,7 @@ from time import sleep
 from timeit import default_timer
 
 from testtools import skipIf
-from testtools.matchers import Equals, NotEquals, LessThan
+from testtools.matchers import Equals, GreaterThan, NotEquals, LessThan
 
 from autopilot.exceptions import BackendException
 from autopilot.matchers import Eventually
@@ -64,7 +64,7 @@ class ProcessEmulatorTests(AutopilotTestCase):
         t.join()
 
         self.assertThat(ret, Equals(True))
-        self.assertThat(abs(end - start - 5.0), LessThan(1))
+        self.assertThat(end - start, GreaterThan(5))
 
     def test_wait_for_app_running_times_out_correctly(self):
         """Make sure the bamf emulator times out correctly if no app is

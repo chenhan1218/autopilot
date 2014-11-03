@@ -585,11 +585,13 @@ def _raise_if_time_delta_not_sane(current_time, last_event_time):
 
 
 def _sleep_for_calculated_delta(current_time, last_event_time, gap_duration):
-    """Sleep if delay time hasn't passed since last event
+    """Sleep for the remaining time between the last event time
+    and duration.
 
-    Calculate the time since last event and sleep for it.
-    This represents the delay that happened between two
-    subsequent events.
+    Given a duration in fractional seconds, ensure that atleast
+    that given amount of time occurs since the last event time.
+    e.g. If 4 seconds have elapsed since the last event and the
+    requested gap duration was 10 seconds, sleep for 6 seconds.
 
     :param float current_timestamp: Current monotonic time,
       in fractional seconds, used to calculate the time delta
@@ -599,8 +601,11 @@ def _sleep_for_calculated_delta(current_time, last_event_time, gap_duration):
     :param float gap_duration: Maximum time, in fractional seconds,
       to be slept between two events.
     :return: Time, in fractional seconds, for which sleep happened.
+    :raises ValueError: If last_event_time equals current_time or
+      is ahead of current_time.
 
     """
+    _raise_if_time_delta_not_sane(current_time, last_event_time)
     time_delta = (last_event_time + gap_duration) - current_time
     if time_delta > 0.0:
         sleep(time_delta)

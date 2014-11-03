@@ -171,7 +171,7 @@ class EventDelayTests(TestCase):
             self.assertThat(mocked_sleep.total_time_slept(), Equals(12.0))
 
     def test_sleep_delta_calc_return_non_zero_if_last_event_ahead_time(self):
-        with sleep.mocked() as mocked_sleep:
+        with sleep.mocked():
             result = _sleep_for_calculated_delta(100, 110, 2)
             self.assertEquals(result, 12.0)
 

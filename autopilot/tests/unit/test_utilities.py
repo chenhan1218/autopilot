@@ -165,6 +165,16 @@ class EventDelayTests(TestCase):
             result = _sleep_for_calculated_delta(100, 100, 1)
             self.assertThat(result, Equals(1.0))
 
+    def test_sleep_delta_calc_sleeps_if_last_event_ahead_current_time(self):
+        with sleep.mocked() as mocked_sleep:
+            _sleep_for_calculated_delta(100, 110, 2)
+            self.assertThat(mocked_sleep.total_time_slept(), Equals(12.0))
+
+    def test_sleep_delta_calc_return_non_zero_if_last_event_ahead_time(self):
+        with sleep.mocked() as mocked_sleep:
+            result = _sleep_for_calculated_delta(100, 110, 2)
+            self.assertEquals(result, 12.0)
+
     def test_time_sanity_checker_raises_if_time_smaller_than_last_event(self):
         self.assertRaises(
             ValueError,

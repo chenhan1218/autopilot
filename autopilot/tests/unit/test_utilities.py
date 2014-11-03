@@ -142,6 +142,13 @@ class EventDelayTests(TestCase):
             self.event_delayer.delay(2, current_time=lambda: 110)
             self.assertThat(mocked_sleep.total_time_slept(), Equals(0.0))
 
+    def test_no_delay_if_given_delay_time_negative(self):
+        self.event_delayer = EventDelay()
+        with sleep.mocked() as mocked_sleep:
+            self.event_delayer.delay(-2, current_time=lambda: 100)
+            self.event_delayer.delay(-2, current_time=lambda: 101)
+            self.assertThat(mocked_sleep.total_time_slept(), Equals(0.0))
+
     def test_sleep_delta_calculator_returns_zero_if_time_delta_negative(self):
         result = _sleep_for_calculated_delta(100, 97, 2)
         self.assertThat(result, Equals(0.0))
@@ -164,6 +171,10 @@ class EventDelayTests(TestCase):
         with sleep.mocked():
             result = _sleep_for_calculated_delta(101, 100, 2)
             self.assertThat(result, Equals(1.0))
+
+    def test_sleep_delta_calc_returns_zero_if_gap_duration_negative(self):
+        result = _sleep_for_calculated_delta(100, 99, -2)
+        self.assertEquals(result, 0.0)
 
     def test_sleep_delta_calc_raises_if_last_event_ahead_current_time(self):
         self.assertRaises(

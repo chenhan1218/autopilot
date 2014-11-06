@@ -131,7 +131,7 @@ class EventDelayTests(TestCase):
     def test_second_call_to_delay_causes_sleep(self):
         self.event_delayer = EventDelay()
         with sleep.mocked() as mocked_sleep:
-            self.event_delayer.delay(2, current_time=lambda: 100)
+            self.event_delayer.delay(0, current_time=lambda: 100)
             self.event_delayer.delay(10, current_time=lambda: 105)
             self.assertThat(mocked_sleep.total_time_slept(), Equals(5.0))
 
@@ -194,7 +194,7 @@ class EventDelayTests(TestCase):
             gap_duration=2
         )
 
-    def test_sleep_delta_calc_raises_if_current_time_negativ(self):
+    def test_sleep_delta_calc_raises_if_current_time_negative(self):
         self.assertRaises(
             ValueError,
             _sleep_for_calculated_delta,
@@ -226,12 +226,6 @@ class EventDelayTests(TestCase):
             current_time=-100,
             last_event_time=100
         )
-
-    def test_time_sanity_checker_return_if_time_greater_than_last_event(self):
-        result = _raise_if_time_delta_not_sane(
-            current_time=400, last_event_time=100)
-
-        self.assertIsNone(result)
 
 
 class CompatibleReprTests(TestCase):

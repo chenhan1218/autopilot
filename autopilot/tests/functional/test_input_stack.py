@@ -27,7 +27,6 @@ from testtools.matchers import (
     IsInstance,
     Equals,
     raises,
-    LessThan,
     GreaterThan
 )
 from testscenarios import TestWithScenarios
@@ -530,13 +529,6 @@ class InputEventDelayTests(MockAppMouseTestBase, TestWithScenarios):
                 self.device.click_object(self.widget, time_between_events=0.6)
 
         self.assertThat(time_counter.elapsed_time, GreaterThan(1.0))
-
-    def test_subsequent_events_no_delay(self):
-        with ElapsedTimeCounter() as time_counter:
-            for i in range(3):
-                self.device.click_object(self.widget, time_between_events=0.0)
-
-        self.assertThat(time_counter.elapsed_time, LessThan(1.0))
 
     def test_subsequent_events_default_delay(self):
         with ElapsedTimeCounter() as time_counter:

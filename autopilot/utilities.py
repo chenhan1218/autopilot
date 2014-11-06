@@ -500,7 +500,6 @@ class EventDelay(object):
     """
 
     def __init__(self):
-        self._mocked = False
         self._last_event = 0.0
 
     @contextmanager
@@ -522,19 +521,10 @@ class EventDelay(object):
 
         """
         sleep.enable_mock()
-        self.enable_mock()
         try:
             yield self
         finally:
-            self.disable_mock()
             sleep.disable_mock()
-
-    def enable_mock(self):
-        self._mocked = True
-        self._mock_count = 0.0
-
-    def disable_mock(self):
-        self._mocked = False
 
     def last_event_time(self):
         """return the time when delay() was last called."""
@@ -588,7 +578,7 @@ def _sleep_for_calculated_delta(current_time, last_event_time, gap_duration):
     """Sleep for the remaining time between the last event time
     and duration.
 
-    Given a duration in fractional seconds, ensure that atleast
+    Given a duration in fractional seconds, ensure that at least
     that given amount of time occurs since the last event time.
     e.g. If 4 seconds have elapsed since the last event and the
     requested gap duration was 10 seconds, sleep for 6 seconds.

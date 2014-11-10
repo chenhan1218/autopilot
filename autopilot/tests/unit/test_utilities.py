@@ -97,56 +97,52 @@ class MockableSleepTests(TestCase):
 
 class EventDelayTests(TestCase):
 
-    def setUp(self):
-        super(EventDelayTests, self).setUp()
-
-    def test_mocked_event_interval_adder_contextmanager(self):
-        self.event_delayer = EventDelay()
-        with self.event_delayer.mocked():
+    def test_mocked_event_delayer_contextmanager(self):
+        event_delayer = EventDelay()
+        with event_delayer.mocked():
             # The first call of delay() only stores the last time
             # stamp, it is only the second call where the delay
             # actually happens. So we call delay() twice here to
             # ensure mocking is working as expected.
-            self.event_delayer.delay()
-            self.event_delayer.delay(3)
+            event_delayer.delay(duration=0)
+            event_delayer.delay(duration=3)
             self.assertAlmostEqual(sleep.total_time_slept(), 3, places=1)
 
     def test_last_event_start_at_zero(self):
-        self.event_delayer = EventDelay()
-        self.assertThat(
-            self.event_delayer.last_event_time(), Equals(0.0))
+        event_delayer = EventDelay()
+        self.assertThat(event_delayer.last_event_time(), Equals(0.0))
 
     def test_last_event_delay_counter_updates_on_first_call(self):
-        self.event_delayer = EventDelay()
-        self.event_delayer.delay(1.0, current_time=lambda: 10)
+        event_delayer = EventDelay()
+        event_delayer.delay(duration=1.0, current_time=lambda: 10)
 
-        self.assertThat(self.event_delayer._last_event, Equals(10.0))
+        self.assertThat(event_delayer._last_event, Equals(10.0))
 
     def test_first_call_to_delay_causes_no_sleep(self):
-        self.event_delayer = EventDelay()
+        event_delayer = EventDelay()
         with sleep.mocked() as mocked_sleep:
-            self.event_delayer.delay()
+            event_delayer.delay(duration=0.0)
             self.assertThat(mocked_sleep.total_time_slept(), Equals(0.0))
 
     def test_second_call_to_delay_causes_sleep(self):
-        self.event_delayer = EventDelay()
+        event_delayer = EventDelay()
         with sleep.mocked() as mocked_sleep:
-            self.event_delayer.delay(0, current_time=lambda: 100)
-            self.event_delayer.delay(10, current_time=lambda: 105)
+            event_delayer.delay(duration=0, current_time=lambda: 100)
+            event_delayer.delay(duration=10, current_time=lambda: 105)
             self.assertThat(mocked_sleep.total_time_slept(), Equals(5.0))
 
     def test_no_delay_if_time_jumps_since_last_event(self):
-        self.event_delayer = EventDelay()
+        event_delayer = EventDelay()
         with sleep.mocked() as mocked_sleep:
-            self.event_delayer.delay(2, current_time=lambda: 100)
-            self.event_delayer.delay(2, current_time=lambda: 110)
+            event_delayer.delay(duration=2, current_time=lambda: 100)
+            event_delayer.delay(duration=2, current_time=lambda: 110)
             self.assertThat(mocked_sleep.total_time_slept(), Equals(0.0))
 
     def test_no_delay_if_given_delay_time_negative(self):
-        self.event_delayer = EventDelay()
+        event_delayer = EventDelay()
         with sleep.mocked() as mocked_sleep:
-            self.event_delayer.delay(-2, current_time=lambda: 100)
-            self.event_delayer.delay(-2, current_time=lambda: 101)
+            event_delayer.delay(duration=-2, current_time=lambda: 100)
+            event_delayer.delay(duration=-2, current_time=lambda: 101)
             self.assertThat(mocked_sleep.total_time_slept(), Equals(0.0))
 
     def test_sleep_delta_calculator_returns_zero_if_time_delta_negative(self):

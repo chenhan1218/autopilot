@@ -530,14 +530,13 @@ class EventDelay(object):
         """return the time when delay() was last called."""
         return self._last_event
 
-    def delay(self, duration=0.1, current_time=time.monotonic):
+    def delay(self, duration, current_time=time.monotonic):
         """Delay the next event for a given amount of time.
 
         To humanize events, so that if a certain action is repeated
         continuously, there is a delay between each subsequent action.
 
-        :param duration: Time interval between events. default value
-          is 0.1 seconds.
+        :param duration: Time interval between events.
         :param current_time: Specify the block of time to use as relative
           time. It is a float, representing time with precision of
           microseconds. Only for testing purpose. Default value is the

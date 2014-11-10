@@ -32,10 +32,13 @@ from testtools.matchers import (
 import timeit
 
 from autopilot.utilities import (
+    _raise_if_time_delta_not_sane,
     _raise_on_unknown_kwargs,
+    _sleep_for_calculated_delta,
     cached_result,
     compatible_repr,
     deprecated,
+    EventDelay,
     sleep,
 )
 
@@ -90,6 +93,135 @@ class MockableSleepTests(TestCase):
             sleep(1.0)
 
             patched_time.sleep.assert_called_once_with(1.0)
+
+
+class EventDelayTests(TestCase):
+
+    def test_mocked_event_delayer_contextmanager(self):
+        event_delayer = EventDelay()
+        with event_delayer.mocked():
+            # The first call of delay() only stores the last time
+            # stamp, it is only the second call where the delay
+            # actually happens. So we call delay() twice here to
+            # ensure mocking is working as expected.
+            event_delayer.delay(duration=0)
+            event_delayer.delay(duration=3)
+            self.assertAlmostEqual(sleep.total_time_slept(), 3, places=1)
+
+    def test_last_event_start_at_zero(self):
+        event_delayer = EventDelay()
+        self.assertThat(event_delayer.last_event_time(), Equals(0.0))
+
+    def test_last_event_delay_counter_updates_on_first_call(self):
+        event_delayer = EventDelay()
+        event_delayer.delay(duration=1.0, current_time=lambda: 10)
+
+        self.assertThat(event_delayer._last_event, Equals(10.0))
+
+    def test_first_call_to_delay_causes_no_sleep(self):
+        event_delayer = EventDelay()
+        with sleep.mocked() as mocked_sleep:
+            event_delayer.delay(duration=0.0)
+            self.assertThat(mocked_sleep.total_time_slept(), Equals(0.0))
+
+    def test_second_call_to_delay_causes_sleep(self):
+        event_delayer = EventDelay()
+        with sleep.mocked() as mocked_sleep:
+            event_delayer.delay(duration=0, current_time=lambda: 100)
+            event_delayer.delay(duration=10, current_time=lambda: 105)
+            self.assertThat(mocked_sleep.total_time_slept(), Equals(5.0))
+
+    def test_no_delay_if_time_jumps_since_last_event(self):
+        event_delayer = EventDelay()
+        with sleep.mocked() as mocked_sleep:
+            event_delayer.delay(duration=2, current_time=lambda: 100)
+            event_delayer.delay(duration=2, current_time=lambda: 110)
+            self.assertThat(mocked_sleep.total_time_slept(), Equals(0.0))
+
+    def test_no_delay_if_given_delay_time_negative(self):
+        event_delayer = EventDelay()
+        with sleep.mocked() as mocked_sleep:
+            event_delayer.delay(duration=-2, current_time=lambda: 100)
+            event_delayer.delay(duration=-2, current_time=lambda: 101)
+            self.assertThat(mocked_sleep.total_time_slept(), Equals(0.0))
+
+    def test_sleep_delta_calculator_returns_zero_if_time_delta_negative(self):
+        result = _sleep_for_calculated_delta(100, 97, 2)
+        self.assertThat(result, Equals(0.0))
+
+    def test_sleep_delta_calculator_doesnt_sleep_if_time_delta_negative(self):
+        with sleep.mocked() as mocked_sleep:
+            _sleep_for_calculated_delta(100, 97, 2)
+            self.assertThat(mocked_sleep.total_time_slept(), Equals(0.0))
+
+    def test_sleep_delta_calculator_returns_zero_if_time_delta_zero(self):
+        result = _sleep_for_calculated_delta(100, 98, 2)
+        self.assertThat(result, Equals(0.0))
+
+    def test_sleep_delta_calculator_doesnt_sleep_if_time_delta_zero(self):
+        with sleep.mocked() as mocked_sleep:
+            _sleep_for_calculated_delta(100, 98, 2)
+            self.assertThat(mocked_sleep.total_time_slept(), Equals(0.0))
+
+    def test_sleep_delta_calculator_returns_non_zero_if_delta_not_zero(self):
+        with sleep.mocked():
+            result = _sleep_for_calculated_delta(101, 100, 2)
+            self.assertThat(result, Equals(1.0))
+
+    def test_sleep_delta_calc_returns_zero_if_gap_duration_negative(self):
+        result = _sleep_for_calculated_delta(100, 99, -2)
+        self.assertEquals(result, 0.0)
+
+    def test_sleep_delta_calc_raises_if_last_event_ahead_current_time(self):
+        self.assertRaises(
+            ValueError,
+            _sleep_for_calculated_delta,
+            current_time=100,
+            last_event_time=110,
+            gap_duration=2
+        )
+
+    def test_sleep_delta_calc_raises_if_last_event_equals_current_time(self):
+        self.assertRaises(
+            ValueError,
+            _sleep_for_calculated_delta,
+            current_time=100,
+            last_event_time=100,
+            gap_duration=2
+        )
+
+    def test_sleep_delta_calc_raises_if_current_time_negative(self):
+        self.assertRaises(
+            ValueError,
+            _sleep_for_calculated_delta,
+            current_time=-100,
+            last_event_time=10,
+            gap_duration=10
+        )
+
+    def test_time_sanity_checker_raises_if_time_smaller_than_last_event(self):
+        self.assertRaises(
+            ValueError,
+            _raise_if_time_delta_not_sane,
+            current_time=90,
+            last_event_time=100
+        )
+
+    def test_time_sanity_checker_raises_if_time_equal_last_event_time(self):
+        self.assertRaises(
+            ValueError,
+            _raise_if_time_delta_not_sane,
+            current_time=100,
+            last_event_time=100
+        )
+
+    def test_time_sanity_checker_raises_if_time_negative_last_event_not(self):
+        self.assertRaises(
+            ValueError,
+            _raise_if_time_delta_not_sane,
+            current_time=-100,
+            last_event_time=100
+        )
 
 
 class CompatibleReprTests(TestCase):

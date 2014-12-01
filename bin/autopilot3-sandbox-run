@@ -38,7 +38,7 @@ AP_OPT=""
 
 SERVERNUM=5
 SCREEN="1024x768x24"
-USEWM=0
+USEWM=1
 WINDOWMANAGER="ratpoison"
 WINDOWMANAGER_CMD="$(which $WINDOWMANAGER||true)"
 DBUS_SESSION_BUS_PID=""
@@ -121,7 +121,7 @@ on_exit() {
 
 trap on_exit EXIT INT QUIT ABRT PIPE TERM
 
-SHORTOPTS="hda:s:X:w:"
+SHORTOPTS="hda:s:Xw:"
 LONGOPTS="help,debug,autopilot:,screen:,xephyr,windowmanager:"
 
 TEMP=$(getopt -o $SHORTOPTS --long $LONGOPTS -- "$@")
@@ -130,6 +130,7 @@ eval set -- "$TEMP"
 exec 2>&1
 
 while true ; do
+    echo "Parsing $1 $2"
     case "$1" in
         -h|--help)
             usage;;
@@ -145,8 +146,9 @@ while true ; do
         -w|--windowmanager)
             USEWM=1
             WINDOWMANAGER=$2
+            WINDOWMANAGER_CMD="$(which $WINDOWMANAGER||true)"
             [ ! -x "$WINDOWMANAGER_CMD" ] && \
-                echo "E: $WINDOWMANAGER Executable not found" &&\
+                echo "E: $WINDOWMANAGER Executable not found." &&\
                 RC=1 && exit 1
             shift 2;;
         -X|--xephyr)
@@ -182,8 +184,8 @@ export DISPLAY=:${SERVERNUM}.0
 
 export XAUTHORITY=/dev/null
 wait_for_x $SERVERNUM
-if [$USEWM -eq 1]; then
-    echo "I: Starting window manager"
+if [ "$USEWM" -eq 1 ]; then
+    echo "I: Starting window manager: $WINDOWMANAGER_CMD"
     dbus-launch --exit-with-session $WINDOWMANAGER_CMD &
 fi
 echo "I: Starting autopilot"

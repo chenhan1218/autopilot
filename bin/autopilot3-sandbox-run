@@ -54,15 +54,14 @@ in Xvfb by default.
     TEST: autopilot tests to run
 
 Options:
-    -h, --help           This help
-    -d, --debug          Enable debug mode
-    -a, --autopilot ARG  Pass arguments ARG to 'autopilot run'
-    -X, --xephyr         Run in nested mode with Xephyr
-    -s, --screen WxHxD   Sets screen width, height, and depth to W, H, and D
-                         respectively (default: $SCREEN)
-    -w, --windowmanager  Start a window manager before executing tests
-                         (default: $WINDOWMANAGER)
-
+    -h, --help             This help
+    -d, --debug            Enable debug mode
+    -a, --autopilot ARG    Pass arguments ARG to 'autopilot run'
+    -X, --xephyr           Run in nested mode with Xephyr
+    -s, --screen WxHxD     Sets screen width, height, and depth to W, H, and D
+                           respectively (default: $SCREEN)
+    -w, --windowmanager WM Start a window manager WM before executing tests
+                           (suggested: $WINDOWMANAGER)
 EOF
     RC=1
     exit

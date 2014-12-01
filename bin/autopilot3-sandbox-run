@@ -129,7 +129,6 @@ eval set -- "$TEMP"
 exec 2>&1
 
 while true ; do
-    echo "Parsing $1 $2"
     case "$1" in
         -h|--help)
             usage;;

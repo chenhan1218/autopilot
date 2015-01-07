@@ -106,7 +106,11 @@ To demonstrate the material covered so far, this selection will outline a simple
 	if __name__ == '__main__':
 		main()
 
-As you can see, this is a trivial application, but it serves our purpose. We will write a single autopilot test that asserts that the title of the main window is equal to the string "Hello World". Our test file is named "test_window.py", and contains the following code::
+As you can see, this is a trivial application, but it serves our purpose. For the upcoming tests to run this file must be executable::
+
+	$ chmod u+x testapp.py
+
+We will write a single autopilot test that asserts that the title of the main window is equal to the string "Hello World". Our test file is named "test_window.py", and contains the following code::
 
 	from autopilot.testcase import AutopilotTestCase
 	from os.path import abspath, dirname, join
@@ -256,7 +260,6 @@ Since we're adding a new category of tests, button response tests, we should org
 	from os.path import abspath, dirname, join
 	from testtools.matchers import Equals
 
-	from autopilot.input import Mouse
 	from autopilot.matchers import Eventually
 
 	class HelloWorldTestBase(AutopilotTestCase):

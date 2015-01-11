@@ -94,6 +94,9 @@ class TestConfigurationTests(TestCase):
     def test_raises_ValueError_on_blank_key(self):
         self.assertRaises(ValueError, lambda: config.ConfigDict('=,'))
 
+    def test_raises_ValueError_on_space_key(self):
+        self.assertRaises(ValueError, lambda: config.ConfigDict(' =,'))
+
     def test_raises_ValueError_on_invalid_string(self):
         self.assertRaises(ValueError, lambda: config.ConfigDict('f,='))
 

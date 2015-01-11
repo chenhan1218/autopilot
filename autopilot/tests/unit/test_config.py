@@ -95,7 +95,7 @@ class TestConfigurationTests(TestCase):
         self.assertRaises(ValueError, lambda: config.ConfigDict('=,'))
 
     def test_raises_ValueError_on_invalid_string(self):
-        self.assertRaises(ValueError, lambda: config.ConfigDict('f=b=c'))
+        self.assertRaises(ValueError, lambda: config.ConfigDict('f,='))
 
     def test_iter(self):
         k = config.ConfigDict('foo').keys()

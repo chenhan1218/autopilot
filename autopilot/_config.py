@@ -74,10 +74,10 @@ class ConfigDict(collections.abc.Mapping):
         for item in config_string.split(','):
             if not item:
                 continue
-            parts = item.split('=')
-            if len(parts) == 1:
+            parts = item.split('=', 1)
+            if len(parts) == 1 and parts[0] != '':
                 self._data[parts[0].lstrip()] = '1'
-            elif len(parts) == 2:
+            elif len(parts) == 2 and parts[0] != '':
                 self._data[parts[0].lstrip()] = parts[1]
             else:
                 raise ValueError(

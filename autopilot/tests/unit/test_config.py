@@ -51,6 +51,10 @@ class TestConfigurationTests(TestCase):
         d = config.ConfigDict('foo')
         self.assertEqual(d['foo'], '1')
 
+    def test_single_value_containing_equals_symbol(self):
+        d = config.ConfigDict('foo=b=a')
+        self.assertEqual(d['foo'], 'b=a')
+
     def test_multiple_simple_keys(self):
         d = config.ConfigDict('foo,bar')
         self.assertTrue('foo' in d)
@@ -86,6 +90,9 @@ class TestConfigurationTests(TestCase):
     def test_complex_keys_strip_leading_whitespace(self):
         d = config.ConfigDict(' foo=bar, bar=baz')
         self.assertEqual(set(d.keys()), {'foo', 'bar'})
+
+    def test_raises_ValueError_on_blank_key(self):
+        self.assertRaises(ValueError, lambda: config.ConfigDict('=,'))
 
     def test_raises_ValueError_on_invalid_string(self):
         self.assertRaises(ValueError, lambda: config.ConfigDict('f=b=c'))

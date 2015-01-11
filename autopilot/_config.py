@@ -75,10 +75,11 @@ class ConfigDict(collections.abc.Mapping):
             if not item:
                 continue
             parts = item.split('=', 1)
-            if len(parts) == 1 and parts[0] != '':
-                self._data[parts[0].lstrip()] = '1'
-            elif len(parts) == 2 and parts[0] != '':
-                self._data[parts[0].lstrip()] = parts[1]
+            safe_key = parts[0].lstrip()
+            if len(parts) == 1 and safe_key != '':
+                self._data[safe_key] = '1'
+            elif len(parts) == 2 and safe_key != '':
+                self._data[safe_key] = parts[1]
             else:
                 raise ValueError(
                     "Invalid configuration string '{}'".format(config_string)

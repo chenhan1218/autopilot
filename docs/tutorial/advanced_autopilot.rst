@@ -355,9 +355,26 @@ Process Control
 Display Information
 ===================
 
-.. Document the display stack.
+Autopilot provides :class:`autopilot.display` to get information about the displays currently being used. This information can be used in tests to implement gestures or input events that are specific to the display being used for testing. For example when running on a desktop using multiple displays of different resolutions, or running on devices with different display sizes.
 
-.. _custom_proxy_classes:
+This example shows how to get the size of each available screen, which could be used to calculate co-ordinates for a swipe or input event. See :class:`autopilot.input` for more details about generating input events.
+
+This example also demonstrates using :meth:`autopilot.testcase.AutopilotTestCase.take_screenshot` to capture an image of the screen and add it to the test deails::
+
+    from autopilot.display import Display
+    from autopilot.testcase import AutopilotTestCase
+
+
+    class ScreenTests(AutopilotTestCase):
+
+        def test_print_display_information(self):
+            display = Display.create()
+            for screen in range(0, display.get_num_screens()):
+                width = display.get_screen_width(screen)
+                height = display.get_screen_height(screen)
+                print('screen {0}: {1}x{2}'.format(screen, width, height))
+
+            self.take_screenshot('test_screenshot')
 
 Writing Custom Proxy Classes
 ============================

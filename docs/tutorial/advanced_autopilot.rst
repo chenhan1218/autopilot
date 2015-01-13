@@ -162,7 +162,64 @@ The :class:`fixtures.EnvironmentVariable` fixture will revert the value of the e
 Custom Assertions
 =================
 
-.. Document the custom assertion methods present in AutopilotTestCase
+Autopilot provides additional custom assertion methods within AutopilotTestCase base class. These assertion methods can be used for validating the visible window stack and also properties on objects whose attributes do not have the **wait_for** method, such as :py:mod:`~autopilot.process.Window` objects.
+
+:py:mod:`autopilot.testcase.AutopilotTestCase.assertVisibleWindowStack`
+
+This assertion allows the test to check the start of the visible window stack by passing an iterable item of :py:mod:`~autopilot.process.Window` instances. Minimised windows will be ignored::
+
+    from autopilot.process import ProcessManager
+    from autopilot.testcase import AutopilotTestCase
+
+
+    class WindowTests(AutopilotTestCase):
+
+        def test_window_stack(self):
+            self.launch_some_test_apps()
+            pm = ProcessManager.create()
+            test_app_windows = []
+            for window in pm.get_open_windows():
+                if self.is_test_app(window.name):
+                    test_app_windows.append(window)
+            self.assertVisibleWindowStack(test_app_windows)
+
+:py:mod:`autopilot.testcase.AutopilotTestCase.assertProperty`
+
+This assertion allows the test to check properties of an object that does not have a **wait_for** method (i.e.- objects that do not come from the autopilot DBus interface). For example the :py:mod:`~autopilot.process.Window` object::
+
+    from autopilot.process import ProcessManager
+    from autopilot.testcase import AutopilotTestCase
+
+
+    class WindowTests(AutopilotTestCase):
+
+        def test_window_stack(self):
+            self.launch_some_test_apps()
+            pm = ProcessManager.create()
+            for window in pm.get_open_windows():
+                if self.is_test_app(window.name):
+                    self.assertProperty(window, is_maximized=True)
+
+.. note:: :py:mod:`~autopilot.testcase.AutopilotTestCase.assertProperties` is a synonym for this method.
+
+:py:mod:`autopilot.testcase.AutopilotTestCase.assertProperties`
+
+This assertion allows the test to check properties of an object that does not have a **wait_for** method (i.e.- objects that do not come from the autopilot DBus interface). For example the :py:mod:`~autopilot.process.Window` object::
+
+    from autopilot.process import ProcessManager
+    from autopilot.testcase import AutopilotTestCase
+
+
+    class WindowTests(AutopilotTestCase):
+
+        def test_window_stack(self):
+            self.launch_some_test_apps()
+            pm = ProcessManager.create()
+            for window in pm.get_open_windows():
+                if self.is_test_app(window.name):
+                    self.assertProperties(window, is_maximized=True)
+
+.. note:: :py:mod:`~autopilot.testcase.AutopilotTestCase.assertProperty` is a synonym for this method.
 
 Platform Selection
 ==================

@@ -357,7 +357,7 @@ Process Control
 Display Information
 ===================
 
-Autopilot provides :class:`autopilot.display` to get information about the displays currently being used. This information can be used in tests to implement gestures or input events that are specific to the display being used for testing. For example when running on a desktop using multiple displays of different resolutions, or running on devices with different display sizes.
+Autopilot provides :class:`autopilot.display` to get information about the displays currently being used. This information can be used in tests to implement gestures or input events that are specific to the current test environment. For example a test could be run on a desktop environment with multiple screens, or on a variety of touch devices that have different screen sizes.
 
 This example shows how to get the size of each available screen, which could be used to calculate co-ordinates for a swipe or input event. See :class:`autopilot.input` for more details about generating input events. This example also demonstrates using :meth:`autopilot.testcase.AutopilotTestCase.take_screenshot` to capture an image of the screen and add it to the test details::
 

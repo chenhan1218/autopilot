@@ -175,10 +175,44 @@ the test or skipping the test all together.
 
 For examples and API documentaion please see :py:mod:`autopilot.platform`.
 
-Gestures and Multitouch
-=======================
+.. _gestures_multitouch:
 
-.. How do we do multi-touch & gestures?
+Gestures and Multi-touch
+========================
+
+Autopilot provides support for both single-touch and multi-touch gestures on a touch device.
+
+:class:`autopilot.input.Touch` provides methods for performing single-touch gestures on a touch enabled device: :meth:`~autopilot.input.Touch.tap` (:meth:`~autopilot.input.Touch.press` + :meth:`~autopilot.input.Touch.release`) and :meth:`~autopilot.input.Touch.drag`. These methods can be used in conjunction with :mod:`autopilot.display` to calculate screen co-ordinates and perform single-touch gestures on the device's screen.
+
+:meth:`~autopilot.input.Touch.tap_object` can also be used to tap the center point of a given introspection object, where the screen co-ordinates are taken directly from the object's **globalRect** property.
+
+This example demonstrates swiping from the center of the screen to the left edge, which could be used for example to swipe to a new scope in the dash.
+
+First calculate the center of the screen: ::
+
+    >>> from autopilot.display import Display
+    >>> display = Display.create()
+    >>> center_x = display.get_screen_width() // 2
+    >>> center_y = display.get_screen_height() // 2
+
+Then perform the swipe operation from center of screen to left edge, using :meth:`~autopilot.input.Touch.drag`: ::
+
+    >>> from autopilot.input import Touch
+    >>> touch = Touch.create()
+    >>> touch.drag(center_x, center_y, 0, center_y)
+
+:class:`autopilot.gestures` provides support for multi-touch pinch gestures on a touch enabled device.
+
+The :meth:`autopilot.gestures.pinch` method can be used with an app that supports the pinch gesture, e.g. web browser or gallery app, to zoom in and out of displayed content. This example demonstrates how to zoom in and out using the pinch gesture, using the center of the screen as reference point.
+
+To zoom in, pinch vertically outwards from center point by 100 pixels: ::
+
+    >>> from autopilot import gestures
+    >>> gestures.pinch([center_x, center_y], [0, 0], [0, 100])
+    
+To zoom back out, pinch vertically 100 pixels back towards the center point: ::
+
+    >>> gestures.pinch([center_x, center_y], [0, 100], [0, 0])
 
 .. _tut-picking-backends:
 

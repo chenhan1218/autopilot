@@ -159,6 +159,8 @@ Sometimes you need to change the value of an environment variable for the durati
 
 The :class:`fixtures.EnvironmentVariable` fixture will revert the value of the environment variable to it's initial value, or will delete it altogether if the environment variable did not exist when :class:`fixtures.EnvironmentVariable` was instantiated. This happens in the cleanup phase of the test execution.
 
+.. _custom_assertions:
+
 Custom Assertions
 =================
 
@@ -183,6 +185,8 @@ This assertion allows the test to check the start of the visible window stack by
                     test_app_windows.append(window)
             self.assertVisibleWindowStack(test_app_windows)
 
+.. _custom_assertions_assertProperty:
+
 :py:mod:`autopilot.testcase.AutopilotTestCase.assertProperty`
 
 This assertion allows the test to check properties of an object that does not have a **wait_for** method (i.e.- objects that do not come from the autopilot DBus interface). For example the :py:mod:`~autopilot.process.Window` object::
@@ -204,20 +208,7 @@ This assertion allows the test to check properties of an object that does not ha
 
 :py:mod:`autopilot.testcase.AutopilotTestCase.assertProperties`
 
-This assertion allows the test to check properties of an object that does not have a **wait_for** method (i.e.- objects that do not come from the autopilot DBus interface). For example the :py:mod:`~autopilot.process.Window` object::
-
-    from autopilot.process import ProcessManager
-    from autopilot.testcase import AutopilotTestCase
-
-
-    class WindowTests(AutopilotTestCase):
-
-        def test_window_stack(self):
-            self.launch_some_test_apps()
-            pm = ProcessManager.create()
-            for window in pm.get_open_windows():
-                if self.is_test_app(window.name):
-                    self.assertProperties(window, is_maximized=True)
+See :ref:`autopilot.testcase.AutopilotTestCase.assertProperty <custom_assertions_assertProperty>`.
 
 .. note:: :py:mod:`~autopilot.testcase.AutopilotTestCase.assertProperty` is a synonym for this method.
 

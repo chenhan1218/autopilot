@@ -352,14 +352,14 @@ Process Control
 
 .. Document the process stack.
 
+.. _display_information:
+
 Display Information
 ===================
 
 Autopilot provides :class:`autopilot.display` to get information about the displays currently being used. This information can be used in tests to implement gestures or input events that are specific to the display being used for testing. For example when running on a desktop using multiple displays of different resolutions, or running on devices with different display sizes.
 
-This example shows how to get the size of each available screen, which could be used to calculate co-ordinates for a swipe or input event. See :class:`autopilot.input` for more details about generating input events.
-
-This example also demonstrates using :meth:`autopilot.testcase.AutopilotTestCase.take_screenshot` to capture an image of the screen and add it to the test deails::
+This example shows how to get the size of each available screen, which could be used to calculate co-ordinates for a swipe or input event. See :class:`autopilot.input` for more details about generating input events. This example also demonstrates using :meth:`autopilot.testcase.AutopilotTestCase.take_screenshot` to capture an image of the screen and add it to the test details::
 
     from autopilot.display import Display
     from autopilot.testcase import AutopilotTestCase
@@ -375,6 +375,8 @@ This example also demonstrates using :meth:`autopilot.testcase.AutopilotTestCase
                 print('screen {0}: {1}x{2}'.format(screen, width, height))
 
             self.take_screenshot('test_screenshot')
+
+.. _custom_proxy_classes:
 
 Writing Custom Proxy Classes
 ============================
@@ -441,7 +443,7 @@ Outside of testcase classes, the :class:`~autopilot.application.NormalApplicatio
         with NormalApplicationLauncher() as launcher:
             launcher.launch('gedit')
 
-Within a fixture or a testcase, ``self.useFixture``can be used::
+Within a fixture or a testcase, ``self.useFixture`` can be used::
 
         launcher = self.useFixture(NormalApplicationLauncher())
         launcher.launch('gedit', ['--new-window', '/path/to/file'])

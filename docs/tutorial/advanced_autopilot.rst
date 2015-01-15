@@ -443,7 +443,7 @@ Outside of testcase classes, the :class:`~autopilot.application.NormalApplicatio
         with NormalApplicationLauncher() as launcher:
             launcher.launch('gedit')
 
-Within a fixture or a testcase, ``self.useFixture`` can be used::
+Within a fixture or a testcase, ``self.useFixture``can be used::
 
         launcher = self.useFixture(NormalApplicationLauncher())
         launcher.launch('gedit', ['--new-window', '/path/to/file'])

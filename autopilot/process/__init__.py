@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012-2013 Canonical
+# Copyright (C) 2012, 2013, 2015 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,11 +39,11 @@ class ProcessManager(object):
             'process-name': 'gucharmap',
         },
         'Calculator': {
-            'desktop-file': 'gcalctool.desktop',
+            'desktop-file': 'gnome-calculator.desktop',
             'process-name': 'gnome-calculator',
         },
         'Mahjongg': {
-            'desktop-file': 'mahjongg.desktop',
+            'desktop-file': 'gnome-mahjongg.desktop',
             'process-name': 'gnome-mahjongg',
         },
         'Remmina': {
@@ -51,8 +51,8 @@ class ProcessManager(object):
             'process-name': 'remmina',
         },
         'System Settings': {
-            'desktop-file': 'gnome-control-center.desktop',
-            'process-name': 'gnome-control-center',
+            'desktop-file': 'unity-control-center.desktop',
+            'process-name': 'unity-control-center',
         },
         'Text Editor': {
             'desktop-file': 'gedit.desktop',

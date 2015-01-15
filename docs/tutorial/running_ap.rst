@@ -8,11 +8,11 @@ List Tests
 
 Autopilot can list all tests found within a particular module::
 
-    $ autopilot list <modulename>
+    $ autopilot3 list <modulename>
 
 where *<modulename>* is the base name of the module you want to look at. The module must either be in the current working directory, or be importable by python. For example, to list the tests inside autopilot itself, you can run::
 
-     $ autopilot list autopilot
+     $ autopilot3 list autopilot
         autopilot.tests.test_ap_apps.GtkTests.test_can_launch_qt_app
         autopilot.tests.test_ap_apps.QtTests.test_can_launch_qt_app
         autopilot.tests.test_application_mixin.ApplicationSupportTests.test_can_create
@@ -39,7 +39,7 @@ Run Tests
 
 Running autopilot tests is very similar to listing tests::
 
-    $ autopilot run <modulename>
+    $ autopilot3 run <modulename>
 
 However, the run command has many more options to customize the run behavior:
 
@@ -70,19 +70,19 @@ Common use cases
 
 1. **Run autopilot and save the test log**::
 
-    $ autopilot run -o . <modulename>
+    $ autopilot3 run -o . <modulename>
 
   Autopilot will create a text log file named <hostname>_<dd.mm.yyy_HHMMSS>.log with the contents of the test log.
 
 2. **Run autopilot and record failing tests**::
 
-    $ autopilot run -r --rd . <modulename>
+    $ autopilot3 run -r --rd . <modulename>
 
   Videos are recorded as *ogg-vorbis* files, with an .ogv extension. They will be named with the test id that failed. All videos will be placed in the directory specified by the ``-rd`` option - in this case the currect directory. If this option is omitted, videos will be placed in ``/tmp/autopilot/``.
 
 3. **Save the test log as jUnitXml format**::
 
-    $ autopilot run -o results.xml -f xml <modulename>
+    $ autopilot3 run -o results.xml -f xml <modulename>
 
   The file 'results.xml' will be created when all the tests have completed, and will be in the jUnitXml file format. This is useful when running the autopilot tests within a jenkins environment.
 
@@ -91,9 +91,9 @@ Common use cases
 Visualise Introspection Tree
 ----------------------------
 
-A very common thing to want to do while writing autopilot tests is see the structure of the application being tested. To support this, autopilot includes a simple application to help visualize the introspection tree. To start it, make sure the application you wish to test is running, and then run::
+A very common thing to want to do while writing autopilot tests is see the structure of the application being tested. To support this, autopilot includes a simple application to help visualize the introspection tree. To start it, make sure the application you wish to test is running (see: :ref:`launching_application_to_introspect`), and then run::
 
-    $ autopilot vis
+    $ autopilot3 vis
 
 The result should be a window similar to below:
 
@@ -103,3 +103,13 @@ Selecting a connection from the drop-down box allows you to inspect different au
 
 .. image:: /images/ap_vis_object.png
 
+.. _launching_application_to_introspect:
+
+Launching an Application to Introspect
+--------------------------------------
+
+In order to be able to introspect an application, it must first be launched with introspection enabled. Autopilot provides the **launch** command to enable this: ::
+
+    $ autopilot3 launch <application>
+    
+The <application> parameter could be the full path to the application, or the name of an application located somewhere on $PATH. This will launch the application including the '-testability' parameter to enable introspection. Once the application has launched, it will be possible to introspect it using the Autopilot vis tool, see: :ref:`visualise_introspection_tree`.

@@ -12,7 +12,7 @@ Autopilot can list all tests found within a particular module::
 
 where *<modulename>* is the base name of the module you want to look at. The module must either be in the current working directory, or be importable by python. For example, to list the tests inside autopilot itself, you can run::
 
-     $ autopilot3 list autopilot
+     $ autopilot list autopilot
         autopilot.tests.test_ap_apps.GtkTests.test_can_launch_qt_app
         autopilot.tests.test_ap_apps.QtTests.test_can_launch_qt_app
         autopilot.tests.test_application_mixin.ApplicationSupportTests.test_can_create
@@ -119,3 +119,4 @@ The result should be a window similar to below:
 Selecting a connection from the drop-down box allows you to inspect different autopilot-supporting applications. If Unity is running, the Unity connection should always be present. If other applications have been started with the autopilot support enabled, they should appear in this list as well. Once a connection is selected, the introspection tree is rendered in the left-hand pane, and the details of each object appear in the right-hand pane.
 
 .. image:: /images/ap_vis_object.png
+

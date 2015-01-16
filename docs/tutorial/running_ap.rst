@@ -8,7 +8,7 @@ List Tests
 
 Autopilot can list all tests found within a particular module::
 
-    $ autopilot3 list <modulename>
+    $ autopilot list <modulename>
 
 where *<modulename>* is the base name of the module you want to look at. The module must either be in the current working directory, or be importable by python. For example, to list the tests inside autopilot itself, you can run::
 
@@ -39,7 +39,7 @@ Run Tests
 
 Running autopilot tests is very similar to listing tests::
 
-    $ autopilot3 run <modulename>
+    $ autopilot run <modulename>
 
 However, the run command has many more options to customize the run behavior:
 
@@ -70,38 +70,21 @@ Common use cases
 
 1. **Run autopilot and save the test log**::
 
-    $ autopilot3 run -o . <modulename>
+    $ autopilot run -o . <modulename>
 
   Autopilot will create a text log file named <hostname>_<dd.mm.yyy_HHMMSS>.log with the contents of the test log.
 
 2. **Run autopilot and record failing tests**::
 
-    $ autopilot3 run -r --rd . <modulename>
+    $ autopilot run -r --rd . <modulename>
 
   Videos are recorded as *ogg-vorbis* files, with an .ogv extension. They will be named with the test id that failed. All videos will be placed in the directory specified by the ``-rd`` option - in this case the currect directory. If this option is omitted, videos will be placed in ``/tmp/autopilot/``.
 
 3. **Save the test log as jUnitXml format**::
 
-    $ autopilot3 run -o results.xml -f xml <modulename>
+    $ autopilot run -o results.xml -f xml <modulename>
 
   The file 'results.xml' will be created when all the tests have completed, and will be in the jUnitXml file format. This is useful when running the autopilot tests within a jenkins environment.
-
-.. _visualise_introspection_tree:
-
-Visualise Introspection Tree
-----------------------------
-
-A very common thing to want to do while writing autopilot tests is see the structure of the application being tested. To support this, autopilot includes a simple application to help visualize the introspection tree. To start it, make sure the application you wish to test is running (see: :ref:`launching_application_to_introspect`), and then run::
-
-    $ autopilot3 vis
-
-The result should be a window similar to below:
-
-.. image:: /images/ap_vis_front_page.png
-
-Selecting a connection from the drop-down box allows you to inspect different autopilot-supporting applications. If Unity is running, the Unity connection should always be present. If other applications have been started with the autopilot support enabled, they should appear in this list as well. Once a connection is selected, the introspection tree is rendered in the left-hand pane, and the details of each object appear in the right-hand pane.
-
-.. image:: /images/ap_vis_object.png
 
 .. _launching_application_to_introspect:
 
@@ -112,4 +95,27 @@ In order to be able to introspect an application, it must first be launched with
 
     $ autopilot3 launch <application>
     
-The <application> parameter could be the full path to the application, or the name of an application located somewhere on $PATH. This will launch the application including the '-testability' parameter to enable introspection. Once the application has launched, it will be possible to introspect it using the Autopilot vis tool, see: :ref:`visualise_introspection_tree`.
+The <application> parameter could be the full path to the application, or the name of an application located somewhere on $PATH.
+
+It is also possible to specify the application framework, using optional -i parameter. This allows "Gtk" or "Qt" frameworks to be specified when launching the application. The default value ("Auto") will try to detect which interface to load. ::
+
+    $ autopilot3 launch -i Qt address-book-app
+
+Once an application has launched with introspection enabled, it will be possible to launch autopilot vis and view the introspection tree, see: :ref:`visualise_introspection_tree`.
+
+.. _visualise_introspection_tree:
+
+Visualise Introspection Tree
+----------------------------
+
+A very common thing to want to do while writing autopilot tests is see the structure of the application being tested. To support this, autopilot includes a simple application to help visualize the introspection tree. To start it, make sure the application you wish to test is running (see: :ref:`launching_application_to_introspect`), and then run::
+
+    $ autopilot vis
+
+The result should be a window similar to below:
+
+.. image:: /images/ap_vis_front_page.png
+
+Selecting a connection from the drop-down box allows you to inspect different autopilot-supporting applications. If Unity is running, the Unity connection should always be present. If other applications have been started with the autopilot support enabled, they should appear in this list as well. Once a connection is selected, the introspection tree is rendered in the left-hand pane, and the details of each object appear in the right-hand pane.
+
+.. image:: /images/ap_vis_object.png

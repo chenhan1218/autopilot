@@ -417,7 +417,7 @@ Launching Applications
 
 Applications can be launched inside of a testcase using :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application`,  :meth:`~autopilot.testcase.AutopilotTestCase.launch_upstart_application`, and  :meth:`~autopilot.testcase.AutopilotTestCase.launch_click_package`.
 
-This example shows launching a click package from within a test case and returning the application proxy for introspection: ::
+This example shows launching an installed click package from within a test case and returning the application proxy for introspection: ::
 
     from autopilot.testcase import AutopilotTestCase
 
@@ -434,7 +434,7 @@ Outside of testcase classes, the :class:`~autopilot.application.NormalApplicatio
         with NormalApplicationLauncher() as launcher:
             launcher.launch('gedit')
 
-or a similar example for a click package: ::
+or a similar example for an installed click package: ::
 
         from autopilot.application import ClickApplicationLauncher
         
@@ -455,3 +455,9 @@ Additional options can also be specified to set a custom addDetail method, a cus
             dbus_bus='some_other_bus',
             proxy_base=my_proxy_class,
         ))
+
+A click application can also be launched directly from source. This can be done using **qmlscene** directly on the target qml file. This example shows branching the ubuntu-calculator-app and launching it directly from source qml: ::
+    
+    $ bzr branch lp:ubuntu-calculator-app
+    $ qmlscene ./ubuntu-calculator-app/ubuntu-calculator-app.qml
+

@@ -456,8 +456,7 @@ Additional options can also be specified to set a custom addDetail method, a cus
             proxy_base=my_proxy_class,
         ))
 
-A click application can also be launched directly from source. This can be done using **qmlscene** directly on the target qml file. This example shows branching the ubuntu-calculator-app and launching it directly from source qml: ::
-    
-    $ bzr branch lp:ubuntu-calculator-app
-    $ qmlscene ./ubuntu-calculator-app/ubuntu-calculator-app.qml
+The main qml file of some click applications can also be launched directly from source. This can be done using **qmlscene** directly on the target application's main qml file. This example uses :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application` method from within a test case: ::
+
+    app_proxy = self.launch_test_application('qmlscene', 'application.qml', app_type='qt')
 

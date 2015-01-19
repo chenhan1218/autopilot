@@ -93,11 +93,21 @@ Launching an Application to Introspect
 
 In order to be able to introspect an application, it must first be launched with introspection enabled. Autopilot provides the **launch** command to enable this: ::
 
-    $ autopilot3 launch <application>
+    $ autopilot3 launch <application> <app_parameters>
     
-The <application> parameter could be the full path to the application, or the name of an application located somewhere on $PATH.
+The <application> parameter could be the full path to the application, or the name of an application located somewhere on $PATH. <app_parameter> is passed on to the application being launched.
 
-It is also possible to specify the application framework, using optional -i parameter. This allows "Gtk" or "Qt" frameworks to be specified when launching the application. The default value ("Auto") will try to detect which interface to load. ::
+A simple Gtk example to launch gedit: ::
+
+    $ autopilot3 launch gedit
+
+A Qt example which passes on parameters to the application being launched: :: 
+
+    $ autopilot3 launch qmlscene my_app.qml
+
+Autopilot launch attempts to detect if you are launching either a Gtk or Qt application so that it can enable the correct libraries. If it is unable to determine this you will need to specify the type of application it is by using the -i argument. This allows "Gtk" or "Qt" frameworks to be specified when launching the application. The default value ("Auto") will try to detect which interface to load automatically. 
+
+A typical error in this situation will be "Error: Could not determine introspection type to use for application". In which case the -i option should be specified with the correct application framework type to fix the problem: ::
 
     $ autopilot3 launch -i Qt address-book-app
 

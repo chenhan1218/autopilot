@@ -1,4 +1,4 @@
- # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
+# -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
 # Copyright (C) 2012, 2013, 2014, 2015 Canonical
@@ -136,9 +136,6 @@ class StartKnowAppsTests(AutopilotTestCase):
         app = self.process_manager.start_app_window(self.app_name, locale='C')
 
         self.assertThat(app, NotEquals(None))
-        self.assertThat(
-            app.desktop_file,
-            Equals(ProcessManager.KNOWN_APPS[self.app_name]['desktop-file']))
 
 
 class ProcessManagerApplicationNoCleanupTests(AutopilotTestCase):

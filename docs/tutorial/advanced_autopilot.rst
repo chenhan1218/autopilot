@@ -164,11 +164,11 @@ The :class:`fixtures.EnvironmentVariable` fixture will revert the value of the e
 Custom Assertions
 =================
 
-Autopilot provides additional custom assertion methods within :class:`~autopilot.testcase.AutopilotTestCase` base class. These assertion methods can be used for validating the visible window stack and also properties on objects whose attributes do not have the **wait_for** method, such as :py:mod:`~autopilot.process.Window` objects.
+Autopilot provides additional custom assertion methods within the :class:`~autopilot.testcase.AutopilotTestCase` base class. These assertion methods can be used for validating the visible window stack and also properties on objects whose attributes do not have the ``wait_for`` method, such as :class:`~autopilot.process.Window` objects (See :ref:`wait_for` for more information about ``wait_for``).
 
 :py:mod:`autopilot.testcase.AutopilotTestCase.assertVisibleWindowStack`
 
-This assertion allows the test to check the start of the visible window stack by passing an iterable item of :py:mod:`~autopilot.process.Window` instances. Minimised windows will be ignored::
+This assertion allows the test to check the start of the visible window stack by passing an iterable item of :class:`~autopilot.process.Window` instances. Minimised windows will be ignored::
 
     from autopilot.process import ProcessManager
     from autopilot.testcase import AutopilotTestCase

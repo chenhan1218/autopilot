@@ -79,12 +79,15 @@ class ProcessEmulatorTests(AutopilotTestCase):
         self.assertThat(abs(end - start - 5.0), LessThan(1))
         self.assertThat(ret, Equals(False))
 
-    def test_start_app_window(self):
-        """Ensure we can start an Application Window."""
-        app = self.process_manager.start_app_window('Calculator', locale='C')
+    def test_start_app(self):
+        """Ensure we can start an Application."""
+        app = self.process_manager.start_app('Calculator')
 
         self.assertThat(app, NotEquals(None))
-        self.assertThat(app.name, Equals('Calculator'))
+        # locale='C' does not work here as this goes through bamf, so we can't
+        # assert the precise name
+        self.assertThat(app.name, NotEquals(''))
+        self.assertThat(app.desktop_file, Equals('gcalctool.desktop'))
 
     @skipIf(model() != 'Desktop', "Bamf only available on desktop (Qt4)")
     def test_bamf_geometry_gives_reliable_results(self):
@@ -121,15 +124,12 @@ class StartKnowAppsTests(AutopilotTestCase):
         for app_name in ProcessManager.KNOWN_APPS
     ]
 
-    def test_start_app(self):
+    def test_start_app_window(self):
         """Ensure we can start all the known applications."""
-        app = self.process_manager.start_app(self.app_name)
+        app = self.process_manager.start_app_window(self.app_name, locale='C')
 
         self.assertThat(app, NotEquals(None))
-        # locale='C' does not work here as this goes through bamf, so we can't
-        # assert the precise name
-        self.assertThat(app.name, NotEquals(''))
-        self.assertThat(app.desktop_file, Equals(self.desktop_file))
+        self.assertThat(app.name, Equals(self.app_name))
 
 
 class ProcessManagerApplicationNoCleanupTests(AutopilotTestCase):

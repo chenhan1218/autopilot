@@ -89,6 +89,13 @@ class ProcessEmulatorTests(AutopilotTestCase):
         self.assertThat(app.name, NotEquals(''))
         self.assertThat(app.desktop_file, Equals('gcalctool.desktop'))
 
+    def test_start_app_window(self):
+        """Ensure we can start an Application Window."""
+        app = self.process_manager.start_app_window('Calculator', locale='C')
+
+        self.assertThat(app, NotEquals(None))
+        self.assertThat(app.name, Equals('Calculator'))
+
     @skipIf(model() != 'Desktop', "Bamf only available on desktop (Qt4)")
     def test_bamf_geometry_gives_reliable_results(self):
         script = dedent("""\
@@ -129,7 +136,6 @@ class StartKnowAppsTests(AutopilotTestCase):
         app = self.process_manager.start_app_window(self.app_name, locale='C')
 
         self.assertThat(app, NotEquals(None))
-        self.assertThat(app.name, Equals(self.app_name))
 
 
 class ProcessManagerApplicationNoCleanupTests(AutopilotTestCase):

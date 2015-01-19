@@ -164,7 +164,7 @@ The :class:`fixtures.EnvironmentVariable` fixture will revert the value of the e
 Custom Assertions
 =================
 
-Autopilot provides additional custom assertion methods within AutopilotTestCase base class. These assertion methods can be used for validating the visible window stack and also properties on objects whose attributes do not have the **wait_for** method, such as :py:mod:`~autopilot.process.Window` objects.
+Autopilot provides additional custom assertion methods within :class:`~autopilot.testcase.AutopilotTestCase` base class. These assertion methods can be used for validating the visible window stack and also properties on objects whose attributes do not have the **wait_for** method, such as :py:mod:`~autopilot.process.Window` objects.
 
 :py:mod:`autopilot.testcase.AutopilotTestCase.assertVisibleWindowStack`
 
@@ -184,6 +184,8 @@ This assertion allows the test to check the start of the visible window stack by
                 if self.is_test_app(window.name):
                     test_app_windows.append(window)
             self.assertVisibleWindowStack(test_app_windows)
+
+.. note:: The process manager is only available on environments that use bamf, i.e. desktop running Unity 7. There is currently no process manager for any other platform.
 
 .. _custom_assertions_assertProperty:
 
@@ -205,6 +207,8 @@ This assertion allows the test to check properties of an object that does not ha
                     self.assertProperty(window, is_maximized=True)
 
 .. note:: :py:mod:`~autopilot.testcase.AutopilotTestCase.assertProperties` is a synonym for this method.
+
+.. note:: The process manager is only available on environments that use bamf, i.e. desktop running Unity 7. There is currently no process manager for any other platform.
 
 :py:mod:`autopilot.testcase.AutopilotTestCase.assertProperties`
 

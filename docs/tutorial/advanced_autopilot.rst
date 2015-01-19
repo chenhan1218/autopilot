@@ -164,6 +164,8 @@ Custom Assertions
 
 .. Document the custom assertion methods present in AutopilotTestCase
 
+.. _platform_selection:
+
 Platform Selection
 ==================
 
@@ -180,39 +182,57 @@ For examples and API documentaion please see :py:mod:`autopilot.platform`.
 Gestures and Multi-touch
 ========================
 
-Autopilot provides support for both single-touch and multi-touch gestures on a touch device.
+Autopilot provides API support for both :ref:`single-touch <single_touch>` and :ref:`multi-touch <multi_touch>` gestures which can be used to simulate user input required to drive an application or system under test. These APIs should be used in conjunction with :ref:`platform_selection` to detect platform capabilities and ensure the correct input API is being used.
 
-:class:`autopilot.input.Touch` provides methods for performing single-touch gestures on a touch enabled device: :meth:`~autopilot.input.Touch.tap` (:meth:`~autopilot.input.Touch.press` + :meth:`~autopilot.input.Touch.release`) and :meth:`~autopilot.input.Touch.drag`. These methods can be used in conjunction with :mod:`autopilot.display` to calculate screen co-ordinates and perform single-touch gestures on the device's screen.
+.. _single_touch:
 
-:meth:`~autopilot.input.Touch.tap_object` can also be used to tap the center point of a given introspection object, where the screen co-ordinates are taken directly from the object's **globalRect** property.
+Single-Touch
+++++++++++++
 
-Autopilot additionally provides the class :class:`autopilot.input.Pointer` as a means to provide a single unified API that can be used with both :class:`~autopilot.input.Mouse` input on a desktop and :class:`~autopilot.input.Touch` input for a touch device. See the documentation for this class for further details of this, as not all operations can be performed on both of these input types.
+:class:`autopilot.input.Touch` provides single-touch input gestures, which includes:
 
-This example demonstrates swiping from the center of the screen to the left edge, which could be used for example to swipe to a new scope in the dash.
+* :meth:`~autopilot.input.Touch.tap` which can be used to tap a specified [x,y] point on the screen
 
-First calculate the center point of the screen: ::
+* :meth:`~autopilot.input.Touch.drag` which will drag between 2 [x,y] points and can be customised by altering the speed of the action
+
+* :meth:`~autopilot.input.Touch.press`, :meth:`~autopilot.input.Touch.release` and :meth:`~autopilot.input.Touch.move` operations which can be combined to create custom gestures
+
+* :meth:`~autopilot.input.Touch.tap_object` can be used to tap the center point of a given introspection object, where the screen co-ordinates are taken directly from the object's **globalRect** property
+
+Autopilot additionally provides the class :class:`autopilot.input.Pointer` as a means to provide a single unified API that can be used with both :class:`~autopilot.input.Mouse` input and :class:`~autopilot.input.Touch` input . See the :class:`documentation <autopilot.input.Pointer>` for this class for further details of this, as not all operations can be performed on both of these input types.
+
+This example demonstrates swiping from the center of the screen to the left edge, which could for example be used in `Ubuntu Touch <http://www.ubuntu.com/phone/features>`_ to swipe a new scope into view.
+
+1. First calculate the center point of the screen (see: :ref:`display_information`): ::
 
     >>> from autopilot.display import Display
     >>> display = Display.create()
     >>> center_x = display.get_screen_width() // 2
     >>> center_y = display.get_screen_height() // 2
 
-Then perform the swipe operation from the center of the screen to the left edge, using :meth:`autopilot.input.Pointer.drag`: ::
+2. Then perform the swipe operation from the center of the screen to the left edge, using :meth:`autopilot.input.Pointer.drag`: ::
 
     >>> from autopilot.input import (Touch, Pointer)
     >>> pointer = Pointer(Touch.create())
     >>> pointer.drag(center_x, center_y, 0, center_y)
 
-:class:`autopilot.gestures` provides support for multi-touch pinch gestures on a touch enabled device.
+.. _multi_touch:
 
-The method :meth:`autopilot.gestures.pinch` can be used with an app that supports the pinch gesture, e.g. web browser or gallery app, to zoom in and out of displayed content. This example demonstrates how to zoom in and out with the pinch gesture, using the center of the screen as reference point.
+Multi-Touch
++++++++++++
 
-To zoom in, pinch vertically outwards from the center point by 100 pixels: ::
+:class:`autopilot.gestures` provides support for multi-touch input which includes:
+
+* :meth:`autopilot.gestures.pinch` provides a 2-finger pinch gesture centered around an [x,y] point on the screen
+
+This example demonstrates how to use the pinch gesture, which for example could be used on `Ubuntu Touch <http://www.ubuntu.com/phone/features>`_ web-browser, or gallery application to zoom in or out of currently displayed content.
+
+1. To zoom in, pinch vertically outwards from the center point by 100 pixels: ::
 
     >>> from autopilot import gestures
     >>> gestures.pinch([center_x, center_y], [0, 0], [0, 100])
     
-To zoom back out, pinch vertically 100 pixels back towards the center point: ::
+2. To zoom back out, pinch vertically 100 pixels back towards the center point: ::
 
     >>> gestures.pinch([center_x, center_y], [0, 100], [0, 0])
     
@@ -390,6 +410,8 @@ Process Control
 ===============
 
 .. Document the process stack.
+
+.. _display_information:
 
 Display Information
 ===================

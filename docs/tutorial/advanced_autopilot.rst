@@ -415,7 +415,11 @@ This method should return True if the object matches this custom proxy class, an
 Launching Applications
 ======================
 
-Applications can be launched inside of a testcase using :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application`,  :meth:`~autopilot.testcase.AutopilotTestCase.launch_upstart_application`, and  :meth:`~autopilot.testcase.AutopilotTestCase.launch_click_package`.
+Applications can be launched inside of a testcase using the application launcher methods from :class:`~autopilot.testcase.AutopilotTestCase`. The exact method required will depend upon the type of application being launched:
+
+* :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application`
+* :meth:`~autopilot.testcase.AutopilotTestCase.launch_upstart_application`
+* :meth:`~autopilot.testcase.AutopilotTestCase.launch_click_package`.
 
 This example shows launching an installed click package from within a test case and returning the application proxy for introspection: ::
 
@@ -424,7 +428,6 @@ This example shows launching an installed click package from within a test case 
     class ClickAppTestCase(AutopilotTestCase):
 
         def setUp(self):
-            super().setUp()
             self.app_proxy = self.launch_click_package('com.ubuntu.calculator')
 
 Outside of testcase classes, the :class:`~autopilot.application.NormalApplicationLauncher`, :class:`~autopilot.application.UpstartApplicationLauncher`, and :class:`~autopilot.application.ClickApplicationLauncher` fixtures can be used, i.e.::
@@ -437,15 +440,19 @@ Outside of testcase classes, the :class:`~autopilot.application.NormalApplicatio
 or a similar example for an installed click package: ::
 
         from autopilot.application import ClickApplicationLauncher
-        
-        launcher = ClickApplicationLauncher()
-        launcher.setUp()
-        app_proxy = launcher.launch('com.ubuntu.calculator')
+
+        with ClickApplicationLauncher() as launcher:
+            app_proxy = launcher.launch('com.ubuntu.calculator')
 
 Within a fixture or a testcase, ``self.useFixture`` can be used::
 
         launcher = self.useFixture(NormalApplicationLauncher())
         launcher.launch('gedit', ['--new-window', '/path/to/file'])
+        
+or for an installed click package: ::
+
+        launcher = self.useFixture(ClickApplicationLauncher())
+        app_proxy = launcher.launch('com.ubuntu.calculator')
 
 Additional options can also be specified to set a custom addDetail method, a custom proxy base, or a custom dbus bus with which to patch the environment::
 
@@ -456,7 +463,8 @@ Additional options can also be specified to set a custom addDetail method, a cus
             proxy_base=my_proxy_class,
         ))
 
-The main qml file of some click applications can also be launched directly from source. This can be done using **qmlscene** directly on the target application's main qml file. This example uses :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application` method from within a test case: ::
+The main qml file of some click applications can also be launched directly from source. This can be done using the `qmlscene <https://developer.ubuntu.com/api/qml/sdk-1.0/QtQuick.qtquick-qmlscene/>`_ application directly on the target application's main qml file. This example uses :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application` method from within a test case: ::
 
     app_proxy = self.launch_test_application('qmlscene', 'application.qml', app_type='qt')
 
+However, using this method it will not be possible to return an application specific custom proxy object, see :ref:`custom_proxy_classes`.

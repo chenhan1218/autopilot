@@ -34,7 +34,7 @@ Then build the debian packages::
 
 	$ bzr bd
 
-bzr-builddeb will build binary packages into the parent directory, or into '../build-dir/' if you do not own the correct gpg key to sign the package. The resulting ``.deb`` files can be installed as normal with ``sudo dpkg -i package.deb``.
+bzr-builddeb will build binary packages into the parent directory, or into '../build-area/' if you do not own the correct gpg key to sign the package. The resulting ``.deb`` files can be installed as normal with ``sudo dpkg -i package.deb``.
 
 The documentation can be built separately from the debian packages::
 

@@ -297,7 +297,7 @@ regardless of which backend or platform is in use, the simple fact is that
 there can be some technical limitations for some backends.
 
 Some of these limitations are hidden when using the "create" method and won't
-cause any concern (i.e. X11 backend on desktop, UInput on an Ubuntu Touch device.)
+cause any concern (e.g. X11 backend on desktop, UInput on an Ubuntu Touch device.)
 while others will raise exceptions (that are fully documented in the API docs).
 
 Here is a list of known limitations:
@@ -328,7 +328,7 @@ Here is a list of known limitations:
     supported/available on the Ubuntu Touch devices. It is possible that it
     will be available on the desktop in the near future.
 
-* Unable to type 'special' keys i.e. Alt
+* Unable to type 'special' keys e.g. Alt
 
   - This shouldn't be an issue as applications running on Ubuntu Touch devices
     will be using the expected patterns of use on these platforms.
@@ -415,29 +415,29 @@ This method should return True if the object matches this custom proxy class, an
 Launching Applications
 ======================
 
-Applications can be launched inside of a testcase using the application launcher methods from :class:`~autopilot.testcase.AutopilotTestCase`. The exact method required will depend upon the type of application being launched:
+Applications can be launched inside of a testcase using the application launcher methods from the :class:`~autopilot.testcase.AutopilotTestCase` class. The exact method required will depend upon the type of application being launched:
 
-* :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application`
-* :meth:`~autopilot.testcase.AutopilotTestCase.launch_upstart_application`
-* :meth:`~autopilot.testcase.AutopilotTestCase.launch_click_package`.
+* :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application` is used to launch regular executables
+* :meth:`~autopilot.testcase.AutopilotTestCase.launch_upstart_application` is used to launch upstart-based applications
+* :meth:`~autopilot.testcase.AutopilotTestCase.launch_click_package`  is used to launch applications inside a `click package <https://click.readthedocs.org/en/latest/>`_
 
-This example shows launching an installed click package from within a test case and returning the application proxy for introspection: ::
+This example shows how to launch an installed click application from within a test case::
 
     from autopilot.testcase import AutopilotTestCase
 
     class ClickAppTestCase(AutopilotTestCase):
 
-        def setUp(self):
-            self.app_proxy = self.launch_click_package('com.ubuntu.calculator')
+        def test_something(self):
+            app_proxy = self.launch_click_package('com.ubuntu.calculator')
 
-Outside of testcase classes, the :class:`~autopilot.application.NormalApplicationLauncher`, :class:`~autopilot.application.UpstartApplicationLauncher`, and :class:`~autopilot.application.ClickApplicationLauncher` fixtures can be used, i.e.::
+Outside of testcase classes, the :class:`~autopilot.application.NormalApplicationLauncher`, :class:`~autopilot.application.UpstartApplicationLauncher`, and :class:`~autopilot.application.ClickApplicationLauncher` fixtures can be used, e.g.::
 
         from autopilot.application import NormalApplicationLauncher
 
         with NormalApplicationLauncher() as launcher:
             launcher.launch('gedit')
 
-or a similar example for an installed click package: ::
+or a similar example for an installed click package::
 
         from autopilot.application import ClickApplicationLauncher
 
@@ -449,21 +449,22 @@ Within a fixture or a testcase, ``self.useFixture`` can be used::
         launcher = self.useFixture(NormalApplicationLauncher())
         launcher.launch('gedit', ['--new-window', '/path/to/file'])
         
-or for an installed click package: ::
+or for an installed click package::
 
         launcher = self.useFixture(ClickApplicationLauncher())
         app_proxy = launcher.launch('com.ubuntu.calculator')
 
 Additional options can also be specified to set a custom addDetail method, a custom proxy base, or a custom dbus bus with which to patch the environment::
 
-        
         launcher = self.useFixture(NormalApplicationLauncher(
             case_addDetail=self.addDetail,
             dbus_bus='some_other_bus',
             proxy_base=my_proxy_class,
         ))
 
-The main qml file of some click applications can also be launched directly from source. This can be done using the `qmlscene <https://developer.ubuntu.com/api/qml/sdk-1.0/QtQuick.qtquick-qmlscene/>`_ application directly on the target application's main qml file. This example uses :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application` method from within a test case: ::
+.. note:: You must pass the test case's 'addDetail' method to these application launch fixtures if you want application logs to be attached to the test result. This is due to the way fixtures are cleaned up, and is unavoidable.
+
+The main qml file of some click applications can also be launched directly from source. This can be done using the `qmlscene <https://developer.ubuntu.com/api/qml/sdk-1.0/QtQuick.qtquick-qmlscene/>`_ application directly on the target application's main qml file. This example uses :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application` method from within a test case::
 
     app_proxy = self.launch_test_application('qmlscene', 'application.qml', app_type='qt')
 

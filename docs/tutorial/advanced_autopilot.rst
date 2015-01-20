@@ -357,13 +357,14 @@ Process Control
 Display Information
 ===================
 
-Autopilot provides :class:`autopilot.display` to get information about the displays currently being used. This information can be used in tests to implement gestures or input events that are specific to the current test environment. For example a test could be run on a desktop environment with multiple screens, or on a variety of touch devices that have different screen sizes.
+Autopilot provides the :mod:`autopilot.display` module to get information about the displays currently being used. This information can be used in tests to implement gestures or input events that are specific to the current test environment. For example a test could be run on a desktop environment with multiple screens, or on a variety of touch devices that have different screen sizes.
 
-The user must call the static method :meth:`~autopilot.display.Display.create` to get an instance of the :class:`~autopilot.display.Display` class. This is required so that the necessary display information can be obtained from the test environment.
+The user must call the static :meth:`~autopilot.display.Display.create` method to get an instance of the :class:`~autopilot.display.Display` class.
 
-This example shows how to get the size of each available screen, which could be used to calculate co-ordinates for a swipe or input event. See :class:`autopilot.input` for more details about generating input events. ::  
+This example shows how to get the size of each available screen, which could be used to calculate coordinates for a swipe or input event (See the :mod:`autopilot.input` module for more details about generating input events).::  
 
     from autopilot.display import Display
+
     display = Display.create()
     for screen in range(0, display.get_num_screens()):
         width = display.get_screen_width(screen)

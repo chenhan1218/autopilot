@@ -482,8 +482,27 @@ This method should return True if the object matches this custom proxy class, an
 
     # Get all QLabels in the applicaton:
     labels = self.app.select_many(QLabel)
+    
+If you are introspecting an application that already has a custom proxy base class defined, then this class can simply be imported and passed to the :ref:`launching application <launching_applications>` method. This will allow you to call all of the public methods of the application's proxy base class directly in your test.
 
-.. launching_applications:
+This example will run on desktop and uses the webbrowser application to navigate to a url using the base class go_to_url() method: ::
+
+    from autopilot.testcase import AutopilotTestCase
+    from webbrowser_app.emulators.browser import Webbrowser
+
+    class ClickAppTestCase(AutopilotTestCase):
+
+        def setUp(self):
+            super().setUp()
+            self.app = self.launch_test_application(
+                'webbrowser-app',
+                emulator_base=Webbrowser)
+
+        def test_go_to_url(self):
+            self.app.main_window.go_to_url('http://www.ubuntu.com')
+            ...
+
+.. _launching_applications:
 
 Launching Applications
 ======================

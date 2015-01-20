@@ -20,11 +20,11 @@ Links
 Build Instructions
 ==================
 
-Autopilot is not buildable within a python virtualenv, as it requires several packages that are not available on ``pypi``. Instead, either use autopilot from the source tree, or build debian packages instead. Instructions for building debian packges are below:
+Autopilot is not buildable within a python virtualenv, as it requires several packages that are not available on ``pypi``. Instead, either use autopilot from the source tree, or build debian packages instead. Instructions for building debian packages are below:
 
-Assuming a current ubuntu installation, make sure you have the build tools required installed::
+Assuming a current ubuntu installation, make sure you have the build tools that are required installed::
 
-	$ sudo apt-get install devscripts bzr-builddeb
+	$ sudo apt-get install devscripts equivs bzr-builddeb
 
 Then install the build-dependencies for the autopilot packages::
 
@@ -34,13 +34,13 @@ Then build the debian packages::
 
 	$ bzr bd
 
-bzr-builddeb will build binary packages into the parent directory, or into '../build-dir/' if you do not own the correct gpg key to sign the package. The resulting ``.deb`` files can be installed as normal with ``dpkg -i package.deb``.
+bzr-builddeb will build binary packages into the parent directory, or into '../build-dir/' if you do not own the correct gpg key to sign the package. The resulting ``.deb`` files can be installed as normal with ``sudo dpkg -i package.deb``.
 
 The documentation can be built separately from the debian packages::
 
 	$ python3 setup.py build_sphinx
 
-The docs are built into 'build/sphinx/html', and can be opened in the default browser with::
+The docs are built into 'build/sphinx/html' and can be opened in the default browser with::
 
 	$ xdg-open build/sphinx/html/index.html
 

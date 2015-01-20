@@ -197,7 +197,7 @@ Single-Touch
 
 * :meth:`~autopilot.input.Touch.press`, :meth:`~autopilot.input.Touch.release` and :meth:`~autopilot.input.Touch.move` operations which can be combined to create custom gestures
 
-* :meth:`~autopilot.input.Touch.tap_object` can be used to tap the center point of a given introspection object, where the screen co-ordinates are taken directly from the object's **globalRect** property
+* :meth:`~autopilot.input.Touch.tap_object` can be used to tap the center point of a given introspection object, where the screen co-ordinates are taken from one of several properties of the object
 
 Autopilot additionally provides the class :class:`autopilot.input.Pointer` as a means to provide a single unified API that can be used with both :class:`~autopilot.input.Mouse` input and :class:`~autopilot.input.Touch` input . See the :class:`documentation <autopilot.input.Pointer>` for this class for further details of this, as not all operations can be performed on both of these input types.
 
@@ -212,7 +212,7 @@ This example demonstrates swiping from the center of the screen to the left edge
 
 2. Then perform the swipe operation from the center of the screen to the left edge, using :meth:`autopilot.input.Pointer.drag`: ::
 
-    >>> from autopilot.input import (Touch, Pointer)
+    >>> from autopilot.input import Touch, Pointer
     >>> pointer = Pointer(Touch.create())
     >>> pointer.drag(center_x, center_y, 0, center_y)
 

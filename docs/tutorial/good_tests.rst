@@ -339,6 +339,8 @@ Since we can use any testtools matcher, we can also write code like this:
 
 Note that you can pass any object that follows the testtools matcher protocol (so you can write your own matchers, if you like).
 
+.. _wait_for:
+
 In Proxy Classes
 ----------------
 

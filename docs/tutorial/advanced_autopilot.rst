@@ -164,6 +164,8 @@ Custom Assertions
 
 .. Document the custom assertion methods present in AutopilotTestCase
 
+.. _platform_selection:
+
 Platform Selection
 ==================
 
@@ -175,10 +177,67 @@ the test or skipping the test all together.
 
 For examples and API documentaion please see :py:mod:`autopilot.platform`.
 
-Gestures and Multitouch
-=======================
+.. _gestures_multitouch:
 
-.. How do we do multi-touch & gestures?
+Gestures and Multi-touch
+========================
+
+Autopilot provides API support for both :ref:`single-touch <single_touch>` and :ref:`multi-touch <multi_touch>` gestures which can be used to simulate user input required to drive an application or system under test. These APIs should be used in conjunction with :ref:`platform_selection` to detect platform capabilities and ensure the correct input API is being used.
+
+.. _single_touch:
+
+Single-Touch
+++++++++++++
+
+:class:`autopilot.input.Touch` provides single-touch input gestures, which includes:
+
+* :meth:`~autopilot.input.Touch.tap` which can be used to tap a specified [x,y] point on the screen
+
+* :meth:`~autopilot.input.Touch.drag` which will drag between 2 [x,y] points and can be customised by altering the speed of the action
+
+* :meth:`~autopilot.input.Touch.press`, :meth:`~autopilot.input.Touch.release` and :meth:`~autopilot.input.Touch.move` operations which can be combined to create custom gestures
+
+* :meth:`~autopilot.input.Touch.tap_object` can be used to tap the center point of a given introspection object, where the screen co-ordinates are taken from one of several properties of the object
+
+Autopilot additionally provides the class :class:`autopilot.input.Pointer` as a means to provide a single unified API that can be used with both :class:`~autopilot.input.Mouse` input and :class:`~autopilot.input.Touch` input . See the :class:`documentation <autopilot.input.Pointer>` for this class for further details of this, as not all operations can be performed on both of these input types.
+
+This example demonstrates swiping from the center of the screen to the left edge, which could for example be used in `Ubuntu Touch <http://www.ubuntu.com/phone/features>`_ to swipe a new scope into view.
+
+1. First calculate the center point of the screen (see: :ref:`display_information`): ::
+
+    >>> from autopilot.display import Display
+    >>> display = Display.create()
+    >>> center_x = display.get_screen_width() // 2
+    >>> center_y = display.get_screen_height() // 2
+
+2. Then perform the swipe operation from the center of the screen to the left edge, using :meth:`autopilot.input.Pointer.drag`: ::
+
+    >>> from autopilot.input import Touch, Pointer
+    >>> pointer = Pointer(Touch.create())
+    >>> pointer.drag(center_x, center_y, 0, center_y)
+
+.. _multi_touch:
+
+Multi-Touch
++++++++++++
+
+:class:`autopilot.gestures` provides support for multi-touch input which includes:
+
+* :meth:`autopilot.gestures.pinch` provides a 2-finger pinch gesture centered around an [x,y] point on the screen
+
+This example demonstrates how to use the pinch gesture, which for example could be used on `Ubuntu Touch <http://www.ubuntu.com/phone/features>`_ web-browser, or gallery application to zoom in or out of currently displayed content.
+
+1. To zoom in, pinch vertically outwards from the center point by 100 pixels: ::
+
+    >>> from autopilot import gestures
+    >>> gestures.pinch([center_x, center_y], [0, 0], [0, 100])
+    
+2. To zoom back out, pinch vertically 100 pixels back towards the center point: ::
+
+    >>> gestures.pinch([center_x, center_y], [0, 100], [0, 0])
+    
+
+.. note:: The multi-touch :meth:`~autopilot.gestures.pinch` method is intended for use on a touch enabled device. However, if run on a desktop environment it will behave as if the mouse select button is pressed whilst moving the mouse pointer. For example to select some text in a document.
 
 .. _tut-picking-backends:
 
@@ -351,6 +410,8 @@ Process Control
 ===============
 
 .. Document the process stack.
+
+.. _display_information:
 
 Display Information
 ===================

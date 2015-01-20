@@ -216,6 +216,8 @@ See :ref:`autopilot.testcase.AutopilotTestCase.assertProperty <custom_assertions
 
 .. note:: :py:mod:`~autopilot.testcase.AutopilotTestCase.assertProperty` is a synonym for this method.
 
+.. _platform_selection:
+
 Platform Selection
 ==================
 
@@ -227,10 +229,67 @@ the test or skipping the test all together.
 
 For examples and API documentaion please see :py:mod:`autopilot.platform`.
 
-Gestures and Multitouch
-=======================
+.. _gestures_multitouch:
 
-.. How do we do multi-touch & gestures?
+Gestures and Multi-touch
+========================
+
+Autopilot provides API support for both :ref:`single-touch <single_touch>` and :ref:`multi-touch <multi_touch>` gestures which can be used to simulate user input required to drive an application or system under test. These APIs should be used in conjunction with :ref:`platform_selection` to detect platform capabilities and ensure the correct input API is being used.
+
+.. _single_touch:
+
+Single-Touch
+++++++++++++
+
+:class:`autopilot.input.Touch` provides single-touch input gestures, which includes:
+
+* :meth:`~autopilot.input.Touch.tap` which can be used to tap a specified [x,y] point on the screen
+
+* :meth:`~autopilot.input.Touch.drag` which will drag between 2 [x,y] points and can be customised by altering the speed of the action
+
+* :meth:`~autopilot.input.Touch.press`, :meth:`~autopilot.input.Touch.release` and :meth:`~autopilot.input.Touch.move` operations which can be combined to create custom gestures
+
+* :meth:`~autopilot.input.Touch.tap_object` can be used to tap the center point of a given introspection object, where the screen co-ordinates are taken from one of several properties of the object
+
+Autopilot additionally provides the class :class:`autopilot.input.Pointer` as a means to provide a single unified API that can be used with both :class:`~autopilot.input.Mouse` input and :class:`~autopilot.input.Touch` input . See the :class:`documentation <autopilot.input.Pointer>` for this class for further details of this, as not all operations can be performed on both of these input types.
+
+This example demonstrates swiping from the center of the screen to the left edge, which could for example be used in `Ubuntu Touch <http://www.ubuntu.com/phone/features>`_ to swipe a new scope into view.
+
+1. First calculate the center point of the screen (see: :ref:`display_information`): ::
+
+    >>> from autopilot.display import Display
+    >>> display = Display.create()
+    >>> center_x = display.get_screen_width() // 2
+    >>> center_y = display.get_screen_height() // 2
+
+2. Then perform the swipe operation from the center of the screen to the left edge, using :meth:`autopilot.input.Pointer.drag`: ::
+
+    >>> from autopilot.input import Touch, Pointer
+    >>> pointer = Pointer(Touch.create())
+    >>> pointer.drag(center_x, center_y, 0, center_y)
+
+.. _multi_touch:
+
+Multi-Touch
++++++++++++
+
+:class:`autopilot.gestures` provides support for multi-touch input which includes:
+
+* :meth:`autopilot.gestures.pinch` provides a 2-finger pinch gesture centered around an [x,y] point on the screen
+
+This example demonstrates how to use the pinch gesture, which for example could be used on `Ubuntu Touch <http://www.ubuntu.com/phone/features>`_ web-browser, or gallery application to zoom in or out of currently displayed content.
+
+1. To zoom in, pinch vertically outwards from the center point by 100 pixels: ::
+
+    >>> from autopilot import gestures
+    >>> gestures.pinch([center_x, center_y], [0, 0], [0, 100])
+    
+2. To zoom back out, pinch vertically 100 pixels back towards the center point: ::
+
+    >>> gestures.pinch([center_x, center_y], [0, 100], [0, 0])
+    
+
+.. note:: The multi-touch :meth:`~autopilot.gestures.pinch` method is intended for use on a touch enabled device. However, if run on a desktop environment it will behave as if the mouse select button is pressed whilst moving the mouse pointer. For example to select some text in a document.
 
 .. _tut-picking-backends:
 
@@ -349,7 +408,7 @@ regardless of which backend or platform is in use, the simple fact is that
 there can be some technical limitations for some backends.
 
 Some of these limitations are hidden when using the "create" method and won't
-cause any concern (i.e. X11 backend on desktop, UInput on an Ubuntu Touch device.)
+cause any concern (e.g. X11 backend on desktop, UInput on an Ubuntu Touch device.)
 while others will raise exceptions (that are fully documented in the API docs).
 
 Here is a list of known limitations:
@@ -380,7 +439,7 @@ Here is a list of known limitations:
     supported/available on the Ubuntu Touch devices. It is possible that it
     will be available on the desktop in the near future.
 
-* Unable to type 'special' keys i.e. Alt
+* Unable to type 'special' keys e.g. Alt
 
   - This shouldn't be an issue as applications running on Ubuntu Touch devices
     will be using the expected patterns of use on these platforms.
@@ -404,10 +463,24 @@ Process Control
 
 .. Document the process stack.
 
+.. _display_information:
+
 Display Information
 ===================
 
-.. Document the display stack.
+Autopilot provides the :mod:`autopilot.display` module to get information about the displays currently being used. This information can be used in tests to implement gestures or input events that are specific to the current test environment. For example a test could be run on a desktop environment with multiple screens, or on a variety of touch devices that have different screen sizes.
+
+The user must call the static :meth:`~autopilot.display.Display.create` method to get an instance of the :class:`~autopilot.display.Display` class.
+
+This example shows how to get the size of each available screen, which could be used to calculate coordinates for a swipe or input event (See the :mod:`autopilot.input` module for more details about generating input events).::  
+
+    from autopilot.display import Display
+
+    display = Display.create()
+    for screen in range(0, display.get_num_screens()):
+        width = display.get_screen_width(screen)
+        height = display.get_screen_height(screen)
+        print('screen {0}: {1}x{2}'.format(screen, width, height))
 
 .. _custom_proxy_classes:
 
@@ -467,25 +540,57 @@ This method should return True if the object matches this custom proxy class, an
 Launching Applications
 ======================
 
-Applications can be launched inside of a testcase using :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application`,  :meth:`~autopilot.testcase.AutopilotTestCase.launch_upstart_application`, and  :meth:`~autopilot.testcase.AutopilotTestCase.launch_click_application`.
+Applications can be launched inside of a testcase using the application launcher methods from the :class:`~autopilot.testcase.AutopilotTestCase` class. The exact method required will depend upon the type of application being launched:
 
-Outside of testcase classes, the :class:`~autopilot.application.NormalApplicationLauncher`, :class:`~autopilot.application.UpstartApplicationLauncher`, and :class:`~autopilot.application.ClickApplicationLauncher` fixtures can be used, i.e.::
+* :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application` is used to launch regular executables
+* :meth:`~autopilot.testcase.AutopilotTestCase.launch_upstart_application` is used to launch upstart-based applications
+* :meth:`~autopilot.testcase.AutopilotTestCase.launch_click_package`  is used to launch applications inside a `click package <https://click.readthedocs.org/en/latest/>`_
+
+This example shows how to launch an installed click application from within a test case::
+
+    from autopilot.testcase import AutopilotTestCase
+
+    class ClickAppTestCase(AutopilotTestCase):
+
+        def test_something(self):
+            app_proxy = self.launch_click_package('com.ubuntu.calculator')
+
+Outside of testcase classes, the :class:`~autopilot.application.NormalApplicationLauncher`, :class:`~autopilot.application.UpstartApplicationLauncher`, and :class:`~autopilot.application.ClickApplicationLauncher` fixtures can be used, e.g.::
 
         from autopilot.application import NormalApplicationLauncher
 
         with NormalApplicationLauncher() as launcher:
             launcher.launch('gedit')
 
+or a similar example for an installed click package::
+
+        from autopilot.application import ClickApplicationLauncher
+
+        with ClickApplicationLauncher() as launcher:
+            app_proxy = launcher.launch('com.ubuntu.calculator')
+
 Within a fixture or a testcase, ``self.useFixture`` can be used::
 
         launcher = self.useFixture(NormalApplicationLauncher())
         launcher.launch('gedit', ['--new-window', '/path/to/file'])
+        
+or for an installed click package::
+
+        launcher = self.useFixture(ClickApplicationLauncher())
+        app_proxy = launcher.launch('com.ubuntu.calculator')
 
 Additional options can also be specified to set a custom addDetail method, a custom proxy base, or a custom dbus bus with which to patch the environment::
 
-        
         launcher = self.useFixture(NormalApplicationLauncher(
             case_addDetail=self.addDetail,
             dbus_bus='some_other_bus',
             proxy_base=my_proxy_class,
         ))
+
+.. note:: You must pass the test case's 'addDetail' method to these application launch fixtures if you want application logs to be attached to the test result. This is due to the way fixtures are cleaned up, and is unavoidable.
+
+The main qml file of some click applications can also be launched directly from source. This can be done using the `qmlscene <https://developer.ubuntu.com/api/qml/sdk-1.0/QtQuick.qtquick-qmlscene/>`_ application directly on the target application's main qml file. This example uses :meth:`~autopilot.testcase.AutopilotTestCase.launch_test_application` method from within a test case::
+
+    app_proxy = self.launch_test_application('qmlscene', 'application.qml', app_type='qt')
+
+However, using this method it will not be possible to return an application specific custom proxy object, see :ref:`custom_proxy_classes`.

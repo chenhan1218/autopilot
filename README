@@ -48,25 +48,30 @@ The docs are built into 'build/sphinx/html' and can be opened in the default bro
 Running and Listing tests
 =========================
 
-In a nutshell running tests is as easy as::
+In a nutshell running tests normally as easy as::
 
     $ autopilot3 run <test id>
 
-For example to run autopilots unit tests::
+There are some complexities when attempting to run the autopilot tests from
+within a development branch (this related to how autopilot modules are loaded
+and then used to attempt to collect the required tests.)
 
-    $ autopilot3 run autopilot.tests.unit
+For that reason when running autopilot's tests while hacking on it it is
+advised to run autopilot in this manner::
+
+    $ python3 -m autopilot.run run autopilot.tests.unit
 
 Listing is similar::
 
-    $ autopilot3 list autopilot.tests.unit
+    $ python3 -m autopilot.run list autopilot.tests.unit
 
 For a more complete explanation for running or listing tests please see the
 full documentation found here:
 https://developer.ubuntu.com/api/devel/ubuntu-14.10/python/autopilot/tutorial/running_ap.html
 
-.. note:: If you are in autopilots root directory this will run/list the tests
-          from within that local module. Otherwise autopilot will look in the
-          system python path.
+If you are in autopilots root directory this will run/list the tests from
+within that local module. Otherwise autopilot will look in the system python
+path.
 
 
 Release Manual Tests

@@ -108,19 +108,17 @@ Automated testing of an application through the Graphical User Interface (GUI) i
 These tests require regular review and attention during the development cycle. This is known as *Interface Sensitivity ("even minor changes to the interface can cause tests to fail" [1])*.
 Utilizing the page-object pattern, alleviates some of the problems stemming from this fragility, allowing us to do automated user acceptance testing (UAT) in a sustainable manner.
 
-The Page Object Pattern comes from the Selenium community [2] and is the
-best way to turn a flaky and unmaintainable user acceptance test into a stable and useful
+The Page Object Pattern comes from the `Selenium community <https://code.google.com/p/selenium/wiki/PageObjects>`_ and is the best way to turn a flaky and unmaintainable user acceptance test into a stable and useful
 part of your release process. A page is what's visible on the screen at a single moment.
-A user story consists of a user jumping from page to page until they achieve there goal.
+A user story consists of a user jumping from page to page until they achieve their goal.
 Thus pages are modeled as objects following these guidelines:
 
 #. The public methods represent the services that the page offers.
 #. Try not to expose the internals of the page.
 #. Methods return other PageObjects.
-#. Generally don't make assertions.
+#. Assertions should exist only in tests
 #. Objects need not represent the entire page.
-#. Different results for the same action are modelled as different
-   methods.
+#. Actions which produce multiple results should have a test for each result
 
 Lets take the page objects of the `Ubuntu Clock App  <http://bazaar.launchpad.net/~ubuntu-clock-dev/ubuntu-clock-app/trunk/view/399/tests/autopilot/ubuntu_clock_app/emulators.py>`__ as an example, with some simplifications. This application is written in
 QML and Javascript using the `Ubuntu SDK <http://developer.ubuntu.com/apps/sdk/>`__.
@@ -207,8 +205,8 @@ caller all the available services that the stopwatch exposes to the
 user. Thus it can be chained as a user journey from one page to the
 other.
 
-4. Generally don't make assertions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+4. Assertions should exist only in tests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A well written UAT (user acceptance test) consists of a sequence of
 steps or user actions and ends with one single assertion that verifies
@@ -280,8 +278,8 @@ you dig into the full implementation of the Clock test class you will
 find that in order to open the stopwatch page we end up calling Header
 methods.
 
-6. Different results for the same action are modeled as different methods
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6. Actions which produce multiple results should have a test for each result
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 According to the guideline #3 we are returning page objects every time
 that a user action opens the option for new actions to execute.
@@ -323,9 +321,6 @@ wrong values.
 
 [1] Meszaros, G. (2007). xUnit test patterns: Refactoring test code.
 Pearson Education.
-
-[2] Selenium community (2013, March 31). Page Objects. Retrieved from
-https://code.google.com/p/selenium/wiki/PageObjects
 
 Test Length
 +++++++++++

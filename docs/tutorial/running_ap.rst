@@ -93,7 +93,7 @@ Visualise Introspection Tree
 
 A very common thing to want to do while writing autopilot tests is see the structure of the application being tested. To support this, autopilot includes a simple application to help visualize the introspection tree. To start it, make sure the application you wish to test is running, and then run::
 
-    $ autopilot vis
+    $ autopilot3 vis
 
 The result should be a window similar to below:
 
@@ -102,4 +102,3 @@ The result should be a window similar to below:
 Selecting a connection from the drop-down box allows you to inspect different autopilot-supporting applications. If Unity is running, the Unity connection should always be present. If other applications have been started with the autopilot support enabled, they should appear in this list as well. Once a connection is selected, the introspection tree is rendered in the left-hand pane, and the details of each object appear in the right-hand pane.
 
 .. image:: /images/ap_vis_object.png
-

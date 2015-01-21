@@ -6,6 +6,7 @@ Autopilot Documentation Front Page
     tutorial/tutorial
     tutorial/good_tests
     tutorial/running_ap
+    guides/installation
     api/index
     faq/faq
     porting/porting

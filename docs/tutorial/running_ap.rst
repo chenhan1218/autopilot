@@ -105,7 +105,7 @@ A Qt example which passes on parameters to the application being launched::
 
     $ autopilot3 launch qmlscene my_app.qml
 
-Autopilot launch attempts to detect if you are launching either a Gtk or Qt application so that it can enable the correct libraries. If it is unable to determine this you will need to specify the type of application it is by using the -i argument. This allows "Gtk" or "Qt" frameworks to be specified when launching the application. The default value ("Auto") will try to detect which interface to load automatically.
+Autopilot launch attempts to detect if you are launching either a Gtk or Qt application so that it can enable the correct libraries. If it is unable to determine this you will need to specify the type of application it is by using the -i argument. This allows "Gtk" or "Qt" frameworks to be specified when launching the application. The default value ("Auto") will try to detect which interface to load automatically. 
 
 A typical error in this situation will be "Error: Could not determine introspection type to use for application". In which case the -i option should be specified with the correct application framework type to fix the problem::
 

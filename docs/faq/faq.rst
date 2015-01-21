@@ -13,26 +13,21 @@ Q. Where can I get help / support?
 
 The developers hang out in the #ubuntu-autopilot IRC channel on irc.freenode.net.
 
-Q. How do I install Autopilot?
-==============================
+Q. Which version of autopilot should I install?
+===============================================
 
-Autopilot is in continuous development, and the best way to get the latest version of autopilot is to be running the latest Ubuntu development image. The autopilot developers traditionally support the Ubuntu release immediately prior to the development release via the autopilot PPA.
+Ideally you should adopt and utilize the latest version of autopilot. If your testcase requires you to utilize an
+older version of autopilot for reasons other than :ref:`porting`, please `file a bug <https://bugs.launchpad.net/autopilot/+filebug>`_ and let the development team know about your issue.
 
-**I am running the latest development image!**
+Q. Should I write my tests in python2 or python3?
+=================================================
 
-In that case you can install autopilot directly - either by installing the ``autopilot-desktop`` or ``autopilot-touch`` packages, depending on whether you are installing to a desktop or an Ubuntu Touch device.
+As Autopilot fully supports python3, you should seek to use python3 for new tests. Before making a decision, you should also ensure any 3rd party modules your test may depend on also support python3.
 
-**I am running the Ubuntu release previous to the development release!**
+Q: Should I convert my existing tests to python3?
+=================================================
 
-You may find that there are packages available for your Ubuntu release in the autopilot PPA. To add the PPA to your system, run the following command::
-
-    sudo add-apt-repository ppa:autopilot/ppa && sudo apt-get update
-
-Once the PPA has been added to your system, you should be able to install the same autopilot packages as if you were running the latest development release (see above).
-
-**I am running some other Linux system!**
-
-You may have to download the source code, and either run from source, or build the packages locally. Your best bet is to ask in the autopilot IRC channel ( :ref:`help_and_support`).
+In a word, yes. Converting python2 to python3 is generally straightforward and converting a testcase is likely much easier than a full blow python application. Autopilot itself has full python3 support, but you should check any 3rd party modules your test may depend on before converting. You can also consider retaining python2 compatibility upon conversion.
 
 Q. Where can I report a bug?
 ============================

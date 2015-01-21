@@ -1,3 +1,5 @@
+.. _porting:
+
 Porting Autopilot Tests
 #######################
 
@@ -22,11 +24,11 @@ Gtk Tests and Boolean Parameters
 
 Version 1.3 of the autopilot-gtk backend contained `a bug <https://bugs.launchpad.net/autopilot-gtk/+bug/1214249>`_ that caused all Boolean properties to be exported as integers instead of boolean values. This in turn meant that test code would fail to return the correct objects when using selection criteria such as::
 
-	visible_buttons = app.select_many("GtkPushButton", visible=True)
+    visible_buttons = app.select_many("GtkPushButton", visible=True)
 
 and instead had to write something like this::
 
-	visible_buttons = app.select_many("GtkPushButton", visible=1)
+    visible_buttons = app.select_many("GtkPushButton", visible=1)
 
 This bug has now been fixed, and using the integer selection will fail.
 
@@ -35,13 +37,13 @@ This bug has now been fixed, and using the integer selection will fail.
 
 The :meth:`~autopilot.introspection.dbus.DBusIntrospectionObject.select_single` method used to return ``None`` in the case where no object was found that matched the search criteria. This led to rather awkward code in places where the object you are searching for is being created dynamically::
 
-	for i in range(10):
-		my_obj = self.app.select_single("MyObject")
-		if my_obj is not None:
-			break
-		time.sleep(1)
-	else:
-		self.fail("Object 'MyObject' was not found within 10 seconds.")
+    for i in range(10):
+        my_obj = self.app.select_single("MyObject")
+        if my_obj is not None:
+            break
+        time.sleep(1)
+    else:
+        self.fail("Object 'MyObject' was not found within 10 seconds.")
 
 This makes the authors intent harder to discern. To improve this situation, two changes have been made:
 
@@ -49,7 +51,7 @@ This makes the authors intent harder to discern. To improve this situation, two 
 
 2. If the object being searched for is likely to not exist, there is a new method: :meth:`~autopilot.introspection.dbus.DBusIntrospectionObject.wait_select_single` will try to retrieve an object for 10 seconds. If the object does not exist after that timeout, a :class:`~autopilot.exceptions.StateNotFoundError` exception is raised. This means that the above code example should now be written as::
 
-	my_obj = self.app.wait_select_single("MyObject")
+    my_obj = self.app.wait_select_single("MyObject")
 
 .. _dbus_backends:
 
@@ -74,6 +76,9 @@ You will instead need to have something like this instead::
 
     all_keys = app_proxy.select_many(KeyCustomProxy)
 
+
+
+.. _python3_support:
 
 Python 3
 ++++++++
@@ -103,42 +108,42 @@ The 1.3 release included many API breaking changes. Earlier versions of autopilo
 
 In autopilot 1.2, tests enabled application introspection services by inheriting from one of two mixin classes: ``QtIntrospectionTestMixin`` to enable testing Qt4, Qt5, and Qml applications, and ``GtkIntrospectionTestMixin`` to enable testing Gtk 2 and Gtk3 applications. For example, a test case class in autopilot 1.2 might look like this::
 
-	from autopilot.introspection.qt import QtIntrospectionTestMixin
-	from autopilot.testcase import AutopilotTestCase
+    from autopilot.introspection.qt import QtIntrospectionTestMixin
+    from autopilot.testcase import AutopilotTestCase
 
 
-	class MyAppTestCase(AutopilotTestCase, QtIntrospectionTestMixin):
+    class MyAppTestCase(AutopilotTestCase, QtIntrospectionTestMixin):
 
-	    def setUp(self):
-	        super(MyAppTestCase, self).setUp()
-	        self.app = self.launch_test_application("../../my-app")
+        def setUp(self):
+            super(MyAppTestCase, self).setUp()
+            self.app = self.launch_test_application("../../my-app")
 
 In Autopilot 1.3, the :class:`~autopilot.testcase.AutopilotTestCase` class contains this functionality directly, so the ``QtIntrospectionTestMixin`` and ``GtkIntrospectionTestMixin`` classes no longer exist. The above example becomes simpler::
 
-	from autopilot.testcase import AutopilotTestCase
+    from autopilot.testcase import AutopilotTestCase
 
 
-	class MyAppTestCase(AutopilotTestCase):
+    class MyAppTestCase(AutopilotTestCase):
 
-	    def setUp(self):
-	        super(MyAppTestCase, self).setUp()
-	        self.app = self.launch_test_application("../../my-app")
+        def setUp(self):
+            super(MyAppTestCase, self).setUp()
+            self.app = self.launch_test_application("../../my-app")
 
 Autopilot will try and determine the introspection type automatically. If this process fails, you can specify the application type manually::
 
-	from autopilot.testcase import AutopilotTestCase
+    from autopilot.testcase import AutopilotTestCase
 
 
-	class MyAppTestCase(AutopilotTestCase):
+    class MyAppTestCase(AutopilotTestCase):
 
-	    def setUp(self):
-	        super(MyAppTestCase, self).setUp()
-	        self.app = self.launch_test_application("../../my-app", app_type='qt')
+        def setUp(self):
+            super(MyAppTestCase, self).setUp()
+            self.app = self.launch_test_application("../../my-app", app_type='qt')
 
 .. seealso::
 
-	Method :py:meth:`autopilot.testcase.AutopilotTestCase.launch_test_application`
-		Launch test applications.
+    Method :py:meth:`autopilot.testcase.AutopilotTestCase.launch_test_application`
+        Launch test applications.
 
 ``autopilot.emulators`` namespace has been deprecated
 +++++++++++++++++++++++++++++++++++++++++++++++++++++

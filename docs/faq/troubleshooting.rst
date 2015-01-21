@@ -14,7 +14,7 @@ The single hardest thing to do while writing autopilot tests is to understand th
 
 **Using Autopilot Vis**
 
-The :ref:`Autopilot vis tool <visualise_introspection_tree>` is a useful tool for exploring the entire structure of an application. The vis tool allows you to search for a particular node. If you want to find out what parts of the application to select to gain access to certain information, the vis tool is probably the best way to do that.
+The :ref:`Autopilot vis tool <visualise_introspection_tree>` is a useful tool for exploring the entire structure of an application, and allows you to search for a particular node in the object tree. If you want to find out what parts of the application to select to gain access to certain information, the vis tool is probably the best way to do that.
 
 **Using print_tree**
 

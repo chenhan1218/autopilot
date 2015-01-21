@@ -69,9 +69,8 @@ For a more complete explanation for running or listing tests please see the
 full documentation found here:
 https://developer.ubuntu.com/api/devel/ubuntu-14.10/python/autopilot/tutorial/running_ap.html
 
-If you are in autopilots root directory this will run/list the tests from
-within that local module. Otherwise autopilot will look in the system python
-path.
+If you are in the root of the autopilot source tree this will run/list the tests from
+within that local module. Otherwise autopilot will look in the system python path.
 
 
 Release Manual Tests

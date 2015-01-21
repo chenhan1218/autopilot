@@ -283,11 +283,11 @@ This example demonstrates how to use the pinch gesture, which for example could 
 
     >>> from autopilot import gestures
     >>> gestures.pinch([center_x, center_y], [0, 0], [0, 100])
-    
+
 2. To zoom back out, pinch vertically 100 pixels back towards the center point: ::
 
     >>> gestures.pinch([center_x, center_y], [0, 100], [0, 0])
-    
+
 
 .. note:: The multi-touch :meth:`~autopilot.gestures.pinch` method is intended for use on a touch enabled device. However, if run on a desktop environment it will behave as if the mouse select button is pressed whilst moving the mouse pointer. For example to select some text in a document.
 
@@ -472,7 +472,7 @@ Autopilot provides the :mod:`autopilot.display` module to get information about 
 
 The user must call the static :meth:`~autopilot.display.Display.create` method to get an instance of the :class:`~autopilot.display.Display` class.
 
-This example shows how to get the size of each available screen, which could be used to calculate coordinates for a swipe or input event (See the :mod:`autopilot.input` module for more details about generating input events).::  
+This example shows how to get the size of each available screen, which could be used to calculate coordinates for a swipe or input event (See the :mod:`autopilot.input` module for more details about generating input events).::
 
     from autopilot.display import Display
 
@@ -516,7 +516,7 @@ If you wish to implement more specific selection criteria, your class can overri
                 return True
             return False
 
-This method should return True if the object matches this custom proxy class, and False otherwise.  If more than one custom proxy class matches an object, a :exc:`ValueError` will be raised at runtime. 
+This method should return True if the object matches this custom proxy class, and False otherwise.  If more than one custom proxy class matches an object, a :exc:`ValueError` will be raised at runtime.
 
 3. Pass the custom proxy class as an argument to the launch_test_application method on your test class. Something like this::
 
@@ -573,7 +573,7 @@ Within a fixture or a testcase, ``self.useFixture`` can be used::
 
         launcher = self.useFixture(NormalApplicationLauncher())
         launcher.launch('gedit', ['--new-window', '/path/to/file'])
-        
+
 or for an installed click package::
 
         launcher = self.useFixture(ClickApplicationLauncher())

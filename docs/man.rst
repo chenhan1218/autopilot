@@ -72,18 +72,18 @@ General Options
             by the -r option).
 
        -ro, --random-order
-            Run the tests in random order 
+            Run the tests in random order
 
        -v, --verbose
             Causes autopilot to print the test log to stdout while the test is
             running.
 
        --debug-profile
-            Select a profile for what additional debugging information should 
+            Select a profile for what additional debugging information should
             be attached to failed test results.
 
        --timeout-profile
-            Alter the timeout values Autopilot uses. Selecting 'long' will 
+            Alter the timeout values Autopilot uses. Selecting 'long' will
             make autopilot use longer timeouts for various polling loops. This
             can be useful if autopilot is running on very slow hardware
 
@@ -92,19 +92,19 @@ General Options
 
        -v, --verbose
 
-            Show autopilot log messages. Set twice to also log data useful 
+            Show autopilot log messages. Set twice to also log data useful
             for debugging autopilot itself.
 
        -i INTERFACE, --interface INTERFACE
-            Specify which introspection interace to load.  The default 
-            ('Auto') uses ldd to try and detect which interface to load.  
+            Specify which introspection interace to load.  The default
+            ('Auto') uses ldd to try and detect which interface to load.
             Options are Gtk and Qt.
 
    vis [options]
        Open the autopilot visualizer tool.
 
        -v, --verbose
-            Show autopilot log messages. Set twice to also log data useful 
+            Show autopilot log messages. Set twice to also log data useful
             for debugging autopilot itself.
 
        -testability

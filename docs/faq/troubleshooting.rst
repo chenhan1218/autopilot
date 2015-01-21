@@ -30,7 +30,7 @@ StateNotFoundError Exception
 
          * solution::
 
-            page.animationRunning.wait_for(False) 
+            page.animationRunning.wait_for(False)
             self.main_view.select_single('Button', text='click_this')
 
 2. Not waiting for an object to become visible before trying to select it. Is your app slower than it used to be for some reason? Does its properties have null values? Do you see errors in stdout/stderr while using your app, if you run it from the commandline?
@@ -76,8 +76,8 @@ StateNotFoundError Exception
         * solution::
 
             def _get_named_photo_element(self, photo_name):
-                """Return the ShapeItem container object for the named photo 
-                This object can be clicked to enable the photo to be selected. 
+                """Return the ShapeItem container object for the named photo
+                This object can be clicked to enable the photo to be selected.
                 """
                 photo_element = self.grid_view().wait_select_single(
                     'QQuickImage',
@@ -87,5 +87,5 @@ StateNotFoundError Exception
 
             def select_named_photo(self, photo_name):
                 """Select the named photo from the picker view."""
-                photo_element = self._get_named_photo_element(photo_name) 
+                photo_element = self._get_named_photo_element(photo_name)
                 self.pointing_device.click_object(photo_element)

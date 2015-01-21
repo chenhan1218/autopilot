@@ -159,10 +159,62 @@ Sometimes you need to change the value of an environment variable for the durati
 
 The :class:`fixtures.EnvironmentVariable` fixture will revert the value of the environment variable to it's initial value, or will delete it altogether if the environment variable did not exist when :class:`fixtures.EnvironmentVariable` was instantiated. This happens in the cleanup phase of the test execution.
 
+.. _custom_assertions:
+
 Custom Assertions
 =================
 
-.. Document the custom assertion methods present in AutopilotTestCase
+Autopilot provides additional custom assertion methods within the :class:`~autopilot.testcase.AutopilotTestCase` base class. These assertion methods can be used for validating the visible window stack and also properties on objects whose attributes do not have the ``wait_for`` method, such as :class:`~autopilot.process.Window` objects (See :ref:`wait_for` for more information about ``wait_for``).
+
+:py:mod:`autopilot.testcase.AutopilotTestCase.assertVisibleWindowStack`
+
+This assertion allows the test to check the start of the visible window stack by passing an iterable item of :class:`~autopilot.process.Window` instances. Minimised windows will be ignored::
+
+    from autopilot.process import ProcessManager
+    from autopilot.testcase import AutopilotTestCase
+
+
+    class WindowTests(AutopilotTestCase):
+
+        def test_window_stack(self):
+            self.launch_some_test_apps()
+            pm = ProcessManager.create()
+            test_app_windows = []
+            for window in pm.get_open_windows():
+                if self.is_test_app(window.name):
+                    test_app_windows.append(window)
+            self.assertVisibleWindowStack(test_app_windows)
+
+.. note:: The process manager is only available on environments that use bamf, i.e. desktop running Unity 7. There is currently no process manager for any other platform.
+
+.. _custom_assertions_assertProperty:
+
+:py:mod:`autopilot.testcase.AutopilotTestCase.assertProperty`
+
+This assertion allows the test to check properties of an object that does not have a **wait_for** method (i.e.- objects that do not come from the autopilot DBus interface). For example the :py:mod:`~autopilot.process.Window` object::
+
+    from autopilot.process import ProcessManager
+    from autopilot.testcase import AutopilotTestCase
+
+
+    class WindowTests(AutopilotTestCase):
+
+        def test_window_stack(self):
+            self.launch_some_test_apps()
+            pm = ProcessManager.create()
+            for window in pm.get_open_windows():
+                if self.is_test_app(window.name):
+                    self.assertProperty(window, is_maximized=True)
+
+.. note:: :py:mod:`~autopilot.testcase.AutopilotTestCase.assertProperties` is a synonym for this method.
+
+.. note:: The process manager is only available on environments that use bamf, i.e. desktop running Unity 7. There is currently no process manager for any other platform.
+
+:py:mod:`autopilot.testcase.AutopilotTestCase.assertProperties`
+
+See :ref:`autopilot.testcase.AutopilotTestCase.assertProperty <custom_assertions_assertProperty>`.
+
+.. note:: :py:mod:`~autopilot.testcase.AutopilotTestCase.assertProperty` is a synonym for this method.
 
 .. _platform_selection:
 
@@ -231,11 +283,11 @@ This example demonstrates how to use the pinch gesture, which for example could 
 
     >>> from autopilot import gestures
     >>> gestures.pinch([center_x, center_y], [0, 0], [0, 100])
-    
+
 2. To zoom back out, pinch vertically 100 pixels back towards the center point: ::
 
     >>> gestures.pinch([center_x, center_y], [0, 100], [0, 0])
-    
+
 
 .. note:: The multi-touch :meth:`~autopilot.gestures.pinch` method is intended for use on a touch enabled device. However, if run on a desktop environment it will behave as if the mouse select button is pressed whilst moving the mouse pointer. For example to select some text in a document.
 
@@ -420,7 +472,7 @@ Autopilot provides the :mod:`autopilot.display` module to get information about 
 
 The user must call the static :meth:`~autopilot.display.Display.create` method to get an instance of the :class:`~autopilot.display.Display` class.
 
-This example shows how to get the size of each available screen, which could be used to calculate coordinates for a swipe or input event (See the :mod:`autopilot.input` module for more details about generating input events).::  
+This example shows how to get the size of each available screen, which could be used to calculate coordinates for a swipe or input event (See the :mod:`autopilot.input` module for more details about generating input events).::
 
     from autopilot.display import Display
 
@@ -464,7 +516,7 @@ If you wish to implement more specific selection criteria, your class can overri
                 return True
             return False
 
-This method should return True if the object matches this custom proxy class, and False otherwise.  If more than one custom proxy class matches an object, a :exc:`ValueError` will be raised at runtime. 
+This method should return True if the object matches this custom proxy class, and False otherwise.  If more than one custom proxy class matches an object, a :exc:`ValueError` will be raised at runtime.
 
 3. Pass the custom proxy class as an argument to the launch_test_application method on your test class. Something like this::
 
@@ -538,7 +590,7 @@ Within a fixture or a testcase, ``self.useFixture`` can be used::
 
         launcher = self.useFixture(NormalApplicationLauncher())
         launcher.launch('gedit', ['--new-window', '/path/to/file'])
-        
+
 or for an installed click package::
 
         launcher = self.useFixture(ClickApplicationLauncher())

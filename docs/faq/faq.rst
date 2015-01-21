@@ -17,7 +17,7 @@ Q. Which version of autopilot should I install?
 ===============================================
 
 Ideally you should adopt and utilize the latest version of autopilot. If your testcase requires you to utilize an
-older version of autopilot for reasons other than :ref:`porting`, please `file a bug <https://bugs.launchpad.net/autopilot/+filebug>`_ and let the development team know about your issue.
+older version of autopilot for reasons other than :ref:`porting/porting`, please `file a bug <https://bugs.launchpad.net/autopilot/+filebug>`_ and let the development team know about your issue.
 
 Q. Should I write my tests in python2 or python3?
 =================================================
@@ -27,7 +27,7 @@ As Autopilot fully supports python3, you should seek to use python3 for new test
 Q: Should I convert my existing tests to python3?
 =================================================
 
-In a word, yes. Converting python2 to python3 is generally straightforward and converting a testcase is likely much easier than a full blow python application. Autopilot itself has full python3 support, but you should check any 3rd party modules your test may depend on before converting. You can also consider retaining python2 compatibility upon conversion.
+See above. In a word, yes. Converting python2 to python3 is generally straightforward and converting a testcase is likely much easier than a full blow python application. You can also consider retaining python2 compatibility upon conversion.
 
 Q. Where can I report a bug?
 ============================

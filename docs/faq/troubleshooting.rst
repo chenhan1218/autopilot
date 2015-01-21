@@ -10,7 +10,7 @@ Troubleshooting
 General Techniques
 ------------------
 
-The single hardest thing to do while writing autopilot tests is understand the state of the application's object tree. This is especially important for applications that change their object tree during the lifetime of the test. There are three techniques you can use to discover the state of the object tree:
+The single hardest thing to do while writing autopilot tests is to understand the state of the application's object tree. This is especially important for applications that change their object tree during the lifetime of the test. There are three techniques you can use to discover the state of the object tree:
 
 **Using Autopilot Vis**
 

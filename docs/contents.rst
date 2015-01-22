@@ -10,6 +10,7 @@ Global Contents
     tutorial/tutorial
     guides/good_tests
     guides/running_ap
+    guides/installation
     api/index
     porting/porting
     guides/page_object

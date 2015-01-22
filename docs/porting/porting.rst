@@ -1,3 +1,5 @@
+.. _porting:
+
 Porting Autopilot Tests
 #######################
 
@@ -74,6 +76,7 @@ You will instead need to have something like this instead::
 
     all_keys = app_proxy.select_many(KeyCustomProxy)
 
+.. _python3_support:
 
 Python 3
 ++++++++

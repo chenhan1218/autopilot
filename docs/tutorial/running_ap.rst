@@ -103,4 +103,4 @@ Selecting a connection from the drop-down box allows you to inspect different au
 
 .. image:: /images/ap_vis_object.png
 
-Autopilot vis also has the ability to search the object tree for nodes that match certain criteria (the magnifying glass icon), and draw a transparent overlay over a widget if it contains position information. These tools, when combined can make finding certain parts of an application introspection tree much easier.
+Autopilot vis also has the ability to search the object tree for nodes that match a given name (such as "LauncherController", for example), and draw a transparent overlay over a widget if it contains position information. These tools, when combined can make finding certain parts of an application introspection tree much easier.

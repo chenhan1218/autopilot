@@ -9,6 +9,7 @@ Global Contents
     tutorial/tutorial
     api/index
     porting/porting
+    guides/page_object
     faq/faq
     faq/contribute
     faq/troubleshooting

@@ -8,7 +8,7 @@ Page Object Pattern
 Introducing the Page Object Pattern
 -----------------------------------
 Automated testing of an application through the Graphical User Interface (GUI) is inherently fragile.
-These tests require regular review and attention during the development cycle. This is known as *Interface Sensitivity ("even minor changes to the interface can cause tests to fail" [1])*.
+These tests require regular review and attention during the development cycle. This is known as Interface Sensitivity (`"even minor changes to the interface can cause tests to fail" <https://books.google.com/books?isbn=0132797461>`_).
 Utilizing the page-object pattern, alleviates some of the problems stemming from this fragility, allowing us to do automated user acceptance testing (UAT) in a sustainable manner.
 
 The Page Object Pattern comes from the `Selenium community <https://code.google.com/p/selenium/wiki/PageObjects>`_ and is the best way to turn a flaky and unmaintainable user acceptance test into a stable and useful
@@ -76,6 +76,8 @@ the impact of interface changes with proper encapsulation and turn these
 tests into a useful way to verify that a change in the GUI didn't
 introduce any regressions.
 
+.. _page_object_guide_guideline_3:
+
 3. Methods return other PageObjects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -111,7 +113,7 @@ other.
 4. Assertions should exist only in tests
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A well written UAT (user acceptance test) consists of a sequence of
+A well written UAT consists of a sequence of
 steps or user actions and ends with one single assertion that verifies
 that the user achieved its goal. The page objects are the helpers for
 the user actions part of the test, so it's better to leave the check for
@@ -184,7 +186,7 @@ methods.
 6. Actions which produce multiple results should have a test for each result
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-According to the guideline #3 we are returning page objects every time
+According to the guideline :ref:`page_object_guide_guideline_3`, we are returning page objects every time
 that a user action opens the option for new actions to execute.
 Sometimes the same action has different results depending on the context
 or the values used for the action. For example, the Clock app has an
@@ -220,7 +222,3 @@ first one returns the Alarm page again, where the user can continue his
 journey or finish the test checking the result. The second one returns
 the error dialog that's expected when you try to add an alarm with the
 wrong values.
-
-
-[1] Meszaros, G. (2007). xUnit test patterns: Refactoring test code.
-Pearson Education.

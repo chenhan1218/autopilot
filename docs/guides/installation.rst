@@ -6,7 +6,7 @@ Installing Autopilot
 .. contents::
 
 
-Autopilot is in continuous development, and the best way to get the latest version of autopilot is to be running the latest Ubuntu development image. The autopilot developers traditionally support the Ubuntu release immediately prior to the development release via the autopilot PPA.
+Autopilot is in continuous development, and the best way to get the latest version of autopilot is to run the latest Ubuntu development image. The autopilot developers traditionally support the Ubuntu release immediately prior to the development release via the autopilot PPA.
 
 Ubuntu
 ======

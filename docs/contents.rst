@@ -8,10 +8,12 @@ Global Contents
 
     tutorial/what_is_autopilot
     tutorial/tutorial
-    tutorial/good_tests
-    tutorial/running_ap
+    guides/good_tests
+    guides/running_ap
+    guides/installation
     api/index
     porting/porting
+    guides/page_object
     faq/faq
     faq/contribute
     faq/troubleshooting

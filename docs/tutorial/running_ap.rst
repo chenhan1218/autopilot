@@ -105,7 +105,7 @@ A Qt example which passes on parameters to the application being launched::
 
     $ autopilot3 launch qmlscene my_app.qml
 
-Autopilot launch attempts to detect if you are launching either a Gtk or Qt application so that it can enable the correct libraries. If it is unable to determine this you will need to specify the type of application it is by using the -i argument. This allows "Gtk" or "Qt" frameworks to be specified when launching the application. The default value ("Auto") will try to detect which interface to load automatically. 
+Autopilot launch attempts to detect if you are launching either a Gtk or Qt application so that it can enable the correct libraries. If it is unable to determine this you will need to specify the type of application it is by using the -i argument. This allows "Gtk" or "Qt" frameworks to be specified when launching the application. The default value ("Auto") will try to detect which interface to load automatically.
 
 A typical error in this situation will be "Error: Could not determine introspection type to use for application". In which case the -i option should be specified with the correct application framework type to fix the problem::
 
@@ -129,3 +129,5 @@ The result should be a window similar to below:
 Selecting a connection from the drop-down box allows you to inspect different autopilot-supporting applications. If Unity is running, the Unity connection should always be present. If other applications have been started with the autopilot support enabled, they should appear in this list as well. Once a connection is selected, the introspection tree is rendered in the left-hand pane, and the details of each object appear in the right-hand pane.
 
 .. image:: /images/ap_vis_object.png
+
+Autopilot vis also has the ability to search the object tree for nodes that match a given name (such as "LauncherController", for example), and draw a transparent overlay over a widget if it contains position information. These tools, when combined can make finding certain parts of an application introspection tree much easier.

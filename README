@@ -48,13 +48,13 @@ The docs are built into 'build/sphinx/html' and can be opened in the default bro
 Running and Listing tests
 =========================
 
-In a nutshell running tests normally as easy as::
+Normally running autopilot tests is as easy as::
 
     $ autopilot3 run <test id>
 
 There are some complexities when attempting to run the autopilot tests from
 within a development branch (this related to how autopilot modules are loaded
-and then used to attempt to collect the required tests.)
+and then used to attempt to collect the required tests).
 
 For that reason when running autopilot's tests while hacking on it it is
 advised to run autopilot in this manner::

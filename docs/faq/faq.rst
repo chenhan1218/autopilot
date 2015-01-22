@@ -27,7 +27,7 @@ As Autopilot fully supports python3 (see :ref:`python3_support`), you should see
 Q: Should I convert my existing tests to python3?
 =================================================
 
-See above. In a word, yes. Converting python2 to python3 (see :ref:`python3_support`) is generally straightforward and converting a testcase is likely much easier than a full blow python application. You can also consider retaining python2 compatibility upon conversion.
+See above. In a word, yes. Converting python2 to python3 (see :ref:`python3_support`) is generally straightforward and converting a testcase is likely much easier than a full python application. You can also consider retaining python2 compatibility upon conversion.
 
 Q. Where can I report a bug?
 ============================

@@ -102,3 +102,5 @@ The result should be a window similar to below:
 Selecting a connection from the drop-down box allows you to inspect different autopilot-supporting applications. If Unity is running, the Unity connection should always be present. If other applications have been started with the autopilot support enabled, they should appear in this list as well. Once a connection is selected, the introspection tree is rendered in the left-hand pane, and the details of each object appear in the right-hand pane.
 
 .. image:: /images/ap_vis_object.png
+
+Autopilot vis also has the ability to search the object tree for nodes that match certain criteria (the magnifying glass icon), and draw a transparent overlay over a widget if it contains position information. These tools, when combined can make finding certain parts of an application introspection tree much easier.

@@ -391,7 +391,7 @@ If you wish to implement more specific selection criteria, your class can overri
                 return True
             return False
 
-This method should return True if the object matches this custom proxy class, and False otherwise.  If more than one custom proxy class matches an object, a :exc:`ValueError` will be raised at runtime. 
+This method should return True if the object matches this custom proxy class, and False otherwise.  If more than one custom proxy class matches an object, a :exc:`ValueError` will be raised at runtime.
 
 3. Pass the custom proxy class as an argument to the launch_test_application method on your test class. Something like this::
 
@@ -424,14 +424,14 @@ Outside of testcase classes, the :class:`~autopilot.application.NormalApplicatio
         with NormalApplicationLauncher() as launcher:
             launcher.launch('gedit')
 
-Within a fixture or a testcase, ``self.useFixture``can be used::
+Within a fixture or a testcase, ``self.useFixture`` can be used::
 
         launcher = self.useFixture(NormalApplicationLauncher())
         launcher.launch('gedit', ['--new-window', '/path/to/file'])
 
 Additional options can also be specified to set a custom addDetail method, a custom proxy base, or a custom dbus bus with which to patch the environment::
 
-        
+
         launcher = self.useFixture(NormalApplicationLauncher(
             case_addDetail=self.addDetail,
             dbus_bus='some_other_bus',

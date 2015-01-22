@@ -101,6 +101,8 @@ the user after completing that step.
 
     class Clock(object):
 
+        ...
+
         def open_stopwatch(self):
             self._switch_to_tab('StopwatchTab')
             return self.wait_select_single(Stopwatch)

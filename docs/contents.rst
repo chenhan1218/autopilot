@@ -12,6 +12,7 @@ Global Contents
     guides/running_ap
     api/index
     porting/porting
+    guides/page_object
     faq/faq
     faq/contribute
     faq/troubleshooting

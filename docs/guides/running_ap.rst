@@ -120,7 +120,7 @@ Visualise Introspection Tree
 
 A very common thing to want to do while writing autopilot tests is see the structure of the application being tested. To support this, autopilot includes a simple application to help visualize the introspection tree. To start it, make sure the application you wish to test is running (see: :ref:`launching_application_to_introspect`), and then run::
 
-    $ autopilot vis
+    $ autopilot3 vis
 
 The result should be a window similar to below:
 
@@ -130,3 +130,4 @@ Selecting a connection from the drop-down box allows you to inspect different au
 
 .. image:: /images/ap_vis_object.png
 
+Autopilot vis also has the ability to search the object tree for nodes that match a given name (such as "LauncherController", for example), and draw a transparent overlay over a widget if it contains position information. These tools, when combined can make finding certain parts of an application introspection tree much easier.

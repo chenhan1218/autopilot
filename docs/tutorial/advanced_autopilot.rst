@@ -463,15 +463,15 @@ Here is a list of known limitations:
 Process Control
 ===============
 
-The :mod:`autopilot.process` module provides the :class:`~autopilot.process.ProcessManager` class to provide a high-level interface for managing applications and windows during testing. Features of the :class:`~autopilot.process.ProcessManager` allow the user start and stop applications easily and to query the current state of an application and its windows. It also provides automatic cleanup for apps that have been launched during testing.
+The :mod:`autopilot.process` module provides the :class:`~autopilot.process.ProcessManager` class to provide a high-level interface for managing applications and windows during testing. Features of the :class:`~autopilot.process.ProcessManager` allow the user to start and stop applications easily and to query the current state of an application and its windows. It also provides automatic cleanup for apps that have been launched during testing.
 
 .. note:: :class:`~autopilot.process.ProcessManager` is not intended for introspecting an application's object tree, for this see :ref:`launching_applications`. Also it does not provide a method for interacting with an application's UI or specific features.
 
-Properties of an application and its windows can be accessed using the classes :class:`~autopilot.process.Application` and :class:`~autopilot.process.Window`, which also allows the window instance to be set in focus and closed.
+Properties of an application and its windows can be accessed using the classes :class:`~autopilot.process.Application` and :class:`~autopilot.process.Window`, which also allows the window instance to be focused and closed.
 
 A list of known applications is defined in :meth:`~autopilot.process.ProcessManager.KNOWN_APPS` and these can easily be referenced by name. This list can also be updated using :meth:`~autopilot.process.ProcessManager.register_known_application` and :meth:`~autopilot.process.ProcessManager.unregister_known_application` for easier use during the test.
 
-To use the :class:`~autopilot.process.ProcessManager` the static :meth:`~autopilot.process.ProcessManager.create` method should be called, which returns an intialised object instance.
+To use the :class:`~autopilot.process.ProcessManager` the static :meth:`~autopilot.process.ProcessManager.create` method should be called, which returns an initialised object instance.
 
 A simple example to launch the gedit text editor and check it is in focus: ::
 

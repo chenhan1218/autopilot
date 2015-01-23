@@ -44,6 +44,35 @@ The docs are built into 'build/sphinx/html' and can be opened in the default bro
 
 	$ xdg-open build/sphinx/html/index.html
 
+
+Running and Listing tests
+=========================
+
+Normally running autopilot tests is as easy as::
+
+    $ autopilot3 run <test id>
+
+There are some complexities when attempting to run the autopilot tests from
+within a development branch (this related to how autopilot modules are loaded
+and then used to attempt to collect the required tests).
+
+For that reason when running autopilot's tests while hacking on it it is
+advised to run autopilot in this manner::
+
+    $ python3 -m autopilot.run run autopilot.tests.unit
+
+Listing is similar::
+
+    $ python3 -m autopilot.run list autopilot.tests.unit
+
+For a more complete explanation for running or listing tests please see the
+full documentation found here:
+https://developer.ubuntu.com/api/devel/ubuntu-14.10/python/autopilot/tutorial/running_ap.html
+
+If you are in the root of the autopilot source tree this will run/list the tests from
+within that local module. Otherwise autopilot will look in the system python path.
+
+
 Release Manual Tests
 ====================
 

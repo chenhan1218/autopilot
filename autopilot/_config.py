@@ -71,9 +71,8 @@ class ConfigDict(collections.abc.Mapping):
 
     def __init__(self, config_string):
         self._data = {}
-        for item in config_string.split(','):
-            if not item:
-                continue
+        config_items = (item for item in config_string.split(',') if item)
+        for item in config_items:
             parts = item.split('=', 1)
             safe_key = parts[0].lstrip()
             if len(parts) == 1 and safe_key != '':

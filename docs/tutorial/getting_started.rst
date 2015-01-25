@@ -149,7 +149,7 @@ Running Autopilot
 
 From the root of this directory structure, we can ask autopilot to list all the tests it can find::
 
-	$ autopilot list example
+	$ autopilot3 list example
 	Loading tests from: /home/thomi/code/canonical/autopilot/example_test
 
 	    example.tests.test_window.MainWindowTitleTests.test_main_window_title_string
@@ -161,7 +161,7 @@ Note that on the first line, autopilot will tell you where it has loaded the tes
 
 To run our test, we use the autopilot 'run' command::
 
-	$ autopilot run example
+	$ autopilot3 run example
 	Loading tests from: /home/thomi/code/canonical/autopilot/example_test
 
 	Tests running...
@@ -171,7 +171,7 @@ To run our test, we use the autopilot 'run' command::
 
 You will notice that the test application launches, and then dissapears shortly afterwards. Since this test doesn't manipulate the application in any way, this is a rather boring test to look at. If you ever want more output from the run command, you may specify the '-v' flag::
 
-	$ autopilot run -v example
+	$ autopilot3 run -v example
 	Loading tests from: /home/thomi/code/canonical/autopilot/example_test
 
 	Tests running...
@@ -196,7 +196,7 @@ You may also specify '-v' twice for even more output (this is rarely useful for 
 
 Both the 'list' and 'run' commands take a test id as an argument. You may be as generic, or as specific as you like. In the examples above, we will list and run all tests in the 'example' package (i.e.- all tests), but we could specify a more specific run criteria if we only wanted to run some of the tests. For example, to only run the single test we've written, we can execute::
 
-	$ autopilot run example.tests.test_window.MainWindowTitleTests.test_main_window_title_string
+	$ autopilot3 run example.tests.test_window.MainWindowTitleTests.test_main_window_title_string
 
 .. _tut_test_with_interaction:
 

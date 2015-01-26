@@ -87,6 +87,10 @@ class LoggedTestResultDecorator(TestResultDecorator):
             self._log_details(logging.ERROR, test.getDetails())
         super().addUnexpectedSuccess(test, details)
 
+    def addExpectedFailure(self, test, err=None, details=None):
+        self._log(logging.INFO, "EXPECTED FAILURE: %s" % test.id())
+        super().addExpectedFailure(test, err, details)
+
 
 def get_output_formats():
     """Get information regarding the different output formats supported.

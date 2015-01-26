@@ -77,6 +77,10 @@ class LoggedTestResultDecorator(TestResultDecorator):
             self._log_details(logging.ERROR, test.getDetails())
         return super(type(self), self).addFailure(test, err, details)
 
+    def addSkip(self, test, reason=None, details=None):
+        self._log(logging.INFO, "SKIP: %s" % (test.id()))
+        super().addSkip(test, reason, details)
+
 
 def get_output_formats():
     """Get information regarding the different output formats supported.

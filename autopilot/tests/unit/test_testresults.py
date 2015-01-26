@@ -122,6 +122,13 @@ class TestResultLogMessageTests(WithScenarios, TestCase):
             ('success', dict(outcome='addSuccess', log='OK: %s')),
             ('error', dict(outcome='addError', log='ERROR: %s')),
             ('fail', dict(outcome='addFailure', log='FAIL: %s')),
+            (
+                'unexpected success',
+                dict(outcome='addUnexpectedSuccess', log='UNEXPECTED SUCCESS: %s')
+            ),
+            ('skip', dict(outcome='addSkip', log='SKIP: %s')),
+            ('expected failure', dict(outcome='addExpectedFailure', log='EXPECTED FAILURE: %s')),
+
         ]
     )
 

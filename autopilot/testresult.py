@@ -62,20 +62,20 @@ class LoggedTestResultDecorator(TestResultDecorator):
 
     def addSuccess(self, test, details=None):
         self._log(logging.INFO, "OK: %s" % (test.id()))
-        return super(LoggedTestResultDecorator, self).addSuccess(test, details)
+        return super().addSuccess(test, details)
 
     def addError(self, test, err=None, details=None):
         self._log(logging.ERROR, "ERROR: %s" % (test.id()))
         if hasattr(test, "getDetails"):
             self._log_details(logging.ERROR, test.getDetails())
-        return super(type(self), self).addError(test, err, details)
+        return super().addError(test, err, details)
 
     def addFailure(self, test, err=None, details=None):
         """Called for a test which failed an assert."""
         self._log(logging.ERROR, "FAIL: %s" % (test.id()))
         if hasattr(test, "getDetails"):
             self._log_details(logging.ERROR, test.getDetails())
-        return super(type(self), self).addFailure(test, err, details)
+        return super().addFailure(test, err, details)
 
     def addSkip(self, test, reason=None, details=None):
         self._log(logging.INFO, "SKIP: %s" % test.id())

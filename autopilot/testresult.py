@@ -78,8 +78,14 @@ class LoggedTestResultDecorator(TestResultDecorator):
         return super(type(self), self).addFailure(test, err, details)
 
     def addSkip(self, test, reason=None, details=None):
-        self._log(logging.INFO, "SKIP: %s" % (test.id()))
+        self._log(logging.INFO, "SKIP: %s" % test.id())
         super().addSkip(test, reason, details)
+
+    def addUnexpectedSuccess(self, test, details=None):
+        self._log(logging.ERROR, "UNEXPECTED SUCCESS: %s" % test.id())
+        if hasattr(test, "getDetails"):
+            self._log_details(logging.ERROR, test.getDetails())
+        super().addUnexpectedSuccess(test, details)
 
 
 def get_output_formats():

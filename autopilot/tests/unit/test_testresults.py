@@ -21,6 +21,8 @@ import codecs
 from unittest.mock import Mock, patch
 import os
 import tempfile
+
+from fixtures import FakeLogger
 from testtools import TestCase, PlaceHolder
 from testtools.content import Content, ContentType, text_content
 from testtools.matchers import Contains, raises, NotEquals
@@ -29,6 +31,8 @@ import unittest
 
 from autopilot import testresult
 from autopilot import run
+from autopilot.testcase import multiply_scenarios
+from autopilot.tests.unit.fixtures import AutopilotVerboseLogging
 
 
 class LoggedTestResultDecoratorTests(TestCase):
@@ -106,6 +110,39 @@ class LoggedTestResultDecoratorTests(TestCase):
                     type="image/png"
                 )
             )
+
+
+class TestResultLogMessageTests(WithScenarios, TestCase):
+
+    scenarios = multiply_scenarios(
+        # Scenarios for each format we support:
+        [(f, dict(format=f)) for f in testresult.get_output_formats().keys()],
+        # Scenarios for each test outcome:
+        [
+            ('success', dict(outcome='addSuccess', log='OK: %s')),
+            ('error', dict(outcome='addError', log='ERROR: %s')),
+            ('fail', dict(outcome='addFailure', log='FAIL: %s')),
+        ]
+    )
+
+    def make_result_object(self):
+        output_path = tempfile.mktemp()
+        self.addCleanup(remove_if_exists, output_path)
+        result_constructor = testresult.get_output_formats()[self.format]
+        return result_constructor(
+            stream=run.get_output_stream(self.format, output_path),
+            failfast=False,
+        )
+
+    def test_outcome_logs(self):
+        test_id = self.getUniqueString()
+        test = PlaceHolder(test_id, outcome=self.outcome)
+        result = self.make_result_object()
+        result.startTestRun()
+        self.useFixture(AutopilotVerboseLogging())
+        with FakeLogger() as log:
+            test.run(result)
+            self.assertThat(log.output, Contains(self.log % test_id))
 
 
 class OutputFormatFactoryTests(TestCase):

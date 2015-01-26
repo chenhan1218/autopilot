@@ -182,7 +182,7 @@ tool<visualise_introspection_tree>`
 
 For instance launching gedit is as easy as::
 
-  $ autopilot launch gedit
+  $ autopilot3 launch gedit
 
 *Autopilot launch* attempts to detect if you are launching either a Gtk or Qt
 application so that it can enable the correct libraries. If is is unable to
@@ -198,7 +198,7 @@ script <tut_test_with_interaction>` from an earlier tutorial we will need to
 inform autopilot that it is a Qt application so that it can enable the correct
 support::
 
-  $ autopilot launch -i Qt testapp.py
+  $ autopilot3 launch -i Qt testapp.py
 
 Now that it has been launched with Autopilot support we can introspect and
 explore out application using the :ref:`vis tool <visualise_introspection_tree>`.

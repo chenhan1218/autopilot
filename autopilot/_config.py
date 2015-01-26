@@ -71,14 +71,14 @@ class ConfigDict(collections.abc.Mapping):
 
     def __init__(self, config_string):
         self._data = {}
-        for item in config_string.split(','):
-            if not item:
-                continue
-            parts = item.split('=')
-            if len(parts) == 1:
-                self._data[parts[0].lstrip()] = '1'
-            elif len(parts) == 2:
-                self._data[parts[0].lstrip()] = parts[1]
+        config_items = (item for item in config_string.split(',') if item)
+        for item in config_items:
+            parts = item.split('=', 1)
+            safe_key = parts[0].lstrip()
+            if len(parts) == 1 and safe_key != '':
+                self._data[safe_key] = '1'
+            elif len(parts) == 2 and safe_key != '':
+                self._data[safe_key] = parts[1]
             else:
                 raise ValueError(
                     "Invalid configuration string '{}'".format(config_string)

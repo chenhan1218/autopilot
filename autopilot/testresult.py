@@ -53,7 +53,10 @@ class LoggedTestResultDecorator(TestResultDecorator):
                     continue
                 detail_content = details[detail]
                 if detail_content.content_type.type == "text":
-                    text = "%s: {{{\n%s}}}" % (detail, detail_content.as_text())
+                    text = "%s: {{{\n%s}}}" % (
+                        detail,
+                        detail_content.as_text()
+                    )
                 else:
                     text = "Binary attachment: \"%s\" (%s)" % (
                         detail,

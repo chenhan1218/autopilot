@@ -43,39 +43,41 @@ class LoggedTestResultDecorator(TestResultDecorator):
         if get_log_verbose():
             logging.getLogger().log(level, message)
 
-    def _log_details(self, level, details):
+    def _log_details(self, level, test):
         """Log the relavent test details."""
-
-        for detail in details:
-            # Skip the test-log as it was logged while the test executed
-            if detail == "test-log":
-                continue
-            detail_content = details[detail]
-            if detail_content.content_type.type == "text":
-                text = "%s: {{{\n%s}}}" % (detail, detail_content.as_text())
-            else:
-                text = "Binary attachment: \"%s\" (%s)" % (
-                    detail,
-                    detail_content.content_type
-                )
-            self._log(level, text)
+        if hasattr(test, "getDetails"):
+            details = test.getDetails()
+            for detail in details:
+                # Skip the test-log as it was logged while the test executed
+                if detail == "test-log":
+                    continue
+                detail_content = details[detail]
+                if detail_content.content_type.type == "text":
+                    text = "%s: {{{\n%s}}}" % (
+                        detail,
+                        detail_content.as_text()
+                    )
+                else:
+                    text = "Binary attachment: \"%s\" (%s)" % (
+                        detail,
+                        detail_content.content_type
+                    )
+                self._log(level, text)
 
     def addSuccess(self, test, details=None):
         self._log(logging.INFO, "OK: %s" % (test.id()))
-        return super(LoggedTestResultDecorator, self).addSuccess(test, details)
+        return super().addSuccess(test, details)
 
     def addError(self, test, err=None, details=None):
         self._log(logging.ERROR, "ERROR: %s" % (test.id()))
-        if hasattr(test, "getDetails"):
-            self._log_details(logging.ERROR, test.getDetails())
-        return super(type(self), self).addError(test, err, details)
+        self._log_details(logging.ERROR, test)
+        return super().addError(test, err, details)
 
     def addFailure(self, test, err=None, details=None):
         """Called for a test which failed an assert."""
         self._log(logging.ERROR, "FAIL: %s" % (test.id()))
-        if hasattr(test, "getDetails"):
-            self._log_details(logging.ERROR, test.getDetails())
-        return super(type(self), self).addFailure(test, err, details)
+        self._log_details(logging.ERROR, test)
+        return super().addFailure(test, err, details)
 
     def addSkip(self, test, reason=None, details=None):
         self._log(logging.INFO, "SKIP: %s" % test.id())
@@ -83,8 +85,7 @@ class LoggedTestResultDecorator(TestResultDecorator):
 
     def addUnexpectedSuccess(self, test, details=None):
         self._log(logging.ERROR, "UNEXPECTED SUCCESS: %s" % test.id())
-        if hasattr(test, "getDetails"):
-            self._log_details(logging.ERROR, test.getDetails())
+        self._log_details(logging.ERROR, test)
         return super().addUnexpectedSuccess(test, details)
 
     def addExpectedFailure(self, test, err=None, details=None):

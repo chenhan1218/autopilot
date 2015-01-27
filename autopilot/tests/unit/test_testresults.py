@@ -95,13 +95,14 @@ class LoggedTestResultDecoratorTests(TestCase):
         result._log_details(0, fake_details)
 
     def test_log_details_logs_binary_attachment_details(self):
-        fake_details = dict(
+        fake_test = Mock()
+        fake_test.getDetails = lambda: dict(
             TestBinary=Content(ContentType('image', 'png'), lambda: b'')
         )
 
         result = testresult.LoggedTestResultDecorator(None)
         with patch.object(result, '_log') as p_log:
-            result._log_details(0, fake_details)
+            result._log_details(0,fake_test)
 
             p_log.assert_called_once_with(
                 0,

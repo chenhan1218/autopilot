@@ -102,7 +102,7 @@ class LoggedTestResultDecoratorTests(TestCase):
 
         result = testresult.LoggedTestResultDecorator(None)
         with patch.object(result, '_log') as p_log:
-            result._log_details(0,fake_test)
+            result._log_details(0, fake_test)
 
             p_log.assert_called_once_with(
                 0,

@@ -15,6 +15,7 @@ override_dh_auto_build:
 	python3 -m flake8.run .
 	dh_auto_build
 	python3 setup.py build_sphinx -b html
+	python3 setup.py build_sphinx -b json
 	python3 setup.py build_sphinx -b man
 
 override_dh_auto_test:

@@ -396,12 +396,7 @@ class Mouse(MouseBase):
     def move_to_object(self, object_proxy):
         """Attempts to move the mouse to 'object_proxy's centre point.
 
-        See autopilot.input._common.get_center_point to know how the
-        center of the object is looked up.
-
-        :raises: **ValueError** when it is impossible to find the center
-            of the given `object_proxy`.
-
+        See :py:meth:`~autopilot.input.Mouse.move_to_object`.
         """
         x, y = get_center_point(object_proxy)
         self.move(x, y)

@@ -173,9 +173,6 @@ def _try_custom_proxy_classes(object_id, path, state):
             )
         )
     if len(possible_classes) == 1:
-        extended_proxy_bases = _get_proxy_bases_for_id(object_id)
-        if extended_proxy_bases:
-            possible_classes[0].__bases__ = extended_proxy_bases
         return possible_classes[0]
     return None
 

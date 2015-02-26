@@ -1,12 +1,16 @@
-autopilot (1.5.0) UNRELEASED; urgency=medium
+autopilot (1.5.0+15.04.20150226.1-0ubuntu1) vivid; urgency=medium
 
+  [ Christopher Lee ]
   * Fix for desktop file name change (lp:1411096)
     Fix for config value containing '=' char (lp:1408317)
     Fix for skipped tests not appearing in log (lp:1414632)
     Add json docs build (for web publish) (lp:1409778)
     Documentation improvements for API, Tutorial, FAQ, and Guidelines
 
- -- Christopher Lee <chris.lee@canonical.com>  Fri, 27 Feb 2015 10:16:42 +1300
+  [ CI Train Bot ]
+  * New rebuild forced.
+
+ -- CI Train Bot <ci-train-bot@canonical.com>  Thu, 26 Feb 2015 22:47:35 +0000
 
 autopilot (1.5.0+15.04.20141031-0ubuntu1) vivid; urgency=low
 

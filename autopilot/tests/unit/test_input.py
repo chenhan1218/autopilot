@@ -790,17 +790,28 @@ class UInputTouchTestCase(TestCase):
             touch.tap_object(object_)
 
         mock_tap.assert_called_once_with(
-            object_.center_x, object_.center_y, press_duration=0.1)
+            object_.center_x,
+            object_.center_y,
+            press_duration=0.1,
+            time_between_events=0.1
+        )
 
     def test_tap_object_with_duration_must_call_tap_with_specified_time(self):
         object_ = make_fake_object(center=True)
         touch = self.get_touch_with_mocked_backend()
 
         with patch.object(touch, 'tap') as mock_tap:
-            touch.tap_object(object_, press_duration=10)
+            touch.tap_object(
+                object_,
+                press_duration=10
+            )
 
         mock_tap.assert_called_once_with(
-            object_.center_x, object_.center_y, press_duration=10)
+            object_.center_x,
+            object_.center_y,
+            press_duration=10,
+            time_between_events=0.1
+        )
 
 
 class MultipleUInputTouchBackend(_uinput._UInputTouchDevice):
@@ -947,11 +958,13 @@ class PointerWithTouchBackendTestCase(TestCase):
         with patch.object(pointer._device, 'tap') as mock_tap:
             pointer.click(1)
 
-        mock_tap.assert_called_once_with(0, 0, press_duration=0.1)
+        mock_tap.assert_called_once_with(
+            0, 0, press_duration=0.1, time_between_events=0.1)
 
     def test_press_with_specified_press_duration(self):
         pointer = self.get_pointer_with_touch_backend_with_mock_device()
         with patch.object(pointer._device, 'tap') as mock_tap:
             pointer.click(1, press_duration=10)
 
-        mock_tap.assert_called_once_with(0, 0, press_duration=10)
+        mock_tap.assert_called_once_with(
+            0, 0, press_duration=10, time_between_events=0.1)

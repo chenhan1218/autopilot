@@ -474,3 +474,130 @@ class cached_result(object):
 
     def reset_cache(self):
         self._cache.clear()
+
+
+class EventDelay(object):
+
+    """Delay execution of a subsequent event for a certain period
+    of time.
+
+    To delay the execution of a subsequent event for two seconds
+    use it like this::
+
+        from autopilot.utilities import EventDelay
+
+        event_delayer = EventDelay()
+
+        def print_something():
+            event_delayer.delay(2)
+            print("Hi! I am an event.")
+
+        print_something()
+        # It will take 2 seconds for second print()
+        # to happen.
+        print_something()
+
+    """
+
+    def __init__(self):
+        self._last_event = 0.0
+
+    @contextmanager
+    def mocked(self):
+        """Enable mocking for the EventDelay class
+
+        Also mocks all calls to autopilot.utilities.sleep.
+        One my use it like::
+
+            from autopilot.utilities import EventDelay
+
+            event_delayer = EventDelay()
+            with event_delayer.mocked() as mocked_delay:
+                event_delayer.delay(3)
+                # This call will return instantly as the sleep
+                # is mocked, just updating the _last_event variable.
+                event_delayer.delay(10)
+                self.assertThat(mocked_delay._last_event, GreaterThan(0.0))
+
+        """
+        sleep.enable_mock()
+        try:
+            yield self
+        finally:
+            sleep.disable_mock()
+
+    def last_event_time(self):
+        """return the time when delay() was last called."""
+        return self._last_event
+
+    def delay(self, duration, current_time=time.monotonic):
+        """Delay the next event for a given amount of time.
+
+        To humanize events, so that if a certain action is repeated
+        continuously, there is a delay between each subsequent action.
+
+        :param duration: Time interval between events.
+        :param current_time: Specify the block of time to use as relative
+          time. It is a float, representing time with precision of
+          microseconds. Only for testing purpose. Default value is the
+          monotonic time. 0.1 is the tenth part of a second.
+        :raises ValueError: If the time stopped or went back since last
+          event.
+
+        """
+        monotime = current_time()
+        _raise_if_time_delta_not_sane(monotime, self._last_event)
+        time_slept = 0.0
+        if monotime < (self._last_event + duration):
+            time_slept = _sleep_for_calculated_delta(
+                monotime,
+                self._last_event,
+                duration
+            )
+
+        self._last_event = monotime + time_slept
+
+
+def _raise_if_time_delta_not_sane(current_time, last_event_time):
+    """Will raise a ValueError exception if current_time is before
+    the last event or equal to it.
+
+    """
+    if current_time == last_event_time:
+        raise ValueError(
+            'current_time must be more than the last event time.'
+        )
+    elif current_time < last_event_time:
+        raise ValueError(
+            'current_time must not be behind the last event time.'
+        )
+
+
+def _sleep_for_calculated_delta(current_time, last_event_time, gap_duration):
+    """Sleep for the remaining time between the last event time
+    and duration.
+
+    Given a duration in fractional seconds, ensure that at least
+    that given amount of time occurs since the last event time.
+    e.g. If 4 seconds have elapsed since the last event and the
+    requested gap duration was 10 seconds, sleep for 6 seconds.
+
+    :param float current_timestamp: Current monotonic time,
+      in fractional seconds, used to calculate the time delta
+      since last event.
+    :param float last_event_timestamp: The last timestamp that
+      the previous delay occured.
+    :param float gap_duration: Maximum time, in fractional seconds,
+      to be slept between two events.
+    :return: Time, in fractional seconds, for which sleep happened.
+    :raises ValueError: If last_event_time equals current_time or
+      is ahead of current_time.
+
+    """
+    _raise_if_time_delta_not_sane(current_time, last_event_time)
+    time_delta = (last_event_time + gap_duration) - current_time
+    if time_delta > 0.0:
+        sleep(time_delta)
+        return time_delta
+    else:
+        return 0.0

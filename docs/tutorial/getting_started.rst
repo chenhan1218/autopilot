@@ -106,7 +106,11 @@ To demonstrate the material covered so far, this selection will outline a simple
 	if __name__ == '__main__':
 		main()
 
-As you can see, this is a trivial application, but it serves our purpose. We will write a single autopilot test that asserts that the title of the main window is equal to the string "Hello World". Our test file is named "test_window.py", and contains the following code::
+As you can see, this is a trivial application, but it serves our purpose. For the upcoming tests to run this file must be executable::
+
+	$ chmod u+x testapp.py
+
+We will write a single autopilot test that asserts that the title of the main window is equal to the string "Hello World". Our test file is named "test_window.py", and contains the following code::
 
 	from autopilot.testcase import AutopilotTestCase
 	from os.path import abspath, dirname, join
@@ -149,7 +153,7 @@ Running Autopilot
 
 From the root of this directory structure, we can ask autopilot to list all the tests it can find::
 
-	$ autopilot list example
+	$ autopilot3 list example
 	Loading tests from: /home/thomi/code/canonical/autopilot/example_test
 
 	    example.tests.test_window.MainWindowTitleTests.test_main_window_title_string
@@ -161,7 +165,7 @@ Note that on the first line, autopilot will tell you where it has loaded the tes
 
 To run our test, we use the autopilot 'run' command::
 
-	$ autopilot run example
+	$ autopilot3 run example
 	Loading tests from: /home/thomi/code/canonical/autopilot/example_test
 
 	Tests running...
@@ -171,7 +175,7 @@ To run our test, we use the autopilot 'run' command::
 
 You will notice that the test application launches, and then dissapears shortly afterwards. Since this test doesn't manipulate the application in any way, this is a rather boring test to look at. If you ever want more output from the run command, you may specify the '-v' flag::
 
-	$ autopilot run -v example
+	$ autopilot3 run -v example
 	Loading tests from: /home/thomi/code/canonical/autopilot/example_test
 
 	Tests running...
@@ -196,7 +200,7 @@ You may also specify '-v' twice for even more output (this is rarely useful for 
 
 Both the 'list' and 'run' commands take a test id as an argument. You may be as generic, or as specific as you like. In the examples above, we will list and run all tests in the 'example' package (i.e.- all tests), but we could specify a more specific run criteria if we only wanted to run some of the tests. For example, to only run the single test we've written, we can execute::
 
-	$ autopilot run example.tests.test_window.MainWindowTitleTests.test_main_window_title_string
+	$ autopilot3 run example.tests.test_window.MainWindowTitleTests.test_main_window_title_string
 
 .. _tut_test_with_interaction:
 
@@ -256,7 +260,6 @@ Since we're adding a new category of tests, button response tests, we should org
 	from os.path import abspath, dirname, join
 	from testtools.matchers import Equals
 
-	from autopilot.input import Mouse
 	from autopilot.matchers import Eventually
 
 	class HelloWorldTestBase(AutopilotTestCase):

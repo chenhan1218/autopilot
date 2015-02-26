@@ -98,6 +98,10 @@ Make sure your tests test what they're supposed to. It's very easy to write a te
  5. Commit. Push. Superseed original merge proposal with your branch.
  6. Celebrate!
 
+Think about design
+++++++++++++++++++
+Much in the same way you might choose a functional or objective-oriented paradigm for a piece of code, a testsuite can benefit from choosing a good design pattern. One such design pattern is the page object model. The page object model can reduce testcase complexity and allow the testcase to grow and easily adapt to changes within the underlying application. Check out :ref:`page_object_guide`.
+
 Test Length
 +++++++++++
 
@@ -338,6 +342,8 @@ Since we can use any testtools matcher, we can also write code like this:
  self.assertThat(self.launcher.key_nav_selection, Eventually(GreaterThan(prev_icon)))
 
 Note that you can pass any object that follows the testtools matcher protocol (so you can write your own matchers, if you like).
+
+.. _wait_for:
 
 In Proxy Classes
 ----------------

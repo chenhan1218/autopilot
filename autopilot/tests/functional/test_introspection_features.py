@@ -24,7 +24,7 @@ import re
 import subprocess
 import tempfile
 from tempfile import mktemp
-from testtools import skipIf
+from testtools import skip, skipIf
 from testtools.matchers import (
     Contains,
     Equals,
@@ -99,6 +99,7 @@ class IntrospectionFeatureTests(AutopilotTestCase):
             Equals(WindowMockerApp)
         )
 
+    @skip("Currently fails due to lp:1425721 (and lp:1376996)")
     def test_customised_proxy_classes_have_extension_classes(self):
         class WindowMockerApp(EmulatorBase):
             @classmethod

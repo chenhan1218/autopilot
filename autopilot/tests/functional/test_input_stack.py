@@ -23,9 +23,16 @@ import logging
 import os
 from tempfile import mktemp
 from testtools import TestCase, skipIf
-from testtools.matchers import IsInstance, Equals, raises
+from testtools.matchers import (
+    IsInstance,
+    Equals,
+    raises,
+    GreaterThan
+)
+from testscenarios import TestWithScenarios
 from textwrap import dedent
 from time import sleep
+import timeit
 from unittest import SkipTest
 from unittest.mock import patch
 
@@ -41,6 +48,22 @@ from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase, multiply_scenarios
 from autopilot.tests.functional import QmlScriptRunnerMixin
 from autopilot.utilities import on_test_started
+
+
+class ElapsedTimeCounter(object):
+
+    """A simple utility to count the amount of real time that passes."""
+
+    def __enter__(self):
+        self._start_time = timeit.default_timer()
+        return self
+
+    def __exit__(self, *args):
+        pass
+
+    @property
+    def elapsed_time(self):
+        return timeit.default_timer() - self._start_time
 
 
 class InputStackKeyboardBase(AutopilotTestCase):
@@ -328,7 +351,26 @@ class OSKBackendTests(AutopilotTestCase, QmlScriptRunnerMixin):
         )
 
 
+class MockAppMouseTestBase(AutopilotTestCase):
+
+    def start_mock_app(self):
+        window_spec_file = mktemp(suffix='.json')
+        window_spec = {"Contents": "MouseTest"}
+        json.dump(
+            window_spec,
+            open(window_spec_file, 'w')
+        )
+        self.addCleanup(os.remove, window_spec_file)
+
+        return self.launch_test_application(
+            'window-mocker', window_spec_file, app_type='qt')
+
+
 class MouseTestCase(AutopilotTestCase, tests.LogHandlerTestCase):
+
+    def setUp(self):
+        super(MouseTestCase, self).setUp()
+        self.device = Mouse.create()
 
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (Mouse)")
     def test_move_to_nonint_point(self):
@@ -338,11 +380,10 @@ class MouseTestCase(AutopilotTestCase, tests.LogHandlerTestCase):
 
         """
         screen_geometry = Display.create().get_screen_geometry(0)
-        device = Mouse.create()
         target_x = screen_geometry[0] + 10
         target_y = screen_geometry[1] + 10.6
-        device.move(target_x, target_y)
-        self.assertEqual(device.position(), (target_x, int(target_y)))
+        self.device.move(target_x, target_y)
+        self.assertEqual(self.device.position(), (target_x, int(target_y)))
 
     @patch('autopilot.platform.model', new=lambda *args: "Not Desktop", )
     def test_mouse_creation_on_device_raises_useful_error(self):
@@ -368,7 +409,7 @@ class MouseTestCase(AutopilotTestCase, tests.LogHandlerTestCase):
 
 
 @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
-class TouchTests(AutopilotTestCase):
+class TouchTests(MockAppMouseTestBase):
 
     def setUp(self):
         super(TouchTests, self).setUp()
@@ -378,18 +419,6 @@ class TouchTests(AutopilotTestCase):
         self.widget = self.app.select_single('MouseTestWidget')
         self.button_status = self.app.select_single(
             'QLabel', objectName='button_status')
-
-    def start_mock_app(self):
-        window_spec_file = mktemp(suffix='.json')
-        window_spec = {"Contents": "MouseTest"}
-        json.dump(
-            window_spec,
-            open(window_spec_file, 'w')
-        )
-        self.addCleanup(os.remove, window_spec_file)
-
-        return self.launch_test_application(
-            'window-mocker', window_spec_file, app_type='qt')
 
     def test_tap(self):
         x, y = get_center_point(self.widget)
@@ -475,6 +504,38 @@ class PointerWrapperTests(AutopilotTestCase):
         p.drag(0, 0, 100, 123)
         self.assertThat(p.x, Equals(100))
         self.assertThat(p.y, Equals(123))
+
+
+@skipIf(platform.model() != "Desktop", "Window mocker only available on X11")
+class InputEventDelayTests(MockAppMouseTestBase, TestWithScenarios):
+
+    scenarios = [
+        ('Touch', dict(input_class=Touch)),
+        ('Mouse', dict(input_class=Mouse)),
+    ]
+
+    def setUp(self):
+        super(InputEventDelayTests, self).setUp()
+        self.device = Pointer(self.input_class.create())
+        self.widget = self.get_mock_app_main_widget()
+
+    def get_mock_app_main_widget(self):
+        self.app = self.start_mock_app()
+        return self.app.select_single('MouseTestWidget')
+
+    def test_subsequent_events_delay(self):
+        with ElapsedTimeCounter() as time_counter:
+            for i in range(3):
+                self.device.click_object(self.widget, time_between_events=0.6)
+
+        self.assertThat(time_counter.elapsed_time, GreaterThan(1.0))
+
+    def test_subsequent_events_default_delay(self):
+        with ElapsedTimeCounter() as time_counter:
+            for i in range(10):
+                self.device.click_object(self.widget)
+
+        self.assertThat(time_counter.elapsed_time, GreaterThan(0.9))
 
 
 class InputStackCleanupTests(TestCase):

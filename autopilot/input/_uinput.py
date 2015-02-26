@@ -27,7 +27,7 @@ import autopilot.platform
 from autopilot.input import Keyboard as KeyboardBase
 from autopilot.input import Touch as TouchBase
 from autopilot.input._common import get_center_point
-from autopilot.utilities import deprecated, sleep
+from autopilot.utilities import deprecated, EventDelay, sleep
 
 
 _logger = logging.getLogger(__name__)
@@ -457,12 +457,13 @@ class Touch(TouchBase):
     def __init__(self, device_class=_UInputTouchDevice):
         super(Touch, self).__init__()
         self._device = device_class()
+        self.event_delayer = EventDelay()
 
     @property
     def pressed(self):
         return self._device.pressed
 
-    def tap(self, x, y, press_duration=0.1):
+    def tap(self, x, y, press_duration=0.1, time_between_events=0.1):
         """Click (or 'tap') at given x and y coordinates.
 
         :raises RuntimeError: if the finger is already pressed.
@@ -470,11 +471,12 @@ class Touch(TouchBase):
 
         """
         _logger.debug("Tapping at: %d,%d", x, y)
+        self.event_delayer.delay(time_between_events)
         self._device.finger_down(x, y)
         sleep(press_duration)
         self._device.finger_up()
 
-    def tap_object(self, object_, press_duration=0.1):
+    def tap_object(self, object_, press_duration=0.1, time_between_events=0.1):
         """Click (or 'tap') a given object.
 
         :raises RuntimeError: if the finger is already pressed.
@@ -485,7 +487,12 @@ class Touch(TouchBase):
         """
         _logger.debug("Tapping object: %r", object)
         x, y = get_center_point(object_)
-        self.tap(x, y, press_duration=press_duration)
+        self.tap(
+            x,
+            y,
+            press_duration=press_duration,
+            time_between_events=time_between_events
+        )
 
     def press(self, x, y):
         """Press and hold a given object or at the given coordinates.

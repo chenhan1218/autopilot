@@ -1,5 +1,51 @@
-autopilot (1.5.0+14.10.20140806-0ubuntu1) UNRELEASED; urgency=medium
+autopilot (1.5.0+15.04.20141031-0ubuntu1) vivid; urgency=low
 
+  [ Thomi Richards ]
+  * Autopilot release: - Add support for large timestamps - Add per-test
+    timeouts - Add press duration to touch clicks - Improved logging -
+    Make own autopilot functional test runnable with testtools runner.
+
+  [ Leo Arias ]
+  * Autopilot release: - Add support for large timestamps - Add per-test
+    timeouts - Add press duration to touch clicks - Improved logging -
+    Make own autopilot functional test runnable with testtools runner.
+
+  [ Leonardo Arias Fonseca ]
+  * Autopilot release: - Add support for large timestamps - Add per-test
+    timeouts - Add press duration to touch clicks - Improved logging -
+    Make own autopilot functional test runnable with testtools runner.
+
+  [ Christopher Lee ]
+  * Autopilot release: - Add support for large timestamps - Add per-test
+    timeouts - Add press duration to touch clicks - Improved logging -
+    Make own autopilot functional test runnable with testtools runner.
+
+  [ nskaggs ]
+  * Autopilot release: - Add support for large timestamps - Add per-test
+    timeouts - Add press duration to touch clicks - Improved logging -
+    Make own autopilot functional test runnable with testtools runner.
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 31 Oct 2014 21:50:09 +0000
+
+autopilot (1.5.0+14.10.20141022~rtm-0ubuntu1) 14.09; urgency=low
+
+  [ Christopher Lee ]
+  * Make autopilot-touch a meta package by removing the apparmor file
+    install rules
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 22 Oct 2014 21:11:30 +0000
+
+autopilot (1.5.0+14.10.20140812-0ubuntu1) utopic; urgency=low
+
+  [ Thomi Richards ]
+  * Release of Autopilot. Bugfix for lp:1306330 & lp:1348399 (LP:
+    #1306330, #1078732, #1348399)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 12 Aug 2014 09:53:34 +0000
+
+autopilot (1.5.0+14.10.20140806.1-0ubuntu1) utopic; urgency=medium
+
+  [ Christopher Lee ]
   [Thomi Richards]
   * Fix the development make_coverage.py script.
   * Remove the python3-six dependency.
@@ -21,7 +67,7 @@ autopilot (1.5.0+14.10.20140806-0ubuntu1) UNRELEASED; urgency=medium
     symlink and "autopilot" group.
     Fixes: https://bugs.launchpad.net/bugs/1350263.
 
- -- Christopher Lee <chris.lee@canonical.com>  Wed, 06 Aug 2014 10:29:45 +1200
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 06 Aug 2014 01:20:38 +0000
 
 autopilot (1.5.0+14.10.20140716-0ubuntu2) utopic; urgency=medium
 

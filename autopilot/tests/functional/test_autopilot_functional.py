@@ -95,6 +95,7 @@ class AutopilotFunctionalTestsBase(AutopilotRunTestBase):
 class FunctionalTestMain(AutopilotFunctionalTestsBase):
 
     def test_config_available_in_decorator(self):
+        """Any commandline config values must be available for decorators."""
         unique_config_value = self.getUniqueString()
         self.create_test_file(
             'test_config_skip.py', dedent("""\
@@ -112,8 +113,9 @@ class FunctionalTestMain(AutopilotFunctionalTestsBase):
             """.format(unique_config_value=unique_config_value))
         )
 
+        config_string = 'skipme={}'.format(unique_config_value)
         code, output, error = self.run_autopilot(
-            ['run', 'tests'])
+            ['run', 'tests', '--config', config_string])
 
         self.assertThat(code, Equals(0))
 

@@ -662,16 +662,6 @@ class TestProgram(object):
 
     def run_tests(self):
         """Run tests, using input from `args`."""
-        test_suite, error_encountered = load_test_suite_from_name(
-            self.args.suite
-        )
-
-        if not test_suite.countTestCases():
-            raise RuntimeError('Did not find any tests')
-
-        if self.args.random_order:
-            shuffle(test_suite._tests)
-            print("Running tests in random order")
 
         _configure_debug_profile(self.args)
         _configure_timeout_profile(self.args)
@@ -687,6 +677,17 @@ class TestProgram(object):
 
         if self.args.verbose:
             autopilot.globals.set_log_verbose(True)
+
+        test_suite, error_encountered = load_test_suite_from_name(
+            self.args.suite
+        )
+
+        if not test_suite.countTestCases():
+            raise RuntimeError('Did not find any tests')
+
+        if self.args.random_order:
+            shuffle(test_suite._tests)
+            print("Running tests in random order")
 
         result = construct_test_result(self.args)
         result.startTestRun()

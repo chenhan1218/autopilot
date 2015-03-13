@@ -494,11 +494,13 @@ class PointerWrapperTests(AutopilotTestCase):
         """
         class FakeTouch(Touch):
             def __init__(self):
-                pass
+                self.x = 0
+                self.y = 0
 
             def drag(self, x1, y1, x2, y2, rate='dummy',
                      time_between_events='dummy'):
-                pass
+                self.x = x2
+                self.y = y2
 
         p = Pointer(FakeTouch())
         p.drag(0, 0, 100, 123)

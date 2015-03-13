@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012, 2013, 2014 Canonical
+# Copyright (C) 2012, 2013, 2014, 2015 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -532,16 +532,28 @@ class Touch(TouchBase):
         _logger.debug("Releasing")
         self._device.finger_up()
 
-    def move(self, x, y, animation=None, rate=10, time_between_events=0.01):
+    def move(self, x, y, animate=None, rate=10, time_between_events=0.01):
         """Moves the pointing "finger" to pos(x,y).
 
         NOTE: The finger has to be down for this to have any effect.
 
+        :param x: The point on the x axis where the move will end at.
+        :param y: The point on the y axis where the move will end at.
+        :param animate: Indicates if the move should be immediate or it should
+            be animated moving the finger slowly accross the screen as a real
+            user would do. By default, when the finger is up the animation is
+            immediate and when the finger is down
+        :type animate: boolean.
+        :param rate: The number of pixels the finger will be moved per
+            iteration. Default is 10 pixels. A higher rate will make the drag
+            faster, and lower rate will make it slower.
+        :param time_between_events: The number of seconds that the drag will
+            wait between iterations.
         :raises RuntimeError: if the finger is not pressed.
 
         """
         if self.pressed:
-            if animation or animation is None:
+            if animate or animate is None:
                 self._move_with_animation(x, y, rate, time_between_events)
             else:
                 self._device.finger_move(x, y)
@@ -597,7 +609,7 @@ class Touch(TouchBase):
         _logger.debug("Dragging from %d,%d to %d,%d", x1, y1, x2, y2)
         self._finger_down(x1, y1)
         self.move(
-            x2, y2, animation=True, rate=rate,
+            x2, y2, animate=True, rate=rate,
             time_between_events=time_between_events)
         self._device.finger_up()
 

@@ -989,7 +989,7 @@ class PointerWithTouchBackendTestCase(TestCase):
 
         mock_move.assert_called_once_with(
             test_destination_x, test_destination_y,
-            animation=True,
+            animate=True,
             rate=test_rate, time_between_events=test_time_between_events)
 
     def test_drag_with_rate(self):

@@ -484,8 +484,8 @@ class PointerWrapperTests(AutopilotTestCase):
         device = Pointer(Touch.create())
         device.move(34, 56)
 
-        self.assertThat(device._x, Equals(34))
-        self.assertThat(device._y, Equals(56))
+        self.assertThat(device.x, Equals(34))
+        self.assertThat(device.y, Equals(56))
 
     def test_touch_drag_updates_coordinates(self):
         """The Pointer wrapper must update it's x and y properties when

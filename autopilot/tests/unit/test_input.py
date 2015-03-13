@@ -661,11 +661,10 @@ class UInputTouchDeviceTestCase(tests.LogHandlerTestCase):
         self.assertFalse(touch.pressed)
 
 
-class UInputTouchTestCase(TestCase):
-    """Test UInput Touch helper for autopilot tests."""
+class UInputTouchBaseTestCase(TestCase):
 
     def setUp(self):
-        super(UInputTouchTestCase, self).setUp()
+        super(UInputTouchBaseTestCase, self).setUp()
         # Mock the sleeps so we don't have to spend time actually sleeping.
         self.addCleanup(utilities.sleep.disable_mock)
         utilities.sleep.enable_mock()
@@ -674,6 +673,50 @@ class UInputTouchTestCase(TestCase):
         touch = _uinput.Touch(device_class=Mock)
         touch._device.mock_add_spec(_uinput._UInputTouchDevice)
         return touch
+
+
+class UInputTouchFingerCoordinatesTestCase(
+        testscenarios.TestWithScenarios, UInputTouchBaseTestCase):
+
+    TEST_X_DESTINATION = 10
+    TEST_Y_DESTINATION = 10
+
+    scenarios = [
+        ('tap', {
+            'method': 'tap',
+            'args': (TEST_X_DESTINATION, TEST_Y_DESTINATION)
+        }),
+        ('press', {
+            'method': 'press',
+            'args': (TEST_X_DESTINATION, TEST_Y_DESTINATION)
+        }),
+        ('move', {
+            'method': 'move',
+            'args': (TEST_X_DESTINATION, TEST_Y_DESTINATION)
+        }),
+        ('drag', {
+            'method': 'drag',
+            'args': (0, 0, TEST_X_DESTINATION, TEST_Y_DESTINATION)
+        })
+    ]
+
+    def test_method_must_update_finger_coordinates(self):
+        touch = self.get_touch_with_mocked_backend()
+
+        getattr(touch, self.method)(*self.args)
+
+        self.assertEqual(touch.x, self.TEST_X_DESTINATION)
+        self.assertEqual(touch.y, self.TEST_Y_DESTINATION)
+
+
+class UInputTouchTestCase(UInputTouchBaseTestCase):
+    """Test UInput Touch helper for autopilot tests."""
+
+    def test_initial_coordinates_must_be_zero(self):
+        touch = self.get_touch_with_mocked_backend()
+
+        self.assertEqual(touch.x, 0)
+        self.assertEqual(touch.y, 0)
 
     def test_tap_must_put_finger_down_then_sleep_and_then_put_finger_up(self):
         expected_calls = [
@@ -989,7 +1032,7 @@ class PointerWithTouchBackendTestCase(TestCase):
         pointer.move(10, 10)
         pointer._device._device.pressed = False
 
-        with patch.object(pointer._device, 'move') as mock_move:
+        with patch.object(pointer._device._device, 'finger_move') as mock_move:
             pointer.move(test_x_destination, test_y_destination)
 
         self.assertFalse(mock_move.called)
@@ -1005,7 +1048,7 @@ class PointerWithTouchBackendTestCase(TestCase):
         pointer.move(10, 10)
         pointer._device._device.pressed = True
 
-        with patch.object(pointer._device, 'move') as mock_move:
+        with patch.object(pointer._device._device, 'finger_move') as mock_move:
             pointer.move(test_x_destination, test_y_destination)
 
         mock_move.assert_called_once_with(20, 20)

@@ -458,6 +458,18 @@ class Touch(TouchBase):
         super(Touch, self).__init__()
         self._device = device_class()
         self.event_delayer = EventDelay()
+        self._x = 0
+        self._y = 0
+
+    @property
+    def x(self):
+        """Finger position X coordinate."""
+        return self._x
+
+    @property
+    def y(self):
+        """Finger position Y coordinate."""
+        return self._y
 
     @property
     def pressed(self):
@@ -473,6 +485,8 @@ class Touch(TouchBase):
         _logger.debug("Tapping at: %d,%d", x, y)
         self.event_delayer.delay(time_between_events)
         self._device.finger_down(x, y)
+        self._x = x
+        self._y = y
         sleep(press_duration)
         self._device.finger_up()
 
@@ -505,6 +519,8 @@ class Touch(TouchBase):
         """
         _logger.debug("Pressing at: %d,%d", x, y)
         self._device.finger_down(x, y)
+        self._x = x
+        self._y = y
 
     def release(self):
         """Release a previously pressed finger.
@@ -523,7 +539,10 @@ class Touch(TouchBase):
         :raises RuntimeError: if the finger is not pressed.
 
         """
-        self._device.finger_move(x, y)
+        if self.pressed:
+            self._device.finger_move(x, y)
+        self._x = x
+        self._y = y
 
     def drag(self, x1, y1, x2, y2, rate=10, time_between_events=0.01):
         """Perform a drag gesture.
@@ -573,6 +592,8 @@ class Touch(TouchBase):
             sleep(time_between_events)
 
         self._device.finger_up()
+        self._x = x2
+        self._y = y2
 
 
 # veebers: there should be a better way to handle this.

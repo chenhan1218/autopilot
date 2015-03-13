@@ -558,8 +558,6 @@ class Pointer(object):
             raise TypeError(
                 "`device` must be either a Touch or a Mouse instance.")
         self._device = device
-        self._x = 0
-        self._y = 0
 
     @property
     def x(self):
@@ -569,10 +567,7 @@ class Pointer(object):
         last known X coordinate, which may not be a sensible value.
 
         """
-        if isinstance(self._device, Mouse):
-            return self._device.x
-        else:
-            return self._x
+        return self._device.x
 
     @property
     def y(self):
@@ -582,10 +577,7 @@ class Pointer(object):
         last known Y coordinate, which may not be a sensible value.
 
         """
-        if isinstance(self._device, Mouse):
-            return self._device.y
-        else:
-            return self._y
+        return self._device.y
 
     def press(self, button=1):
         """Press the pointer at it's current location.
@@ -637,8 +629,8 @@ class Pointer(object):
                 raise ValueError(
                     "Touch devices do not have button %d" % (button))
             self._device.tap(
-                self._x,
-                self._y,
+                self.x,
+                self.y,
                 press_duration=press_duration,
                 time_between_events=time_between_events
             )
@@ -652,13 +644,7 @@ class Pointer(object):
         :meth:`click` will occur.
 
         """
-        if isinstance(self._device, Mouse):
-            self._device.move(x, y)
-        else:
-            if self._device.pressed:
-                self._device.move(x, y)
-            self._x = x
-            self._y = y
+        self._device.move(x, y)
 
     def click_object(
             self,
@@ -716,7 +702,7 @@ class Pointer(object):
         if isinstance(self._device, Mouse):
             return self._device.position()
         else:
-            return (self._x, self._y)
+            return (self.x, self.y)
 
     def drag(self, x1, y1, x2, y2, rate=10, time_between_events=0.01):
         """Perform a press, move and release.
@@ -742,6 +728,3 @@ class Pointer(object):
         """
         self._device.drag(
             x1, y1, x2, y2, rate=rate, time_between_events=time_between_events)
-        if isinstance(self._device, Touch):
-            self._x = x2
-            self._y = y2

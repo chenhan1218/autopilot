@@ -763,6 +763,38 @@ class UInputTouchTestCase(UInputTouchBaseTestCase):
         touch.move(10, 10)
         self.assertEqual(expected_calls, touch._device.mock_calls)
 
+    def test_move_must_move_with_specified_rate(self):
+        expected_calls = [
+            call.finger_move(5, 5),
+            call.finger_move(10, 10),
+            call.finger_move(15, 15),
+        ]
+
+        touch = self.get_touch_with_mocked_backend()
+        touch.move(15, 15, rate=5)
+
+        self.assertEqual(
+            expected_calls, touch._device.mock_calls)
+
+    def test_move_without_rate_must_use_default(self):
+        expected_calls = [
+            call.finger_move(10, 10),
+            call.finger_move(20, 20),
+        ]
+
+        touch = self.get_touch_with_mocked_backend()
+        touch.move(20, 20)
+
+        self.assertEqual(
+            expected_calls, touch._device.mock_calls)
+
+    def test_move_to_same_place_must_not_move(self):
+        expected_calls = []
+
+        touch = self.get_touch_with_mocked_backend()
+        touch.move(0, 0)
+        self.assertEqual(expected_calls, touch._device.mock_calls)
+
     def test_drag_must_call_finger_down_move_and_up(self):
         expected_calls = [
             call.finger_down(0, 0),
@@ -772,43 +804,6 @@ class UInputTouchTestCase(UInputTouchBaseTestCase):
 
         touch = self.get_touch_with_mocked_backend()
         touch.drag(0, 0, 10, 10)
-        self.assertEqual(expected_calls, touch._device.mock_calls)
-
-    def test_drag_must_move_with_specified_rate(self):
-        expected_calls = [
-            call.finger_down(0, 0),
-            call.finger_move(5, 5),
-            call.finger_move(10, 10),
-            call.finger_move(15, 15),
-            call.finger_up()]
-
-        touch = self.get_touch_with_mocked_backend()
-        touch.drag(0, 0, 15, 15, rate=5)
-
-        self.assertEqual(
-            expected_calls, touch._device.mock_calls)
-
-    def test_drag_without_rate_must_use_default(self):
-        expected_calls = [
-            call.finger_down(0, 0),
-            call.finger_move(10, 10),
-            call.finger_move(20, 20),
-            call.finger_up()]
-
-        touch = self.get_touch_with_mocked_backend()
-        touch.drag(0, 0, 20, 20)
-
-        self.assertEqual(
-            expected_calls, touch._device.mock_calls)
-
-    def test_drag_to_same_place_must_not_move(self):
-        expected_calls = [
-            call.finger_down(0, 0),
-            call.finger_up()
-        ]
-
-        touch = self.get_touch_with_mocked_backend()
-        touch.drag(0, 0, 0, 0)
         self.assertEqual(expected_calls, touch._device.mock_calls)
 
     def test_tap_without_press_duration_must_sleep_default_time(self):
@@ -891,55 +886,56 @@ class MultipleUInputTouchTestCase(TestCase):
         self.assertFalse(finger2.pressed)
 
 
-class DragUInputTouchTestCase(testscenarios.TestWithScenarios, TestCase):
+class MoveWithAnimationUInputTouchTestCase(
+        testscenarios.TestWithScenarios, TestCase):
 
     scenarios = [
-        ('drag to top', dict(
+        ('move to top', dict(
             start_x=50, start_y=50, stop_x=50, stop_y=30,
             expected_moves=[call.finger_move(50, 40),
                             call.finger_move(50, 30)])),
-        ('drag to bottom', dict(
+        ('move to bottom', dict(
             start_x=50, start_y=50, stop_x=50, stop_y=70,
             expected_moves=[call.finger_move(50, 60),
                             call.finger_move(50, 70)])),
-        ('drag to left', dict(
+        ('move to left', dict(
             start_x=50, start_y=50, stop_x=30, stop_y=50,
             expected_moves=[call.finger_move(40, 50),
                             call.finger_move(30, 50)])),
-        ('drag to right', dict(
+        ('move to right', dict(
             start_x=50, start_y=50, stop_x=70, stop_y=50,
             expected_moves=[call.finger_move(60, 50),
                             call.finger_move(70, 50)])),
 
-        ('drag to top-left', dict(
+        ('move to top-left', dict(
             start_x=50, start_y=50, stop_x=30, stop_y=30,
             expected_moves=[call.finger_move(40, 40),
                             call.finger_move(30, 30)])),
-        ('drag to top-right', dict(
+        ('move to top-right', dict(
             start_x=50, start_y=50, stop_x=70, stop_y=30,
             expected_moves=[call.finger_move(60, 40),
                             call.finger_move(70, 30)])),
-        ('drag to bottom-left', dict(
+        ('move to bottom-left', dict(
             start_x=50, start_y=50, stop_x=30, stop_y=70,
             expected_moves=[call.finger_move(40, 60),
                             call.finger_move(30, 70)])),
-        ('drag to bottom-right', dict(
+        ('move to bottom-right', dict(
             start_x=50, start_y=50, stop_x=70, stop_y=70,
             expected_moves=[call.finger_move(60, 60),
                             call.finger_move(70, 70)])),
 
-        ('drag less than rate', dict(
+        ('move less than rate', dict(
             start_x=50, start_y=50, stop_x=55, stop_y=55,
             expected_moves=[call.finger_move(55, 55)])),
 
-        ('drag with last move less than rate', dict(
+        ('move with last move less than rate', dict(
             start_x=50, start_y=50, stop_x=65, stop_y=65,
             expected_moves=[call.finger_move(60, 60),
                             call.finger_move(65, 65)])),
     ]
 
     def setUp(self):
-        super(DragUInputTouchTestCase, self).setUp()
+        super(MoveWithAnimationUInputTouchTestCase, self).setUp()
         # Mock the sleeps so we don't have to spend time actually sleeping.
         self.addCleanup(utilities.sleep.disable_mock)
         utilities.sleep.enable_mock()
@@ -953,12 +949,12 @@ class DragUInputTouchTestCase(testscenarios.TestWithScenarios, TestCase):
     def test_drag_moves(self):
         touch = self.get_touch_with_mocked_backend()
 
-        touch.drag(
-            self.start_x, self.start_y, self.stop_x, self.stop_y)
+        touch.press(self.start_x, self.start_y)
+        touch.move(self.stop_x, self.stop_y)
 
-        # We don't check the finger down and finger up. They are already
-        # tested.
-        expected_calls = [ANY] + self.expected_moves + [ANY]
+        expected_calls = (
+            [call.finger_down(self.start_x, self.start_y)] +
+            self.expected_moves)
         self.assertEqual(
             expected_calls, touch._device.mock_calls)
 
@@ -977,6 +973,24 @@ class PointerWithTouchBackendTestCase(TestCase):
 
         self.assertEqual(pointer.x, 0)
         self.assertEqual(pointer.y, 0)
+
+    def test_drag_must_call_move_with_animation(self):
+        test_rate = 2
+        test_time_between_events = 1
+        test_destination_x = 20
+        test_destination_y = 20
+
+        pointer = self.get_pointer_with_touch_backend_with_mock_device()
+        with patch.object(pointer._device, 'move') as mock_move:
+            pointer.drag(
+                0, 0,
+                test_destination_x, test_destination_y,
+                rate=test_rate, time_between_events=test_time_between_events)
+
+        mock_move.assert_called_once_with(
+            test_destination_x, test_destination_y,
+            animation=True,
+            rate=test_rate, time_between_events=test_time_between_events)
 
     def test_drag_with_rate(self):
         pointer = self.get_pointer_with_touch_backend_with_mock_device()

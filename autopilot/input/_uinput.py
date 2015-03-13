@@ -484,11 +484,14 @@ class Touch(TouchBase):
         """
         _logger.debug("Tapping at: %d,%d", x, y)
         self.event_delayer.delay(time_between_events)
+        self._finger_down(x, y)
+        sleep(press_duration)
+        self._device.finger_up()
+
+    def _finger_down(self, x, y):
         self._device.finger_down(x, y)
         self._x = x
         self._y = y
-        sleep(press_duration)
-        self._device.finger_up()
 
     def tap_object(self, object_, press_duration=0.1, time_between_events=0.1):
         """Click (or 'tap') a given object.
@@ -518,9 +521,7 @@ class Touch(TouchBase):
 
         """
         _logger.debug("Pressing at: %d,%d", x, y)
-        self._device.finger_down(x, y)
-        self._x = x
-        self._y = y
+        self._finger_down(x, y)
 
     def release(self):
         """Release a previously pressed finger.
@@ -540,9 +541,36 @@ class Touch(TouchBase):
 
         """
         if self.pressed:
-            self._device.finger_move(x, y)
+            if animation or animation is None:
+                self._move_with_animation(x, y, rate, time_between_events)
+            else:
+                self._device.finger_move(x, y)
         self._x = x
         self._y = y
+
+    def _move_with_animation(self, x, y, rate, time_between_events):
+        current_x, current_y = self.x, self.y
+        while current_x != x or current_y != y:
+            dx = abs(x - current_x)
+            dy = abs(y - current_y)
+
+            intx = float(dx) / max(dx, dy)
+            inty = float(dy) / max(dx, dy)
+
+            step_x = min(rate * intx, dx)
+            step_y = min(rate * inty, dy)
+
+            if x < current_x:
+                step_x *= -1
+            if y < current_y:
+                step_y *= -1
+
+            current_x += step_x
+            current_y += step_y
+
+            self._device.finger_move(current_x, current_y)
+
+            sleep(time_between_events)
 
     def drag(self, x1, y1, x2, y2, rate=10, time_between_events=0.01):
         """Perform a drag gesture.
@@ -567,33 +595,11 @@ class Touch(TouchBase):
 
         """
         _logger.debug("Dragging from %d,%d to %d,%d", x1, y1, x2, y2)
-        self._device.finger_down(x1, y1)
-
-        current_x, current_y = x1, y1
-        while current_x != x2 or current_y != y2:
-            dx = abs(x2 - current_x)
-            dy = abs(y2 - current_y)
-
-            intx = float(dx) / max(dx, dy)
-            inty = float(dy) / max(dx, dy)
-
-            step_x = min(rate * intx, dx)
-            step_y = min(rate * inty, dy)
-
-            if x2 < current_x:
-                step_x *= -1
-            if y2 < current_y:
-                step_y *= -1
-
-            current_x += step_x
-            current_y += step_y
-            self._device.finger_move(current_x, current_y)
-
-            sleep(time_between_events)
-
+        self._finger_down(x1, y1)
+        self.move(
+            x2, y2, animation=True, rate=rate,
+            time_between_events=time_between_events)
         self._device.finger_up()
-        self._x = x2
-        self._y = y2
 
 
 # veebers: there should be a better way to handle this.

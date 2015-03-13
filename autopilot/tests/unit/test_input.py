@@ -929,6 +929,12 @@ class PointerWithTouchBackendTestCase(TestCase):
         pointer = autopilot.input.Pointer(touch)
         return pointer
 
+    def test_initial_coordinates_must_be_zero(self):
+        pointer = self.get_pointer_with_touch_backend_with_mock_device()
+
+        self.assertEqual(pointer.x, 0)
+        self.assertEqual(pointer.y, 0)
+
     def test_drag_with_rate(self):
         pointer = self.get_pointer_with_touch_backend_with_mock_device()
         with patch.object(pointer._device, 'drag') as mock_drag:

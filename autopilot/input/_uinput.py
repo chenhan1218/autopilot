@@ -515,7 +515,7 @@ class Touch(TouchBase):
         _logger.debug("Releasing")
         self._device.finger_up()
 
-    def move(self, x, y):
+    def move(self, x, y, animation=None, rate=10, time_between_events=0.01):
         """Moves the pointing "finger" to pos(x,y).
 
         NOTE: The finger has to be down for this to have any effect.

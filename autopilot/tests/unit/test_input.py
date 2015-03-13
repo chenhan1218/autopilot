@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2013, 2014 Canonical
+# Copyright (C) 2013, 2014, 2015 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -968,3 +968,40 @@ class PointerWithTouchBackendTestCase(TestCase):
 
         mock_tap.assert_called_once_with(
             0, 0, press_duration=10, time_between_events=0.1)
+
+    def test_not_pressed_move_must_not_move_pointing_figer(self):
+        """Test for moving the finger when it is not pressed.
+
+        The move method on the pointer class must update the finger coordinates
+        but it must not execute a move on the device.
+
+        """
+        test_x_destination = 20
+        test_y_destination = 20
+        pointer = self.get_pointer_with_touch_backend_with_mock_device()
+
+        pointer.move(10, 10)
+        pointer._device._device.pressed = False
+
+        with patch.object(pointer._device, 'move') as mock_move:
+            pointer.move(test_x_destination, test_y_destination)
+
+        self.assertFalse(mock_move.called)
+        self.assertEqual(pointer.x, test_x_destination)
+        self.assertEqual(pointer.y, test_y_destination)
+
+    def test_pressed_move_must_move_pointing_finger(self):
+        test_x_destination = 20
+        test_y_destination = 20
+
+        pointer = self.get_pointer_with_touch_backend_with_mock_device()
+
+        pointer.move(10, 10)
+        pointer._device._device.pressed = True
+
+        with patch.object(pointer._device, 'move') as mock_move:
+            pointer.move(test_x_destination, test_y_destination)
+
+        mock_move.assert_called_once_with(20, 20)
+        self.assertEqual(pointer.x, test_x_destination)
+        self.assertEqual(pointer.y, test_y_destination)

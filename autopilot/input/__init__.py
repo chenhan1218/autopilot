@@ -655,6 +655,8 @@ class Pointer(object):
         if isinstance(self._device, Mouse):
             self._device.move(x, y)
         else:
+            if self._device.pressed:
+                self._device.move(x, y)
             self._x = x
             self._y = y
 

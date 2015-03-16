@@ -532,7 +532,7 @@ class Touch(TouchBase):
         _logger.debug("Releasing")
         self._device.finger_up()
 
-    def move(self, x, y, animate=None, rate=10, time_between_events=0.01):
+    def move(self, x, y, animate=True, rate=10, time_between_events=0.01):
         """Moves the pointing "finger" to pos(x,y).
 
         NOTE: The finger has to be down for this to have any effect.
@@ -541,8 +541,9 @@ class Touch(TouchBase):
         :param y: The point on the y axis where the move will end at.
         :param animate: Indicates if the move should be immediate or it should
             be animated moving the finger slowly accross the screen as a real
-            user would do. By default, when the finger is up the animation is
-            immediate and when the finger is down
+            user would do. By default, when the finger is down the finger is
+            animated. When the finger is up, the parameter is ignored and the
+            move is always immediate.
         :type animate: boolean.
         :param rate: The number of pixels the finger will be moved per
             iteration. Default is 10 pixels. A higher rate will make the drag
@@ -553,7 +554,7 @@ class Touch(TouchBase):
 
         """
         if self.pressed:
-            if animate or animate is None:
+            if animate:
                 self._move_with_animation(x, y, rate, time_between_events)
             else:
                 self._device.finger_move(x, y)

@@ -700,10 +700,13 @@ class UInputTouchFingerCoordinatesTestCase(
         })
     ]
 
+    def call_scenario_method(self, object_, method, *args):
+        getattr(object_, method)(*self.args)
+
     def test_method_must_update_finger_coordinates(self):
         touch = self.get_touch_with_mocked_backend()
 
-        getattr(touch, self.method)(*self.args)
+        self.call_scenario_method(touch, self.method, *self.args)
 
         self.assertEqual(touch.x, self.TEST_X_DESTINATION)
         self.assertEqual(touch.y, self.TEST_Y_DESTINATION)

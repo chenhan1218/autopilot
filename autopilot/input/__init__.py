@@ -593,7 +593,7 @@ class Pointer(object):
             if button != 1:
                 raise ValueError(
                     "Touch devices do not have button %d" % (button))
-            self._device.press(self._x, self._y)
+            self._device.press(self.x, self.y)
 
     def release(self, button=1):
         """Releases the pointer at it's current location.

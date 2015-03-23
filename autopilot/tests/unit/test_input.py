@@ -1071,3 +1071,11 @@ class PointerWithTouchBackendTestCase(TestCase):
         mock_move.assert_called_once_with(20, 20)
         self.assertEqual(pointer.x, test_x_destination)
         self.assertEqual(pointer.y, test_y_destination)
+
+    def test_press_must_put_finger_down_at_last_move_position(self):
+        pointer = self.get_pointer_with_touch_backend_with_mock_device()
+        pointer.move(10, 10)
+
+        pointer.press()
+
+        pointer._device._device.finger_down.assert_called_once_with(10, 10)

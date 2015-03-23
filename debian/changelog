@@ -1,3 +1,18 @@
+autopilot (1.5.0+15.04.20150323-0ubuntu1) vivid; urgency=medium
+
+  [ CI Train Bot ]
+  * New rebuild forced.
+
+  [ Christopher Lee ]
+  * Bugfix for Touch pointer pressed. Packaging req. due to python3-xlib
+    bug.
+
+  [ Leo Arias ]
+  * Bugfix for Touch pointer pressed. Packaging req. due to python3-xlib
+    bug.
+
+ -- CI Train Bot <ci-train-bot@canonical.com>  Mon, 23 Mar 2015 09:34:31 +0000
+
 autopilot (1.5.0+15.04.20150226.1-0ubuntu1) vivid; urgency=medium
 
   [ Christopher Lee ]

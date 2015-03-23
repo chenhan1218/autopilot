@@ -94,6 +94,31 @@ class AutopilotFunctionalTestsBase(AutopilotRunTestBase):
 
 class FunctionalTestMain(AutopilotFunctionalTestsBase):
 
+    def test_config_available_in_decorator(self):
+        """Any commandline config values must be available for decorators."""
+        unique_config_value = self.getUniqueString()
+        self.create_test_file(
+            'test_config_skip.py', dedent("""\
+            from testtools import skipIf
+            import autopilot
+            from autopilot.testcase import AutopilotTestCase
+
+            class ConfigTest(AutopilotTestCase):
+                @skipIf(
+                    autopilot.get_test_configuration().get('skipme', None)
+                    == '{unique_config_value}',
+                    'Skipping Test')
+                def test_config(self):
+                    self.fail('Should not run.')
+            """.format(unique_config_value=unique_config_value))
+        )
+
+        config_string = 'skipme={}'.format(unique_config_value)
+        code, output, error = self.run_autopilot(
+            ['run', 'tests', '--config', config_string])
+
+        self.assertThat(code, Equals(0))
+
     def test_can_list_empty_test_dir(self):
         """Autopilot list must report 0 tests found with an empty test
         module."""

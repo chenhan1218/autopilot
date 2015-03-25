@@ -307,17 +307,13 @@ def _find_matching_connections(bus, connection_matcher, process=None):
         while we're searching for it.
 
     """
-    seen_connections = []
-
     for _ in Timeout.default():
         _get_child_pids.reset_cache()
         _raise_if_process_has_exited(process)
 
         connections = _get_buses_unchecked_connection_names(
-            bus,
-            seen_connections
+            bus
         )
-        seen_connections.extend(connections)
 
         valid_connections = [
             c for c

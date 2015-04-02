@@ -43,6 +43,7 @@ from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional.fixtures import TempDesktopFile
 from autopilot.introspection import CustomEmulatorBase
+from autopilot.introspection import _object_registry as object_registry
 from autopilot.introspection.qt import QtObjectProxyMixin
 from autopilot.display import Display
 
@@ -107,6 +108,20 @@ class IntrospectionFeatureTests(AutopilotTestCase):
 
         app = self.start_mock_app(EmulatorBase)
         self.assertThat(app.__class__.__bases__, Contains(QtObjectProxyMixin))
+
+    def test_customised_proxy_classes_have_multiple_extension_classes(self):
+        with object_registry.patch_registry({}):
+            class SecondEmulatorBase(CustomEmulatorBase):
+                pass
+
+            class WindowMockerApp(EmulatorBase, SecondEmulatorBase):
+                @classmethod
+                def validate_dbus_object(cls, path, _state):
+                    return path == b'/window-mocker'
+
+            app = self.start_mock_app(EmulatorBase)
+            self.assertThat(app.__class__.__bases__, Contains(EmulatorBase))
+            self.assertThat(app.__class__.__bases__, Contains(SecondEmulatorBase))
 
     def test_can_select_custom_emulators_by_name(self):
         """Must be able to select a custom emulator type by name."""

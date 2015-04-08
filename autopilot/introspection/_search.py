@@ -307,17 +307,11 @@ def _find_matching_connections(bus, connection_matcher, process=None):
         while we're searching for it.
 
     """
-    seen_connections = []
-
     for _ in Timeout.default():
         _get_child_pids.reset_cache()
         _raise_if_process_has_exited(process)
 
-        connections = _get_buses_unchecked_connection_names(
-            bus,
-            seen_connections
-        )
-        seen_connections.extend(connections)
+        connections = bus.list_names()
 
         valid_connections = [
             c for c
@@ -343,17 +337,6 @@ def _raise_if_process_has_exited(process):
 
 def _process_is_running(process):
     return process.poll() is None
-
-
-def _get_buses_unchecked_connection_names(dbus_bus, previous_connections=None):
-    """Return a list of connections found on dbus_bus.
-
-    If previous_connections is supplied then those connections are removed from
-    the returned list.
-
-    """
-    all_conns = dbus_bus.list_names()
-    return list(set(all_conns).difference(set(previous_connections or [])))
 
 
 def _dedupe_connections_on_pid(valid_connections, bus):

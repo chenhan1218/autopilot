@@ -1,3 +1,13 @@
+autopilot (1.5.0+15.04.20150408-0ubuntu1) vivid; urgency=medium
+
+  [ Albert Astals Cid ]
+  * Bug fixes related to improving automated runs.
+
+  [ Christopher Lee ]
+  * Bug fixes related to improving automated runs.
+
+ -- CI Train Bot <ci-train-bot@canonical.com>  Wed, 08 Apr 2015 15:07:28 +0000
+
 autopilot (1.5.0+15.04.20150323-0ubuntu1) vivid; urgency=medium
 
   [ CI Train Bot ]

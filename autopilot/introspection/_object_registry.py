@@ -161,6 +161,11 @@ def _try_custom_proxy_classes(object_id, path, state):
 
     """
     proxy_class_dict = _object_registry[object_id]
+    print("? ", path)
+    if path == b'/AddressBookApp/QQuickView/MainWindow/OrientationHelper/QQuickItem/QQuickItem/PageStack/PageWrapper/ContactListPage':
+        import inspect
+        print("s: ", inspect.getsource(proxy_class_dict['ContactListPage'].validate_dbus_object))
+        print("b: ", proxy_class_dict['ContactListPage'].__bases__)
     possible_classes = [c for c in proxy_class_dict.values() if
                         c.validate_dbus_object(path, state)]
     if len(possible_classes) > 1:
@@ -172,14 +177,36 @@ def _try_custom_proxy_classes(object_id, path, state):
                 path,
             )
         )
+    # Do we need to make a copy here or something to return the class type with
     if len(possible_classes) == 1:
+        # import ipdb; ipdb.set_trace()
         extended_proxy_bases = _get_proxy_bases_for_id(object_id)
-        if extended_proxy_bases:
-            possible_classes[0].__bases__ = extended_proxy_bases
+        # if extended_proxy_bases:
+        #     possible_classes[0].__bases__ = _combine_base_and_extensions(
+        #         possible_classes[0].__bases__,
+        #         extended_proxy_bases
+        #     )
+        mixed = _combine_base_and_extensions(
+                possible_classes[0].__bases__,
+                extended_proxy_bases
+            )
+        print("E >>: ", extended_proxy_bases)
+        print("M >>: ", mixed)
+        possible_classes[0].__bases__ = mixed
         return possible_classes[0]
     return None
 
 
+def _combine_base_and_extensions(base, extensions):
+    """Give 2 lists of base classescobine both to have a unique list."""
+    # Find the bases in extensions that also appear in base.
+    # extensions_set = set(extensions)
+    # return base.extend(list(extensions_set.difference_update(set(base))))
+    return base + tuple(set(extensions).difference(base))
+    # return tuple(set(base).union(set(extensions)))
+
+
+# XXX This docstring is out of date.
 def _get_default_proxy_class(id, name):
     """Return a custom proxy object class of the default or a base class.
 

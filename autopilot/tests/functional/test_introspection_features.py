@@ -126,6 +126,18 @@ class IntrospectionFeatureTests(AutopilotTestCase):
                 Contains(SecondEmulatorBase)
             )
 
+    def test_uses_correct_base_class(self):
+        # This test uses the wrong base_emulator passed to start_mock_app to
+        # replicate an issue found in the addressbook app (being fixed).
+        # Autopilot should handle this better than it currently does.
+        with object_registry.patch_registry({}):
+            class WindowMockerApp(CustomEmulatorBase):
+                @classmethod
+                def validate_dbus_object(cls, path, _state):
+                    return path == b'/window-mocker'
+
+            app = self.start_mock_app(WindowMockerApp)
+
     def test_can_select_custom_emulators_by_name(self):
         """Must be able to select a custom emulator type by name."""
         class MouseTestWidget(EmulatorBase):

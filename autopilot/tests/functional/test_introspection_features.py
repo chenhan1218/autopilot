@@ -136,7 +136,7 @@ class IntrospectionFeatureTests(AutopilotTestCase):
                 def validate_dbus_object(cls, path, _state):
                     return path == b'/window-mocker'
 
-            app = self.start_mock_app(WindowMockerApp)
+            self.start_mock_app(WindowMockerApp)
 
     def test_can_select_custom_emulators_by_name(self):
         """Must be able to select a custom emulator type by name."""

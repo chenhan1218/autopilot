@@ -180,28 +180,28 @@ def _try_custom_proxy_classes(object_id, path, state):
         #         extended_proxy_bases
         #     )
         mixed = _combine_base_and_extensions(
-                possible_classes[0].__bases__,
-                extended_proxy_bases
-            )
+            possible_classes[0],
+            extended_proxy_bases
+        )
         possible_classes[0].__bases__ = mixed
         return possible_classes[0]
     return None
 
 
-def _combine_base_and_extensions(base, extensions):
+def _combine_base_and_extensions(kls, extensions):
     """Give 2 lists of base classescobine both to have a unique list."""
     # XXX There was some concern during my exploration here for the best way to
     # merge them. I believe that the need to difference base is gone but I need
     # to re-confirm this (as I've unfortunately forgotten at this point in
     # time).
 
-    # Find the bases in extensions that also appear in base.
-    # extensions_set = set(extensions)
+    # set of bases + extensions removing the original class to prevent
+    # TypeError: a __bases__ item causes an inheritance cycle
+    unique_bases = {x for x in kls.__bases__ + extensions if x != kls}
 
-    # return base.extend(list(extensions_set.difference_update(set(base))))
-    return base + tuple(set(extensions).difference(base))
-
-    # return tuple(set(base).union(set(extensions)))
+    # sort them taking into account inheritance to prevent
+    # TypeError: Cannot create a consistent method resolution order (MRO)
+    return tuple(sorted(unique_bases, key=lambda cls: -1 * len(cls.mro())))
 
 
 # XXX This docstring is out of date.

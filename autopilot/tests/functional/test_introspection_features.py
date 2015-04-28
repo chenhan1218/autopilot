@@ -121,7 +121,10 @@ class IntrospectionFeatureTests(AutopilotTestCase):
 
             app = self.start_mock_app(EmulatorBase)
             self.assertThat(app.__class__.__bases__, Contains(EmulatorBase))
-            self.assertThat(app.__class__.__bases__, Contains(SecondEmulatorBase))
+            self.assertThat(
+                app.__class__.__bases__,
+                Contains(SecondEmulatorBase)
+            )
 
     def test_can_select_custom_emulators_by_name(self):
         """Must be able to select a custom emulator type by name."""

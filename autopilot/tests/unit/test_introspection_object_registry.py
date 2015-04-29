@@ -263,3 +263,18 @@ class ObjectRegistryPatchTests(TestCase):
         with object_registry.patch_registry(dict()):
             object_registry._object_registry[token] = token
         self.assertFalse(token in object_registry._object_registry)
+
+
+class CombineBasesTests(TestCase):
+
+    def test_returns_original_if_no_extensions(self):
+        pass
+
+    def test_returns_addition_of_extension_classes(self):
+        pass
+
+    def test_excludes_addition_of_base_class_within_extension_classes(self):
+        pass
+
+    def test_maintains_mro_order(self):
+        pass

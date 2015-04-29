@@ -778,28 +778,26 @@ class ProxyObjectTests(TestCase):
 class ActualBaseClassTests(TestCase):
 
     def test_returns_passed_base_when_is_only_base(self):
-        with object_registry.patch_registry({}):
-            class ActualBase(CustomEmulatorBase):
-                pass
+        class ActualBase(CustomEmulatorBase):
+            pass
 
-            self.assertThat(
-                _s._get_actual_base_for_emulator_base(ActualBase),
-                Equals(ActualBase)
-            )
+        self.assertThat(
+            _s._get_actual_base_for_emulator_base(ActualBase),
+            Equals(ActualBase)
+        )
 
     def test_returns_parent_as_base(self):
-        with object_registry.patch_registry({}):
-            class ActualBase(CustomEmulatorBase):
-                pass
+        class ActualBase(CustomEmulatorBase):
+            pass
 
-            class InheritedCPO(ActualBase):
-                pass
+        class InheritedCPO(ActualBase):
+            pass
 
-            with patch.object(_s, 'logger'):
-                self.assertThat(
-                    _s._get_actual_base_for_emulator_base(InheritedCPO),
-                    Equals(ActualBase)
-                )
+        with patch.object(_s, 'logger'):
+            self.assertThat(
+                _s._get_actual_base_for_emulator_base(InheritedCPO),
+                Equals(ActualBase)
+            )
 
     def test_logs_warning_if_passed_incorrect_base_class(self):
         class ActualBase(CustomEmulatorBase):

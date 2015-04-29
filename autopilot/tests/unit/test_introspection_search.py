@@ -842,7 +842,7 @@ class ActualBaseClassTests(TestCase):
             pass
 
         with patch.object(_s, 'logger') as p_logger:
-            _s._get_actual_base_for_emulator_base(InheritedCPO)
+            actual = _s._get_actual_base_for_emulator_base(InheritedCPO)
 
             self.assertThat(
                 p_logger.warning.call_args[0][0],
@@ -854,3 +854,4 @@ class ActualBaseClassTests(TestCase):
                     )
                 )
             )
+            self.assertIs(ActualBase, actual)

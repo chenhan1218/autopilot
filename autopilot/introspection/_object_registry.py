@@ -189,7 +189,7 @@ def _try_custom_proxy_classes(object_id, path, state):
 
 
 def _combine_base_and_extensions(kls, extensions):
-    """Give 2 lists of base classescobine both to have a unique list."""
+    """Give 2 lists of base classes, combine both to have a unique list."""
     # XXX There was some concern during my exploration here for the best way to
     # merge them. I believe that the need to difference base is gone but I need
     # to re-confirm this (as I've unfortunately forgotten at this point in

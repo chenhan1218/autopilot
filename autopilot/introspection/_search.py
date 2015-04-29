@@ -450,10 +450,12 @@ def _make_default_emulator_base():
 
 
 def _get_actual_base_for_emulator_base(base_class):
-    """Return the actual base CPO class for the provided.
+    """Return the actual base CPO class for the provided *base_class*.
 
-    Returns *base_class* if it is the base otherwise walks up the tree to
-    attempt to determine the base class.
+    :param base_class: The base class to check.
+
+    :returns: *base_class* if it is the base otherwise walks up the tree to
+        attempt to determine the actual base class.
 
     :raises ValueError: if unable to determine the actual base class.
 
@@ -464,7 +466,7 @@ def _get_actual_base_for_emulator_base(base_class):
             actual_base_class = cls
         else:
             # When walking up the stack, the first time there is no customproxy
-            # class identified there will be no more.
+            # class identified, there will be no more.
             break
     if actual_base_class != base_class:
         logger.warning(

@@ -466,6 +466,14 @@ def _get_actual_base_for_emulator_base(base_class):
             # When walking up the stack, the first time there is no customproxy
             # class identified there will be no more.
             break
+    if actual_base_class != base_class:
+        logger.warning(
+            'base_class: {passed} is not the actual base CPO class: {actual}. '
+            'Please refer to the documentation <link>.'.format(
+                passed=base_class,
+                actual=actual_base_class
+            )
+        )
     return actual_base_class
 
 

@@ -134,7 +134,6 @@ def _get_proxy_object_class(object_id, path, state):
     :param object_id: The _id attribute of the class doing the lookup. This is
         used to index into the object registry to retrieve the dict of proxy
         classes to try.
-    :param default_class: default class to use if nothing in dict matches
     :param path: dbus path
     :param state: dbus state
     :returns: appropriate custom proxy class
@@ -153,7 +152,8 @@ def _try_custom_proxy_classes(object_id, path, state):
     """Identify which custom proxy class matches the dbus path and state.
 
     If more than one class in proxy_class_dict matches, raise an exception.
-    :param proxy_class_dict: dict of proxy classes to try
+
+    :param object_id: id to use to get the dict of proxy classes to  try
     :param path: dbus path
     :param state: dbus state dict
     :returns: matching custom proxy class
@@ -229,15 +229,14 @@ def _get_mro_sort_order(cls, promoted_collection=()):
     return order
 
 
-# XXX This docstring is out of date.
 def _get_default_proxy_class(id, name):
     """Return a custom proxy object class of the default or a base class.
 
     We want the object to inherit from the class that is set as the emulator
-    base class, not the class that is doing the selecting (which will be the
-    'default_class' parameter).
+    base class, not the class that is doing the selecting. Using the passed id
+    we retrieve the relevant bases from the object registry.
 
-    :param default_class: default class to use if no bases match
+    :param id: The object id (_id attribute) of the class doing the lookup.
     :param name: name of new class
     :returns: custom proxy object class
 

@@ -410,6 +410,11 @@ def _make_proxy_object(dbus_address, emulator_base):
         # Figure out if the backend has any extension methods, and return
         # classes that understand how to use each of those extensions:
         extension_classes = _get_proxy_bases_from_introspection_xml(intro_xml)
+
+        # Ensure that the provided emulator_base is the actual base class for
+        # the CPO and not a child.
+        emulator_base = _get_actual_base_for_emulator_base(emulator_base)
+
         # Register those base classes for everything that will derive from this
         # emulator base class.
         _object_registry.register_extension_classes_for_proxy_base(
@@ -442,6 +447,18 @@ def _make_proxy_object(dbus_address, emulator_base):
 def _make_default_emulator_base():
     """Make a default base class for all proxy classes to derive from."""
     return type("DefaultEmulatorBase", (ap_dbus.DBusIntrospectionObject,), {})
+
+
+def _get_actual_base_for_emulator_base(base_class):
+    """Return the actual base CPO class for the provided.
+
+    Returns *base_class* if it is the base otherwise walks up the tree to
+    attempt to determine the base class.
+
+    :raises ValueError: if unable to determine the actual base class.
+
+    """
+    return base_class
 
 
 def _make_proxy_object_async(

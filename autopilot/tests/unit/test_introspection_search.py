@@ -34,6 +34,8 @@ from testtools.matchers import (
 from autopilot.exceptions import ProcessSearchError
 from autopilot.utilities import sleep
 from autopilot.introspection import _search as _s
+from autopilot.introspection import _object_registry as object_registry
+from autopilot.introspection import CustomEmulatorBase
 from autopilot.introspection.constants import AUTOPILOT_PATH
 
 
@@ -770,3 +772,44 @@ class ProxyObjectTests(TestCase):
                 _s._find_matching_connections("bus", lambda *args: True)
 
                 dedupe.assert_called_once_with(["conn1"], "bus")
+
+
+class ActualBaseClassTests(TestCase):
+
+    def test_returns_passed_base_when_is_only_base(self):
+        with object_registry.patch_registry({}):
+            class ActualBase(CustomEmulatorBase):
+                pass
+
+            self.assertThat(
+                _s._get_actual_base_for_emulator_base(ActualBase),
+                Equals(ActualBase)
+            )
+
+    def test_returns_parent_as_base(self):
+        with object_registry.patch_registry({}):
+            class ActualBase(CustomEmulatorBase):
+                pass
+
+            class InheritedCPO(ActualBase):
+                pass
+
+            self.assertThat(
+                _s._get_actual_base_for_emulator_base(InheritedCPO),
+                Equals(ActualBase)
+            )
+
+    def test_logs_warning_if_passed_incorrect_base_class(self):
+        class ActualBase(CustomEmulatorBase):
+            pass
+
+        class InheritedCPO(ActualBase):
+            pass
+
+        with patch.object(_s, 'logger') as p_logger:
+            _s._get_actual_base_for_emulator_base(InheritedCPO)
+
+            self.assertThat(
+                p_logger.warning.call_args[0][0],
+                Not(Equals(''))
+            )

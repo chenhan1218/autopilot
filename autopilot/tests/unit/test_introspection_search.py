@@ -26,6 +26,7 @@ from testtools.matchers import (
     Equals,
     MatchesAll,
     MatchesListwise,
+    MatchesRegex,
     MatchesSetwise,
     Not,
     raises,
@@ -794,10 +795,11 @@ class ActualBaseClassTests(TestCase):
             class InheritedCPO(ActualBase):
                 pass
 
-            self.assertThat(
-                _s._get_actual_base_for_emulator_base(InheritedCPO),
-                Equals(ActualBase)
-            )
+            with patch.object(_s, 'logger'):
+                self.assertThat(
+                    _s._get_actual_base_for_emulator_base(InheritedCPO),
+                    Equals(ActualBase)
+                )
 
     def test_logs_warning_if_passed_incorrect_base_class(self):
         class ActualBase(CustomEmulatorBase):
@@ -811,5 +813,11 @@ class ActualBaseClassTests(TestCase):
 
             self.assertThat(
                 p_logger.warning.call_args[0][0],
-                Not(Equals(''))
+                MatchesRegex(
+                    'base_class: {passed} is not the actual base CPO '
+                    'class: {actual}. '.format(
+                        passed=InheritedCPO,
+                        actual=ActualBase
+                    )
+                )
             )

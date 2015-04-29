@@ -458,7 +458,15 @@ def _get_actual_base_for_emulator_base(base_class):
     :raises ValueError: if unable to determine the actual base class.
 
     """
-    return base_class
+    actual_base_class = base_class
+    for cls in base_class.mro():
+        if getattr(cls, '_id', None) is not None:
+            actual_base_class = cls
+        else:
+            # When walking up the stack, the first time there is no customproxy
+            # class identified there will be no more.
+            break
+    return actual_base_class
 
 
 def _make_proxy_object_async(

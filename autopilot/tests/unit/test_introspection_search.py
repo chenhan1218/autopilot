@@ -799,6 +799,41 @@ class ActualBaseClassTests(TestCase):
                 Equals(ActualBase)
             )
 
+    def test_returns_parent_as_base(self):
+        with object_registry.patch_registry({}):
+            class ActualBase(CustomEmulatorBase):
+                pass
+
+            class InheritedCPO(ActualBase):
+                pass
+
+            with patch.object(_s, 'logger'):
+                self.assertThat(
+                    _s._get_actual_base_for_emulator_base(InheritedCPO),
+                    Equals(ActualBase)
+                )
+
+    def test_returns_parent_when_multi_inheritance_involved(self):
+        """When mixing in non-customproxy classes must return the base."""
+
+        class ActualBase(CustomEmulatorBase):
+            pass
+
+        class InheritedCPO(ActualBase):
+            pass
+
+        class TrickyOne(object):
+            pass
+
+        class FinalForm(InheritedCPO, TrickyOne):
+            pass
+
+        with patch.object(_s, 'logger') as p_logger:
+            self.assertThat(
+                _s._get_actual_base_for_emulator_base(InheritedCPO),
+                Equals(ActualBase)
+            )
+
     def test_logs_warning_if_passed_incorrect_base_class(self):
         class ActualBase(CustomEmulatorBase):
             pass

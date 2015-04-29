@@ -174,11 +174,6 @@ def _try_custom_proxy_classes(object_id, path, state):
         )
     if len(possible_classes) == 1:
         extended_proxy_bases = _get_proxy_bases_for_id(object_id)
-        # if extended_proxy_bases:
-        #     possible_classes[0].__bases__ = _combine_base_and_extensions(
-        #         possible_classes[0].__bases__,
-        #         extended_proxy_bases
-        #     )
         mixed = _combine_base_and_extensions(
             possible_classes[0],
             extended_proxy_bases
@@ -189,19 +184,49 @@ def _try_custom_proxy_classes(object_id, path, state):
 
 
 def _combine_base_and_extensions(kls, extensions):
-    """Give 2 lists of base classes, combine both to have a unique list."""
-    # XXX There was some concern during my exploration here for the best way to
-    # merge them. I believe that the need to difference base is gone but I need
-    # to re-confirm this (as I've unfortunately forgotten at this point in
-    # time).
+    """Returns the bases of the given class augmented with extensions
 
+    In order to get the right bases tuple, the given class is removed
+    from the result (to prevent cyclic dependencies), there's only one
+    occurrence of each final base class in the result and the result
+    is ordered following the inheritance order (classes lower in the
+    inheritance tree are listed before in the resulting tuple)
+
+    :param kls: class for which we are combining bases and extensions
+    :param extensions: tuple of extensions to be added to kls' bases
+    :returns: bases tuple for kls, including its former bases and the
+             extensions
+
+    """
     # set of bases + extensions removing the original class to prevent
     # TypeError: a __bases__ item causes an inheritance cycle
     unique_bases = {x for x in kls.__bases__ + extensions if x != kls}
 
     # sort them taking into account inheritance to prevent
     # TypeError: Cannot create a consistent method resolution order (MRO)
-    return tuple(sorted(unique_bases, key=lambda cls: -1 * len(cls.mro())))
+    return tuple(sorted(unique_bases, key=lambda cls: _get_mro_sort_order(
+        cls, kls.__bases__), reverse=True))
+
+
+def _get_mro_sort_order(cls, promoted_collection=()):
+    """Returns the comparable numerical order for the given class honouring
+    its MRO
+
+    It accepts an optional parameter for promoting classes in a certain
+    group, this can give more control over the sorting when two classes
+    have the same MRO
+
+    :param cls: the subject class
+    :param promoted_collection: tuple of classes which must be promoted
+    :returns: comparable numerical order, higher for classes with higher mro
+
+    """
+    order = 2 * len(cls.mro())
+
+    if cls in promoted_collection:
+        order += 1
+
+    return order
 
 
 # XXX This docstring is out of date.

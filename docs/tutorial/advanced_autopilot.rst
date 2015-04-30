@@ -525,13 +525,7 @@ However, sometimes you want to customize the class used to create these objects.
     class CustomProxyObjectBase(ProxyBase):
         """A base class for all custom proxy objects within this test suite."""
 
-For Ubuntu applications using Ubuntu UI Toolkit objects, you should derive your custom proxy object from UbuntuUIToolkitCustomProxyObjectBase. This base class is also derived from :class:`~autopilot.introspection.ProxyBase` and is used for all Ubuntu UI Toolkit custom proxy objects. So if you are introspecting objects from Ubuntu UI Toolkit then this is the base class to use::
-
-    import ubuntuuitoolkit
-    
-    class CustomProxyObjectBase(ubuntuuitoolkit.UbuntuUIToolkitCustomProxyObjectBase):
-        """A base class for all custom proxy objects within this test suite."""
-
+For Ubuntu applications using Ubuntu UI Toolkit objects, you should derive your custom proxy object from UbuntuUIToolkitCustomProxyObjectBase. This base class is also derived from :class:`~autopilot.introspection.ProxyBase` and is used for all Ubuntu UI Toolkit custom proxy objects. So if you are introspecting objects from Ubuntu UI Toolkit then this is the base class to use.
 
 2. Define the classes you want autopilot to use, instead of the default. The simplest method is to give the class the same name as the type you wish to override. For example, if you want to define your own custom class to be used every time autopilot generates an instance of a 'QLabel' object, the class definition would look like this::
 
@@ -550,6 +544,8 @@ If you wish to implement more specific selection criteria, your class can overri
 This method should return True if the object matches this custom proxy class, and False otherwise.  If more than one custom proxy class matches an object, a :exc:`ValueError` will be raised at runtime.
 
 An example using Ubuntu UI Toolkit which would be used to swipe up a PageWithBottomEdge object to reveal it's bottom edge menu could look like this::
+
+    import ubuntuuitoolkit
 
     class PageWithBottomEdge(ubuntuuitoolkit.UbuntuUIToolkitCustomProxyObjectBase):
         """An emulator class that makes it easy to interact with the bottom edge

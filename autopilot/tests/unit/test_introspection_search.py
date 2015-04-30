@@ -799,7 +799,6 @@ class ActualBaseClassTests(TestCase):
             _s._warn_if_base_class_not_actually_base(DefaultBase)
             self.assertFalse(p_logger.warning.called)
 
-
     def test_log_message_contains_useful_message(self):
         class ActualBase(CustomEmulatorBase):
             pass

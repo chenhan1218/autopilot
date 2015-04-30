@@ -228,7 +228,9 @@ def _get_mro_sort_order(cls, promoted_collection=()):
 
     """
     # Multiplying by 2 the lenght of the MRO list gives the chance to promote
-    # items in the promoted_collection by adding them 1 later
+    # items in the promoted_collection by adding them 1 later: non promoted
+    # classes will have even scores and promoted classes with MRO of the same
+    # length will have odd scores one point higher
     order = 2 * len(cls.mro())
 
     if cls in promoted_collection:

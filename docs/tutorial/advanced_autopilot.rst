@@ -515,7 +515,7 @@ Writing Custom Proxy Classes
 By default, autopilot will generate an object for every introspectable item in your application under test. These are generated on the fly, and derive from
 :class:`~autopilot.introspection.ProxyBase`. This gives you the usual methods of selecting other nodes in the object tree, as well the the means to inspect all the properties in that class.
 
-However, sometimes you want to customize the class used to create these objects. The most common reason to want to do this is to provide methods that make it easier to inspect these objects. Autopilot allows test authors to provide their own custom classes, through a couple of simple steps:
+However, sometimes you want to customize the class used to create these objects. The most common reason to want to do this is to provide methods that make it easier to inspect or interact with these objects. Autopilot allows test authors to provide their own custom classes, through a couple of simple steps:
 
 1. First, you must define your own base class, to be used by all custom proxy objects in your test suite. This base class can be empty, but must derive from :class:`~autopilot.introspection.ProxyBase`. An example class might look like this::
 
@@ -524,6 +524,14 @@ However, sometimes you want to customize the class used to create these objects.
 
     class CustomProxyObjectBase(ProxyBase):
         """A base class for all custom proxy objects within this test suite."""
+
+For Ubuntu applications using Ubuntu UI Toolkit objects, you should derive your custom proxy object from UbuntuUIToolkitCustomProxyObjectBase. This base class is also derived from :class:`~autopilot.introspection.ProxyBase` and is used for all Ubuntu UI Toolkit custom proxy objects. So if you are introspecting objects from Ubuntu UI Toolkit then this is the base class to use::
+
+    import ubuntuuitoolkit
+    
+    class CustomProxyObjectBase(ubuntuuitoolkit.UbuntuUIToolkitCustomProxyObjectBase):
+        """A base class for all custom proxy objects within this test suite."""
+
 
 2. Define the classes you want autopilot to use, instead of the default. The simplest method is to give the class the same name as the type you wish to override. For example, if you want to define your own custom class to be used every time autopilot generates an instance of a 'QLabel' object, the class definition would look like this::
 
@@ -543,17 +551,32 @@ If you wish to implement more specific selection criteria, your class can overri
 
 This method should return True if the object matches this custom proxy class, and False otherwise.  If more than one custom proxy class matches an object, a :exc:`ValueError` will be raised at runtime.
 
-3. Pass the custom proxy class as an argument to the launch_test_application method on your test class. Something like this::
+An example using Ubuntu UI Toolkit which would be used to swipe up a PageWithBottomEdge object to reveal it's bottom edge menu could look like this::
+
+    class PageWithBottomEdge(ubuntuuitoolkit.UbuntuUIToolkitCustomProxyObjectBase):
+        """An emulator class that makes it easy to interact with the bottom edge
+           swipe page"""
+
+        def reveal_bottom_edge_page(self):
+            """Swipe up from the bottom edge of the Page
+               to reveal it's bottom edge menu."""
+
+3. Pass the custom proxy base class as an argument to the launch_test_application method on your test class. This base class should be the same base class that is used to write all of your custom proxy objects::
 
     from autopilot.testcase import AutopilotTestCase
 
     class TestCase(AutopilotTestCase):
 
         def setUp(self):
-            super(TestCase, self).setUp()
+            super().setUp()
             self.app = self.launch_test_application(
                 '/path/to/the/application',
                 emulator_base=CustomProxyObjectBase)
+
+For applications using objects from Ubuntu UI Toolkit, the emulator_base parameter should be::
+
+    emulator_base=ubuntuuitoolkit.UbuntuUIToolkitCustomProxyObjectBase
+
 
 4. You can pass the custom proxy class to methods like :meth:`~autopilot.introspection.ProxyBase.select_single` instead of a string. So, for example, the following is a valid way of selecting the QLabel instances in an application::
 

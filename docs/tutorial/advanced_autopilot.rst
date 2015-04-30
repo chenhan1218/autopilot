@@ -544,10 +544,8 @@ If you wish to implement more specific selection criteria, your class can overri
     class SpecificQLabel(CustomProxyObjectBase):
 
         def validate_dbus_object(path, state):
-            if (path.endswith('object_we_want') or
-                    state['some_property'] == 'desired_value'):
-                return True
-            return False
+            return (path.endswith('object_we_want') or
+                    state['some_property'] == 'desired_value')
 
 This method should return True if the object matches this custom proxy class, and False otherwise.  If more than one custom proxy class matches an object, a :exc:`ValueError` will be raised at runtime.
 

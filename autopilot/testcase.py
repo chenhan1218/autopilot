@@ -161,8 +161,8 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         self._process_manager = None
         self._mouse = None
-        self._kb = None
         self._display = None
+        self._kb = Keyboard.create()
 
         # Work around for bug lp:1297592.
         _ensure_uinput_device_created()
@@ -185,8 +185,6 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
     @property
     def keyboard(self):
-        if self._kb is None:
-            self._kb = Keyboard.create()
         return self._kb
 
     @property

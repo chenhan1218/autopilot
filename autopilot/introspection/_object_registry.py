@@ -204,8 +204,13 @@ def _combine_base_and_extensions(kls, extensions):
 
     # sort them taking into account inheritance to prevent
     # TypeError: Cannot create a consistent method resolution order (MRO)
-    return tuple(sorted(unique_bases, key=lambda cls: _get_mro_sort_order(
-        cls, kls.__bases__), reverse=True))
+    return tuple(
+        sorted(
+            unique_bases,
+            key=lambda cls: _get_mro_sort_order(cls, kls.__bases__),
+            reverse=True
+        )
+    )
 
 
 def _get_mro_sort_order(cls, promoted_collection=()):
@@ -214,13 +219,16 @@ def _get_mro_sort_order(cls, promoted_collection=()):
 
     It accepts an optional parameter for promoting classes in a certain
     group, this can give more control over the sorting when two classes
-    have the same MRO
+    have the a MRO of the same length
 
     :param cls: the subject class
     :param promoted_collection: tuple of classes which must be promoted
-    :returns: comparable numerical order, higher for classes with higher mro
+    :returns: comparable numerical order, higher for classes with MROs of
+              greater length
 
     """
+    # Multiplying by 2 the lenght of the MRO list gives the chance to promote
+    # items in the promoted_collection by adding them 1 later
     order = 2 * len(cls.mro())
 
     if cls in promoted_collection:

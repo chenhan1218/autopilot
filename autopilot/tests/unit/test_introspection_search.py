@@ -26,7 +26,6 @@ from testtools.matchers import (
     Equals,
     MatchesAll,
     MatchesListwise,
-    MatchesRegex,
     MatchesSetwise,
     Not,
     raises,
@@ -35,7 +34,7 @@ from testtools.matchers import (
 from autopilot.exceptions import ProcessSearchError
 from autopilot.utilities import sleep
 from autopilot.introspection import _search as _s
-from autopilot.introspection import _object_registry as object_registry
+
 from autopilot.introspection import CustomEmulatorBase
 from autopilot.introspection.constants import AUTOPILOT_PATH
 
@@ -777,30 +776,26 @@ class ProxyObjectTests(TestCase):
 
 class ActualBaseClassTests(TestCase):
 
-    def test_returns_passed_base_when_is_only_base(self):
+    def test_logs_no_warning_passed_base_when_is_only_base(self):
         class ActualBase(CustomEmulatorBase):
             pass
 
-        self.assertThat(
-            _s._get_actual_base_for_emulator_base(ActualBase),
-            Equals(ActualBase)
-        )
+        with patch.object(_s, 'logger') as p_logger:
+            _s._warn_if_base_class_not_actually_base(ActualBase)
+            self.assertFalse(p_logger.warning.called)
 
-    def test_returns_parent_as_base(self):
-        with object_registry.patch_registry({}):
-            class ActualBase(CustomEmulatorBase):
-                pass
+    def test_logs_warning_if_passed_incorrect_base_class(self):
+        class ActualBase(CustomEmulatorBase):
+            pass
 
-            class InheritedCPO(ActualBase):
-                pass
+        class InheritedCPO(ActualBase):
+            pass
 
-            with patch.object(_s, 'logger'):
-                self.assertThat(
-                    _s._get_actual_base_for_emulator_base(InheritedCPO),
-                    Equals(ActualBase)
-                )
+        with patch.object(_s, 'logger') as p_logger:
+            _s._warn_if_base_class_not_actually_base(InheritedCPO)
+            self.assertTrue(p_logger.warning.called)
 
-    def test_returns_parent_when_multi_inheritance_involved(self):
+    def test_logs_warning_parent_with_simple_non_ap_multi_inheritance(self):
         """When mixing in non-customproxy classes must return the base."""
 
         class ActualBase(CustomEmulatorBase):
@@ -815,13 +810,37 @@ class ActualBaseClassTests(TestCase):
         class FinalForm(InheritedCPO, TrickyOne):
             pass
 
-        with patch.object(_s, 'logger'):
-            self.assertThat(
-                _s._get_actual_base_for_emulator_base(InheritedCPO),
-                Equals(ActualBase)
-            )
+        with patch.object(_s, 'logger') as p_logger:
+            _s._warn_if_base_class_not_actually_base(FinalForm),
+            self.assertTrue(p_logger.warning.called)
 
-    def test_logs_warning_if_passed_incorrect_base_class(self):
+    def test_returns_parent_with_non_ap_multi_inheritance(self):
+
+        class ActualBase(CustomEmulatorBase):
+            pass
+
+        class InheritedCPO(ActualBase):
+            pass
+
+        class TrickyOne(object):
+            pass
+
+        class FinalForm(TrickyOne, InheritedCPO):
+            pass
+
+        with patch.object(_s, 'logger') as p_logger:
+            _s._warn_if_base_class_not_actually_base(FinalForm)
+            self.assertTrue(p_logger.warning.called)
+
+    def test_no_warning_when_using_default_emulator_base(self):
+        # _make_proxy_object potentially creates a default base.
+        DefaultBase = _s._make_default_emulator_base()
+        with patch.object(_s, 'logger') as p_logger:
+            _s._warn_if_base_class_not_actually_base(DefaultBase)
+            self.assertFalse(p_logger.warning.called)
+
+
+    def test_log_message_contains_useful_message(self):
         class ActualBase(CustomEmulatorBase):
             pass
 
@@ -829,16 +848,18 @@ class ActualBaseClassTests(TestCase):
             pass
 
         with patch.object(_s, 'logger') as p_logger:
-            actual = _s._get_actual_base_for_emulator_base(InheritedCPO)
+            _s._warn_if_base_class_not_actually_base(InheritedCPO)
 
             self.assertThat(
                 p_logger.warning.call_args[0][0],
-                MatchesRegex(
-                    'base_class: {passed} is not the actual base CPO '
-                    'class: {actual}. '.format(
+                Equals(
+                    'base_class: {passed} does not appear to be the actual '
+                    'base CPO class. Perhaps you meant to use: '
+                    '{actual}.\n'
+                    'Note: This warning will become an error in future '
+                    'releases'.format(
                         passed=InheritedCPO,
                         actual=ActualBase
                     )
                 )
             )
-            self.assertIs(ActualBase, actual)

@@ -404,16 +404,14 @@ def _make_proxy_object(dbus_address, emulator_base):
     # make sure we always have an emulator base. Either use the one the user
     # gave us, or make one:
     emulator_base = emulator_base or _make_default_emulator_base()
+    _warn_if_base_class_not_actually_base(emulator_base)
+
     # Get the dbus introspection Xml for the backend.
     intro_xml = _get_introspection_xml_from_backend(dbus_address)
     try:
         # Figure out if the backend has any extension methods, and return
         # classes that understand how to use each of those extensions:
         extension_classes = _get_proxy_bases_from_introspection_xml(intro_xml)
-
-        # Ensure that the provided emulator_base is the actual base class for
-        # the CPO and not a child.
-        emulator_base = _get_actual_base_for_emulator_base(emulator_base)
 
         # Register those base classes for everything that will derive from this
         # emulator base class.
@@ -449,34 +447,31 @@ def _make_default_emulator_base():
     return type("DefaultEmulatorBase", (ap_dbus.DBusIntrospectionObject,), {})
 
 
-def _get_actual_base_for_emulator_base(base_class):
-    """Return the actual base CPO class for the provided *base_class*.
+def _warn_if_base_class_not_actually_base(base_class):
+    """Log a warning if the provided base_class is not actually the base_class
+
+    To ensure that the expected base classes are used when creating proxy
+    objects.
+
+    Note: This warning will become an error in future development.
 
     :param base_class: The base class to check.
-
-    :returns: *base_class* if it is the base otherwise walks up the tree to
-        attempt to determine the actual base class.
-
-    :raises ValueError: if unable to determine the actual base class.
 
     """
     actual_base_class = base_class
     for cls in base_class.mro():
-        if getattr(cls, '_id', None) is not None:
+        if hasattr(cls, '_id'):
             actual_base_class = cls
-        else:
-            # When walking up the stack, the first time there is no customproxy
-            # class identified, there will be no more.
-            break
+
     if actual_base_class != base_class:
         logger.warning(
-            'base_class: {passed} is not the actual base CPO class: {actual}. '
-            'Please refer to the documentation <link>.'.format(
+            'base_class: {passed} does not appear to be the actual base CPO '
+            'class. Perhaps you meant to use: {actual}.\n'
+            'Note: This warning will become an error in future releases'.format(  # NOQA
                 passed=base_class,
                 actual=actual_base_class
             )
         )
-    return actual_base_class
 
 
 def _make_proxy_object_async(

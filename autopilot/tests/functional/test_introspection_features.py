@@ -36,6 +36,7 @@ from testtools.matchers import (
     StartsWith,
 )
 from textwrap import dedent
+from unittest.mock import patch
 from io import StringIO
 
 from autopilot import platform
@@ -44,6 +45,7 @@ from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional.fixtures import TempDesktopFile
 from autopilot.introspection import CustomEmulatorBase
 from autopilot.introspection import _object_registry as object_registry
+from autopilot.introspection import _search
 from autopilot.introspection.qt import QtObjectProxyMixin
 from autopilot.display import Display
 
@@ -126,10 +128,9 @@ class IntrospectionFeatureTests(AutopilotTestCase):
                 Contains(SecondEmulatorBase)
             )
 
-    def test_uses_correct_base_class(self):
-        # This test uses the wrong base_emulator passed to start_mock_app to
-        # replicate an issue found in the addressbook app (being fixed).
-        # Autopilot should handle this better than it currently does.
+    def test_handles_using_app_cpo_base_class(self):
+        # This test replicates an issue found in an application test suite
+        # where using the App CPO caused an exception.
         with object_registry.patch_registry({}):
             class WindowMockerApp(CustomEmulatorBase):
                 @classmethod
@@ -137,6 +138,21 @@ class IntrospectionFeatureTests(AutopilotTestCase):
                     return path == b'/window-mocker'
 
             self.start_mock_app(WindowMockerApp)
+
+    def test_warns_when_using_incorrect_cpo_base_class(self):
+        # Ensure the warning method is called when launching a proxy.
+        with object_registry.patch_registry({}):
+            class TestCPO(CustomEmulatorBase):
+                pass
+
+            class WindowMockerApp(TestCPO):
+                @classmethod
+                def validate_dbus_object(cls, path, _state):
+                    return path == b'/window-mocker'
+
+            with patch.object(_search, 'logger') as p_logger:
+                self.start_mock_app(WindowMockerApp)
+                self.assertTrue(p_logger.warning.called)
 
     def test_can_select_custom_emulators_by_name(self):
         """Must be able to select a custom emulator type by name."""

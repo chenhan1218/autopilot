@@ -811,14 +811,5 @@ class ActualBaseClassTests(TestCase):
 
             self.assertThat(
                 p_logger.warning.call_args[0][0],
-                Equals(
-                    'base_class: {passed} does not appear to be the actual '
-                    'base CPO class. Perhaps you meant to use: '
-                    '{actual}.\n'
-                    'Note: This warning will become an error in future '
-                    'releases'.format(
-                        passed=InheritedCPO,
-                        actual=ActualBase
-                    )
-                )
-            )
+                Equals(_s.WRONG_CPO_CLASS_MSG.format(passed=InheritedCPO,
+                                                     actual=ActualBase)))

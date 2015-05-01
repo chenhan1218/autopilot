@@ -990,6 +990,30 @@ class AutopilotVerboseFunctionalTests(AutopilotFunctionalTestsBase):
 
         self.assertThat(error, Not(Contains("Hello World")))
 
+    def test_debug_output_not_shown_by_default_normal_logger(self):
+        """Verbose log must not show logger.debug level details with -v."""
+        debug_string = self.getUniqueString()
+        self.create_test_file(
+            "test_simple.py", dedent("""\
+
+            import logging
+            from autopilot.testcase import AutopilotTestCase
+
+            logger = logging.getLogger(__name__)
+
+            class SimpleTest(AutopilotTestCase):
+
+                def test_simple(self):
+                    logger.debug('{debug_string}')
+            """.format(debug_string=debug_string))
+        )
+
+        code, output, error = self.run_autopilot(["run",
+                                                  "-f", self.output_format,
+                                                  "-v", "tests"])
+
+        self.assertThat(error, Not(Contains(debug_string)))
+
     def test_verbose_flag_shows_autopilot_version(self):
         from autopilot import get_version_string
         """Verbose log must indicate successful tests (text format)."""

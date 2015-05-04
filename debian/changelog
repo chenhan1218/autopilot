@@ -1,6 +1,4 @@
-autopilot (1.5.1) UNRELEASED; urgency=medium
-
-  * Fixed CPO class resolution (lp:1425721, lp:1376996)
+autopilot (1.5.1~fgimenez-ppa5) vivid; urgency=medium
 
   [ Christopher Lee ]
   * Fix for desktop file name change (lp:1411096)
@@ -11,6 +9,9 @@ autopilot (1.5.1) UNRELEASED; urgency=medium
 
   [ Vincent Ladeuil ]
   * Remove apparmor/click.rules which is now shipped by dbus-property-service.
+
+  [ Federico Gimenez ]
+  * Fixed CPO class resolution (lp:1425721, lp:1376996)
 
  -- Federico Gimenez <fgimenez@canonical.com>  Fri, 1 May 2015 09:53:48 +0200
 

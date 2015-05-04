@@ -308,7 +308,7 @@ class CombineBasesTests(TestCase):
 
         self.assertEqual(
             object_registry._combine_base_and_extensions(Sub, (Ext1, Base)),
-            (Base, Ext1,)
+            (Ext1, Base,)
         )
 
     def test_excludes_addition_of_extension_base_classes(self):
@@ -341,7 +341,7 @@ class CombineBasesTests(TestCase):
 
         self.assertEqual(
             object_registry._combine_base_and_extensions(Sub, (Ext1, Sub)),
-            (Base, Ext1,)
+            (Ext1, Base)
         )
 
     def test_maintains_mro_order(self):
@@ -406,3 +406,70 @@ class MROSortOrderTests(TestCase):
             object_registry._get_mro_sort_order(
                 Child2, promoted_collection),
         )
+
+
+class RemoveAttrsFromCollectionTests(TestCase):
+    def test_attr_removal(self):
+        class A():
+            a = 'val1'
+
+        class B():
+            a = 'val2'
+
+        output = object_registry._remove_attrs_from_collection(
+            [A, B],
+            'a'
+        )
+        for item in output:
+            self.assertFalse(hasattr(item, 'a'))
+
+    def test_multiple_attr_removal(self):
+        class A():
+            a = 'val1'
+            b = 'val2'
+
+        output = object_registry._remove_attrs_from_collection(
+            [A],
+            'a',
+            'b'
+        )
+
+        for item in output:
+            self.assertFalse(hasattr(item, 'a'))
+            self.assertFalse(hasattr(item, 'b'))
+
+    def test_preserve_other_attrs(self):
+        class A():
+            a = 'val1'
+            b = 'val2'
+
+        output = object_registry._remove_attrs_from_collection(
+            [A],
+            'a',
+        )
+
+        for item in output:
+            self.assertTrue(hasattr(item, 'b'))
+
+    def test_output_as_tuple(self):
+        class A():
+            a = 'val1'
+
+        output = object_registry._remove_attrs_from_collection(
+            [A],
+            'a',
+        )
+
+        self.assertIsInstance(output, tuple)
+
+    def test_does_not_raise_exception_for_unexisting_attrs(self):
+        class A():
+            pass
+
+        try:
+            object_registry._remove_attrs_from_collection(
+                [A],
+                'a',
+            )
+        except AttributeError:
+            self.fail('Unexpected AttributeError exception')

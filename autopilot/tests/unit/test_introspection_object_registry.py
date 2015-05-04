@@ -296,7 +296,7 @@ class CombineBasesTests(TestCase):
         self.assertIn(Ext1, mixed)
         self.assertIn(Ext2, mixed)
 
-    def test_excludes_addition_of_base_class_within_extension_classes(self):
+    def test_excludes_duplication_of_base_class_within_extension_classes(self):
         class Base():
             pass
 
@@ -306,9 +306,12 @@ class CombineBasesTests(TestCase):
         class Ext1():
             pass
 
+        class Ext2(Ext1):
+            pass
+
         self.assertEqual(
-            object_registry._combine_base_and_extensions(Sub, (Ext1, Base)),
-            (Ext1, Base,)
+            object_registry._combine_base_and_extensions(Sub, (Ext2, Base)),
+            (Ext2, Base,)
         )
 
     def test_excludes_addition_of_extension_base_classes(self):

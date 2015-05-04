@@ -224,14 +224,18 @@ class _OneOrMoreArgumentStoreAction(Action):
 def setup_logging(verbose):
     """Configure the root logger and verbose logging to stderr."""
     root_logger = get_root_logger()
-    root_logger.setLevel(logging.DEBUG)
+    root_logger.setLevel(logging.INFO)
     if verbose == 0:
         set_null_log_handler(root_logger)
     if verbose >= 1:
+        autopilot.globals.set_log_verbose(True)
         set_stderr_stream_handler(root_logger)
     if verbose >= 2:
+        root_logger.setLevel(logging.DEBUG)
         enable_debug_log_messages()
     # log autopilot version
+    # XXX this isn't the right place to be outputting this (this method is
+    # doing _way_ more than 1 thing.)
     root_logger.info(get_version_string())
 
 
@@ -674,9 +678,6 @@ class TestProgram(object):
             exit(1)
 
         test_config.set_configuration_string(self.args.test_config)
-
-        if self.args.verbose:
-            autopilot.globals.set_log_verbose(True)
 
         test_suite, error_encountered = load_test_suite_from_name(
             self.args.suite

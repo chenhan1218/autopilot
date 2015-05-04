@@ -13,7 +13,7 @@ autopilot (1.5.0) UNRELEASED; urgency=medium
   [ Federico Gimenez ]
   * Fixed CPO class resolution (lp:1425721, lp:1376996)
 
- -- Federico Gimenez <fgimenez@canonical.com>  Fri, 1 May 2015 09:53:48 +0200
+ -- Christopher Lee <chris.lee@canonical.com>  Fri, 27 Feb 2015 10:16:42 +1300
 
 autopilot (1.5.0+15.04.20141031-0ubuntu1) vivid; urgency=low
 

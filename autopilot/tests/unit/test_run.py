@@ -40,7 +40,7 @@ from testtools.matchers import (
 from contextlib import ExitStack
 from io import StringIO
 
-from autopilot import have_vis, run, _video
+from autopilot import get_version_string, have_vis, run, _video
 
 
 class RunUtilityFunctionTests(TestCase):
@@ -593,6 +593,22 @@ class LoggingSetupTests(TestCase):
     verbose_level_none = 0
     verbose_level_v = 1
     verbose_level_vv = 2
+
+    def test_run_logs_autopilot_version(self):
+        with patch.object(run, 'log_autopilot_version') as log_version:
+            fake_args = Namespace(mode=None)
+            program = run.TestProgram(fake_args)
+            program.run()
+
+            log_version.assert_called_once_with()
+
+    def test_log_autopilot_version_logs_current_version(self):
+        current_version = get_version_string()
+        with patch.object(run, 'get_root_logger') as fake_get_root_logger:
+            run.log_autopilot_version()
+            fake_get_root_logger.return_value.info.assert_called_once_with(
+                current_version
+            )
 
     def test_get_root_logger_returns_logging_instance(self):
         logger = run.get_root_logger()

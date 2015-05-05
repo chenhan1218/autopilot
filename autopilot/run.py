@@ -233,9 +233,10 @@ def setup_logging(verbose):
     if verbose >= 2:
         root_logger.setLevel(logging.DEBUG)
         enable_debug_log_messages()
-    # log autopilot version
-    # XXX this isn't the right place to be outputting this (this method is
-    # doing _way_ more than 1 thing.)
+
+
+def log_autopilot_version():
+    root_logger = get_root_logger()
     root_logger.info(get_version_string())
 
 
@@ -614,6 +615,8 @@ class TestProgram(object):
 
     def run(self):
         setup_logging(getattr(self.args, 'verbose', False))
+
+        log_autopilot_version()
 
         action = None
         if self.args.mode == 'list':

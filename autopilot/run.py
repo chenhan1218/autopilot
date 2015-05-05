@@ -109,8 +109,8 @@ def _get_parser():
     parser_run.add_argument(
         '-v', '--verbose', default=False, required=False, action='count',
         help="If set, autopilot will output test log data to stderr during a "
-        "test run. Set twice to also log data useful for debugging autopilot "
-        "itself.")
+        "test run. Set twice (i.e. -vv) to also log debug level messages. "
+        "(This can be useful for debugging autopilot itself.)")
     parser_run.add_argument(
         "--debug-profile",
         choices=[p.name for p in get_all_debug_profiles()],

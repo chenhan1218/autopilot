@@ -590,21 +590,51 @@ class TestRunLaunchAppHelpers(TestCase):
 
 class LoggingSetupTests(TestCase):
 
+    verbose_level_none = 0
+    verbose_level_v = 1
+    verbose_level_vv = 2
+
     def test_get_root_logger_returns_logging_instance(self):
         logger = run.get_root_logger()
         self.assertThat(logger, IsInstance(logging.RootLogger))
 
     def test_setup_logging_calls_get_root_logger(self):
         with patch.object(run, 'get_root_logger') as fake_get_root_logger:
-            run.setup_logging(0)
+            run.setup_logging(self.verbose_level_none)
             fake_get_root_logger.assert_called_once_with()
 
-    def test_setup_logging_sets_root_logging_level_to_debug(self):
+    def test_setup_logging_defaults_to_info_level(self):
         with patch.object(run, 'get_root_logger') as fake_get_logger:
-            run.setup_logging(0)
+            run.setup_logging(self.verbose_level_none)
             fake_get_logger.return_value.setLevel.assert_called_once_with(
+                logging.INFO
+            )
+
+    def test_setup_logging_keeps_root_logging_level_at_info_for_v(self):
+        with patch.object(run, 'get_root_logger') as fake_get_logger:
+            run.setup_logging(self.verbose_level_v)
+            fake_get_logger.return_value.setLevel.assert_called_once_with(
+                logging.INFO
+            )
+
+    def test_setup_logging_sets_root_logging_level_to_debug_with_vv(self):
+        with patch.object(run, 'get_root_logger') as fake_get_logger:
+            run.setup_logging(self.verbose_level_vv)
+            fake_get_logger.return_value.setLevel.assert_called_with(
                 logging.DEBUG
             )
+
+    @patch.object(run.autopilot.globals, 'set_log_verbose')
+    def test_setup_logging_calls_set_log_verbose_for_v(self, patch_set_log):
+        with patch.object(run, 'get_root_logger'):
+            run.setup_logging(self.verbose_level_v)
+            patch_set_log.assert_called_once_with(True)
+
+    @patch.object(run.autopilot.globals, 'set_log_verbose')
+    def test_setup_logging_calls_set_log_verbose_for_vv(self, patch_set_log):
+        with patch.object(run, 'get_root_logger'):
+            run.setup_logging(self.verbose_level_vv)
+            patch_set_log.assert_called_once_with(True)
 
     def test_set_null_log_handler(self):
         mock_root_logger = Mock()

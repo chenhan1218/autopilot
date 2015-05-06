@@ -432,8 +432,7 @@ def _make_default_emulator_base():
 
 WRONG_CPO_CLASS_MSG = '''\
 base_class: {passed} does not appear to be the actual base CPO class.
-Perhaps you meant to use: {actual}.
-Note: This warning will become an error in future releases'''
+Perhaps you meant to use: {actual}.'''
 
 
 def _raise_if_base_class_not_actually_base(base_class):

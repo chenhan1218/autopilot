@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2014 Canonical
+# Copyright (C) 2014, 2015 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -47,7 +47,6 @@ from uuid import uuid4
 from autopilot.introspection._xpathselect import get_classname_from_path
 from autopilot.utilities import get_debug_logger
 from contextlib import contextmanager
-from copy import deepcopy
 
 _object_registry = {}
 _proxy_extensions = {}
@@ -199,23 +198,16 @@ def _combine_base_and_extensions(kls, extensions):
              extensions
 
     """
-    # extensions without the validate_dbus_object method to preserve
-    # the original method resolution
-    fixed_extensions = _remove_attrs_from_collection(
-        extensions,
-        'validate_dbus_object'
-    )
-
     # set of bases + extensions removing the original class to prevent
     # TypeError: a __bases__ item causes an inheritance cycle
-    unique_bases = {x for x in kls.__bases__ + fixed_extensions if x != kls}
+    unique_bases = {x for x in kls.__bases__ + extensions if x != kls}
 
     # sort them taking into account inheritance to prevent
     # TypeError: Cannot create a consistent method resolution order (MRO)
     return tuple(
         sorted(
             unique_bases,
-            key=lambda cls: _get_mro_sort_order(cls, fixed_extensions),
+            key=lambda cls: _get_mro_sort_order(cls, extensions),
             reverse=True
         )
     )
@@ -245,26 +237,6 @@ def _get_mro_sort_order(cls, promoted_collection=()):
         order += 1
 
     return order
-
-
-def _remove_attrs_from_collection(collection, *attrs):
-    """Retuns a tuple with a copy of the elements in the given
-    collection with the given attributes removed
-
-    :param collection: input collection
-    :param attrs: list of strings representing attributes to remove
-    :returns: tuple with a copy of the original elements with the
-        attributes removed
-
-    """
-    output = [deepcopy(x) for x in collection]
-    for item in output:
-        for attr in attrs:
-            try:
-                delattr(item, attr)
-            except AttributeError:
-                pass
-    return tuple(output)
 
 
 def _get_default_proxy_class(id, name):

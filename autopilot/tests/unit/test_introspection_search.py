@@ -736,26 +736,29 @@ class ProxyObjectTests(TestCase):
 
 class ActualBaseClassTests(TestCase):
 
-    def test_logs_no_warning_passed_base_when_is_only_base(self):
+    def test_dont_raise_passed_base_when_is_only_base(self):
         class ActualBase(CustomEmulatorBase):
             pass
 
-        with patch.object(_s, 'logger') as p_logger:
-            _s._warn_if_base_class_not_actually_base(ActualBase)
-            self.assertFalse(p_logger.warning.called)
+        try:
+            _s._raise_if_base_class_not_actually_base(ActualBase)
+        except ValueError:
+            self.fail('Unexpected ValueError exception')
 
-    def test_logs_warning_if_passed_incorrect_base_class(self):
+    def test_raises_if_passed_incorrect_base_class(self):
         class ActualBase(CustomEmulatorBase):
             pass
 
         class InheritedCPO(ActualBase):
             pass
 
-        with patch.object(_s, 'logger') as p_logger:
-            _s._warn_if_base_class_not_actually_base(InheritedCPO)
-            self.assertTrue(p_logger.warning.called)
+        self.assertRaises(
+            ValueError,
+            _s._raise_if_base_class_not_actually_base,
+            InheritedCPO
+        )
 
-    def test_logs_warning_parent_with_simple_non_ap_multi_inheritance(self):
+    def test_raises_parent_with_simple_non_ap_multi_inheritance(self):
         """When mixing in non-customproxy classes must return the base."""
 
         class ActualBase(CustomEmulatorBase):
@@ -770,11 +773,13 @@ class ActualBaseClassTests(TestCase):
         class FinalForm(InheritedCPO, TrickyOne):
             pass
 
-        with patch.object(_s, 'logger') as p_logger:
-            _s._warn_if_base_class_not_actually_base(FinalForm),
-            self.assertTrue(p_logger.warning.called)
+        self.assertRaises(
+            ValueError,
+            _s._raise_if_base_class_not_actually_base,
+            FinalForm
+        )
 
-    def test_returns_parent_with_non_ap_multi_inheritance(self):
+    def test_raises_parent_with_non_ap_multi_inheritance(self):
 
         class ActualBase(CustomEmulatorBase):
             pass
@@ -788,28 +793,34 @@ class ActualBaseClassTests(TestCase):
         class FinalForm(TrickyOne, InheritedCPO):
             pass
 
-        with patch.object(_s, 'logger') as p_logger:
-            _s._warn_if_base_class_not_actually_base(FinalForm)
-            self.assertTrue(p_logger.warning.called)
+        self.assertRaises(
+            ValueError,
+            _s._raise_if_base_class_not_actually_base,
+            FinalForm
+        )
 
-    def test_no_warning_when_using_default_emulator_base(self):
+    def test_dont_raise_when_using_default_emulator_base(self):
         # _make_proxy_object potentially creates a default base.
         DefaultBase = _s._make_default_emulator_base()
-        with patch.object(_s, 'logger') as p_logger:
-            _s._warn_if_base_class_not_actually_base(DefaultBase)
-            self.assertFalse(p_logger.warning.called)
+        try:
+            _s._raise_if_base_class_not_actually_base(DefaultBase)
+        except ValueError:
+            self.fail('Unexpected ValueError exception')
 
-    def test_log_message_contains_useful_message(self):
+    def test_exception_message_contains_useful_information(self):
         class ActualBase(CustomEmulatorBase):
             pass
 
         class InheritedCPO(ActualBase):
             pass
 
-        with patch.object(_s, 'logger') as p_logger:
-            _s._warn_if_base_class_not_actually_base(InheritedCPO)
-
-            self.assertThat(
-                p_logger.warning.call_args[0][0],
-                Equals(_s.WRONG_CPO_CLASS_MSG.format(passed=InheritedCPO,
-                                                     actual=ActualBase)))
+        try:
+            _s._raise_if_base_class_not_actually_base(InheritedCPO)
+        except ValueError as err:
+            self.assertEqual(
+                str(err),
+                _s.WRONG_CPO_CLASS_MSG.format(
+                    passed=InheritedCPO,
+                    actual=ActualBase
+                )
+            )

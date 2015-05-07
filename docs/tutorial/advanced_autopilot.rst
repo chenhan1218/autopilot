@@ -136,9 +136,13 @@ Test authors are encouraged to write to the python logging framework whenever do
 
 3. Log some messages. You may choose which level the messages should be logged at. For example::
 
+    logger.debug("This is debug information, not shown by default.")
     logger.info("This is some information")
     logger.warning("This is a warning")
     logger.error("This is an error")
+
+
+.. note:: To view log messages when using ``debug`` level of logging pass ``-vv`` when running autopilot.
 
 For more information on the various logging levels, see the `python documentation on Logger objects <http://docs.python.org/2/library/logging.html#logger-objects>`_. All messages logged in this way will be picked up by the autopilot test runner. This is a valuable tool when debugging failing tests.
 
@@ -559,8 +563,8 @@ This method should return True if the object matches this custom proxy class, an
 
     # Get all QLabels in the applicaton:
     labels = self.app.select_many(QLabel)
-    
-If you are introspecting an application that already has a custom proxy base class defined, then this class can simply be imported and passed to the appropriate application launcher method. See :ref:`launching applications <launching_applications>` for more details on launching an application for introspection. This will allow you to call all of the public methods of the application's proxy base class directly in your test. 
+
+If you are introspecting an application that already has a custom proxy base class defined, then this class can simply be imported and passed to the appropriate application launcher method. See :ref:`launching applications <launching_applications>` for more details on launching an application for introspection. This will allow you to call all of the public methods of the application's proxy base class directly in your test.
 
 This example will run on desktop and uses the webbrowser application to navigate to a url using the base class go_to_url() method::
 

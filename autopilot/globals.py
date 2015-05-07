@@ -38,9 +38,6 @@ def set_log_verbose(verbose):
     if type(verbose) is not bool:
         raise TypeError("Verbose flag must be a boolean.")
     _log_verbose = verbose
-    if verbose:
-        root_logger = logging.getLogger()
-        root_logger.setLevel(logging.DEBUG)
 
 
 _debug_profile_fixture = DebugProfile

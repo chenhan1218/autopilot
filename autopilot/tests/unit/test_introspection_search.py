@@ -34,6 +34,8 @@ from testtools.matchers import (
 from autopilot.exceptions import ProcessSearchError
 from autopilot.utilities import sleep
 from autopilot.introspection import _search as _s
+
+from autopilot.introspection import CustomEmulatorBase
 from autopilot.introspection.constants import AUTOPILOT_PATH
 
 
@@ -730,3 +732,95 @@ class ProxyObjectTests(TestCase):
                 _s._find_matching_connections(bus, lambda *args: True)
 
                 dedupe.assert_called_once_with(["conn1"], bus)
+
+
+class ActualBaseClassTests(TestCase):
+
+    def test_dont_raise_passed_base_when_is_only_base(self):
+        class ActualBase(CustomEmulatorBase):
+            pass
+
+        try:
+            _s._raise_if_base_class_not_actually_base(ActualBase)
+        except ValueError:
+            self.fail('Unexpected ValueError exception')
+
+    def test_raises_if_passed_incorrect_base_class(self):
+        class ActualBase(CustomEmulatorBase):
+            pass
+
+        class InheritedCPO(ActualBase):
+            pass
+
+        self.assertRaises(
+            ValueError,
+            _s._raise_if_base_class_not_actually_base,
+            InheritedCPO
+        )
+
+    def test_raises_parent_with_simple_non_ap_multi_inheritance(self):
+        """When mixing in non-customproxy classes must return the base."""
+
+        class ActualBase(CustomEmulatorBase):
+            pass
+
+        class InheritedCPO(ActualBase):
+            pass
+
+        class TrickyOne(object):
+            pass
+
+        class FinalForm(InheritedCPO, TrickyOne):
+            pass
+
+        self.assertRaises(
+            ValueError,
+            _s._raise_if_base_class_not_actually_base,
+            FinalForm
+        )
+
+    def test_raises_parent_with_non_ap_multi_inheritance(self):
+
+        class ActualBase(CustomEmulatorBase):
+            pass
+
+        class InheritedCPO(ActualBase):
+            pass
+
+        class TrickyOne(object):
+            pass
+
+        class FinalForm(TrickyOne, InheritedCPO):
+            pass
+
+        self.assertRaises(
+            ValueError,
+            _s._raise_if_base_class_not_actually_base,
+            FinalForm
+        )
+
+    def test_dont_raise_when_using_default_emulator_base(self):
+        # _make_proxy_object potentially creates a default base.
+        DefaultBase = _s._make_default_emulator_base()
+        try:
+            _s._raise_if_base_class_not_actually_base(DefaultBase)
+        except ValueError:
+            self.fail('Unexpected ValueError exception')
+
+    def test_exception_message_contains_useful_information(self):
+        class ActualBase(CustomEmulatorBase):
+            pass
+
+        class InheritedCPO(ActualBase):
+            pass
+
+        try:
+            _s._raise_if_base_class_not_actually_base(InheritedCPO)
+        except ValueError as err:
+            self.assertEqual(
+                str(err),
+                _s.WRONG_CPO_CLASS_MSG.format(
+                    passed=InheritedCPO,
+                    actual=ActualBase
+                )
+            )

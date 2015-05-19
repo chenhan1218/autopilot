@@ -139,8 +139,8 @@ class IntrospectionFeatureTests(AutopilotTestCase):
 
             self.start_mock_app(WindowMockerApp)
 
-    def test_warns_when_using_incorrect_cpo_base_class(self):
-        # Ensure the warning method is called when launching a proxy.
+    def test_raises_exception_when_using_incorrect_cpo_base_class(self):
+        """Launching a proxy app with incorrect base must raise exception."""
         with object_registry.patch_registry({}):
             class TestCPO(CustomEmulatorBase):
                 pass
@@ -150,9 +150,8 @@ class IntrospectionFeatureTests(AutopilotTestCase):
                 def validate_dbus_object(cls, path, _state):
                     return path == b'/window-mocker'
 
-            with patch.object(_search, 'logger') as p_logger:
-                self.start_mock_app(WindowMockerApp)
-                self.assertTrue(p_logger.warning.called)
+            self.assertRaises(ValueError, self.start_mock_app, WindowMockerApp)
+
 
     def test_can_select_custom_emulators_by_name(self):
         """Must be able to select a custom emulator type by name."""

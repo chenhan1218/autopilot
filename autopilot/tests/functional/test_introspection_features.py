@@ -416,10 +416,12 @@ class CustomCPOTest(AutopilotTestCase, QmlScriptRunnerMixin):
 
         """
         with object_registry.patch_registry({}):
-            class RandomNamedCPO(CustomEmulatorBase):
-                pass
+            class RandomNamedCPORectangle(CustomEmulatorBase):
+                @classmethod
+                def get_type_query_name(cls):
+                    return 'QQuickRectangle'
 
             app = self.launch_simple_qml_script()
-            rectangle = app.select_single(RandomNamedCPO)
+            rectangle = app.select_single(RandomNamedCPORectangle)
 
             self.assertThat(rectangle.objectName, Equals('ExampleRectangle'))

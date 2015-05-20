@@ -544,6 +544,36 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         class_name = cls.__name__.encode('utf-8')
         return state_name == class_name
 
+    @classmethod
+    def get_type_query_name(cls):
+        """Return the Type node name to use within the search query.
+
+        This allows for a Custom Proxy Object to be named differently to the
+        underlying node type name.
+
+        For instance if you have a QML type defined in the file RedRect.qml::
+
+            import QtQuick 2.0
+            Rectangle {
+                color: red;
+            }
+
+        You can then define a Custom Proxy Object  for this type like so::
+
+        class RedRect(DBusIntrospectionObject):
+            @classmethod
+            def get_type_query_name(cls):
+                return 'QQuickRectangle'
+
+        This is due to the qml engine storing 'RedRect' as a QQuickRectangle in
+        the UI tree and the xpathquery query needs a node type to query for.
+        By default the query will use the class name (in this case RedRect) but
+        this will not match any node type in the tree.
+
+        """
+
+        return cls.__name__
+
 
 # TODO - can we add a deprecation warning around this somehow?
 CustomEmulatorBase = DBusIntrospectionObject
@@ -557,5 +587,11 @@ def get_type_name(maybe_string_or_class):
 
     """
     if not isinstance(maybe_string_or_class, str):
-        return maybe_string_or_class.__name__
+        return _get_class_type_name(maybe_string_or_class)
     return maybe_string_or_class
+
+def _get_class_type_name(maybe_cpo_class):
+    if hasattr(maybe_cpo_class, 'get_type_query_name'):
+        return maybe_cpo_class.get_type_query_name()
+    else:
+        return maybe_cpo_class.__name__

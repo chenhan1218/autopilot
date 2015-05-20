@@ -379,7 +379,7 @@ class MouseTestCase(AutopilotTestCase, tests.LogHandlerTestCase):
         screen_geometry = Display.create().get_screen_geometry(0)
         target_x = screen_geometry[0] + 10
         target_y = screen_geometry[1] + 10.6
-        self.device.move(target_x, target_y)
+        device.move(target_x, target_y)
         self.assertEqual(device.position(), (target_x, int(target_y)))
 
     @patch('autopilot.platform.model', new=lambda *args: "Not Desktop", )

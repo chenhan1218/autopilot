@@ -118,6 +118,43 @@ class DBusIntrospectionObjectTests(TestCase):
                 ),
             )
 
+    def test_base_class_provides_correct_query_name(self):
+        self.assertThat(
+            dbus.DBusIntrospectionObject.get_type_query_name(),
+            Equals('DBusIntrospectionObject')
+        )
+
+    def test_inherited_uses_default_get_node_name(self):
+        class TestCPO(dbus.DBusIntrospectionObject):
+            pass
+
+        self.assertThat(
+            TestCPO.get_type_query_name(),
+            Equals('DBusIntrospectionObject')
+        )
+
+    def test_inherited_overwrites_node_name_is_correct(self):
+        class TestCPO(dbus.DBusIntrospectionObject):
+            @classmethod
+            def get_type_query_name(cls):
+                return "TestCPO"
+        self.assertThat(TestCPO.get_type_query_name(), Equals("TestCPO"))
+
+    def test_get_type_name_returns_classname(self):
+        class CustomCPO(dbus.DBusIntrospectionObject):
+            pass
+
+        type_name = dbus.get_type_name(CustomEmulatorBase)
+        self.assertThat(type_name, Equals('TestingCPO'))
+
+    def test_get_type_name_returns_custom_node_name(self):
+        class CustomCPO(dbus.DBusIntrospectionObject):
+            @classmethod
+            def get_type_query_name(cls):
+                return 'TestingCPO'
+        type_name = dbus.get_type_name(CustomEmulatorBase)
+        self.assertThat(type_name, Equals('TestingCPO'))
+
 
 class ProxyObjectPrintTreeTests(TestCase):
 

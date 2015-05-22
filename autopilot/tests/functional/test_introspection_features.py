@@ -24,7 +24,7 @@ import re
 import subprocess
 import tempfile
 from tempfile import mktemp
-from testtools import skip, skipIf
+from testtools import skipIf
 from testtools.matchers import (
     Contains,
     Equals,
@@ -36,6 +36,7 @@ from testtools.matchers import (
     StartsWith,
 )
 from textwrap import dedent
+from unittest.mock import patch
 from io import StringIO
 
 from autopilot import platform
@@ -43,6 +44,8 @@ from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase
 from autopilot.tests.functional.fixtures import TempDesktopFile
 from autopilot.introspection import CustomEmulatorBase
+from autopilot.introspection import _object_registry as object_registry
+from autopilot.introspection import _search
 from autopilot.introspection.qt import QtObjectProxyMixin
 from autopilot.display import Display
 
@@ -99,7 +102,6 @@ class IntrospectionFeatureTests(AutopilotTestCase):
             Equals(WindowMockerApp)
         )
 
-    @skip("Currently fails due to lp:1425721 (and lp:1376996)")
     def test_customised_proxy_classes_have_extension_classes(self):
         class WindowMockerApp(EmulatorBase):
             @classmethod
@@ -108,6 +110,49 @@ class IntrospectionFeatureTests(AutopilotTestCase):
 
         app = self.start_mock_app(EmulatorBase)
         self.assertThat(app.__class__.__bases__, Contains(QtObjectProxyMixin))
+
+    def test_customised_proxy_classes_have_multiple_extension_classes(self):
+        with object_registry.patch_registry({}):
+            class SecondEmulatorBase(CustomEmulatorBase):
+                pass
+
+            class WindowMockerApp(EmulatorBase, SecondEmulatorBase):
+                @classmethod
+                def validate_dbus_object(cls, path, _state):
+                    return path == b'/window-mocker'
+
+            app = self.start_mock_app(EmulatorBase)
+            self.assertThat(app.__class__.__bases__, Contains(EmulatorBase))
+            self.assertThat(
+                app.__class__.__bases__,
+                Contains(SecondEmulatorBase)
+            )
+
+    def test_handles_using_app_cpo_base_class(self):
+        # This test replicates an issue found in an application test suite
+        # where using the App CPO caused an exception.
+        with object_registry.patch_registry({}):
+            class WindowMockerApp(CustomEmulatorBase):
+                @classmethod
+                def validate_dbus_object(cls, path, _state):
+                    return path == b'/window-mocker'
+
+            self.start_mock_app(WindowMockerApp)
+
+    def test_warns_when_using_incorrect_cpo_base_class(self):
+        # Ensure the warning method is called when launching a proxy.
+        with object_registry.patch_registry({}):
+            class TestCPO(CustomEmulatorBase):
+                pass
+
+            class WindowMockerApp(TestCPO):
+                @classmethod
+                def validate_dbus_object(cls, path, _state):
+                    return path == b'/window-mocker'
+
+            with patch.object(_search, 'logger') as p_logger:
+                self.start_mock_app(WindowMockerApp)
+                self.assertTrue(p_logger.warning.called)
 
     def test_can_select_custom_emulators_by_name(self):
         """Must be able to select a custom emulator type by name."""

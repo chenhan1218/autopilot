@@ -1,3 +1,30 @@
+autopilot (1.5.1+15.04.20150522-0ubuntu1) vivid; urgency=medium
+
+  [ CI Train Bot ]
+  * New rebuild forced.
+
+  [ Christopher Lee ]
+  * Bug fixes for logging (debug level now -vv) and application of CPO
+    bases for proxy objects. (LP: #1425721, #1376996, #1420949)
+
+  [ Federico Gimenez ]
+  * Bug fixes for logging (debug level now -vv) and application of CPO
+    bases for proxy objects. (LP: #1425721, #1376996, #1420949)
+
+  [ Leo Arias ]
+  * Bug fixes for logging (debug level now -vv) and application of CPO
+    bases for proxy objects. (LP: #1425721, #1376996, #1420949)
+
+  [ Richard Huddie ]
+  * Bug fixes for logging (debug level now -vv) and application of CPO
+    bases for proxy objects. (LP: #1425721, #1376996, #1420949)
+
+  [ Vincent Ladeuil ]
+  * Bug fixes for logging (debug level now -vv) and application of CPO
+    bases for proxy objects. (LP: #1425721, #1376996, #1420949)
+
+ -- CI Train Bot <ci-train-bot@canonical.com>  Fri, 22 May 2015 16:54:03 +0000
+
 autopilot (1.5.0+15.04.20150408-0ubuntu1) vivid; urgency=medium
 
   [ Albert Astals Cid ]

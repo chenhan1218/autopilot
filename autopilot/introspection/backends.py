@@ -217,9 +217,16 @@ class Backend(object):
     def execute_query_get_data(self, query):
         """Execute 'query', return the raw dbus reply."""
         with Timer("GetState %r" % query):
-            data = self.ipc_address.introspection_iface.GetState(
-                query.server_query_bytes()
-            )
+            try:
+                data = self.ipc_address.introspection_iface.GetState(
+                    query.server_query_bytes()
+                )
+            except dbus.DBusException as e:
+                e.get_dbus_name() == \
+                    'org.freedesktop.DBus.Error.ServiceUnknown'
+                raise RuntimeError(
+                    "Application under test exited before the test finished!"
+                )
             if len(data) > 15:
                 _logger.warning(
                     "Your query '%r' returned a lot of data (%d items). This "

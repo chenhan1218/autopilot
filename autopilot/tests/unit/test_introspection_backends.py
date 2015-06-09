@@ -270,7 +270,9 @@ class BackendTests(TestCase):
         try:
             backend.execute_query_get_data(query)
         except RuntimeError as e:
-            msg = "Application under test exited before the test finished!"
+            msg = ("Lost dbus backend communication. It appears the "
+            "application under test exited before the test "
+            "finished!")
             self.assertEqual(str(e), msg)
 
     def test_proxy_instance_raises_uncaught_dbus_exceptions(self):

@@ -248,6 +248,17 @@ class BackendTests(TestCase):
                 Equals([None])
             )
 
+    def test_proxy_instance_catches_dbus_exception(self):
+        query = xpathselect.Query.root('foo')
+        e = DBusException(
+            name = 'org.freedesktop.DBus.Error.ServiceUnknown'
+        )        
+        fake_dbus_address = Mock()
+        fake_dbus_address.introspection_iface.GetState.side_effect = e
+        backend = backends.Backend(fake_dbus_address)
+
+        self.assertRaises(RuntimeError, backend.execute_query_get_data, query)
+
 
 class MakeIntrospectionObjectTests(TestCase):
 

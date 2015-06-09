@@ -151,20 +151,20 @@ class DbusQueryTests(AutopilotTestCase):
     def test_exception_raised_when_operating_on_dead_app(self):
         app = self.start_fully_featured_app()
         main_window = app.select_single('QMainWindow')
-        app.kill_application()        
+        app.kill_application()
         self.assertRaises(RuntimeError, main_window.get_parent)
 
     def test_exception_message_when_operating_on_dead_app(self):
         app = self.start_fully_featured_app()
         app.kill_application()
         try:
-            main_window = app.select_single('QMainWindow')        
+            app.select_single('QMainWindow')
         except RuntimeError as e:
             msg = ("Lost dbus backend communication. It appears the "
-            "application under test exited before the test "
-            "finished!")
+                   "application under test exited before the test "
+                   "finished!")
             self.assertEqual(str(e), msg)
-            
+
     def test_select_single_parameters_only(self):
         app = self.start_fully_featured_app()
         main_win = app.select_single('QMainWindow')

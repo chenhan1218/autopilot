@@ -115,9 +115,9 @@ class DBusAddress(object):
 
         if not self._check_pid_running():
             raise RuntimeError(
-                    "Lost dbus backend communication. It appears the "
-                    "application under test exited before the test "
-                    "finished!"
+                "Lost dbus backend communication. It appears the "
+                "application under test exited before the test "
+                "finished!"
             )
 
         proxy_obj = self._addr_tuple.bus.get_object(
@@ -228,13 +228,13 @@ class Backend(object):
             except dbus.DBusException as e:
                 desired_exception = 'org.freedesktop.DBus.Error.ServiceUnknown'
                 if e.get_dbus_name() != desired_exception:
-                    raise				
+                    raise
                 else:
                     raise RuntimeError(
                         "Lost dbus backend communication. It appears the "
                         "application under test exited before the test "
                         "finished!"
-                )
+                    )
             if len(data) > 15:
                 _logger.warning(
                     "Your query '%r' returned a lot of data (%d items). This "

@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from dbus import String
+from dbus import String, DBusException
 from unittest.mock import patch, MagicMock, Mock
 from testtools import TestCase
 from testtools.matchers import Equals, Not, NotEquals, IsInstance
@@ -251,7 +251,7 @@ class BackendTests(TestCase):
     def test_proxy_instance_catches_dbus_exception(self):
         query = xpathselect.Query.root('foo')
         e = DBusException(
-            name = 'org.freedesktop.DBus.Error.ServiceUnknown'
+            name = 'org.freedesktop.DBus.Error.Unknown'
         )        
         fake_dbus_address = Mock()
         fake_dbus_address.introspection_iface.GetState.side_effect = e

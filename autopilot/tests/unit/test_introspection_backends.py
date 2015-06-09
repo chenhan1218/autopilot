@@ -248,17 +248,48 @@ class BackendTests(TestCase):
                 Equals([None])
             )
 
-    def test_proxy_instance_catches_dbus_exception(self):
+    def test_proxy_instance_catches_unknown_service_exception(self):
         query = xpathselect.Query.root('foo')
         e = DBusException(
-            name = 'org.freedesktop.DBus.Error.Unknown'
-        )        
+            name = 'org.freedesktop.DBus.Error.ServiceUnknown'
+        )
         fake_dbus_address = Mock()
         fake_dbus_address.introspection_iface.GetState.side_effect = e
         backend = backends.Backend(fake_dbus_address)
 
         self.assertRaises(RuntimeError, backend.execute_query_get_data, query)
 
+    def test_unknown_service_exception_gives_correct_msg(self):
+        query = xpathselect.Query.root('foo')
+        e = DBusException(
+            name = 'org.freedesktop.DBus.Error.ServiceUnknown'
+        )
+        fake_dbus_address = Mock()
+        fake_dbus_address.introspection_iface.GetState.side_effect = e
+        backend = backends.Backend(fake_dbus_address)
+        try:
+            backend.execute_query_get_data(query)
+        except RuntimeError as e:
+            msg = "Application under test exited before the test finished!"
+            self.assertEqual(str(e), msg)
+
+    def test_proxy_instance_raises_uncaught_dbus_exceptions(self):
+        query = xpathselect.Query.root('foo')
+        e = DBusException()
+        fake_dbus_address = Mock()
+        fake_dbus_address.introspection_iface.GetState.side_effect = e
+        backend = backends.Backend(fake_dbus_address)
+
+        self.assertRaises(DBusException, backend.execute_query_get_data, query)
+
+    def test_proxy_instance_raises_uncaught_exceptions(self):
+        query = xpathselect.Query.root('foo')
+        e = Exception()
+        fake_dbus_address = Mock()
+        fake_dbus_address.introspection_iface.GetState.side_effect = e
+        backend = backends.Backend(fake_dbus_address)
+
+        self.assertRaises(Exception, backend.execute_query_get_data, query)
 
 class MakeIntrospectionObjectTests(TestCase):
 

@@ -740,7 +740,10 @@ class ActualBaseClassTests(TestCase):
         class ActualBase(CustomEmulatorBase):
             pass
 
-        _s._raise_if_base_class_not_actually_base(ActualBase)
+        try:
+            _s._raise_if_base_class_not_actually_base(ActualBase)
+        except ValueError:
+            self.fail('Unexpected ValueError exception')
 
     def test_raises_if_passed_incorrect_base_class(self):
         class ActualBase(CustomEmulatorBase):
@@ -797,23 +800,27 @@ class ActualBaseClassTests(TestCase):
         )
 
     def test_dont_raise_when_using_default_emulator_base(self):
+        # _make_proxy_object potentially creates a default base.
         DefaultBase = _s._make_default_emulator_base()
-        _s._raise_if_base_class_not_actually_base(DefaultBase)
+        try:
+            _s._raise_if_base_class_not_actually_base(DefaultBase)
+        except ValueError:
+            self.fail('Unexpected ValueError exception')
 
     def test_exception_message_contains_useful_information(self):
-        actual_base = 'ActualBase'
+        class ActualBase(CustomEmulatorBase):
+            pass
 
-        passed_base = 'InheritedCPO'
+        class InheritedCPO(ActualBase):
+            pass
 
-        error_message = _s._get_wrong_cpo_error_message(
-            passed_base,
-            actual_base
-        )
-
-        self.assertEqual(
-            error_message,
-            _s.WRONG_CPO_CLASS_MSG.format(
-                passed=passed_base,
-                actual=actual_base
+        try:
+            _s._raise_if_base_class_not_actually_base(InheritedCPO)
+        except ValueError as err:
+            self.assertEqual(
+                str(err),
+                _s.WRONG_CPO_CLASS_MSG.format(
+                    passed=InheritedCPO,
+                    actual=ActualBase
+                )
             )
-        )

@@ -430,6 +430,11 @@ def _make_default_emulator_base():
     return type("DefaultEmulatorBase", (ap_dbus.DBusIntrospectionObject,), {})
 
 
+WRONG_CPO_CLASS_MSG = '''\
+base_class: {passed} does not appear to be the actual base CPO class.
+Perhaps you meant to use: {actual}.'''
+
+
 def _raise_if_base_class_not_actually_base(base_class):
     """Raises ValueError if the provided base_class is not actually the
        base_class
@@ -447,24 +452,14 @@ def _raise_if_base_class_not_actually_base(base_class):
             actual_base_class = cls
 
     if actual_base_class != base_class:
-        error_message = _get_wrong_cpo_error_message(
-            base_class,
-            actual_base_class
+        raise(
+            ValueError(
+                WRONG_CPO_CLASS_MSG.format(
+                    passed=base_class,
+                    actual=actual_base_class
+                )
+            )
         )
-
-        raise ValueError(error_message)
-
-
-WRONG_CPO_CLASS_MSG = '''\
-base_class: {passed} does not appear to be the actual base CPO class.
-Perhaps you meant to use: {actual}.'''
-
-
-def _get_wrong_cpo_error_message(passed_base, actual_base):
-    return WRONG_CPO_CLASS_MSG.format(
-        passed=passed_base,
-        actual=actual_base
-    )
 
 
 def _make_proxy_object_async(

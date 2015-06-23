@@ -590,6 +590,7 @@ def get_type_name(maybe_string_or_class):
         return _get_class_type_name(maybe_string_or_class)
     return maybe_string_or_class
 
+
 def _get_class_type_name(maybe_cpo_class):
     if hasattr(maybe_cpo_class, 'get_type_query_name'):
         return maybe_cpo_class.get_type_query_name()

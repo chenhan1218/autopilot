@@ -325,13 +325,7 @@ def _get_system_resolution():
 
 
 def _get_touch_tool():
-    # android uses BTN_TOOL_FINGER, whereas desktop uses BTN_TOUCH. I have
-    # no idea why...
-    if autopilot.platform.model() == 'Desktop':
-        touch_tool = e.BTN_TOUCH
-    else:
-        touch_tool = e.BTN_TOOL_FINGER
-    return touch_tool
+    return e.BTN_TOUCH
 
 
 class _UInputTouchDevice(object):

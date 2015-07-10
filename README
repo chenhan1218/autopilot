@@ -12,7 +12,7 @@ Links
   https://launchpad.net/autopilot
 
 - Documentation (Tutorial, FAQ, API Reference, etc):
-  https://developer.ubuntu.com/api/devel/ubuntu-14.10/python/autopilot/
+  https://developer.ubuntu.com/api/autopilot/python/1.5.0/
 
 - IRC channel is #ubuntu-autopilot on irc.freenode.net
 
@@ -67,7 +67,7 @@ Listing is similar::
 
 For a more complete explanation for running or listing tests please see the
 full documentation found here:
-https://developer.ubuntu.com/api/devel/ubuntu-14.10/python/autopilot/tutorial/running_ap.html
+https://developer.ubuntu.com/api/autopilot/python/1.5.0/guides-running_ap/
 
 If you are in the root of the autopilot source tree this will run/list the tests from
 within that local module. Otherwise autopilot will look in the system python path.

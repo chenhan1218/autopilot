@@ -24,7 +24,6 @@ import os
 from tempfile import mktemp
 from testtools import TestCase, skipIf
 from testtools.matchers import (
-    Not,
     IsInstance,
     Equals,
     raises,
@@ -612,12 +611,3 @@ class InputStackCleanup(AutopilotTestCase):
         from autopilot.input._X11 import _PRESSED_MOUSE_BUTTONS
         self.assertThat(test_result.wasSuccessful(), Equals(True))
         self.assertThat(_PRESSED_MOUSE_BUTTONS, Equals([]))
-
-
-class InputStackUsageTestCase(AutopilotTestCase):
-
-    def test_keyboard_is_None_initially(self):
-        self.assertThat(self._kb, Equals(None))
-
-    def test_keyboard_created_when_needed(self):
-        self.assertThat(self.keyboard, Not(Equals(None)))

@@ -19,16 +19,28 @@
 
 
 from testtools import TestCase
-
-from autopilot._fixtures import FixtureWithDirectAddDetail
+from testtools.matchers import (
+    Not,
+    Raises,
+)
+import autopilot._fixtures as ap_fixtures
 
 
 class FixtureWithDirectAddDetailTests(TestCase):
 
     def test_sets_caseAddDetail_method(self):
-        fixture = FixtureWithDirectAddDetail(self.addDetail)
+        fixture = ap_fixtures.FixtureWithDirectAddDetail(self.addDetail)
         self.assertEqual(fixture.caseAddDetail, self.addDetail)
 
     def test_can_construct_without_arguments(self):
-        fixture = FixtureWithDirectAddDetail()
+        fixture = ap_fixtures.FixtureWithDirectAddDetail()
         self.assertEqual(fixture.caseAddDetail, fixture.addDetail)
+
+
+class GSettingsAccess(TestCase):
+
+    def test_incorrect_schema_doesnt_raise_exception(self):
+        self.assertThat(
+            lambda: ap_fixtures.get_gsettings_value('foo', 'bar'),
+            Not(Raises())
+        )

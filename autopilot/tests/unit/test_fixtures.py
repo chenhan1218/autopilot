@@ -62,6 +62,7 @@ class GSettingsAccessTests(TestCase):
                 'buzz'
             )
 
+
 class OSKAlwaysEnabledTests(TestCase):
 
     def test_sets_stayhidden_to_false(self):

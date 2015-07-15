@@ -69,6 +69,7 @@ from autopilot.matchers import Eventually
 from autopilot.platform import get_display_server
 from autopilot.process import ProcessManager
 from autopilot.utilities import deprecated, on_test_started
+from autopilot._fixtures import OSKAlwaysEnabled
 from autopilot._timeout import Timeout
 from autopilot._logging import TestCaseLoggingFixture
 from autopilot._video import get_video_recording_fixture
@@ -163,6 +164,11 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         self._mouse = None
         self._display = None
         self._kb = Keyboard.create()
+
+        # Instatiate this after keyboard creation to ensure it doesn't get
+        # overwritten
+        # Workaround for bug lp:1474444
+        self.useFixture(OSKAlwaysEnabled())
 
         # Work around for bug lp:1297592.
         _ensure_uinput_device_created()

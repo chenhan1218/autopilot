@@ -77,9 +77,18 @@ class OSKAlwaysEnabled(Fixture):
 
 
 def get_gsettings_value(schema, key):
+    """Return the output of gsettings get as a string or None if the call
+    fails.
+
+    """
     command = ['gsettings', 'get', schema, key]
     try:
-        return subprocess.check_output(command, stderr=subprocess.PIPE)
+        output = subprocess.check_output(
+            command,
+            stderr=subprocess.PIPE,
+            universal_newlines=True
+        )
+        return output.rstrip('\n')
     except subprocess.CalledProcessError as e:
         logger.warning(
             'Failed to get gsettings value for {schema}/{key}: {error}'.format(

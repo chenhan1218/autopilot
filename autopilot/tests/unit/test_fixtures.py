@@ -54,6 +54,13 @@ class GSettingsAccessTests(TestCase):
                 'buzz'
             )
 
+    def test_get_value_strips_newline(self):
+        with patch.object(ap_fixtures.subprocess, 'check_output') as check_out:
+            check_out.return_value = 'buzz\n'
+            self.assertEqual(
+                ap_fixtures.get_gsettings_value('foo', 'bar'),
+                'buzz'
+            )
 
 class OSKAlwaysEnabledTests(TestCase):
 

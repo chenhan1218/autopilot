@@ -616,8 +616,7 @@ class InputStackCleanup(AutopilotTestCase):
 
 class InputStackUsageTestCase(AutopilotTestCase):
 
-    def test_keyboard_is_None_initiall(self):
-        import pdb; pdb.set_trace()
+    def test_keyboard_is_None_initially(self):
         self.assertThat(self._kb, Equals(None))
 
     def test_keyboard_created_when_needed(self):

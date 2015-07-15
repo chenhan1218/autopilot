@@ -66,6 +66,7 @@ class OSKAlwaysEnabled(Fixture):
         )
 
     def setUp(self):
+        super().setUp()
         set_gsettings_value(self.osk_schema, self.osk_show_key, 'false')
         self.addCleanup(
             set_gsettings_value,

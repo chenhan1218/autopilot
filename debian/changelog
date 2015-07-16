@@ -1,3 +1,12 @@
+autopilot (1.5.1) UNRELEASED; urgency=medium
+
+  * Add window manager support for autopilot sandbox run, fixes LP:1379508
+  * Add fixture that forces a gsetting for unity8 so that OSK is shown even
+    when a UInput keyboard is present.
+  * Fix unit test failures on Wily
+
+ -- Christopher Lee <chris.lee@canonical.com>  Thu, 16 Jul 2015 15:51:25 +1200
+
 autopilot (1.5.1+15.04.20150708-0ubuntu1) vivid; urgency=medium
 
   [ Christopher Lee ]

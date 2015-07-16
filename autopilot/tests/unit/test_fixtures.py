@@ -23,7 +23,7 @@ from testtools.matchers import (
     Not,
     Raises,
 )
-from mock import patch
+from unittest.mock import patch
 import autopilot._fixtures as ap_fixtures
 
 

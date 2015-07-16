@@ -296,10 +296,6 @@ class QtTests(ApplicationTests, QmlTestMixin):
         )
         self.assertTrue(app_proxy is not None)
 
-    @skipIf(
-        model() == "Desktop",
-        "CI infrastructure issue (please see: autopilot/+bug/1384957)"
-    )
     def test_can_launch_upstart_app(self):
         path = self.get_qml_viewer_app_path()
         fixture = self.useFixture(TempDesktopFile(exec_=path,))

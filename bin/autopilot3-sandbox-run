@@ -3,11 +3,11 @@
 #
 # Runner to execute autopilot locally
 #
-# This scripts run autopilot in a "fake" X server, either headless with xvfb
-# or nested with Xephyr
+# This scripts run autopilot in a "fake" X server, and optionally a
+# window manager with either headless with xvfb or nested with Xephyr
 #
 
-# Copyright (C) 2013 Canonical
+# Copyright (C) 2013-2015 Canonical
 #
 # Authors: Jean-Baptiste Lallement <jean-baptiste.lallement@canonical.com>
 #
@@ -38,7 +38,9 @@ AP_OPT=""
 
 SERVERNUM=5
 SCREEN="1024x768x24"
-
+USEWM=0
+WINDOWMANAGER="ratpoison"
+WINDOWMANAGER_CMD="$(which $WINDOWMANAGER||true)"
 DBUS_SESSION_BUS_PID=""
 X_PID=""
 
@@ -48,17 +50,18 @@ usage() {
 Usage: $(basename $0) [OPTIONS...] TEST [TEST...]
 Runs autopilot tests in a 'fake' Xserver with Xvfb or Xephyr. autopilot runs
 in Xvfb by default.
-    
+
     TEST: autopilot tests to run
 
 Options:
-    -h, --help           This help
-    -d, --debug          Enable debug mode
-    -a, --autopilot ARG  Pass arguments ARG to 'autopilot run'
-    -X, --xephyr         Run in nested mode with Xephyr
-    -s, --screen WxHxD   Sets screen width, height, and depth to W, H, and D
-                         respectively (default: $SCREEN)
-
+    -h, --help             This help
+    -d, --debug            Enable debug mode
+    -a, --autopilot ARG    Pass arguments ARG to 'autopilot run'
+    -X, --xephyr           Run in nested mode with Xephyr
+    -s, --screen WxHxD     Sets screen width, height, and depth to W, H, and D
+                           respectively (default: $SCREEN)
+    -w, --windowmanager WM Start a window manager WM before executing tests
+                           (suggested: $WINDOWMANAGER)
 EOF
     RC=1
     exit
@@ -117,8 +120,8 @@ on_exit() {
 
 trap on_exit EXIT INT QUIT ABRT PIPE TERM
 
-SHORTOPTS="hda:s:X"
-LONGOPTS="help,debug,autopilot:,screen:,xephyr"
+SHORTOPTS="hda:s:Xw:"
+LONGOPTS="help,debug,autopilot:,screen:,xephyr,windowmanager:"
 
 TEMP=$(getopt -o $SHORTOPTS --long $LONGOPTS -- "$@")
 eval set -- "$TEMP"
@@ -138,6 +141,14 @@ while true ; do
         -s|-screen)
             SCREEN=$2
             shift 2;;
+        -w|--windowmanager)
+            USEWM=1
+            WINDOWMANAGER=$2
+            WINDOWMANAGER_CMD="$(which $WINDOWMANAGER||true)"
+            [ ! -x "$WINDOWMANAGER_CMD" ] && \
+                echo "E: $WINDOWMANAGER Executable not found." &&\
+                RC=1 && exit 1
+            shift 2;;
         -X|--xephyr)
             XEPHYR=1
             [ ! -x "$XEPHYR_CMD" ] && \
@@ -154,7 +165,7 @@ done
 if [ $XEPHYR -eq 0 -a ! -x "$XVFB_CMD" ]; then
     echo "E: Xvfb executable not found. Please install xvfb"
     RC=1
-    exit 
+    exit
 fi
 
 TESTLIST="$@"
@@ -171,6 +182,10 @@ export DISPLAY=:${SERVERNUM}.0
 
 export XAUTHORITY=/dev/null
 wait_for_x $SERVERNUM
+if [ "$USEWM" -eq 1 ]; then
+    echo "I: Starting window manager: $WINDOWMANAGER_CMD"
+    dbus-launch --exit-with-session $WINDOWMANAGER_CMD &
+fi
 echo "I: Starting autopilot"
 dbus-launch --exit-with-session python3 -m autopilot.run run $AP_OPT $TESTLIST || RC=$?
 echo "I: autopilot tests done"

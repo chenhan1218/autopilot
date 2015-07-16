@@ -23,7 +23,6 @@ import logging
 
 from evdev import UInput, ecodes as e
 
-import autopilot.platform
 from autopilot.input import Keyboard as KeyboardBase
 from autopilot.input import Touch as TouchBase
 from autopilot.input._common import get_center_point
@@ -325,13 +324,7 @@ def _get_system_resolution():
 
 
 def _get_touch_tool():
-    # android uses BTN_TOOL_FINGER, whereas desktop uses BTN_TOUCH. I have
-    # no idea why...
-    if autopilot.platform.model() == 'Desktop':
-        touch_tool = e.BTN_TOUCH
-    else:
-        touch_tool = e.BTN_TOOL_FINGER
-    return touch_tool
+    return e.BTN_TOUCH
 
 
 class _UInputTouchDevice(object):
@@ -378,7 +371,7 @@ class _UInputTouchDevice(object):
         self._device.write(
             e.EV_ABS, e.ABS_MT_TRACKING_ID, self._get_next_tracking_id())
         press_value = 1
-        self._device.write(e.EV_KEY, e.BTN_TOOL_FINGER, press_value)
+        self._device.write(e.EV_KEY, _get_touch_tool(), press_value)
         self._device.write(e.EV_ABS, e.ABS_MT_POSITION_X, int(x))
         self._device.write(e.EV_ABS, e.ABS_MT_POSITION_Y, int(y))
         self._device.write(e.EV_ABS, e.ABS_MT_PRESSURE, 400)
@@ -430,7 +423,7 @@ class _UInputTouchDevice(object):
         lift_tracking_id = -1
         self._device.write(e.EV_ABS, e.ABS_MT_TRACKING_ID, lift_tracking_id)
         release_value = 0
-        self._device.write(e.EV_KEY, e.BTN_TOOL_FINGER, release_value)
+        self._device.write(e.EV_KEY, _get_touch_tool(), release_value)
         self._device.syn()
         self._release_touch_finger()
 

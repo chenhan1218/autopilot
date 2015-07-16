@@ -81,7 +81,7 @@ def get_gsettings_value(schema, key):
     fails.
 
     """
-    command = ['gsettings', 'get', schema, key]
+    command = ['/usr/bin/gsettings', 'get', schema, key]
     try:
         output = subprocess.check_output(
             command,
@@ -98,7 +98,7 @@ def get_gsettings_value(schema, key):
 
 
 def set_gsettings_value(schema, key, value):
-    command = ['gsettings', 'set', schema, key, value]
+    command = ['/usr/bin/gsettings', 'set', schema, key, value]
     try:
         subprocess.check_output(command, stderr=subprocess.PIPE)
     except subprocess.CalledProcessError as e:

@@ -229,7 +229,7 @@ class TimezoneFixtureTests(TestCase):
         original_tz = os.environ.get('TZ', None)
         token = self.getUniqueString()
 
-        fixture = self.useFixture(Timezone(token))
-        fixture.cleanUp()
+        with Timezone(token):
+            pass  # Trigger cleanup
 
         self.assertEqual(os.environ.get('TZ', None), original_tz)

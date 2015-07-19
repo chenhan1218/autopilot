@@ -18,6 +18,11 @@
 #
 
 from fixtures import Fixture
+import logging
+import subprocess
+
+
+logger = logging.getLogger(__name__)
 
 
 class FixtureWithDirectAddDetail(Fixture):
@@ -40,3 +45,65 @@ class FixtureWithDirectAddDetail(Fixture):
         """
         super().__init__()
         self.caseAddDetail = caseAddDetail or self.addDetail
+
+
+class OSKAlwaysEnabled(Fixture):
+    """Enable the OSK to be shown regardless of if there is a keyboard (virtual
+    or real) plugged in.
+
+    This is a workaround for bug lp:1474444
+
+    """
+
+    osk_schema = 'com.canonical.keyboard.maliit'
+    osk_show_key = 'stay-hidden'
+
+    def __init__(self):
+        super().__init__()
+        self._original_value = get_gsettings_value(
+            self.osk_schema,
+            self.osk_show_key
+        )
+
+    def setUp(self):
+        super().setUp()
+        set_gsettings_value(self.osk_schema, self.osk_show_key, 'false')
+        self.addCleanup(
+            set_gsettings_value,
+            self.osk_schema,
+            self.osk_show_key,
+            self._original_value
+        )
+
+
+def get_gsettings_value(schema, key):
+    """Return the output of gsettings get as a string or None if the call
+    fails.
+
+    """
+    command = ['/usr/bin/gsettings', 'get', schema, key]
+    try:
+        output = subprocess.check_output(
+            command,
+            stderr=subprocess.PIPE,
+            universal_newlines=True
+        )
+        return output.rstrip('\n')
+    except subprocess.CalledProcessError as e:
+        logger.warning(
+            'Failed to get gsettings value for {schema}/{key}: {error}'.format(
+                schema=schema, key=key, error=e.output
+            )
+        )
+
+
+def set_gsettings_value(schema, key, value):
+    command = ['/usr/bin/gsettings', 'set', schema, key, value]
+    try:
+        subprocess.check_output(command, stderr=subprocess.PIPE)
+    except subprocess.CalledProcessError as e:
+        logger.warning(
+            'Failed to set gsettings value {sch}/{key} to {v}: {error}'.format(
+                sch=schema, key=key, v=value, error=e.output
+            )
+        )

@@ -468,7 +468,7 @@ class UInputTouchDeviceTestCase(tests.LogHandlerTestCase):
             call.write(
                 ecodes.EV_ABS, ecodes.ABS_MT_TRACKING_ID, tracking_id),
             call.write(
-                ecodes.EV_KEY, ecodes.BTN_TOOL_FINGER, press_value),
+                ecodes.EV_KEY, ecodes.BTN_TOUCH, press_value),
             call.write(ecodes.EV_ABS, ecodes.ABS_MT_POSITION_X, x),
             call.write(ecodes.EV_ABS, ecodes.ABS_MT_POSITION_Y, y),
             call.write(ecodes.EV_ABS, ecodes.ABS_MT_PRESSURE, 400),
@@ -493,7 +493,7 @@ class UInputTouchDeviceTestCase(tests.LogHandlerTestCase):
             call.write(
                 ecodes.EV_ABS, ecodes.ABS_MT_TRACKING_ID, lift_tracking_id),
             call.write(
-                ecodes.EV_KEY, ecodes.BTN_TOOL_FINGER, release_value),
+                ecodes.EV_KEY, ecodes.BTN_TOUCH, release_value),
             call.syn()
         ]
         self.assertEqual(expected_calls, touch._device.mock_calls)

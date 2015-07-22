@@ -43,6 +43,7 @@ X-Python3-Version: >= 3.3
 Package: python3-autopilot
 Architecture: all
 Depends: gir1.2-ubuntu-app-launch-2 | gir1.2-upstart-app-launch-2,
+         libglib2.0-bin,
          libjs-jquery,
          libjs-underscore,
          python3-dateutil,

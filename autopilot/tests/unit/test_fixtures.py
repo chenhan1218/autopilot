@@ -19,11 +19,8 @@
 
 
 from testtools import TestCase
-from testtools.matchers import (
-    Not,
-    Raises,
-)
-from unittest.mock import patch
+from testtools.matchers import raises
+from unittest.mock import patch, Mock
 import autopilot._fixtures as ap_fixtures
 
 
@@ -40,47 +37,51 @@ class FixtureWithDirectAddDetailTests(TestCase):
 
 class GSettingsAccessTests(TestCase):
 
-    def test_incorrect_schema_doesnt_raise_exception(self):
+    def test_incorrect_schema_raises_exception(self):
         self.assertThat(
-            lambda: ap_fixtures.get_gsettings_value('foo', 'bar'),
-            Not(Raises())
+            lambda: ap_fixtures._gsetting_get_setting('com.foo.', 'baz'),
+            raises(ValueError)
+        )
+
+    def test_incorrect_key_raises_exception(self):
+        self.assertThat(
+            lambda: ap_fixtures._gsetting_get_setting(
+                'org.gnome.system.locale',
+                'baz'
+            ),
+            raises(ValueError)
         )
 
     def test_get_value_returns_expected_value(self):
-        with patch.object(ap_fixtures.subprocess, 'check_output') as check_out:
-            check_out.return_value = 'buzz'
+        with patch.object(ap_fixtures, '_gsetting_get_setting') as get_setting:
+            setting = Mock()
+            setting.get_boolean.return_value = True
+            get_setting.return_value = setting
             self.assertEqual(
-                ap_fixtures.get_gsettings_value('foo', 'bar'),
-                'buzz'
-            )
-
-    def test_get_value_strips_newline(self):
-        with patch.object(ap_fixtures.subprocess, 'check_output') as check_out:
-            check_out.return_value = 'buzz\n'
-            self.assertEqual(
-                ap_fixtures.get_gsettings_value('foo', 'bar'),
-                'buzz'
+                ap_fixtures.get_bool_gsettings_value('foo', 'bar'),
+                True
             )
 
 
 class OSKAlwaysEnabledTests(TestCase):
 
-    def test_sets_stayhidden_to_false(self):
-        with patch.object(ap_fixtures, 'set_gsettings_value') as set_gsetting:
+    @patch.object(ap_fixtures, '_gsetting_get_setting')
+    def test_sets_stayhidden_to_False(self, gs):
+        with patch.object(ap_fixtures, 'set_bool_gsettings_value') as set_gs:
             with ap_fixtures.OSKAlwaysEnabled():
-                set_gsetting.assert_called_once_with(
+                set_gs.assert_called_once_with(
                     'com.canonical.keyboard.maliit',
                     'stay-hidden',
-                    'false'
+                    False
                 )
 
     def test_resets_value_to_original(self):
-        with patch.object(ap_fixtures, 'set_gsettings_value') as set_gset:
-            with patch.object(ap_fixtures, 'get_gsettings_value') as get_gset:
-                get_gset.return_value = 'foo'
+        with patch.object(ap_fixtures, 'set_bool_gsettings_value') as set_gs:
+            with patch.object(ap_fixtures, 'get_bool_gsettings_value') as get_gs:  # NOQA
+                get_gs.return_value = 'foo'
                 with ap_fixtures.OSKAlwaysEnabled():
                     pass
-                set_gset.assert_called_with(
+                set_gs.assert_called_with(
                     'com.canonical.keyboard.maliit',
                     'stay-hidden',
                     'foo'

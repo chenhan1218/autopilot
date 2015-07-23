@@ -19,8 +19,7 @@
 
 from fixtures import Fixture
 import logging
-import subprocess
-
+from gi.repository import Gio
 
 logger = logging.getLogger(__name__)
 
@@ -58,52 +57,64 @@ class OSKAlwaysEnabled(Fixture):
     osk_schema = 'com.canonical.keyboard.maliit'
     osk_show_key = 'stay-hidden'
 
-    def __init__(self):
-        super().__init__()
-        self._original_value = get_gsettings_value(
-            self.osk_schema,
-            self.osk_show_key
-        )
-
     def setUp(self):
         super().setUp()
-        set_gsettings_value(self.osk_schema, self.osk_show_key, 'false')
-        self.addCleanup(
-            set_gsettings_value,
-            self.osk_schema,
-            self.osk_show_key,
-            self._original_value
-        )
+
+        try:
+            _original_value = get_bool_gsettings_value(
+                self.osk_schema,
+                self.osk_show_key
+            )
+            set_bool_gsettings_value(
+                self.osk_schema,
+                self.osk_show_key,
+                False
+            )
+            self.addCleanup(
+                set_bool_gsettings_value,
+                self.osk_schema,
+                self.osk_show_key,
+                _original_value
+            )
+        except ValueError as e:
+            logger.warning('Failed to set OSK gsetting: {}'.format(e))
 
 
-def get_gsettings_value(schema, key):
-    """Return the output of gsettings get as a string or None if the call
-    fails.
+def get_bool_gsettings_value(schema, key):
+    """Return the boolean value for schema/key combo.
+
+    :raises ValueError: If either ``schema`` or ``key`` are not valid.
 
     """
-    command = ['/usr/bin/gsettings', 'get', schema, key]
-    try:
-        output = subprocess.check_output(
-            command,
-            stderr=subprocess.PIPE,
-            universal_newlines=True
-        )
-        return output.rstrip('\n')
-    except subprocess.CalledProcessError as e:
-        logger.warning(
-            'Failed to get gsettings value for {schema}/{key}: {error}'.format(
-                schema=schema, key=key, error=e.output
+    setting = _gsetting_get_setting(schema, key)
+
+    return setting.get_boolean(key)
+
+
+def set_bool_gsettings_value(schema, key, value):
+    """Set the boolean value ``value`` for schema/key combo.
+
+    :raises ValueError: If either ``schema`` or ``key`` are not valid.
+
+    """
+
+    setting = _gsetting_get_setting(schema, key)
+
+    setting.set_boolean(key, value)
+
+
+def _gsetting_get_setting(schema, key):
+    if schema not in Gio.Settings.list_schemas():
+        raise ValueError('schema {} is not installed.'.format(schema))
+
+    setting = Gio.Settings.new(schema)
+
+    if key not in setting.keys():
+        raise ValueError(
+            'key \'{key}\' is not available for schema \'{schema}\''.format(
+                key=key,
+                schema=schema
             )
         )
 
-
-def set_gsettings_value(schema, key, value):
-    command = ['/usr/bin/gsettings', 'set', schema, key, value]
-    try:
-        subprocess.check_output(command, stderr=subprocess.PIPE)
-    except subprocess.CalledProcessError as e:
-        logger.warning(
-            'Failed to set gsettings value {sch}/{key} to {v}: {error}'.format(
-                sch=schema, key=key, v=value, error=e.output
-            )
-        )
+    return setting

@@ -68,7 +68,7 @@ class OSKAlwaysEnabled(Fixture):
             set_bool_gsettings_value(
                 self.osk_schema,
                 self.osk_show_key,
-                'false'
+                False
             )
             self.addCleanup(
                 set_bool_gsettings_value,

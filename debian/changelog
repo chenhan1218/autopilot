@@ -1,3 +1,13 @@
+autopilot (1.5.1+15.10.20150723-0ubuntu1) wily; urgency=medium
+
+  [ Christopher Lee ]
+  * Bug fixes including updated dependencies.
+
+  [ Ken VanDine ]
+  * Bug fixes including updated dependencies.
+
+ -- CI Train Bot <ci-train-bot@canonical.com>  Thu, 23 Jul 2015 14:39:21 +0000
+
 autopilot (1.5.1+15.10.20150716-0ubuntu1) wily; urgency=medium
 
   [ Christopher Lee ]

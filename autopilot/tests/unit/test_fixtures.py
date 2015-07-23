@@ -66,13 +66,13 @@ class GSettingsAccessTests(TestCase):
 class OSKAlwaysEnabledTests(TestCase):
 
     @patch.object(ap_fixtures, '_gsetting_get_setting')
-    def test_sets_stayhidden_to_false(self, gs):
+    def test_sets_stayhidden_to_False(self, gs):
         with patch.object(ap_fixtures, 'set_bool_gsettings_value') as set_gs:
             with ap_fixtures.OSKAlwaysEnabled():
                 set_gs.assert_called_once_with(
                     'com.canonical.keyboard.maliit',
                     'stay-hidden',
-                    'false'
+                    False
                 )
 
     def test_resets_value_to_original(self):

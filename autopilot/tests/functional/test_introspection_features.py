@@ -42,6 +42,7 @@ from io import StringIO
 from autopilot import platform
 from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase
+from autopilot.tests.functional import QmlScriptRunnerMixin
 from autopilot.tests.functional.fixtures import TempDesktopFile
 from autopilot.introspection import CustomEmulatorBase
 from autopilot.introspection import _object_registry as object_registry
@@ -397,3 +398,31 @@ class QMLCustomEmulatorTestCase(AutopilotTestCase):
                 [e[1] for e in result2.decorated.errors]
             )
         )
+
+
+class CustomCPOTest(AutopilotTestCase, QmlScriptRunnerMixin):
+
+    def launch_simple_qml_script(self):
+        simple_script = dedent("""
+        import QtQuick 2.0
+        Rectangle {
+            objectName: "ExampleRectangle"
+        }
+        """)
+        return self.start_qml_script(simple_script)
+
+    def test_cpo_can_be_named_different_to_underlying_type(self):
+        """A CPO with the correct name match method must be matched if the
+        class name is different to the Type name.
+
+        """
+        with object_registry.patch_registry({}):
+            class RandomNamedCPORectangle(CustomEmulatorBase):
+                @classmethod
+                def get_type_query_name(cls):
+                    return 'QQuickRectangle'
+
+            app = self.launch_simple_qml_script()
+            rectangle = app.select_single(RandomNamedCPORectangle)
+
+            self.assertThat(rectangle.objectName, Equals('ExampleRectangle'))

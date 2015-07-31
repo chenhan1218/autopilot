@@ -1,3 +1,11 @@
+autopilot (1.5.1+15.10.20150731-0ubuntu1) wily; urgency=medium
+
+  [ Christopher Lee ]
+  * Fix Bug #1337004. Allow custom proxy classes to have different class
+    names to the application objects. (LP: #1337004)
+
+ -- CI Train Bot <ci-train-bot@canonical.com>  Fri, 31 Jul 2015 02:39:56 +0000
+
 autopilot (1.5.1+15.10.20150723-0ubuntu1) wily; urgency=medium
 
   [ Christopher Lee ]

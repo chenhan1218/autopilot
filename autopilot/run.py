@@ -214,7 +214,7 @@ def _parse_arguments(argv=None):
 
 class _OneOrMoreArgumentStoreAction(Action):
 
-    def __call__(self,  parser, namespace, values, option_string=None):
+    def __call__(self, parser, namespace, values, option_string=None):
         if len(values) == 0:
             parser.error(
                 "Must specify at least one argument to the 'launch' command")

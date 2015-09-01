@@ -163,7 +163,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         self._process_manager = None
         self._mouse = None
         self._display = None
-        self._kb = None
+        self._kb = Keyboard.create()
 
         # Instatiate this after keyboard creation to ensure it doesn't get
         # overwritten
@@ -191,8 +191,6 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
     @property
     def keyboard(self):
-        if self._kb is None:
-            self._kb = Keyboard.create()
         return self._kb
 
     @property

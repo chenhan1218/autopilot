@@ -340,6 +340,9 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             app_proxy = self.launch_upstart_application("gallery-app")
 
         :param application_name: The name of the application to launch.
+        :param launcher_class: The application launcher class to use. Useful if
+        you need to overwrite the default to do something custom (i.e. using
+          AlreadyLaunchedUpstartLauncher)
         :keyword emulator_base: If set, specifies the base class to be used for
             all emulators for this loaded application.
 

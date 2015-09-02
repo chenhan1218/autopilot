@@ -21,6 +21,7 @@ from testtools import TestCase
 from unittest.mock import patch
 
 from autopilot.testcase import AutopilotTestCase
+from autopilot.application._launcher import ApplicationLauncher
 
 
 class AutopilotTestCaseClassTests(TestCase):
@@ -76,3 +77,18 @@ class AutopilotTestCaseClassTests(TestCase):
             uf.assert_called_once_with(ual.return_value)
             uf.return_value.launch.assert_called_once_with('a', ['b'])
             self.assertEqual(result, uf.return_value.launch.return_value)
+
+    def test_launch_upstart_application_custom_launcher(self):
+        class LauncherTest(AutopilotTestCase):
+
+            """Test launchers."""
+
+            def test_anything(self):
+                pass
+
+        test_case = LauncherTest('test_anything')
+        self.assertRaises(
+            NotImplementedError,
+            test_case.launch_upstart_application,
+            'a', ['b'], launcher_class=ApplicationLauncher
+        )

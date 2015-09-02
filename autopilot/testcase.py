@@ -326,7 +326,9 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         )
         return launcher.launch(package_id, app_name, app_uris)
 
-    def launch_upstart_application(self, application_name, uris=[], **kwargs):
+    def launch_upstart_application(self, application_name, uris=[],
+                                   launcher_class=UpstartApplicationLauncher,
+                                   **kwargs):
         """Launch an application with upstart.
 
         This method launched an application via the ``ubuntu-app-launch``
@@ -344,7 +346,7 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         :raises RuntimeError: If the specified application cannot be launched.
         """
         launcher = self.useFixture(
-            UpstartApplicationLauncher(
+            launcher_class(
                 case_addDetail=self.addDetailUniqueName,
                 **kwargs
             )

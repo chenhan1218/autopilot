@@ -21,7 +21,7 @@ from testtools import TestCase
 from unittest.mock import patch
 
 from autopilot.testcase import AutopilotTestCase
-from autopilot.application._launcher import ApplicationLauncher
+from autopilot.application import _launcher
 
 
 class AutopilotTestCaseClassTests(TestCase):
@@ -63,7 +63,7 @@ class AutopilotTestCaseClassTests(TestCase):
             self.assertEqual(result, uf.return_value.launch.return_value)
 
     @patch('autopilot.testcase.UpstartApplicationLauncher')
-    def test_launch_upstart_application(self, ual):
+    def test_launch_upstart_application_defaults(self, ual):
         class LauncherTest(AutopilotTestCase):
 
             """Test launchers."""
@@ -73,7 +73,9 @@ class AutopilotTestCaseClassTests(TestCase):
 
         test_case = LauncherTest('test_anything')
         with patch.object(test_case, 'useFixture') as uf:
-            result = test_case.launch_upstart_application('a', ['b'])
+            result = test_case.launch_upstart_application(
+                'a', ['b'], launcher_class=ual
+            )
             uf.assert_called_once_with(ual.return_value)
             uf.return_value.launch.assert_called_once_with('a', ['b'])
             self.assertEqual(result, uf.return_value.launch.return_value)
@@ -90,5 +92,5 @@ class AutopilotTestCaseClassTests(TestCase):
         self.assertRaises(
             NotImplementedError,
             test_case.launch_upstart_application,
-            'a', ['b'], launcher_class=ApplicationLauncher
+            'a', ['b'], launcher_class=_launcher.ApplicationLauncher
         )

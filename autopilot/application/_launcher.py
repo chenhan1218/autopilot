@@ -140,12 +140,15 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             state.get('message', '')
         )
         pid = self._get_pid_for_launched_app(app_id)
-        proxy_object = get_proxy_object_for_existing_process(
+
+        return self._get_proxy_object(pid)
+
+    def _get_proxy_object(self, pid):
+        return get_proxy_object_for_existing_process(
             dbus_bus=self.dbus_bus,
             emulator_base=self.proxy_base,
             pid=pid
         )
-        return proxy_object
 
     @staticmethod
     def _on_failed(launched_app_id, failure_type, state):
@@ -231,6 +234,19 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             message_parts.append(extra_message)
         if message_parts:
             raise RuntimeError(': '.join(message_parts))
+
+
+class AlreadyLaunchedUpstart(UpstartApplicationLauncher):
+    """Launcher that doesn't wait for a proxy object.
+
+    This is useful when you are 're-launching' an already running application
+    and it's state has changed to suspended.
+
+    """
+
+    def _get_proxy_object(self, pid):
+        # Don't wait for a proxy object
+        return None
 
 
 class ClickApplicationLauncher(UpstartApplicationLauncher):

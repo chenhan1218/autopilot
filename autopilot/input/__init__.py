@@ -129,7 +129,7 @@ class Keyboard(CleanupRegistered):
         return _pick_backend(backends, preferred_backend)
 
     @contextmanager
-    def focused_type(self, input_target,  pointer=None):
+    def focused_type(self, input_target, pointer=None):
         """Type into an input widget.
 
         This context manager takes care of making sure a particular

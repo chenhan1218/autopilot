@@ -1,3 +1,4 @@
+
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
@@ -189,9 +190,11 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
             from autopilot.input import _uinput
             return _uinput.Keyboard._device._pressed_keys_ecodes
         else:
-            self.fail("Don't know how to get pressed keys list for backend "
-                      + self.backend
-                      )
+            self.fail(
+                "Don't know how to get pressed keys list for {}".format(
+                    self.backend
+                )
+            )
 
 
 @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")

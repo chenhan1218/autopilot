@@ -236,7 +236,7 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             raise RuntimeError(': '.join(message_parts))
 
 
-class AlreadyLaunchedUpstart(UpstartApplicationLauncher):
+class AlreadyLaunchedUpstartLauncher(UpstartApplicationLauncher):
     """Launcher that doesn't wait for a proxy object.
 
     This is useful when you are 're-launching' an already running application

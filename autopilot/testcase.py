@@ -326,7 +326,9 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         )
         return launcher.launch(package_id, app_name, app_uris)
 
-    def launch_upstart_application(self, application_name, uris=[], **kwargs):
+    def launch_upstart_application(self, application_name, uris=[],
+                                   launcher_class=UpstartApplicationLauncher,
+                                   **kwargs):
         """Launch an application with upstart.
 
         This method launched an application via the ``ubuntu-app-launch``
@@ -338,13 +340,16 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             app_proxy = self.launch_upstart_application("gallery-app")
 
         :param application_name: The name of the application to launch.
+        :param launcher_class: The application launcher class to use. Useful if
+        you need to overwrite the default to do something custom (i.e. using
+          AlreadyLaunchedUpstartLauncher)
         :keyword emulator_base: If set, specifies the base class to be used for
             all emulators for this loaded application.
 
         :raises RuntimeError: If the specified application cannot be launched.
         """
         launcher = self.useFixture(
-            UpstartApplicationLauncher(
+            launcher_class(
                 case_addDetail=self.addDetailUniqueName,
                 **kwargs
             )

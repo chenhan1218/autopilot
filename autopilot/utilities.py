@@ -37,6 +37,18 @@ from autopilot.exceptions import BackendException
 logger = logging.getLogger(__name__)
 
 
+def safe_text_content(text):
+    """Return testtools.content.Content object.
+
+    Safe in the sense that it will catch any attempt to attach NoneType
+    objects.
+
+    :raises ValueError: If `text` is not a text-type object.
+
+    """
+    pass
+
+
 def _pick_backend(backends, preferred_backend):
     """Pick a backend and return an instance of it."""
     possible_backends = list(backends.keys())

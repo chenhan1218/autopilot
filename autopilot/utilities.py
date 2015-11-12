@@ -29,6 +29,7 @@ import logging
 import os
 import time
 import timeit
+from testtools.content import text_content
 from functools import wraps
 
 from autopilot.exceptions import BackendException
@@ -46,7 +47,15 @@ def safe_text_content(text):
     :raises ValueError: If `text` is not a text-type object.
 
     """
-    pass
+    if not isinstance(text, str):
+        raise ValueError(
+            'text argument must be string not {}'.format(
+                type(text).__name__
+            )
+        )
+
+    return text_content(text)
+
 
 
 def _pick_backend(backends, preferred_backend):

@@ -32,7 +32,8 @@ import os
 import psutil
 import subprocess
 import signal
-from testtools.content import content_from_file, text_content
+from testtools.content import content_from_file
+from autopilot.utilities import safe_text_content
 
 from autopilot._timeout import Timeout
 from autopilot._fixtures import FixtureWithDirectAddDetail
@@ -428,15 +429,15 @@ class NormalApplicationLauncher(ApplicationLauncher):
         stdout, stderr, return_code = _kill_process(process)
         self.caseAddDetail(
             'process-return-code (%s)' % app_path,
-            text_content(str(return_code))
+            safe_text_content(str(return_code))
         )
         self.caseAddDetail(
             'process-stdout (%s)' % app_path,
-            text_content(stdout)
+            safe_text_content(stdout)
         )
         self.caseAddDetail(
             'process-stderr (%s)' % app_path,
-            text_content(stderr)
+            safe_text_content(stderr)
         )
 
 

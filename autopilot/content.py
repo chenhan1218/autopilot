@@ -22,7 +22,8 @@
 import io
 
 import logging
-from testtools.content import ContentType, content_from_stream, text_content
+from testtools.content import ContentType, content_from_stream
+from autopilot.utilities import safe_text_content
 
 _logger = logging.getLogger(__name__)
 
@@ -46,7 +47,7 @@ def follow_file(path, test_case, content_name=None):
             content_name,
             str(e)
         )
-        return text_content('')
+        return safe_text_content('')
     else:
         file_obj.seek(0, io.SEEK_END)
         return follow_stream(

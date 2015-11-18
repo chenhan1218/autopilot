@@ -57,7 +57,6 @@ def safe_text_content(text):
     return text_content(text)
 
 
-
 def _pick_backend(backends, preferred_backend):
     """Pick a backend and return an instance of it."""
     possible_backends = list(backends.keys())

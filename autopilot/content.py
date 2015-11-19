@@ -75,5 +75,13 @@ def follow_stream(stream, test_case, content_name):
             ContentType('text', 'plain', {'charset': 'iso8859-1'}),
             buffer_now=True
         )
+
+        # Work around a bug in older testtools where an empty file would result
+        # in None being decoded and exploding.
+        # See: https://bugs.launchpad.net/autopilot/+bug/1517289
+        if list(content_obj.iter_text()) == []:
+            _logger.warning('Followed stream is empty.')
+            content_obj = safe_text_content('Unable to read file data.')
+
         test_case.addDetail(content_name, content_obj)
     test_case.addCleanup(make_content)

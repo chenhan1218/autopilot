@@ -361,7 +361,7 @@ class CachedResultTests(TestCase):
         self.assertThat(inner.call_count, Equals(2))
 
 
-class SafeTextContextTests(TestCase):
+class SafeTextContentTests(TestCase):
 
     def test_raises_ValueError_on_non_texttype(self):
         self.assertThat(

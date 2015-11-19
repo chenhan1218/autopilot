@@ -48,7 +48,7 @@ def safe_text_content(text):
 
     """
     if not isinstance(text, str):
-        raise ValueError(
+        raise TypeError(
             'text argument must be string not {}'.format(
                 type(text).__name__
             )

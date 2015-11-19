@@ -363,10 +363,10 @@ class CachedResultTests(TestCase):
 
 class SafeTextContentTests(TestCase):
 
-    def test_raises_ValueError_on_non_texttype(self):
+    def test_raises_TypeError_on_non_texttype(self):
         self.assertThat(
             lambda: safe_text_content(None),
-            raises(ValueError)
+            raises(TypeError)
         )
 
     def test_returns_text_content_object(self):

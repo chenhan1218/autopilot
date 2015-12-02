@@ -29,12 +29,32 @@ import logging
 import os
 import time
 import timeit
+from testtools.content import text_content
 from functools import wraps
 
 from autopilot.exceptions import BackendException
 
 
 logger = logging.getLogger(__name__)
+
+
+def safe_text_content(text):
+    """Return testtools.content.Content object.
+
+    Safe in the sense that it will catch any attempt to attach NoneType
+    objects.
+
+    :raises ValueError: If `text` is not a text-type object.
+
+    """
+    if not isinstance(text, str):
+        raise TypeError(
+            'text argument must be string not {}'.format(
+                type(text).__name__
+            )
+        )
+
+    return text_content(text)
 
 
 def _pick_backend(backends, preferred_backend):

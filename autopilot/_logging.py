@@ -22,10 +22,11 @@
 import logging
 from io import StringIO
 
-from testtools.content import text_content
-
 from autopilot._fixtures import FixtureWithDirectAddDetail
-from autopilot.utilities import LogFormatter
+from autopilot.utilities import (
+    LogFormatter,
+    safe_text_content,
+)
 
 
 class TestCaseLoggingFixture(FixtureWithDirectAddDetail):
@@ -54,7 +55,7 @@ class TestCaseLoggingFixture(FixtureWithDirectAddDetail):
         self._log_buffer.seek(0)
         self.caseAddDetail(
             'test-log',
-            text_content(self._log_buffer.getvalue())
+            safe_text_content(self._log_buffer.getvalue())
         )
         root_logger.removeHandler(self._log_handler)
         self._log_buffer = None

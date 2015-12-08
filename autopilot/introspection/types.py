@@ -37,8 +37,9 @@ objects.
 
 """
 
+import pytz
 from datetime import datetime, time, timedelta
-from dateutil.tz import gettz, tzutc
+from dateutil.tz import gettz
 
 import dbus
 import logging
@@ -650,39 +651,15 @@ class DateTime(_array_packed_type(1)):
         super(DateTime, self).__init__(*args, **kwargs)
         # Using timedelta in this manner is a workaround so that we can support
         # timestamps larger than the 32bit time_t limit on 32bit hardware.
-        # We then apply another workaround where timedelta doesn't apply
-        # daylight savings, so we need to work out the offsets for the
-        # localtime manually and apply them to give us the correct local time.
+        # We then apply the timezone information to this to get the correct
+        # datetime.
         #
         # Note. self[0] is a UTC timestamp
-        EPOCH = datetime(1970, 1, 1, tzinfo=tzutc())
+        utc = pytz.timezone('UTC')
+        EPOCH = datetime(1970, 1, 1, tzinfo=utc)
         utc_dt = EPOCH + timedelta(seconds=self[0])
 
-        local_tzinfo = gettz()
-
-        # Get the localtimes timezone offset (known as standard offset) by
-        # subtracting its dst offset (if any) from its utc offset.
-        # We apply this to the utc datetime object to get datetime object in
-        # localtime.
-        # (We will check (once we have a local datetime) if the time is in dst
-        # and make that adjustment then.)
-        utc_offset = local_tzinfo.utcoffset(utc_dt)
-        dst_offset = local_tzinfo.dst(utc_dt)
-        standard_offset = utc_offset - dst_offset
-
-        # Create a local timezone aware datetime object from the utc_dt
-        # (i.e. attaching a timezone to it) and apply the standard offset to
-        # give us the local time.
-        local_dt = utc_dt.replace(tzinfo=local_tzinfo) + standard_offset
-
-        # If the new local time is firmly in std time then the standard offset
-        # will be 0 (i.e. timedelta(0)).
-        # If the delta isn't 0 then we need to use the timezone information to
-        # apply the dst delta to the local time.
-        if standard_offset != timedelta(0):
-            local_dt = local_dt + local_tzinfo.dst(local_dt)
-
-        self._cached_dt = local_dt
+        self._cached_dt = utc_dt.astimezone(gettz())
 
     @property
     def year(self):

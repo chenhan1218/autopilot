@@ -56,12 +56,9 @@ class OttoSaysDirective(Directive):
                              self.content, self.lineno, self.content_offset,
                              self.block_text, self.state, self.state_machine)
         image_container = nodes.container()
-        image_container.children.append(nodes.image(uri='/images/otto-64.png'))
+        image_container.append(nodes.image(uri='/images/otto-64.png'))
         image_container['classes'] = ['otto-image-container']
         outer_container = nodes.container()
-        outer_container.children.extend(
-            [image_container]
-            + ad
-        )
+        outer_container.extend([image_container] + ad)
         outer_container['classes'] = ['otto-says-container']
         return [outer_container]

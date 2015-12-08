@@ -22,6 +22,8 @@
 import fixtures
 from gi.repository import GLib
 try:
+    from gi import require_version
+    require_version('UbuntuAppLaunch', '2')
     from gi.repository import UbuntuAppLaunch
 except ImportError:
     # Note: the renamed package is not in Trusty.

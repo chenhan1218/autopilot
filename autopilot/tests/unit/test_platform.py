@@ -39,7 +39,7 @@ class PublicAPITests(TestCase):
     @patch('autopilot.platform._PlatformDetector')
     def test_model_creates_platform_detector(self, mock_detector):
         platform.model()
-        mock_detector.create.assert_called_once()
+        mock_detector.create.assert_called_once_with()
 
     @patch('autopilot.platform._PlatformDetector._cached_detector')
     def test_model_returns_correct_value(self, mock_detector):
@@ -49,7 +49,7 @@ class PublicAPITests(TestCase):
     @patch('autopilot.platform._PlatformDetector')
     def test_image_codename_creates_platform_detector(self, mock_detector):
         platform.image_codename()
-        mock_detector.create.assert_called_once()
+        mock_detector.create.assert_called_once_with()
 
     @patch('autopilot.platform._PlatformDetector._cached_detector')
     def test_image_codename_returns_correct_value(self, mock_detector):

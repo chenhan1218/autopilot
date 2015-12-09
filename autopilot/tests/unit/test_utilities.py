@@ -20,6 +20,7 @@
 from unittest.mock import Mock, patch
 import re
 from testtools import TestCase
+from testtools.content import Content
 from testtools.matchers import (
     Equals,
     IsInstance,
@@ -39,6 +40,7 @@ from autopilot.utilities import (
     compatible_repr,
     deprecated,
     EventDelay,
+    safe_text_content,
     sleep,
 )
 
@@ -357,3 +359,17 @@ class CachedResultTests(TestCase):
         wrapped.reset_cache()
         wrapped()
         self.assertThat(inner.call_count, Equals(2))
+
+
+class SafeTextContentTests(TestCase):
+
+    def test_raises_TypeError_on_non_texttype(self):
+        self.assertThat(
+            lambda: safe_text_content(None),
+            raises(TypeError)
+        )
+
+    def test_returns_text_content_object(self):
+        example_string = self.getUniqueString()
+        content_obj = safe_text_content(example_string)
+        self.assertTrue(isinstance(content_obj, Content))

@@ -307,17 +307,11 @@ def _find_matching_connections(bus, connection_matcher, process=None):
         while we're searching for it.
 
     """
-    seen_connections = []
-
     for _ in Timeout.default():
         _get_child_pids.reset_cache()
         _raise_if_process_has_exited(process)
 
-        connections = _get_buses_unchecked_connection_names(
-            bus,
-            seen_connections
-        )
-        seen_connections.extend(connections)
+        connections = bus.list_names()
 
         valid_connections = [
             c for c
@@ -343,17 +337,6 @@ def _raise_if_process_has_exited(process):
 
 def _process_is_running(process):
     return process.poll() is None
-
-
-def _get_buses_unchecked_connection_names(dbus_bus, previous_connections=None):
-    """Return a list of connections found on dbus_bus.
-
-    If previous_connections is supplied then those connections are removed from
-    the returned list.
-
-    """
-    all_conns = dbus_bus.list_names()
-    return list(set(all_conns).difference(set(previous_connections or [])))
 
 
 def _dedupe_connections_on_pid(valid_connections, bus):
@@ -404,12 +387,15 @@ def _make_proxy_object(dbus_address, emulator_base):
     # make sure we always have an emulator base. Either use the one the user
     # gave us, or make one:
     emulator_base = emulator_base or _make_default_emulator_base()
+    _raise_if_base_class_not_actually_base(emulator_base)
+
     # Get the dbus introspection Xml for the backend.
     intro_xml = _get_introspection_xml_from_backend(dbus_address)
     try:
         # Figure out if the backend has any extension methods, and return
         # classes that understand how to use each of those extensions:
         extension_classes = _get_proxy_bases_from_introspection_xml(intro_xml)
+
         # Register those base classes for everything that will derive from this
         # emulator base class.
         _object_registry.register_extension_classes_for_proxy_base(
@@ -442,6 +428,38 @@ def _make_proxy_object(dbus_address, emulator_base):
 def _make_default_emulator_base():
     """Make a default base class for all proxy classes to derive from."""
     return type("DefaultEmulatorBase", (ap_dbus.DBusIntrospectionObject,), {})
+
+
+WRONG_CPO_CLASS_MSG = '''\
+base_class: {passed} does not appear to be the actual base CPO class.
+Perhaps you meant to use: {actual}.'''
+
+
+def _raise_if_base_class_not_actually_base(base_class):
+    """Raises ValueError if the provided base_class is not actually the
+       base_class
+
+    To ensure that the expected base classes are used when creating proxy
+    objects.
+
+    :param base_class: The base class to check.
+    :raises ValueError: The actual base class is not the one provided
+
+    """
+    actual_base_class = base_class
+    for cls in base_class.mro():
+        if hasattr(cls, '_id'):
+            actual_base_class = cls
+
+    if actual_base_class != base_class:
+        raise(
+            ValueError(
+                WRONG_CPO_CLASS_MSG.format(
+                    passed=base_class,
+                    actual=actual_base_class
+                )
+            )
+        )
 
 
 def _make_proxy_object_async(

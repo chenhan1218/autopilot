@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2014 Canonical
+# Copyright (C) 2014, 2015 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -263,3 +263,149 @@ class ObjectRegistryPatchTests(TestCase):
         with object_registry.patch_registry(dict()):
             object_registry._object_registry[token] = token
         self.assertFalse(token in object_registry._object_registry)
+
+
+class CombineBasesTests(TestCase):
+    def test_returns_original_if_no_extensions(self):
+        class Base():
+            pass
+
+        class Sub(Base):
+            pass
+
+        self.assertEqual(
+            object_registry._combine_base_and_extensions(Sub, ()),
+            (Base,)
+        )
+
+    def test_returns_addition_of_extension_classes(self):
+        class Base():
+            pass
+
+        class Sub(Base):
+            pass
+
+        class Ext1():
+            pass
+
+        class Ext2():
+            pass
+
+        mixed = object_registry._combine_base_and_extensions(Sub, (Ext1, Ext2))
+
+        self.assertIn(Ext1, mixed)
+        self.assertIn(Ext2, mixed)
+
+    def test_excludes_duplication_of_base_class_within_extension_classes(self):
+        class Base():
+            pass
+
+        class Sub(Base):
+            pass
+
+        class Ext1():
+            pass
+
+        class Ext2(Ext1):
+            pass
+
+        self.assertEqual(
+            object_registry._combine_base_and_extensions(Sub, (Ext2, Base)),
+            (Ext2, Base,)
+        )
+
+    def test_excludes_addition_of_extension_base_classes(self):
+        class Base():
+            pass
+
+        class Sub(Base):
+            pass
+
+        class Ext1():
+            pass
+
+        class Ext2(Ext1):
+            pass
+
+        self.assertNotIn(
+            object_registry._combine_base_and_extensions(Sub, (Ext2,)),
+            Ext1
+        )
+
+    def test_excludes_addition_of_subject_class(self):
+        class Base():
+            pass
+
+        class Sub(Base):
+            pass
+
+        class Ext1():
+            pass
+
+        self.assertEqual(
+            object_registry._combine_base_and_extensions(Sub, (Ext1, Sub)),
+            (Ext1, Base)
+        )
+
+    def test_maintains_mro_order(self):
+        class Base():
+            pass
+
+        class Sub1(Base):
+            pass
+
+        class Sub2(Sub1, Base):
+            pass
+
+        class Ext1():
+            pass
+
+        mixed = object_registry._combine_base_and_extensions(Sub2, (Ext1,))
+
+        self.assertLess(
+            mixed.index(Sub1),
+            mixed.index(Base)
+        )
+
+
+class MROSortOrderTests(TestCase):
+    def test_returns_lower_values_for_lower_classes_in_mro(self):
+        class Parent():
+            pass
+
+        class Child(Parent):
+            pass
+
+        class GrandChild(Child):
+            pass
+
+        self.assertGreater(
+            object_registry._get_mro_sort_order(Child),
+            object_registry._get_mro_sort_order(Parent),
+        )
+        self.assertGreater(
+            object_registry._get_mro_sort_order(GrandChild),
+            object_registry._get_mro_sort_order(Child),
+        )
+
+    def test_return_higher_values_for_promoted_collections_in_ties(self):
+        class Parent1():
+            pass
+
+        class Child1(Parent1):
+            pass
+
+        class Parent2():
+            pass
+
+        class Child2(Parent2):
+            pass
+
+        promoted_collection = (Parent1, Child1)
+
+        self.assertGreater(
+            object_registry._get_mro_sort_order(
+                Child1, promoted_collection),
+            object_registry._get_mro_sort_order(
+                Child2, promoted_collection),
+        )

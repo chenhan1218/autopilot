@@ -22,6 +22,8 @@
 import fixtures
 from gi.repository import GLib
 try:
+    from gi import require_version
+    require_version('UbuntuAppLaunch', '2')
     from gi.repository import UbuntuAppLaunch
 except ImportError:
     # Note: the renamed package is not in Trusty.
@@ -32,7 +34,8 @@ import os
 import psutil
 import subprocess
 import signal
-from testtools.content import content_from_file, text_content
+from testtools.content import content_from_file
+from autopilot.utilities import safe_text_content
 
 from autopilot._timeout import Timeout
 from autopilot._fixtures import FixtureWithDirectAddDetail
@@ -140,12 +143,15 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             state.get('message', '')
         )
         pid = self._get_pid_for_launched_app(app_id)
-        proxy_object = get_proxy_object_for_existing_process(
+
+        return self._get_proxy_object(pid)
+
+    def _get_proxy_object(self, pid):
+        return get_proxy_object_for_existing_process(
             dbus_bus=self.dbus_bus,
             emulator_base=self.proxy_base,
             pid=pid
         )
-        return proxy_object
 
     @staticmethod
     def _on_failed(launched_app_id, failure_type, state):
@@ -231,6 +237,19 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             message_parts.append(extra_message)
         if message_parts:
             raise RuntimeError(': '.join(message_parts))
+
+
+class AlreadyLaunchedUpstartLauncher(UpstartApplicationLauncher):
+    """Launcher that doesn't wait for a proxy object.
+
+    This is useful when you are 're-launching' an already running application
+    and it's state has changed to suspended.
+
+    """
+
+    def _get_proxy_object(self, pid):
+        # Don't wait for a proxy object
+        return None
 
 
 class ClickApplicationLauncher(UpstartApplicationLauncher):
@@ -412,15 +431,15 @@ class NormalApplicationLauncher(ApplicationLauncher):
         stdout, stderr, return_code = _kill_process(process)
         self.caseAddDetail(
             'process-return-code (%s)' % app_path,
-            text_content(str(return_code))
+            safe_text_content(str(return_code))
         )
         self.caseAddDetail(
             'process-stdout (%s)' % app_path,
-            text_content(stdout)
+            safe_text_content(stdout)
         )
         self.caseAddDetail(
             'process-stderr (%s)' % app_path,
-            text_content(stderr)
+            safe_text_content(stderr)
         )
 
 

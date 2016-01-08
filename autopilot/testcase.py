@@ -69,6 +69,7 @@ from autopilot.matchers import Eventually
 from autopilot.platform import get_display_server
 from autopilot.process import ProcessManager
 from autopilot.utilities import deprecated, on_test_started
+from autopilot._fixtures import OSKAlwaysEnabled
 from autopilot._timeout import Timeout
 from autopilot._logging import TestCaseLoggingFixture
 from autopilot._video import get_video_recording_fixture
@@ -161,8 +162,13 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
         self._process_manager = None
         self._mouse = None
-        self._kb = None
         self._display = None
+        self._kb = Keyboard.create()
+
+        # Instatiate this after keyboard creation to ensure it doesn't get
+        # overwritten
+        # Workaround for bug lp:1474444
+        self.useFixture(OSKAlwaysEnabled())
 
         # Work around for bug lp:1297592.
         _ensure_uinput_device_created()
@@ -185,8 +191,6 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
 
     @property
     def keyboard(self):
-        if self._kb is None:
-            self._kb = Keyboard.create()
         return self._kb
 
     @property
@@ -322,7 +326,9 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         )
         return launcher.launch(package_id, app_name, app_uris)
 
-    def launch_upstart_application(self, application_name, uris=[], **kwargs):
+    def launch_upstart_application(self, application_name, uris=[],
+                                   launcher_class=UpstartApplicationLauncher,
+                                   **kwargs):
         """Launch an application with upstart.
 
         This method launched an application via the ``ubuntu-app-launch``
@@ -334,13 +340,16 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
             app_proxy = self.launch_upstart_application("gallery-app")
 
         :param application_name: The name of the application to launch.
+        :param launcher_class: The application launcher class to use. Useful if
+        you need to overwrite the default to do something custom (i.e. using
+          AlreadyLaunchedUpstartLauncher)
         :keyword emulator_base: If set, specifies the base class to be used for
             all emulators for this loaded application.
 
         :raises RuntimeError: If the specified application cannot be launched.
         """
         launcher = self.useFixture(
-            UpstartApplicationLauncher(
+            launcher_class(
                 case_addDetail=self.addDetailUniqueName,
                 **kwargs
             )

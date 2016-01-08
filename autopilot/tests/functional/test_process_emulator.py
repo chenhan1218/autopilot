@@ -87,7 +87,7 @@ class ProcessEmulatorTests(AutopilotTestCase):
         # locale='C' does not work here as this goes through bamf, so we can't
         # assert the precise name
         self.assertThat(app.name, NotEquals(''))
-        self.assertThat(app.desktop_file, Equals('gnome-calculator.desktop'))
+        self.assertThat(app.desktop_file, Equals('gcalctool.desktop'))
 
     def test_start_app_window(self):
         """Ensure we can start an Application Window."""

@@ -22,7 +22,8 @@
 import io
 
 import logging
-from testtools.content import ContentType, content_from_stream, text_content
+from testtools.content import ContentType, content_from_stream
+from autopilot.utilities import safe_text_content
 
 _logger = logging.getLogger(__name__)
 
@@ -46,7 +47,7 @@ def follow_file(path, test_case, content_name=None):
             content_name,
             str(e)
         )
-        return text_content('')
+        return safe_text_content('')
     else:
         file_obj.seek(0, io.SEEK_END)
         return follow_stream(
@@ -74,5 +75,13 @@ def follow_stream(stream, test_case, content_name):
             ContentType('text', 'plain', {'charset': 'iso8859-1'}),
             buffer_now=True
         )
+
+        # Work around a bug in older testtools where an empty file would result
+        # in None being decoded and exploding.
+        # See: https://bugs.launchpad.net/autopilot/+bug/1517289
+        if list(content_obj.iter_text()) == []:
+            _logger.warning('Followed stream is empty.')
+            content_obj = safe_text_content('Unable to read file data.')
+
         test_case.addDetail(content_name, content_obj)
     test_case.addCleanup(make_content)

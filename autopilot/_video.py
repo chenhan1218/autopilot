@@ -26,10 +26,10 @@ import os
 import signal
 import subprocess
 
-from testtools.content import text_content
 from testtools.matchers import NotEquals
 
 from autopilot.matchers import Eventually
+from autopilot.utilities import safe_text_content
 
 
 logger = logging.getLogger(__name__)
@@ -103,7 +103,7 @@ class RMDVideoLogFixture(fixtures.Fixture):
             if self._capture_process.returncode != 0:
                 test_instance.addDetail(
                     'video capture log',
-                    text_content(self._capture_process.stdout.read()))
+                    safe_text_content(self._capture_process.stdout.read()))
         self._capture_process = None
         self._currently_recording_description = None
 

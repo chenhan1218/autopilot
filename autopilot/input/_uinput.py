@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012, 2013, 2014 Canonical
+# Copyright (C) 2012, 2013, 2014, 2015 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@ import logging
 
 from evdev import UInput, ecodes as e
 
-import autopilot.platform
 from autopilot.input import Keyboard as KeyboardBase
 from autopilot.input import Touch as TouchBase
 from autopilot.input._common import get_center_point
@@ -325,13 +324,7 @@ def _get_system_resolution():
 
 
 def _get_touch_tool():
-    # android uses BTN_TOOL_FINGER, whereas desktop uses BTN_TOUCH. I have
-    # no idea why...
-    if autopilot.platform.model() == 'Desktop':
-        touch_tool = e.BTN_TOUCH
-    else:
-        touch_tool = e.BTN_TOOL_FINGER
-    return touch_tool
+    return e.BTN_TOUCH
 
 
 class _UInputTouchDevice(object):
@@ -378,7 +371,7 @@ class _UInputTouchDevice(object):
         self._device.write(
             e.EV_ABS, e.ABS_MT_TRACKING_ID, self._get_next_tracking_id())
         press_value = 1
-        self._device.write(e.EV_KEY, e.BTN_TOOL_FINGER, press_value)
+        self._device.write(e.EV_KEY, _get_touch_tool(), press_value)
         self._device.write(e.EV_ABS, e.ABS_MT_POSITION_X, int(x))
         self._device.write(e.EV_ABS, e.ABS_MT_POSITION_Y, int(y))
         self._device.write(e.EV_ABS, e.ABS_MT_PRESSURE, 400)
@@ -430,7 +423,7 @@ class _UInputTouchDevice(object):
         lift_tracking_id = -1
         self._device.write(e.EV_ABS, e.ABS_MT_TRACKING_ID, lift_tracking_id)
         release_value = 0
-        self._device.write(e.EV_KEY, e.BTN_TOOL_FINGER, release_value)
+        self._device.write(e.EV_KEY, _get_touch_tool(), release_value)
         self._device.syn()
         self._release_touch_finger()
 
@@ -458,6 +451,18 @@ class Touch(TouchBase):
         super(Touch, self).__init__()
         self._device = device_class()
         self.event_delayer = EventDelay()
+        self._x = 0
+        self._y = 0
+
+    @property
+    def x(self):
+        """Finger position X coordinate."""
+        return self._x
+
+    @property
+    def y(self):
+        """Finger position Y coordinate."""
+        return self._y
 
     @property
     def pressed(self):
@@ -472,9 +477,14 @@ class Touch(TouchBase):
         """
         _logger.debug("Tapping at: %d,%d", x, y)
         self.event_delayer.delay(time_between_events)
-        self._device.finger_down(x, y)
+        self._finger_down(x, y)
         sleep(press_duration)
         self._device.finger_up()
+
+    def _finger_down(self, x, y):
+        self._device.finger_down(x, y)
+        self._x = x
+        self._y = y
 
     def tap_object(self, object_, press_duration=0.1, time_between_events=0.1):
         """Click (or 'tap') a given object.
@@ -504,7 +514,7 @@ class Touch(TouchBase):
 
         """
         _logger.debug("Pressing at: %d,%d", x, y)
-        self._device.finger_down(x, y)
+        self._finger_down(x, y)
 
     def release(self):
         """Release a previously pressed finger.
@@ -515,15 +525,58 @@ class Touch(TouchBase):
         _logger.debug("Releasing")
         self._device.finger_up()
 
-    def move(self, x, y):
+    def move(self, x, y, animate=True, rate=10, time_between_events=0.01):
         """Moves the pointing "finger" to pos(x,y).
 
         NOTE: The finger has to be down for this to have any effect.
 
+        :param x: The point on the x axis where the move will end at.
+        :param y: The point on the y axis where the move will end at.
+        :param animate: Indicates if the move should be immediate or it should
+            be animated moving the finger slowly accross the screen as a real
+            user would do. By default, when the finger is down the finger is
+            animated. When the finger is up, the parameter is ignored and the
+            move is always immediate.
+        :type animate: boolean.
+        :param rate: The number of pixels the finger will be moved per
+            iteration. Default is 10 pixels. A higher rate will make the drag
+            faster, and lower rate will make it slower.
+        :param time_between_events: The number of seconds that the drag will
+            wait between iterations.
         :raises RuntimeError: if the finger is not pressed.
 
         """
-        self._device.finger_move(x, y)
+        if self.pressed:
+            if animate:
+                self._move_with_animation(x, y, rate, time_between_events)
+            else:
+                self._device.finger_move(x, y)
+        self._x = x
+        self._y = y
+
+    def _move_with_animation(self, x, y, rate, time_between_events):
+        current_x, current_y = self.x, self.y
+        while current_x != x or current_y != y:
+            dx = abs(x - current_x)
+            dy = abs(y - current_y)
+
+            intx = float(dx) / max(dx, dy)
+            inty = float(dy) / max(dx, dy)
+
+            step_x = min(rate * intx, dx)
+            step_y = min(rate * inty, dy)
+
+            if x < current_x:
+                step_x *= -1
+            if y < current_y:
+                step_y *= -1
+
+            current_x += step_x
+            current_y += step_y
+
+            self._device.finger_move(current_x, current_y)
+
+            sleep(time_between_events)
 
     def drag(self, x1, y1, x2, y2, rate=10, time_between_events=0.01):
         """Perform a drag gesture.
@@ -548,30 +601,10 @@ class Touch(TouchBase):
 
         """
         _logger.debug("Dragging from %d,%d to %d,%d", x1, y1, x2, y2)
-        self._device.finger_down(x1, y1)
-
-        current_x, current_y = x1, y1
-        while current_x != x2 or current_y != y2:
-            dx = abs(x2 - current_x)
-            dy = abs(y2 - current_y)
-
-            intx = float(dx) / max(dx, dy)
-            inty = float(dy) / max(dx, dy)
-
-            step_x = min(rate * intx, dx)
-            step_y = min(rate * inty, dy)
-
-            if x2 < current_x:
-                step_x *= -1
-            if y2 < current_y:
-                step_y *= -1
-
-            current_x += step_x
-            current_y += step_y
-            self._device.finger_move(current_x, current_y)
-
-            sleep(time_between_events)
-
+        self._finger_down(x1, y1)
+        self.move(
+            x2, y2, animate=True, rate=rate,
+            time_between_events=time_between_events)
         self._device.finger_up()
 
 

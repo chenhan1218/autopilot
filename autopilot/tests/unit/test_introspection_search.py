@@ -34,6 +34,8 @@ from testtools.matchers import (
 from autopilot.exceptions import ProcessSearchError
 from autopilot.utilities import sleep
 from autopilot.introspection import _search as _s
+
+from autopilot.introspection import CustomEmulatorBase
 from autopilot.introspection.constants import AUTOPILOT_PATH
 
 
@@ -522,47 +524,6 @@ class FilterHelpersTests(TestCase):
         )
 
 
-class FindMatchingConnectionsTests(TestCase):
-
-    """Testing the behaviour of _find_matching_connections and helper methods
-    used within.
-
-    """
-
-    def test_unchecked_connection_names_returns_all_buses_initially(self):
-        mock_connection_list = ['conn1', 'conn2', 'conn3']
-        dbus_bus = Mock()
-        dbus_bus.list_names = Mock(return_value=mock_connection_list)
-
-        self.assertThat(
-            _s._get_buses_unchecked_connection_names(dbus_bus),
-            ListContainsOnly(mock_connection_list)
-        )
-
-    def test_unchecked_connection_names_returns_only_unseen_connections(self):
-        mock_connection_list = ['conn1', 'conn2', 'conn3']
-        dbus_bus = Mock()
-        dbus_bus.list_names = Mock(return_value=mock_connection_list)
-
-        self.assertThat(
-            _s._get_buses_unchecked_connection_names(dbus_bus, ['conn3']),
-            ListContainsOnly(['conn1', 'conn2'])
-        )
-
-    def test_unchecked_connection_names_returns_empty_list_when_all_seen(self):
-        mock_connection_list = ['conn1', 'conn2', 'conn3']
-        dbus_bus = Mock()
-        dbus_bus.list_names = Mock(return_value=mock_connection_list)
-
-        self.assertThat(
-            _s._get_buses_unchecked_connection_names(
-                dbus_bus,
-                mock_connection_list
-            ),
-            Equals([])
-        )
-
-
 class ProcessAndPidErrorCheckingTests(TestCase):
 
     def test_raises_ProcessSearchError_when_process_is_not_running(self):
@@ -740,33 +701,126 @@ class ProxyObjectTests(TestCase):
     def test_raise_if_not_single_result_doesnt_raise_with_single_result(self):
         _s._raise_if_not_single_result([1], "")
 
-    @patch.object(_s, '_get_buses_unchecked_connection_names')
-    def test_find_matching_connections_calls_connection_matcher(self, gbycn):
-        gbycn.return_value = ["conn1"]
+    class FMCTest:
+        def list_names(self):
+            return ["conn1"]
+
+    def test_find_matching_connections_calls_connection_matcher(self):
+        bus = ProxyObjectTests.FMCTest()
         connection_matcher = Mock(return_value=False)
 
         with sleep.mocked():
-            _s._find_matching_connections("bus", connection_matcher)
+            _s._find_matching_connections(bus, connection_matcher)
 
-        connection_matcher.assert_called_with(("bus", "conn1"))
+        connection_matcher.assert_called_with((bus, "conn1"))
 
-    @patch.object(_s, '_get_buses_unchecked_connection_names')
-    def test_find_matching_connections_attempts_multiple_times(self, gbycn):
-        gbycn.return_value = ["conn1"]
+    def test_find_matching_connections_attempts_multiple_times(self):
+        bus = ProxyObjectTests.FMCTest()
         connection_matcher = Mock(return_value=False)
 
         with sleep.mocked():
-            _s._find_matching_connections("bus", connection_matcher)
+            _s._find_matching_connections(bus, connection_matcher)
 
-        connection_matcher.assert_called_with(("bus", "conn1"))
+        connection_matcher.assert_called_with((bus, "conn1"))
         self.assertEqual(connection_matcher.call_count, 11)
 
-    @patch.object(_s, '_get_buses_unchecked_connection_names')
-    def test_find_matching_connections_dedupes_results_on_pid(self, gbycn):
-        gbycn.return_value = ["conn1"]
+    def test_find_matching_connections_dedupes_results_on_pid(self):
+        bus = ProxyObjectTests.FMCTest()
 
         with patch.object(_s, '_dedupe_connections_on_pid') as dedupe:
             with sleep.mocked():
-                _s._find_matching_connections("bus", lambda *args: True)
+                _s._find_matching_connections(bus, lambda *args: True)
 
-                dedupe.assert_called_once_with(["conn1"], "bus")
+                dedupe.assert_called_once_with(["conn1"], bus)
+
+
+class ActualBaseClassTests(TestCase):
+
+    def test_dont_raise_passed_base_when_is_only_base(self):
+        class ActualBase(CustomEmulatorBase):
+            pass
+
+        try:
+            _s._raise_if_base_class_not_actually_base(ActualBase)
+        except ValueError:
+            self.fail('Unexpected ValueError exception')
+
+    def test_raises_if_passed_incorrect_base_class(self):
+        class ActualBase(CustomEmulatorBase):
+            pass
+
+        class InheritedCPO(ActualBase):
+            pass
+
+        self.assertRaises(
+            ValueError,
+            _s._raise_if_base_class_not_actually_base,
+            InheritedCPO
+        )
+
+    def test_raises_parent_with_simple_non_ap_multi_inheritance(self):
+        """When mixing in non-customproxy classes must return the base."""
+
+        class ActualBase(CustomEmulatorBase):
+            pass
+
+        class InheritedCPO(ActualBase):
+            pass
+
+        class TrickyOne(object):
+            pass
+
+        class FinalForm(InheritedCPO, TrickyOne):
+            pass
+
+        self.assertRaises(
+            ValueError,
+            _s._raise_if_base_class_not_actually_base,
+            FinalForm
+        )
+
+    def test_raises_parent_with_non_ap_multi_inheritance(self):
+
+        class ActualBase(CustomEmulatorBase):
+            pass
+
+        class InheritedCPO(ActualBase):
+            pass
+
+        class TrickyOne(object):
+            pass
+
+        class FinalForm(TrickyOne, InheritedCPO):
+            pass
+
+        self.assertRaises(
+            ValueError,
+            _s._raise_if_base_class_not_actually_base,
+            FinalForm
+        )
+
+    def test_dont_raise_when_using_default_emulator_base(self):
+        # _make_proxy_object potentially creates a default base.
+        DefaultBase = _s._make_default_emulator_base()
+        try:
+            _s._raise_if_base_class_not_actually_base(DefaultBase)
+        except ValueError:
+            self.fail('Unexpected ValueError exception')
+
+    def test_exception_message_contains_useful_information(self):
+        class ActualBase(CustomEmulatorBase):
+            pass
+
+        class InheritedCPO(ActualBase):
+            pass
+
+        try:
+            _s._raise_if_base_class_not_actually_base(InheritedCPO)
+        except ValueError as err:
+            self.assertEqual(
+                str(err),
+                _s.WRONG_CPO_CLASS_MSG.format(
+                    passed=InheritedCPO,
+                    actual=ActualBase
+                )
+            )

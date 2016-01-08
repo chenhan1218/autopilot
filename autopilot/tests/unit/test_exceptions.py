@@ -76,9 +76,9 @@ class StateNotFoundTests(TestCase):
         self.assertThat(
             str(err),
             EndsWith(
-                'Tips on minimizing the occurrence of this failure'
+                'Tips on minimizing the occurrence of this failure '
                 'are available here: '
-                'http://developer.ubuntu.com/api/devel/ubuntu-14.10/python/'
-                'autopilot/faq/troubleshooting.html'
+                'https://developer.ubuntu.com/api/autopilot/python/1.5.0/'
+                'faq-troubleshooting/'
             )
         )

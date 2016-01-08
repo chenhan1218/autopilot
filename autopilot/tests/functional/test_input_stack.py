@@ -1,7 +1,8 @@
+
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2012, 2013, 2014 Canonical
+# Copyright (C) 2012, 2013, 2014, 2015 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -189,9 +190,11 @@ class InputStackKeyboardTypingTests(InputStackKeyboardBase):
             from autopilot.input import _uinput
             return _uinput.Keyboard._device._pressed_keys_ecodes
         else:
-            self.fail("Don't know how to get pressed keys list for backend "
-                      + self.backend
-                      )
+            self.fail(
+                "Don't know how to get pressed keys list for {}".format(
+                    self.backend
+                )
+            )
 
 
 @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
@@ -368,10 +371,6 @@ class MockAppMouseTestBase(AutopilotTestCase):
 
 class MouseTestCase(AutopilotTestCase, tests.LogHandlerTestCase):
 
-    def setUp(self):
-        super(MouseTestCase, self).setUp()
-        self.device = Mouse.create()
-
     @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (Mouse)")
     def test_move_to_nonint_point(self):
         """Test mouse does not get stuck when we move to a non-integer point.
@@ -379,11 +378,12 @@ class MouseTestCase(AutopilotTestCase, tests.LogHandlerTestCase):
         LP bug #1195499.
 
         """
+        device = Mouse.create()
         screen_geometry = Display.create().get_screen_geometry(0)
         target_x = screen_geometry[0] + 10
         target_y = screen_geometry[1] + 10.6
-        self.device.move(target_x, target_y)
-        self.assertEqual(self.device.position(), (target_x, int(target_y)))
+        device.move(target_x, target_y)
+        self.assertEqual(device.position(), (target_x, int(target_y)))
 
     @patch('autopilot.platform.model', new=lambda *args: "Not Desktop", )
     def test_mouse_creation_on_device_raises_useful_error(self):
@@ -484,8 +484,8 @@ class PointerWrapperTests(AutopilotTestCase):
         device = Pointer(Touch.create())
         device.move(34, 56)
 
-        self.assertThat(device._x, Equals(34))
-        self.assertThat(device._y, Equals(56))
+        self.assertThat(device.x, Equals(34))
+        self.assertThat(device.y, Equals(56))
 
     def test_touch_drag_updates_coordinates(self):
         """The Pointer wrapper must update it's x and y properties when
@@ -494,11 +494,13 @@ class PointerWrapperTests(AutopilotTestCase):
         """
         class FakeTouch(Touch):
             def __init__(self):
-                pass
+                self.x = 0
+                self.y = 0
 
             def drag(self, x1, y1, x2, y2, rate='dummy',
                      time_between_events='dummy'):
-                pass
+                self.x = x2
+                self.y = y2
 
         p = Pointer(FakeTouch())
         p.drag(0, 0, 100, 123)

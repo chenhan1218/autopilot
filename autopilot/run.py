@@ -109,8 +109,8 @@ def _get_parser():
     parser_run.add_argument(
         '-v', '--verbose', default=False, required=False, action='count',
         help="If set, autopilot will output test log data to stderr during a "
-        "test run. Set twice to also log data useful for debugging autopilot "
-        "itself.")
+        "test run. Set twice (i.e. -vv) to also log debug level messages. "
+        "(This can be useful for debugging autopilot itself.)")
     parser_run.add_argument(
         "--debug-profile",
         choices=[p.name for p in get_all_debug_profiles()],
@@ -214,7 +214,7 @@ def _parse_arguments(argv=None):
 
 class _OneOrMoreArgumentStoreAction(Action):
 
-    def __call__(self,  parser, namespace, values, option_string=None):
+    def __call__(self, parser, namespace, values, option_string=None):
         if len(values) == 0:
             parser.error(
                 "Must specify at least one argument to the 'launch' command")
@@ -224,14 +224,19 @@ class _OneOrMoreArgumentStoreAction(Action):
 def setup_logging(verbose):
     """Configure the root logger and verbose logging to stderr."""
     root_logger = get_root_logger()
-    root_logger.setLevel(logging.DEBUG)
+    root_logger.setLevel(logging.INFO)
     if verbose == 0:
         set_null_log_handler(root_logger)
     if verbose >= 1:
+        autopilot.globals.set_log_verbose(True)
         set_stderr_stream_handler(root_logger)
     if verbose >= 2:
+        root_logger.setLevel(logging.DEBUG)
         enable_debug_log_messages()
-    # log autopilot version
+
+
+def log_autopilot_version():
+    root_logger = get_root_logger()
     root_logger.info(get_version_string())
 
 
@@ -611,6 +616,8 @@ class TestProgram(object):
     def run(self):
         setup_logging(getattr(self.args, 'verbose', False))
 
+        log_autopilot_version()
+
         action = None
         if self.args.mode == 'list':
             action = self.list_tests
@@ -662,16 +669,6 @@ class TestProgram(object):
 
     def run_tests(self):
         """Run tests, using input from `args`."""
-        test_suite, error_encountered = load_test_suite_from_name(
-            self.args.suite
-        )
-
-        if not test_suite.countTestCases():
-            raise RuntimeError('Did not find any tests')
-
-        if self.args.random_order:
-            shuffle(test_suite._tests)
-            print("Running tests in random order")
 
         _configure_debug_profile(self.args)
         _configure_timeout_profile(self.args)
@@ -685,8 +682,16 @@ class TestProgram(object):
 
         test_config.set_configuration_string(self.args.test_config)
 
-        if self.args.verbose:
-            autopilot.globals.set_log_verbose(True)
+        test_suite, error_encountered = load_test_suite_from_name(
+            self.args.suite
+        )
+
+        if not test_suite.countTestCases():
+            raise RuntimeError('Did not find any tests')
+
+        if self.args.random_order:
+            shuffle(test_suite._tests)
+            print("Running tests in random order")
 
         result = construct_test_result(self.args)
         result.startTestRun()

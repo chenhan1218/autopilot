@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2014 Canonical
+# Copyright (C) 2014, 2015 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -134,7 +134,6 @@ def _get_proxy_object_class(object_id, path, state):
     :param object_id: The _id attribute of the class doing the lookup. This is
         used to index into the object registry to retrieve the dict of proxy
         classes to try.
-    :param default_class: default class to use if nothing in dict matches
     :param path: dbus path
     :param state: dbus state
     :returns: appropriate custom proxy class
@@ -153,7 +152,8 @@ def _try_custom_proxy_classes(object_id, path, state):
     """Identify which custom proxy class matches the dbus path and state.
 
     If more than one class in proxy_class_dict matches, raise an exception.
-    :param proxy_class_dict: dict of proxy classes to try
+
+    :param object_id: id to use to get the dict of proxy classes to  try
     :param path: dbus path
     :param state: dbus state dict
     :returns: matching custom proxy class
@@ -174,20 +174,79 @@ def _try_custom_proxy_classes(object_id, path, state):
         )
     if len(possible_classes) == 1:
         extended_proxy_bases = _get_proxy_bases_for_id(object_id)
-        if extended_proxy_bases:
-            possible_classes[0].__bases__ = extended_proxy_bases
+        mixed = _combine_base_and_extensions(
+            possible_classes[0],
+            extended_proxy_bases
+        )
+        possible_classes[0].__bases__ = mixed
         return possible_classes[0]
     return None
+
+
+def _combine_base_and_extensions(kls, extensions):
+    """Returns the bases of the given class augmented with extensions
+
+    In order to get the right bases tuple, the given class is removed
+    from the result (to prevent cyclic dependencies), there's only one
+    occurrence of each final base class in the result and the result
+    is ordered following the inheritance order (classes lower in the
+    inheritance tree are listed before in the resulting tuple)
+
+    :param kls: class for which we are combining bases and extensions
+    :param extensions: tuple of extensions to be added to kls' bases
+    :returns: bases tuple for kls, including its former bases and the
+             extensions
+
+    """
+    # set of bases + extensions removing the original class to prevent
+    # TypeError: a __bases__ item causes an inheritance cycle
+    unique_bases = {x for x in kls.__bases__ + extensions if x != kls}
+
+    # sort them taking into account inheritance to prevent
+    # TypeError: Cannot create a consistent method resolution order (MRO)
+    return tuple(
+        sorted(
+            unique_bases,
+            key=lambda cls: _get_mro_sort_order(cls, extensions),
+            reverse=True
+        )
+    )
+
+
+def _get_mro_sort_order(cls, promoted_collection=()):
+    """Returns the comparable numerical order for the given class honouring
+    its MRO
+
+    It accepts an optional parameter for promoting classes in a certain
+    group, this can give more control over the sorting when two classes
+    have the a MRO of the same length
+
+    :param cls: the subject class
+    :param promoted_collection: tuple of classes which must be promoted
+    :returns: comparable numerical order, higher for classes with MROs of
+        greater length
+
+    """
+    # Multiplying by 2 the lenght of the MRO list gives the chance to promote
+    # items in the promoted_collection by adding them 1 later: non promoted
+    # classes will have even scores and promoted classes with MRO of the same
+    # length will have odd scores one point higher
+    order = 2 * len(cls.mro())
+
+    if cls in promoted_collection:
+        order += 1
+
+    return order
 
 
 def _get_default_proxy_class(id, name):
     """Return a custom proxy object class of the default or a base class.
 
     We want the object to inherit from the class that is set as the emulator
-    base class, not the class that is doing the selecting (which will be the
-    'default_class' parameter).
+    base class, not the class that is doing the selecting. Using the passed id
+    we retrieve the relevant bases from the object registry.
 
-    :param default_class: default class to use if no bases match
+    :param id: The object id (_id attribute) of the class doing the lookup.
     :param name: name of new class
     :returns: custom proxy object class
 

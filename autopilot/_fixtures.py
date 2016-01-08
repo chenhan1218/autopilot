@@ -18,6 +18,10 @@
 #
 
 from fixtures import Fixture
+import logging
+from gi.repository import Gio
+
+logger = logging.getLogger(__name__)
 
 
 class FixtureWithDirectAddDetail(Fixture):
@@ -40,3 +44,77 @@ class FixtureWithDirectAddDetail(Fixture):
         """
         super().__init__()
         self.caseAddDetail = caseAddDetail or self.addDetail
+
+
+class OSKAlwaysEnabled(Fixture):
+    """Enable the OSK to be shown regardless of if there is a keyboard (virtual
+    or real) plugged in.
+
+    This is a workaround for bug lp:1474444
+
+    """
+
+    osk_schema = 'com.canonical.keyboard.maliit'
+    osk_show_key = 'stay-hidden'
+
+    def setUp(self):
+        super().setUp()
+
+        try:
+            _original_value = get_bool_gsettings_value(
+                self.osk_schema,
+                self.osk_show_key
+            )
+            set_bool_gsettings_value(
+                self.osk_schema,
+                self.osk_show_key,
+                False
+            )
+            self.addCleanup(
+                set_bool_gsettings_value,
+                self.osk_schema,
+                self.osk_show_key,
+                _original_value
+            )
+        except ValueError as e:
+            logger.warning('Failed to set OSK gsetting: {}'.format(e))
+
+
+def get_bool_gsettings_value(schema, key):
+    """Return the boolean value for schema/key combo.
+
+    :raises ValueError: If either ``schema`` or ``key`` are not valid.
+
+    """
+    setting = _gsetting_get_setting(schema, key)
+
+    return setting.get_boolean(key)
+
+
+def set_bool_gsettings_value(schema, key, value):
+    """Set the boolean value ``value`` for schema/key combo.
+
+    :raises ValueError: If either ``schema`` or ``key`` are not valid.
+
+    """
+
+    setting = _gsetting_get_setting(schema, key)
+
+    setting.set_boolean(key, value)
+
+
+def _gsetting_get_setting(schema, key):
+    if schema not in Gio.Settings.list_schemas():
+        raise ValueError('schema {} is not installed.'.format(schema))
+
+    setting = Gio.Settings.new(schema)
+
+    if key not in setting.keys():
+        raise ValueError(
+            'key \'{key}\' is not available for schema \'{schema}\''.format(
+                key=key,
+                schema=schema
+            )
+        )
+
+    return setting

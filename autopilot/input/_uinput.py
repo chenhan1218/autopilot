@@ -25,7 +25,7 @@ from evdev import UInput, ecodes as e
 
 from autopilot.input import Keyboard as KeyboardBase
 from autopilot.input import Touch as TouchBase
-from autopilot.input._common import get_center_point
+from autopilot.input import get_center_point
 from autopilot.utilities import deprecated, EventDelay, sleep
 
 

@@ -30,8 +30,7 @@ from autopilot import (
     tests,
     utilities
 )
-from autopilot.input import _uinput
-from autopilot.input._common import get_center_point
+from autopilot.input import _uinput, get_center_point
 
 
 class Empty(object):
@@ -94,7 +93,7 @@ class InputCenterPointTests(TestCase):
             raises(expected_exception)
         )
 
-    @patch('autopilot.input._common._logger')
+    @patch('autopilot.input._logger')
     def test_get_center_point_logs_with_globalRect(self, mock_logger):
         obj = make_fake_object(globalRect=True)
         x, y = get_center_point(obj)
@@ -110,7 +109,7 @@ class InputCenterPointTests(TestCase):
         self.assertEqual(123, x)
         self.assertEqual(345, y)
 
-    @patch('autopilot.input._common._logger')
+    @patch('autopilot.input._logger')
     def test_get_center_point_logs_with_center_points(self, mock_logger):
         obj = make_fake_object(center=True)
         x, y = get_center_point(obj)
@@ -126,7 +125,7 @@ class InputCenterPointTests(TestCase):
         self.assertEqual(110, x)
         self.assertEqual(120, y)
 
-    @patch('autopilot.input._common._logger')
+    @patch('autopilot.input._logger')
     def test_get_center_point_logs_with_xywh(self, mock_logger):
         obj = make_fake_object(xywh=True)
         x, y = get_center_point(obj)

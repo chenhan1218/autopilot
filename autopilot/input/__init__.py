@@ -58,11 +58,13 @@ running on a desktop.
 from collections import OrderedDict
 from contextlib import contextmanager
 from autopilot.utilities import _pick_backend, CleanupRegistered
-from autopilot.input._common import get_center_point
 
 import logging
 
 _logger = logging.getLogger(__name__)
+
+
+__all__ = ['get_center_point']
 
 
 class Keyboard(CleanupRegistered):
@@ -653,23 +655,19 @@ class Pointer(object):
             press_duration=0.10,
             time_between_events=0.1):
         """
-        Attempts to move the pointer to 'object_proxy's centre point.
-        and click a button
+        Attempts to move the pointer to 'object_proxy's centre point
+        and click a button.
 
-        It does this by looking for several attributes, in order. The first
-        attribute found will be used. The attributes used are (in order):
-
-         * globalRect (x,y,w,h)
-         * center_x, center_y
-         * x, y, w, h
+        See :py:meth:`~autopilot.input.get_center_point` for details on how
+        the center point is calculated.
 
         If the wrapped device is a mouse, the button specification is used. If
         it is a touch device, passing anything other than 1 will raise a
         ValueError exception.
 
         :param time_between_events: takes floating point to represent the
-          delay time between subsequent clicks/taps. Default value 0.1
-          represents tenth of a second.
+            delay time between subsequent clicks/taps. Default value 0.1
+            represents tenth of a second.
 
         """
 
@@ -679,15 +677,8 @@ class Pointer(object):
     def move_to_object(self, object_proxy):
         """Attempts to move the pointer to 'object_proxy's centre point.
 
-        It does this by looking for several attributes, in order. The first
-        attribute found will be used. The attributes used are (in order):
-
-         * globalRect (x,y,w,h)
-         * center_x, center_y
-         * x, y, w, h
-
-        :raises: **ValueError** if none of these attributes are found, or if an
-         attribute is of an incorrect type.
+        See :py:meth:`~autopilot.input.get_center_point` for details on how
+        the center point is calculated.
 
         """
         x, y = get_center_point(object_proxy)
@@ -728,3 +719,57 @@ class Pointer(object):
         """
         self._device.drag(
             x1, y1, x2, y2, rate=rate, time_between_events=time_between_events)
+
+
+def get_center_point(object_proxy):
+    """Get the center point of an object.
+
+    It does this by looking for several attributes, in order. The first
+    attribute found will be used. The attributes used are (in order):
+
+    * globalRect (x,y,w,h)
+    * center_x, center_y
+    * x, y, w, h
+
+    :raises ValueError: if `object_proxy` has the globalRect attribute but it
+        is not of the correct type.
+    :raises ValueError: if `object_proxy` doesn't have the globalRect
+        attribute, it has the x and y attributes instead, but they are not of
+        the correct type.
+    :raises ValueError: if `object_proxy` doesn't have any recognised position
+        attributes.
+
+    """
+    try:
+        x, y, w, h = object_proxy.globalRect
+        _logger.debug("Moving to object's globalRect coordinates.")
+        return x+w/2, y+h/2
+    except AttributeError:
+        pass
+    except (TypeError, ValueError):
+        raise ValueError(
+            "Object '%r' has globalRect attribute, but it is not of the "
+            "correct type" % object_proxy)
+
+    try:
+        x, y = object_proxy.center_x, object_proxy.center_y
+        _logger.debug("Moving to object's center_x, center_y coordinates.")
+        return x, y
+    except AttributeError:
+        pass
+
+    try:
+        x, y, w, h = (
+            object_proxy.x, object_proxy.y, object_proxy.w, object_proxy.h)
+        _logger.debug(
+            "Moving to object's center point calculated from x,y,w,h "
+            "attributes.")
+        return x+w/2, y+h/2
+    except AttributeError:
+        raise ValueError(
+            "Object '%r' does not have any recognised position attributes" %
+            object_proxy)
+    except (TypeError, ValueError):
+        raise ValueError(
+            "Object '%r' has x,y attribute, but they are not of the correct "
+            "type" % object_proxy)

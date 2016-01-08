@@ -26,7 +26,7 @@ In the future we may also need other devices.
 
 import logging
 
-from autopilot.input._common import get_center_point
+from autopilot.input import get_center_point
 from autopilot.display import is_point_on_any_screen, move_mouse_to_screen
 from autopilot.utilities import (
     EventDelay,
@@ -396,7 +396,9 @@ class Mouse(MouseBase):
     def move_to_object(self, object_proxy):
         """Attempts to move the mouse to 'object_proxy's centre point.
 
-        See :py:meth:`~autopilot.input.Mouse.move_to_object`.
+        See :py:meth:`~autopilot.input.get_center_point` for details on how
+        the center point is calculated.
+
         """
         x, y = get_center_point(object_proxy)
         self.move(x, y)

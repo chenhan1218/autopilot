@@ -26,6 +26,7 @@ In the future we may also need other devices.
 
 import logging
 
+from autopilot.input import get_center_point
 from autopilot.display import is_point_on_any_screen, move_mouse_to_screen
 from autopilot.utilities import (
     EventDelay,
@@ -395,57 +396,12 @@ class Mouse(MouseBase):
     def move_to_object(self, object_proxy):
         """Attempts to move the mouse to 'object_proxy's centre point.
 
-        It does this by looking for several attributes, in order. The first
-        attribute found will be used. The attributes used are (in order):
-
-         * globalRect (x,y,w,h)
-         * center_x, center_y
-         * x, y, w, h
-
-        :raises: **ValueError** if none of these attributes are found, or if an
-         attribute is of an incorrect type.
+        See :py:meth:`~autopilot.input.get_center_point` for details on how
+        the center point is calculated.
 
         """
-        try:
-            x, y, w, h = object_proxy.globalRect
-            _logger.debug("Moving to object's globalRect coordinates.")
-            self.move(x+w/2, y+h/2)
-            return
-        except AttributeError:
-            pass
-        except (TypeError, ValueError):
-            raise ValueError(
-                "Object '%r' has globalRect attribute, but it is not of the "
-                "correct type" % object_proxy)
-
-        try:
-            x, y = object_proxy.center_x, object_proxy.center_y
-            _logger.debug("Moving to object's center_x, center_y coordinates.")
-            self.move(x, y)
-            return
-        except AttributeError:
-            pass
-        except (TypeError, ValueError):
-            raise ValueError(
-                "Object '%r' has center_x, center_y attributes, but they are "
-                "not of the correct type" % object_proxy)
-
-        try:
-            x, y, w, h = (
-                object_proxy.x, object_proxy.y, object_proxy.w, object_proxy.h)
-            _logger.debug(
-                "Moving to object's center point calculated from x,y,w,h "
-                "attributes.")
-            self.move(x+w/2, y+h/2)
-            return
-        except AttributeError:
-            raise ValueError(
-                "Object '%r' does not have any recognised position "
-                "attributes" % object_proxy)
-        except (TypeError, ValueError):
-            raise ValueError(
-                "Object '%r' has x,y attribute, but they are not of the "
-                "correct type" % object_proxy)
+        x, y = get_center_point(object_proxy)
+        self.move(x, y)
 
     def position(self):
         """

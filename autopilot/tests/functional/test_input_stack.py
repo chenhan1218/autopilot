@@ -43,8 +43,7 @@ from autopilot import (
 )
 from autopilot.display import Display
 from autopilot.gestures import pinch
-from autopilot.input import Keyboard, Mouse, Pointer, Touch
-from autopilot.input._common import get_center_point
+from autopilot.input import Keyboard, Mouse, Pointer, Touch, get_center_point
 from autopilot.matchers import Eventually
 from autopilot.testcase import AutopilotTestCase, multiply_scenarios
 from autopilot.tests.functional import QmlScriptRunnerMixin

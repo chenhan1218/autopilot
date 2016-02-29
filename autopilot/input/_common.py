@@ -29,7 +29,11 @@ def get_center_point(object_proxy):
     """Get the center point of an object.
 
     It searches for several different ways of determining exactly where the
-    center is.
+    center is. The attributes used are (in order):
+
+     * globalRect (x,y,w,h)
+     * center_x, center_y
+     * x, y, w, h
 
     :raises ValueError: if `object_proxy` has the globalRect attribute but it
         is not of the correct type.

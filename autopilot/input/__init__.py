@@ -57,12 +57,15 @@ running on a desktop.
 
 from collections import OrderedDict
 from contextlib import contextmanager
-from autopilot.utilities import _pick_backend, CleanupRegistered
 from autopilot.input._common import get_center_point
+from autopilot.utilities import _pick_backend, CleanupRegistered
 
 import logging
 
 _logger = logging.getLogger(__name__)
+
+
+__all__ = ['get_center_point']
 
 
 class Keyboard(CleanupRegistered):
@@ -653,23 +656,19 @@ class Pointer(object):
             press_duration=0.10,
             time_between_events=0.1):
         """
-        Attempts to move the pointer to 'object_proxy's centre point.
-        and click a button
+        Attempts to move the pointer to 'object_proxy's centre point
+        and click a button.
 
-        It does this by looking for several attributes, in order. The first
-        attribute found will be used. The attributes used are (in order):
-
-         * globalRect (x,y,w,h)
-         * center_x, center_y
-         * x, y, w, h
+        See :py:meth:`~autopilot.input.get_center_point` for details on how
+        the center point is calculated.
 
         If the wrapped device is a mouse, the button specification is used. If
         it is a touch device, passing anything other than 1 will raise a
         ValueError exception.
 
         :param time_between_events: takes floating point to represent the
-          delay time between subsequent clicks/taps. Default value 0.1
-          represents tenth of a second.
+            delay time between subsequent clicks/taps. Default value 0.1
+            represents tenth of a second.
 
         """
 
@@ -679,15 +678,8 @@ class Pointer(object):
     def move_to_object(self, object_proxy):
         """Attempts to move the pointer to 'object_proxy's centre point.
 
-        It does this by looking for several attributes, in order. The first
-        attribute found will be used. The attributes used are (in order):
-
-         * globalRect (x,y,w,h)
-         * center_x, center_y
-         * x, y, w, h
-
-        :raises: **ValueError** if none of these attributes are found, or if an
-         attribute is of an incorrect type.
+        See :py:meth:`~autopilot.input.get_center_point` for details on how
+        the center point is calculated.
 
         """
         x, y = get_center_point(object_proxy)

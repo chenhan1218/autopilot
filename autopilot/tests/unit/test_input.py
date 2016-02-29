@@ -30,8 +30,7 @@ from autopilot import (
     tests,
     utilities
 )
-from autopilot.input import _uinput
-from autopilot.input._common import get_center_point
+from autopilot.input import _uinput, get_center_point
 
 
 class Empty(object):

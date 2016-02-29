@@ -1,3 +1,9 @@
+autopilot (1.5.1+16.04.20151209-0ubuntu2) xenial; urgency=medium
+
+  * psutil.Process.get_children is removed, use children instead
+
+ -- Iain Lane <iain@orangesquash.org.uk>  Fri, 22 Jan 2016 17:44:56 +0000
+
 autopilot (1.5.1+16.04.20151209-0ubuntu1) xenial; urgency=medium
 
   * Stops attempts to access NoneType instead of bytes''. Considered a

@@ -1,3 +1,11 @@
+autopilot (1.5.1+16.04.20160229-0ubuntu1) xenial; urgency=medium
+
+  [ Andrea Cerisara, Iain Lane ]
+  * Bugfix for lp:1308330 Simplify X11 mouse move_to_point. (LP:
+    #1308330)
+
+ -- Christopher Lee <ci-train-bot@canonical.com>  Mon, 29 Feb 2016 21:55:05 +0000
+
 autopilot (1.5.1+16.04.20151209-0ubuntu2) xenial; urgency=medium
 
   * psutil.Process.get_children is removed, use children instead

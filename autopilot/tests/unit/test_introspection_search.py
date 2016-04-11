@@ -581,6 +581,32 @@ class ProcessAndPidErrorCheckingTests(TestCase):
         self.assertEqual(fake_process.pid, observed)
 
 
+class FilterParentPidsFromChildrenTests(TestCase):
+
+    def test_returns_all_connections_with_no_parent_match(self):
+        search_pid = 123
+        connections = ['1:0', '1:3']
+        mapping = {111: '1:0', 222: '1:3'}
+        with patch.object(_s, '_map_connection_to_pid', return_value=mapping):
+            self.assertThat(
+                _s._filter_parent_pids_from_children(
+                    search_pid, connections, Mock()
+                ),
+                Equals(connections)
+            )
+
+    def test_returns_just_parent_connection_with_pid_match(self):
+        search_pid = 123
+        connections = ['1:0', '1:3']
+        mapping = {123: '1:0', 222: '1:3'}
+        with patch.object(_s, '_map_connection_to_pid', return_value=mapping):
+            self.assertThat(
+                _s._filter_parent_pids_from_children(
+                    search_pid, connections, Mock()
+                ),
+                Equals(['1:0'])
+            )
+
 class ProcessSearchErrorStringRepTests(TestCase):
 
     """Various tests for the _get_search_criteria_string_representation

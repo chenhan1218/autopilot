@@ -607,6 +607,7 @@ class FilterParentPidsFromChildrenTests(TestCase):
                 Equals(['1:0'])
             )
 
+
 class ProcessSearchErrorStringRepTests(TestCase):
 
     """Various tests for the _get_search_criteria_string_representation

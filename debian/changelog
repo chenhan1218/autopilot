@@ -1,3 +1,9 @@
+autopilot (1.5.1+16.04.20160412-0ubuntu1) xenial; urgency=medium
+
+  * Bug fix for process search using PIDs (lp:1569079). (LP: #1569079)
+
+ -- Christopher Lee <ci-train-bot@canonical.com>  Tue, 12 Apr 2016 04:08:58 +0000
+
 autopilot (1.5.1+16.04.20160229-0ubuntu1) xenial; urgency=medium
 
   [ Andrea Cerisara, Iain Lane ]

@@ -19,7 +19,7 @@
 
 from dbus import DBusException
 import os
-from unittest.mock import patch, Mock
+from unittest.mock import call, patch, Mock
 from testtools import TestCase
 from testtools.matchers import (
     Contains,
@@ -579,6 +579,82 @@ class ProcessAndPidErrorCheckingTests(TestCase):
                 fake_process.pid
             )
         self.assertEqual(fake_process.pid, observed)
+
+
+class FilterParentPidsFromChildrenTests(TestCase):
+
+    def test_returns_all_connections_with_no_parent_match(self):
+        search_pid = 123
+        connections = ['1:0', '1:3']
+        dbus_bus = Mock()
+        pid_mapping = Mock(side_effect=[111, 222])
+        self.assertThat(
+            _s._filter_parent_pids_from_children(
+                search_pid,
+                connections,
+                dbus_bus,
+                _connection_pid_fn=pid_mapping
+            ),
+            Equals(connections)
+        )
+
+    def test_calls_connection_pid_fn_in_order(self):
+        search_pid = 123
+        connections = ['1:3', '1:0']
+        dbus_bus = Mock()
+        pid_mapping = Mock(side_effect=[222, 123])
+        _s._filter_parent_pids_from_children(
+            search_pid,
+            connections,
+            dbus_bus,
+            _connection_pid_fn=pid_mapping
+        )
+
+        self.assertTrue(
+            pid_mapping.call_args_list == [
+                call('1:3', dbus_bus),
+                call('1:0', dbus_bus)
+            ]
+        )
+
+    def test_returns_just_parent_connection_with_pid_match(self):
+        search_pid = 123
+        # connection '1.0' has pid 123.
+        connections = ['1:3', '1:0']
+        dbus_bus = Mock()
+        # Mapping returns parent pid on second call.
+        pid_mapping = Mock(side_effect=[222, 123])
+        self.assertThat(
+            _s._filter_parent_pids_from_children(
+                search_pid,
+                connections,
+                dbus_bus,
+                _connection_pid_fn=pid_mapping
+            ),
+            Equals(['1:0'])
+        )
+
+        self.assertTrue(
+            pid_mapping.call_args_list == [
+                call('1:3', dbus_bus),
+                call('1:0', dbus_bus)
+            ]
+        )
+
+    def test_returns_all_connections_with_no_pids_returned_in_search(self):
+        search_pid = 123
+        connections = ['1:3', '1:0']
+        dbus_bus = Mock()
+        pid_mapping = Mock(side_effect=[None, None])
+        self.assertThat(
+            _s._filter_parent_pids_from_children(
+                search_pid,
+                connections,
+                dbus_bus,
+                _connection_pid_fn=pid_mapping
+            ),
+            Equals(connections)
+        )
 
 
 class ProcessSearchErrorStringRepTests(TestCase):

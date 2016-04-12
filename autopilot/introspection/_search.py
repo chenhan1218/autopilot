@@ -171,6 +171,16 @@ def get_proxy_object_for_existing_process(**kwargs):
         process
     )
 
+    if pid is not None:
+        # Due to the filtering including children parents, if there exists a
+        # top-level pid, take that instead of any children that may have
+        # matched.
+        connections = _filter_parent_pids_from_children(
+            pid,
+            connections,
+            dbus_bus
+        )
+
     _raise_if_not_single_result(
         connections,
         _get_search_criteria_string_representation(**kwargs)
@@ -182,6 +192,38 @@ def get_proxy_object_for_existing_process(**kwargs):
         _get_dbus_address_object(connection_name, object_path, dbus_bus),
         emulator_base
     )
+
+
+def _map_connection_to_pid(connection, dbus_bus):
+    try:
+        return _get_bus_connections_pid(dbus_bus, connection)
+    except dbus.DBusException as e:
+        logger.info(
+            "dbus.DBusException while attempting to get PID for %s: %r" %
+            (connection, e))
+
+
+def _filter_parent_pids_from_children(
+        pid, connections, dbus_bus, _connection_pid_fn=_map_connection_to_pid):
+    """Return any connections that have an actual pid matching the requested
+    and aren't just a child of that requested pid.
+
+    :param pid: Pid passed in for matching
+    :param connections: List of connections to filter
+    :param dbus_bus: Dbus object that the connections are contained.
+    :param _connection_pid_fn: Function that takes 2 args 'connection' 'dbus
+      object' that returns the pid (or None if not found) of the connection on
+      that dbus bus.
+      (Note: Useful for testing.)
+    :returns: List of suitable connections (e.g. returns what was passed if no
+      connections match the pid (i.e. all matches are children)).
+
+    """
+    for conn in connections:
+        if pid == _connection_pid_fn(conn, dbus_bus):
+            logger.info('Found the parent pid, ignoring any others.')
+            return [conn]
+    return connections
 
 
 def _get_dbus_bus_from_string(dbus_string):

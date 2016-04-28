@@ -1,3 +1,10 @@
+autopilot (1.5.1+16.04.20160428-0ubuntu1) xenial; urgency=medium
+
+  [ Albert Astals Cid ]
+  * Make the s in seconds lower case.
+
+ -- Max Brustkern <ci-train-bot@canonical.com>  Thu, 28 Apr 2016 19:12:42 +0000
+
 autopilot (1.5.1+16.04.20160412-0ubuntu1) xenial; urgency=medium
 
   * Bug fix for process search using PIDs (lp:1569079). (LP: #1569079)

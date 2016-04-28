@@ -179,7 +179,7 @@ class Timer(object):
         self.end = timeit.default_timer()
         elapsed = self.end - self.start
         self.logger.log(
-            self.log_level, "'%s' took %.3fS", self.code_name, elapsed)
+            self.log_level, "'%s' took %.3fs", self.code_name, elapsed)
 
 
 class StagnantStateDetector(object):

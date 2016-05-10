@@ -76,7 +76,6 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         self.__refresh_on_attribute = True
         self._set_properties(state_dict)
         self._path = path
-        self._poll_time = 10
         self._backend = backend
         self._query = xpathselect.Query.new_from_path_and_id(
             self._path,
@@ -244,13 +243,13 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             raise StateNotFoundError(type_name_str, **kwargs)
         return instances[0]
 
-    def wait_select_single(self, type_name='*', **kwargs):
+    def wait_select_single(self, type_name='*', timeout=10, **kwargs):
         """Get a proxy object matching some search criteria, retrying if no
         object is found until a timeout is reached.
 
         This method is identical to the :meth:`select_single` method, except
-        that this method will poll the application under test for 10 seconds
-        in the event that the search criteria does not match anything.
+        that this method will poll the application under test for the specified
+        time in the event that the search criteria does not match anything.
 
         This method will return single proxy object from the introspection
         tree, with type equal to *type_name* and (optionally) matching the
@@ -266,17 +265,20 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         Example usage::
 
-            app.wait_select_single('QPushButton', objectName='clickme')
+            app.wait_select_single(
+                'QPushButton', timeout=10, objectName='clickme')
             # returns a QPushButton whose 'objectName' property is 'clickme'.
             # will poll the application until such an object exists, or will
-            # raise StateNotFoundError after 10 seconds.
+            # raise StateNotFoundError after specified timeout.
 
         If nothing is returned from the query, this method raises
-        StateNotFoundError after 10 seconds.
+        StateNotFoundError after specified timeout.
 
         :param type_name: Either a string naming the type you want, or a class
             of the appropriate type (the latter case is for overridden emulator
             classes).
+
+        :param timeout: Time in seconds to poll for the proxy object to match.
 
         :raises ValueError: if the query returns more than one item. *If
             you want more than one item, use select_many instead*.
@@ -290,11 +292,11 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             Tutorial Section :ref:`custom_proxy_classes`
 
         """
-        for i in range(self._poll_time):
+        for i in range(timeout):
             try:
                 return self.select_single(type_name, **kwargs)
             except StateNotFoundError:
-                if i == self._poll_time - 1:
+                if i == timeout - 1:
                     raise
                 sleep(1)
 

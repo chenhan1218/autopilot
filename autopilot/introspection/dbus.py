@@ -355,6 +355,43 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         )
         return self._execute_query(new_query)
 
+    def wait_select_many(self, type_name='*', number=1, timeout=10, **kwargs):
+        """
+        Get a list of nodes from the introspection tree, with type equal to
+        *type_name* and (optionally) matching the keyword filters present in
+        *kwargs*. This method will retry until either the objects matching
+        the criteria are >= *number* or the *timeout* is reached.
+
+        You must specify either *type_name*, keyword filters or both.
+
+        Example Usage::
+
+            app.wait_select_many(
+                'QPushButton', number=5, timeout=8, enabled=True)
+            # waits for >=5 QPushButtons to create within 8 seconds and returns
+            # them in a list.
+
+        :param: type_name: Either a string naming the type you want, or a class
+            of the appropriate type
+
+        :param: number: The number of objects that have to match to return
+
+        :param: timeout: The timeout for the polling
+
+        :param: **kwargs: The optional parameters used to match objects
+
+        :raises: ValueError: When the number of objects matching the
+            query are less than the *number* passed as parameter
+
+        :return: A list of proxy objects
+        """
+        for i in range(timeout):
+            items = self.select_many(type_name, **kwargs)
+            if len(items) >= number:
+                return items
+            sleep(1)
+        raise ValueError("Not found the number of elements requested")
+
     def refresh_state(self):
         """Refreshes the object's state.
 

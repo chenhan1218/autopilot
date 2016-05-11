@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import psutil
+
 from dbus import Interface
 import os.path
 
@@ -44,3 +46,37 @@ def translate_state_keys(state_dict):
     """Translates the *state_dict* passed in so the keys are usable as python
     attributes."""
     return {k.replace('-', '_'): v for k, v in state_dict.items()}
+
+
+def _query_pids_for_process(process_name):
+    pids = []
+    for process in psutil.process_iter():
+        if process.name() == process_name:
+            pids.append(process.pid)
+
+    if len(pids) == 0:
+        raise ValueError('Process \'{}\' not running'.format(process_name))
+
+    return pids
+
+
+def get_pid_for_process(process_name):
+    """
+    Returns the PID(s) associated with a process name
+
+    :param process_name: Process name to get PID(s) for.
+    :return: PID of the requested process or a list of PIDs, in case of
+        multiple PIDs.
+    """
+    pids = _query_pids_for_process(process_name=process_name)
+    if len(pids) > 1:
+        raise ValueError(
+            'More than one PID exists for process \'{}\''.format(
+                process_name)
+        )
+
+    return pids[-1]
+
+
+def get_pids_for_process(process_name):
+    return _query_pids_for_process(process_name=process_name)

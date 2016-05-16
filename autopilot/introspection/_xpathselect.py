@@ -402,3 +402,14 @@ def get_classname_from_path(object_path):
     if is_string:
         class_name = class_name.decode('utf-8')
     return class_name
+
+
+def get_path_root(object_path):
+    """Return the name of the root node of specified path."""
+    is_string = isinstance(object_path, str)
+    if is_string:
+        object_path = object_path.encode('utf-8')
+    root = object_path.split(b'/')[1]
+    if is_string:
+        root = root.decode('utf-8')
+    return root

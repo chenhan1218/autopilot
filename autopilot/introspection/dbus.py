@@ -635,3 +635,18 @@ def _get_class_type_name(maybe_cpo_class):
         return maybe_cpo_class.get_type_query_name()
     else:
         return maybe_cpo_class.__name__
+
+
+def is_element(predicate, *args, **kwargs):
+    """
+    Evaluate the predicate with the args and indicate if it raises
+    StateNotFoundError
+     :param: predicate: The method to be evaluated
+     :param: *args: The predicate positional parameters
+     :param: **kwargs: The predicate optional parameters
+     :return: False if the predicate raises StateNotFoundError, True otherwise
+    """
+    try:
+        return bool(predicate(*args, **kwargs))
+    except StateNotFoundError:
+        return False

@@ -49,12 +49,10 @@ def translate_state_keys(state_dict):
 
 
 def _query_pids_for_process(process_name):
-    pids = []
-    for process in psutil.process_iter():
-        if process.name() == process_name:
-            pids.append(process.pid)
+    pids = [process.pid for process in psutil.process_iter()
+            if process.name() == process_name]
 
-    if len(pids) == 0:
+    if not pids:
         raise ValueError('Process \'{}\' not running'.format(process_name))
 
     return pids
@@ -75,7 +73,7 @@ def get_pid_for_process(process_name):
                 process_name)
         )
 
-    return pids[-1]
+    return pids[0]
 
 
 def get_pids_for_process(process_name):

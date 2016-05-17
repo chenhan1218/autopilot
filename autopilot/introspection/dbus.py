@@ -637,6 +637,14 @@ def _get_class_type_name(maybe_cpo_class):
         return maybe_cpo_class.__name__
 
 
+def _raises(exception_class, predicate, *args, **kwargs):
+    try:
+        predicate(*args, **kwargs)
+        return False
+    except exception_class:
+        return True
+
+
 def is_element(predicate, *args, **kwargs):
     """
     Evaluate the predicate with the args and indicate if it raises
@@ -646,7 +654,4 @@ def is_element(predicate, *args, **kwargs):
      :param: **kwargs: The predicate optional parameters
      :return: False if the predicate raises StateNotFoundError, True otherwise
     """
-    try:
-        return bool(predicate(*args, **kwargs))
-    except StateNotFoundError:
-        return False
+    return not _raises(StateNotFoundError, predicate, *args, **kwargs)

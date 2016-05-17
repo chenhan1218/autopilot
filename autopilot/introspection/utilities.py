@@ -49,6 +49,9 @@ def translate_state_keys(state_dict):
 
 
 def _query_pids_for_process(process_name):
+    if not isinstance(process_name, str):
+        raise ValueError('Process name should be a string')
+
     pids = [process.pid for process in psutil.process_iter()
             if process.name() == process_name]
 

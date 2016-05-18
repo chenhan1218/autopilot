@@ -217,6 +217,24 @@ class DbusQueryTests(AutopilotTestCase):
         self.assertThat(abs(end_time - start_time), GreaterThan(9))
         self.assertThat(abs(end_time - start_time), LessThan(11))
 
+    def test_wait_select_single_timeout_less_than_ten_seconds(self):
+        app = self.start_fully_featured_app()
+        start_time = default_timer()
+        fn = lambda: app.wait_select_single('QMadeupType', timeout=3)
+        self.assertThat(fn, raises(StateNotFoundError('QMadeupType')))
+        end_time = default_timer()
+        self.assertThat(abs(end_time - start_time), GreaterThan(2))
+        self.assertThat(abs(end_time - start_time), LessThan(4))
+
+    def test_wait_select_single_timeout_more_than_ten_seconds(self):
+        app = self.start_fully_featured_app()
+        start_time = default_timer()
+        fn = lambda: app.wait_select_single('QMadeupType', timeout=12)
+        self.assertThat(fn, raises(StateNotFoundError('QMadeupType')))
+        end_time = default_timer()
+        self.assertThat(abs(end_time - start_time), GreaterThan(11))
+        self.assertThat(abs(end_time - start_time), LessThan(13))
+
 
 @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
 class DbusCustomBusTests(AutopilotTestCase):

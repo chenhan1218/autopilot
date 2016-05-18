@@ -645,8 +645,8 @@ class MockableProcessIter:
             self.disable_mock()
 
     def enable_mock(self, fake_processes):
-        self._fake_processes = fake_processes
         self._mocked = True
+        self._fake_processes = fake_processes
 
     def disable_mock(self):
         self._mocked = False

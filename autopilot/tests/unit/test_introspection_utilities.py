@@ -24,7 +24,7 @@ from autopilot.introspection.utilities import pid_util
 
 PROCESS_NAME = 'dummy_process'
 PROCESS_WITH_SINGLE_INSTANCE = [{'name': PROCESS_NAME, 'pid': -80}]
-PROCESS_WITH_MULTIPLE_INSTANCE = [
+PROCESS_WITH_MULTIPLE_INSTANCES = [
     PROCESS_WITH_SINGLE_INSTANCE[0],
     {'name': PROCESS_NAME, 'pid': -81}
 ]
@@ -66,14 +66,14 @@ class ProcessUtilitiesTestCase(TestCase):
             )
 
     def test_pids_for_process_is_list(self):
-        with pid_util.mocked(PROCESS_WITH_MULTIPLE_INSTANCE):
+        with pid_util.mocked(PROCESS_WITH_MULTIPLE_INSTANCES):
             self.assertIsInstance(
                 pid_util.get_pids_for_process(PROCESS_NAME),
                 list
             )
 
     def test_passing_process_with_multiple_pids_raises(self):
-        with pid_util.mocked(PROCESS_WITH_MULTIPLE_INSTANCE):
+        with pid_util.mocked(PROCESS_WITH_MULTIPLE_INSTANCES):
             self.assertRaises(
                 ValueError,
                 pid_util.get_pid_for_process,

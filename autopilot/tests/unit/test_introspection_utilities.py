@@ -19,7 +19,7 @@
 
 from testtools import TestCase
 
-from autopilot.introspection.utilities import pid_util
+from autopilot.introspection.utilities import process_util
 
 
 PROCESS_NAME = 'dummy_process'
@@ -42,40 +42,40 @@ class ProcessUtilitiesTestCase(TestCase):
     def test_passing_non_running_process_raises(self):
         self.assertRaises(
             ValueError,
-            pid_util._query_pids_for_process,
+            process_util._query_pids_for_process,
             PROCESS_NAME
         )
 
     def test_passing_running_process_not_raises(self):
-        with pid_util.mocked(PROCESS_WITH_SINGLE_INSTANCE):
+        with process_util.mocked(PROCESS_WITH_SINGLE_INSTANCE):
             self.assertTrue(
                 not_raises(
-                    pid_util._query_pids_for_process,
+                    process_util._query_pids_for_process,
                     PROCESS_NAME
                 )
             )
 
     def test_passing_integer_raises(self):
-        self.assertRaises(ValueError, pid_util._query_pids_for_process, 911)
+        self.assertRaises(ValueError, process_util._query_pids_for_process, 911)
 
     def test_pid_for_process_is_int(self):
-        with pid_util.mocked(PROCESS_WITH_SINGLE_INSTANCE):
+        with process_util.mocked(PROCESS_WITH_SINGLE_INSTANCE):
             self.assertIsInstance(
-                pid_util.get_pid_for_process(PROCESS_NAME),
+                process_util.get_pid_for_process(PROCESS_NAME),
                 int
             )
 
     def test_pids_for_process_is_list(self):
-        with pid_util.mocked(PROCESS_WITH_MULTIPLE_INSTANCES):
+        with process_util.mocked(PROCESS_WITH_MULTIPLE_INSTANCES):
             self.assertIsInstance(
-                pid_util.get_pids_for_process(PROCESS_NAME),
+                process_util.get_pids_for_process(PROCESS_NAME),
                 list
             )
 
     def test_passing_process_with_multiple_pids_raises(self):
-        with pid_util.mocked(PROCESS_WITH_MULTIPLE_INSTANCES):
+        with process_util.mocked(PROCESS_WITH_MULTIPLE_INSTANCES):
             self.assertRaises(
                 ValueError,
-                pid_util.get_pid_for_process,
+                process_util.get_pid_for_process,
                 PROCESS_NAME
             )

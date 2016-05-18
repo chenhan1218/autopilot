@@ -39,7 +39,7 @@ from autopilot.introspection.backends import WireProtocolVersionMismatch
 from autopilot.introspection.utilities import (
     _get_bus_connections_pid,
     _pid_is_running,
-    pid_util
+    process_util
 )
 from autopilot.utilities import deprecated
 
@@ -196,7 +196,7 @@ def get_proxy_object_for_existing_process(**kwargs):
 
 
 def get_proxy_object_for_existing_process_by_name(process_name, emulator_base):
-    pid = pid_util.get_pid_for_process(process_name=process_name)
+    pid = process_util.get_pid_for_process(process_name=process_name)
     return get_proxy_object_for_existing_process(
         pid=pid,
         emulator_base=emulator_base

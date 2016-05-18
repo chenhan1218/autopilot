@@ -61,10 +61,10 @@ class ProcessUtil:
 
             from autopilot.introspection.utilities import EventDelay
 
-            pid_util = ProcessUtil()
-            with pid_util.mocked([{'pid': -9, 'name': 'xx'}]):
+            process_util = ProcessUtil()
+            with process_util.mocked([{'pid': -9, 'name': 'xx'}]):
                 self.assertThat(
-                    pid_util._query_pid_for_process('xx'),
+                    process_util._query_pid_for_process('xx'),
                     Equals(-9)
                     )
                 )
@@ -108,4 +108,4 @@ class ProcessUtil:
     def get_pids_for_process(self, process_name):
         return self._query_pids_for_process(process_name=process_name)
 
-pid_util = ProcessUtil()
+process_util = ProcessUtil()

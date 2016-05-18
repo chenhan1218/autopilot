@@ -274,11 +274,12 @@ class IsElementTestCase(TestCase):
     def raise_state_not_found(self, should_raise=True):
         if should_raise:
             raise StateNotFoundError('Just throw the exception')
+        return not None
 
-    def test_returns_false_of_not_element(self):
+    def test_returns_false_if_not_element(self):
         self.assertFalse(is_element(self.raise_state_not_found))
 
-    def test_returns_true_of_element(self):
+    def test_returns_true_if_element(self):
         self.assertTrue(
             is_element(
                 self.raise_state_not_found,

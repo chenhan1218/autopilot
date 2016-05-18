@@ -19,6 +19,7 @@
 
 from testtools import TestCase
 
+from autopilot.introspection.dbus import not_raises
 from autopilot.introspection.utilities import process_util
 
 
@@ -28,13 +29,6 @@ PROCESS_WITH_MULTIPLE_INSTANCES = [
     PROCESS_WITH_SINGLE_INSTANCE[0],
     {'name': PROCESS_NAME, 'pid': -81}
 ]
-
-
-def not_raises(predicate, *args, **kwargs):
-    try:
-        return bool(predicate(*args, **kwargs))
-    except ValueError:
-        return False
 
 
 class ProcessUtilitiesTestCase(TestCase):
@@ -50,6 +44,7 @@ class ProcessUtilitiesTestCase(TestCase):
         with process_util.mocked(PROCESS_WITH_SINGLE_INSTANCE):
             self.assertTrue(
                 not_raises(
+                    ValueError,
                     process_util._query_pids_for_process,
                     PROCESS_NAME
                 )

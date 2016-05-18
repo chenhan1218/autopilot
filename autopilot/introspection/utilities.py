@@ -64,7 +64,7 @@ class ProcessUtil:
             process_util = ProcessUtil()
             with process_util.mocked([{'pid': -9, 'name': 'xx'}]):
                 self.assertThat(
-                    process_util._query_pid_for_process('xx'),
+                    process_util.get_pid_for_process('xx'),
                     Equals(-9)
                     )
                 )

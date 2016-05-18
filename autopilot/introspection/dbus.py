@@ -639,7 +639,8 @@ def _get_class_type_name(maybe_cpo_class):
 
 def not_raises(exception_class, predicate, *args, **kwargs):
     try:
-        return bool(predicate(*args, **kwargs))
+        predicate(*args, **kwargs)
+        return True
     except exception_class:
         return False
 

@@ -648,10 +648,14 @@ def not_raises(exception_class, predicate, *args, **kwargs):
 def is_element(predicate, *args, **kwargs):
     """
     Evaluate the predicate with the args and indicate if it raises
-    StateNotFoundError
-     :param: predicate: The method to be evaluated
-     :param: *args: The predicate positional parameters
-     :param: **kwargs: The predicate optional parameters
-     :return: False if the predicate raises StateNotFoundError, True otherwise
+    StateNotFoundError.
+
+    :param: predicate: The method to be evaluated.
+
+    :param: *args: The predicate positional parameters.
+
+    :param: **kwargs: The predicate optional parameters.
+
+    :return: False if the predicate raises StateNotFoundError, True otherwise.
     """
     return not_raises(StateNotFoundError, predicate, *args, **kwargs)

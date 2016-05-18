@@ -90,11 +90,11 @@ class ProcessUtil:
 
     def get_pid_for_process(self, process_name):
         """
-        Returns the PID(s) associated with a process name
+        Returns the PID associated with a process name.
 
-        :param process_name: Process name to get PID(s) for.
-        :return: PID of the requested process or a list of PIDs, in case of
-            multiple PIDs.
+        :param process_name: Process name to get PID for.
+
+        :return: PID of the requested process.
         """
         pids = self._query_pids_for_process(process_name=process_name)
         if len(pids) > 1:
@@ -107,6 +107,13 @@ class ProcessUtil:
         return pids[0]
 
     def get_pids_for_process(self, process_name):
+        """
+        Returns PID(s) associated with a process name.
+
+        :param process_name: Process name to get PID(s) for.
+
+        :return: A list containing the PID(s) of the requested process.
+        """
         return self._query_pids_for_process(process_name=process_name)
 
 process_util = ProcessUtil()

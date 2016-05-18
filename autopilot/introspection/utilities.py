@@ -54,12 +54,12 @@ class ProcessUtil:
 
     @contextmanager
     def mocked(self, fake_processes):
-        """Enable mocking for the PidUtil class
+        """Enable mocking for the ProcessUtil class
 
         Also mocks all calls to autopilot.utilities.process_iter.
         One may use it like::
 
-            from autopilot.introspection.utilities import EventDelay
+            from autopilot.introspection.utilities import ProcessUtil
 
             process_util = ProcessUtil()
             with process_util.mocked([{'pid': -9, 'name': 'xx'}]):

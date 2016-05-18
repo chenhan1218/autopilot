@@ -50,7 +50,7 @@ def translate_state_keys(state_dict):
     return {k.replace('-', '_'): v for k, v in state_dict.items()}
 
 
-class PidUtil:
+class ProcessUtil:
 
     @contextmanager
     def mocked(self, fake_processes):
@@ -61,7 +61,7 @@ class PidUtil:
 
             from autopilot.introspection.utilities import EventDelay
 
-            pid_util = PidUtil()
+            pid_util = ProcessUtil()
             with pid_util.mocked([{'pid': -9, 'name': 'xx'}]):
                 self.assertThat(
                     pid_util._query_pid_for_process('xx'),
@@ -108,4 +108,4 @@ class PidUtil:
     def get_pids_for_process(self, process_name):
         return self._query_pids_for_process(process_name=process_name)
 
-pid_util = PidUtil()
+pid_util = ProcessUtil()

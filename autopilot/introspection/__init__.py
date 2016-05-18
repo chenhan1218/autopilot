@@ -40,12 +40,12 @@ For creating your own Custom Proxy Classes use
 from autopilot.introspection.dbus import CustomEmulatorBase, is_element
 from autopilot.introspection._xpathselect import (
     get_classname_from_path,
-    get_path_root
+    get_path_root,
 )
 from autopilot.exceptions import ProcessSearchError
 from autopilot.introspection._search import (
     get_proxy_object_for_existing_process,
-    get_proxy_object_for_existing_process_by_name
+    get_proxy_object_for_existing_process_by_name,
 )
 
 # TODO: Remove ProcessSearchError from here once all our clients have stopped
@@ -58,7 +58,7 @@ __all__ = [
     'ProxyBase',
     'ProcessSearchError',
     'get_proxy_object_for_existing_process',
-    'get_proxy_object_for_existing_process_by_name'
+    'get_proxy_object_for_existing_process_by_name',
 ]
 
 ProxyBase = CustomEmulatorBase

@@ -39,7 +39,7 @@ from autopilot.introspection.backends import WireProtocolVersionMismatch
 from autopilot.introspection.utilities import (
     _get_bus_connections_pid,
     _pid_is_running,
-    process_util
+    process_util,
 )
 from autopilot.utilities import deprecated
 

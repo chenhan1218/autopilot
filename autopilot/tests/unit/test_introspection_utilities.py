@@ -17,23 +17,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from contextlib import contextmanager
-import subprocess
-import os
-import signal
 import uuid
 
 from testtools import TestCase
 
-from autopilot.introspection.utilities import (
-    _query_pids_for_process,
-    get_pid_for_process,
-    get_pids_for_process
-)
+from autopilot.introspection.utilities import pid_util
 
 
-RUNNING_PROCESS = 'compiz'
-NON_RUNNING_PROCESS = uuid.uuid1().__str__()
+PROCESS_NAME = 'dummy_process'
+PROCESS_WITH_SINGLE_INSTANCE = [{'name': PROCESS_NAME, 'pid': -80}]
+PROCESS_WITH_MULTIPLE_INSTANCE = [
+    PROCESS_WITH_SINGLE_INSTANCE[0],
+    {'name': PROCESS_NAME, 'pid': -81}
+]
 
 
 def not_raises(predicate, *args, **kwargs):
@@ -48,26 +44,40 @@ class ProcessUtilitiesTestCase(TestCase):
     def test_passing_non_running_process_raises(self):
         self.assertRaises(
             ValueError,
-            _query_pids_for_process,
-            NON_RUNNING_PROCESS
+            pid_util._query_pids_for_process,
+            PROCESS_NAME
         )
 
     def test_passing_running_process_not_raises(self):
-        self.assertTrue(
-            not_raises(
-                _query_pids_for_process,
-                RUNNING_PROCESS
+        with pid_util.mocked(PROCESS_WITH_SINGLE_INSTANCE):
+            self.assertTrue(
+                not_raises(
+                    pid_util._query_pids_for_process,
+                    PROCESS_NAME
+                )
             )
-        )
 
     def test_passing_integer_raises(self):
-        self.assertRaises(ValueError, _query_pids_for_process, 911)
+        self.assertRaises(ValueError, pid_util._query_pids_for_process, 911)
 
     def test_pid_for_process_is_int(self):
-        self.assertIsInstance(get_pid_for_process(RUNNING_PROCESS), int)
+        with pid_util.mocked(PROCESS_WITH_SINGLE_INSTANCE):
+            self.assertIsInstance(
+                pid_util.get_pid_for_process(PROCESS_NAME),
+                int
+            )
 
-    # def test_pids_for_process_is_list(self):
-    #     self.assertIsInstance(get_pids_for_process(PYTHON_PROCESS_NAME), list)
-    #
-    # def test_passing_process_with_multiple_pids_raises(self):
-    #     self.assertRaises(ValueError, get_pid_for_process, PYTHON_PROCESS_NAME)
+    def test_pids_for_process_is_list(self):
+        with pid_util.mocked(PROCESS_WITH_MULTIPLE_INSTANCE):
+            self.assertIsInstance(
+                pid_util.get_pids_for_process(PROCESS_NAME),
+                list
+            )
+
+    def test_passing_process_with_multiple_pids_raises(self):
+        with pid_util.mocked(PROCESS_WITH_MULTIPLE_INSTANCE):
+            self.assertRaises(
+                ValueError,
+                pid_util.get_pid_for_process,
+                PROCESS_NAME
+            )

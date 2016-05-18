@@ -38,7 +38,7 @@ from autopilot.exceptions import StateNotFoundError
 from autopilot.introspection import (
     CustomEmulatorBase,
     dbus,
-    is_element
+    is_element,
 )
 from autopilot.utilities import sleep
 

@@ -100,7 +100,8 @@ class ProcessUtil:
         if len(pids) > 1:
             raise ValueError(
                 'More than one PID exists for process \'{}\''.format(
-                    process_name)
+                    process_name
+                )
             )
 
         return pids[0]

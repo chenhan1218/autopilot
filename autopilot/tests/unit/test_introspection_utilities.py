@@ -51,7 +51,11 @@ class ProcessUtilitiesTestCase(TestCase):
             )
 
     def test_passing_integer_raises(self):
-        self.assertRaises(ValueError, process_util._query_pids_for_process, 911)
+        self.assertRaises(
+            ValueError,
+            process_util._query_pids_for_process,
+            911
+        )
 
     def test_pid_for_process_is_int(self):
         with process_util.mocked(PROCESS_WITH_SINGLE_INSTANCE):

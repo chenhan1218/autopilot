@@ -19,7 +19,7 @@
 
 from testtools import TestCase
 
-from autopilot.introspection.dbus import not_raises
+from autopilot.introspection.dbus import raises
 from autopilot.introspection.utilities import process_util
 
 
@@ -42,8 +42,8 @@ class ProcessUtilitiesTestCase(TestCase):
 
     def test_passing_running_process_not_raises(self):
         with process_util.mocked(PROCESS_WITH_SINGLE_INSTANCE):
-            self.assertTrue(
-                not_raises(
+            self.assertFalse(
+                raises(
                     ValueError,
                     process_util._query_pids_for_process,
                     PROCESS_NAME

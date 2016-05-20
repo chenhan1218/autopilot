@@ -96,7 +96,7 @@ class ProcessUtil:
 
         :return: PID of the requested process.
         """
-        pids = self._query_pids_for_process(process_name=process_name)
+        pids = self._query_pids_for_process(process_name)
         if len(pids) > 1:
             raise ValueError(
                 'More than one PID exists for process \'{}\''.format(
@@ -114,6 +114,6 @@ class ProcessUtil:
 
         :return: A list containing the PID(s) of the requested process.
         """
-        return self._query_pids_for_process(process_name=process_name)
+        return self._query_pids_for_process(process_name)
 
 process_util = ProcessUtil()

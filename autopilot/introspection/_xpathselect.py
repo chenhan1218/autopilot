@@ -391,7 +391,7 @@ def _get_filter_string_for_key_value_pair(key, value):
         )
 
 
-def _get_classname_from_path_by_index(object_path, index):
+def _get_node(object_path, index):
     # TODO: Find places where paths are strings, and convert them to
     # bytestrings. Figure out what to do with the whole string vs. bytestring
     # mess.
@@ -407,9 +407,9 @@ def _get_classname_from_path_by_index(object_path, index):
 
 def get_classname_from_path(object_path):
     """Given an object path, return the class name component."""
-    return _get_classname_from_path_by_index(object_path, -1)
+    return _get_node(object_path, -1)
 
 
 def get_path_root(object_path):
     """Return the name of the root node of specified path."""
-    return _get_classname_from_path_by_index(object_path, 1)
+    return _get_node(object_path, 1)

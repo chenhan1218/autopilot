@@ -400,8 +400,7 @@ def _get_classname_from_path_by_index(object_path, index):
     except TypeError:
         if not isinstance(object_path, bytes):
             raise
-        object_path = object_path.decode('utf-8')
-        return Path(object_path).parts[index]
+        return object_path.split(b"/")[index]
 
 
 def get_classname_from_path(object_path):

@@ -399,7 +399,9 @@ def _get_classname_from_path_by_index(object_path, index):
         return Path(object_path).parts[index]
     except TypeError:
         if not isinstance(object_path, bytes):
-            raise
+            raise TypeError(
+                'Object path needs to be a string literal or a bytes literal'
+            )
         return object_path.split(b"/")[index]
 
 

@@ -490,6 +490,21 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
                 "Object was not destroyed after %d seconds" % timeout
             )
 
+    def is_moving(self):
+        return _MockableDbusObject(self).is_moving()
+
+    def wait_until_not_moving(self, timeout=10):
+        for i in range(timeout):
+            if self.is_moving():
+                sleep(1)
+            else:
+                return
+        raise RuntimeError(
+            'Object was still moving after {} seconds'.format(
+                timeout
+            )
+        )
+
     def print_tree(self, output=None, maxdepth=None, _curdepth=0):
         """Print properties of the object and its children to a stream.
 
@@ -541,6 +556,13 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
                     c.print_tree(output, maxdepth, _curdepth + 1)
         except StateNotFoundError as error:
             output.write("%sError: %s\n" % (indent, error))
+
+    def get_path(self):
+        """Return the absolute path of the dbus node"""
+        if isinstance(self._path, str):
+            return self._path
+
+        return self._path.decode('utf-8')
 
     @contextmanager
     def no_automatic_refreshing(self):
@@ -659,3 +681,50 @@ def is_element(predicate, *args, **kwargs):
     :return: False if the predicate raises StateNotFoundError, True otherwise.
     """
     return not raises(StateNotFoundError, predicate, *args, **kwargs)
+
+
+class _MockableDbusObject:
+
+    def __init__(self, dbus_object):
+        self._dbus_object = dbus_object
+        self._mocked = False
+        self._post_sleep_object = None
+
+    @contextmanager
+    def mocked(self, post_sleep_object):
+        try:
+            self.enable_mock(post_sleep_object)
+            yield self
+        finally:
+            self.disable_mock()
+
+    def enable_mock(self, post_sleep_object):
+        self._post_sleep_object = post_sleep_object
+        sleep.enable_mock()
+        self._mocked = True
+
+    def disable_mock(self):
+        self._post_sleep_object = None
+        sleep.disable_mock()
+        self._mocked = False
+
+    def _get_object_global_rectangle_pre_sleep(self):
+        return self._dbus_object.globalRect
+
+    def _get_object_global_rectangle_post_sleep(self):
+        if not self._mocked:
+            return self._dbus_object.globalRect
+        else:
+            return self._post_sleep_object.globalRect
+
+    def is_moving(self):
+        """
+        Return bool representing if the dbus object is moving.
+
+        :return: True if the element is moving, False otherwise.
+        """
+        x1, y1, h1, w1 = self._get_object_global_rectangle_pre_sleep()
+        sleep(1)
+        x2, y2, h2, w2 = self._get_object_global_rectangle_post_sleep()
+
+        return x1 != x2 or y1 != y2

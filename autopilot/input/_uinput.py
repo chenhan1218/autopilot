@@ -653,3 +653,19 @@ _UINPUT_CODE_TRANSLATIONS = {
     'ALT': 'LEFTALT',
     'SHIFT': 'LEFTSHIFT',
 }
+
+
+class UInputHardwareKeysDevice:
+
+    _device = None
+
+    def __init__(self, device_class=UInput):
+        if not UInputHardwareKeysDevice._device:
+            UInputHardwareKeysDevice._device = device_class(
+                devnode=_get_devnode_path(),
+            )
+
+    def press_and_release_power_button(self):
+        self._device.write(e.EV_KEY, e.KEY_POWER, 1)
+        self._device.write(e.EV_KEY, e.KEY_POWER, 0)
+        self._device.syn()

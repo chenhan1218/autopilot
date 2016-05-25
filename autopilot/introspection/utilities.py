@@ -18,11 +18,17 @@
 #
 
 from contextlib import contextmanager
+import sys
 
 from dbus import Interface
 import os.path
 
+from autopilot.display import is_point_on_any_screen
+from autopilot.introspection import dbus
 from autopilot.utilities import process_iter
+
+
+CO_ORD_MAX = (sys.maxsize, sys.maxsize)
 
 
 def _pid_is_running(pid):
@@ -117,3 +123,63 @@ class ProcessUtil:
         return self._query_pids_for_process(process_name)
 
 process_util = ProcessUtil()
+
+
+class SortUtil:
+
+    def order_by_x_coord(self, dbus_object_list, include_off_screen=False):
+        return self._order_by_key(
+            dbus_object_list=dbus_object_list,
+            sort_key=self._get_x_and_y,
+            include_off_screen=include_off_screen
+        )
+
+    def order_by_y_coord(self, dbus_object_list, include_off_screen=False):
+        return self._order_by_key(
+            dbus_object_list=dbus_object_list,
+            sort_key=self._get_y_and_x,
+            include_off_screen=include_off_screen
+        )
+
+    def _order_by_key(self, dbus_object_list, sort_key, include_off_screen):
+        objects = [obj for obj in dbus_object_list if
+                   self._filter_object(obj, include_off_screen)]
+        return sorted(objects, key=sort_key)
+
+    def _filter_object(self, obj, include_off_screen):
+        if dbus.is_element(obj.refresh_state):
+            point = self._get_x_and_y(obj)
+            if include_off_screen or is_point_on_any_screen(point):
+                return obj
+
+        return None
+
+    def _get_y_and_x(self, item):
+        """
+        Return y and x co-ordinates for specified object.
+
+        :param item: Item to check
+        :return: (y, x) co-ordinates
+        """
+        if dbus.is_element(item.refresh_state):
+            return item.globalRect[1], item.globalRect[0]
+
+        # Trying to sort an object that no longer exists,
+        # return a dummy key value so this item is sorted last
+        return CO_ORD_MAX
+
+    def _get_x_and_y(self, item):
+        """
+        Return x and y co-ordinates for specified object.
+
+        :param item: Item to check
+        :return: (x, y) co-ordinates
+        """
+        if dbus.is_element(item.refresh_state):
+            return item.globalRect[0], item.globalRect[1]
+
+        # Trying to sort an object that no longer exists,
+        # return a dummy key value so this item is sorted last
+        return CO_ORD_MAX
+
+sort_util = SortUtil()

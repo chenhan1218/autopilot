@@ -44,6 +44,12 @@ from autopilot.introspection.dbus import _MockableDbusObject
 from autopilot.utilities import sleep
 
 
+X_DEFAULT = 0
+Y_DEFAULT = 0
+W_DEFAULT = 0
+H_DEFAULT = 0
+
+
 class IntrospectionFeatureTests(TestCase):
 
     def test_custom_emulator_base_does_not_have_id(self):
@@ -290,11 +296,6 @@ class IsElementTestCase(TestCase):
 
 class IsElementMovingTestCase(TestCase):
 
-    X_DEFAULT = 0
-    Y_DEFAULT = 0
-    W_DEFAULT = 0
-    H_DEFAULT = 0
-
     def setUp(self):
         super().setUp()
         self.dbus_object = _MockableDbusObject(self._get_mock_object())
@@ -311,19 +312,19 @@ class IsElementMovingTestCase(TestCase):
         return mock_object
 
     def test_returns_true_if_x_changed(self):
-        mock_object_new = self._get_mock_object(x=self.X_DEFAULT + 1)
+        mock_object_new = self._get_mock_object(x=X_DEFAULT + 1)
         with self.dbus_object.mocked(mock_object_new) as mocked_dbus_object:
             self.assertTrue(mocked_dbus_object.is_moving())
 
     def test_returns_true_if_y_changed(self):
-        mock_object_new = self._get_mock_object(y=self.Y_DEFAULT + 1)
+        mock_object_new = self._get_mock_object(y=Y_DEFAULT + 1)
         with self.dbus_object.mocked(mock_object_new) as mocked_dbus_object:
             self.assertTrue(mocked_dbus_object.is_moving())
 
     def test_returns_true_if_x_and_y_changed(self):
         mock_object_new = self._get_mock_object(
-            x=self.X_DEFAULT + 1,
-            y=self.Y_DEFAULT + 1,
+            x=X_DEFAULT + 1,
+            y=Y_DEFAULT + 1,
         )
         with self.dbus_object.mocked(mock_object_new) as mocked_dbus_object:
             self.assertTrue(mocked_dbus_object.is_moving())

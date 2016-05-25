@@ -688,34 +688,34 @@ class _MockableDbusObject:
     def __init__(self, dbus_object):
         self._dbus_object = dbus_object
         self._mocked = False
-        self._post_sleep_object = None
+        self._dbus_object_secondary = None
 
     @contextmanager
-    def mocked(self, post_sleep_object):
+    def mocked(self, dbus_object_secondary):
         try:
-            self.enable_mock(post_sleep_object)
+            self.enable_mock(dbus_object_secondary)
             yield self
         finally:
             self.disable_mock()
 
-    def enable_mock(self, post_sleep_object):
-        self._post_sleep_object = post_sleep_object
+    def enable_mock(self, dbus_object_secondary):
+        self._dbus_object_secondary = dbus_object_secondary
         sleep.enable_mock()
         self._mocked = True
 
     def disable_mock(self):
-        self._post_sleep_object = None
+        self._dbus_object_secondary = None
         sleep.disable_mock()
         self._mocked = False
 
-    def _get_object_global_rectangle_pre_sleep(self):
-        return self._dbus_object.globalRect
+    def _get_default_dbus_object(self):
+        return self._dbus_object
 
-    def _get_object_global_rectangle_post_sleep(self):
+    def _get_secondary_dbus_object(self):
         if not self._mocked:
-            return self._dbus_object.globalRect
+            return self._get_default_dbus_object()
         else:
-            return self._post_sleep_object.globalRect
+            return self._dbus_object_secondary
 
     def is_moving(self):
         """
@@ -723,8 +723,8 @@ class _MockableDbusObject:
 
         :return: True if the element is moving, False otherwise.
         """
-        x1, y1, h1, w1 = self._get_object_global_rectangle_pre_sleep()
+        x1, y1, h1, w1 = self._get_default_dbus_object().globalRect
         sleep(1)
-        x2, y2, h2, w2 = self._get_object_global_rectangle_post_sleep()
+        x2, y2, h2, w2 = self._get_secondary_dbus_object().globalRect
 
         return x1 != x2 or y1 != y2

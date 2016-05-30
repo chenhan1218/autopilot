@@ -640,9 +640,10 @@ def _get_class_type_name(maybe_cpo_class):
 def raises(exception_class, predicate, *args, **kwargs):
     try:
         predicate(*args, **kwargs)
-        return False
     except exception_class:
         return True
+    else:
+        return False
 
 
 def is_element(predicate, *args, **kwargs):

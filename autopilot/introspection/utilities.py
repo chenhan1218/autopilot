@@ -142,7 +142,6 @@ class SortUtil:
             sort_util = SortUtil()
             with sort_util.mocked() as mocked_sort_util:
                 sorted_objects = mocked_sort_util.order_by_x_coord(objects)
-                
         """
         try:
             self.enable_mock()
@@ -281,4 +280,3 @@ class MockableDisplayUtil:
             return True
 
 display_util = MockableDisplayUtil()
-

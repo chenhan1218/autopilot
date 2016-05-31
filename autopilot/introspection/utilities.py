@@ -24,7 +24,6 @@ from dbus import Interface
 import os.path
 
 from autopilot.display import is_point_on_any_screen
-from autopilot import introspection as i
 from autopilot.utilities import process_iter
 
 
@@ -171,7 +170,8 @@ class SortUtil:
         return sorted(objects, key=sort_key)
 
     def _filter_object(self, obj, include_off_screen):
-        if i.is_element(obj.refresh_state):
+        from autopilot.introspection import is_element
+        if is_element(obj.refresh_state):
             point = self._get_x_and_y(obj)
             if include_off_screen or is_point_on_any_screen(point):
                 return obj
@@ -185,7 +185,8 @@ class SortUtil:
         :param item: Item to check
         :return: (y, x) co-ordinates
         """
-        if i.is_element(item.refresh_state):
+        from autopilot.introspection import is_element
+        if is_element(item.refresh_state):
             return item.globalRect[1], item.globalRect[0]
 
         # Trying to sort an object that no longer exists,
@@ -199,7 +200,8 @@ class SortUtil:
         :param item: Item to check
         :return: (x, y) co-ordinates
         """
-        if i.is_element(item.refresh_state):
+        from autopilot.introspection import is_element
+        if is_element(item.refresh_state):
             return item.globalRect[0], item.globalRect[1]
 
         # Trying to sort an object that no longer exists,

@@ -95,18 +95,20 @@ class SortUtilitiesTestCase(TestCase):
 
     def test_sort_by_x(self):
         objects = [get_mock_object(x=x) for x in DUMMY_PARAMETERS]
-        sorted_objects = sort_util.order_by_x_coord(objects)
-        self.assertEquals(len(sorted_objects), len(DUMMY_PARAMETERS))
-        self.assertEquals(
-            self._get_x_cordinates_from_object_list(sorted_objects),
-            sorted(DUMMY_PARAMETERS)
-        )
+        with sort_util.mocked() as mocked_sort_util:
+            sorted_objects = mocked_sort_util.order_by_x_coord(objects)
+            self.assertEquals(len(sorted_objects), len(DUMMY_PARAMETERS))
+            self.assertEquals(
+                self._get_x_cordinates_from_object_list(sorted_objects),
+                sorted(DUMMY_PARAMETERS)
+            )
 
     def test_sort_by_y(self):
         objects = [get_mock_object(y=y) for y in DUMMY_PARAMETERS]
-        sorted_objects = sort_util.order_by_y_coord(objects)
-        self.assertEquals(len(sorted_objects), len(DUMMY_PARAMETERS))
-        self.assertEquals(
-            self._get_y_cordinates_from_object_list(sorted_objects),
-            sorted(DUMMY_PARAMETERS)
-        )
+        with sort_util.mocked() as mocked_sort_util:
+            sorted_objects = mocked_sort_util.order_by_y_coord(objects)
+            self.assertEquals(len(sorted_objects), len(DUMMY_PARAMETERS))
+            self.assertEquals(
+                self._get_y_cordinates_from_object_list(sorted_objects),
+                sorted(DUMMY_PARAMETERS)
+            )

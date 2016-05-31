@@ -126,6 +126,38 @@ process_util = ProcessUtil()
 
 class SortUtil:
 
+    def __init__(self):
+        self._mocked = False
+
+    @contextmanager
+    def mocked(self):
+        """
+        Enable mocking for the SortUtil class.
+
+        Also mocks all calls to MockableDisplayUtil.is_point_on_any_screen.
+        One may may use it like::
+
+            from autopilot.introspection.utilities import SortUtil
+
+            sort_util = SortUtil()
+            with sort_util.mocked() as mocked_sort_util:
+                sorted_objects = mocked_sort_util.order_by_x_coord(objects)
+                
+        """
+        try:
+            self.enable_mock()
+            yield self
+        finally:
+            self.disable_mock()
+
+    def enable_mock(self):
+        display_util.enable_mock()
+        self._mocked = True
+
+    def disable_mock(self):
+        display_util.disable_mock()
+        self._mocked = False
+
     def order_by_x_coord(self, dbus_object_list, include_off_screen=False):
         """
         Sort the dbus objects list by x co-ordinate.
@@ -173,9 +205,9 @@ class SortUtil:
         from autopilot.introspection import is_element
         if is_element(obj.refresh_state):
             point = self._get_x_and_y(obj)
-            if include_off_screen or is_point_on_any_screen(point):
+            if include_off_screen or display_util.is_point_on_any_screen(
+                    point):
                 return obj
-
         return None
 
     def _get_y_and_x(self, item):
@@ -209,3 +241,44 @@ class SortUtil:
         return CO_ORD_MAX
 
 sort_util = SortUtil()
+
+
+class MockableDisplayUtil:
+
+    def __init__(self):
+        self._mocked = False
+
+    @contextmanager
+    def mocked(self):
+        """
+        Enable mocking for MockableDisplayUtil class.
+
+        One may use it like::
+
+            display_util = MockableDisplayUtil()
+            with display_util.mocked() as mocked_display_util:
+                point = 120, 10
+                self.assertTrue(
+                    mocked_display_util.is_point_on_any_screen(point)
+                )
+        """
+        try:
+            self.enable_mock()
+            yield self
+        finally:
+            self.disable_mock()
+
+    def enable_mock(self):
+        self._mocked = True
+
+    def disable_mock(self):
+        self._mocked = False
+
+    def is_point_on_any_screen(self, point):
+        if not self._mocked:
+            return is_point_on_any_screen(point)
+        else:
+            return True
+
+display_util = MockableDisplayUtil()
+

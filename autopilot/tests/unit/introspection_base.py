@@ -26,7 +26,7 @@ W_DEFAULT = 0
 H_DEFAULT = 0
 
 
-def get_mock_object(x=X_DEFAULT, y=Y_DEFAULT, w=W_DEFAULT, h=H_DEFAULT):
+def get_mock_object(x=X_DEFAULT, y=Y_DEFAULT, h=H_DEFAULT, w=W_DEFAULT):
     mock_object = Mock()
-    mock_object.globalRect = x, y, w, h
+    mock_object.globalRect = x, y, h, w
     return mock_object

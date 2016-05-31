@@ -690,6 +690,7 @@ class _MockableDbusObject:
         self._dbus_object = dbus_object
         self._mocked = False
         self._dbus_object_secondary = None
+        sleep.disable_mock()
 
     @contextmanager
     def mocked(self, dbus_object_secondary):

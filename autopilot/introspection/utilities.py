@@ -128,6 +128,18 @@ process_util = ProcessUtil()
 class SortUtil:
 
     def order_by_x_coord(self, dbus_object_list, include_off_screen=False):
+        """
+        Sort the dbus objects list by x co-ordinate.
+
+        Sort the dbus objects by x co-ordinate. This is normally used to
+        sort results retrieved by calling *select_many* on a proxy object.
+
+        :param dbus_object_list: list of dbus objects to sort.
+
+        :param include_off_screen: Whether to include off-screen elements.
+
+        :return: sorted list of elements.
+        """
         return self._order_by_key(
             dbus_object_list=dbus_object_list,
             sort_key=self._get_x_and_y,
@@ -135,6 +147,18 @@ class SortUtil:
         )
 
     def order_by_y_coord(self, dbus_object_list, include_off_screen=False):
+        """
+        Sort the dbus objects list by y co-ordinate.
+
+        Sort the dbus objects by y co-ordinate. This is normally used to
+        sort results retrieved by calling *select_many* on a proxy object.
+
+        :param dbus_object_list: list of dbus objects to sort.
+
+        :param include_off_screen: Whether to include off-screen elements.
+
+        :return: sorted list of elements.
+        """
         return self._order_by_key(
             dbus_object_list=dbus_object_list,
             sort_key=self._get_y_and_x,

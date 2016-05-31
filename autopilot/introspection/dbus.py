@@ -491,9 +491,21 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             )
 
     def is_moving(self):
+        """Return bool representing if the dbus node is static or moving."""
         return _MockableDbusObject(self).is_moving()
 
     def wait_until_not_moving(self, timeout=10):
+        """
+        Block until this object is not moving.
+
+        Block until both x and y of the object stop changing. This is
+        normally used with listviews where there is a need to wait for
+        the scrolling to stop before performing another action.
+
+        :param timeout: Seconds to wait for the dbus node to stop moving.
+
+        :raises RuntimeError: if dbus node is still moving after *timeout*.
+        """
         for i in range(timeout):
             if self.is_moving():
                 sleep(1)

@@ -204,7 +204,7 @@ def get_proxy_object_for_existing_process_by_name(process_name, emulator_base):
     :param emulator_base: emulator base to use with the custom proxy object.
 
     :raises ValueError: if process not running or more than one PIDs
-        associated with the process
+        associated with the process.
 
     :return: proxy object for the requested process.
     """

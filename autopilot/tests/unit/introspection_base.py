@@ -35,8 +35,4 @@ def get_mock_object(x=X_DEFAULT, y=Y_DEFAULT, w=W_DEFAULT, h=H_DEFAULT):
 
 def _get_global_rect_as_named_tuple(x, y, w, h):
     global_rect = namedtuple('globalRect', ['x', 'y', 'w', 'h'])
-    global_rect.x = x
-    global_rect.y = y
-    global_rect.w = w
-    global_rect.h = h
-    return global_rect
+    return global_rect(x, y, w, h)

@@ -33,7 +33,7 @@ PROCESS_WITH_MULTIPLE_INSTANCES = [
 ]
 
 # A list containing a single coordinate parameter in a sequence
-DUMMY_PARAMETERS = [15, 1, 20]
+DUMMY_COORDS = [15, 1, 20]
 
 
 class ProcessUtilitiesTestCase(TestCase):
@@ -88,27 +88,27 @@ class ProcessUtilitiesTestCase(TestCase):
 class SortUtilitiesTestCase(TestCase):
 
     def _get_x_cordinates_from_object_list(self, objects):
-        return [obj.globalRect[0] for obj in objects]
+        return [obj.globalRect.x for obj in objects]
 
     def _get_y_cordinates_from_object_list(self, objects):
-        return [obj.globalRect[1] for obj in objects]
+        return [obj.globalRect.y for obj in objects]
 
     def test_sort_by_x(self):
-        objects = [get_mock_object(x=x) for x in DUMMY_PARAMETERS]
+        objects = [get_mock_object(x=x) for x in DUMMY_COORDS]
         with sort_util.mocked() as mocked_sort_util:
             sorted_objects = mocked_sort_util.order_by_x_coord(objects)
-            self.assertEquals(len(sorted_objects), len(DUMMY_PARAMETERS))
+            self.assertEquals(len(sorted_objects), len(DUMMY_COORDS))
             self.assertEquals(
                 self._get_x_cordinates_from_object_list(sorted_objects),
-                sorted(DUMMY_PARAMETERS)
+                sorted(DUMMY_COORDS)
             )
 
     def test_sort_by_y(self):
-        objects = [get_mock_object(y=y) for y in DUMMY_PARAMETERS]
+        objects = [get_mock_object(y=y) for y in DUMMY_COORDS]
         with sort_util.mocked() as mocked_sort_util:
             sorted_objects = mocked_sort_util.order_by_y_coord(objects)
-            self.assertEquals(len(sorted_objects), len(DUMMY_PARAMETERS))
+            self.assertEquals(len(sorted_objects), len(DUMMY_COORDS))
             self.assertEquals(
                 self._get_y_cordinates_from_object_list(sorted_objects),
-                sorted(DUMMY_PARAMETERS)
+                sorted(DUMMY_COORDS)
             )

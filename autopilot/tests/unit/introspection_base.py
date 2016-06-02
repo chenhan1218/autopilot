@@ -18,6 +18,7 @@
 #
 
 from unittest.mock import Mock
+from collections import namedtuple
 
 
 X_DEFAULT = 0
@@ -26,7 +27,16 @@ W_DEFAULT = 0
 H_DEFAULT = 0
 
 
-def get_mock_object(x=X_DEFAULT, y=Y_DEFAULT, h=H_DEFAULT, w=W_DEFAULT):
+def get_mock_object(x=X_DEFAULT, y=Y_DEFAULT, w=W_DEFAULT, h=H_DEFAULT):
     mock_object = Mock()
-    mock_object.globalRect = x, y, h, w
+    mock_object.globalRect = _get_global_rect_as_named_tuple(x, y, w, h)
     return mock_object
+
+
+def _get_global_rect_as_named_tuple(x, y, w, h):
+    global_rect = namedtuple('globalRect', ['x', 'y', 'w', 'h'])
+    global_rect.x = x
+    global_rect.y = y
+    global_rect.w = w
+    global_rect.h = h
+    return global_rect

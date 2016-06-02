@@ -736,7 +736,7 @@ class _MockableDbusObject:
         :return: True if the element is moving, False otherwise.
         """
         x1, y1, h1, w1 = self._get_default_dbus_object().globalRect
-        sleep(1)
+        sleep(0.5)
         x2, y2, h2, w2 = self._get_secondary_dbus_object().globalRect
 
         return x1 != x2 or y1 != y2

@@ -507,9 +507,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         :raises RuntimeError: if dbus node is still moving after *timeout*.
         """
         for i in range(timeout):
-            if self.is_moving():
-                sleep(1)
-            else:
+            if not self.is_moving():
                 return
         raise RuntimeError(
             'Object was still moving after {} seconds'.format(

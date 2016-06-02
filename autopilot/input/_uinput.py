@@ -664,8 +664,29 @@ class UInputHardwareKeysDevice:
             UInputHardwareKeysDevice._device = device_class(
                 devnode=_get_devnode_path(),
             )
+            self._wait_for_device_to_ready()
 
     def press_and_release_power_button(self):
         self._device.write(e.EV_KEY, e.KEY_POWER, 1)
         self._device.write(e.EV_KEY, e.KEY_POWER, 0)
         self._device.syn()
+
+    def _wait_for_device_to_ready(self, timeout=10):
+        """
+        Wait for UInput device to initialize.
+
+        This is a workaround for a bug in evdev where the input device
+        is not instantly created.
+
+        :param timeout: time in seconds to wait for the device to ready.
+
+        :raises RuntimeError: if device is not initialized within *timeout*.
+        """
+        for i in range(timeout):
+            device = self._device._find_device()
+            if device:
+                self._device.device = device
+                return
+            else:
+                sleep(1)
+        raise RuntimeError('Could not find UInput device.')

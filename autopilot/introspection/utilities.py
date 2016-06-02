@@ -187,7 +187,7 @@ class SortUtil:
         """
         from autopilot.introspection import is_element
         if is_element(item.refresh_state):
-            return item.globalRect[1], item.globalRect[0]
+            return item.globalRect.y, item.globalRect.x
 
         # Trying to sort an object that no longer exists,
         # return a dummy key value so this item is sorted last
@@ -202,7 +202,7 @@ class SortUtil:
         """
         from autopilot.introspection import is_element
         if is_element(item.refresh_state):
-            return item.globalRect[0], item.globalRect[1]
+            return item.globalRect.x, item.globalRect.y
 
         # Trying to sort an object that no longer exists,
         # return a dummy key value so this item is sorted last

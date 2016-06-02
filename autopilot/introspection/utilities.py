@@ -126,37 +126,6 @@ process_util = ProcessUtil()
 
 class SortUtil:
 
-    def __init__(self):
-        self._mocked = False
-
-    @contextmanager
-    def mocked(self):
-        """
-        Enable mocking for the SortUtil class.
-
-        Also mocks all calls to MockableDisplayUtil.is_point_on_any_screen.
-        One may may use it like::
-
-            from autopilot.introspection.utilities import SortUtil
-
-            sort_util = SortUtil()
-            with sort_util.mocked() as mocked_sort_util:
-                sorted_objects = mocked_sort_util.order_by_x_coord(objects)
-        """
-        try:
-            self.enable_mock()
-            yield self
-        finally:
-            self.disable_mock()
-
-    def enable_mock(self):
-        display_util.enable_mock()
-        self._mocked = True
-
-    def disable_mock(self):
-        display_util.disable_mock()
-        self._mocked = False
-
     def order_by_x_coord(self, dbus_object_list, include_off_screen=False):
         """
         Sort the dbus objects list by x co-ordinate.

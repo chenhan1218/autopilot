@@ -196,6 +196,18 @@ def get_proxy_object_for_existing_process(**kwargs):
 
 
 def get_proxy_object_for_existing_process_by_name(process_name, emulator_base):
+    """
+    Return the proxy object for a process by its name.
+
+    :param process_name: name of the process to get proxy object.
+
+    :param emulator_base: emulator base to use with the custom proxy object.
+
+    :raises ValueError: if process not running or more than one PIDs
+        associated with the process.
+
+    :return: proxy object for the requested process.
+    """
     pid = process_util.get_pid_for_process(process_name)
     return get_proxy_object_for_existing_process(
         pid=pid,

@@ -244,6 +244,14 @@ class DbusQueryTests(AutopilotTestCase):
         self.assertThat(abs(end_time - start_time), GreaterThan(3))
         self.assertThat(abs(end_time - start_time), LessThan(5))
 
+    def test_wait_select_many_requested_elements_count_matches(self):
+        app = self.start_fully_featured_app()
+        start_time = default_timer()
+        menus = app.wait_select_many('QMenu', number=3, timeout=4)
+        end_time = default_timer()
+        self.assertThat(len(menus), GreaterThan(2))
+        self.assertThat(abs(end_time - start_time), LessThan(5))
+
 
 @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")
 class DbusCustomBusTests(AutopilotTestCase):

@@ -78,7 +78,7 @@ class ProcessUtil:
 
     def _query_pids_for_process(self, process_name):
         if not isinstance(process_name, str):
-            raise ValueError('Process name should be a string')
+            raise ValueError('Process name must be a string.')
 
         pids = [process.pid for process in process_iter()
                 if process.name() == process_name]

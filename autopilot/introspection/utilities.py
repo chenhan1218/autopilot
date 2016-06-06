@@ -92,7 +92,8 @@ class ProcessUtil:
         """
         Returns the PID associated with a process name.
 
-        :param process_name: Process name to get PID for.
+        :param process_name: Process name to get PID for. This must
+            be a string.
 
         :return: PID of the requested process.
         """

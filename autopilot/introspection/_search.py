@@ -200,6 +200,7 @@ def get_proxy_object_for_existing_process_by_name(process_name, emulator_base):
     Return the proxy object for a process by its name.
 
     :param process_name: name of the process to get proxy object.
+        This must be a string.
 
     :param emulator_base: emulator base to use with the custom proxy object.
 

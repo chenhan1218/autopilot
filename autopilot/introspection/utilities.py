@@ -83,7 +83,7 @@ class ProcessUtil:
 
     def _query_pids_for_process(self, process_name):
         if not isinstance(process_name, str):
-            raise ValueError('Process name should be a string')
+            raise ValueError('Process name must be a string.')
 
         pids = [process.pid for process in process_iter()
                 if process.name() == process_name]
@@ -97,7 +97,8 @@ class ProcessUtil:
         """
         Returns the PID associated with a process name.
 
-        :param process_name: Process name to get PID for.
+        :param process_name: Process name to get PID for. This must
+            be a string.
 
         :return: PID of the requested process.
         """

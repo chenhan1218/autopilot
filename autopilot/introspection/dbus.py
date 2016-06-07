@@ -243,7 +243,12 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             raise StateNotFoundError(type_name_str, **kwargs)
         return instances[0]
 
-    def wait_select_single(self, type_name='*', timeout=10, **kwargs):
+    def wait_select_single(
+            self,
+            type_name='*',
+            dbus_query_timeout=10,
+            **kwargs
+    ):
         """Get a proxy object matching some search criteria, retrying if no
         object is found until a timeout is reached.
 
@@ -266,7 +271,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         Example usage::
 
             app.wait_select_single(
-                'QPushButton', timeout=10, objectName='clickme')
+                'QPushButton', dbus_query_timeout=10, objectName='clickme')
             # returns a QPushButton whose 'objectName' property is 'clickme'.
             # will poll the application until such an object exists, or will
             # raise StateNotFoundError after specified timeout.
@@ -278,7 +283,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             of the appropriate type (the latter case is for overridden emulator
             classes).
 
-        :param timeout: Time in seconds to poll for the proxy object to match.
+        :param dbus_query_timeout: Time in seconds to poll for the
+            proxy object to match.
 
         :raises ValueError: if the query returns more than one item. *If
             you want more than one item, use select_many instead*.
@@ -292,11 +298,11 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             Tutorial Section :ref:`custom_proxy_classes`
 
         """
-        for i in range(timeout):
+        for i in range(dbus_query_timeout):
             try:
                 return self.select_single(type_name, **kwargs)
             except StateNotFoundError:
-                if i == timeout - 1:
+                if i == dbus_query_timeout - 1:
                     raise
                 sleep(1)
 
@@ -355,7 +361,13 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         )
         return self._execute_query(new_query)
 
-    def wait_select_many(self, type_name='*', number=1, timeout=10, **kwargs):
+    def wait_select_many(
+            self,
+            type_name='*',
+            number=1,
+            dbus_query_timeout=10,
+            **kwargs
+    ):
         """
         Get a list of nodes from the introspection tree, with type equal to
         *type_name* and (optionally) matching the keyword filters present in
@@ -367,25 +379,25 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         Example Usage::
 
             app.wait_select_many(
-                'QPushButton', number=5, timeout=8, enabled=True)
+                'QPushButton', number=5, dbus_query_timeout=8, enabled=True)
             # waits for >=5 QPushButtons to create within 8 seconds and returns
             # them in a list.
 
         :param: type_name: Either a string naming the type you want, or a class
-            of the appropriate type
+            of the appropriate type.
 
-        :param: number: The number of objects that have to match to return
+        :param: number: The number of objects that have to match to return.
 
-        :param: timeout: The timeout for the polling
+        :param: dbus_query_timeout: The timeout for the polling.
 
-        :param: **kwargs: The optional parameters used to match objects
+        :param: **kwargs: The optional parameters used to match objects.
 
         :raises: ValueError: When the number of objects matching the
-            query are less than the *number* passed as parameter
+            query are less than the *number* passed as parameter.
 
-        :return: A list of proxy objects
+        :return: A list of proxy objects.
         """
-        for i in range(timeout):
+        for i in range(dbus_query_timeout):
             items = self.select_many(type_name, **kwargs)
             if len(items) >= number:
                 return items
@@ -637,26 +649,27 @@ def _get_class_type_name(maybe_cpo_class):
         return maybe_cpo_class.__name__
 
 
-def raises(exception_class, predicate, *args, **kwargs):
+def raises(exception_class, func, *args, **kwargs):
     try:
-        predicate(*args, **kwargs)
+        func(*args, **kwargs)
     except exception_class:
         return True
     else:
         return False
 
 
-def is_element(predicate, *args, **kwargs):
+def is_element(dbus_query_func, *args, **kwargs):
     """
-    Evaluate the predicate with the args and indicate if it raises
-    StateNotFoundError.
+    Call the *dbus_query_func* with the args and indicate if it
+    raises StateNotFoundError.
 
-    :param: predicate: The method to be evaluated.
+    :param: dbus_query_func: The dbus query call to be evaluated.
 
-    :param: *args: The predicate positional parameters.
+    :param: *args: The *dbus_query_func* positional parameters.
 
-    :param: **kwargs: The predicate optional parameters.
+    :param: **kwargs: The *dbus_query_func* optional parameters.
 
-    :return: False if the predicate raises StateNotFoundError, True otherwise.
+    :return: False if the *dbus_query_func* raises StateNotFoundError,
+        True otherwise.
     """
-    return not raises(StateNotFoundError, predicate, *args, **kwargs)
+    return not raises(StateNotFoundError, dbus_query_func, *args, **kwargs)

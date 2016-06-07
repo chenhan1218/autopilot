@@ -56,6 +56,7 @@ def translate_state_keys(state_dict):
 
 
 class ProcessUtil:
+    """Helper class to manipulate running processes."""
 
     @contextmanager
     def mocked(self, fake_processes):
@@ -126,6 +127,10 @@ process_util = ProcessUtil()
 
 
 class SortUtil:
+    """
+    Helper class to sort autopilot dbus objects based on their
+    co-ordinates.
+    """
 
     def order_by_x_coord(self, dbus_object_list, include_off_screen=False):
         """
@@ -213,6 +218,7 @@ sort_util = SortUtil()
 
 
 class MockableDisplayUtil:
+    """Helper class to mock autopilot.display."""
 
     def __init__(self):
         self._mocked = False

@@ -709,6 +709,7 @@ def is_element(ap_query_func, *args, **kwargs):
 
 
 class _MockableDbusObject:
+    """Mockable DBus object."""
 
     def __init__(self, dbus_object):
         self._dbus_object = dbus_object

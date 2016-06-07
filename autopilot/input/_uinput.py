@@ -671,7 +671,7 @@ class UInputHardwareKeysDevice:
         self._device.write(e.EV_KEY, e.KEY_POWER, 0)
         self._device.syn()
 
-    def _wait_for_device_to_ready(self, timeout=10):
+    def _wait_for_device_to_ready(self, timeout=5):
         """
         Wait for UInput device to initialize.
 

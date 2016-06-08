@@ -507,7 +507,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         """Return bool representing if the dbus node is static or moving."""
         return _MockableDbusObject(self).is_moving()
 
-    def wait_until_not_moving(self, timeout=10):
+    def wait_until_not_moving(self, timeout=5):
         """
         Block until this object is not moving.
 
@@ -519,7 +519,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         :raises RuntimeError: if dbus node is still moving after *timeout*.
         """
-        for i in range(timeout):
+        for i in range(timeout * 2):
             if not self.is_moving():
                 return
         raise RuntimeError(

@@ -671,7 +671,7 @@ class UInputHardwareKeysDevice:
         self._device.write(e.EV_KEY, e.KEY_POWER, 0)
         self._device.syn()
 
-    def _wait_for_device_to_ready(self, timeout=5):
+    def _wait_for_device_to_ready(self, timeout=1):
         """
         Wait for UInput device to initialize.
 
@@ -682,11 +682,11 @@ class UInputHardwareKeysDevice:
 
         :raises RuntimeError: if device is not initialized within *timeout*.
         """
-        for i in range(timeout):
+        for i in range(timeout * 10):
             device = self._device._find_device()
             if device:
                 self._device.device = device
                 return
             else:
-                sleep(1)
+                sleep(.1)
         raise RuntimeError('Could not find UInput device.')

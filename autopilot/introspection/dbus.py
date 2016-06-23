@@ -76,8 +76,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         self.__refresh_on_attribute = True
         self._set_properties(state_dict)
         self._path = path
-        self._poll_time = 1
-        self._object_count = 0
+        self._poll_time = 0
+        self._minimum_object_count = 0
         self._backend = backend
         self._query = xpathselect.Query.new_from_path_and_id(
             self._path,
@@ -198,6 +198,21 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
     @contextmanager
     def query_timeout(self, seconds):
+        """
+        Override the default poll time for object search.
+
+        This is mainly useful for cases where the call to search
+        method like *select_single* may not produce the desired
+        result instantly.
+
+        One may use it like this::
+
+            with my_app.query_timeout(seconds=10):
+                menu = my_app.select_single(objectName='QMenu')
+                self.assertTrue(menu.visible)
+
+        :param seconds: time to poll for search criteria to match.
+        """
         poll_time_old = self._poll_time
         try:
             self._poll_time = seconds
@@ -207,15 +222,33 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
     @contextmanager
     def minimum_query_results(self, count, timeout):
-        object_count_old = self._object_count
+        """
+        Override the minimum object count for search result.
+
+        This is mainly useful for cases, where there is a desire
+        to have a minimal count of results produced from search
+        method, like *select_many*.
+
+        One may use it like this::
+
+            with my_app.minimum_query_results(count=3, timeout=10):
+                results = my_app.select_many('QMenu')
+                self.assertTrue(len(results) >= 3)
+
+        :param count: minimum number of expected results.
+
+        :param timeout: time to poll for search criteria to match.
+        """
+        object_count_old = self._minimum_object_count
         with self.query_timeout(seconds=timeout):
             try:
-                self._object_count = count
+                self._minimum_object_count = count
                 yield self
             finally:
-                self._object_count = object_count_old
+                self._minimum_object_count = object_count_old
 
     def _select(self, type_name_str, **kwargs):
+        """Base method to execute search query on the DBus."""
         new_query = self._query.select_descendant(type_name_str, kwargs)
         _logger.debug(
             "Selecting object(s) of %s with attributes: %r",
@@ -225,6 +258,10 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         return self._execute_query(new_query)
 
     def _select_single(self, type_name, **kwargs):
+        """
+        Ensures a single search result is produced from the query
+        and returns it.
+        """
         type_name_str = get_type_name(type_name)
         instances = self._select(type_name_str, **kwargs)
         if len(instances) > 1:
@@ -270,14 +307,14 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             Tutorial Section :ref:`custom_proxy_classes`
 
         """
-        i = 0
-        while i < self._poll_time:
+        if not self._poll_time:
+            return self._select_single(type_name, **kwargs)
+
+        for i in range(self._poll_time):
             try:
                 return self._select_single(type_name, **kwargs)
             except StateNotFoundError:
-                if self._poll_time > 1:
-                    sleep(1)
-                i += 1
+                sleep(1)
         raise StateNotFoundError(type_name, **kwargs)
 
     def wait_select_single(self, type_name='*', **kwargs):
@@ -376,14 +413,15 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             Tutorial Section :ref:`custom_proxy_classes`
 
         """
-        i = 0
-        while i < self._poll_time:
+        if not self._poll_time or not self._minimum_object_count:
+            return self._select_many(type_name, **kwargs)
+
+        for i in range(self._poll_time):
             items = self._select_many(type_name, **kwargs)
-            if len(items) >= self._object_count:
+            if len(items) >= self._minimum_object_count:
                 return items
             sleep(1)
-            i += 1
-        raise ValueError("Not found the number of elements requested")
+        raise ValueError('Not found the number of elements requested')
 
     def refresh_state(self):
         """Refreshes the object's state.

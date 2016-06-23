@@ -421,7 +421,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             if len(items) >= self._minimum_object_count:
                 return items
             sleep(1)
-        raise ValueError('Not found the number of elements requested')
+        raise ValueError('Failed to find the requested number of elements.')
 
     def refresh_state(self):
         """Refreshes the object's state.

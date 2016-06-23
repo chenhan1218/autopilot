@@ -76,6 +76,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         self.__refresh_on_attribute = True
         self._set_properties(state_dict)
         self._path = path
+        self._poll_time = 0
+        self._minimum_object_count = 0
         self._backend = backend
         self._query = xpathselect.Query.new_from_path_and_id(
             self._path,
@@ -194,6 +196,80 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         new_query = self._query.select_parent()
         return self._execute_query(new_query)[0]
 
+    @contextmanager
+    def query_timeout(self, seconds):
+        """
+        Override the default poll time for object search.
+
+        This is mainly useful for cases where the call to search
+        method like *select_single* may not produce the desired
+        result instantly.
+
+        One may use it like this::
+
+            with my_app.query_timeout(seconds=10):
+                menu = my_app.select_single(objectName='QMenu')
+                self.assertTrue(menu.visible)
+
+        :param seconds: time to poll for search criteria to match.
+        """
+        poll_time_old = self._poll_time
+        try:
+            self._poll_time = seconds
+            yield self
+        finally:
+            self._poll_time = poll_time_old
+
+    @contextmanager
+    def minimum_query_results(self, count, timeout):
+        """
+        Override the minimum object count for search result.
+
+        This is mainly useful for cases, where there is a desire
+        to have a minimal count of results produced from search
+        method, like *select_many*.
+
+        One may use it like this::
+
+            with my_app.minimum_query_results(count=3, timeout=10):
+                results = my_app.select_many('QMenu')
+                self.assertTrue(len(results) >= 3)
+
+        :param count: minimum number of expected results.
+
+        :param timeout: time to poll for search criteria to match.
+        """
+        object_count_old = self._minimum_object_count
+        with self.query_timeout(seconds=timeout):
+            try:
+                self._minimum_object_count = count
+                yield self
+            finally:
+                self._minimum_object_count = object_count_old
+
+    def _select(self, type_name_str, **kwargs):
+        """Base method to execute search query on the DBus."""
+        new_query = self._query.select_descendant(type_name_str, kwargs)
+        _logger.debug(
+            "Selecting object(s) of %s with attributes: %r",
+            'any type' if type_name_str == '*' else 'type ' + type_name_str,
+            kwargs
+        )
+        return self._execute_query(new_query)
+
+    def _select_single(self, type_name, **kwargs):
+        """
+        Ensures a single search result is produced from the query
+        and returns it.
+        """
+        type_name_str = get_type_name(type_name)
+        instances = self._select(type_name_str, **kwargs)
+        if len(instances) > 1:
+            raise ValueError("More than one item was returned for query")
+        if not instances:
+            raise StateNotFoundError(type_name_str, **kwargs)
+        return instances[0]
+
     def select_single(self, type_name='*', **kwargs):
         """Get a single node from the introspection tree, with type equal to
         *type_name* and (optionally) matching the keyword filters present in
@@ -231,25 +307,23 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             Tutorial Section :ref:`custom_proxy_classes`
 
         """
-        type_name_str = get_type_name(type_name)
-        new_query = self._query.select_descendant(
-            type_name_str,
-            kwargs
-        )
-        instances = self._execute_query(new_query)
-        if len(instances) > 1:
-            raise ValueError("More than one item was returned for query")
-        if not instances:
-            raise StateNotFoundError(type_name_str, **kwargs)
-        return instances[0]
+        if not self._poll_time:
+            return self._select_single(type_name, **kwargs)
 
-    def wait_select_single(self, type_name='*', ap_query_timeout=10, **kwargs):
+        for i in range(self._poll_time):
+            try:
+                return self._select_single(type_name, **kwargs)
+            except StateNotFoundError:
+                sleep(1)
+        raise StateNotFoundError(type_name, **kwargs)
+
+    def wait_select_single(self, type_name='*', **kwargs):
         """Get a proxy object matching some search criteria, retrying if no
         object is found until a timeout is reached.
 
         This method is identical to the :meth:`select_single` method, except
-        that this method will poll the application under test for the specified
-        time in the event that the search criteria does not match anything.
+        that this method will poll the application under test for 10 seconds
+        in the event that the search criteria does not match anything.
 
         This method will return single proxy object from the introspection
         tree, with type equal to *type_name* and (optionally) matching the
@@ -265,21 +339,17 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         Example usage::
 
-            app.wait_select_single(
-                'QPushButton', ap_query_timeout=10, objectName='clickme')
+            app.wait_select_single('QPushButton', objectName='clickme')
             # returns a QPushButton whose 'objectName' property is 'clickme'.
             # will poll the application until such an object exists, or will
-            # raise StateNotFoundError after specified timeout.
+            # raise StateNotFoundError after 10 seconds.
 
         If nothing is returned from the query, this method raises
-        StateNotFoundError after specified timeout.
+        StateNotFoundError after 10 seconds.
 
         :param type_name: Either a string naming the type you want, or a class
             of the appropriate type (the latter case is for overridden emulator
             classes).
-
-        :param ap_query_timeout: Time in seconds to poll for the
-            proxy object to match.
 
         :raises ValueError: if the query returns more than one item. *If
             you want more than one item, use select_many instead*.
@@ -293,13 +363,12 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             Tutorial Section :ref:`custom_proxy_classes`
 
         """
-        for i in range(ap_query_timeout):
-            try:
-                return self.select_single(type_name, **kwargs)
-            except StateNotFoundError:
-                if i == ap_query_timeout - 1:
-                    raise
-                sleep(1)
+        with self.query_timeout(seconds=10):
+            return self.select_single(type_name, **kwargs)
+
+    def _select_many(self, type_name, **kwargs):
+        type_name_str = get_type_name(type_name)
+        return self._select(type_name_str, **kwargs)
 
     def select_many(self, type_name='*', **kwargs):
         """Get a list of nodes from the introspection tree, with type equal to
@@ -344,66 +413,15 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             Tutorial Section :ref:`custom_proxy_classes`
 
         """
-        type_name_str = get_type_name(type_name)
-        new_query = self._query.select_descendant(
-            type_name_str,
-            kwargs
-        )
-        _logger.debug(
-            "Selecting objects of %s with attributes: %r",
-            'any type'
-            if type_name_str == '*' else 'type ' + type_name_str, kwargs
-        )
-        return self._execute_query(new_query)
+        if not self._poll_time or not self._minimum_object_count:
+            return self._select_many(type_name, **kwargs)
 
-    def wait_select_many(
-            self,
-            type_name='*',
-            ap_result_count=1,
-            ap_query_timeout=10,
-            **kwargs
-    ):
-        """
-        Get a list of nodes from the introspection tree, with type equal to
-        *type_name* and (optionally) matching the keyword filters present in
-        *kwargs*. This method will retry until either the objects matching
-        the criteria are >= *ap_result_count* or the *ap_query_timeout*
-        is reached.
-
-        You must specify either *type_name*, keyword filters or both.
-
-        Example Usage::
-
-            app.wait_select_many(
-                'QPushButton',
-                ap_result_count=5,
-                ap_query_timeout=8,
-                enabled=True
-            )
-            # waits for >=5 QPushButtons to create within 8 seconds and returns
-            # them in a list.
-
-        :param: type_name: Either a string naming the type you want, or a class
-            of the appropriate type.
-
-        :param: ap_result_count: The number of objects that have to
-            match to return.
-
-        :param: ap_query_timeout: The timeout for the polling.
-
-        :param: **kwargs: The optional parameters used to match objects.
-
-        :raises: ValueError: When the number of objects matching the
-            query are less than the *number* passed as parameter.
-
-        :return: A list of proxy objects.
-        """
-        for i in range(ap_query_timeout):
-            items = self.select_many(type_name, **kwargs)
-            if len(items) >= ap_result_count:
+        for i in range(self._poll_time):
+            items = self._select_many(type_name, **kwargs)
+            if len(items) >= self._minimum_object_count:
                 return items
             sleep(1)
-        raise ValueError("Not found the number of elements requested")
+        raise ValueError('Failed to find the requested number of elements.')
 
     def refresh_state(self):
         """Refreshes the object's state.

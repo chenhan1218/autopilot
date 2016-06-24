@@ -687,11 +687,11 @@ class UInputHardwareKeysDevice:
         :raises RuntimeError: if device is not initialized within *timeout*.
         """
         if not isinstance(timeout, int):
-            raise ValueError('Timeout must be an integer.')
+            raise ValueError('timeout must be an integer.')
         retry_interval = 0.1
-        retry_attempts = int(timeout / retry_interval)
+        retry_attempts_count = int(timeout / retry_interval)
 
-        for i in range(retry_attempts):
+        for i in range(retry_attempts_count):
             device = self._device._find_device()
             if device:
                 self._device.device = device

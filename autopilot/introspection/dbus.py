@@ -521,24 +521,38 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
                 "Object was not destroyed after %d seconds" % timeout
             )
 
-    def is_moving(self):
-        """Return bool representing if the dbus node is static or moving."""
-        return _MockableDbusObject(self).is_moving()
+    def is_moving(self, gap_interval=0.1):
+        """
+        Check if the element is moving.
 
-    def wait_until_not_moving(self, timeout=5):
+        :param gap_interval: Time in seconds to wait before
+            re-inquiring the object co-ordinates to be able
+            to evaluate if, the element is moving.
+
+        :return: True, if the element is moving, otherwise False.
+        """
+        return _MockableDbusObject(self).is_moving(gap_interval)
+
+    def wait_until_not_moving(self, timeout=10):
         """
         Block until this object is not moving.
 
         Block until both x and y of the object stop changing. This is
-        normally used with listviews where there is a need to wait for
-        the scrolling to stop before performing another action.
+        normally useful for cases, where there is a need to ensure an
+        object is static before interacting with it.
 
-        :param timeout: Seconds to wait for the dbus node to stop moving.
+        :param timeout: Seconds to wait for the DBus node to stop moving.
+            This must be an integer.
 
-        :raises RuntimeError: if dbus node is still moving after *timeout*.
+        :raises RuntimeError: if DBus node is still moving after *timeout*.
         """
-        for i in range(timeout * 2):
-            if not self.is_moving():
+        if not isinstance(timeout, int):
+            raise ValueError('timeout must be an integer.')
+        gap_interval = 0.5
+        attempts_count = int(timeout / gap_interval)
+
+        for i in range(attempts_count):
+            if not self.is_moving(gap_interval):
                 return
         raise RuntimeError(
             'Object was still moving after {} seconds'.format(
@@ -762,14 +776,18 @@ class _MockableDbusObject:
         else:
             return self._dbus_object_secondary
 
-    def is_moving(self):
+    def is_moving(self, gap_interval=0.1):
         """
-        Return bool representing if the dbus object is moving.
+        Check if the element is moving.
 
-        :return: True if the element is moving, False otherwise.
+        :param gap_interval: Time in seconds to wait before
+            re-inquiring the object co-ordinates to be able
+            to evaluate if, the element has moved.
+
+        :return: True, if the element is moving, otherwise False.
         """
         x1, y1, h1, w1 = self._get_default_dbus_object().globalRect
-        sleep(0.5)
+        sleep(gap_interval)
         x2, y2, h2, w2 = self._get_secondary_dbus_object().globalRect
 
         return x1 != x2 or y1 != y2

@@ -20,13 +20,7 @@
 from testtools import TestCase
 
 from autopilot.introspection.dbus import raises
-from autopilot.introspection.utilities import (
-    display_util,
-    process_util,
-    sort_util,
-)
-
-from autopilot.tests.unit.introspection_base import get_mock_object
+from autopilot.introspection.utilities import process_util
 
 
 PROCESS_NAME = 'dummy_process'
@@ -35,9 +29,6 @@ PROCESS_WITH_MULTIPLE_INSTANCES = [
     PROCESS_WITH_SINGLE_INSTANCE[0],
     {'name': PROCESS_NAME, 'pid': -81}
 ]
-
-# A list containing a single coordinate parameter in a sequence
-DUMMY_COORDS = [15, 1, 20]
 
 
 class ProcessUtilitiesTestCase(TestCase):
@@ -86,33 +77,4 @@ class ProcessUtilitiesTestCase(TestCase):
                 ValueError,
                 process_util.get_pid_for_process,
                 PROCESS_NAME
-            )
-
-
-class SortUtilitiesTestCase(TestCase):
-
-    def _get_x_cordinates_from_object_list(self, objects):
-        return [obj.globalRect.x for obj in objects]
-
-    def _get_y_cordinates_from_object_list(self, objects):
-        return [obj.globalRect.y for obj in objects]
-
-    def test_sort_by_x(self):
-        objects = [get_mock_object(x=x) for x in DUMMY_COORDS]
-        with display_util.mocked():
-            sorted_objects = sort_util.order_by_x_coord(objects)
-            self.assertEquals(len(sorted_objects), len(DUMMY_COORDS))
-            self.assertEquals(
-                self._get_x_cordinates_from_object_list(sorted_objects),
-                sorted(DUMMY_COORDS)
-            )
-
-    def test_sort_by_y(self):
-        objects = [get_mock_object(y=y) for y in DUMMY_COORDS]
-        with display_util.mocked():
-            sorted_objects = sort_util.order_by_y_coord(objects)
-            self.assertEquals(len(sorted_objects), len(DUMMY_COORDS))
-            self.assertEquals(
-                self._get_y_cordinates_from_object_list(sorted_objects),
-                sorted(DUMMY_COORDS)
             )

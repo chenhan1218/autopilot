@@ -198,8 +198,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
     @contextmanager
     def query_timeout(self, seconds):
-        """
-        Override the default poll time for object search.
+        """Override the default poll time for object search.
 
         This is mainly useful for cases where the call to search
         method like *select_single* may not produce the desired
@@ -222,8 +221,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
     @contextmanager
     def minimum_query_results(self, count, timeout):
-        """
-        Override the minimum object count for search result.
+        """Override the minimum object count for search result.
 
         This is mainly useful for cases, where there is a desire
         to have a minimal count of results produced from search
@@ -724,8 +722,7 @@ def raises(exception_class, func, *args, **kwargs):
 
 
 def is_element(ap_query_func, *args, **kwargs):
-    """
-    Call the *ap_query_func* with the args and indicate if it
+    """Call the *ap_query_func* with the args and indicate if it
     raises StateNotFoundError.
 
     :param: ap_query_func: The dbus query call to be evaluated.

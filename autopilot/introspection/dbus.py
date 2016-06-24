@@ -520,8 +520,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             )
 
     def is_moving(self, gap_interval=0.1):
-        """
-        Check if the element is moving.
+        """Check if the element is moving.
 
         :param gap_interval: Time in seconds to wait before
             re-inquiring the object co-ordinates to be able
@@ -532,8 +531,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         return _MockableDbusObject(self).is_moving(gap_interval)
 
     def wait_until_not_moving(self, timeout=10):
-        """
-        Block until this object is not moving.
+        """Block until this object is not moving.
 
         Block until both x and y of the object stop changing. This is
         normally useful for cases, where there is a need to ensure an
@@ -774,8 +772,7 @@ class _MockableDbusObject:
             return self._dbus_object_secondary
 
     def is_moving(self, gap_interval=0.1):
-        """
-        Check if the element is moving.
+        """Check if the element is moving.
 
         :param gap_interval: Time in seconds to wait before
             re-inquiring the object co-ordinates to be able

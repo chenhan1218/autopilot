@@ -675,8 +675,7 @@ class UInputHardwareKeysDevice:
         self._device.syn()
 
     def _wait_for_device_to_ready(self, timeout=1):
-        """
-        Wait for UInput device to initialize.
+        """Wait for UInput device to initialize.
 
         This is a workaround for a bug in evdev where the input device
         is not instantly created.

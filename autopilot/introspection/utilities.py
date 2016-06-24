@@ -131,8 +131,7 @@ class SortUtil:
     """
 
     def order_by_x_coord(self, dbus_object_list, include_off_screen=False):
-        """
-        Sort the dbus objects list by x co-ordinate.
+        """Sort the dbus objects list by x co-ordinate.
 
         Sort the dbus objects by x co-ordinate. This is normally used to
         sort results retrieved by calling *select_many* on a proxy object.
@@ -150,8 +149,7 @@ class SortUtil:
         )
 
     def order_by_y_coord(self, dbus_object_list, include_off_screen=False):
-        """
-        Sort the dbus objects list by y co-ordinate.
+        """Sort the dbus objects list by y co-ordinate.
 
         Sort the dbus objects by y co-ordinate. This is normally used to
         sort results retrieved by calling *select_many* on a proxy object.
@@ -183,8 +181,7 @@ class SortUtil:
         return None
 
     def _get_y_and_x(self, item):
-        """
-        Return y and x co-ordinates for specified object.
+        """Return y and x co-ordinates for specified object.
 
         :param item: Item to check
         :return: (y, x) co-ordinates
@@ -198,8 +195,7 @@ class SortUtil:
         return CO_ORD_MAX
 
     def _get_x_and_y(self, item):
-        """
-        Return x and y co-ordinates for specified object.
+        """Return x and y co-ordinates for specified object.
 
         :param item: Item to check
         :return: (x, y) co-ordinates
@@ -223,8 +219,7 @@ class MockableDisplayUtil:
 
     @contextmanager
     def mocked(self):
-        """
-        Enable mocking for MockableDisplayUtil class.
+        """Enable mocking for MockableDisplayUtil class.
 
         One may use it like::
 

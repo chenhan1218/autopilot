@@ -674,22 +674,26 @@ class UInputHardwareKeysDevice:
         self._device.write(e.EV_KEY, e.KEY_POWER, 0)
         self._device.syn()
 
-    def _wait_for_device_to_ready(self, timeout=1):
+    def _wait_for_device_to_ready(
+            self,
+            retry_attempts_count=10,
+            retry_interval=0.1,
+    ):
         """Wait for UInput device to initialize.
 
         This is a workaround for a bug in evdev where the input device
         is not instantly created.
 
-        :param timeout: time in seconds to wait for the device to ready.
-            This must be an integer.
+        :param retry_attempts_count: number of attempts to check
+            if device is ready.
 
-        :raises RuntimeError: if device is not initialized within *timeout*.
+        :param retry_interval: time in fractional seconds to be
+            slept, between each attempt to check if device is
+            ready.
+
+        :raises RuntimeError: if device is not initialized after
+            number of retries specified in *retry_attempts_count*.
         """
-        if not isinstance(timeout, int):
-            raise ValueError('timeout must be an integer.')
-        retry_interval = 0.1
-        retry_attempts_count = int(timeout / retry_interval)
-
         for i in range(retry_attempts_count):
             device = self._device._find_device()
             if device:

@@ -530,29 +530,33 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         """
         return _MockableDbusObject(self).is_moving(gap_interval)
 
-    def wait_until_not_moving(self, timeout=10):
+    def wait_until_not_moving(
+            self,
+            retry_attempts_count=20,
+            retry_interval=0.5,
+    ):
         """Block until this object is not moving.
 
         Block until both x and y of the object stop changing. This is
         normally useful for cases, where there is a need to ensure an
         object is static before interacting with it.
 
-        :param timeout: Seconds to wait for the DBus node to stop moving.
-            This must be an integer.
+        :param retry_attempts_count: number of attempts to check
+            if the object is moving.
 
-        :raises RuntimeError: if DBus node is still moving after *timeout*.
+        :param retry_interval: time in fractional seconds to be
+            slept, between each attempt to check if the object
+            moving.
+
+        :raises RuntimeError: if DBus node is still moving after
+            number of retries specified in *retry_attempts_count*.
         """
-        if not isinstance(timeout, int):
-            raise ValueError('timeout must be an integer.')
-        gap_interval = 0.5
-        attempts_count = int(timeout / gap_interval)
-
-        for i in range(attempts_count):
-            if not self.is_moving(gap_interval):
+        for i in range(retry_attempts_count):
+            if not self.is_moving(retry_interval):
                 return
         raise RuntimeError(
-            'Object was still moving after {} seconds'.format(
-                timeout
+            'Object was still moving after {} second(s)'.format(
+                retry_attempts_count * retry_interval
             )
         )
 

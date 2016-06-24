@@ -86,7 +86,8 @@ class SortUtil:
             return item.globalRect.y, item.globalRect.x
 
         # Trying to sort an object that no longer exists,
-        # return a dummy key value so this item is sorted last
+        # may cause sort() to fail, so we return a dummy
+        # key value for this item to be sorted last.
         return CO_ORD_MAX
 
     def _get_x_and_y(self, item):
@@ -99,7 +100,8 @@ class SortUtil:
             return item.globalRect.x, item.globalRect.y
 
         # Trying to sort an object that no longer exists,
-        # return a dummy key value so this item is sorted last
+        # may cause sort() to fail, so we return a dummy
+        # key value for this item to be sorted last.
         return CO_ORD_MAX
 
 sort_util = SortUtil()

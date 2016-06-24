@@ -26,6 +26,7 @@ from evdev import UInput, ecodes as e
 from autopilot.input import Keyboard as KeyboardBase
 from autopilot.input import Touch as TouchBase
 from autopilot.input import get_center_point
+from autopilot.platform import model
 from autopilot.utilities import deprecated, EventDelay, sleep
 
 
@@ -664,7 +665,9 @@ class UInputHardwareKeysDevice:
             UInputHardwareKeysDevice._device = device_class(
                 devnode=_get_devnode_path(),
             )
-            self._wait_for_device_to_ready()
+            # This workaround is not needed on desktop.
+            if model() != 'Desktop':
+                self._wait_for_device_to_ready()
 
     def press_and_release_power_button(self):
         self._device.write(e.EV_KEY, e.KEY_POWER, 1)
@@ -679,14 +682,20 @@ class UInputHardwareKeysDevice:
         is not instantly created.
 
         :param timeout: time in seconds to wait for the device to ready.
+            This must be an integer.
 
         :raises RuntimeError: if device is not initialized within *timeout*.
         """
-        for i in range(timeout * 10):
+        if not isinstance(timeout, int):
+            raise ValueError('Timeout must be an integer.')
+        retry_interval = 0.1
+        retry_attempts = int(timeout / retry_interval)
+
+        for i in range(retry_attempts):
             device = self._device._find_device()
             if device:
                 self._device.device = device
                 return
             else:
-                sleep(.1)
-        raise RuntimeError('Could not find UInput device.')
+                sleep(retry_interval)
+        raise RuntimeError('Failed to find UInput device.')

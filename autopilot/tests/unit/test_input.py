@@ -1089,7 +1089,6 @@ class UInputPowerButtonTestCase(TestCase):
 
     def assert_power_button_press_release_emitted_write_and_sync(self, calls):
         expected_calls = [
-            call._find_device(),
             call.write(ecodes.EV_KEY, ecodes.KEY_POWER, 1),
             call.write(ecodes.EV_KEY, ecodes.KEY_POWER, 0),
             call.syn(),

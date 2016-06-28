@@ -248,6 +248,22 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
     @contextmanager
     def order_by_properties(self, keys):
+        """Force the search results from a query to be ordered.
+
+        This is to be used with *select_many* where there is a
+        need to have objects ordered by their specific property.
+        A basic case could be, to determine the top-most item
+        based on its 'y' co-ordinate.
+
+        One may use it like::
+
+            with my_app.order_by_properties(['y']):
+                items = my_app.select_many('AClass')
+                self.assertTrue(items[-1].y > items[0].y)
+
+        :param keys: a list containing object properties to sort
+            first.
+        """
         if not isinstance(keys, list):
             raise ValueError('Parameter "keys" must be list.')
         result_keys_old = self._result_order_keys
@@ -377,6 +393,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             return self.select_single(type_name, **kwargs)
 
     def _select_many(self, type_name, **kwargs):
+        """Executes a query, with no restraints on the number of results."""
         type_name_str = get_type_name(type_name)
         instances = self._select(type_name_str, **kwargs)
         if len(instances) > 1 and self._result_order_keys:

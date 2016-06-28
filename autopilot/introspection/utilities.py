@@ -23,7 +23,6 @@ from contextlib import contextmanager
 
 from dbus import Interface
 
-from autopilot.display import is_point_on_any_screen
 from autopilot.utilities import process_iter
 
 CO_ORD_MAX = (sys.maxsize, sys.maxsize)
@@ -121,43 +120,3 @@ class ProcessUtil:
         return self._query_pids_for_process(process_name)
 
 process_util = ProcessUtil()
-
-
-class MockableDisplayUtil:
-    """Helper class to mock autopilot.display."""
-
-    def __init__(self):
-        self._mocked = False
-
-    @contextmanager
-    def mocked(self):
-        """Enable mocking for MockableDisplayUtil class.
-
-        One may use it like::
-
-            display_util = MockableDisplayUtil()
-            with display_util.mocked() as mocked_display_util:
-                point = 120, 10
-                self.assertTrue(
-                    mocked_display_util.is_point_on_any_screen(point)
-                )
-        """
-        try:
-            self.enable_mock()
-            yield self
-        finally:
-            self.disable_mock()
-
-    def enable_mock(self):
-        self._mocked = True
-
-    def disable_mock(self):
-        self._mocked = False
-
-    def is_point_on_any_screen(self, point):
-        if not self._mocked:
-            return is_point_on_any_screen(point)
-        else:
-            return True
-
-display_util = MockableDisplayUtil()

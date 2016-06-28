@@ -78,6 +78,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         self._path = path
         self._poll_time = 0
         self._minimum_object_count = 0
+        self._result_order_keys = None
         self._backend = backend
         self._query = xpathselect.Query.new_from_path_and_id(
             self._path,
@@ -245,6 +246,17 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             finally:
                 self._minimum_object_count = object_count_old
 
+    @contextmanager
+    def order_by_properties(self, keys):
+        if not isinstance(keys, list):
+            raise ValueError('Parameter "keys" must be list.')
+        result_keys_old = self._result_order_keys
+        try:
+            self._result_order_keys = keys
+            yield self
+        finally:
+            self._result_order_keys = result_keys_old
+
     def _select(self, type_name_str, **kwargs):
         """Base method to execute search query on the DBus."""
         new_query = self._query.select_descendant(type_name_str, kwargs)
@@ -366,7 +378,15 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
     def _select_many(self, type_name, **kwargs):
         type_name_str = get_type_name(type_name)
-        return self._select(type_name_str, **kwargs)
+        instances = self._select(type_name_str, **kwargs)
+        if len(instances) > 1 and self._result_order_keys:
+            return sorted(
+                instances,
+                key=lambda item: [
+                    item.__getattr__(key) for key in self._result_order_keys
+                ]
+            )
+        return instances
 
     def select_many(self, type_name='*', **kwargs):
         """Get a list of nodes from the introspection tree, with type equal to

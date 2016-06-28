@@ -319,3 +319,59 @@ class IsElementMovingTestCase(TestCase):
         mock_object_new = get_mock_object()
         with self.dbus_object.mocked(mock_object_new) as mocked_dbus_object:
             self.assertFalse(mocked_dbus_object.is_moving())
+
+
+class DBusIntrospectionObjectContextManagersTests(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.fake_object = dbus.DBusIntrospectionObject(
+            dict(id=[0, 123], path=[0, '/some/path']),
+            b'/root',
+            Mock()
+        )
+        self._set_object_self_refresh(False)
+        self.addCleanup(self._set_object_self_refresh, True)
+
+    def _set_object_self_refresh(self, enabled):
+        self.fake_object.__refresh_on_attribute = enabled
+
+    def test_query_timeout_context_manager_changes_poll_time(self):
+        with self.fake_object.query_timeout(seconds=10):
+            self.assertEqual(10, self.fake_object._poll_time)
+
+    def test_query_timeout_context_manager_resets_poll_time(self):
+        with self.fake_object.query_timeout(seconds=10):
+            pass
+        self.assertEqual(0, self.fake_object._poll_time)
+
+    def test_query_timeout_context_manager_yields_self(self):
+        with self.fake_object.query_timeout(seconds=10) as o:
+            self.assertIsInstance(o, dbus.DBusIntrospectionObject)
+
+    def test_query_results_context_manager_changes_min_obj_count(self):
+        with self.fake_object.minimum_query_results(count=10, timeout=10):
+            self.assertEqual(10, self.fake_object._minimum_object_count)
+
+    def test_query_results_context_manager_resets_min_obj_count(self):
+        with self.fake_object.minimum_query_results(count=10, timeout=10):
+            pass
+        self.assertEqual(0, self.fake_object._minimum_object_count)
+
+    def test_query_results_context_manager_changes_poll_time(self):
+        with self.fake_object.minimum_query_results(count=10, timeout=10):
+            self.assertEqual(10, self.fake_object._poll_time)
+
+    def test_order_by_properties_context_manager_raises_if_string_passed(self):
+        def callable_manager():
+            with self.fake_object.order_by_properties('test'):
+                pass
+        self.assertRaises(ValueError, callable_manager)
+
+    def test_order_by_properties_context_manager_changes_order_keys(self):
+        with self.fake_object.order_by_properties(['x']):
+            self.assertEqual(['x'], self.fake_object._result_order_keys)
+
+    def test_order_by_properties_context_manager_resets_order_keys(self):
+        with self.fake_object.order_by_properties(['x']):
+            pass
+        self.assertEqual(None, self.fake_object._result_order_keys)

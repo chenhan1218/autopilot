@@ -667,6 +667,19 @@ def _get_class_type_name(maybe_cpo_class):
 
 
 def raises(exception_class, func, *args, **kwargs):
+    """Evaluate if the callable *func* raises the expected
+    exception.
+
+    :param exception_class: Expected exception to be raised.
+
+    :param func: The callable that is to be evaluated.
+
+    :param args: Optional *args* to call the *func* with.
+
+    :param kwargs: Optional *kwargs* to call the *func* with.
+
+    :returns: bool, if the exception was raised.
+    """
     try:
         func(*args, **kwargs)
     except exception_class:
@@ -685,7 +698,7 @@ def is_element(ap_query_func, *args, **kwargs):
 
     :param: **kwargs: The *ap_query_func* optional parameters.
 
-    :return: False if the *ap_query_func* raises StateNotFoundError,
+    :returns: False if the *ap_query_func* raises StateNotFoundError,
         True otherwise.
     """
     return not raises(StateNotFoundError, ap_query_func, *args, **kwargs)

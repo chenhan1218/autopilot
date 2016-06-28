@@ -18,14 +18,11 @@
 #
 
 import os
-import sys
 from contextlib import contextmanager
 
 from dbus import Interface
 
 from autopilot.utilities import process_iter
-
-CO_ORD_MAX = (sys.maxsize, sys.maxsize)
 
 
 def _pid_is_running(pid):

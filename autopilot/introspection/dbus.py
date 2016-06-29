@@ -422,15 +422,25 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             Tutorial Section :ref:`custom_proxy_classes`
 
         """
-        if not self._poll_time or not self._minimum_object_count:
-            return self._select_many(type_name, **kwargs)
+        exception_message = 'Failed to find the requested number of elements.'
+        # No need to poll, in case polling time is anything smaller
+        # than 1.
+        if self._poll_time <= 0:
+            # Execute a one-off query, in case minimum result count
+            # is not set or is insane.
+            if self._minimum_object_count <= 0:
+                return self._select_many(type_name, **kwargs)
+            items = self._select_many(type_name, **kwargs)
+            if len(items) >= self._minimum_object_count:
+                return items
+            raise ValueError(exception_message)
 
         for i in range(self._poll_time):
             items = self._select_many(type_name, **kwargs)
             if len(items) >= self._minimum_object_count:
                 return items
             sleep(1)
-        raise ValueError('Failed to find the requested number of elements.')
+        raise ValueError(exception_message)
 
     def refresh_state(self):
         """Refreshes the object's state.

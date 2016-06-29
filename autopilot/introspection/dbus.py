@@ -426,8 +426,9 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         # No need to poll, in case polling time is anything smaller
         # than 1.
         if self._poll_time <= 0:
-            # Execute a one-off query, in case minimum result count
-            # is not set or is insane.
+            # In case minimum object count requirement is anything
+            # smaller than 1, execute a one-off query and return the
+            # results, without checking its count.
             if self._minimum_object_count <= 0:
                 return self._select_many(type_name, **kwargs)
             items = self._select_many(type_name, **kwargs)

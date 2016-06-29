@@ -198,11 +198,10 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
     @contextmanager
     def query_timeout(self, seconds):
-        """Override the default poll time for object search.
+        """Set a poll time for object search.
 
-        This is mainly useful for cases where the call to search
-        method like *select_single* may not produce the desired
-        result instantly.
+        This is useful for cases where the call to :meth:`select_single` or
+        :meth:`select_many` may not produce the expected result(s) instantly.
 
         One may use it like this::
 
@@ -210,7 +209,10 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
                 menu = my_app.select_single(objectName='QMenu')
                 self.assertTrue(menu.visible)
 
-        :param seconds: time to poll for search criteria to match.
+        This context manager is only effective for :meth:`select_single` and
+        :meth:`select_many`.
+
+        :param seconds: poll time to set.
         """
         poll_time_old = self._poll_time
         try:
@@ -221,17 +223,21 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
     @contextmanager
     def minimum_query_results(self, count, timeout):
-        """Override the minimum object count for search result.
+        """Set the minimum result count for search result
+        from :meth:`select_many`.
 
         This is mainly useful for cases, where there is a desire
-        to have a minimal count of results produced from search
-        method, like *select_many*.
+        to have a minimum count of results produced from object
+        search.
 
         One may use it like this::
 
             with my_app.minimum_query_results(count=3, timeout=10):
                 results = my_app.select_many('QMenu')
                 self.assertTrue(len(results) >= 3)
+
+        This will wait for a maximum of ten seconds for search
+        result count to be greater than or equal to 3.
 
         :param count: minimum number of expected results.
 
@@ -286,8 +292,10 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             app.select_single('QPushButton', objectName='clickme')
             # returns a QPushButton whose 'objectName' property is 'clickme'.
 
-        If nothing is returned from the query, this method raises
-        StateNotFoundError.
+        This method call is one-off by default and if nothing is returned
+        from the query, this method raises StateNotFoundError, however,
+        if you want autopilot to wait for the search criteria to match, then
+        call this method inside :meth:`query_timeout` context manager.
 
         :param type_name: Either a string naming the type you want, or a class
             of the appropriate type (the latter case is for overridden emulator
@@ -397,6 +405,9 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             bad practise to write tests that depend on the order in which
             this method returns objects. (see :ref:`object_ordering` for more
             information).
+
+        If you want to ensure a certain count of results retrieved from this
+        method, call it inside :meth:`minimum_query_results` context manager.
 
         If you only want to get one item, use :meth:`select_single` instead.
 

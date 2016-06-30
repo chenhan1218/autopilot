@@ -369,7 +369,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             Tutorial Section :ref:`custom_proxy_classes`
 
         """
-        with self.query_timeout(seconds=10):
+        with self.query_timeout(seconds=self._poll_time or 10):
             return self.select_single(type_name, **kwargs)
 
     def _select_many(self, type_name, **kwargs):

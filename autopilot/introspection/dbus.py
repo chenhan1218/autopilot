@@ -209,8 +209,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
                 menu = my_app.select_single(objectName='QMenu')
                 self.assertTrue(menu.visible)
 
-        This context manager is only effective for :meth:`select_single` and
-        :meth:`select_many`.
+        This context manager is only effective for search methods like
+        :meth:`select_single` and :meth:`select_many`.
 
         :param seconds: poll time to set.
         """

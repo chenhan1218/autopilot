@@ -588,6 +588,10 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         :raises RuntimeError: if DBus node is still moving after
             number of retries specified in *retry_attempts_count*.
         """
+        # In case *retry_attempts_count* is something smaller than
+        # 1, sanitize it.
+        if retry_attempts_count < 1:
+            retry_attempts_count = 1
         for i in range(retry_attempts_count):
             if not self.is_moving(retry_interval):
                 return

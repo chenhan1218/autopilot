@@ -50,6 +50,19 @@ def translate_state_keys(state_dict):
     return {k.replace('-', '_'): v for k, v in state_dict.items()}
 
 
+def sort_by_keys(instances, sort_keys):
+    """Sorts DBus object instances by requested keys."""
+    if sort_keys and not isinstance(sort_keys, list):
+        raise ValueError('Parameter `sort_keys` must be a list')
+    if len(instances) > 1 and sort_keys:
+        return sorted(
+            instances,
+            key=lambda item: [item.__getattr__('globalRect').__getattr__(key)
+                              for key in sort_keys]
+        )
+    return instances
+
+
 class ProcessUtil:
     """Helper class to manipulate running processes."""
 

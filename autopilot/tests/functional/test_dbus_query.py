@@ -208,47 +208,51 @@ class DbusQueryTests(AutopilotTestCase):
         self.assertThat(main_window, NotEquals(None))
         self.assertThat(abs(end_time - start_time), LessThan(1))
 
-    def test_select_single_timeout_less_than_ten_seconds(self):
+    def test_wait_select_single_timeout_less_than_ten_seconds(self):
         app = self.start_fully_featured_app()
-        match_fn = lambda: app.select_single('QMadeupType')
+        match_fn = lambda: app.select_single(
+            'QMadeupType',
+            ap_query_timeout=3
+        )
         start_time = default_timer()
-        with app.query_timeout(seconds=3):
-            self.assertThat(
-                match_fn,
-                raises(StateNotFoundError('QMadeupType')),
-            )
+        self.assertThat(match_fn, raises(StateNotFoundError('QMadeupType')))
         end_time = default_timer()
         self.assertThat(abs(end_time - start_time), GreaterThan(2))
         self.assertThat(abs(end_time - start_time), LessThan(4))
 
-    def test_select_single_timeout_more_than_ten_seconds(self):
+    def test_wait_select_single_timeout_more_than_ten_seconds(self):
         app = self.start_fully_featured_app()
-        match_fn = lambda: app.select_single('QMadeupType')
+        match_fn = lambda: app.select_single(
+            'QMadeupType',
+            ap_query_timeout=12
+        )
         start_time = default_timer()
-        with app.query_timeout(seconds=12):
-            self.assertThat(
-                match_fn,
-                raises(StateNotFoundError('QMadeupType')),
-            )
+        self.assertThat(match_fn, raises(StateNotFoundError('QMadeupType')))
         end_time = default_timer()
         self.assertThat(abs(end_time - start_time), GreaterThan(11))
         self.assertThat(abs(end_time - start_time), LessThan(13))
 
-    def test_select_many_requested_elements_count_not_match_raises(self):
+    def test_wait_select_many_requested_elements_count_not_match_raises(self):
         app = self.start_fully_featured_app()
-        fn = lambda: app.select_many('QMadeupType')
+        fn = lambda: app.wait_select_many(
+            'QMadeupType',
+            ap_query_timeout=4,
+            ap_result_count=2
+        )
         start_time = default_timer()
-        with app.minimum_query_results(count=2, timeout=4):
-            self.assertRaises(ValueError, fn)
+        self.assertRaises(ValueError, fn)
         end_time = default_timer()
         self.assertThat(abs(end_time - start_time), GreaterThan(3))
         self.assertThat(abs(end_time - start_time), LessThan(5))
 
-    def test_select_many_requested_elements_count_matches(self):
+    def test_wait_select_many_requested_elements_count_matches(self):
         app = self.start_fully_featured_app()
         start_time = default_timer()
-        with app.minimum_query_results(count=3, timeout=4):
-            menus = app.select_many('QMenu')
+        menus = app.wait_select_many(
+            'QMadeupType',
+            ap_query_timeout=4,
+            ap_result_count=3
+        )
         end_time = default_timer()
         self.assertThat(len(menus), GreaterThan(2))
         self.assertThat(abs(end_time - start_time), LessThan(5))

@@ -210,7 +210,7 @@ class DbusQueryTests(AutopilotTestCase):
 
     def test_wait_select_single_timeout_less_than_ten_seconds(self):
         app = self.start_fully_featured_app()
-        match_fn = lambda: app.select_single(
+        match_fn = lambda: app.wait_select_single(
             'QMadeupType',
             ap_query_timeout=3
         )
@@ -222,7 +222,7 @@ class DbusQueryTests(AutopilotTestCase):
 
     def test_wait_select_single_timeout_more_than_ten_seconds(self):
         app = self.start_fully_featured_app()
-        match_fn = lambda: app.select_single(
+        match_fn = lambda: app.wait_select_single(
             'QMadeupType',
             ap_query_timeout=12
         )
@@ -249,7 +249,7 @@ class DbusQueryTests(AutopilotTestCase):
         app = self.start_fully_featured_app()
         start_time = default_timer()
         menus = app.wait_select_many(
-            'QMadeupType',
+            'QMenu',
             ap_query_timeout=4,
             ap_result_count=3
         )

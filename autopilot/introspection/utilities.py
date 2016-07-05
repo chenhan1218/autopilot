@@ -52,14 +52,30 @@ def translate_state_keys(state_dict):
 
 def sort_by_keys(instances, sort_keys):
     """Sorts DBus object instances by requested keys."""
+    def get_sort_key(item):
+        sort_key = []
+        for sk in sort_keys:
+            if not isinstance(sk, str):
+                raise ValueError(
+                    'Parameter `sort_keys` must be a list of strings'
+                )
+            # If a key contains a dot, we assume this to be a
+            # a nested request.
+            if '.' in sk:
+                nested = sk.split('.')
+                if len(nested) > 2:
+                    raise ValueError(
+                        'Cannot access properties below second level.'
+                    )
+                sort_key.append(getattr(getattr(item, nested[0]), nested[1]))
+            else:
+                sort_key.append(getattr(item, sk))
+        return sort_key
+
     if sort_keys and not isinstance(sort_keys, list):
-        raise ValueError('Parameter `sort_keys` must be a list')
+        raise ValueError('Parameter `sort_keys` must be a list.')
     if len(instances) > 1 and sort_keys:
-        return sorted(
-            instances,
-            key=lambda item: [item.__getattr__('globalRect').__getattr__(key)
-                              for key in sort_keys]
-        )
+        return sorted(instances, key=get_sort_key)
     return instances
 
 

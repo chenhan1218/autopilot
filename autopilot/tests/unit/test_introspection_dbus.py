@@ -47,6 +47,7 @@ from autopilot.tests.unit.introspection_base import (
     X_DEFAULT,
     Y_DEFAULT,
     get_mock_object,
+    get_global_rect,
 )
 
 
@@ -298,24 +299,32 @@ class IsElementMovingTestCase(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.dbus_object = _MockableDbusObject(get_mock_object())
+        self.dbus_object = _MockableDbusObject(
+            get_mock_object(globalRect=get_global_rect())
+        )
 
     def test_returns_true_if_x_changed(self):
-        mock_object_new = get_mock_object(x=X_DEFAULT + 1)
-        with self.dbus_object.mocked(mock_object_new) as mocked_dbus_object:
+        mock_object = get_mock_object(
+            globalRect=get_global_rect(x=X_DEFAULT + 1)
+        )
+        with self.dbus_object.mocked(mock_object) as mocked_dbus_object:
             self.assertTrue(mocked_dbus_object.is_moving())
 
     def test_returns_true_if_y_changed(self):
-        mock_object_new = get_mock_object(y=Y_DEFAULT + 1)
-        with self.dbus_object.mocked(mock_object_new) as mocked_dbus_object:
+        mock_object = get_mock_object(
+            globalRect=get_global_rect(y=Y_DEFAULT + 1)
+        )
+        with self.dbus_object.mocked(mock_object) as mocked_dbus_object:
             self.assertTrue(mocked_dbus_object.is_moving())
 
     def test_returns_true_if_x_and_y_changed(self):
-        mock_object_new = get_mock_object(x=X_DEFAULT + 1, y=Y_DEFAULT + 1)
-        with self.dbus_object.mocked(mock_object_new) as mocked_dbus_object:
+        mock_object = get_mock_object(
+            globalRect=get_global_rect(x=X_DEFAULT + 1, y=Y_DEFAULT + 1)
+        )
+        with self.dbus_object.mocked(mock_object) as mocked_dbus_object:
             self.assertTrue(mocked_dbus_object.is_moving())
 
     def test_returns_false_if_x_and_y_not_changed(self):
-        mock_object_new = get_mock_object()
-        with self.dbus_object.mocked(mock_object_new) as mocked_dbus_object:
+        mock_object = get_mock_object(globalRect=get_global_rect())
+        with self.dbus_object.mocked(mock_object) as mocked_dbus_object:
             self.assertFalse(mocked_dbus_object.is_moving())

@@ -26,13 +26,15 @@ Y_DEFAULT = 0
 W_DEFAULT = 0
 H_DEFAULT = 0
 
+global_rect = namedtuple('globalRect', ['x', 'y', 'w', 'h'])
 
-def get_mock_object(x=X_DEFAULT, y=Y_DEFAULT, w=W_DEFAULT, h=H_DEFAULT):
+
+def get_mock_object(**kwargs):
     mock_object = Mock()
-    mock_object.globalRect = _get_global_rect_as_named_tuple(x, y, w, h)
+    for k, v in kwargs.items():
+        setattr(mock_object, k, v)
     return mock_object
 
 
-def _get_global_rect_as_named_tuple(x, y, w, h):
-    global_rect = namedtuple('globalRect', ['x', 'y', 'w', 'h'])
+def get_global_rect(x=X_DEFAULT, y=Y_DEFAULT, w=W_DEFAULT, h=H_DEFAULT):
     return global_rect(x, y, w, h)

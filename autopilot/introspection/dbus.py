@@ -370,7 +370,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             self,
             type_name='*',
             ap_query_timeout=10,
-            ap_result_count=2,
+            ap_result_count=1,
             **kwargs
     ):
         """Get a list of nodes from the introspection tree, with type equal to

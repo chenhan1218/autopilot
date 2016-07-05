@@ -237,6 +237,9 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             app.select_single('QPushButton', objectName='clickme')
             # returns a QPushButton whose 'objectName' property is 'clickme'.
 
+        If nothing is returned from the query, this method raises
+        StateNotFoundError.
+
         :param type_name: Either a string naming the type you want, or a class
             of the appropriate type (the latter case is for overridden emulator
             classes).
@@ -384,8 +387,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         This method is identical to the :meth:`select_many` method, except
         that this method will poll the application under test for
-        *ap_query_timeout* seconds in the event that the search criteria does
-        not match the number of results requested by *ap_result_count*.
+        *ap_query_timeout* seconds in the event that the search result count
+        is not greater than or equal to *ap_result_count*.
 
         You must specify either *type_name*, keyword filters or both.
 

@@ -62,12 +62,10 @@ def sort_by_keys(instances, sort_keys):
             # If a key contains a dot, we assume this to be a
             # a nested request.
             if '.' in sk:
-                nested = sk.split('.')
-                if len(nested) > 2:
-                    raise ValueError(
-                        'Cannot access properties below second level.'
-                    )
-                sort_key.append(getattr(getattr(item, nested[0]), nested[1]))
+                value = item
+                for key in sk.split('.'):
+                    value = getattr(value, key)
+                sort_key.append(value)
             else:
                 sort_key.append(getattr(item, sk))
         return sort_key

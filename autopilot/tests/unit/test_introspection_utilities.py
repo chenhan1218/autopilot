@@ -160,17 +160,21 @@ class SortByKeysTests(TestCase):
             sorted(Y_COORDS)
         )
 
+    def test_sort_three_levels_nested_property(self):
+        objects = [
+            get_mock_object(
+                fake_property=get_global_rect(
+                    y=get_global_rect(y=y)
+                )
+            ) for y in Y_COORDS
+        ]
+        sorted_objects = sort_by_keys(objects, ['fake_property.y.y'])
+        self.assertEqual(len(sorted_objects), len(objects))
+        sorted_ys = [i.fake_property.y.y for i in sorted_objects]
+        self.assertEqual(sorted_ys, sorted(Y_COORDS))
+
     def test_raises_if_sort_keys_not_list(self):
         self.assertRaises(ValueError, sort_by_keys, None, 'y')
-
-    def test_raises_if_nested_key_two_levels_down(self):
-        objects = [get_mock_object(y=y) for y in Y_COORDS]
-        self.assertRaises(
-            ValueError,
-            sort_by_keys,
-            objects,
-            ['globalRect.prop.x']
-        )
 
     def test_returns_unchanged_if_one_object(self):
         obj = [get_mock_object()]

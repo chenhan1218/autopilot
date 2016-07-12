@@ -361,7 +361,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             classes).
 
         :param ap_result_sort_keys: list of object properties to sort the
-            query result with (the sort key priority is left-to-right).
+            query result with (sort key priority starts with element 0 as
+            highest priority and then descends down the list).
 
         :raises ValueError: if neither *type_name* or keyword filters are
             provided.
@@ -425,7 +426,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         :param ap_result_count: Minimum number of results to return.
 
         :param ap_result_sort_keys: list of object properties to sort the
-            query result with (the sort key priority is left-to-right).
+            query result with (sort key priority starts with element 0 as
+            highest priority and then descends down the list).
 
         :raises ValueError: if neither *type_name* or keyword filters are
             provided. Also raises, if search result count does not match the

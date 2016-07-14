@@ -196,6 +196,27 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         new_query = self._query.select_parent()
         return self._execute_query(new_query)[0]
 
+    def get_parent_by_type(self, type_name, **kwargs):
+        """Get the closest parent node from the introspection tree, with type
+        equal to *type_name* and (optionally) matching the keyword filters
+        present in *kwargs*.
+
+        :param type_name: Either a string naming the type you want, or a class
+            of the appropriate type (the latter case is for overridden emulator
+            classes).
+
+        :raises StateNotFoundError: if the requested object was not found.
+        """
+        type_name_str = get_type_name(type_name)
+        parent_nodes = self.get_parent().get_path().split('/')
+        for index, node_name in reversed(list(enumerate(parent_nodes))):
+            if node_name == type_name_str:
+                parent_level = len(parent_nodes) - index
+                parent_object = _get_parent_by_level(self, parent_level)
+                if _validate_object_properties(parent_object, **kwargs):
+                    return parent_object
+        raise StateNotFoundError(type_name_str, **kwargs)
+
     def _select(self, type_name_str, **kwargs):
         """Base method to execute search query on the DBus."""
         new_query = self._query.select_descendant(type_name_str, kwargs)
@@ -748,6 +769,21 @@ def _get_class_type_name(maybe_cpo_class):
         return maybe_cpo_class.get_type_query_name()
     else:
         return maybe_cpo_class.__name__
+
+
+def _validate_object_properties(item, **kwargs):
+    props = item.get_properties()
+    for key in kwargs.keys():
+        if props[key] != kwargs[key]:
+            return False
+    return True
+
+
+def _get_parent_by_level(child_object, levels):
+    obj = child_object
+    for i in range(levels):
+        obj = obj.get_parent()
+    return obj
 
 
 def raises(exception_class, func, *args, **kwargs):

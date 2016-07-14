@@ -59,15 +59,10 @@ def sort_by_keys(instances, sort_keys):
                 raise ValueError(
                     'Parameter `sort_keys` must be a list of strings'
                 )
-            # If a key contains a dot, we assume this to be a
-            # a nested request.
-            if '.' in sk:
-                value = item
-                for key in sk.split('.'):
-                    value = getattr(value, key)
-                sort_key.append(value)
-            else:
-                sort_key.append(getattr(item, sk))
+            value = item
+            for key in sk.split('.'):
+                value = getattr(value, key)
+            sort_key.append(value)
         return sort_key
 
     if sort_keys and not isinstance(sort_keys, list):

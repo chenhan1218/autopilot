@@ -186,20 +186,21 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         new_query = self._query.select_child(xpathselect.Query.WILDCARD)
         return self._execute_query(new_query)
 
-    def get_parent(self):
+    def _get_parent(self, base_object=None):
+        obj = base_object or self
+        new_query = obj._query.select_parent()
+        return obj._execute_query(new_query)[0]
+
+    def get_parent(self, type_name='', **kwargs):
         """Returns the parent of this object.
 
-        If this object has no parent (i.e.- it is the root of the introspection
-        tree). Then it returns itself.
+        One may also use this method to get the a specific parent node from the
+        introspection tree, with type equal to *type_name* or matching the
+        keyword filters present in *kwargs*.
+        Note: The priority order is closest parent.
 
-        """
-        new_query = self._query.select_parent()
-        return self._execute_query(new_query)[0]
-
-    def get_parent_by_type(self, type_name, **kwargs):
-        """Get the closest parent node from the introspection tree, with type
-        equal to *type_name* and (optionally) matching the keyword filters
-        present in *kwargs*.
+        If no filters are provided and this object has no parent (i.e.- it is
+        the root of the introspection tree). Then it returns itself.
 
         :param type_name: Either a string naming the type you want, or a class
             of the appropriate type (the latter case is for overridden emulator
@@ -207,14 +208,29 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         :raises StateNotFoundError: if the requested object was not found.
         """
+        parent = self._get_parent()
+        if not type_name and not kwargs:
+            return parent
+        parent_nodes = parent.get_path().split('/')
         type_name_str = get_type_name(type_name)
-        parent_nodes = self.get_parent().get_path().split('/')
-        for index, node_name in reversed(list(enumerate(parent_nodes))):
-            if node_name == type_name_str:
-                parent_level = len(parent_nodes) - index
-                parent_object = _get_parent_by_level(self, parent_level)
-                if _validate_object_properties(parent_object, **kwargs):
-                    return parent_object
+        # If the requested type_name is not a parent, then there is
+        # no point in going forward, just raise here.
+        if type_name and type_name_str not in parent_nodes:
+            raise StateNotFoundError(type_name_str, **kwargs)
+
+        # om26er: 2016-07-18: Reset the parent object reference, to keep it
+        # in-sync with our loop. Java' Do..While could help here.
+        parent = self
+        for node in reversed(parent_nodes):
+            parent = self._get_parent(parent)
+            if type_name:
+                if node != type_name_str:
+                    continue
+                if _validate_object_properties(parent, **kwargs):
+                    return parent
+            else:
+                if _validate_object_properties(parent, **kwargs):
+                    return parent
         raise StateNotFoundError(type_name_str, **kwargs)
 
     def _select(self, type_name_str, **kwargs):
@@ -774,16 +790,9 @@ def _get_class_type_name(maybe_cpo_class):
 def _validate_object_properties(item, **kwargs):
     props = item.get_properties()
     for key in kwargs.keys():
-        if props[key] != kwargs[key]:
+        if key not in props or props[key] != kwargs[key]:
             return False
     return True
-
-
-def _get_parent_by_level(child_object, levels):
-    obj = child_object
-    for i in range(levels):
-        obj = obj.get_parent()
-    return obj
 
 
 def raises(exception_class, func, *args, **kwargs):

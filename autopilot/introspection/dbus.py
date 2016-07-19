@@ -186,6 +186,12 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         new_query = self._query.select_child(xpathselect.Query.WILDCARD)
         return self._execute_query(new_query)
 
+    def _get_parent_by_level(self, level=1):
+        new_query = self._query
+        for i in range(level):
+            new_query = new_query.select_parent()
+        return self._execute_query(new_query)[0]
+
     def _get_parent(self, base_object=None):
         obj = base_object or self
         new_query = obj._query.select_parent()
@@ -194,7 +200,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
     def get_parent(self, type_name='', **kwargs):
         """Returns the parent of this object.
 
-        One may also use this method to get the a specific parent node from the
+        One may also use this method to get a specific parent node from the
         introspection tree, with type equal to *type_name* or matching the
         keyword filters present in *kwargs*.
         Note: The priority order is closest parent.
@@ -221,14 +227,17 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         # om26er: 2016-07-18: Reset the parent object reference, to keep it
         # in-sync with our loop. Java' Do..While could help here.
         parent = self
-        for node in reversed(parent_nodes):
-            parent = self._get_parent(parent)
-            if type_name:
+        if type_name:
+            for index, node in reversed(list(enumerate(parent_nodes))):
                 if node != type_name_str:
                     continue
+                parent_level = len(parent_nodes) - index
+                parent = self._get_parent_by_level(parent_level)
                 if _validate_object_properties(parent, **kwargs):
                     return parent
-            else:
+        else:
+            for i in range(len(parent_nodes)):
+                parent = self._get_parent(parent)
                 if _validate_object_properties(parent, **kwargs):
                     return parent
         raise StateNotFoundError(type_name_str, **kwargs)

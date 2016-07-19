@@ -186,15 +186,17 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         new_query = self._query.select_child(xpathselect.Query.WILDCARD)
         return self._execute_query(new_query)
 
-    def _get_parent_by_level(self, level=1):
-        new_query = self._query
+    def _get_parent(self, base_object=None, level=1):
+        """Returns the parent of this object.
+
+        Note: *level* is in ascending order, i.e. its value as 1 will return
+            the immediate parent of this object or (optionally) *base_object*,
+            if provided.
+        """
+        obj = base_object or self
+        new_query = obj._query
         for i in range(level):
             new_query = new_query.select_parent()
-        return self._execute_query(new_query)[0]
-
-    def _get_parent(self, base_object=None):
-        obj = base_object or self
-        new_query = obj._query.select_parent()
         return obj._execute_query(new_query)[0]
 
     def get_parent(self, type_name='', **kwargs):
@@ -232,12 +234,12 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
                 if node != type_name_str:
                     continue
                 parent_level = len(parent_nodes) - index
-                parent = self._get_parent_by_level(parent_level)
+                parent = self._get_parent(level=parent_level)
                 if _validate_object_properties(parent, **kwargs):
                     return parent
         else:
             for i in range(len(parent_nodes)):
-                parent = self._get_parent(parent)
+                parent = self._get_parent(base_object=parent)
                 if _validate_object_properties(parent, **kwargs):
                     return parent
         raise StateNotFoundError(type_name_str, **kwargs)
@@ -797,6 +799,8 @@ def _get_class_type_name(maybe_cpo_class):
 
 
 def _validate_object_properties(item, **kwargs):
+    """Returns bool representing if the properties specified in *kwargs*
+    match the provided object *item*."""
     props = item.get_properties()
     for key in kwargs.keys():
         if key not in props or props[key] != kwargs[key]:

@@ -90,6 +90,35 @@ class DbusQueryTests(AutopilotTestCase):
         window_parent = main_window.get_parent()
         self.assertThat(window_parent.id, Equals(root.id))
 
+    def test_can_select_specific_parent(self):
+        root = self.start_fully_featured_app()
+        action_item = root.select_single('QAction', text='Save')
+        window_parent = action_item.get_parent('window-mocker')
+        self.assertThat(window_parent.id, Equals(root.id))
+
+    def test_select_parent_raises_if_node_not_parent(self):
+        root = self.start_fully_featured_app()
+        action_item = root.select_single('QAction', text='Save')
+        match_fn = lambda: action_item.get_parent('QMadeUpType')
+        self.assertThat(match_fn, raises(StateNotFoundError('QMadeUpType')))
+
+    def test_select_parent_with_property_only(self):
+        root = self.start_fully_featured_app()
+        action_item = root.select_single('QAction', text='Save')
+        # The ID of parent of a tree is always 1.
+        window_parent = action_item.get_parent(id=1)
+        self.assertThat(window_parent.id, Equals(root.id))
+
+    def test_select_parent_raises_if_property_not_match(self):
+        root = self.start_fully_featured_app()
+        action_item = root.select_single('QAction', text='Save')
+        self.assertIsNotNone(action_item.get_parent('QMenu'))
+        match_fn = lambda: action_item.get_parent('QMenu', visible=True)
+        self.assertThat(
+            match_fn,
+            raises(StateNotFoundError('QMenu', visible=True))
+        )
+
     def test_single_select_on_object(self):
         """Must be able to select a single unique child of an object."""
         app = self.start_fully_featured_app()

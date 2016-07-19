@@ -35,8 +35,11 @@ from testtools.matchers import (
 )
 
 from autopilot.exceptions import StateNotFoundError
-from autopilot.introspection import CustomEmulatorBase
-from autopilot.introspection import dbus
+from autopilot.introspection import (
+    CustomEmulatorBase,
+    dbus,
+    is_element,
+)
 from autopilot.utilities import sleep
 
 
@@ -264,3 +267,21 @@ class GetTypeNameTests(TestCase):
         class Foo(object):
             pass
         self.assertEqual('Foo', dbus.get_type_name(Foo))
+
+
+class IsElementTestCase(TestCase):
+
+    def raise_state_not_found(self, should_raise=True):
+        if should_raise:
+            raise StateNotFoundError('Just throw the exception')
+
+    def test_returns_false_if_not_element(self):
+        self.assertFalse(is_element(self.raise_state_not_found))
+
+    def test_returns_true_if_element(self):
+        self.assertTrue(
+            is_element(
+                self.raise_state_not_found,
+                should_raise=False
+            )
+        )

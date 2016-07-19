@@ -369,3 +369,15 @@ class GetClassnameFromPathTests(TestCase):
             "Baz",
             xpathselect.get_classname_from_path("/Foo/Bar/Baz")
         )
+
+
+class GetPathRootTests(TestCase):
+
+    def test_get_root_path_on_string_path(self):
+        self.assertEqual("Foo", xpathselect.get_path_root("/Foo/Bar/Baz"))
+
+    def test_get_root_path_on_bytes_literal_path(self):
+        self.assertEqual(b"Foo", xpathselect.get_path_root(b"/Foo/Bar/Baz"))
+
+    def test_get_root_path_on_garbage_path_raises(self):
+        self.assertRaises(IndexError, xpathselect.get_path_root, "asdfgh")

@@ -46,6 +46,7 @@ invoke some client-side processing - in this case the
 Queries are executed in the autopilot.introspection.backends module.
 
 """
+from pathlib import Path
 import re
 
 from autopilot.utilities import compatible_repr
@@ -390,15 +391,25 @@ def _get_filter_string_for_key_value_pair(key, value):
         )
 
 
-def get_classname_from_path(object_path):
-    """Given an object path, return the class name component."""
+def _get_node(object_path, index):
     # TODO: Find places where paths are strings, and convert them to
     # bytestrings. Figure out what to do with the whole string vs. bytestring
     # mess.
-    is_string = isinstance(object_path, str)
-    if is_string:
-        object_path = object_path.encode('utf-8')
-    class_name = object_path.split(b"/")[-1]
-    if is_string:
-        class_name = class_name.decode('utf-8')
-    return class_name
+    try:
+        return Path(object_path).parts[index]
+    except TypeError:
+        if not isinstance(object_path, bytes):
+            raise TypeError(
+                'Object path needs to be a string literal or a bytes literal'
+            )
+        return object_path.split(b"/")[index]
+
+
+def get_classname_from_path(object_path):
+    """Given an object path, return the class name component."""
+    return _get_node(object_path, -1)
+
+
+def get_path_root(object_path):
+    """Return the name of the root node of specified path."""
+    return _get_node(object_path, 1)

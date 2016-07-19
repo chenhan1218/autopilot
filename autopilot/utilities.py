@@ -27,9 +27,11 @@ import functools
 import inspect
 import logging
 import os
+import psutil
 import time
 import timeit
 from testtools.content import text_content
+from unittest.mock import Mock
 from functools import wraps
 
 from autopilot.exceptions import BackendException
@@ -621,3 +623,46 @@ def _sleep_for_calculated_delta(current_time, last_event_time, gap_duration):
         return time_delta
     else:
         return 0.0
+
+
+class MockableProcessIter:
+    def __init__(self):
+        self._mocked = False
+        self._fake_processes = []
+
+    def __call__(self):
+        if not self._mocked:
+            return psutil.process_iter()
+        else:
+            return self.mocked_process_iter()
+
+    @contextmanager
+    def mocked(self, fake_processes):
+        self.enable_mock(fake_processes)
+        try:
+            yield self
+        finally:
+            self.disable_mock()
+
+    def enable_mock(self, fake_processes):
+        self._mocked = True
+        self._fake_processes = fake_processes
+
+    def disable_mock(self):
+        self._mocked = False
+        self._fake_processes = []
+
+    def create_mock_process(self, name, pid):
+        mock_process = Mock()
+        mock_process.name = lambda: name
+        mock_process.pid = pid
+        return mock_process
+
+    def mocked_process_iter(self):
+        for process in self._fake_processes:
+            yield self.create_mock_process(
+                process.get('name'),
+                process.get('pid')
+            )
+
+process_iter = MockableProcessIter()

@@ -17,8 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from contextlib import contextmanager
+
 from dbus import Interface
 import os.path
+
+from autopilot.utilities import process_iter
 
 
 def _pid_is_running(pid):
@@ -44,3 +48,71 @@ def translate_state_keys(state_dict):
     """Translates the *state_dict* passed in so the keys are usable as python
     attributes."""
     return {k.replace('-', '_'): v for k, v in state_dict.items()}
+
+
+class ProcessUtil:
+
+    @contextmanager
+    def mocked(self, fake_processes):
+        """Enable mocking for the ProcessUtil class
+
+        Also mocks all calls to autopilot.utilities.process_iter.
+        One may use it like::
+
+            from autopilot.introspection.utilities import ProcessUtil
+
+            process_util = ProcessUtil()
+            with process_util.mocked([{'pid': -9, 'name': 'xx'}]):
+                self.assertThat(
+                    process_util.get_pid_for_process('xx'),
+                    Equals(-9)
+                    )
+                )
+
+        """
+        process_iter.enable_mock(fake_processes)
+        try:
+            yield self
+        finally:
+            process_iter.disable_mock()
+
+    def _query_pids_for_process(self, process_name):
+        if not isinstance(process_name, str):
+            raise ValueError('Process name must be a string.')
+
+        pids = [process.pid for process in process_iter()
+                if process.name() == process_name]
+
+        if not pids:
+            raise ValueError('Process \'{}\' not running'.format(process_name))
+
+        return pids
+
+    def get_pid_for_process(self, process_name):
+        """Returns the PID associated with a process name.
+
+        :param process_name: Process name to get PID for. This must
+            be a string.
+
+        :return: PID of the requested process.
+        """
+        pids = self._query_pids_for_process(process_name)
+        if len(pids) > 1:
+            raise ValueError(
+                'More than one PID exists for process \'{}\''.format(
+                    process_name
+                )
+            )
+
+        return pids[0]
+
+    def get_pids_for_process(self, process_name):
+        """Returns PID(s) associated with a process name.
+
+        :param process_name: Process name to get PID(s) for.
+
+        :return: A list containing the PID(s) of the requested process.
+        """
+        return self._query_pids_for_process(process_name)
+
+process_util = ProcessUtil()

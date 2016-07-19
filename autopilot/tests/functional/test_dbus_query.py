@@ -141,7 +141,7 @@ class DbusQueryTests(AutopilotTestCase):
     def test_select_single_no_name_no_parameter_raises_exception(self):
         app = self.start_fully_featured_app()
         fn = lambda: app.select_single()
-        self.assertThat(fn, raises(ValueError))
+        self.assertRaises(ValueError, fn)
 
     def test_select_single_no_match_raises_exception(self):
         app = self.start_fully_featured_app()
@@ -183,12 +183,12 @@ class DbusQueryTests(AutopilotTestCase):
     def test_select_single_returning_multiple_raises(self):
         app = self.start_fully_featured_app()
         fn = lambda: app.select_single('QMenu')
-        self.assertThat(fn, raises(ValueError))
+        self.assertRaises(ValueError, fn)
 
     def test_select_many_no_name_no_parameter_raises_exception(self):
         app = self.start_fully_featured_app()
         fn = lambda: app.select_single()
-        self.assertThat(fn, raises(ValueError))
+        self.assertRaises(ValueError, fn)
 
     def test_select_many_only_using_parameters(self):
         app = self.start_fully_featured_app()
@@ -208,14 +208,54 @@ class DbusQueryTests(AutopilotTestCase):
         self.assertThat(main_window, NotEquals(None))
         self.assertThat(abs(end_time - start_time), LessThan(1))
 
-    def test_wait_select_single_fails_slowly(self):
+    def test_wait_select_single_timeout_less_than_ten_seconds(self):
+        app = self.start_fully_featured_app()
+        match_fn = lambda: app.wait_select_single(
+            'QMadeupType',
+            ap_query_timeout=3
+        )
+        start_time = default_timer()
+        self.assertThat(match_fn, raises(StateNotFoundError('QMadeupType')))
+        end_time = default_timer()
+        self.assertThat(abs(end_time - start_time), GreaterThan(2))
+        self.assertThat(abs(end_time - start_time), LessThan(4))
+
+    def test_wait_select_single_timeout_more_than_ten_seconds(self):
+        app = self.start_fully_featured_app()
+        match_fn = lambda: app.wait_select_single(
+            'QMadeupType',
+            ap_query_timeout=12
+        )
+        start_time = default_timer()
+        self.assertThat(match_fn, raises(StateNotFoundError('QMadeupType')))
+        end_time = default_timer()
+        self.assertThat(abs(end_time - start_time), GreaterThan(11))
+        self.assertThat(abs(end_time - start_time), LessThan(13))
+
+    def test_wait_select_many_requested_elements_count_not_match_raises(self):
+        app = self.start_fully_featured_app()
+        fn = lambda: app.wait_select_many(
+            'QMadeupType',
+            ap_query_timeout=4,
+            ap_result_count=2
+        )
+        start_time = default_timer()
+        self.assertRaises(ValueError, fn)
+        end_time = default_timer()
+        self.assertThat(abs(end_time - start_time), GreaterThan(3))
+        self.assertThat(abs(end_time - start_time), LessThan(5))
+
+    def test_wait_select_many_requested_elements_count_matches(self):
         app = self.start_fully_featured_app()
         start_time = default_timer()
-        fn = lambda: app.wait_select_single('QMadeupType')
-        self.assertThat(fn, raises(StateNotFoundError('QMadeupType')))
+        menus = app.wait_select_many(
+            'QMenu',
+            ap_query_timeout=4,
+            ap_result_count=3
+        )
         end_time = default_timer()
-        self.assertThat(abs(end_time - start_time), GreaterThan(9))
-        self.assertThat(abs(end_time - start_time), LessThan(11))
+        self.assertThat(len(menus), GreaterThan(2))
+        self.assertThat(abs(end_time - start_time), LessThan(5))
 
 
 @skipIf(platform.model() != "Desktop", "Only suitable on Desktop (WinMocker)")

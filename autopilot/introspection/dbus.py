@@ -199,6 +199,13 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             new_query = new_query.select_parent()
         return obj._execute_query(new_query)[0]
 
+    def _get_parent_nodes(self):
+        parent_nodes = self.get_path().split('/')
+        parent_nodes.pop()
+        # return a list without any NoneType elements. Only needed for the
+        # case when we try to get parent of a root object
+        return [node for node in parent_nodes if node]
+
     def get_parent(self, type_name='', **kwargs):
         """Returns the parent of this object.
 
@@ -216,20 +223,15 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
 
         :raises StateNotFoundError: if the requested object was not found.
         """
-        parent = self._get_parent()
         if not type_name and not kwargs:
-            return parent
-        parent_nodes = parent.get_path().split('/')
-        type_name_str = get_type_name(type_name)
-        # If the requested type_name is not a parent, then there is
-        # no point in going forward, just raise here.
-        if type_name and type_name_str not in parent_nodes:
-            raise StateNotFoundError(type_name_str, **kwargs)
+            return self._get_parent()
 
-        # om26er: 2016-07-18: Reset the parent object reference, to keep it
-        # in-sync with our loop. Java' Do..While could help here.
-        parent = self
+        parent_nodes = self._get_parent_nodes()
+        type_name_str = get_type_name(type_name)
         if type_name:
+            # Raise if type_name is not a parent.
+            if type_name_str not in parent_nodes:
+                raise StateNotFoundError(type_name_str, **kwargs)
             for index, node in reversed(list(enumerate(parent_nodes))):
                 if node == type_name_str:
                     parent_level = len(parent_nodes) - index
@@ -237,6 +239,8 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
                     if _validate_object_properties(parent, **kwargs):
                         return parent
         else:
+            # Keep a reference of the parent object to improve performance.
+            parent = self
             for i in range(len(parent_nodes)):
                 parent = self._get_parent(base_object=parent)
                 if _validate_object_properties(parent, **kwargs):

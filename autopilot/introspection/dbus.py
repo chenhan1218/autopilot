@@ -231,12 +231,11 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         parent = self
         if type_name:
             for index, node in reversed(list(enumerate(parent_nodes))):
-                if node != type_name_str:
-                    continue
-                parent_level = len(parent_nodes) - index
-                parent = self._get_parent(level=parent_level)
-                if _validate_object_properties(parent, **kwargs):
-                    return parent
+                if node == type_name_str:
+                    parent_level = len(parent_nodes) - index
+                    parent = self._get_parent(level=parent_level)
+                    if _validate_object_properties(parent, **kwargs):
+                        return parent
         else:
             for i in range(len(parent_nodes)):
                 parent = self._get_parent(base_object=parent)

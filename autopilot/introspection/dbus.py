@@ -429,7 +429,7 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             self,
             type_name='*',
             ap_query_timeout=10,
-            ap_result_count=2,
+            ap_result_count=1,
             ap_result_sort_keys=None,
             **kwargs
     ):

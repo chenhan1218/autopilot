@@ -25,19 +25,21 @@ module is the DBusIntrospectableObject class.
 
 """
 
-from contextlib import contextmanager
-import sys
 import logging
+import sys
+from contextlib import contextmanager
 
 from autopilot.exceptions import StateNotFoundError
+from autopilot.introspection import _xpathselect as xpathselect
 from autopilot.introspection._object_registry import (
     DBusIntrospectionObjectBase,
 )
 from autopilot.introspection.types import create_value_instance
-from autopilot.introspection.utilities import translate_state_keys
-from autopilot.introspection import _xpathselect as xpathselect
+from autopilot.introspection.utilities import (
+    translate_state_keys,
+    sort_by_keys,
+)
 from autopilot.utilities import sleep
-
 
 _logger = logging.getLogger(__name__)
 
@@ -184,15 +186,66 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         new_query = self._query.select_child(xpathselect.Query.WILDCARD)
         return self._execute_query(new_query)
 
-    def get_parent(self):
+    def _get_parent(self, base_object=None, level=1):
         """Returns the parent of this object.
 
-        If this object has no parent (i.e.- it is the root of the introspection
-        tree). Then it returns itself.
-
+        Note: *level* is in ascending order, i.e. its value as 1 will return
+            the immediate parent of this object or (optionally) *base_object*,
+            if provided.
         """
-        new_query = self._query.select_parent()
-        return self._execute_query(new_query)[0]
+        obj = base_object or self
+        new_query = obj._query
+        for i in range(level):
+            new_query = new_query.select_parent()
+        return obj._execute_query(new_query)[0]
+
+    def _get_parent_nodes(self):
+        parent_nodes = self.get_path().split('/')
+        parent_nodes.pop()
+        # return a list without any NoneType elements. Only needed for the
+        # case when we try to get parent of a root object
+        return [node for node in parent_nodes if node]
+
+    def get_parent(self, type_name='', **kwargs):
+        """Returns the parent of this object.
+
+        One may also use this method to get a specific parent node from the
+        introspection tree, with type equal to *type_name* or matching the
+        keyword filters present in *kwargs*.
+        Note: The priority order is closest parent.
+
+        If no filters are provided and this object has no parent (i.e.- it is
+        the root of the introspection tree). Then it returns itself.
+
+        :param type_name: Either a string naming the type you want, or a class
+            of the appropriate type (the latter case is for overridden emulator
+            classes).
+
+        :raises StateNotFoundError: if the requested object was not found.
+        """
+        if not type_name and not kwargs:
+            return self._get_parent()
+
+        parent_nodes = self._get_parent_nodes()
+        type_name_str = get_type_name(type_name)
+        if type_name:
+            # Raise if type_name is not a parent.
+            if type_name_str not in parent_nodes:
+                raise StateNotFoundError(type_name_str, **kwargs)
+            for index, node in reversed(list(enumerate(parent_nodes))):
+                if node == type_name_str:
+                    parent_level = len(parent_nodes) - index
+                    parent = self._get_parent(level=parent_level)
+                    if _validate_object_properties(parent, **kwargs):
+                        return parent
+        else:
+            # Keep a reference of the parent object to improve performance.
+            parent = self
+            for i in range(len(parent_nodes)):
+                parent = self._get_parent(base_object=parent)
+                if _validate_object_properties(parent, **kwargs):
+                    return parent
+        raise StateNotFoundError(type_name_str, **kwargs)
 
     def _select(self, type_name_str, **kwargs):
         """Base method to execute search query on the DBus."""
@@ -316,10 +369,11 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         raise StateNotFoundError(type_name, **kwargs)
 
     def _select_many(self, type_name, **kwargs):
+        """Executes a query, with no restraints on the number of results."""
         type_name_str = get_type_name(type_name)
         return self._select(type_name_str, **kwargs)
 
-    def select_many(self, type_name='*', **kwargs):
+    def select_many(self, type_name='*', ap_result_sort_keys=None, **kwargs):
         """Get a list of nodes from the introspection tree, with type equal to
         *type_name* and (optionally) matching the keyword filters present in
         *kwargs*.
@@ -357,6 +411,10 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             of the appropriate type (the latter case is for overridden emulator
             classes).
 
+        :param ap_result_sort_keys: list of object properties to sort the
+            query result with (sort key priority starts with element 0 as
+            highest priority and then descends down the list).
+
         :raises ValueError: if neither *type_name* or keyword filters are
             provided.
 
@@ -364,13 +422,15 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             Tutorial Section :ref:`custom_proxy_classes`
 
         """
-        return self._select_many(type_name, **kwargs)
+        instances = self._select_many(type_name, **kwargs)
+        return sort_by_keys(instances, ap_result_sort_keys)
 
     def wait_select_many(
             self,
             type_name='*',
             ap_query_timeout=10,
             ap_result_count=1,
+            ap_result_sort_keys=None,
             **kwargs
     ):
         """Get a list of nodes from the introspection tree, with type equal to
@@ -414,12 +474,20 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
         :param ap_query_timeout: Time in seconds to wait for search criteria
             to match.
 
-        :param ap_result_count: Minimum number of results to return
+        :param ap_result_count: Minimum number of results to return.
+
+        :param ap_result_sort_keys: list of object properties to sort the
+            query result with (sort key priority starts with element 0 as
+            highest priority and then descends down the list).
 
         :raises ValueError: if neither *type_name* or keyword filters are
             provided. Also raises, if search result count does not match the
             number specified by *ap_result_count* within *ap_query_timeout*
             seconds.
+
+        .. seealso::
+            Tutorial Section :ref:`custom_proxy_classes`
+
         """
         exception_message = 'Failed to find the requested number of elements.'
 
@@ -427,12 +495,12 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
             instances = self._select_many(type_name, **kwargs)
             if len(instances) < ap_result_count:
                 raise ValueError(exception_message)
-            return instances
+            return sort_by_keys(instances, ap_result_sort_keys)
 
         for i in range(ap_query_timeout):
             instances = self._select_many(type_name, **kwargs)
             if len(instances) >= ap_result_count:
-                return instances
+                return sort_by_keys(instances, ap_result_sort_keys)
             sleep(1)
         raise ValueError(exception_message)
 
@@ -534,6 +602,51 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
                 "Object was not destroyed after %d seconds" % timeout
             )
 
+    def is_moving(self, gap_interval=0.1):
+        """Check if the element is moving.
+
+        :param gap_interval: Time in seconds to wait before
+            re-inquiring the object co-ordinates to be able
+            to evaluate if, the element is moving.
+
+        :return: True, if the element is moving, otherwise False.
+        """
+        return _MockableDbusObject(self).is_moving(gap_interval)
+
+    def wait_until_not_moving(
+            self,
+            retry_attempts_count=20,
+            retry_interval=0.5,
+    ):
+        """Block until this object is not moving.
+
+        Block until both x and y of the object stop changing. This is
+        normally useful for cases, where there is a need to ensure an
+        object is static before interacting with it.
+
+        :param retry_attempts_count: number of attempts to check
+            if the object is moving.
+
+        :param retry_interval: time in fractional seconds to be
+            slept, between each attempt to check if the object
+            moving.
+
+        :raises RuntimeError: if DBus node is still moving after
+            number of retries specified in *retry_attempts_count*.
+        """
+        # In case *retry_attempts_count* is something smaller than
+        # 1, sanitize it.
+        if retry_attempts_count < 1:
+            retry_attempts_count = 1
+        for i in range(retry_attempts_count):
+            if not self.is_moving(retry_interval):
+                return
+        raise RuntimeError(
+            'Object was still moving after {} second(s)'.format(
+                retry_attempts_count * retry_interval
+            )
+        )
+
     def print_tree(self, output=None, maxdepth=None, _curdepth=0):
         """Print properties of the object and its children to a stream.
 
@@ -585,6 +698,13 @@ class DBusIntrospectionObject(DBusIntrospectionObjectBase):
                     c.print_tree(output, maxdepth, _curdepth + 1)
         except StateNotFoundError as error:
             output.write("%sError: %s\n" % (indent, error))
+
+    def get_path(self):
+        """Return the absolute path of the dbus node"""
+        if isinstance(self._path, str):
+            return self._path
+
+        return self._path.decode('utf-8')
 
     @contextmanager
     def no_automatic_refreshing(self):
@@ -681,6 +801,16 @@ def _get_class_type_name(maybe_cpo_class):
         return maybe_cpo_class.__name__
 
 
+def _validate_object_properties(item, **kwargs):
+    """Returns bool representing if the properties specified in *kwargs*
+    match the provided object *item*."""
+    props = item.get_properties()
+    for key in kwargs.keys():
+        if key not in props or props[key] != kwargs[key]:
+            return False
+    return True
+
+
 def raises(exception_class, func, *args, **kwargs):
     """Evaluate if the callable *func* raises the expected
     exception.
@@ -717,3 +847,55 @@ def is_element(ap_query_func, *args, **kwargs):
         True otherwise.
     """
     return not raises(StateNotFoundError, ap_query_func, *args, **kwargs)
+
+
+class _MockableDbusObject:
+    """Mockable DBus object."""
+
+    def __init__(self, dbus_object):
+        self._dbus_object = dbus_object
+        self._mocked = False
+        self._dbus_object_secondary = None
+        sleep.disable_mock()
+
+    @contextmanager
+    def mocked(self, dbus_object_secondary):
+        try:
+            self.enable_mock(dbus_object_secondary)
+            yield self
+        finally:
+            self.disable_mock()
+
+    def enable_mock(self, dbus_object_secondary):
+        self._dbus_object_secondary = dbus_object_secondary
+        sleep.enable_mock()
+        self._mocked = True
+
+    def disable_mock(self):
+        self._dbus_object_secondary = None
+        sleep.disable_mock()
+        self._mocked = False
+
+    def _get_default_dbus_object(self):
+        return self._dbus_object
+
+    def _get_secondary_dbus_object(self):
+        if not self._mocked:
+            return self._get_default_dbus_object()
+        else:
+            return self._dbus_object_secondary
+
+    def is_moving(self, gap_interval=0.1):
+        """Check if the element is moving.
+
+        :param gap_interval: Time in seconds to wait before
+            re-inquiring the object co-ordinates to be able
+            to evaluate if, the element has moved.
+
+        :return: True, if the element is moving, otherwise False.
+        """
+        x1, y1, h1, w1 = self._get_default_dbus_object().globalRect
+        sleep(gap_interval)
+        x2, y2, h2, w2 = self._get_secondary_dbus_object().globalRect
+
+        return x1 != x2 or y1 != y2

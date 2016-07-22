@@ -17,10 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os
 from contextlib import contextmanager
 
 from dbus import Interface
-import os.path
 
 from autopilot.utilities import process_iter
 
@@ -50,7 +50,30 @@ def translate_state_keys(state_dict):
     return {k.replace('-', '_'): v for k, v in state_dict.items()}
 
 
+def sort_by_keys(instances, sort_keys):
+    """Sorts DBus object instances by requested keys."""
+    def get_sort_key(item):
+        sort_key = []
+        for sk in sort_keys:
+            if not isinstance(sk, str):
+                raise ValueError(
+                    'Parameter `sort_keys` must be a list of strings'
+                )
+            value = item
+            for key in sk.split('.'):
+                value = getattr(value, key)
+            sort_key.append(value)
+        return sort_key
+
+    if sort_keys and not isinstance(sort_keys, list):
+        raise ValueError('Parameter `sort_keys` must be a list.')
+    if len(instances) > 1 and sort_keys:
+        return sorted(instances, key=get_sort_key)
+    return instances
+
+
 class ProcessUtil:
+    """Helper class to manipulate running processes."""
 
     @contextmanager
     def mocked(self, fake_processes):

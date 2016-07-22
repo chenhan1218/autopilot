@@ -1078,3 +1078,26 @@ class PointerWithTouchBackendTestCase(TestCase):
         pointer.press()
 
         pointer._device._device.finger_down.assert_called_once_with(10, 10)
+
+
+class UInputPowerButtonTestCase(TestCase):
+
+    def get_mock_hardware_keys_device(self):
+        power_button = _uinput.UInputHardwareKeysDevice(device_class=Mock)
+        power_button._device.mock_add_spec(uinput.UInput, spec_set=True)
+        return power_button
+
+    def assert_power_button_press_release_emitted_write_and_sync(self, calls):
+        expected_calls = [
+            call.write(ecodes.EV_KEY, ecodes.KEY_POWER, 1),
+            call.write(ecodes.EV_KEY, ecodes.KEY_POWER, 0),
+            call.syn(),
+        ]
+        self.assertEquals(expected_calls, calls)
+
+    def test_power_button_press_release_emitted_write_and_sync(self):
+        device = self.get_mock_hardware_keys_device()
+        device.press_and_release_power_button()
+        self.assert_power_button_press_release_emitted_write_and_sync(
+            device._device.mock_calls
+        )

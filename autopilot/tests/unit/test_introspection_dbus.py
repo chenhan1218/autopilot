@@ -40,7 +40,19 @@ from autopilot.introspection import (
     dbus,
     is_element,
 )
+from autopilot.introspection.dbus import (
+    _MockableDbusObject,
+    _validate_object_properties,
+)
 from autopilot.utilities import sleep
+
+from autopilot.tests.unit.introspection_base import (
+    W_DEFAULT,
+    X_DEFAULT,
+    Y_DEFAULT,
+    get_mock_object,
+    get_global_rect,
+)
 
 
 class IntrospectionFeatureTests(TestCase):
@@ -283,5 +295,72 @@ class IsElementTestCase(TestCase):
             is_element(
                 self.raise_state_not_found,
                 should_raise=False
+            )
+        )
+
+
+class IsElementMovingTestCase(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.dbus_object = _MockableDbusObject(
+            get_mock_object(globalRect=get_global_rect())
+        )
+
+    def test_returns_true_if_x_changed(self):
+        mock_object = get_mock_object(
+            globalRect=get_global_rect(x=X_DEFAULT + 1)
+        )
+        with self.dbus_object.mocked(mock_object) as mocked_dbus_object:
+            self.assertTrue(mocked_dbus_object.is_moving())
+
+    def test_returns_true_if_y_changed(self):
+        mock_object = get_mock_object(
+            globalRect=get_global_rect(y=Y_DEFAULT + 1)
+        )
+        with self.dbus_object.mocked(mock_object) as mocked_dbus_object:
+            self.assertTrue(mocked_dbus_object.is_moving())
+
+    def test_returns_true_if_x_and_y_changed(self):
+        mock_object = get_mock_object(
+            globalRect=get_global_rect(x=X_DEFAULT + 1, y=Y_DEFAULT + 1)
+        )
+        with self.dbus_object.mocked(mock_object) as mocked_dbus_object:
+            self.assertTrue(mocked_dbus_object.is_moving())
+
+    def test_returns_false_if_x_and_y_not_changed(self):
+        mock_object = get_mock_object(globalRect=get_global_rect())
+        with self.dbus_object.mocked(mock_object) as mocked_dbus_object:
+            self.assertFalse(mocked_dbus_object.is_moving())
+
+
+class ValidateObjectPropertiesTestCase(TestCase):
+
+    def test_return_true_if_property_match(self):
+        mock_object = get_mock_object(x=X_DEFAULT)
+        self.assertTrue(_validate_object_properties(mock_object, x=X_DEFAULT))
+
+    def test_returns_true_if_all_properties_match(self):
+        mock_object = get_mock_object(x=X_DEFAULT, y=Y_DEFAULT)
+        self.assertTrue(
+            _validate_object_properties(mock_object, x=X_DEFAULT, y=Y_DEFAULT)
+        )
+
+    def test_return_false_if_property_not_match(self):
+        mock_object = get_mock_object(x=X_DEFAULT + 1)
+        self.assertFalse(_validate_object_properties(mock_object, x=X_DEFAULT))
+
+    def test_returns_false_if_property_invalid(self):
+        mock_object = get_mock_object()
+        self.assertFalse(_validate_object_properties(mock_object, x=X_DEFAULT))
+
+    def test_returns_false_if_any_property_not_match(self):
+        mock_object = get_mock_object(x=X_DEFAULT, y=Y_DEFAULT, w=W_DEFAULT)
+        self.assertFalse(
+            _validate_object_properties(
+                mock_object,
+                x=X_DEFAULT,
+                y=Y_DEFAULT,
+                w=W_DEFAULT + 1
             )
         )

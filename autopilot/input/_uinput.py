@@ -26,6 +26,7 @@ from evdev import UInput, ecodes as e
 from autopilot.input import Keyboard as KeyboardBase
 from autopilot.input import Touch as TouchBase
 from autopilot.input import get_center_point
+from autopilot.platform import model
 from autopilot.utilities import deprecated, EventDelay, sleep
 
 
@@ -653,3 +654,51 @@ _UINPUT_CODE_TRANSLATIONS = {
     'ALT': 'LEFTALT',
     'SHIFT': 'LEFTSHIFT',
 }
+
+
+class UInputHardwareKeysDevice:
+
+    _device = None
+
+    def __init__(self, device_class=UInput):
+        if not UInputHardwareKeysDevice._device:
+            UInputHardwareKeysDevice._device = device_class(
+                devnode=_get_devnode_path(),
+            )
+            # This workaround is not needed on desktop.
+            if model() != 'Desktop':
+                self._wait_for_device_to_ready()
+
+    def press_and_release_power_button(self):
+        self._device.write(e.EV_KEY, e.KEY_POWER, 1)
+        self._device.write(e.EV_KEY, e.KEY_POWER, 0)
+        self._device.syn()
+
+    def _wait_for_device_to_ready(
+            self,
+            retry_attempts_count=10,
+            retry_interval=0.1,
+    ):
+        """Wait for UInput device to initialize.
+
+        This is a workaround for a bug in evdev where the input device
+        is not instantly created.
+
+        :param retry_attempts_count: number of attempts to check
+            if device is ready.
+
+        :param retry_interval: time in fractional seconds to be
+            slept, between each attempt to check if device is
+            ready.
+
+        :raises RuntimeError: if device is not initialized after
+            number of retries specified in *retry_attempts_count*.
+        """
+        for i in range(retry_attempts_count):
+            device = self._device._find_device()
+            if device:
+                self._device.device = device
+                return
+            else:
+                sleep(retry_interval)
+        raise RuntimeError('Failed to find UInput device.')

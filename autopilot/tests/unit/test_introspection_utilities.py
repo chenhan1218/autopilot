@@ -20,8 +20,11 @@
 from testtools import TestCase
 
 from autopilot.introspection.dbus import raises
-from autopilot.introspection.utilities import process_util
-
+from autopilot.introspection.utilities import process_util, sort_by_keys
+from autopilot.tests.unit.introspection_base import (
+    get_mock_object,
+    get_global_rect,
+)
 
 PROCESS_NAME = 'dummy_process'
 PROCESS_WITH_SINGLE_INSTANCE = [{'name': PROCESS_NAME, 'pid': -80}]
@@ -29,6 +32,9 @@ PROCESS_WITH_MULTIPLE_INSTANCES = [
     PROCESS_WITH_SINGLE_INSTANCE[0],
     {'name': PROCESS_NAME, 'pid': -81}
 ]
+# a list of dummy co-ordinates
+X_COORDS = [0, 0, 0, 0]
+Y_COORDS = [7, 9, 18, 14]
 
 
 class ProcessUtilitiesTestCase(TestCase):
@@ -78,3 +84,99 @@ class ProcessUtilitiesTestCase(TestCase):
                 process_util.get_pid_for_process,
                 PROCESS_NAME
             )
+
+
+class SortByKeysTests(TestCase):
+    def _get_root_property_from_object_list(self, objects, prop):
+        return [getattr(obj, prop) for obj in objects]
+
+    def _get_child_property_from_object_list(self, objects, child, prop):
+        return [getattr(getattr(obj, child), prop) for obj in objects]
+
+    def test_sort_by_single_property(self):
+        objects = [get_mock_object(y=y) for y in Y_COORDS]
+        sorted_objects = sort_by_keys(objects, ['y'])
+        self.assertEqual(len(sorted_objects), len(objects))
+        self.assertEqual(
+            self._get_root_property_from_object_list(sorted_objects, 'y'),
+            sorted(Y_COORDS)
+        )
+
+    def test_sort_by_multiple_properties(self):
+        objects = [
+            get_mock_object(x=x, y=y) for x, y in zip(X_COORDS, Y_COORDS)
+        ]
+
+        sorted_objects = sort_by_keys(objects, ['x', 'y'])
+        self.assertEqual(len(sorted_objects), len(objects))
+        self.assertEqual(
+            self._get_root_property_from_object_list(sorted_objects, 'x'),
+            sorted(X_COORDS)
+        )
+        self.assertEqual(
+            self._get_root_property_from_object_list(sorted_objects, 'y'),
+            sorted(Y_COORDS)
+        )
+
+    def test_sort_by_single_nested_property(self):
+        objects = [
+            get_mock_object(globalRect=get_global_rect(y=y)) for y in Y_COORDS
+        ]
+        sorted_objects = sort_by_keys(objects, ['globalRect.y'])
+        self.assertEqual(len(sorted_objects), len(objects))
+        self.assertEqual(
+            self._get_child_property_from_object_list(
+                sorted_objects,
+                child='globalRect',
+                prop='y'
+            ),
+            sorted(Y_COORDS)
+        )
+
+    def test_sort_by_multiple_nested_properties(self):
+        objects = [
+            get_mock_object(globalRect=get_global_rect(x=x, y=y))
+            for x, y in zip(X_COORDS, Y_COORDS)
+        ]
+        sorted_objects = sort_by_keys(
+            objects,
+            ['globalRect.x', 'globalRect.y']
+        )
+        self.assertEqual(len(sorted_objects), len(objects))
+        self.assertEqual(
+            self._get_child_property_from_object_list(
+                sorted_objects,
+                child='globalRect',
+                prop='x'
+            ),
+            sorted(X_COORDS)
+        )
+        self.assertEqual(
+            self._get_child_property_from_object_list(
+                sorted_objects,
+                child='globalRect',
+                prop='y'
+            ),
+            sorted(Y_COORDS)
+        )
+
+    def test_sort_three_levels_nested_property(self):
+        objects = [
+            get_mock_object(
+                fake_property=get_global_rect(
+                    y=get_global_rect(y=y)
+                )
+            ) for y in Y_COORDS
+        ]
+        sorted_objects = sort_by_keys(objects, ['fake_property.y.y'])
+        self.assertEqual(len(sorted_objects), len(objects))
+        sorted_ys = [i.fake_property.y.y for i in sorted_objects]
+        self.assertEqual(sorted_ys, sorted(Y_COORDS))
+
+    def test_raises_if_sort_keys_not_list(self):
+        self.assertRaises(ValueError, sort_by_keys, None, 'y')
+
+    def test_returns_unchanged_if_one_object(self):
+        obj = [get_mock_object()]
+        output = sort_by_keys(obj, ['x'])
+        self.assertEqual(output, obj)

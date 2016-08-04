@@ -91,7 +91,7 @@ class StateNotFoundError(RuntimeError):
     _troubleshoot_url_message = (
         'Tips on minimizing the occurrence of this failure '
         'are available here: '
-        'https://developer.ubuntu.com/api/autopilot/python/1.5.0/'
+        'https://developer.ubuntu.com/api/autopilot/python/1.6.0/'
         'faq-troubleshooting/'
     )
 

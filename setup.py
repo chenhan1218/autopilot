@@ -23,7 +23,7 @@ import sys
 assert sys.version_info >= (3,), 'Python 3 is required'
 
 
-VERSION = '1.5.0'
+VERSION = '1.6.0'
 
 
 autopilot_tracepoint = Extension(

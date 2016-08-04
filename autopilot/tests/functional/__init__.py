@@ -173,13 +173,13 @@ def _get_environment_patch(pythonpath):
 
 load_entry_point_script = """\
 #!/usr/bin/python
-__requires__ = 'autopilot==1.5.0'
+__requires__ = 'autopilot==1.6.0'
 import sys
 from pkg_resources import load_entry_point
 
 if __name__ == '__main__':
     sys.exit(
-        load_entry_point('autopilot==1.5.0', 'console_scripts', 'autopilot3')()
+        load_entry_point('autopilot==1.6.0', 'console_scripts', 'autopilot3')()
     )
 """
 

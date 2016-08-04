@@ -1,4 +1,18 @@
-autopilot (1.5.0) UNRELEASED; urgency=medium
+autopilot (1.6.0) yakkety; urgency=medium
+
+  * Autopilot proxy object
+    - Update: select_many() method to optionally return sorted results.
+    - New: get_path() to get object path in autopilot tree.
+    - New: wait_until_not_moving() block till object stops moving.
+    - New: wait_select_many() method.
+  * Introspection helper methods addition
+    - is_element() to check existence of a proxy object.
+    - get_path_root() to get root path of a proxy object.
+    - get_proxy_object_for_existing_process_by_name().
+
+ -- Omer Akram <omer.akram@canonical.com>  Wed, 03 Aug 2016 20:24:40 +0500
+
+autopilot (1.5.0) vivid; urgency=medium
 
   * Fix for desktop file name change (lp:1411096)
     Fix for config value containing '=' char (lp:1408317)

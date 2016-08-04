@@ -1,4 +1,4 @@
-autopilot (1.6.0-0ubuntu1) yakkety; urgency=medium
+autopilot (1.6.0) yakkety; urgency=medium
 
   * Autopilot proxy object
     - Update: select_many() method to optionally return sorted results.
@@ -7,8 +7,8 @@ autopilot (1.6.0-0ubuntu1) yakkety; urgency=medium
     - New: wait_select_many() method.
   * Introspection helper methods addition
     - is_element() to check existence of a proxy object.
-    - get_path_root() to get root path of a proxy object
-    - get_proxy_object_for_existing_process_by_name()
+    - get_path_root() to get root path of a proxy object.
+    - get_proxy_object_for_existing_process_by_name().
 
  -- Omer Akram <omer.akram@canonical.com>  Wed, 03 Aug 2016 20:24:40 +0500
 

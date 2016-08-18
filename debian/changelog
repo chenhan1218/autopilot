@@ -1,4 +1,4 @@
-autopilot (1.6.0-0ubuntu1) UNRELEASED; urgency=medium
+autopilot (1.6.0+16.10.20160818.1-0ubuntu1) yakkety; urgency=medium
 
   * Autopilot proxy object
     - Update: select_many() method to optionally return sorted results.
@@ -10,7 +10,7 @@ autopilot (1.6.0-0ubuntu1) UNRELEASED; urgency=medium
     - get_path_root() to get root path of a proxy object.
     - get_proxy_object_for_existing_process_by_name().
 
- -- Omer Akram <omer.akram@canonical.com>  Wed, 03 Aug 2016 20:24:40 +0500
+ -- Omer Akram <om26er@ubuntu.com>  Thu, 18 Aug 2016 19:24:27 +0000
 
 autopilot (1.5.1+16.04.20160428-0ubuntu1) xenial; urgency=medium
 

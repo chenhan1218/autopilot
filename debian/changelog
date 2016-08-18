@@ -1,4 +1,4 @@
-autopilot (1.6.0) yakkety; urgency=medium
+autopilot (1.6.0-0ubuntu1) yakkety; urgency=medium
 
   * Autopilot proxy object
     - Update: select_many() method to optionally return sorted results.
@@ -12,15 +12,142 @@ autopilot (1.6.0) yakkety; urgency=medium
 
  -- Omer Akram <omer.akram@canonical.com>  Wed, 03 Aug 2016 20:24:40 +0500
 
-autopilot (1.5.0) vivid; urgency=medium
+autopilot (1.5.1+16.04.20160428-0ubuntu1) xenial; urgency=medium
 
+  [ Albert Astals Cid ]
+  * Make the s in seconds lower case.
+
+ -- Max Brustkern <ci-train-bot@canonical.com>  Thu, 28 Apr 2016 19:12:42 +0000
+
+autopilot (1.5.1+16.04.20160412-0ubuntu1) xenial; urgency=medium
+
+  * Bug fix for process search using PIDs (lp:1569079). (LP: #1569079)
+
+ -- Christopher Lee <ci-train-bot@canonical.com>  Tue, 12 Apr 2016 04:08:58 +0000
+
+autopilot (1.5.1+16.04.20160229-0ubuntu1) xenial; urgency=medium
+
+  [ Andrea Cerisara, Iain Lane ]
+  * Bugfix for lp:1308330 Simplify X11 mouse move_to_point. (LP:
+    #1308330)
+
+ -- Christopher Lee <ci-train-bot@canonical.com>  Mon, 29 Feb 2016 21:55:05 +0000
+
+autopilot (1.5.1+16.04.20151209-0ubuntu2) xenial; urgency=medium
+
+  * psutil.Process.get_children is removed, use children instead
+
+ -- Iain Lane <iain@orangesquash.org.uk>  Fri, 22 Jan 2016 17:44:56 +0000
+
+autopilot (1.5.1+16.04.20151209-0ubuntu1) xenial; urgency=medium
+
+  * Stops attempts to access NoneType instead of bytes''. Considered a
+    workaround, fixed in newer testtools.
+
+ -- Christopher Lee <ci-train-bot@canonical.com>  Wed, 09 Dec 2015 05:36:03 +0000
+
+autopilot (1.5.1+15.10.20150908-0ubuntu1) wily; urgency=medium
+
+  * Add functionality to the click app launcher use use a custom
+    launcher class.
+
+ -- Christopher Lee <ci-train-bot@canonical.com>  Tue, 08 Sep 2015 04:18:25 +0000
+
+autopilot (1.5.1+15.10.20150902.1-0ubuntu1) wily; urgency=medium
+
+  [ CI Train Bot ]
+  * New rebuild forced.
+
+  [ Christopher Lee ]
+  * Flake8 fix for FTBFS due to new flake8.
+
+ -- CI Train Bot <ci-train-bot@canonical.com>  Wed, 02 Sep 2015 03:33:27 +0000
+
+autopilot (1.5.1+15.10.20150731-0ubuntu1) wily; urgency=medium
+
+  [ Christopher Lee ]
+  * Fix Bug #1337004. Allow custom proxy classes to have different class
+    names to the application objects. (LP: #1337004)
+
+ -- CI Train Bot <ci-train-bot@canonical.com>  Fri, 31 Jul 2015 02:39:56 +0000
+
+autopilot (1.5.1+15.10.20150723-0ubuntu1) wily; urgency=medium
+
+  [ Christopher Lee ]
+  * Bug fixes including updated dependencies.
+
+  [ Ken VanDine ]
+  * Bug fixes including updated dependencies.
+
+ -- CI Train Bot <ci-train-bot@canonical.com>  Thu, 23 Jul 2015 14:39:21 +0000
+
+autopilot (1.5.1+15.10.20150716-0ubuntu1) wily; urgency=medium
+
+  [ Christopher Lee ]
+  * Add window manager support for autopilot sandbox run, fixes LP:1379508
+  * Add fixture that forces a gsetting for unity8 so that OSK is shown even
+    when a UInput keyboard is present.
+  * Fix unit test failures on Wily
+
+ -- CI Train Bot <ci-train-bot@canonical.com>  Thu, 16 Jul 2015 04:38:49 +0000
+
+autopilot (1.5.1+15.04.20150708-0ubuntu1) vivid; urgency=medium
+
+  [ Christopher Lee ]
+  * Create correct touch device at creation to stop unity8 erroneously
+    changing to windowed mode. (Fixes lp:1471598).
+
+ -- CI Train Bot <ci-train-bot@canonical.com>  Wed, 08 Jul 2015 03:44:43 +0000
+
+autopilot (1.5.1+15.04.20150522-0ubuntu1) vivid; urgency=medium
+
+  [ CI Train Bot ]
+  * New rebuild forced.
+
+  [ Christopher Lee, Federico Gimenez, Leo Arias, Richard Huddie, Vincent Ladeuil ]
+  * Bug fixes for logging (debug level now -vv) and application of CPO
+    bases for proxy objects. (LP: #1425721, #1376996, #1420949)
+
+ -- CI Train Bot <ci-train-bot@canonical.com>  Fri, 22 May 2015 16:54:03 +0000
+
+autopilot (1.5.0+15.04.20150408-0ubuntu1) vivid; urgency=medium
+
+  [ Albert Astals Cid ]
+  * Bug fixes related to improving automated runs.
+
+  [ Christopher Lee ]
+  * Bug fixes related to improving automated runs.
+
+ -- CI Train Bot <ci-train-bot@canonical.com>  Wed, 08 Apr 2015 15:07:28 +0000
+
+autopilot (1.5.0+15.04.20150323-0ubuntu1) vivid; urgency=medium
+
+  [ CI Train Bot ]
+  * New rebuild forced.
+
+  [ Christopher Lee ]
+  * Bugfix for Touch pointer pressed. Packaging req. due to python3-xlib
+    bug.
+
+  [ Leo Arias ]
+  * Bugfix for Touch pointer pressed. Packaging req. due to python3-xlib
+    bug.
+
+ -- CI Train Bot <ci-train-bot@canonical.com>  Mon, 23 Mar 2015 09:34:31 +0000
+
+autopilot (1.5.0+15.04.20150226.1-0ubuntu1) vivid; urgency=medium
+
+  [ Christopher Lee ]
   * Fix for desktop file name change (lp:1411096)
     Fix for config value containing '=' char (lp:1408317)
     Fix for skipped tests not appearing in log (lp:1414632)
     Add json docs build (for web publish) (lp:1409778)
     Documentation improvements for API, Tutorial, FAQ, and Guidelines
 
- -- Christopher Lee <chris.lee@canonical.com>  Fri, 27 Feb 2015 10:16:42 +1300
+  [ CI Train Bot ]
+  * New rebuild forced.
+
+ -- CI Train Bot <ci-train-bot@canonical.com>  Thu, 26 Feb 2015 22:47:35 +0000
 
 autopilot (1.5.0+15.04.20141031-0ubuntu1) vivid; urgency=low
 

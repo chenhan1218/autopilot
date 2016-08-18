@@ -1,4 +1,4 @@
-autopilot (1.6.0-0ubuntu1) yakkety; urgency=medium
+autopilot (1.6.0-0ubuntu1) UNRELEASED; urgency=medium
 
   * Autopilot proxy object
     - Update: select_many() method to optionally return sorted results.

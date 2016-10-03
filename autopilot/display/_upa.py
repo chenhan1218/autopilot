@@ -71,7 +71,8 @@ def _get_process_environ(process_name):
 def _get_environ_variable_for_process(variable, process_name):
     all_variables = _get_process_environ(process_name)
     for var in all_variables:
-        if var and var.startswith(variable) and var.index('=') == len(variable):
+        if var and var.startswith(variable) and \
+                var.index('=') == len(variable):
             return var.split('=')[1]
 
 
@@ -120,22 +121,6 @@ def query_current_display_server():
         return DISPLAY_SERVER_MIR
     else:
         raise RuntimeError('No or unknown display server running.')
-
-
-def _get_fbset_resolution():
-    """Return the resolution, as determined by fbset, or None."""
-    fbset_output = _get_fbset_output()
-    for line in fbset_output.split('\n'):
-        line = line.strip()
-        if line.startswith('Mode'):
-            quoted_resolution = line.split()[1]
-            resolution_string = quoted_resolution.strip('"')
-            return tuple(int(piece) for piece in resolution_string.split('x'))
-    raise RuntimeError("No modes found from fbset output")
-
-
-def _get_fbset_output():
-    return subprocess.check_output(["fbset", "-s", "-x"]).decode().strip()
 
 
 class Display(DisplayBase):

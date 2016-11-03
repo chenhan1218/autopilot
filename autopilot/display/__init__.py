@@ -107,8 +107,8 @@ class Display(object):
             return Display()
 
         backends = OrderedDict()
-        backends['X11'] = get_x11_display
         backends['UPA'] = get_upa_display
+        backends['X11'] = get_x11_display
         return _pick_backend(backends, preferred_backend)
 
     class BlacklistedDriverError(RuntimeError):

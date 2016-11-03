@@ -20,7 +20,6 @@
 """Tests for the autopilot platform code."""
 
 
-from contextlib import contextmanager
 from io import StringIO
 from testtools import TestCase
 from testtools.matchers import Equals
@@ -34,7 +33,6 @@ class PublicAPITests(TestCase):
 
     def setUp(self):
         super().setUp()
-        platform._display_is_mir.cache_clear()
 
     @patch('autopilot.platform._PlatformDetector')
     def test_model_creates_platform_detector(self, mock_detector):
@@ -55,14 +53,6 @@ class PublicAPITests(TestCase):
     def test_image_codename_returns_correct_value(self, mock_detector):
         mock_detector.image_codename = "test123"
         self.assertThat(platform.image_codename(), Equals('test123'))
-
-    def test_is_x11_returns_False_on_failure(self):
-        with _simulate_not_X11():
-            self.assertFalse(platform._display_is_x11())
-
-    def test_is_x11_returns_True_on_success(self):
-        with _simulate_X11():
-            self.assertTrue(platform._display_is_x11())
 
 
 class PlatformGetProcessNameTests(TestCase):
@@ -247,15 +237,3 @@ class BuildPropertyParserTests(TestCase):
         prop_file = StringIO("ro.product.model=maguro")
         properties = platform._parse_build_properties_file(prop_file)
         self.assertThat(properties, Equals({'ro.product.model': 'maguro'}))
-
-
-@contextmanager
-def _simulate_not_X11():
-    with patch.dict(platform.os.environ, dict(), clear=True):
-        yield
-
-
-@contextmanager
-def _simulate_X11():
-    with patch.dict(platform.os.environ, dict(DISPLAY=':0'), clear=True):
-        yield

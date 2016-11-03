@@ -21,18 +21,16 @@ import os
 import subprocess
 
 from autopilot.display import Display as DisplayBase
-from autopilot.introspection.utilities import process_util
+from autopilot.platform import get_display_server
 
-DISPLAY_SERVER_X = 'XOrg'
-DISPLAY_SERVER_MIR = 'Mir'
-ENV_XDG_RUNTIME_DIR = 'XDG_RUNTIME_DIR'
-PROCESS_NAME_X_SERVER = 'Xorg'
-SOCKET_MIR = 'mir_socket'
+DISPLAY_SERVER_X11 = 'X11'
+DISPLAY_SERVER_MIR = 'MIR'
+ENV_MIR_SOCKET = 'MIR_SERVER_HOST_SOCKET'
 
 
 def query_resolution():
-    display_server = query_current_display_server()
-    if display_server == DISPLAY_SERVER_X:
+    display_server = get_display_server()
+    if display_server == DISPLAY_SERVER_X11:
         return _get_resolution_from_xrandr()
     elif display_server == DISPLAY_SERVER_MIR:
         return _get_resolution_from_mirout()
@@ -40,57 +38,33 @@ def query_resolution():
         raise RuntimeError(
             'Unknown display server. Only {} and {} are supported.'.format(
                 DISPLAY_SERVER_MIR,
-                DISPLAY_SERVER_X
+                DISPLAY_SERVER_X11
             )
         )
 
 
-def _get_resolution_from_xrandr():
-    xrandr_stdout = subprocess.check_output(
-        ['xrandr', '--current'],
-        universal_newlines=True
+def _get_stdout_for_command(command, *args):
+    full_command = [command]
+    full_command.extend(args)
+    return subprocess.check_output(
+        full_command,
+        universal_newlines=True,
+        stderr=subprocess.DEVNULL,
     ).split('\n')
-    for line in xrandr_stdout:
+
+
+def _get_resolution_from_xrandr():
+    xrandr_output = _get_stdout_for_command('xrandr', '--current')
+    for line in xrandr_output:
         if '*' in line:
             return _grab_resolution_from_line(line)
     raise ValueError('Something for now')
 
 
-def _get_process_environ_path(process_name):
-    return '/proc/{}/environ'.format(
-        process_util.get_pid_for_process(process_name)
-    )
-
-
-def _get_process_environ(process_name):
-    with open(_get_process_environ_path(process_name), 'r') as file:
-        output = file.read()
-    return output.split('\0')
-
-
-def _get_environ_variable_for_process(variable, process_name):
-    all_variables = _get_process_environ(process_name)
-    for var in all_variables:
-        if var and var.startswith(variable) and \
-                var.index('=') == len(variable):
-            return var.split('=')[1]
-
-
-def _get_unity8_mir_socket():
-    return _get_environ_variable_for_process('UNITY_MIR_SOCKET', 'unity8')
-
-
-def _grab_resolution_from_line(line):
-    return tuple([int(i) for i in line.strip().split()[0].split('x')])
-
-
 def _get_resolution_from_mirout():
-    mirout_stdout = subprocess.check_output(
-        ['mirout', _get_unity8_mir_socket()],
-        universal_newlines=True
-    ).split('\n')
+    mirout_output = _get_stdout_for_command('mirout', _get_unity8_mir_socket())
     grab_resolution = False
-    for line in mirout_stdout:
+    for line in mirout_output:
         if grab_resolution:
             return _grab_resolution_from_line(line)
         if 'connected' in line:
@@ -98,29 +72,12 @@ def _get_resolution_from_mirout():
     raise ValueError('Something for now')
 
 
-def _is_x_server_running():
-    if not os.environ.get('DISPLAY'):
-        return False
-    try:
-        return bool(process_util.get_pids_for_process(PROCESS_NAME_X_SERVER))
-    except ValueError:
-        return False
+def _get_unity8_mir_socket():
+    return os.environ.get(ENV_MIR_SOCKET)
 
 
-def _is_mir_based_server_running():
-    xdg_dir = os.environ.get(ENV_XDG_RUNTIME_DIR)
-    return xdg_dir is not None and os.path.exists(
-        os.path.join(xdg_dir, SOCKET_MIR)
-    )
-
-
-def query_current_display_server():
-    if _is_x_server_running():
-        return DISPLAY_SERVER_X
-    elif _is_mir_based_server_running():
-        return DISPLAY_SERVER_MIR
-    else:
-        raise RuntimeError('No or unknown display server running.')
+def _grab_resolution_from_line(line):
+    return tuple([int(i) for i in line.strip().split()[0].split('x')])
 
 
 class Display(DisplayBase):

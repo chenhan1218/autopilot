@@ -53,31 +53,40 @@ def _get_stdout_for_command(command, *args):
     ).split('\n')
 
 
+def _get_resolution(server_output, keyword, offset=0):
+    grab_line = False
+    for line in server_output:
+        if grab_line:
+            if offset == 0:
+                return _grab_resolution_from_line(line)
+            else:
+                offset -= 1
+                continue
+        if keyword in line:
+            if offset == 0:
+                return _grab_resolution_from_line(line)
+            else:
+                grab_line = True
+                offset -= 1
+    raise ValueError(
+        'Failed to get display resolution, is a display connected?'
+    )
+
+
 def _get_resolution_from_xrandr():
-    xrandr_output = _get_stdout_for_command('xrandr', '--current')
-    for line in xrandr_output:
-        if '*' in line:
-            return _grab_resolution_from_line(line)
-    raise ValueError('Something for now')
+    return _get_resolution(_get_stdout_for_command('xrandr', '--current'), '*')
 
 
 def _get_resolution_from_mirout():
-    mirout_output = _get_stdout_for_command('mirout', _get_unity8_mir_socket())
-    grab_resolution = False
-    for line in mirout_output:
-        if grab_resolution:
-            return _grab_resolution_from_line(line)
-        if 'connected' in line:
-            grab_resolution = True
-    raise ValueError('Something for now')
-
-
-def _get_unity8_mir_socket():
-    return os.environ.get(ENV_MIR_SOCKET)
+    return _get_resolution(
+        _get_stdout_for_command('mirout', os.environ.get(ENV_MIR_SOCKET)),
+        'connected',
+        offset=1
+    )
 
 
 def _grab_resolution_from_line(line):
-    return tuple([int(i) for i in line.strip().split()[0].split('x')])
+    return tuple([int(i) for i in line.split()[0].split('x')])
 
 
 class Display(DisplayBase):

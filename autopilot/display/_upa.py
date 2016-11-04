@@ -53,35 +53,22 @@ def _get_stdout_for_command(command, *args):
     ).split('\n')
 
 
-def _get_resolution(server_output, keyword, offset=0):
-    grab_line = False
-    for line in server_output:
-        if grab_line:
-            if offset == 0:
-                return _grab_resolution_from_line(line)
-            else:
-                offset -= 1
-                continue
-        if keyword in line:
-            if offset == 0:
-                return _grab_resolution_from_line(line)
-            else:
-                grab_line = True
-                offset -= 1
+def _get_resolution(server_output):
+    relevant_line = list(filter(lambda line: '*' in line, server_output))[0]
+    if relevant_line:
+        return tuple([int(i) for i in relevant_line.split()[0].split('x')])
     raise ValueError(
         'Failed to get display resolution, is a display connected?'
     )
 
 
 def _get_resolution_from_xrandr():
-    return _get_resolution(_get_stdout_for_command('xrandr', '--current'), '*')
+    return _get_resolution(_get_stdout_for_command('xrandr', '--current'))
 
 
 def _get_resolution_from_mirout():
     return _get_resolution(
-        _get_stdout_for_command('mirout', os.environ.get(ENV_MIR_SOCKET)),
-        'connected',
-        offset=1
+        _get_stdout_for_command('mirout', os.environ.get(ENV_MIR_SOCKET))
     )
 
 

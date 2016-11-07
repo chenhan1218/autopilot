@@ -72,10 +72,6 @@ def _get_resolution_from_mirout():
     )
 
 
-def _grab_resolution_from_line(line):
-    return tuple([int(i) for i in line.split()[0].split('x')])
-
-
 class Display(DisplayBase):
     """The base class/inteface for the display devices"""
 

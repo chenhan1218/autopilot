@@ -25,17 +25,12 @@ from evdev import UInput, ecodes as e
 
 from autopilot.input import Keyboard as KeyboardBase
 from autopilot.input import Touch as TouchBase
-from autopilot.input import Mouse as MouseBase
-
 from autopilot.input import get_center_point
 from autopilot.platform import model
 from autopilot.utilities import deprecated, EventDelay, sleep
-from autopilot.display import move_mouse_to_screen
 
 
 _logger = logging.getLogger(__name__)
-
-_PRESSED_MOUSE_BUTTONS = []
 
 
 def _get_devnode_path():
@@ -305,25 +300,6 @@ def _get_touch_events(res_x=None, res_y=None):
         e.EV_KEY: [
             touch_tool,
         ]
-    }
-    return events
-
-
-def _get_mouse_events(res_x=None, res_y=None):
-    if res_x is None or res_y is None:
-        res_x, res_y = _get_system_resolution()
-    events = {
-        e.EV_KEY:
-            (e.BTN_LEFT,
-             e.BTN_RIGHT),
-        e.EV_REL:
-            (e.REL_X,
-             e.REL_Y),
-        e.EV_ABS: [
-            (e.ABS_X, (0, res_x, 0, 0)),
-            (e.ABS_Y, (0, res_y, 0, 0)),
-            (e.ABS_MT_POSITION_X, (0, res_x, 0, 0)),
-            (e.ABS_MT_POSITION_Y, (0, res_y, 0, 0))]
     }
     return events
 
@@ -726,143 +702,3 @@ class UInputHardwareKeysDevice:
             else:
                 sleep(retry_interval)
         raise RuntimeError('Failed to find UInput device.')
-
-
-class _UInputMouseDevice(object):
-    """Wrapper for the UInput Mouse to execute its primitives."""
-
-    _device = None
-    buttons = {1: e.BTN_LEFT,
-               2: e.BTN_RIGHT
-               }
-
-    def __init__(self, device_class=UInput):
-        """Class constructor.
-
-        If res_x and res_y are not specified, they will be queried from the
-        system.
-
-        """
-        super(_UInputMouseDevice, self).__init__()
-        if _UInputMouseDevice._device is None:
-            _UInputMouseDevice._device = device_class(
-                events=_get_mouse_events(),
-                name='autopilot-mouse',
-                version=0x2, devnode=_get_devnode_path())
-
-    def press(self, button):
-        self._device.write(e.EV_KEY, self.buttons.get(button, e.BTN_LEFT), 1)
-        self._device.syn()
-
-    def release(self, button):
-        self._device.write(e.EV_KEY, self.buttons.get(button, e.BTN_LEFT), 0)
-        self._device.syn()
-
-    def move(self, x, y):
-        self._device.write(e.EV_ABS, e.ABS_MT_POSITION_X, int(x))
-        self._device.write(e.EV_ABS, e.ABS_MT_POSITION_Y, int(y))
-        self._device.syn()
-
-
-class Mouse(MouseBase):
-
-    def __init__(self, device_class=_UInputMouseDevice):
-        super(Mouse, self).__init__()
-        self._device = device_class()
-        self.event_delayer = EventDelay()
-        self._x = 0
-        self._y = 0
-
-    @property
-    def x(self):
-        """Mouse position X coordinate."""
-        return self._x
-
-    @property
-    def y(self):
-        """Mouse position Y coordinate."""
-        return self._y
-
-    def press(self, button=1):
-        """Press mouse button at current mouse location."""
-        _PRESSED_MOUSE_BUTTONS.append(button)
-        self._device.press(button)
-
-    def release(self, button=1):
-        """Releases mouse button at current mouse location."""
-        if button in _PRESSED_MOUSE_BUTTONS:
-            _PRESSED_MOUSE_BUTTONS.remove(button)
-        self._device.release(button)
-
-    def click(self, button=1, press_duration=0.10, time_between_events=0.1):
-        """Click mouse at current location."""
-        self.event_delayer.delay(time_between_events)
-        self.press(button)
-        sleep(press_duration)
-        self.release(button)
-
-    def move(self, x, y, animate=True, rate=10, time_between_events=0.01):
-        """Moves mouse to location (x, y).
-
-        Callers should avoid specifying the *rate* or *time_between_events*
-        parameters unless they need a specific rate of movement.
-
-        """
-        self._device.move(x, y)
-        self._x = x
-        self._y = y
-
-    def move_to_object(self, object_proxy):
-        """Attempts to move the mouse to 'object_proxy's centre point.
-
-        See :py:meth:`~autopilot.input.get_center_point` for details on how
-        the center point is calculated.
-
-        """
-        x, y = get_center_point(object_proxy)
-        self.move(x, y)
-
-    def position(self):
-        """
-        Returns the current position of the mouse pointer.
-
-        :return: (x,y) tuple
-        """
-        raise NotImplementedError('Position not implemented for this class')
-
-    def drag(self, x1, y1, x2, y2, rate=10, time_between_events=0.01):
-        """Perform a press, move and release.
-
-        This is to keep a common API between Mouse and Finger as long as
-        possible.
-
-        The pointer will be dragged from the starting point to the ending point
-        with multiple moves. The number of moves, and thus the time that it
-        will take to complete the drag can be altered with the `rate`
-        parameter.
-
-        :param x1: The point on the x axis where the drag will start from.
-        :param y1: The point on the y axis where the drag will starts from.
-        :param x2: The point on the x axis where the drag will end at.
-        :param y2: The point on the y axis where the drag will end at.
-        :param rate: The number of pixels the mouse will be moved per
-            iteration. Default is 10 pixels. A higher rate will make the drag
-            faster, and lower rate will make it slower.
-        :param time_between_events: The number of seconds that the drag will
-            wait between iterations.
-
-        """
-        self.move(x1, y1)
-        self.press()
-        self.move(x2, y2, rate=rate, time_between_events=time_between_events)
-        self.release()
-
-    @classmethod
-    def on_test_end(cls, test_instance):
-        """Put mouse in a known safe state."""
-        global _PRESSED_MOUSE_BUTTONS
-        for btn in _PRESSED_MOUSE_BUTTONS:
-            _logger.debug("Releasing mouse button %d as part of cleanup", btn)
-            _UInputMouseDevice().release(btn)
-        _PRESSED_MOUSE_BUTTONS = []
-        move_mouse_to_screen(0)

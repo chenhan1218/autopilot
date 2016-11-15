@@ -283,10 +283,6 @@ class Mouse(CleanupRegistered):
             from autopilot.input._X11 import Mouse
             return Mouse()
 
-        def get_uinput_mouse():
-            from autopilot.input._uinput import Mouse
-            return Mouse()
-
         from autopilot.platform import model
         if model() != 'Desktop':
             _logger.info(
@@ -302,7 +298,6 @@ class Mouse(CleanupRegistered):
 
         backends = OrderedDict()
         backends['X11'] = get_x11_mouse
-        backends['UInput'] = get_uinput_mouse
         return _pick_backend(backends, preferred_backend)
 
     @property

@@ -47,6 +47,7 @@ Architecture: all
 Depends: gir1.2-ubuntu-app-launch-2 | gir1.2-upstart-app-launch-2,
          libjs-jquery,
          libjs-underscore,
+         mir-utils,
          python3-dateutil,
          python3-dbus,
          python3-decorator,

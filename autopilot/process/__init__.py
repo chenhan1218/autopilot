@@ -89,10 +89,6 @@ class ProcessManager(object):
             from autopilot.process._bamf import ProcessManager
             return ProcessManager()
 
-        def get_upa_pm():
-            from autopilot.process._upa import ProcessManager
-            return ProcessManager()
-
         backends = OrderedDict()
         backends['BAMF'] = get_bamf_pm
         return _pick_backend(backends, preferred_backend)

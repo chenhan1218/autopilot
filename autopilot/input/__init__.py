@@ -126,9 +126,9 @@ class Keyboard(CleanupRegistered):
                 raise
 
         backends = OrderedDict()
-        backends['X11'] = get_x11_kb
         backends['UInput'] = get_uinput_kb
         backends['OSK'] = get_osk_kb
+        backends['X11'] = get_x11_kb
         return _pick_backend(backends, preferred_backend)
 
     @contextmanager
@@ -283,21 +283,15 @@ class Mouse(CleanupRegistered):
             from autopilot.input._X11 import Mouse
             return Mouse()
 
-        from autopilot.platform import model
-        if model() != 'Desktop':
-            _logger.info(
-                "You cannot create a Mouse on the devices where X11 is not "
-                "available. consider using a Touch or Pointer device. "
-                "For more information, see: "
-                "http://unity.ubuntu.com/autopilot/api/input.html"
-                "#autopilot-unified-input-system"
-            )
-            raise RuntimeError(
-                "Cannot create a Mouse on devices where X11 is not available."
-            )
+        def get_uinput_mouse():
+            # Return the Touch device for now as Mouse under a Mir desktop
+            # is a challenge for now.
+            from autopilot.input._uinput import Touch
+            return Touch()
 
         backends = OrderedDict()
         backends['X11'] = get_x11_mouse
+        backends['UInput'] = get_uinput_mouse
         return _pick_backend(backends, preferred_backend)
 
     @property

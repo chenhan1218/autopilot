@@ -17,51 +17,59 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os
+import subprocess
 
 from autopilot.display import Display as DisplayBase
-from autopilot.platform import image_codename
-import subprocess
+from autopilot.platform import get_display_server
+
+DISPLAY_SERVER_X11 = 'X11'
+DISPLAY_SERVER_MIR = 'MIR'
+ENV_MIR_SOCKET = 'MIR_SERVER_HOST_SOCKET'
 
 
 def query_resolution():
-    try:
-        return _get_fbset_resolution()
-    except Exception:
-        return _get_hardcoded_resolution()
+    display_server = get_display_server()
+    if display_server == DISPLAY_SERVER_X11:
+        return _get_resolution_from_xrandr()
+    elif display_server == DISPLAY_SERVER_MIR:
+        return _get_resolution_from_mirout()
+    else:
+        raise RuntimeError(
+            'Unknown display server. Only {} and {} are supported.'.format(
+                DISPLAY_SERVER_MIR,
+                DISPLAY_SERVER_X11
+            )
+        )
 
 
-def _get_fbset_resolution():
-    """Return the resolution, as determined by fbset, or None."""
-    fbset_output = _get_fbset_output()
-    for line in fbset_output.split('\n'):
-        line = line.strip()
-        if line.startswith('Mode'):
-            quoted_resolution = line.split()[1]
-            resolution_string = quoted_resolution.strip('"')
-            return tuple(int(piece) for piece in resolution_string.split('x'))
-    raise RuntimeError("No modes found from fbset output")
+def _get_stdout_for_command(command, *args):
+    full_command = [command]
+    full_command.extend(args)
+    return subprocess.check_output(
+        full_command,
+        universal_newlines=True,
+        stderr=subprocess.DEVNULL,
+    ).split('\n')
 
 
-def _get_fbset_output():
-    return subprocess.check_output(["fbset", "-s", "-x"]).decode().strip()
+def _get_resolution(server_output):
+    relevant_line = list(filter(lambda line: '*' in line, server_output))[0]
+    if relevant_line:
+        return tuple([int(i) for i in relevant_line.split()[0].split('x')])
+    raise ValueError(
+        'Failed to get display resolution, is a display connected?'
+    )
 
 
-def _get_hardcoded_resolution():
-    name = image_codename()
+def _get_resolution_from_xrandr():
+    return _get_resolution(_get_stdout_for_command('xrandr', '--current'))
 
-    resolutions = {
-        "generic": (480, 800),
-        "mako": (768, 1280),
-        "maguro": (720, 1280),
-        "manta": (2560, 1600),
-        "grouper": (800, 1280),
-    }
 
-    if name not in resolutions:
-        raise NotImplementedError(
-            'Device "{}" is not supported by Autopilot.'.format(name))
-
-    return resolutions[name]
+def _get_resolution_from_mirout():
+    return _get_resolution(
+        _get_stdout_for_command('mirout', os.environ.get(ENV_MIR_SOCKET))
+    )
 
 
 class Display(DisplayBase):
@@ -91,4 +99,4 @@ class Display(DisplayBase):
         :return: Tuple containing (x, y, width, height).
 
         """
-        return (0, 0, self._X, self._Y)
+        return 0, 0, self._X, self._Y

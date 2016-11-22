@@ -19,8 +19,6 @@
 
 
 import os
-import psutil
-from functools import lru_cache
 
 """
 Platform identification utilities for Autopilot.
@@ -143,27 +141,10 @@ def is_tablet():
 def get_display_server():
     """Returns display server type.
 
-    :returns: string indicating display server type. Either "X11", "MIR" or
-      "UNKNOWN"
+    :returns: string indicating display server type.
 
     """
-    if _display_is_x11():
-        return "X11"
-    elif _display_is_mir():
-        return "MIR"
-    else:
-        return "UNKNOWN"
-
-
-def _display_is_x11():
-    return 'DISPLAY' in os.environ
-
-
-@lru_cache()
-def _display_is_mir():
-    return "unity-system-compositor" in [
-        _get_process_name(p.name) for p in psutil.process_iter()
-    ]
+    return os.environ.get('XDG_SESSION_TYPE', 'UNKNOWN').upper()
 
 
 # Different vers. of psutil across Trusty and Utopic have name as either a

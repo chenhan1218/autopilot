@@ -173,13 +173,14 @@ class AutopilotTestCase(TestWithScenarios, TestCase, KeybindingsHelper):
         # Work around for bug lp:1297592.
         _ensure_uinput_device_created()
 
-        try:
-            self._app_snapshot = _get_process_snapshot()
-            self.addCleanup(self._compare_system_with_app_snapshot)
-        except RuntimeError:
-            _logger.warning(
-                "Process manager backend unavailable, application snapshot "
-                "support disabled.")
+        if get_display_server() == 'X11':
+            try:
+                self._app_snapshot = _get_process_snapshot()
+                self.addCleanup(self._compare_system_with_app_snapshot)
+            except RuntimeError:
+                _logger.warning(
+                    "Process manager backend unavailable, application "
+                    "snapshot support disabled.")
 
         self.addOnException(self._take_screenshot_on_failure)
 

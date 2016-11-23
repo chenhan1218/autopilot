@@ -38,6 +38,7 @@ class MockObject(Mock):
     def get_properties(self):
         return self.__dict__
 
+
 get_mock_object = MockObject
 
 

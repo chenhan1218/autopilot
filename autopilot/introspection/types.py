@@ -255,6 +255,7 @@ def _integer_repr(self):
 def _create_generic_repr(target_type):
     return compatible_repr(lambda self: repr(target_type(self)))
 
+
 _bytes_repr = _create_generic_repr(bytes)
 _text_repr = _create_generic_repr(str)
 _dict_repr = _create_generic_repr(dict)

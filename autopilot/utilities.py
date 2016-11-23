@@ -430,6 +430,7 @@ class MockableSleep(object):
     def total_time_slept(self):
         return self._mock_count
 
+
 sleep = MockableSleep()
 
 
@@ -664,5 +665,6 @@ class MockableProcessIter:
                 process.get('name'),
                 process.get('pid')
             )
+
 
 process_iter = MockableProcessIter()

@@ -21,12 +21,11 @@ import os
 import subprocess
 
 from autopilot.display import Display as DisplayBase
-from autopilot.platform import get_display_server
+from autopilot.platform import get_display_server, image_codename
 
 DISPLAY_SERVER_X11 = 'X11'
 DISPLAY_SERVER_MIR = 'MIR'
 ENV_MIR_SOCKET = 'MIR_SERVER_HOST_SOCKET'
-
 
 def query_resolution():
     display_server = get_display_server()
@@ -35,13 +34,24 @@ def query_resolution():
     elif display_server == DISPLAY_SERVER_MIR:
         return _get_resolution_from_mirout()
     else:
-        raise RuntimeError(
-            'Unknown display server. Only {} and {} are supported.'.format(
-                DISPLAY_SERVER_MIR,
-                DISPLAY_SERVER_X11
-            )
-        )
+        _get_hardcoded_resolution()
 
+def _get_hardcoded_resolution():
+    name = image_codename()
+
+    resolutions = {
+        "generic": (480, 800),
+        "mako": (768, 1280),
+        "maguro": (720, 1280),
+        "manta": (2560, 1600),
+        "grouper": (800, 1280),
+    }
+
+    if name not in resolutions:
+        raise NotImplementedError(
+            'Device "{}" is not supported by Autopilot.'.format(name))
+
+    return resolutions[name]
 
 def _get_stdout_for_command(command, *args):
     full_command = [command]

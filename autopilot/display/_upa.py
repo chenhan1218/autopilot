@@ -40,11 +40,8 @@ def _get_hardcoded_resolution():
     name = image_codename()
 
     resolutions = {
-        "generic": (480, 800),
-        "mako": (768, 1280),
-        "maguro": (720, 1280),
-        "manta": (2560, 1600),
-        "grouper": (800, 1280),
+        "Aquaris_M10_HD": (800, 1280),
+        "Desktop": (1920, 1080)
     }
 
     if name not in resolutions:

@@ -27,6 +27,7 @@ DISPLAY_SERVER_X11 = 'X11'
 DISPLAY_SERVER_MIR = 'MIR'
 ENV_MIR_SOCKET = 'MIR_SERVER_HOST_SOCKET'
 
+
 def query_resolution():
     display_server = get_display_server()
     if display_server == DISPLAY_SERVER_X11:
@@ -35,6 +36,7 @@ def query_resolution():
         return _get_resolution_from_mirout()
     else:
         _get_hardcoded_resolution()
+
 
 def _get_hardcoded_resolution():
     name = image_codename()
@@ -49,6 +51,7 @@ def _get_hardcoded_resolution():
             'Device "{}" is not supported by Autopilot.'.format(name))
 
     return resolutions[name]
+
 
 def _get_stdout_for_command(command, *args):
     full_command = [command]

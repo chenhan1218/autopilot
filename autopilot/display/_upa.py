@@ -35,7 +35,7 @@ def query_resolution():
     elif display_server == DISPLAY_SERVER_MIR:
         return _get_resolution_from_mirout()
     else:
-        _get_hardcoded_resolution()
+        return _get_hardcoded_resolution()
 
 
 def _get_hardcoded_resolution():

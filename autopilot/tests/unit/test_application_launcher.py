@@ -33,7 +33,7 @@ from testtools.matchers import (
     raises,
 )
 from testtools.content import text_content
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 from autopilot.application import (
     ClickApplicationLauncher,
@@ -781,10 +781,11 @@ class UpstartApplicationLauncherTests(TestCase):
         app_id = self.getUniqueString()
         case_addDetail = Mock()
         launcher = UpstartApplicationLauncher(case_addDetail)
-        with patch.object(_l.journal, 'Reader') as p:
+        j = MagicMock(spec=_l.journal.Reader)
+        with patch.object(_l.journal, 'Reader', return_value=j) as p:
             launcher._attach_application_log(app_id)
-
-            p.assert_called_once_with(app_id)
+            expected = launcher._get_user_unit_match(app_id)
+            j.add_match.assert_called_once_with(_SYSTEMD_USER_UNIT=expected)
             self.assertEqual(0, case_addDetail.call_count)
 
     def test_attach_application_log_attaches_log(self):
@@ -792,7 +793,9 @@ class UpstartApplicationLauncherTests(TestCase):
         case_addDetail = Mock()
         launcher = UpstartApplicationLauncher(case_addDetail)
         app_id = self.getUniqueString()
-        with patch.object(_l.journal, 'Reader', return_value=token):
+        j = MagicMock(spec=_l.journal.Reader)
+        j.__iter__ = lambda x: iter([token])
+        with patch.object(_l.journal, 'Reader', return_value=j):
             launcher._attach_application_log(app_id)
 
             self.assertEqual(1, case_addDetail.call_count)

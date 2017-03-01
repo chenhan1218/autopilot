@@ -20,14 +20,12 @@
 """Base module for application launchers."""
 
 import fixtures
-from gi.repository import GLib
 from gi import require_version
 try:
     require_version('UbuntuAppLaunch', '3')
-    from gi.repository import UbuntuAppLaunch
-except ImportError:
+except ValueError:
     require_version('UbuntuAppLaunch', '2')
-    from gi.repository import UbuntuAppLaunch
+from gi.repository import GLib, UbuntuAppLaunch
 
 import json
 import logging
@@ -187,16 +185,20 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             self.addCleanup(self._stop_application, app_id)
             self.addCleanup(self._attach_application_log, app_id)
 
+    @staticmethod
+    def _get_user_unit_match(app_id):
+        return 'ubuntu-app-launch-*-%s-*.service' % app_id
+
     def _attach_application_log(self, app_id):
         j = journal.Reader()
         j.log_level(journal.LOG_INFO)
-        systemd_unit = 'ubuntu-app-launch-*-%s-*.service' % app_id
-        j.add_match(_SYSTEMD_USER_UNIT=systemd_unit)
+        j.add_match(_SYSTEMD_USER_UNIT=self._get_user_unit_match(app_id))
         log_data = ''
         for i in j:
             log_data += str(i) + '\n'
-        self.caseAddDetail('Application Log (%s)' % app_id,
-                           safe_text_content(log_data))
+        if len(log_data) > 0:
+            self.caseAddDetail('Application Log (%s)' % app_id,
+                               safe_text_content(log_data))
 
     def _stop_application(self, app_id):
         state = {}

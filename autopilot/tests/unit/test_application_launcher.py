@@ -782,7 +782,7 @@ class UpstartApplicationLauncherTests(TestCase):
         case_addDetail = Mock()
         launcher = UpstartApplicationLauncher(case_addDetail)
         j = MagicMock(spec=_l.journal.Reader)
-        with patch.object(_l.journal, 'Reader', return_value=j) as p:
+        with patch.object(_l.journal, 'Reader', return_value=j):
             launcher._attach_application_log(app_id)
             expected = launcher._get_user_unit_match(app_id)
             j.add_match.assert_called_once_with(_SYSTEMD_USER_UNIT=expected)

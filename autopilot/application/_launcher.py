@@ -196,7 +196,7 @@ class UpstartApplicationLauncher(ApplicationLauncher):
         for i in j:
             log_data += str(i) + '\n'
         self.caseAddDetail('Application Log (%s)' % app_id,
-                           safe_text_content(log_data)
+                           safe_text_content(log_data))
 
     def _stop_application(self, app_id):
         state = {}

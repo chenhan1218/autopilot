@@ -191,10 +191,13 @@ class UpstartApplicationLauncher(ApplicationLauncher):
     def _attach_application_log(self, app_id):
         j = journal.Reader()
         j.log_level(journal.LOG_INFO)
-        systemd_unit = "ubuntu-app-launch-*-%s-*.service" % app_id
+        systemd_unit = 'ubuntu-app-launch-*-%s-*.service' % app_id
         j.add_match(_SYSTEMD_USER_UNIT=systemd_unit)
-        self.caseAddDetail("Application Log (%s)" % app_id,
-                           safe_text_content(str(j)))
+        log_data = ''
+        for i in j:
+            log_data += str(i) + '\n'
+        self.caseAddDetail('Application Log (%s)' % app_id,
+                           safe_text_content(log_data)
 
     def _stop_application(self, app_id):
         state = {}

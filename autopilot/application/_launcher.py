@@ -36,7 +36,6 @@ import psutil
 import subprocess
 import signal
 from systemd import journal
-from testtools.content import content_from_file
 from autopilot.utilities import safe_text_content
 
 from autopilot._timeout import Timeout

@@ -33,7 +33,6 @@ from testtools.matchers import (
     raises,
 )
 from testtools.content import text_content
-import tempfile
 from unittest.mock import Mock, patch
 
 from autopilot.application import (

@@ -35,6 +35,7 @@ import os
 import psutil
 import subprocess
 import signal
+from systemd import journal
 from testtools.content import content_from_file
 from autopilot.utilities import safe_text_content
 
@@ -188,12 +189,12 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             self.addCleanup(self._attach_application_log, app_id)
 
     def _attach_application_log(self, app_id):
-        log_path = UbuntuAppLaunch.application_log_path(app_id)
-        if log_path and os.path.exists(log_path):
-            self.caseAddDetail(
-                "Application Log (%s)" % app_id,
-                content_from_file(log_path)
-            )
+        j = journal.Reader()
+        j.log_level(journal.LOG_INFO)
+        systemd_unit = "ubuntu-app-launch-*-%s-*.service" % app_id
+        j.add_match(_SYSTEMD_USER_UNIT=systemd_unit)
+        self.caseAddDetail("Application Log (%s)" % app_id,
+                           safe_text_content(str(j)))
 
     def _stop_application(self, app_id):
         state = {}

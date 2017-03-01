@@ -782,32 +782,27 @@ class UpstartApplicationLauncherTests(TestCase):
         app_id = self.getUniqueString()
         case_addDetail = Mock()
         launcher = UpstartApplicationLauncher(case_addDetail)
-        with patch.object(_l.UbuntuAppLaunch, 'application_log_path') as p:
-            p.return_value = None
+        with patch.object(_l.journal, 'Reader') as p:
             launcher._attach_application_log(app_id)
 
             p.assert_called_once_with(app_id)
             self.assertEqual(0, case_addDetail.call_count)
 
-    def test_attach_application_log_attaches_log_file(self):
+    def test_attach_application_log_attaches_log(self):
         token = self.getUniqueString()
         case_addDetail = Mock()
         launcher = UpstartApplicationLauncher(case_addDetail)
         app_id = self.getUniqueString()
-        with tempfile.NamedTemporaryFile(mode='w') as f:
-            f.write(token)
-            f.flush()
-            with patch.object(_l.UbuntuAppLaunch, 'application_log_path',
-                              return_value=f.name):
-                launcher._attach_application_log(app_id)
+        with patch.object(_l.journal, 'Reader', return_value=token):
+            launcher._attach_application_log(app_id)
 
-                self.assertEqual(1, case_addDetail.call_count)
-                content_name, content_obj = case_addDetail.call_args[0]
-                self.assertEqual(
-                    "Application Log (%s)" % app_id,
-                    content_name
-                )
-                self.assertThat(content_obj.as_text(), Contains(token))
+            self.assertEqual(1, case_addDetail.call_count)
+            content_name, content_obj = case_addDetail.call_args[0]
+            self.assertEqual(
+                "Application Log (%s)" % app_id,
+                content_name
+            )
+            self.assertThat(content_obj.as_text(), Contains(token))
 
     def test_stop_adds_app_stopped_observer(self):
         mock_add_detail = Mock()

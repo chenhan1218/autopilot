@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2013 Canonical
+# Copyright (C) 2013,2017 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,13 +21,14 @@
 
 import fixtures
 from gi.repository import GLib
+from gi import require_version
 try:
-    from gi import require_version
-    require_version('UbuntuAppLaunch', '2')
+    require_version('UbuntuAppLaunch', '3')
     from gi.repository import UbuntuAppLaunch
 except ImportError:
-    # Note: the renamed package is not in Trusty.
-    from gi.repository import UpstartAppLaunch as UbuntuAppLaunch
+    require_version('UbuntuAppLaunch', '2')
+    from gi.repository import UbuntuAppLaunch
+
 import json
 import logging
 import os

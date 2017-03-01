@@ -72,6 +72,12 @@ https://developer.ubuntu.com/api/autopilot/python/1.6.0/guides-running_ap/
 If you are in the root of the autopilot source tree this will run/list the tests from
 within that local module. Otherwise autopilot will look in the system python path.
 
+Release Autopilot
+=================
+1. Open a new request on bileto: https://bileto.ubuntu.com/ with the lp:autopilot -> lp:autopilot/1.5 merge proposal
+2. Add the relevant details (i.e. bug fix details in the landing description and a link to the testplan: https://wiki.ubuntu.com/Process/Merges/TestPlan/autopilot)
+3. Build the silo and run the tests
+4. Once happy with all tests approve and publish the result
 
 Release Manual Tests
 ====================

@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2013 Canonical
+# Copyright (C) 2013,2017 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,8 +33,7 @@ from testtools.matchers import (
     raises,
 )
 from testtools.content import text_content
-import tempfile
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 from autopilot.application import (
     ClickApplicationLauncher,
@@ -782,32 +781,30 @@ class UpstartApplicationLauncherTests(TestCase):
         app_id = self.getUniqueString()
         case_addDetail = Mock()
         launcher = UpstartApplicationLauncher(case_addDetail)
-        with patch.object(_l.UbuntuAppLaunch, 'application_log_path') as p:
-            p.return_value = None
+        j = MagicMock(spec=_l.journal.Reader)
+        with patch.object(_l.journal, 'Reader', return_value=j):
             launcher._attach_application_log(app_id)
-
-            p.assert_called_once_with(app_id)
+            expected = launcher._get_user_unit_match(app_id)
+            j.add_match.assert_called_once_with(_SYSTEMD_USER_UNIT=expected)
             self.assertEqual(0, case_addDetail.call_count)
 
-    def test_attach_application_log_attaches_log_file(self):
+    def test_attach_application_log_attaches_log(self):
         token = self.getUniqueString()
         case_addDetail = Mock()
         launcher = UpstartApplicationLauncher(case_addDetail)
         app_id = self.getUniqueString()
-        with tempfile.NamedTemporaryFile(mode='w') as f:
-            f.write(token)
-            f.flush()
-            with patch.object(_l.UbuntuAppLaunch, 'application_log_path',
-                              return_value=f.name):
-                launcher._attach_application_log(app_id)
+        j = MagicMock(spec=_l.journal.Reader)
+        j.__iter__ = lambda x: iter([token])
+        with patch.object(_l.journal, 'Reader', return_value=j):
+            launcher._attach_application_log(app_id)
 
-                self.assertEqual(1, case_addDetail.call_count)
-                content_name, content_obj = case_addDetail.call_args[0]
-                self.assertEqual(
-                    "Application Log (%s)" % app_id,
-                    content_name
-                )
-                self.assertThat(content_obj.as_text(), Contains(token))
+            self.assertEqual(1, case_addDetail.call_count)
+            content_name, content_obj = case_addDetail.call_args[0]
+            self.assertEqual(
+                "Application Log (%s)" % app_id,
+                content_name
+            )
+            self.assertThat(content_obj.as_text(), Contains(token))
 
     def test_stop_adds_app_stopped_observer(self):
         mock_add_detail = Mock()

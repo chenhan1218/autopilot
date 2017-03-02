@@ -1,7 +1,7 @@
 # -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
 #
 # Autopilot Functional Test Tool
-# Copyright (C) 2013 Canonical
+# Copyright (C) 2013,2017 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,21 +20,20 @@
 """Base module for application launchers."""
 
 import fixtures
-from gi.repository import GLib
+from gi import require_version
 try:
-    from gi import require_version
+    require_version('UbuntuAppLaunch', '3')
+except ValueError:
     require_version('UbuntuAppLaunch', '2')
-    from gi.repository import UbuntuAppLaunch
-except ImportError:
-    # Note: the renamed package is not in Trusty.
-    from gi.repository import UpstartAppLaunch as UbuntuAppLaunch
+from gi.repository import GLib, UbuntuAppLaunch
+
 import json
 import logging
 import os
 import psutil
 import subprocess
 import signal
-from testtools.content import content_from_file
+from systemd import journal
 from autopilot.utilities import safe_text_content
 
 from autopilot._timeout import Timeout
@@ -186,13 +185,20 @@ class UpstartApplicationLauncher(ApplicationLauncher):
             self.addCleanup(self._stop_application, app_id)
             self.addCleanup(self._attach_application_log, app_id)
 
+    @staticmethod
+    def _get_user_unit_match(app_id):
+        return 'ubuntu-app-launch-*-%s-*.service' % app_id
+
     def _attach_application_log(self, app_id):
-        log_path = UbuntuAppLaunch.application_log_path(app_id)
-        if log_path and os.path.exists(log_path):
-            self.caseAddDetail(
-                "Application Log (%s)" % app_id,
-                content_from_file(log_path)
-            )
+        j = journal.Reader()
+        j.log_level(journal.LOG_INFO)
+        j.add_match(_SYSTEMD_USER_UNIT=self._get_user_unit_match(app_id))
+        log_data = ''
+        for i in j:
+            log_data += str(i) + '\n'
+        if len(log_data) > 0:
+            self.caseAddDetail('Application Log (%s)' % app_id,
+                               safe_text_content(log_data))
 
     def _stop_application(self, app_id):
         state = {}

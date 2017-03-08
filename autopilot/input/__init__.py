@@ -126,9 +126,9 @@ class Keyboard(CleanupRegistered):
                 raise
 
         backends = OrderedDict()
-        backends['UInput'] = get_uinput_kb
-        backends['OSK'] = get_osk_kb
         backends['X11'] = get_x11_kb
+        backends['OSK'] = get_osk_kb
+        backends['UInput'] = get_uinput_kb
         return _pick_backend(backends, preferred_backend)
 
     @contextmanager

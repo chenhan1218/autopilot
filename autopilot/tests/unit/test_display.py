@@ -18,8 +18,8 @@
 #
 import unittest
 from unittest.mock import patch
-
 from autopilot.display import Display
+
 
 class DisplayTestCase(unittest.TestCase):
 

@@ -18,6 +18,7 @@
 #
 
 import logging
+import unittest
 
 import testscenarios
 from evdev import ecodes, uinput
@@ -30,7 +31,7 @@ from autopilot import (
     tests,
     utilities
 )
-from autopilot.input import _uinput, get_center_point
+from autopilot.input import _uinput, get_center_point, Keyboard
 
 
 class Empty(object):
@@ -1101,3 +1102,15 @@ class UInputPowerButtonTestCase(TestCase):
         self.assert_power_button_press_release_emitted_write_and_sync(
             device._device.mock_calls
         )
+
+class KeyboardTestCase(unittest.TestCase):
+
+    @patch('autopilot.input._pick_backend')
+    def test_input_backends_default_order(self, pick_backend):
+        k = Keyboard()
+        k.create()
+
+        backends = list(pick_backend.call_args[0][0].items())
+        self.assertTrue(backends[0][0] == 'X11')
+        self.assertTrue(backends[1][0] == 'OSK')
+        self.assertTrue(backends[2][0] == 'UInput')

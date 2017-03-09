@@ -1103,6 +1103,7 @@ class UInputPowerButtonTestCase(TestCase):
             device._device.mock_calls
         )
 
+
 class KeyboardTestCase(unittest.TestCase):
 
     @patch('autopilot.input._pick_backend')

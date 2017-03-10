@@ -122,11 +122,13 @@ class Keyboard(CleanupRegistered):
 
         def get_osk_kb():
             try:
-                from autopilot.input._osk import Keyboard
                 maliit = [p for p in
                           psutil.process_iter() if p.name == 'maliit-server']
                 if maliit:
+                    from autopilot.input._osk import Keyboard
                     return Keyboard()
+                else:
+                    raise RuntimeError('maliit-server is not running')
             except ImportError as e:
                 e.args += ("Unable to import the OSK backend",)
                 raise

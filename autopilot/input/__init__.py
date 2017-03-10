@@ -57,6 +57,9 @@ running on a desktop.
 
 from collections import OrderedDict
 from contextlib import contextmanager
+
+import psutil
+
 from autopilot.input._common import get_center_point
 from autopilot.utilities import _pick_backend, CleanupRegistered
 
@@ -120,7 +123,10 @@ class Keyboard(CleanupRegistered):
         def get_osk_kb():
             try:
                 from autopilot.input._osk import Keyboard
-                return Keyboard()
+                maliit = [p for p in
+                          psutil.process_iter() if p.name == 'maliit-server']
+                if maliit:
+                    return Keyboard()
             except ImportError as e:
                 e.args += ("Unable to import the OSK backend",)
                 raise

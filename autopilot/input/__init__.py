@@ -123,7 +123,7 @@ class Keyboard(CleanupRegistered):
         def get_osk_kb():
             try:
                 maliit = [p for p in
-                          psutil.process_iter() if p.name == 'maliit-server']
+                          psutil.process_iter() if p.name() == 'maliit-server']
                 if maliit:
                     from autopilot.input._osk import Keyboard
                     return Keyboard()

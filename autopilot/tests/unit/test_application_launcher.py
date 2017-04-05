@@ -631,9 +631,10 @@ class UpstartApplicationLauncherTests(TestCase):
         loop = UpstartApplicationLauncher._get_glib_loop()
         self.assertThat(loop, IsInstance(GLib.MainLoop))
 
+    @patch('autopilot.application._launcher.UbuntuAppLaunch')
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')
-    def test_handle_string(self, _):
+    def test_handle_string(self, gpofep, ual):
         launcher = UpstartApplicationLauncher()
         token_a = self.getUniqueString()
         token_b = self.getUniqueString()
@@ -643,9 +644,10 @@ class UpstartApplicationLauncherTests(TestCase):
                     launcher.launch(token_a, token_b)
                     la.assert_called_once_with(token_a, [token_b])
 
+    @patch('autopilot.application._launcher.UbuntuAppLaunch')
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')
-    def test_handle_bytes(self, _):
+    def test_handle_bytes(self, gpofep, ual):
         launcher = UpstartApplicationLauncher()
         token_a = self.getUniqueString()
         token_b = self.getUniqueString()
@@ -655,9 +657,10 @@ class UpstartApplicationLauncherTests(TestCase):
                     launcher.launch(token_a, token_b.encode())
                     la.assert_called_once_with(token_a, [token_b])
 
+    @patch('autopilot.application._launcher.UbuntuAppLaunch')
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')
-    def test_handle_list(self, _):
+    def test_handle_list(self, gpofep, ual):
         launcher = UpstartApplicationLauncher()
         token_a = self.getUniqueString()
         token_b = self.getUniqueString()
@@ -667,9 +670,10 @@ class UpstartApplicationLauncherTests(TestCase):
                     launcher.launch(token_a, [token_b])
                     la.assert_called_once_with(token_a, [token_b])
 
+    @patch('autopilot.application._launcher.UbuntuAppLaunch')
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')
-    def test_calls_get_pid(self, _):
+    def test_calls_get_pid(self, gpofep, ual):
         launcher = UpstartApplicationLauncher()
         token = self.getUniqueString()
         with patch.object(launcher, '_launch_app'):
@@ -678,9 +682,10 @@ class UpstartApplicationLauncherTests(TestCase):
                     launcher.launch(token)
                     gp.assert_called_once_with(token)
 
+    @patch('autopilot.application._launcher.UbuntuAppLaunch')
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')
-    def test_gets_correct_proxy_object(self, gpofep):
+    def test_gets_correct_proxy_object(self, gpofep, ual):
         launcher = UpstartApplicationLauncher()
         with patch.object(launcher, '_launch_app'):
             with patch.object(launcher, '_get_pid_for_launched_app') as gp:
@@ -690,9 +695,10 @@ class UpstartApplicationLauncherTests(TestCase):
                                                    emulator_base=None,
                                                    dbus_bus='session')
 
+    @patch('autopilot.application._launcher.UbuntuAppLaunch')
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')
-    def test_returns_proxy_object(self, gpofep):
+    def test_returns_proxy_object(self, gpofep, ual):
         launcher = UpstartApplicationLauncher()
         with patch.object(launcher, '_launch_app'):
             with patch.object(launcher, '_get_pid_for_launched_app'):
@@ -700,9 +706,10 @@ class UpstartApplicationLauncherTests(TestCase):
                     result = launcher.launch('')
                     self.assertEqual(result, gpofep.return_value)
 
+    @patch('autopilot.application._launcher.UbuntuAppLaunch')
     @patch('autopilot.application._launcher.'
            'get_proxy_object_for_existing_process')
-    def test_calls_get_glib_loop(self, gpofep):
+    def test_calls_get_glib_loop(self, gpofep, ual):
         launcher = UpstartApplicationLauncher()
         with patch.object(launcher, '_launch_app'):
             with patch.object(launcher, '_get_pid_for_launched_app'):
